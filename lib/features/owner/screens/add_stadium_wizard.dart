@@ -28,7 +28,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 
 class AddStadiumWizard extends StatefulWidget {
@@ -2499,144 +2498,96 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  );
  }
 
- Future<void> _showDeleteConfirmationDialog() async {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final confirm = await showDialog<bool>(
- context: context,
- builder: (ctx) => AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: Text(
- isArabic ? 'إخفاء وحذف الملعب؟ ' : 'Hide & Delete Stadium? ',
- style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
- ),
- content: Text(
- isArabic
- ? 'هل أنت متأكد من رغبتك في إخفاء هذا الملعب؟ سيتم إيقافه وإخفاؤه فوراً عن اللاعبين ولن تظهر حجوزاته، ولن يتم الحذف النهائي من قاعدة البيانات إلا بعد تواصل الإدارة معك لمراجعة السبب والتأكيد.'
- : 'Are you sure you want to hide this stadium? It will be immediately hidden from players. Permanent deletion will only occur after admin contacts you to confirm.',
- style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
- ),
- actions: [
- TextButton(
- onPressed: () => Navigator.pop(ctx, false),
- child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
- ),
- ElevatedButton(
- onPressed: () => Navigator.pop(ctx, true),
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
- ),
- child: Text(isArabic ? 'تأكيد الإخفاء' : 'Confirm Hide'),
- ),
- ],
- ),
- );
- if (confirm == true && mounted) {
- setState(() => _isSaving = true);
- try {
- final now = DateTime.now();
- final startOfTodayUtc = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+  Future<void> _showDeleteConfirmationDialog() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text(
+          isArabic ? 'إخفاء وحذف الملعب؟ ' : 'Hide & Delete Stadium? ',
+          style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد من رغبتك في إخفاء هذا الملعب؟ سيتم إيقافه وإخفاؤه فوراً عن اللاعبين ولن تظهر حجوزاته، ولن يتم الحذف النهائي من قاعدة البيانات إلا بعد تواصل الإدارة معك لمراجعة السبب والتأكيد.'
+              : 'Are you sure you want to hide this stadium? It will be immediately hidden from players. Permanent deletion will only occur after admin contacts you to confirm.',
+          style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+            child: Text(isArabic ? 'تأكيد الإخفاء' : 'Confirm Hide'),
+          ),
+        ],
+      ),
+    );
 
- // Business Rule: Block deletion ONLY if there are active non-cancelled bookings today or in the future
- final activeBookingsCheck = await Supabase.instance.client
- .from('bookings')
- .select('id')
- .eq('stadium_id', widget.stadiumId!)
- .neq('status', 'cancelled')
- .gte('start_time', startOfTodayUtc);
+    if (confirm == true && mounted) {
+      setState(() => _isSaving = true);
+      try {
+        bool success = false;
+        try {
+          success = await StadiumRepository().deleteStadium(widget.stadiumId!);
+        } catch (e) {
+          if (e.toString().contains('active_bookings_exist')) {
+            if (!mounted) return;
+            VSPFeedback.showError(
+              context,
+              isArabic
+                  ? 'لا يمكن حذف الملعب لوجود حجوزات نشطة اليوم أو في المستقبل! قم بإلغائها أو انتظار انتهائها أولاً.'
+                  : 'Cannot delete stadium with active bookings today or in the future! Cancel them or wait for completion first.',
+            );
+            return;
+          }
+        }
 
- if (!mounted) return;
- if ((activeBookingsCheck as List).isNotEmpty) {
- VSPFeedback.showError(
- context,
- isArabic
- ? 'لا يمكن حذف الملعب لوجود حجوزات نشطة اليوم أو في المستقبل! قم بإلغائها أو انتظار انتهائها أولاً.'
- : 'Cannot delete stadium with active bookings today or in the future! Cancel them or wait for completion first.',
- );
- return;
- }
+        if (!mounted) return;
+        if (success) {
+          final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+          final uid = auth.currentUser?.uid;
+          if (uid != null) {
+            final bool stillHas = await StadiumRepository().checkOwnerHasRemainingStadiums(uid);
+            await auth.updateProfile({'hasStadium': stillHas});
+          }
 
- // Clean up non-critical optional records (reviews) before attempting hard delete
- try {
- await Supabase.instance.client
- .from('reviews')
- .delete()
- .eq('stadium_id', widget.stadiumId!);
- } catch (e) {
- debugPrint('Pre-delete cleanup warning: $e');
- }
-
- // 1. Try Hard Delete (Permanent DB Removal)
- bool success = false;
- try {
- await Supabase.instance.client
- .from('stadiums')
- .delete()
- .eq('id', widget.stadiumId!);
- success = true;
- } catch (e) {
- debugPrint('Hard delete fallback to soft-delete (FK RESTRICT): $e');
- }
-
- // 2. Fallback Soft-Delete if DB constraint prevents hard delete
- if (!success) {
- try {
- await Supabase.instance.client
- .from('stadiums')
- .update({
- 'is_verified': false,
- 'is_deleted_by_owner': true,
- 'is_blocked': true,
- })
- .eq('id', widget.stadiumId!);
- success = true;
- } catch (e, stack) {
- VSPLogger.e('Error deleting stadium permanently', e, stack);
- }
- }
-
- if (!mounted) return;
- if (success) {
- // Check remaining active stadiums for owner
- final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
- final uid = auth.currentUser?.uid;
- if (uid != null) {
- try {
- final remaining = await Supabase.instance.client
- .from('stadiums')
- .select('id')
- .eq('owner_id', uid)
- .neq('is_deleted_by_owner', true);
- final bool stillHas = (remaining as List).isNotEmpty;
- await auth.updateProfile({'hasStadium': stillHas});
- } catch (e, stack) {
- VSPLogger.e('Error updating owner profile hasStadium flag', e, stack);
- }
- }
-
- if (mounted) {
- VSPFeedback.showSuccess(
- context,
- isArabic
- ? 'تم حذف الملعب نهائياً واختفاؤه من التطبيق بنجاح! '
- : 'Stadium deleted permanently and hidden from app! ',
- );
- Navigator.pop(context);
- }
- }
- } catch (e) {
- if (mounted) {
- VSPFeedback.showError(
- context,
- isArabic ? 'حدث خطأ أثناء عملية حذف الملعب' : 'Error deleting stadium',
- );
- }
- } finally {
- if (mounted) setState(() => _isSaving = false);
- }
- }
- }
-
+          if (mounted) {
+            VSPFeedback.showSuccess(
+              context,
+              isArabic
+                  ? 'تم حذف الملعب نهائياً واختفاؤه من التطبيق بنجاح! '
+                  : 'Stadium deleted permanently and hidden from app! ',
+            );
+            Navigator.pop(context);
+          }
+        } else {
+          if (mounted) {
+            VSPFeedback.showError(
+              context,
+              isArabic ? 'حدث خطأ أثناء عملية حذف الملعب' : 'Error deleting stadium',
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'حدث خطأ أثناء عملية حذف الملعب' : 'Error deleting stadium',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
+    }
+  }
 }

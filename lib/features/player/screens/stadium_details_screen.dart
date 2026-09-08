@@ -4,8 +4,8 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -36,17 +36,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
  super.initState();
  _tabController = TabController(length: 3, vsync: this);
  _pageController = PageController();
-    _stadiumStream = Supabase.instance.client
-        .from('stadiums')
-        .stream(primaryKey: ['id'])
-        .eq('id', widget.stadium.id)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium details: ');
-        });
+    _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
  
  // Parse ALL genuine stadium images (primary imageUrl + images array + features['allImages'])
  final List<String> rawImages = [];
@@ -825,21 +815,7 @@ class _RatingsTabState extends State<_RatingsTab> {
   @override
   void initState() {
     super.initState();
-    _reviewsStream = Supabase.instance.client
-        .from('reviews')
-        .stream(primaryKey: ['id'])
-        .eq('stadium_id', widget.stadium.id)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .map((list) {
-          final sorted = List<Map<String, dynamic>>.from(list);
-          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
-          return sorted;
-        }).handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium reviews: ');
-        });
+    _reviewsStream = StadiumRepository().streamReviews(widget.stadium.id);
   }
 
  Future<void> _showAddReviewSheet(BuildContext context) async {
@@ -946,14 +922,14 @@ class _RatingsTabState extends State<_RatingsTab> {
  final userName = userModel?.name ?? auth.currentUser?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
  final userAvatar = userModel?.profileImageUrl ?? '';
 
- await Supabase.instance.client.rpc('submit_stadium_review_atomic', params: {
- 'p_stadium_id': widget.stadium.id,
- 'p_user_id': userId,
- 'p_user_name': userName,
- 'p_user_image_url': userAvatar,
- 'p_rating': selectedRating,
- 'p_comment': comment,
- });
+                    await StadiumRepository().submitStadiumReviewAtomic(
+                      stadiumId: widget.stadium.id,
+                      userId: userId,
+                      userName: userName,
+                      userImageUrl: userAvatar,
+                      rating: selectedRating.toDouble(),
+                      comment: comment,
+                    );
 
  if (sheetCtx.mounted) Navigator.pop(sheetCtx);
  if (context.mounted) {

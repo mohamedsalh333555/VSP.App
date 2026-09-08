@@ -6,7 +6,6 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -323,7 +322,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
  setState(() => _isLoading = true);
  try {
  final auth = Provider.of<AuthProvider>(context, listen: false);
- final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid ?? auth.userModel?.uid ?? Supabase.instance.client.auth.currentUser?.id ?? '';
+ final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid ?? auth.userModel?.uid ?? '';
  final currentGov = auth.governorate.trim().isNotEmpty 
  ? auth.governorate 
  : (auth.userModel?.governorate ?? 'القاهرة');

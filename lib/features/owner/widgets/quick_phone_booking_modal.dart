@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/owner_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
@@ -198,11 +198,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
-      final response = await Supabase.instance.client
-          .from('bookings')
-          .insert(newBooking)
-          .select()
-          .single();
+      final response = await OwnerRepository().insertManualPhoneBooking(newBooking);
 
       final createdBookingId = response['id']?.toString() ?? bookingRef;
 

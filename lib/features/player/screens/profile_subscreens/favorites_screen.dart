@@ -1,7 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../shared/widgets/stadium_card.dart';
@@ -41,28 +41,22 @@ class FavoritesScreen extends StatelessWidget {
             );
           }
 
-          return FutureBuilder<List<Map<String, dynamic>>>(
-            future: Supabase.instance.client
-                .from('stadiums')
-                .select()
-                .inFilter('id', favoriteIds)
-                .then((res) => List<Map<String, dynamic>>.from(res)),
+          return FutureBuilder<List<Stadium>>(
+            future: StadiumRepository().getStadiumsByIds(favoriteIds),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
               }
               
-              final data = snapshot.data ?? [];
+              final favoriteStadiums = snapshot.data ?? [];
               
-              if (data.isEmpty) {
+              if (favoriteStadiums.isEmpty) {
                 return VSPEmptyState(
                   icon: Iconsax.search_normal_copy,
                   title: isAr ? 'تعذر تحميل الملاعب المفضلة' : 'Stadiums Not Found',
                   subtitle: isAr ? 'لم نتمكن من العثور على بيانات الملاعب المفضلة حالياً.' : 'Your favorite stadiums could not be loaded.',
                 );
               }
-
-              final favoriteStadiums = data.map((d) => Stadium.fromFirestore(d, d['id'].toString())).toList();
 
               return ListView.builder(
                 padding: const EdgeInsets.all(VSPSpacing.md),

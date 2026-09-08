@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/booking_repository.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -181,34 +181,20 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
  Future<void> _cleanupStalePendingBookings(String userId) async {
- if (widget.isTournamentPayment) return;
- try {
- await Supabase.instance.client
- .from('bookings')
- .update({
- 'status': 'cancelled',
- 'payment_status': 'expired',
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- })
- .eq('created_by_user_id', userId)
- .eq('stadium_id', widget.bookingDraft.stadiumId)
- .eq('status', 'pending');
- debugPrint(' Stale pending bookings transitioned to expired/cancelled safely.');
- } catch (e) {
- debugPrint(' Cleanup stale bookings failed (non-blocking): $e');
- }
- }
+    if (widget.isTournamentPayment) return;
+    await SupabaseBookingRepository().cleanupStalePendingBookings(
+      userId: userId,
+      stadiumId: widget.bookingDraft.stadiumId,
+    );
+  }
 
 
- /// التسمع اللحظي الحصري: لا يتم الانتقال إلا عندما يغير الـ Webhook في السيرفر حالة الحجز
+  /// التسمع اللحظي الحصري: لا يتم الانتقال إلا عندما يغير الـ Webhook في السيرفر حالة الحجز
  void _initBookingRealtimeListener(String bookingId) {
  if (bookingId.startsWith('mock_')) return;
  _bookingSubscription?.cancel();
- _bookingSubscription = Supabase.instance.client
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('id', bookingId)
- .listen((data) async {
+ _bookingSubscription = SupabaseBookingRepository()
+        .streamBookingStatus(bookingId).listen((data) async {
  if (data.isNotEmpty) {
  final bookingData = data.first;
  final status = bookingData['status'] as String?;
@@ -363,18 +349,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           if (_booking != null) {
             final bookingId = _booking!.id;
             // Test Mode: تأكيد الحجز فورياً عبر stored procedure في حالة عدم رفع الويب هوك بالسيرفر
-            try {
-              await Supabase.instance.client.rpc('process_paymob_webhook', params: {
-                'p_booking_id': bookingId,
-                'p_txn_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}',
-                'p_order_id': 'ORD_${DateTime.now().millisecondsSinceEpoch}',
-                'p_success': true,
-                'p_signature_verified': true,
-                'p_payload': {'source': 'paymob_test_client'},
-              });
-            } catch (rpcErr) {
-              debugPrint('process_paymob_webhook direct call note: $rpcErr');
-            }
+            await SupabaseBookingRepository().simulateTestPaymentWebhook(bookingId);
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {
@@ -428,21 +403,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
       if (!widget.isTournamentPayment) {
         if (_booking != null && !_booking!.id.startsWith('mock_')) {
-          try {
-            await Supabase.instance.client.rpc('release_booking_lock', params: {
-              'p_booking_id': _booking!.id,
-            });
-          } catch (_) {
-            await Supabase.instance.client
-                .from('bookings')
-                .update({
-                  'status': 'cancelled',
-                  'payment_status': 'expired',
-                  'updated_at': DateTime.now().toUtc().toIso8601String(),
-                })
-                .eq('id', _booking!.id)
-                .eq('status', 'pending');
-          }
+          await SupabaseBookingRepository().releaseBookingLock(_booking!.id);
         }
 
         if (userId != null) {

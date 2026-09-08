@@ -167,14 +167,85 @@ class OwnerRepository {
  'p_destination': destination,
  });
 
- if (response is Map) {
- return Map<String, dynamic>.from(response);
- }
- return {'success': true};
- } catch (e, stack) {
- VSPLogger.e('Error requesting payout settlement', e, stack);
- return {'success': false, 'error': e.toString()};
- }
- }
-}
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e, stack) {
+      VSPLogger.e('Error requesting payout settlement', e, stack);
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 
+  /// تأكيد استلام الدفع النقدي في الملعب ذرياً
+  Future<dynamic> confirmCashBookingAtomic({
+    required String bookingId,
+    required String ownerId,
+    required double totalPrice,
+  }) async {
+    return _supabase.rpc('confirm_cash_booking_atomic', params: {
+      'p_booking_id': bookingId,
+      'p_owner_id': ownerId,
+      'p_total_price': totalPrice,
+    });
+  }
+
+  /// تمديد وقت انتهاء الحجز/المباراة الجارية
+  Future<void> extendBookingEndTime({
+    required String bookingId,
+    required DateTime newEndTime,
+  }) async {
+    await _supabase
+        .from('bookings')
+        .update({
+          'end_time': newEndTime.toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', bookingId);
+  }
+
+  /// إنشاء حجز يدوي ذرياً بواسطة المالك
+  Future<dynamic> createManualBookingAtomic({
+    required String ownerId,
+    required String stadiumId,
+    required DateTime startTime,
+    required DateTime endTime,
+    required String customerName,
+    String? customerPhone,
+    String? notes,
+    required double totalPrice,
+    required double collectedAmount,
+    required int playerCount,
+  }) async {
+    return _supabase.rpc('owner_create_manual_booking_atomic', params: {
+      'p_owner_id': ownerId,
+      'p_stadium_id': stadiumId,
+      'p_start_time': startTime.toUtc().toIso8601String(),
+      'p_end_time': endTime.toUtc().toIso8601String(),
+      'p_customer_name': customerName,
+      'p_customer_phone': customerPhone,
+      'p_notes': notes,
+      'p_total_price': totalPrice,
+      'p_collected_amount': collectedAmount,
+      'p_current_players': playerCount,
+    });
+  }
+
+  /// تحديث بيانات الحجز اليدوي بواسطة المالك
+  Future<void> updateBookingDetails(String bookingId, Map<String, dynamic> updateMap) async {
+    await _supabase
+        .from('bookings')
+        .update(updateMap)
+        .eq('id', bookingId);
+  }
+
+  /// إدراج حجز هاتفي يدوي بواسطة المالك
+  Future<Map<String, dynamic>> insertManualPhoneBooking(Map<String, dynamic> bookingData) async {
+    final response = await _supabase
+        .from('bookings')
+        .insert(bookingData)
+        .select()
+        .single();
+    return Map<String, dynamic>.from(response);
+  }
+}

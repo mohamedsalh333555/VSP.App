@@ -1,7 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/custom_text_field.dart';
@@ -65,33 +64,30 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  _errorMessage = null;
  });
 
- try {
- await Supabase.instance.client.auth.updateUser(
- UserAttributes(password: _newPassController.text.trim()),
- );
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final success = await auth.updatePassword(_newPassController.text.trim());
+      if (!success) {
+        throw Exception(isAr ? 'فشل تحديث كلمة المرور' : 'Failed to update password');
+      }
 
- if (!mounted) return;
- setState(() {
- _successMessage = isAr ? ' تم تحديث كلمة المرور بنجاح!' : ' Password updated successfully!';
- _isLoading = false;
- });
+      if (!mounted) return;
+      setState(() {
+        _successMessage = isAr ? ' تم تحديث كلمة المرور بنجاح!' : ' Password updated successfully!';
+        _isLoading = false;
+      });
 
- // Small delay then let GoRouter redirect (auth state refreshes)
- await Future.delayed(const Duration(milliseconds: 1200));
- if (!mounted) return;
- // Sign out and back in to refresh session cleanly
- await Provider.of<AuthProvider>(context, listen: false).signOut();
- } on AuthException catch (e) {
- setState(() {
- _errorMessage = e.message;
- _isLoading = false;
- });
- } catch (e) {
- setState(() {
- _errorMessage = isAr ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' : 'An unexpected error occurred. Please try again.';
- _isLoading = false;
- });
- }
+      // Small delay then let GoRouter redirect (auth state refreshes)
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (!mounted) return;
+      // Sign out and back in to refresh session cleanly
+      await auth.signOut();
+    } catch (e) {
+      setState(() {
+        _errorMessage = isAr ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' : 'An unexpected error occurred. Please try again.';
+        _isLoading = false;
+      });
+    }
  }
 
  @override

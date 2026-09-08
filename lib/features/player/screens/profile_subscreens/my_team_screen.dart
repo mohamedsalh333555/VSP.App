@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -60,14 +59,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  final auth = Provider.of<AuthProvider>(context, listen: false);
  final uid = auth.currentUser?.uid;
  if (uid != null) {
- _membershipSubscription = Supabase.instance.client
- .from('team_members')
- .stream(primaryKey: ['id'])
- .eq('user_id', uid)
- .timeout(
- const Duration(seconds: 10),
- onTimeout: (sink) => sink.add([]),
- )
+ _membershipSubscription = TeamRepository()
+ .streamUserMembership(uid)
  .listen((data) {
  _initialLoad();
  }, onError: (err) {
@@ -108,15 +101,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  _selectedSport = team.sportType;
  _localTeam = team;
  
- // Listen to team updates in Supabase
- _teamSubscription = Supabase.instance.client
- .from('teams')
- .stream(primaryKey: ['id'])
- .eq('id', team.id)
- .timeout(
- const Duration(seconds: 10),
- onTimeout: (sink) => sink.add([]),
- )
+ // Listen to team updates via repository
+ _teamSubscription = TeamRepository()
+ .streamTeam(team.id)
  .listen((data) async {
  if (data.isNotEmpty && mounted) {
  final updatedTeam = await TeamRepository().getTeam(team.id);

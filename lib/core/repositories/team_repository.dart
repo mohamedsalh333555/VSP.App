@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
 import '../repositories/notification_repository.dart';
+import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
 
 class TeamRepository {
@@ -596,20 +597,50 @@ class TeamRepository {
  }
  }
 
- Future<void> _sendJoinNotification(String userId) async {
- try {
- await NotificationRepository().sendNotification(
- userId,
- AppNotification(
- id: '',
- title: " New Team Transfer!",
- body: "You have been drafted to join a new team. Get ready for the next match!",
- type: "info",
- createdAt: DateTime.now(),
- ),
- );
- } catch (e) {
- debugPrint('Error sending join notification: $e');
- }
- }
+  Future<void> _sendJoinNotification(String userId) async {
+    try {
+      await NotificationRepository().sendNotification(
+        userId,
+        AppNotification(
+          id: '',
+          title: " New Team Transfer!",
+          body: "You have been drafted to join a new team. Get ready for the next match!",
+          type: "info",
+          createdAt: DateTime.now(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error sending join notification: $e');
+    }
+  }
+
+  /// Stream user's membership changes
+  Stream<List<Map<String, dynamic>>> streamUserMembership(String userId) {
+    return _supabase
+        .from('team_members')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((err) {
+          VSPLogger.w('Membership realtime stream notice: $err');
+        });
+  }
+
+  /// Stream single team updates
+  Stream<List<Map<String, dynamic>>> streamTeam(String teamId) {
+    return _supabase
+        .from('teams')
+        .stream(primaryKey: ['id'])
+        .eq('id', teamId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((err) {
+          VSPLogger.w('Team realtime stream notice: $err');
+        });
+  }
 }

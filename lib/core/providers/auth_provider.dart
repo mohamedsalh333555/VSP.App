@@ -764,6 +764,11 @@ class AuthProvider with ChangeNotifier {
  notifyListeners();
  }
 
+  /// Update password cleanly through AuthService
+  Future<bool> updatePassword(String newPassword) async {
+    return _authService.updatePassword(newPassword);
+  }
+
  /// Update user profile
  Future<bool> updateProfile(Map<String, dynamic> data) async {
  if (_firebaseUser == null) return false;

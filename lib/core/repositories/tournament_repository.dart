@@ -2259,5 +2259,50 @@ class TournamentRepository {
       rethrow;
     }
   }
+
+  /// Insert championship roster
+  Future<void> insertChampionshipRoster({
+    required String championshipId,
+    required String teamId,
+    required List<String> guestNames,
+    List<String> playerIds = const [],
+  }) async {
+    await _supabase.from('championship_rosters').insert({
+      'championship_id': championshipId,
+      'team_id': teamId,
+      'player_ids': playerIds,
+      'guest_names': guestNames,
+    });
+  }
+
+  /// Stream single championship updates
+  Stream<List<Map<String, dynamic>>> streamChampionshipRaw(String championshipId) {
+    return _supabase
+        .from('championships')
+        .stream(primaryKey: ['id'])
+        .eq('id', championshipId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in championship stream: $e');
+        });
+  }
+
+  /// Check if 1v1 tournament order was paid
+  Future<bool> is1v1OrderPaid(String orderReference) async {
+    try {
+      final res = await _supabase
+          .from('vsp_1v1_tournament_orders')
+          .select('payment_status')
+          .eq('order_reference', orderReference)
+          .maybeSingle();
+      return res != null && res['payment_status'] == 'paid';
+    } catch (e) {
+      debugPrint('Error checking 1v1 order paid status: $e');
+      return false;
+    }
+  }
 }
 

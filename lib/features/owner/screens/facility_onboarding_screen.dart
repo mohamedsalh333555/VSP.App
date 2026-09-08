@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
@@ -148,13 +148,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                     authProvider.userModel?.additionalData ?? {},
                   )..['isOnboardingConfirmed'] = true;
                   if (uid != null) {
-                    try {
-                      await Supabase.instance.client.from('users').update({
-                        'has_stadium': true,
-                        'additional_data': updatedAdditional,
-                        'updated_at': DateTime.now().toUtc().toIso8601String(),
-                      }).eq('id', uid);
-                    } catch (_) {}
+                    await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
                   }
                   await authProvider.updateProfile({'additionalData': updatedAdditional});
                   if (context.mounted) {
@@ -344,17 +338,8 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  final updatedAdditional = Map<String, dynamic>.from(
  authProvider.userModel?.additionalData ?? {},
  )..['isOnboardingConfirmed'] = true;
-
  if (uid != null) {
- try {
- await Supabase.instance.client.from('users').update({
- 'has_stadium': true,
- 'additional_data': updatedAdditional,
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- }).eq('id', uid);
- } catch (e, stack) {
- VSPLogger.e('Error updating user onboarding status in Supabase', e, stack);
- }
+ await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
  }
  await authProvider.updateProfile({
  'additionalData': updatedAdditional,

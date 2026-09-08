@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/booking_repository.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +13,6 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/repositories/report_repository.dart';
-import '../../../core/services/logger_service.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
@@ -36,18 +35,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  void initState() {
  super.initState();
- _bookingStream = Supabase.instance.client
-     .from('bookings')
-     .stream(primaryKey: ['id'])
-     .eq('id', widget.bookingId)
-     .timeout(
-       const Duration(seconds: 10),
-       onTimeout: (sink) => sink.add([]),
-     )
-     .handleError((e) {
-       VSPLogger.w('Handled realtime error in match details: ');
-     });
- _fetchMatchDetails();
+ _bookingStream = SupabaseBookingRepository().streamBookingRaw(widget.bookingId);
+    _fetchMatchDetails();
  }
 
  Future<void> _fetchMatchDetails() async {

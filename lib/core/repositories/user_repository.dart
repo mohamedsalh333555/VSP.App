@@ -190,26 +190,87 @@ class UserRepository {
  }
  }
 
- Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) async {
- try {
- await _supabase.from('users').update({
- 'is_blocked': isBlocked,
- if (warningMessage != null) 'last_warning': warningMessage,
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- }).eq('id', userId);
+  Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) async {
+    try {
+      await _supabase.from('users').update({
+        'is_blocked': isBlocked,
+        if (warningMessage != null) 'last_warning': warningMessage,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', userId);
 
- if (warningMessage != null) {
- await _supabase.from('notifications').insert({
- 'user_id': userId,
- 'title': 'Safety Warning ',
- 'body': warningMessage,
- 'type': 'warning',
- 'is_read': false,
- 'created_at': DateTime.now().toUtc().toIso8601String(),
- });
- }
- } catch (e) {
- VSPLogger.e('Error updating user moderation status', e);
- }
- }
+      if (warningMessage != null) {
+        await _supabase.from('notifications').insert({
+          'user_id': userId,
+          'title': 'Safety Warning ',
+          'body': warningMessage,
+          'type': 'warning',
+          'is_read': false,
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
+    } catch (e) {
+      VSPLogger.e('Error updating user moderation status', e);
+    }
+  }
+
+  /// Update owner onboarding status and extra config safely in Supabase
+  Future<bool> updateOnboardingStatus(String uid, Map<String, dynamic> additionalData) async {
+    try {
+      await _supabase.from('users').update({
+        'has_stadium': true,
+        'additional_data': additionalData,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', uid);
+      return true;
+    } catch (e, stack) {
+      VSPLogger.e('Error updating user onboarding status', e, stack);
+      return false;
+    }
+  }
+
+  /// Search users for inbox or team invite
+  Future<List<UserModel>> searchUsers({
+    required String currentUserId,
+    String? role,
+    String query = '',
+    int limit = 50,
+  }) async {
+    try {
+      var dbQuery = _supabase
+          .from('users')
+          .select('id, name, email, role, profile_image_url')
+          .neq('id', currentUserId);
+
+      if (role != null) {
+        dbQuery = dbQuery.eq('role', role);
+      }
+
+      if (query.isNotEmpty) {
+        dbQuery = dbQuery.ilike('name', '%$query%');
+      }
+
+      final response = await dbQuery.limit(limit);
+      return (response as List)
+          .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
+          .toList();
+    } catch (e, stack) {
+      VSPLogger.e('Error searching users in UserRepository', e, stack);
+      return [];
+    }
+  }
+
+  /// Batch-fetch user summary maps (id, name, profile_image_url) for quick caching
+  Future<List<Map<String, dynamic>>> getUserSummariesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      final rows = await _supabase
+          .from('users')
+          .select('id, name, profile_image_url')
+          .inFilter('id', ids);
+      return List<Map<String, dynamic>>.from(rows as List<dynamic>);
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching user summaries by IDs', e, stack);
+      return [];
+    }
+  }
 }

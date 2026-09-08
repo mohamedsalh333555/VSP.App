@@ -2,12 +2,12 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import '../../../core/models/user_model.dart';
 import '../../../data/models.dart';
 import '../../player/screens/chat_screen.dart';
@@ -38,12 +38,8 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  if (missing.isEmpty || _isFetchingUsers) return;
  _isFetchingUsers = true;
  try {
- final rows = await Supabase.instance.client
- .from('users')
- .select('id, name, profile_image_url')
- .inFilter('id', missing);
- for (final row in (rows as List<dynamic>)) {
- final map = row as Map<String, dynamic>;
+ final rows = await UserRepository().getUserSummariesByIds(missing);
+ for (final map in rows) {
  _userCache[map['id'].toString()] = map;
  }
  if (mounted) setState(() {});
@@ -468,23 +464,10 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
  }
 
  Future<List<UserModel>> _searchUsers(String query) async {
- try {
- final supabase = Supabase.instance.client;
- var dbQuery = supabase.from('users').select('id, name, email, role, profile_image_url').neq('id', currentUserId);
-
- if (currentUserRole == 'owner') {
- dbQuery = dbQuery.eq('role', 'player');
- }
-
- if (query.isNotEmpty) {
- dbQuery = dbQuery.ilike('name', '%$query%');
- }
-
- final response = await dbQuery.limit(50);
- return (response as List).map((data) => UserModel.fromFirestore(data)).toList();
- } catch (e) {
- debugPrint('Error searching users: ');
- return [];
- }
- }
+    return UserRepository().searchUsers(
+      currentUserId: currentUserId,
+      role: currentUserRole == 'owner' ? 'player' : null,
+      query: query,
+    );
+  }
 }

@@ -421,31 +421,140 @@ class StadiumRepository {
  }
  }
 
- // Stadium Deletion Safeguard (Handles ON DELETE RESTRICT with soft-delete fallback)
- Future<bool> deleteStadium(String stadiumId) async {
- try {
- // 1. Attempt Hard Delete (Permanent DB Removal)
- await _supabase.from('stadiums').delete().eq('id', stadiumId);
- return true;
- } catch (e) {
- VSPLogger.w('Hard delete failed (e.g. FK RESTRICT due to bookings). Falling back to soft-delete: $e');
- try {
- // 2. Fallback Soft-Delete if DB foreign key constraint prevents hard delete
- await _supabase
- .from('stadiums')
- .update({
- 'is_deleted_by_owner': true,
- 'is_verified': false,
- 'is_blocked': true,
- })
- .eq('id', stadiumId);
- return true;
- } catch (softErr) {
- VSPLogger.e('Error during stadium soft deletion fallback', softErr);
- return false;
- }
- }
- }
+  // Stadium Deletion Safeguard (Checks active bookings, reviews cleanup, hard/soft delete)
+  Future<bool> deleteStadium(String stadiumId) async {
+    final now = DateTime.now().toUtc();
+    final startOfTodayUtc = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+
+    // Business Rule: Block deletion if active bookings exist today or in the future
+    final activeBookingsCheck = await _supabase
+        .from('bookings')
+        .select('id')
+        .eq('stadium_id', stadiumId)
+        .neq('status', 'cancelled')
+        .gte('start_time', startOfTodayUtc);
+
+    if ((activeBookingsCheck as List).isNotEmpty) {
+      throw Exception('active_bookings_exist');
+    }
+
+    // Clean up optional records (reviews)
+    try {
+      await _supabase.from('reviews').delete().eq('stadium_id', stadiumId);
+    } catch (e) {
+      VSPLogger.w('Pre-delete cleanup warning: $e');
+    }
+
+    try {
+      // 1. Attempt Hard Delete (Permanent DB Removal)
+      await _supabase.from('stadiums').delete().eq('id', stadiumId);
+      return true;
+    } catch (e) {
+      VSPLogger.w('Hard delete failed (e.g. FK RESTRICT due to bookings). Falling back to soft-delete: $e');
+      try {
+        // 2. Fallback Soft-Delete if DB foreign key constraint prevents hard delete
+        await _supabase
+            .from('stadiums')
+            .update({
+              'is_deleted_by_owner': true,
+              'is_verified': false,
+              'is_blocked': true,
+            })
+            .eq('id', stadiumId);
+        return true;
+      } catch (softErr) {
+        VSPLogger.e('Error during stadium soft deletion fallback', softErr);
+        return false;
+      }
+    }
+  }
+
+  /// Check if owner still has active non-deleted stadiums
+  Future<bool> checkOwnerHasRemainingStadiums(String ownerId) async {
+    try {
+      final remaining = await _supabase
+          .from('stadiums')
+          .select('id')
+          .eq('owner_id', ownerId)
+          .neq('is_deleted_by_owner', true);
+      return (remaining as List).isNotEmpty;
+    } catch (e, stack) {
+      VSPLogger.e('Error checking remaining stadiums for $ownerId', e, stack);
+      return false;
+    }
+  }
+
+  /// Stream single stadium raw records for realtime details
+  Stream<List<Map<String, dynamic>>> streamStadiumRaw(String stadiumId) {
+    return _supabase
+        .from('stadiums')
+        .stream(primaryKey: ['id'])
+        .eq('id', stadiumId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in stadium details stream: $e');
+        });
+  }
+
+  /// Stream reviews for a stadium
+  Stream<List<Map<String, dynamic>>> streamReviews(String stadiumId) {
+    return _supabase
+        .from('reviews')
+        .stream(primaryKey: ['id'])
+        .eq('stadium_id', stadiumId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .map((list) {
+          final sorted = List<Map<String, dynamic>>.from(list);
+          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
+              .compareTo(DateTime.parse(a['created_at'].toString())));
+          return sorted;
+        })
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in stadium reviews stream: $e');
+        });
+  }
+
+  /// Submit stadium review atomic RPC
+  Future<dynamic> submitStadiumReviewAtomic({
+    required String stadiumId,
+    required String userId,
+    required String userName,
+    required String userImageUrl,
+    required double rating,
+    required String comment,
+  }) async {
+    return _supabase.rpc('submit_stadium_review_atomic', params: {
+      'p_stadium_id': stadiumId,
+      'p_user_id': userId,
+      'p_user_name': userName,
+      'p_user_image_url': userImageUrl,
+      'p_rating': rating,
+      'p_comment': comment,
+    });
+  }
+
+  /// Fetch multiple stadiums by their IDs (e.g. for Favorites)
+  Future<List<Stadium>> getStadiumsByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      final res = await _supabase
+          .from('stadiums')
+          .select()
+          .inFilter('id', ids);
+      return (res as List)
+          .map((d) => Stadium.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
+          .toList();
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching stadiums by IDs: $ids', e, stack);
+      return [];
+    }
+  }
 
  // Discovery and Search Geo-Matching: Database-Level Geodistance Query
  // Offloads GPS distance calculation and trigonometric sorting from client device to Supabase execution.

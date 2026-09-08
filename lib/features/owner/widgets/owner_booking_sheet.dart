@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/owner_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
@@ -387,11 +387,11 @@ Enjoy your match.
  final authProvider = Provider.of<AuthProvider>(parentCtx, listen: false);
  final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid ?? booking.ownerId;
 
- final rpcRes = await Supabase.instance.client.rpc('confirm_cash_booking_atomic', params: {
- 'p_booking_id': booking.id,
- 'p_owner_id': uid,
- 'p_total_price': totalPrice,
- });
+ final rpcRes = await OwnerRepository().confirmCashBookingAtomic(
+			bookingId: booking.id,
+			ownerId: uid,
+			totalPrice: totalPrice,
+		);
 
  if (rpcRes is Map && rpcRes['success'] == false) {
  throw Exception(rpcRes['message']?.toString() ?? 'Failed to confirm cash payment');
@@ -425,13 +425,10 @@ Enjoy your match.
 
  setState(() => _isSaving = true);
  try {
- await Supabase.instance.client
- .from('bookings')
- .update({
- 'end_time': newEndTime.toUtc().toIso8601String(),
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- })
- .eq('id', booking.id);
+ await OwnerRepository().extendBookingEndTime(
+				bookingId: booking.id,
+				newEndTime: newEndTime,
+			);
 
  if (mounted) {
  VSPFeedback.showSuccess(
@@ -556,18 +553,18 @@ Enjoy your match.
 
  bool rpcSuccess = false;
  try {
- final res = await Supabase.instance.client.rpc('owner_create_manual_booking_atomic', params: {
- 'p_owner_id': uid,
- 'p_stadium_id': stadium.id,
- 'p_start_time': startTime.toUtc().toIso8601String(),
- 'p_end_time': endTime.toUtc().toIso8601String(),
- 'p_customer_name': customerName,
- 'p_customer_phone': customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
- 'p_notes': notes.isNotEmpty ? notes : null,
- 'p_total_price': totalPrice,
- 'p_collected_amount': collectedAmount,
- 'p_current_players': _playerCount,
- });
+ final res = await OwnerRepository().createManualBookingAtomic(
+				ownerId: uid,
+				stadiumId: stadium.id,
+				startTime: startTime,
+				endTime: endTime,
+				customerName: customerName,
+				customerPhone: customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
+				notes: notes.isNotEmpty ? notes : null,
+				totalPrice: totalPrice,
+				collectedAmount: collectedAmount,
+				playerCount: _playerCount,
+			);
  if (res != null && res['success'] == true) {
  rpcSuccess = true;
  }
@@ -636,10 +633,7 @@ Enjoy your match.
  updateMap['total_price'] = finalTotal;
  }
 
- await Supabase.instance.client
- .from('bookings')
- .update(updateMap)
- .eq('id', booking.id);
+ await OwnerRepository().updateBookingDetails(booking.id, updateMap);
 
  await bookingProvider.loadOwnerBookings(uid);
  }

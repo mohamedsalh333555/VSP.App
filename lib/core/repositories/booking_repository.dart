@@ -92,6 +92,20 @@ abstract class BookingRepository {
  required String reason,
  required int durationHours,
  });
+
+  Future<void> cleanupStalePendingBookings({
+    required String userId,
+    required String stadiumId,
+  });
+
+  Stream<List<Map<String, dynamic>>> streamBookingStatus(String bookingId);
+
+  Stream<List<Map<String, dynamic>>> streamBookingRaw(String bookingId);
+
+  Future<void> simulateTestPaymentWebhook(String bookingId);
+
+  Future<void> releaseBookingLock(String bookingId);
+
 }
 
 /// Supabase implementation of BookingRepository
@@ -1133,6 +1147,87 @@ class SupabaseBookingRepository implements BookingRepository {
  return {'success': false, 'message': e.toString()};
  }
  }
+
+  @override
+  Future<void> cleanupStalePendingBookings({
+    required String userId,
+    required String stadiumId,
+  }) async {
+    try {
+      await _supabase
+          .from('bookings')
+          .update({
+            'status': 'cancelled',
+            'payment_status': 'expired',
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('created_by_user_id', userId)
+          .eq('stadium_id', stadiumId)
+          .eq('status', 'pending');
+      debugPrint(' Stale pending bookings transitioned to expired/cancelled safely.');
+    } catch (e) {
+      debugPrint(' Cleanup stale bookings failed (non-blocking): ');
+    }
+  }
+
+  @override
+  Stream<List<Map<String, dynamic>>> streamBookingStatus(String bookingId) {
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('id', bookingId);
+  }
+
+  @override
+  Stream<List<Map<String, dynamic>>> streamBookingRaw(String bookingId) {
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('id', bookingId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in match details: $e');
+        });
+  }
+
+  @override
+  Future<void> simulateTestPaymentWebhook(String bookingId) async {
+    try {
+      await _supabase.rpc('process_paymob_webhook', params: {
+        'p_booking_id': bookingId,
+        'p_txn_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}',
+        'p_order_id': 'ORD_${DateTime.now().millisecondsSinceEpoch}',
+        'p_success': true,
+        'p_signature_verified': true,
+        'p_payload': {'source': 'paymob_test_client'},
+      });
+    } catch (rpcErr) {
+      debugPrint('process_paymob_webhook direct call note: $rpcErr');
+    }
+  }
+
+  @override
+  Future<void> releaseBookingLock(String bookingId) async {
+    try {
+      await _supabase.rpc('release_booking_lock', params: {
+        'p_booking_id': bookingId,
+      });
+    } catch (_) {
+      await _supabase
+          .from('bookings')
+          .update({
+            'status': 'cancelled',
+            'payment_status': 'expired',
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', bookingId)
+          .eq('status', 'pending');
+    }
+  }
+
 }
 
 /// Mock implementation for demo/testing
@@ -1367,6 +1462,29 @@ class MockBookingRepository implements BookingRepository {
  }) async {
  return true;
  }
+
+
+  @override
+  Future<void> cleanupStalePendingBookings({
+    required String userId,
+    required String stadiumId,
+  }) async {}
+
+  @override
+  Stream<List<Map<String, dynamic>>> streamBookingStatus(String bookingId) {
+    return Stream.value([]);
+  }
+
+  @override
+  Stream<List<Map<String, dynamic>>> streamBookingRaw(String bookingId) {
+    return Stream.value([]);
+  }
+
+  @override
+  Future<void> simulateTestPaymentWebhook(String bookingId) async {}
+
+  @override
+  Future<void> releaseBookingLock(String bookingId) async {}
 
  /// Add mock bookings for testing
  void addMockBookings() {

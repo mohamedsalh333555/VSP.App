@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -50,10 +50,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
  Future<void> _loadTeamMembers() async {
  try {
- final response = await Supabase.instance.client
- .from('users')
- .select('id, name, profile_image_url')
- .inFilter('id', widget.team.memberUids);
+ final response = await UserRepository().getUserSummariesByIds(widget.team.memberUids);
  _teamMembers = List<Map<String, dynamic>>.from(response);
  } catch (e) {
  debugPrint('Error loading team members: $e');
