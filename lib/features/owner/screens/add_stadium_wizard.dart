@@ -19,7 +19,9 @@ import '../widgets/add_stadium/add_stadium_step3_images.dart';
 import '../widgets/add_stadium/stadium_wizard_dialogs.dart';
 import '../widgets/add_stadium/stadium_wizard_draft_service.dart';
 import '../widgets/add_stadium/stadium_wizard_image_service.dart';
+import '../widgets/add_stadium/stadium_wizard_payload_builder.dart';
 import '../widgets/add_stadium/stadium_wizard_time_utils.dart';
+import '../widgets/add_stadium/stadium_wizard_validator.dart';
 
 class AddStadiumWizard extends StatefulWidget {
   final String? stadiumId;
@@ -499,104 +501,48 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_currentStep == 0) {
-      if (_locationController.text.trim().isEmpty) {
-        _showError(isArabic ? 'يرجى تحديد موقع الملعب على الخريطة أولاً' : 'Please select stadium location on map first');
+      final error = StadiumWizardValidator.validateStep0(
+        location: _locationController.text,
+        name: _nameController.text,
+        stadiumPhone: _stadiumPhoneController.text,
+        sportType: _selectedSportType,
+        price: _priceController.text,
+        startTime: _startTime,
+        endTime: _endTime,
+        isSplitShift: _isSplitShift,
+        breakTimes: _breakTimes,
+        isArabic: isArabic,
+      );
+      if (error != null) {
+        _showError(error);
         return;
-      }
-
-      if (_nameController.text.trim().isEmpty) {
-        _showError(isArabic ? 'يرجى إدخال اسم الملعب' : 'Please enter stadium name');
-        return;
-      }
-
-      if (_stadiumPhoneController.text.trim().isEmpty) {
-        _showError(isArabic ? 'يرجى إدخال رقم هاتف الملعب' : 'Please enter stadium phone number');
-        return;
-      }
-
-      if (_selectedSportType == null || _selectedSportType!.trim().isEmpty) {
-        _showError(isArabic ? 'يرجى اختيار نوع الرياضة' : 'Please select sport type');
-        return;
-      }
-
-      if (_priceController.text.trim().isEmpty) {
-        _showError(isArabic ? 'يرجى إدخال سعر حجز الملعب للساعة' : 'Please enter stadium hourly price');
-        return;
-      }
-
-      if (_startTime == null || _endTime == null) {
-        _showError(isArabic ? 'يرجى تحديد مواعيد العمل (البداية والنهاية)' : 'Please select working hours (start and end)');
-        return;
-      }
-
-      // ── Split-Shift Validation ──
-      if (_isSplitShift) {
-        if (_breakTimes.isEmpty) {
-          _showError(isArabic ? "يرجى إضافة فترة راحة واحدة على الأقل عند تفعيل الراحة." : "Please add at least one break time.");
-          return;
-        }
-
-        for (var i = 0; i < _breakTimes.length; i++) {
-          final bStart = _breakTimes[i]['start'];
-          final bEnd = _breakTimes[i]['end'];
-          if (bStart == null || bEnd == null) {
-            _showError(isArabic ? "يرجى تحديد وقت البداية والنهاية لفترة الراحة ${i + 1}." : "Please set start and end times for Break ${i + 1}.");
-            return;
-          }
-
-          int t(TimeOfDay time) => time.hour * 60 + time.minute;
-          final start = t(_startTime!);
-          final end = t(_endTime!);
-          final bStartMin = t(bStart);
-          final bEndMin = t(bEnd);
-
-          int normEnd = (end <= start) ? end + (24 * 60) : end;
-          int normBStart = (bStartMin < start && end <= start) ? bStartMin + (24 * 60) : bStartMin;
-          int normBEnd = (bEndMin < start && end <= start) ? bEndMin + (24 * 60) : bEndMin;
-
-          bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
-
-          if (!isBreakInHours) {
-            _showError(isArabic
-                ? "فترة الراحة ${i + 1} يجب أن تكون داخل مواعيد العمل الرسمية (${StadiumWizardTimeUtils.formatTime(_startTime, '')} - ${StadiumWizardTimeUtils.formatTime(_endTime, '')})."
-                : "Break ${i + 1} must be within opening hours (${StadiumWizardTimeUtils.formatTime(_startTime, '')} - ${StadiumWizardTimeUtils.formatTime(_endTime, '')}).");
-            return;
-          }
-        }
       }
     } else if (_currentStep == 1) {
-      if (_selectedBathOption == null || _cafeteria == null) {
-        _showError(AppLocalizations.of(context)!.selectFeaturesError);
+      final l10n = AppLocalizations.of(context)!;
+      final error = StadiumWizardValidator.validateStep1(
+        selectedBathOption: _selectedBathOption,
+        cafeteria: _cafeteria,
+        hasBall: _hasBall,
+        ballPriceText: _ballPriceController.text,
+        requireDeposit: _requireDeposit,
+        depositText: _depositController.text,
+        priceText: _priceController.text,
+        isArabic: isArabic,
+        selectFeaturesError: l10n.selectFeaturesError,
+        ballPriceMinError: l10n.ballPriceMinError,
+      );
+      if (error != null) {
+        _showError(error);
         return;
-      }
-      if (_hasBall == true) {
-        final ballPrice = double.tryParse(_ballPriceController.text) ?? 0.0;
-        if (ballPrice < 5.0) {
-          _showError(AppLocalizations.of(context)!.ballPriceMinError);
-          return;
-        }
-      }
-      if (_requireDeposit) {
-        final deposit = double.tryParse(_depositController.text.trim()) ?? 0.0;
-        final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
-        if (deposit <= 0) {
-          _showError(isArabic ? "يرجى إدخال مبلغ عربون صحيح." : "Please set a valid deposit amount.");
-          return;
-        }
-        if (deposit > (price * 0.5)) {
-          _showError(isArabic
-              ? "مبلغ العربون لا يمكن أن يتجاوز 50% من سعر الساعة (${(price * 0.5).toStringAsFixed(0)} ج.م)."
-              : "Deposit amount cannot exceed 50% of the hourly price (${price * 0.5} EGP).");
-          return;
-        }
       }
     } else if (_currentStep == 2) {
-      if (_images.isEmpty && (widget.stadiumId == null)) {
-        _showError(AppLocalizations.of(context)!.uploadPhotoError);
-        return;
-      }
-      if (_images.any((img) => img['isUploading'] == true)) {
-        _showError('Please wait for all images to finish uploading.');
+      final error = StadiumWizardValidator.validateStep2(
+        images: _images,
+        stadiumId: widget.stadiumId,
+        uploadPhotoError: AppLocalizations.of(context)!.uploadPhotoError,
+      );
+      if (error != null) {
+        _showError(error);
         return;
       }
       _saveStadium();
@@ -644,58 +590,44 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         return;
       }
 
-      final stadiumFeatures = {
-        'stadiumPhone': _stadiumPhoneController.text.trim(),
-        'sportType': _selectedSportType,
-        'floorType': _selectedFloorType,
-        'bathOption': _selectedBathOption,
-        'cafeteria': _cafeteria,
-        'garage': _garage,
-        'changingRoom': _changingRoom,
-        'seats': _seatsController.text.trim(),
-        'length': _lengthController.text.trim(),
-        'width': _widthController.text.trim(),
-        'hasBall': _hasBall ?? false,
-        'ballPrice': (_hasBall == true) ? (double.tryParse(_ballPriceController.text) ?? 0.0) : 0.0,
-        'workingHours': {
-          'start': StadiumWizardTimeUtils.formatTime(_startTime, '16:00:00'),
-          'end': StadiumWizardTimeUtils.formatTime(_endTime, '23:00:00'),
-        },
-        'isSplitShift': _isSplitShift,
-        'breakTimes': _isSplitShift
-            ? _breakTimes.map((bt) => {
-                  'start': StadiumWizardTimeUtils.formatTime(bt['start'], ''),
-                  'end': StadiumWizardTimeUtils.formatTime(bt['end'], ''),
-                }).toList()
-            : [],
-        'breakTime': (_isSplitShift && _breakTimes.isNotEmpty)
-            ? {
-                'start': StadiumWizardTimeUtils.formatTime(_breakTimes.first['start'], ''),
-                'end': StadiumWizardTimeUtils.formatTime(_breakTimes.first['end'], ''),
-              }
-            : null,
-        'allImages': uploadedUrls,
-      };
+      final stadiumFeatures = StadiumWizardPayloadBuilder.buildFeatures(
+        stadiumPhone: _stadiumPhoneController.text,
+        sportType: _selectedSportType,
+        floorType: _selectedFloorType,
+        bathOption: _selectedBathOption,
+        cafeteria: _cafeteria,
+        garage: _garage,
+        changingRoom: _changingRoom,
+        seats: _seatsController.text,
+        length: _lengthController.text,
+        width: _widthController.text,
+        hasBall: _hasBall ?? false,
+        ballPrice: double.tryParse(_ballPriceController.text) ?? 0.0,
+        startTime: _startTime,
+        endTime: _endTime,
+        isSplitShift: _isSplitShift,
+        breakTimes: _breakTimes,
+        uploadedUrls: uploadedUrls,
+      );
 
       if (widget.stadiumId != null) {
-        await _databaseService.updateStadium(widget.stadiumId!, {
-          'name': _nameController.text.trim(),
-          'location': _locationController.text.trim(),
-          'governorate': _governorate,
-          'pricePerHour': double.tryParse(_priceController.text.trim()) ?? 0.0,
-          'players_per_team': int.tryParse(_capacityController.text.trim()) ?? 5,
-          'total_field_capacity': (int.tryParse(_capacityController.text.trim()) ?? 5) * 2,
-          'deposit_amount': _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
-          'needs_deposit': _requireDeposit,
-          'imageUrl': uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
-          'images': uploadedUrls,
-          'notes': _notesController.text.trim(),
-          'features': stadiumFeatures,
-          'opening_time': StadiumWizardTimeUtils.formatTime(_startTime, '16:00:00'),
-          'closing_time': StadiumWizardTimeUtils.formatTime(_endTime, '03:00:00'),
-          'lat': _latitude,
-          'lng': _longitude,
-        });
+        final updatePayload = StadiumWizardPayloadBuilder.buildUpdatePayload(
+          name: _nameController.text,
+          location: _locationController.text,
+          governorate: _governorate,
+          pricePerHour: double.tryParse(_priceController.text.trim()) ?? 0.0,
+          capacity: int.tryParse(_capacityController.text.trim()) ?? 5,
+          requireDeposit: _requireDeposit,
+          depositAmount: double.tryParse(_depositController.text.trim()) ?? 0.0,
+          uploadedUrls: uploadedUrls,
+          notes: _notesController.text,
+          features: stadiumFeatures,
+          startTime: _startTime,
+          endTime: _endTime,
+          latitude: _latitude,
+          longitude: _longitude,
+        );
+        await _databaseService.updateStadium(widget.stadiumId!, updatePayload);
       } else {
         final stadiumId = await _databaseService.createStadium(
           name: _nameController.text.trim(),
