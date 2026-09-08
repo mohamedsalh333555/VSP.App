@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +7,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
-import '../../../core/widgets/shimmer_image.dart';
+import '../services/challenge_team_service.dart';
+import '../widgets/challenge/challenge_team_card.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -272,7 +273,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  onPressed: _selectedTeam == null
  ? null
  : () async {
- if (_selectedTeam != null && _selectedTeam!.fairPlayScore < 40) {
+ if (!ChallengeTeamService.isFairPlayEligible(_selectedTeam)) {
  if (context.mounted) {
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
@@ -289,7 +290,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  if (uid != null) {
  final team = await TeamRepository().getUserTeam(uid);
  if (team != null) {
- if (team.fairPlayScore < 40) {
+ if (!ChallengeTeamService.isFairPlayEligible(team)) {
  if (context.mounted) {
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
@@ -341,207 +342,37 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  _check1v1ChampionForTeam(team.id);
  final bool hasChampion = _championStatusMap[team.id] ?? false;
 
- return GestureDetector(
- onTap: () async {
- HapticFeedback.selectionClick();
- if (isSelected) return;
- 
- setState(() {
- _selectedTeam = team;
- _isLoadingH2H = true;
- _h2hStats = null;
- });
+    return ChallengeTeamCard(
+      team: team,
+      isSelected: isSelected,
+      hasChampion: hasChampion,
+      isLoadingH2H: _isLoadingH2H,
+      h2hStats: _h2hStats,
+      onTap: () async {
+        HapticFeedback.selectionClick();
+        if (isSelected) return;
 
- final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
- if (myTeamId != null) {
- final stats = await TeamRepository().getHeadToHeadStats(myTeamId, team.id);
- if (mounted) {
- setState(() {
- _h2hStats = stats;
- _isLoadingH2H = false;
- });
- }
- } else {
- if (mounted) setState(() => _isLoadingH2H = false);
- }
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 300),
- margin: const EdgeInsets.only(bottom: 12),
- padding: const EdgeInsets.all(VSPSpacing.md),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.divider,
- width: 1.5,
- ),
- ),
- child: Column(
- children: [
- Row(
- children: [
- ShimmerImage(
- imageUrl: team.captainImageUrl,
- width: 50,
- height: 50,
- borderRadius: VSPRadius.full,
- ),
- const SizedBox(width: 16),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- children: [
- Flexible(
- child: Text(
- team.name,
- style: Theme.of(context).textTheme.titleMedium?.copyWith(
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- if (hasChampion) ...[
- const SizedBox(width: 6),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
- decoration: BoxDecoration(
- color: VSPColors.warning.withValues(alpha: 0.15),
- borderRadius: BorderRadius.circular(12),
- border: Border.all(color: VSPColors.warning, width: 1),
- ),
- child: const Text(
- ' يضم بطل 1 ضد 1',
- style: TextStyle(
- color: VSPColors.warning,
- fontSize: 10,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- ],
- ],
- ),
- const SizedBox(height: 4),
- Text(
- AppLocalizations.of(context)!.matchesPlayedCount(team.matchesPlayed),
- style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
- ),
- ],
- ),
- ),
- if (isSelected)
- const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
- else
- Icon(Iconsax.tick_circle_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
- ],
- ),
- if (isSelected) ...[
- const Divider(color: VSPColors.divider, height: 32),
- if (_isLoadingH2H)
- const Center(
- child: Padding(
- padding: EdgeInsets.all(8.0),
- child: SizedBox(
- width: 20,
- height: 20,
- child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
- ),
- ),
- )
- else if (_h2hStats != null && _h2hStats!['totalMatches']! > 0)
- _buildH2HContent()
- else if (_h2hStats != null)
- Text(
- AppLocalizations.of(context)!.firstTimePlaying,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
- ),
- ],
- ],
- ),
- ),
- );
- }
+        setState(() {
+          _selectedTeam = team;
+          _isLoadingH2H = true;
+          _h2hStats = null;
+        });
 
- Widget _buildH2HContent() {
- final wins = _h2hStats!['teamAWins']!;
- final opposingWins = _h2hStats!['teamBWins']!;
- final draws = _h2hStats!['draws']!;
- 
- String hypeMessage = AppLocalizations.of(context)!.seriesTied;
- if (wins > opposingWins) {
- hypeMessage = AppLocalizations.of(context)!.youDominate;
- } else if (wins < opposingWins) {
- hypeMessage = AppLocalizations.of(context)!.timeForRevenge;
- }
-
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- AppLocalizations.of(context)!.headToHeadHistory,
- style: const TextStyle(
- color: VSPColors.textSecondary,
- fontSize: 10,
- fontWeight: FontWeight.bold,
- letterSpacing: 1.2,
- ),
- ),
- const SizedBox(height: 16),
- Row(
- children: [
- _buildH2HStatItem(AppLocalizations.of(context)!.yourWins, wins, VSPColors.accent),
- _buildH2HStatItem(AppLocalizations.of(context)!.draws, draws, VSPColors.textSecondary),
- _buildH2HStatItem(AppLocalizations.of(context)!.theirWins, opposingWins, VSPColors.error),
- ],
- ),
- const SizedBox(height: 16),
- Container(
- width: double.infinity,
- padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.1),
- borderRadius: BorderRadius.circular(VSPRadius.sm),
- ),
- child: Text(
- hypeMessage,
- textAlign: TextAlign.center,
- style: Theme.of(context).textTheme.labelLarge?.copyWith(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- ],
- );
- }
-
- Widget _buildH2HStatItem(String label, int value, Color color) {
- return Expanded(
- child: Column(
- children: [
- Text(
- value.toString(),
- style: TextStyle(
- color: color,
- fontSize: 24,
- fontWeight: FontWeight.w900,
- 
- ),
- ),
- Text(
- label,
- style: TextStyle(
- color: VSPColors.textSecondary.withValues(alpha: 0.6),
- fontSize: 9,
- fontWeight: FontWeight.bold,
- ),
- ),
- ],
- ),
- );
- }
+        final String? myTeamId =
+            context.read<BookingProvider>().currentDraft?.playerTeamId;
+        if (myTeamId != null) {
+          final stats =
+              await TeamRepository().getHeadToHeadStats(myTeamId, team.id);
+          if (mounted) {
+            setState(() {
+              _h2hStats = stats;
+              _isLoadingH2H = false;
+            });
+          }
+        } else {
+          if (mounted) setState(() => _isLoadingH2H = false);
+        }
+      },
+    );
+  }
 }
-
-
