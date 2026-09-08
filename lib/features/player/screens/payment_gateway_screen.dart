@@ -1,11 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/booking_repository.dart';
@@ -13,7 +11,10 @@ import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
+import '../services/payment_checkout_service.dart';
+import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
+import '../widgets/payment/payment_cancel_dialog.dart';
 import '../widgets/payment/payment_countdown_header.dart';
 import '../widgets/payment/payment_method_selector.dart';
 import '../widgets/payment/payment_security_footer.dart';
@@ -73,7 +74,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           if (!mounted) return;
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.uid;
-          if (userId != null && !widget.isTournamentPayment && widget.existingBookingId == null) {
+          if (userId != null && PaymentCheckoutService.shouldCleanupStaleBookings(
+            isTournamentPayment: widget.isTournamentPayment,
+            existingBookingId: widget.existingBookingId,
+          )) {
             await _cleanupStalePendingBookings(userId);
           }
           if (mounted) {
@@ -194,7 +198,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
-        if (status == 'confirmed' || paymentStatus == 'paid') {
+        if (PaymentCheckoutService.isPaymentConfirmed(status: status, paymentStatus: paymentStatus)) {
           HapticFeedback.heavyImpact();
           if (mounted) {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
@@ -282,18 +286,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
 
-    final baseAmount = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0
-        ? widget.bookingDraft.depositPaid
-        : widget.bookingDraft.totalPrice;
-    final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
-
-    final selectedIntegrationId = _selectedMethod == 'wallet'
-        ? AppConfig.paymobWalletIntegrationId
-        : AppConfig.paymobCardIntegrationId;
-
-    final paymentRefId = widget.isTournamentPayment
-        ? 'TOURN_${widget.bookingDraft.playerTeamId ?? 'TEAM'}_${DateTime.now().millisecondsSinceEpoch}'
-        : (_booking?.id ?? 'BK_${DateTime.now().millisecondsSinceEpoch}');
+    final baseAmount = PaymentCheckoutService.calculateBasePayableAmount(
+      needsDeposit: widget.bookingDraft.needsDeposit,
+      depositPaid: widget.bookingDraft.depositPaid,
+      totalPrice: widget.bookingDraft.totalPrice,
+    );
+    final totalAmount = PaymentCheckoutService.calculateTotalAmountWithFees(baseAmount);
+    final selectedIntegrationId = PaymentCheckoutService.getIntegrationId(_selectedMethod);
+    final paymentRefId = PaymentCheckoutService.generatePaymentReference(
+      isTournamentPayment: widget.isTournamentPayment,
+      playerTeamId: widget.bookingDraft.playerTeamId,
+      bookingId: _booking?.id,
+      timestampMs: DateTime.now().millisecondsSinceEpoch,
+    );
 
     final paymobUrl = await PaymobService.getCheckoutUrlFromServer(
       amountInEgp: totalAmount,
@@ -404,41 +409,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);
   }
 
-  Future<bool?> _showCancelDialog(BuildContext context, bool isChampionship, bool isArabic) {
-    final dialogTitle = isChampionship
-        ? (isArabic ? 'التراجع عن التسجيل في البطولة؟' : 'Cancel Championship Registration?')
-        : (isArabic ? 'التراجع عن عملية الحجز؟' : 'Cancel Booking Checkout?');
-
-    final dialogContent = isChampionship
-        ? (isArabic
-            ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل في البطولة وسيمكنك العودة في أي وقت.'
-            : 'If you go back now, your tournament registration will not be completed.')
-        : (isArabic
-            ? 'إذا تراجعت الآن، لن يتم خصم أي مبالغ وسيمكنك مراجعة حجزك وتعديله في أي وقت.'
-            : 'If you go back now, no charges will be made and you can review your checkout anytime.');
-
-    final dialogContinueText = isChampionship
-        ? (isArabic ? 'متابعة التسجيل' : 'Continue Registration')
-        : (isArabic ? 'متابعة الدفع' : 'Continue Checkout');
-
-    return showDialog<bool>(
+  Future<bool?> _confirmCancel(BuildContext context, bool isChampionship, bool isArabic) {
+    return PaymentCancelDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(dialogTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: Text(dialogContent, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(dialogContinueText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-          ),
-          TextButton(
-            onPressed: () => _onCancelAndReleaseBooking(ctx),
-            child: Text(isArabic ? 'الرجوع للخلف' : 'Go Back', style: const TextStyle(color: VSPColors.error)),
-          ),
-        ],
-      ),
+      isChampionship: isChampionship,
+      isArabic: isArabic,
+      onConfirmCancel: _onCancelAndReleaseBooking,
     );
   }
 
@@ -454,7 +430,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final cancel = await _showCancelDialog(context, isChampionship, isArabic);
+        final cancel = await _confirmCancel(context, isChampionship, isArabic);
         if (cancel == true && context.mounted) Navigator.pop(context);
       },
       child: Scaffold(
@@ -469,7 +445,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               size: 20,
             ),
             onPressed: () async {
-              final cancel = await _showCancelDialog(context, isChampionship, isArabic);
+              final cancel = await _confirmCancel(context, isChampionship, isArabic);
               if (cancel == true && context.mounted) Navigator.pop(context);
             },
           ),
@@ -483,19 +459,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ),
         body: Stack(
           children: [
-            Positioned(
-              top: -100,
-              right: -100,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: VSPColors.accent.withValues(alpha: 0.12)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                  child: Container(color: Colors.transparent),
-                ),
-              ),
-            ),
+            const PaymentBackgroundGlow(),
             SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
