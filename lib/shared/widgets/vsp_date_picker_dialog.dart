@@ -4,6 +4,8 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/utils/vsp_feedback.dart';
 import '../../shared/widgets/primary_button.dart';
+import 'date_picker/vsp_date_picker_calculator.dart';
+import 'date_picker/vsp_date_picker_step_chip.dart';
 
 /// VSP Custom 3-Step Date Picker Dialog
 /// Fully aligned with VSP Design System (Tokens, Neon Glow, Haptics, Glassmorphism)
@@ -50,21 +52,6 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
 
  final ScrollController _scrollController = ScrollController();
 
- static const List<Map<String, dynamic>> _months = [
- {'number': 1, 'nameAr': 'يناير', 'nameEn': 'January'},
- {'number': 2, 'nameAr': 'فبراير', 'nameEn': 'February'},
- {'number': 3, 'nameAr': 'مارس', 'nameEn': 'March'},
- {'number': 4, 'nameAr': 'أبريل', 'nameEn': 'April'},
- {'number': 5, 'nameAr': 'مايو', 'nameEn': 'May'},
- {'number': 6, 'nameAr': 'يونيو', 'nameEn': 'June'},
- {'number': 7, 'nameAr': 'يوليو', 'nameEn': 'July'},
- {'number': 8, 'nameAr': 'أغسطس', 'nameEn': 'August'},
- {'number': 9, 'nameAr': 'سبتمبر', 'nameEn': 'September'},
- {'number': 10, 'nameAr': 'أكتوبر', 'nameEn': 'October'},
- {'number': 11, 'nameAr': 'نوفمبر', 'nameEn': 'November'},
- {'number': 12, 'nameAr': 'ديسمبر', 'nameEn': 'December'},
- ];
-
  @override
  void initState() {
  super.initState();
@@ -79,10 +66,6 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  void dispose() {
  _scrollController.dispose();
  super.dispose();
- }
-
- int _daysInMonth(int year, int month) {
- return DateTime(year, month + 1, 0).day;
  }
 
  void _finishSelection() {
@@ -195,11 +178,18 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
  child: Row(
  children: [
- _buildStepChip(
+ VspDatePickerStepChip(
  stepIndex: 0,
+ currentStep: _currentStep,
  title: isAr ? 'السنة' : 'Year',
  value: _selectedYear != null ? '$_selectedYear' : null,
  isAr: isAr,
+ isEnabled: VspDatePickerCalculator.canNavigateToStep(
+ targetStep: 0,
+ selectedYear: _selectedYear,
+ selectedMonth: _selectedMonth,
+ ),
+ onTap: () => setState(() => _currentStep = 0),
  ),
  Padding(
  padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -209,13 +199,20 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  size: 14,
  ),
  ),
- _buildStepChip(
+ VspDatePickerStepChip(
  stepIndex: 1,
+ currentStep: _currentStep,
  title: isAr ? 'الشهر' : 'Month',
  value: _selectedMonth != null
- ? (isAr ? _months[_selectedMonth! - 1]['nameAr'] : '$_selectedMonth')
+ ? VspDatePickerCalculator.getMonthName(_selectedMonth!, isArabic: isAr)
  : null,
  isAr: isAr,
+ isEnabled: VspDatePickerCalculator.canNavigateToStep(
+ targetStep: 1,
+ selectedYear: _selectedYear,
+ selectedMonth: _selectedMonth,
+ ),
+ onTap: () => setState(() => _currentStep = 1),
  ),
  Padding(
  padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -225,11 +222,18 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  size: 14,
  ),
  ),
- _buildStepChip(
+ VspDatePickerStepChip(
  stepIndex: 2,
+ currentStep: _currentStep,
  title: isAr ? 'اليوم' : 'Day',
  value: _selectedDay != null ? '$_selectedDay' : null,
  isAr: isAr,
+ isEnabled: VspDatePickerCalculator.canNavigateToStep(
+ targetStep: 2,
+ selectedYear: _selectedYear,
+ selectedMonth: _selectedMonth,
+ ),
+ onTap: () => setState(() => _currentStep = 2),
  ),
  ],
  ),
@@ -295,83 +299,12 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  );
  }
 
- Widget _buildStepChip({
- required int stepIndex,
- required String title,
- String? value,
- required bool isAr,
- }) {
- final isCurrent = _currentStep == stepIndex;
- final isDone = value != null;
-
- return Expanded(
- child: GestureDetector(
- onTap: () {
- if (stepIndex == 0 || (stepIndex == 1 && _selectedYear != null) || (stepIndex == 2 && _selectedMonth != null)) {
- VSPFeedback.triggerTap();
- setState(() => _currentStep = stepIndex);
- }
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 200),
- padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
- decoration: BoxDecoration(
- color: isCurrent
- ? VSPColors.accent.withValues(alpha: 0.18)
- : (isDone ? VSPColors.surfaceAlt : VSPColors.surfaceAlt.withValues(alpha: 0.4)),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(
- color: isCurrent
- ? VSPColors.accent
- : (isDone ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.divider),
- width: isCurrent ? 2.0 : 1.0,
- ),
- boxShadow: isCurrent
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.2),
- blurRadius: 10,
- spreadRadius: 1,
- )
- ]
- : null,
- ),
- child: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Text(
- title.toUpperCase(),
- style: TextStyle(
- color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
- fontSize: 10,
- fontWeight: FontWeight.w800,
- letterSpacing: 0.5,
- ),
- ),
- const SizedBox(height: 3),
- Text(
- value ?? (isAr ? 'اختر' : 'Select'),
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- style: TextStyle(
- color: isCurrent ? Colors.white : (isDone ? VSPColors.textPrimary : VSPColors.textMuted),
- fontSize: 13,
- fontWeight: FontWeight.w900,
- ),
- ),
- ],
- ),
- ),
- ),
- );
- }
-
  Widget _buildStepListContent(bool isAr) {
  if (_currentStep == 0) {
  // Step 1: Years List
- final List<int> years = List.generate(
- widget.maxYear - widget.minYear + 1,
- (index) => widget.maxYear - index,
+ final List<int> years = VspDatePickerCalculator.generateYears(
+ minYear: widget.minYear,
+ maxYear: widget.maxYear,
  );
 
  return ListView.separated(
@@ -438,13 +371,13 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  return ListView.separated(
  physics: const BouncingScrollPhysics(),
  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
- itemCount: _months.length,
+ itemCount: VspDatePickerCalculator.months.length,
  separatorBuilder: (_, __) => const SizedBox(height: 8),
  itemBuilder: (context, index) {
- final monthItem = _months[index];
+ final monthItem = VspDatePickerCalculator.months[index];
  final monthNum = monthItem['number'] as int;
  final isSelected = _selectedMonth == monthNum;
- final monthName = isAr ? monthItem['nameAr'] : monthItem['nameEn'];
+ final monthName = VspDatePickerCalculator.getMonthName(monthNum, isArabic: isAr);
 
  return GestureDetector(
  onTap: () {
@@ -516,7 +449,10 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  );
  } else {
  // Step 3: Days List
- final totalDays = _daysInMonth(_selectedYear ?? DateTime.now().year, _selectedMonth ?? 1);
+ final totalDays = VspDatePickerCalculator.daysInMonth(
+ _selectedYear ?? DateTime.now().year,
+ _selectedMonth ?? 1,
+ );
  final List<int> days = List.generate(totalDays, (index) => index + 1);
 
  return ListView.separated(
