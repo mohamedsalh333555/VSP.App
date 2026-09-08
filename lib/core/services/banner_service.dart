@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/banner_model.dart';
+import '../../data/models/banner_model.dart';
 
 /// Service for managing and retrieving dynamic promotional banners from Supabase.
 class BannerService {

@@ -6,10 +6,10 @@ import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
-import '../models/banner_model.dart';
-import '../services/banner_service.dart';
-import '../core/ui/tokens/vsp_tokens.dart';
-import '../features/player/screens/player_home_screen.dart';
+import '../../data/models/banner_model.dart';
+import '../../core/services/banner_service.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../features/player/screens/player_home_screen.dart';
 
 /// An interactive, auto-rotating promotional banner carousel linked directly to Supabase.
 class BannerSliderWidget extends StatefulWidget {
@@ -228,43 +228,43 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
           // Banner Slider
           SizedBox(
             height: widget.height,
-                child: Listener(
-                  onPointerDown: (_) {
-                    _isUserInteracting = true;
-                    _timer?.cancel();
+            child: Listener(
+              onPointerDown: (_) {
+                _isUserInteracting = true;
+                _timer?.cancel();
+              },
+              onPointerUp: (_) {
+                _isUserInteracting = false;
+                _scheduleNextSlide();
+              },
+              onPointerCancel: (_) {
+                _isUserInteracting = false;
+                _scheduleNextSlide();
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(widget.borderRadius),
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: _banners.length,
+                  onPageChanged: _onPageChanged,
+                  physics: const BouncingScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final banner = _banners[index];
+                    return _buildBannerCard(banner);
                   },
-                  onPointerUp: (_) {
-                    _isUserInteracting = false;
-                    _scheduleNextSlide();
-                  },
-                  onPointerCancel: (_) {
-                    _isUserInteracting = false;
-                    _scheduleNextSlide();
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: _banners.length,
-                      onPageChanged: _onPageChanged,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final banner = _banners[index];
-                        return _buildBannerCard(banner);
-                      },
-                    ),
-                  ),
                 ),
               ),
-
-              // Page Indicators
-              if (widget.showIndicators && _banners.length > 1) ...[
-                const SizedBox(height: 8),
-                _buildDotsIndicator(),
-              ],
-            ],
+            ),
           ),
-        );
+
+          // Page Indicators
+          if (widget.showIndicators && _banners.length > 1) ...[
+            const SizedBox(height: 8),
+            _buildDotsIndicator(),
+          ],
+        ],
+      ),
+    );
   }
 
   Widget _buildBannerCard(AppBanner banner) {

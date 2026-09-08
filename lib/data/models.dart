@@ -1,6 +1,6 @@
 library;
 
-export '../models/banner_model.dart';
+export 'models/banner_model.dart';
 export 'models/stadium_models.dart';
 export 'models/booking_models.dart';
 export 'models/team_models.dart';

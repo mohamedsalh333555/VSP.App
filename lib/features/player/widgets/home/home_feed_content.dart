@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../widgets/banner_slider_widget.dart';
+import '../../../../shared/widgets/banner_slider_widget.dart';
 import 'home_feed_sections.dart';
 import 'home_stadiums_section.dart';
 import 'home_top_bar.dart';
