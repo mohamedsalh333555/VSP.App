@@ -1,0 +1,169 @@
+import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../data/models.dart';
+
+/// Pure domain helper and business logic service for the owner pitch booking sheet.
+class OwnerBookingSheetService {
+  const OwnerBookingSheetService._();
+
+  /// Calculates maximum allowable duration (in minutes, clamped between 30 and 720)
+  /// considering pitch closing time, split-shift break intervals, and subsequent bookings.
+  static int calculateMaxAvailableMinutes({
+    required Stadium stadium,
+    required DateTime? slotTime,
+    required List<Booking> existingBookings,
+    String? currentBookingId,
+  }) {
+    if (slotTime == null) return 720; // 12 hours max
+
+    final int slotMin = slotTime.hour * 60 + slotTime.minute;
+    int maxMins = 720;
+
+    // 1. Closing time constraint
+    final int closingMin = AppDateFormatter.parseTimeToMinutes(stadium.closingTime);
+    final int openingMin = AppDateFormatter.parseTimeToMinutes(stadium.openingTime);
+    if (openingMin != closingMin) {
+      int minsToClosing;
+      if (closingMin > slotMin) {
+        minsToClosing = closingMin - slotMin;
+      } else {
+        minsToClosing = (closingMin + 24 * 60) - slotMin;
+      }
+      if (minsToClosing > 0 && minsToClosing < maxMins) {
+        maxMins = minsToClosing;
+      }
+    }
+
+    // 2. Break time constraint
+    if (stadium.isSplitShift) {
+      final int bStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
+      final int bEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
+      if (bStartMin != bEndMin) {
+        int minsToBreak;
+        if (bStartMin > slotMin) {
+          minsToBreak = bStartMin - slotMin;
+        } else {
+          minsToBreak = (bStartMin + 24 * 60) - slotMin;
+        }
+        if (minsToBreak > 0 && minsToBreak < maxMins) {
+          maxMins = minsToBreak;
+        }
+      }
+    }
+
+    // 3. Existing active bookings constraint
+    for (final b in existingBookings) {
+      if (currentBookingId != null && b.id == currentBookingId) continue;
+      if (b.status == BookingStatus.cancelled) continue;
+      
+      final bStartLocal = b.startTime.toLocal();
+      if (bStartLocal.year != slotTime.year ||
+          bStartLocal.month != slotTime.month ||
+          bStartLocal.day != slotTime.day) {
+        continue;
+      }
+
+      final int bStartMin = bStartLocal.hour * 60 + bStartLocal.minute;
+      if (bStartMin > slotMin) {
+        final minsToBooking = bStartMin - slotMin;
+        if (minsToBooking < maxMins) {
+          maxMins = minsToBooking;
+        }
+      }
+    }
+
+    return maxMins.clamp(30, 720);
+  }
+
+  /// Determines whether a proposed interval overlaps with stadium break schedule.
+  static bool checkBreakOverlap({
+    required Stadium stadium,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) {
+    if (!stadium.isSplitShift) return false;
+
+    final int breakStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
+    final int breakEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
+    final int startMin = startTime.hour * 60 + startTime.minute;
+    final int endMin = endTime.hour * 60 + endTime.minute;
+
+    if (breakStartMin < breakEndMin) {
+      return startMin < breakEndMin && endMin > breakStartMin;
+    } else if (breakStartMin != breakEndMin) {
+      return startMin >= breakStartMin || endMin > breakStartMin;
+    }
+    return false;
+  }
+
+  /// Determines whether a proposed interval overlaps with any active bookings.
+  static bool checkBookingsOverlap({
+    required DateTime startTime,
+    required DateTime endTime,
+    required List<Booking> bookings,
+    String? ignoreBookingId,
+  }) {
+    for (final b in bookings) {
+      if (ignoreBookingId != null && b.id == ignoreBookingId) continue;
+      if (b.status == BookingStatus.cancelled) continue;
+
+      final bStartLocal = b.startTime.toLocal();
+      final bEndLocal = b.endTime.toLocal();
+
+      if (startTime.isBefore(bEndLocal) && endTime.isAfter(bStartLocal)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Calculates total booking price based on hourly rate, duration, and optional ball rental.
+  static double calculateBookingPrice({
+    required Stadium stadium,
+    required int durationMinutes,
+    bool rentBall = false,
+    double collectedAmount = 0.0,
+  }) {
+    final double ballFee = rentBall ? stadium.ballPrice : 0.0;
+    final double calculatedPrice = (stadium.pricePerHour * (durationMinutes / 60.0)) + ballFee;
+    return calculatedPrice > 0 ? calculatedPrice : (collectedAmount > 0 ? collectedAmount : stadium.basePrice);
+  }
+
+  /// Cleans and localizes error messages from database constraints or business logic.
+  static String formatBookingErrorMessage(dynamic error, {required bool isArabic}) {
+    final cleanErr = error.toString();
+    final lower = cleanErr.toLowerCase();
+    if (lower.contains('prevent_double_booking') || lower.contains('duplicate key value')) {
+      return isArabic ? 'هذا الموعد محجوز بالفعل على الملعب! يرجى اختيار موعد آخر.' : 'Time slot is already booked on this stadium!';
+    } else if (lower.contains('overlap')) {
+      return isArabic ? 'مدة الحجز تتداخل مع حجز آخر نشط على الملعب! يرجى تقليل المدة أو اختيار موعد آخر.' : 'Booking duration overlaps with another active booking!';
+    }
+    return cleanErr
+        .replaceAll('Exception:', '')
+        .replaceAll('PostgrestException', '')
+        .replaceAll('(message:', '')
+        .replaceAll('Failed to create booking:', '')
+        .trim();
+  }
+
+  /// Returns localized modal title depending on booking lifecycle status.
+  static String getModalTitle({
+    required bool isNewSlot,
+    required bool isPastCompleted,
+    required bool isUpcomingOnlinePaid,
+    required bool isUpcomingPendingCash,
+    required bool isArabic,
+    required String manualBookingTitle,
+  }) {
+    if (isNewSlot) {
+      return manualBookingTitle;
+    } else if (isPastCompleted) {
+      return isArabic ? 'تفاصيل الحجز (مكتمل)' : 'Booking Details (Completed)';
+    } else if (isUpcomingOnlinePaid) {
+      return isArabic ? 'تفاصيل الحجز (أونلاين مؤكد)' : 'Booking Details (Online Paid)';
+    } else if (isUpcomingPendingCash) {
+      return isArabic ? 'تفاصيل الحجز (كاش معلق)' : 'Booking Details (Pending Cash)';
+    } else {
+      return isArabic ? 'تفاصيل الحجز اليدوي' : 'Manual Booking Details';
+    }
+  }
+}

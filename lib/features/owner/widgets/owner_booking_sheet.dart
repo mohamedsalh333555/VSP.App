@@ -8,7 +8,6 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/owner_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -16,6 +15,7 @@ import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
 import 'booking_sheet/booking_sheet_duration_selector.dart';
 import 'booking_sheet/booking_sheet_form_fields.dart';
+import 'booking_sheet/owner_booking_sheet_service.dart';
 
 /// Shows the dedicated bottom sheet modal for owner booking management.
 Future<void> showOwnerBookingModal({
@@ -111,71 +111,18 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   }
 
   int _getMaxAvailableMinutes() {
-    final stadium = widget.selectedStadium;
-    final slotTime = widget.slot['slotTime'] as DateTime?;
-    if (slotTime == null) return 720; // 12 hours max
-
-    final int slotMin = slotTime.hour * 60 + slotTime.minute;
-    int maxMins = 720;
-
-    // 1. Closing time constraint
-    final int closingMin = AppDateFormatter.parseTimeToMinutes(stadium.closingTime);
-    final int openingMin = AppDateFormatter.parseTimeToMinutes(stadium.openingTime);
-    if (openingMin != closingMin) {
-      int minsToClosing;
-      if (closingMin > slotMin) {
-        minsToClosing = closingMin - slotMin;
-      } else {
-        minsToClosing = (closingMin + 24 * 60) - slotMin;
-      }
-      if (minsToClosing > 0 && minsToClosing < maxMins) {
-        maxMins = minsToClosing;
-      }
-    }
-
-    // 2. Break time constraint
-    if (stadium.isSplitShift) {
-      final int bStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
-      final int bEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
-      if (bStartMin != bEndMin) {
-        int minsToBreak;
-        if (bStartMin > slotMin) {
-          minsToBreak = bStartMin - slotMin;
-        } else {
-          minsToBreak = (bStartMin + 24 * 60) - slotMin;
-        }
-        if (minsToBreak > 0 && minsToBreak < maxMins) {
-          maxMins = minsToBreak;
-        }
-      }
-    }
-
-    // 3. Existing active bookings constraint
+    List<Booking> bookings = [];
     try {
       final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
-      final bookings = bookingProvider.userBookings.where((b) {
-        final bStartLocal = b.startTime.toLocal();
-        return b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
-            b.status != BookingStatus.cancelled &&
-            bStartLocal.year == slotTime.year &&
-            bStartLocal.month == slotTime.month &&
-            bStartLocal.day == slotTime.day;
-      }).toList();
-
-      for (final b in bookings) {
-        if (widget.isEdit && b.id == (widget.slot['booking'] as Booking?)?.id) continue;
-        final bStartLocal = b.startTime.toLocal();
-        final int bStartMin = bStartLocal.hour * 60 + bStartLocal.minute;
-        if (bStartMin > slotMin) {
-          final minsToBooking = bStartMin - slotMin;
-          if (minsToBooking < maxMins) {
-            maxMins = minsToBooking;
-          }
-        }
-      }
+      bookings = bookingProvider.userBookings;
     } catch (_) {}
 
-    return maxMins.clamp(30, 720);
+    return OwnerBookingSheetService.calculateMaxAvailableMinutes(
+      stadium: widget.selectedStadium,
+      slotTime: widget.slot['slotTime'] as DateTime?,
+      existingBookings: bookings,
+      currentBookingId: (widget.slot['booking'] as Booking?)?.id,
+    );
   }
 
   Future<void> _handleConfirmCashPayment(Booking booking, bool isArabic) async {
@@ -293,39 +240,29 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               bStartLocal.day == selectedDate.day;
         }).toList();
 
-        if (stadium.isSplitShift) {
-          final int breakStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
-          final int breakEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
-          final int startMin = startTime.hour * 60 + startTime.minute;
-          final int endMin = endTime.hour * 60 + endTime.minute;
-          bool overlapsBreak = false;
-          if (breakStartMin < breakEndMin) {
-            overlapsBreak = (startMin < breakEndMin && endMin > breakStartMin);
-          } else if (breakStartMin != breakEndMin) {
-            overlapsBreak = (startMin >= breakStartMin || endMin > breakStartMin);
-          }
-          if (overlapsBreak) {
-            throw Exception(isArabic ? "عذراً، هذا الموعد يتعارض مع فترة استراحة الملعب " : "Booking overlaps with stadium break time ");
-          }
+        if (OwnerBookingSheetService.checkBreakOverlap(
+          stadium: stadium,
+          startTime: startTime,
+          endTime: endTime,
+        )) {
+          throw Exception(isArabic ? "عذراً، هذا الموعد يتعارض مع فترة استراحة الملعب " : "Booking overlaps with stadium break time ");
         }
 
-        bool hasOverlap = false;
-        for (final b in bookings) {
-          final bStartLocal = b.startTime.toLocal();
-          final bEndLocal = b.endTime.toLocal();
-          if (startTime.isBefore(bEndLocal) && endTime.isAfter(bStartLocal)) {
-            hasOverlap = true;
-            break;
-          }
-        }
-        if (hasOverlap) {
+        if (OwnerBookingSheetService.checkBookingsOverlap(
+          startTime: startTime,
+          endTime: endTime,
+          bookings: bookings,
+        )) {
           throw Exception(isArabic ? "هذا الوقت متداخل مع حجز آخر نشط " : "Time slot overlaps with another booking ");
         }
 
         final booking = widget.slot['booking'] as Booking?;
-        final double ballFee = (booking?.rentBall == true) ? stadium.ballPrice : 0.0;
-        final double calculatedPrice = (stadium.pricePerHour * (_selectedMinutes / 60.0)) + ballFee;
-        final double totalPrice = calculatedPrice > 0 ? calculatedPrice : (collectedAmount > 0 ? collectedAmount : stadium.basePrice);
+        final double totalPrice = OwnerBookingSheetService.calculateBookingPrice(
+          stadium: stadium,
+          durationMinutes: _selectedMinutes,
+          rentBall: booking?.rentBall == true,
+          collectedAmount: collectedAmount,
+        );
 
         final draft = BookingDraft(
           stadiumId: stadium.id,
@@ -396,21 +333,20 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                 bStartLocal.day == startTime.day;
           }).toList();
 
-          bool hasOverlap = false;
-          for (final b in bookings) {
-            final bStartLocal = b.startTime.toLocal();
-            final bEndLocal = b.endTime.toLocal();
-            if (startTime.isBefore(bEndLocal) && endTime.isAfter(bStartLocal)) {
-              hasOverlap = true;
-              break;
-            }
-          }
-          if (hasOverlap) {
+          if (OwnerBookingSheetService.checkBookingsOverlap(
+            startTime: startTime,
+            endTime: endTime,
+            bookings: bookings,
+            ignoreBookingId: booking.id,
+          )) {
             throw Exception(isArabic ? "مدة الحجز المعدلة تتداخل مع حجز آخر نشط " : "Updated duration overlaps with another active booking ");
           }
 
-          final double ballFee = booking.rentBall ? stadium.ballPrice : 0.0;
-          final double calculatedPrice = (stadium.pricePerHour * (_selectedMinutes / 60.0)) + ballFee;
+          final double calculatedPrice = OwnerBookingSheetService.calculateBookingPrice(
+            stadium: stadium,
+            durationMinutes: _selectedMinutes,
+            rentBall: booking.rentBall,
+          );
           final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
           final double finalTotal = isManual
               ? (calculatedPrice > 0 ? calculatedPrice : booking.totalPrice)
@@ -453,23 +389,8 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       }
     } catch (e) {
       if (mounted) {
-        String cleanErr = e.toString();
-        final lower = cleanErr.toLowerCase();
-        if (lower.contains('prevent_double_booking') || lower.contains('duplicate key value')) {
-          cleanErr = isArabic ? ' هذا الموعد محجوز بالفعل على الملعب! يرجى اختيار موعد آخر.' : ' Time slot is already booked on this stadium!';
-        } else if (lower.contains('overlap')) {
-          cleanErr = isArabic ? ' مدة الحجز تتداخل مع حجز آخر نشط على الملعب! يرجى تقليل المدة أو اختيار موعد آخر.' : ' Booking duration overlaps with another active booking!';
-        } else {
-          cleanErr = cleanErr
-              .replaceAll('Exception:', '')
-              .replaceAll('PostgrestException', '')
-              .replaceAll('(message:', '')
-              .replaceAll('Failed to create booking:', '')
-              .trim();
-        }
-        if (mounted) {
-          VSPFeedback.showError(context, cleanErr);
-        }
+        final cleanErr = OwnerBookingSheetService.formatBookingErrorMessage(e, isArabic: isArabic);
+        VSPFeedback.showError(context, cleanErr);
       }
     } finally {
       if (mounted) {
@@ -539,18 +460,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final bool isOngoingActiveMatch = isEdit && !isPastCompleted && now.isAfter(booking.startTime) && now.isBefore(booking.endTime);
     final bool isReadOnly = isPastCompleted || isUpcomingOnlinePaid;
 
-    String modalTitle;
-    if (isNewSlot) {
-      modalTitle = l10n.manualBookingTitle;
-    } else if (isPastCompleted) {
-      modalTitle = isArabic ? 'تفاصيل الحجز (مكتمل)' : 'Booking Details (Completed)';
-    } else if (isUpcomingOnlinePaid) {
-      modalTitle = isArabic ? 'تفاصيل الحجز (أونلاين مؤكد )' : 'Booking Details (Online Paid )';
-    } else if (isUpcomingPendingCash) {
-      modalTitle = isArabic ? 'تفاصيل الحجز (كاش معلق )' : 'Booking Details (Pending Cash )';
-    } else {
-      modalTitle = isArabic ? 'تفاصيل الحجز اليدوي' : 'Manual Booking Details';
-    }
+    final modalTitle = OwnerBookingSheetService.getModalTitle(
+      isNewSlot: isNewSlot,
+      isPastCompleted: isPastCompleted,
+      isUpcomingOnlinePaid: isUpcomingOnlinePaid,
+      isUpcomingPendingCash: isUpcomingPendingCash,
+      isArabic: isArabic,
+      manualBookingTitle: l10n.manualBookingTitle,
+    );
 
     final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
     final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
