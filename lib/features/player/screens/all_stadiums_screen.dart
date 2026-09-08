@@ -11,14 +11,11 @@ import '../../../data/models.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../services/stadium_filter_sort_service.dart';
+import '../widgets/all_stadiums/all_stadiums_filter_sheet.dart';
 import 'stadium_details_screen.dart';
 
-enum StadiumSortOption {
-  featured,
-  priceLowToHigh,
-  priceHighToLow,
-  topRated,
-}
+export '../services/stadium_filter_sort_service.dart' show StadiumSortOption;
 
 class AllStadiumsScreen extends StatefulWidget {
   final String? initialGovernorate;
@@ -97,59 +94,13 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   }
 
   List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) {
-    var list = allStadiums.where((stadium) {
-      // 1. Governorate Filter
-      if (_selectedGovernorate != 'All') {
-        final rawGov = stadium.governorate ?? '';
-        final stdGov = (EgyptGovernorates.resolveGoogleName(rawGov) ?? rawGov).toLowerCase();
-        final selectedStd = (EgyptGovernorates.resolveGoogleName(_selectedGovernorate) ?? _selectedGovernorate).toLowerCase();
-        if (stdGov != selectedStd) {
-          return false;
-        }
-      }
-
-      // 2. Floor Type Filter
-      if (_selectedFloorType != 'All') {
-        final features = stadium.features;
-        final floorType = (features is Map ? features['floorType']?.toString() : '') ?? '';
-        if (!floorType.toLowerCase().contains(_selectedFloorType.toLowerCase())) {
-          return false;
-        }
-      }
-
-      // 3. Search Query (Name, Location, Governorate)
-      if (_searchQuery.trim().isNotEmpty) {
-        final q = _searchQuery.trim().toLowerCase();
-        final name = stadium.name.toLowerCase();
-        final loc = stadium.location.toLowerCase();
-        final gov = (stadium.governorate ?? '').toLowerCase();
-        final arabicGov = (EgyptGovernorates.governorateToArabic[stadium.governorate ?? ''] ?? '').toLowerCase();
-
-        if (!name.contains(q) && !loc.contains(q) && !gov.contains(q) && !arabicGov.contains(q)) {
-          return false;
-        }
-      }
-
-      return true;
-    }).toList();
-
-    // 4. Sorting
-    switch (_sortOption) {
-      case StadiumSortOption.priceLowToHigh:
-        list.sort((a, b) => a.pricePerHour.compareTo(b.pricePerHour));
-        break;
-      case StadiumSortOption.priceHighToLow:
-        list.sort((a, b) => b.pricePerHour.compareTo(a.pricePerHour));
-        break;
-      case StadiumSortOption.topRated:
-        list.sort((a, b) => b.rating.compareTo(a.rating));
-        break;
-      case StadiumSortOption.featured:
-        // Default ranking
-        break;
-    }
-
-    return list;
+    return StadiumFilterSortService.filterAndSortStadiums(
+      allStadiums: allStadiums,
+      selectedGovernorate: _selectedGovernorate,
+      selectedFloorType: _selectedFloorType,
+      searchQuery: _searchQuery,
+      sortOption: _sortOption,
+    );
   }
 
   void _resetFilters() {
@@ -422,171 +373,22 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   }
 
   String _getSortLabel(bool isArabic) {
-    switch (_sortOption) {
-      case StadiumSortOption.featured:
-        return isArabic ? 'المميزة' : 'Featured';
-      case StadiumSortOption.priceLowToHigh:
-        return isArabic ? 'الأقل سعراً' : 'Price: Low';
-      case StadiumSortOption.priceHighToLow:
-        return isArabic ? 'الأعلى سعراً' : 'Price: High';
-      case StadiumSortOption.topRated:
-        return isArabic ? 'الأعلى تقييماً' : 'Top Rated';
-    }
+    return StadiumFilterSortService.getSortLabel(_sortOption, isArabic: isArabic);
   }
 
   void _showFilterBottomSheet(BuildContext context, bool isArabic) {
-    showModalBottomSheet(
+    AllStadiumsFilterSheet.show(
       context: context,
-      backgroundColor: VSPColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          _resetFilters();
-                          Navigator.pop(ctx);
-                        },
-                        child: Text(isArabic ? 'إعادة ضبط' : 'Reset', style: const TextStyle(color: VSPColors.accent)),
-                      ),
-                    ],
-                  ),
-                  const Divider(color: VSPColors.divider),
-                  const SizedBox(height: 12),
-
-                  // Sort Options
-                  Text(
-                    isArabic ? 'ترتيب حسب:' : 'Sort By:',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildSortChip(StadiumSortOption.featured, isArabic ? 'المميزة' : 'Featured', setModalState),
-                      _buildSortChip(StadiumSortOption.topRated, isArabic ? 'الأعلى تقييماً' : 'Top Rated', setModalState),
-                      _buildSortChip(StadiumSortOption.priceLowToHigh, isArabic ? 'الأقل سعراً' : 'Lowest Price', setModalState),
-                      _buildSortChip(StadiumSortOption.priceHighToLow, isArabic ? 'الأعلى سعراً' : 'Highest Price', setModalState),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Floor Type Options
-                  Text(
-                    isArabic ? 'نوع الأرضية:' : 'Pitch / Floor Type:',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFloorChip('All', isArabic ? 'الكل' : 'All', setModalState),
-                      _buildFloorChip('نجيل صناعي', isArabic ? 'نجيل صناعي' : 'Artificial Grass', setModalState),
-                      _buildFloorChip('نجيل طبيعي', isArabic ? 'نجيل طبيعي' : 'Natural Grass', setModalState),
-                      _buildFloorChip('ترتان', isArabic ? 'ترتان' : 'Tartan', setModalState),
-                      _buildFloorChip('صالة', isArabic ? 'صالة مغطاة' : 'Indoor Court', setModalState),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {});
-                        Navigator.pop(ctx);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VSPColors.accent,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                      ),
-                      child: Text(
-                        isArabic ? 'تطبيق الفلترة' : 'Apply Filters',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+      initialSortOption: _sortOption,
+      initialFloorType: _selectedFloorType,
+      isArabic: isArabic,
+      onApply: (sortOption, floorType) {
+        setState(() {
+          _sortOption = sortOption;
+          _selectedFloorType = floorType;
+        });
       },
-    );
-  }
-
-  Widget _buildSortChip(StadiumSortOption option, String label, StateSetter setModalState) {
-    final isSelected = _sortOption == option;
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedColor: VSPColors.accent,
-      backgroundColor: VSPColors.surfaceAlt,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: isSelected ? VSPColors.accent : VSPColors.divider),
-      ),
-      onSelected: (selected) {
-        if (selected) {
-          setModalState(() => _sortOption = option);
-          setState(() => _sortOption = option);
-        }
-      },
-    );
-  }
-
-  Widget _buildFloorChip(String floorType, String label, StateSetter setModalState) {
-    final isSelected = _selectedFloorType.toLowerCase() == floorType.toLowerCase();
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      selected: isSelected,
-      selectedColor: VSPColors.accent,
-      backgroundColor: VSPColors.surfaceAlt,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: isSelected ? VSPColors.accent : VSPColors.divider),
-      ),
-      onSelected: (selected) {
-        if (selected) {
-          setModalState(() => _selectedFloorType = floorType);
-          setState(() => _selectedFloorType = floorType);
-        }
-      },
+      onReset: _resetFilters,
     );
   }
 }
