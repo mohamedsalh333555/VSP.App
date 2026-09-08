@@ -9,7 +9,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
-import '../../screens/player_home_screen.dart';
+import '../championship_card.dart';
 
 class ChampionshipsListTab extends StatelessWidget {
   final Stream<List<Championship>> championshipsStream;
