@@ -465,7 +465,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  // إصلاح قراءة السعر من حقل قاعدة البيانات الفعلي price_per_hour
  _priceController.text = (data['price_per_hour'] ?? data['pricePerHour'] ?? 0).toString();
  _capacityController.text = (data['players_per_team'] ?? data['playersPerTeam'] ?? 5).toString();
- final depositVal = data['deposit_amount'] ?? 0.0;
+ final depositVal = data['deposit_amount'] ?? data['depositAmount'] ?? 0.0;
  _depositController.text = depositVal == 0.0 ? '' : depositVal.toString();
  _requireDeposit = data['needs_deposit'] ?? data['needsDeposit'] ?? (depositVal > 0.0);
  
