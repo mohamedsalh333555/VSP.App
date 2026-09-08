@@ -3,16 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/models/user_model.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
-import 'subscription_plans_screen.dart';
+import '../services/facility_onboarding_service.dart';
+import '../widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart';
 import '../../../shared/widgets/stadium_card.dart';
-import '../../../shared/widgets/primary_button.dart';
 
 class FacilityOnboardingScreen extends StatefulWidget {
  const FacilityOnboardingScreen({super.key});
@@ -34,48 +33,31 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     return _stadiumsStream!;
   }
 
- /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
- Future<void> _onAddAnotherStadium(
- BuildContext context,
- List<Stadium> stadiums,
- bool isAr,
- ) async {
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final user = authProvider.userModel;
- if (user == null) return;
+  /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
+  Future<void> _onAddAnotherStadium(
+    BuildContext context,
+    List<Stadium> stadiums,
+    bool isAr,
+  ) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.userModel;
+    if (user == null) return;
 
- final int maxAllowed = user.maxStadiums;
- final int current = stadiums.length;
+    if (FacilityOnboardingService.canAddStadium(
+      user: user,
+      currentStadiumsCount: stadiums.length,
+    )) {
+      if (!context.mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+      );
+      return;
+    }
 
- // لو ما وصلش للحد المسموح → يدخل الـ Wizard مباشرة
- if (current < maxAllowed) {
- if (!context.mounted) return;
- Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
- );
- return;
- }
-
- // وصل للحد → نعرض Bottom Sheet الترقية
- if (!context.mounted) return;
- await _showUpgradeBottomSheet(context, isAr, user);
- }
-
- /// Bottom Sheet شرح الترقية مع زر الاشتراك والعودة التلقائية
- Future<void> _showUpgradeBottomSheet(
- BuildContext context,
- bool isAr,
- UserModel user,
- ) async {
- await showModalBottomSheet(
- context: context,
- useSafeArea: true,
- backgroundColor: Colors.transparent,
- isScrollControlled: true,
- builder: (ctx) => _UpgradeBottomSheet(isAr: isAr, user: user),
- );
- }
+    if (!context.mounted) return;
+    await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
+  }
 
  @override
  Widget build(BuildContext context) {
@@ -144,13 +126,16 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
               TextButton(
                 onPressed: () async {
                   final uid = authProvider.currentUser?.uid;
-                  final updatedAdditional = Map<String, dynamic>.from(
-                    authProvider.userModel?.additionalData ?? {},
-                  )..['isOnboardingConfirmed'] = true;
+                  final updatedAdditional =
+                      FacilityOnboardingService.buildOnboardingConfirmedPayload(
+                    authProvider.userModel?.additionalData,
+                  );
                   if (uid != null) {
                     await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
                   }
-                  await authProvider.updateProfile({'additionalData': updatedAdditional});
+                  await authProvider.updateProfile({
+                    'additionalData': updatedAdditional,
+                  });
                   if (context.mounted) {
                     context.go('/owner');
                   }
@@ -335,9 +320,10 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: ElevatedButton(
  onPressed: () async {
  final uid = authProvider.currentUser?.uid;
- final updatedAdditional = Map<String, dynamic>.from(
- authProvider.userModel?.additionalData ?? {},
- )..['isOnboardingConfirmed'] = true;
+ final updatedAdditional =
+ FacilityOnboardingService.buildOnboardingConfirmedPayload(
+ authProvider.userModel?.additionalData,
+ );
  if (uid != null) {
  await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
  }
@@ -370,208 +356,6 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  );
  }),
  ),
- );
- }
-}
-
-// ────────────────────────────────────────────────
-// Bottom Sheet: Upgrade to Pro Required
-// ────────────────────────────────────────────────
-class _UpgradeBottomSheet extends StatelessWidget {
- final bool isAr;
- final UserModel user;
- const _UpgradeBottomSheet({required this.isAr, required this.user});
-
- @override
- Widget build(BuildContext context) {
- return Container(
- decoration: const BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.only(
- topLeft: Radius.circular(VSPRadius.xl),
- topRight: Radius.circular(VSPRadius.xl),
- ),
- ),
- padding: EdgeInsets.fromLTRB(
- 24,
- 20,
- 24,
- MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 16 : 36,
- ),
- child: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- // ─── Handle Bar ───
- Container(
- width: 40, height: 4,
- decoration: BoxDecoration(
- color: VSPColors.divider,
- borderRadius: BorderRadius.circular(2),
- ),
- ),
- const SizedBox(height: 20),
-
- // ─── Icon ───
- Container(
- width: 64, height: 64,
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.12),
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent, width: 1.5),
- ),
- child: const Icon(Iconsax.crown_copy, color: VSPColors.accent, size: 32),
- ),
- const SizedBox(height: 16),
-
- // ─── Title ───
- Text(
- isAr ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
- textAlign: TextAlign.center,
- style: const TextStyle(
- color: Colors.white,
- fontSize: 19,
- fontWeight: FontWeight.w900,
- ),
- ),
- const SizedBox(height: 12),
-
- // ─── Current Plan Badge ───
- _buildCurrentPlanBadge(isAr, user),
- const SizedBox(height: 12),
-
- // ─── Description ───
- Text(
- isAr
- ? 'فترتك الحالية تتيح تشغيل ملعب واحد فقط (1).\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية (1000 ج.م / شهرياً).'
- : 'Your current plan allows 1 stadium only.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan (1000 EGP/month).',
- textAlign: TextAlign.center,
- style: const TextStyle(
- color: VSPColors.textSecondary,
- fontSize: 13,
- height: 1.5,
- ),
- ),
- const SizedBox(height: 20),
-
- // ─── What you get ───
- Container(
- width: double.infinity,
- padding: const EdgeInsets.all(14),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.05),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
- ),
- child: Column(
- children: [
- _FeatureRow(
- icon: Iconsax.buildings_copy,
- text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب كاملة' : 'Operate up to 3 full stadiums',
- ),
- const SizedBox(height: 8),
- _FeatureRow(
- icon: Iconsax.chart_1_copy,
- text: isAr ? 'أولوية الظهور في نتائج البحث للاعبين' : 'Priority search boost in governorate results',
- ),
- const SizedBox(height: 8),
- _FeatureRow(
- icon: Iconsax.headphones_copy,
- text: isAr ? 'دعم فني وأولوية تشغيلية على مدار الساعة' : '24/7 Priority owner support',
- ),
- ],
- ),
- ),
- const SizedBox(height: 24),
-
- // ─── Subscribe Button ───
- PrimaryButton(
- text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
- color: Colors.amber,
- textColor: Colors.black,
- onPressed: () async {
- // التقاط مرجع الـ Navigator قبل إغلاق الـ Bottom Sheet لمنع أخطاء الـ Deactivated Context
- final navigator = Navigator.of(context);
- navigator.pop();
- await navigator.push(
- MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
- );
- // بعد الرجوع: لو اشترك Pro الآن يقدر يضيف ملعب
- // الشاشة ستعيد البناء تلقائياً عبر Provider لأن UserModel تحدّث
- },
- ),
- const SizedBox(height: 12),
-
- // ─── Cancel ───
- SizedBox(
- width: double.infinity,
- child: TextButton(
- onPressed: () => Navigator.pop(context),
- child: Text(
- isAr ? 'ليس الآن' : 'Not now',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
- ),
- ),
- ),
- ],
- ),
- );
- }
-
- Widget _buildCurrentPlanBadge(bool isAr, UserModel user) {
- final bool isTrial = user.isInActiveTrial;
- final int daysRemaining = isTrial && user.effectiveTrialEndsAt != null
- ? user.effectiveTrialEndsAt!.difference(DateTime.now()).inDays.clamp(0, 999)
- : 0;
-
- final String planLabel = isTrial
- ? (isAr ? 'اشتراك مجاني — فترة تجريبية شهرين' : 'Free Trial — 2 Month Plan')
- : (isAr ? 'الباقة الأساسية (Basic)' : 'Basic Plan');
-
- final String daysText = isTrial
- ? (isAr ? 'متبقي $daysRemaining يوم من الفترة المجانية' : '$daysRemaining days remaining in free trial')
- : '';
-
- return Column(
- children: [
- Text(
- isAr ? 'باقتك الحالية' : 'Current Plan',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
- ),
- const SizedBox(height: 4),
- Text(
- planLabel,
- style: const TextStyle(
- color: VSPColors.accent, fontSize: 14, fontWeight: FontWeight.bold,
- ),
- ),
- if (daysText.isNotEmpty) ...[
- const SizedBox(height: 2),
- Text(
- daysText,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
- ),
- ],
- ],
- );
- }
-}
-
-
-class _FeatureRow extends StatelessWidget {
- final IconData icon;
- final String text;
- const _FeatureRow({required this.icon, required this.text});
-
- @override
- Widget build(BuildContext context) {
- return Row(
- children: [
- Icon(icon, color: Colors.amber, size: 16),
- const SizedBox(width: 10),
- Expanded(
- child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
- ),
- ],
  );
  }
 }
