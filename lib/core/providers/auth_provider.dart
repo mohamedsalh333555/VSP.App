@@ -14,6 +14,7 @@ import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
 import '../repositories/user_repository.dart';
 import '../services/secure_storage_service.dart';
+import 'auth/auth_session_validator.dart';
 
 class AuthProvider with ChangeNotifier {
  final AuthService _authService = AuthService();
@@ -190,7 +191,10 @@ class AuthProvider with ChangeNotifier {
 
       // UNREGISTERED ACCOUNT GUARD:
       // Only trigger signOut() if isLoginOnly == true AND user has completed registration flag as false in existing check
-      if (isLoginOnly && (userData['phone'] == null || userData['phone'].toString().trim().isEmpty)) {
+      if (AuthSessionValidator.isUnregisteredSocialLoginAttempt(
+        isLoginOnly: isLoginOnly,
+        userData: userData,
+      )) {
         VSPLogger.w(" Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
         await prefs.remove('pending_oauth_is_login_only');
         await signOut();
@@ -210,14 +214,15 @@ class AuthProvider with ChangeNotifier {
  // Fix: Read the role the user intentionally selected before OAuth redirect
  final effectiveRole = pendingRole ?? _userType;
 
- if (effectiveRole != null &&
- !(userData['is_registration_complete'] as bool? ?? false) &&
- userData['role'] != effectiveRole) {
+  if (AuthSessionValidator.shouldOverrideOAuthRole(
+   pendingRole: effectiveRole,
+   userData: userData,
+  )) {
 
  VSPLogger.i(" Overriding OAuth trigger role default from '${userData['role']}' to '$effectiveRole' for UID: ${user.id}");
 
  // 1⃣ Patch DB via repository setUserRole RPC
- await _userRepository.setUserRole(user.id, effectiveRole);
+ await _userRepository.setUserRole(user.id, effectiveRole!);
 
  // 1.5 Sync role directly to Supabase Auth metadata for single source of truth
  try {
@@ -234,8 +239,7 @@ class AuthProvider with ChangeNotifier {
  }
  // ────────────────────────────────────────────────────────────────────────
 
- final bool isExistingCompleteUser = (userData['is_registration_complete'] == true || userData['isRegistrationComplete'] == true) &&
- (userData['phone'] != null && userData['phone'].toString().trim().isNotEmpty);
+ final bool isExistingCompleteUser = AuthSessionValidator.isExistingCompleteUser(userData);
 
  // SEAMLESS SMART ROLE ROUTING:
  // If user profile already exists in DB, respect database role for existing users.
@@ -252,8 +256,10 @@ class AuthProvider with ChangeNotifier {
  // before the trigger fix. Always trust the Supabase Auth object instead:
  // - Google/Apple users: emailConfirmedAt is set automatically by the provider
  // - Email/password users: emailConfirmedAt is set after OTP confirmation
- final bool isActuallyEmailVerified = user.emailConfirmedAt != null;
- if (_userModel != null && isActuallyEmailVerified && !_userModel!.isEmailVerified) {
+  if (AuthSessionValidator.needsEmailVerificationSync(
+   authUser: user,
+   userModel: _userModel,
+  )) {
  _userModel = _userModel!.copyWith(isEmailVerified: true);
  // Silently patch the DB column so it's consistent going forward
  _userRepository.updateUserProfile(
@@ -266,11 +272,7 @@ class AuthProvider with ChangeNotifier {
 
  // FIX: Only auto-complete registration if the user ACTUALLY has a phone number.
  // This ensures new social sign-ups are forced to the onboarding screen.
- final bool hasValidPhone = _userModel != null && 
- _userModel!.phone != null && 
- _userModel!.phone!.trim().isNotEmpty;
- 
- if (_userModel != null && !_userModel!.isRegistrationComplete && hasValidPhone) {
+  if (AuthSessionValidator.shouldAutoPatchRegistrationComplete(_userModel)) {
  _userModel = _userModel!.copyWith(isRegistrationComplete: true);
  _userRepository.updateUserProfile(
  user.id,
@@ -285,10 +287,9 @@ class AuthProvider with ChangeNotifier {
  // For an existing complete user (phone set + isRegistrationComplete),
  // clear _userType so GoRouter routes by their DB role, not the
  // sign-up screen they came from. This prevents ghost-user onboarding.
- final hasPhone = (_userModel != null && _userModel!.phone?.isNotEmpty == true);
- if (_userModel != null && _userModel!.isRegistrationComplete && hasPhone) {
- _userType = null; // let GoRouter use userModel.role
- }
+  if (AuthSessionValidator.shouldClearUserTypeForAutoLogin(_userModel)) {
+  _userType = null; // let GoRouter use userModel.role
+  }
  // ===== END AUTO-LOGIN REDIRECT =====
 
  _isGhostUser = false;

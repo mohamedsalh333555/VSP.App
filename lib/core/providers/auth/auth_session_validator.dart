@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/user_model.dart';
+import '../../models/user_model.dart';
 
 /// Pure stateless session validation predicates for AuthProvider.
 /// No Supabase I/O — all methods accept already-fetched data as arguments.
