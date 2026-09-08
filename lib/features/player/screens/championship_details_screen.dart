@@ -1,32 +1,33 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/vsp_icon_badge.dart';
-import '../../../shared/widgets/vsp_back_button.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
+import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
-import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../data/models.dart';
-import '../../../core/constants/egypt_governorates.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
+import '../widgets/championship_details/championship_details_header.dart';
+import '../widgets/championship_details/championship_matches_tab.dart';
+import '../widgets/championship_details/championship_rules_tab.dart';
+import '../widgets/championship_details/championship_squad_builder_sheet.dart';
+import '../widgets/championship_details/championship_top_scorers_tab.dart';
 import 'championship_checkout_screen.dart';
 import 'manage_tournament_roster_screen.dart';
-import '../widgets/create_team_sheet.dart';
 
 class ChampionshipDetailsScreen extends StatefulWidget {
- final Championship championship;
+  final Championship championship;
 
- const ChampionshipDetailsScreen({super.key, required this.championship});
+  const ChampionshipDetailsScreen({super.key, required this.championship});
 
- @override
- State<ChampionshipDetailsScreen> createState() => _ChampionshipDetailsScreenState();
+  @override
+  State<ChampionshipDetailsScreen> createState() => _ChampionshipDetailsScreenState();
 }
 
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
@@ -45,157 +46,27 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     _checkUserTeamState();
   }
 
- Future<void> _checkUserTeamState() async {
- try {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- if (auth.currentUser != null) {
- final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
- if (team != null && mounted) {
- setState(() {
- _myTeam = team;
- });
- }
- }
- } catch (e) {
- debugPrint('Error checking user team state in championship: $e');
- }
- }
+  Future<void> _checkUserTeamState() async {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.currentUser != null) {
+        final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+        if (team != null && mounted) {
+          setState(() {
+            _myTeam = team;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking user team state in championship: $e');
+    }
+  }
 
- @override
- void dispose() {
- _tabController.dispose();
- super.dispose();
- }
-
- Future<void> _showIncompleteSquadBridgeSheet({
- required BuildContext context,
- required Team? team,
- required Championship championship,
- }) async {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final int currentCount = team?.memberUids.length ?? 0;
- final int missingCount = (5 - currentCount).clamp(1, 5);
-
- await showModalBottomSheet(
- context: context,
- isScrollControlled: true,
- backgroundColor: Colors.transparent,
- builder: (sheetCtx) {
- return Container(
- padding: const EdgeInsets.all(VSPSpacing.lg),
- decoration: const BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.only(
- topLeft: Radius.circular(VSPRadius.xl),
- topRight: Radius.circular(VSPRadius.xl),
- ),
- ),
- child: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Container(
- width: 40,
- height: 4,
- decoration: BoxDecoration(
- color: VSPColors.divider,
- borderRadius: BorderRadius.circular(2),
- ),
- ),
- const SizedBox(height: 16),
- Row(
- children: [
- const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 24),
- const SizedBox(width: 10),
- Text(
- isArabic ? 'استكمال تشكيلة البطولة ' : 'Tournament Squad Builder ',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
- ),
- ],
- ),
- const SizedBox(height: 14),
- Container(
- padding: const EdgeInsets.all(12),
- decoration: BoxDecoration(
- color: VSPColors.background,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider),
- ),
- child: Row(
- children: [
- const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 20),
- const SizedBox(width: 10),
- Expanded(
- child: Text(
- team == null
- ? (isArabic
- ? 'يجب إنشاء فريقك أولاً للتمكن من الاشتراك في البطولة.'
- : 'You need to create a team first to join tournaments.')
- : (isArabic
- ? 'ينقص فريقك [$missingCount] لاعبين للمشاركة في البطولة (الحد الأدنى 5 لاعبين).'
- : 'Your team needs [$missingCount] more players to meet the 5-player minimum.'),
- style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.4),
- ),
- ),
- ],
- ),
- ),
- const SizedBox(height: 20),
- if (team == null) ...[
- PrimaryButton(
- text: isArabic ? 'إنشاء فريق الآن في ثوانٍ ' : 'Create Team Now in Seconds ',
- color: VSPColors.accent,
- textColor: Colors.black,
- onPressed: () async {
- Navigator.pop(sheetCtx);
- final created = await showModalBottomSheet<bool>(
- context: context,
- isScrollControlled: true,
- backgroundColor: Colors.transparent,
- builder: (ctx) => const CreateTeamSheet(),
- );
- if (created == true && context.mounted) {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final newTeam = await TeamRepository().getUserTeam(auth.currentUser!.uid);
- if (newTeam != null && context.mounted) {
- Navigator.push(
- context,
- MaterialPageRoute(
- builder: (ctx) => ChampionshipCheckoutScreen(
- championship: championship,
- team: newTeam,
- ),
- ),
- );
- }
- }
- },
- ),
- ] else ...[
- PrimaryButton(
- text: isArabic ? 'متابعة وإضافة أسماء اللاعبين الضيوف ' : 'Continue & Add Guest Players ',
- color: VSPColors.accent,
- textColor: Colors.black,
- onPressed: () {
- Navigator.pop(sheetCtx);
- Navigator.push(
- context,
- MaterialPageRoute(
- builder: (ctx) => ChampionshipCheckoutScreen(
- championship: championship,
- team: team,
- ),
- ),
- );
- },
- ),
- ],
- const SizedBox(height: 10),
- ],
- ),
- );
- },
- );
- }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleJoin([Championship? liveChamp]) async {
     final activeChamp = liveChamp ?? widget.championship;
@@ -204,21 +75,22 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
     if (!auth.isAuthenticated || auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.loginToJoinError)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.loginToJoinError)),
+      );
       return;
     }
 
     setState(() => _isJoining = true);
 
     try {
-      // Use direct UID lookup to avoid phone international format mismatches
       final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
 
       if (team != null && team.captainId != auth.currentUser!.uid) {
         if (mounted) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          _showErrorDialog(isArabic 
-              ? 'عذراً! قائد الفريق (الكابتن) فقط هو من يحق له تسجيل الفريق في البطولة ' 
+          _showErrorDialog(isArabic
+              ? 'عذراً! قائد الفريق (الكابتن) فقط هو من يحق له تسجيل الفريق في البطولة '
               : 'Only team captain is authorized to register team in tournaments ');
         }
         return;
@@ -226,7 +98,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
 
       if (team == null || team.memberUids.length < 5) {
         if (mounted) {
-          await _showIncompleteSquadBridgeSheet(
+          await showIncompleteSquadBridgeSheet(
             context: context,
             team: team,
             championship: activeChamp,
@@ -251,7 +123,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       final champGovStd = EgyptGovernorates.resolveGoogleName(champGovRaw) ?? champGovRaw;
       final playerGovStd = EgyptGovernorates.resolveGoogleName(playerGovRaw) ?? playerGovRaw;
 
-      if (champGovStd.isNotEmpty && playerGovStd.isNotEmpty && champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
+      if (champGovStd.isNotEmpty &&
+          playerGovStd.isNotEmpty &&
+          champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
         final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -267,7 +141,10 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                 Expanded(
                   child: Text(
                     isArabic ? 'تأكيد موقع البطولة' : 'Confirm Tournament Location',
-                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                   ),
                 ),
               ],
@@ -327,7 +204,10 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        title: Text(AppLocalizations.of(context)!.errorLabel, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error)),
+        title: Text(
+          AppLocalizations.of(context)!.errorLabel,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error),
+        ),
         content: Text(message, style: Theme.of(context).textTheme.bodyMedium),
         actionsPadding: const EdgeInsets.all(VSPSpacing.md),
         actions: [
@@ -353,8 +233,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
         final isTeamRegistered = _myTeam != null && championship.joinedTeams.contains(_myTeam!.id);
         final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
 
-        final DateTime effectiveStartDate = (championship.status == 'ongoing' || DateTime.now().isAfter(championship.startDate)) 
-            ? DateTime.now() 
+        final DateTime effectiveStartDate = (championship.status == 'ongoing' ||
+                DateTime.now().isAfter(championship.startDate))
+            ? DateTime.now()
             : championship.startDate;
         final startDateDisplay = AppDateFormatter.formatDayMonth(effectiveStartDate, isArabic ? 'ar' : 'en');
 
@@ -399,7 +280,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          isArabic 
+                          isArabic
                               ? 'فريقك [${_myTeam!.name}] مسجّل رسمياً في هذه البطولة '
                               : 'Your team [${_myTeam!.name}] is registered in this tournament ',
                           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
@@ -409,170 +290,15 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                   ),
                 ),
               ],
-              // 1. Modern Glassmorphic Header Card
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.all(VSPSpacing.md),
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.xl),
-                  border: Border.all(color: VSPColors.divider, width: 0.5),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        championship.logoUrl.isNotEmpty
-                            ? Container(
-                                width: 50,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: VSPColors.accent, width: 1.5),
-                                ),
-                                child: ClipOval(
-                                  child: CachedNetworkImage(
-                                    imageUrl: championship.logoUrl,
-                                    memCacheWidth: 150,
-                                    memCacheHeight: 150,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) => const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
-                                  ),
-                                ),
-                              )
-                            : const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                championship.name,
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 12),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    championship.governorate.isNotEmpty ? championship.governorate : (isArabic ? 'مصر' : 'Egypt'),
-                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: (isFull || championship.status != 'open')
-                                ? VSPColors.error.withValues(alpha: 0.15)
-                                : VSPColors.success.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(VSPRadius.sm),
-                          ),
-                          child: Text(
-                            isFull
-                                ? (isArabic ? 'مكتمل العدد' : 'Full')
-                                : (championship.status == 'open' ? (isArabic ? 'مفتوح للتسجيل' : 'Open') : championship.status.toUpperCase()),
-                            style: TextStyle(
-                              color: (isFull || championship.status != 'open') ? VSPColors.error : VSPColors.success,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (championship.status == 'open' && !isFull && championship.startDate.isAfter(DateTime.now())) ...[
-                      const SizedBox(height: 12),
-                      VSPCountdownTimer(targetDate: championship.startDate),
-                    ],
-                    if (championship.status == 'completed') ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: championship.prizeDelivered
-                              ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                              : const Color(0xFFF59E0B).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                          border: Border.all(
-                            color: championship.prizeDelivered
-                                ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                                : const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              championship.prizeDelivered ? Iconsax.verify_copy : Iconsax.clock_copy,
-                              color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                championship.prizeDelivered
-                                    ? (isArabic ? 'تم تسليم الجائزة المالية للبطل وتوثيقها رسمياً' : 'Prize officially delivered to champion')
-                                    : (isArabic ? 'بانتظار تسليم الجائزة المالية للبطل' : 'Pending prize delivery to champion'),
-                                style: TextStyle(
-                                  color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    // Stats Grid
-                    Row(
-                      children: [
-                        _buildStatCard(
-                          icon: Iconsax.cup_copy,
-                          iconColor: VSPColors.accent,
-                          label: isArabic ? 'الجائزة' : 'Prize',
-                          value: championship.prizePool > 0
-                              ? '${championship.prizePool.toInt()} ${isArabic ? "ج.م" : "EGP"}'
-                              : (championship.grandPrize > 0
-                                  ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'
-                                  : (isArabic ? 'كأس وميداليات' : 'Cup & Medals')),
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatCard(
-                          icon: Iconsax.card_copy,
-                          iconColor: VSPColors.accent,
-                          label: isArabic ? 'رسوم الاشتراك' : 'Entry Fee',
-                          value: '${championship.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}',
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatCard(
-                          icon: Iconsax.calendar_1_copy,
-                          iconColor: VSPColors.accent,
-                          label: isArabic ? 'الموعد' : 'Date',
-                          value: startDateDisplay,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatCard(
-                          icon: Iconsax.people_copy,
-                          iconColor: VSPColors.accent,
-                          label: isArabic ? 'الفرق' : 'Teams',
-                          value: '${championship.joinedTeams.length}/${championship.maxTeams}',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+
+              // 1. Header Card
+              ChampionshipDetailsHeader(
+                championship: championship,
+                isFull: isFull,
+                startDateDisplay: startDateDisplay,
               ),
 
-              // 2. VSP Design System Pill Segmented Switcher
+              // 2. Pill Segmented Switcher
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                 padding: const EdgeInsets.all(4),
@@ -617,14 +343,17 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    // TAB 1: Timeline & Brackets
-                    _buildTimelineAndBracketsTab(isArabic),
+                    // TAB 1: Matches & Standings
+                    ChampionshipMatchesTab(
+                      championship: championship,
+                      matchesStream: _matchesStream,
+                    ),
 
-                    // TAB 2: Top Scorers Leaderboard
-                    _buildTopScorersTab(isArabic),
+                    // TAB 2: Top Scorers
+                    ChampionshipTopScorersTab(championshipId: championship.id),
 
                     // TAB 3: Rules & Details
-                    _buildRulesAndInfoTab(isArabic),
+                    ChampionshipRulesTab(championship: championship),
                   ],
                 ),
               ),
@@ -691,711 +420,51 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
- Widget _buildPillTabItem({
- required int index,
- required int currentIndex,
- required String title,
- required IconData icon,
- }) {
- final isSelected = currentIndex == index;
- return Expanded(
- child: GestureDetector(
- onTap: () {
- _tabController.animateTo(index);
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 200),
- padding: const EdgeInsets.symmetric(vertical: 8),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent : Colors.transparent,
- borderRadius: BorderRadius.circular(VSPRadius.full),
- ),
- child: Row(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Icon(
- icon,
- size: 14,
- color: isSelected ? Colors.black : VSPColors.textSecondary,
- ),
- const SizedBox(width: 6),
- Flexible(
- child: Text(
- title,
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- style: TextStyle(
- color: isSelected ? Colors.black : VSPColors.textSecondary,
- fontWeight: FontWeight.bold,
- fontSize: 12,
- ),
- ),
- ),
- ],
- ),
- ),
- ),
- );
- }
+  Widget _buildPillTabItem({
+    required int index,
+    required int currentIndex,
+    required String title,
+    required IconData icon,
+  }) {
+    final isSelected = currentIndex == index;
 
- Widget _buildStatCard({
- required IconData icon,
- required Color iconColor,
- required String label,
- required String value,
- }) {
- return Expanded(
- child: Container(
- padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
- decoration: BoxDecoration(
- color: VSPColors.background,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider, width: 0.5),
- ),
- child: Column(
- children: [
- Icon(icon, color: iconColor, size: 16),
- const SizedBox(height: 4),
- FittedBox(
- fit: BoxFit.scaleDown,
- child: Text(
- label,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9),
- maxLines: 1,
- ),
- ),
- const SizedBox(height: 2),
- FittedBox(
- fit: BoxFit.scaleDown,
- child: Text(
- value,
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
- maxLines: 1,
- ),
- ),
- ],
- ),
- ),
- );
- }
-
- Widget _buildStandingsSection(bool isArabic) {
- final isGroupOrLeague = widget.championship.type == 'League' || widget.championship.type == 'GroupsAndKnockout';
- if (!isGroupOrLeague) return const SizedBox.shrink();
-
- final isGroups = widget.championship.type == 'GroupsAndKnockout';
- final numGroups = widget.championship.numberOfGroups;
- final groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- children: [
- const Icon(Iconsax.award_copy, color: VSPColors.accent, size: 20),
- const SizedBox(width: 8),
- Text(
- isArabic ? 'جدول الترتيب الحي' : 'Live Standings Table',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
- ),
- ],
- ),
- const SizedBox(height: 12),
- if (isGroups) ...[
- for (int g = 0; g < numGroups; g++) ...[
- Padding(
- padding: const EdgeInsets.only(top: 8, bottom: 6),
- child: Text(
- isArabic ? 'المجموعة ${groupNames[g]}' : 'Group ${groupNames[g]}',
- style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
- ),
- ),
- _buildStandingsTableWidget(context, widget.championship.id, groupName: groupNames[g]),
- const SizedBox(height: 12),
- ],
- ] else ...[
- _buildStandingsTableWidget(context, widget.championship.id),
- ],
- const SizedBox(height: 20),
- ],
- );
- }
-
- Widget _buildStandingsTableWidget(BuildContext context, String championshipId, {String? groupName}) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
- return FutureBuilder<List<Map<String, dynamic>>>(
- future: TournamentRepository().getChampionshipStandings(championshipId, groupName: groupName),
- builder: (context, snapshot) {
- if (snapshot.connectionState == ConnectionState.waiting) {
- return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: VSPColors.accent)));
- }
-
- final rows = snapshot.data ?? [];
- if (rows.isEmpty) {
- return Container(
- padding: const EdgeInsets.all(16),
- decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(12)),
- child: Center(
- child: Text(
- isArabic ? 'لا توجد مباريات مسجلة بعد' : 'No recorded matches yet',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
- ),
- ),
- );
- }
-
- return Container(
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider),
- ),
- child: SingleChildScrollView(
- scrollDirection: Axis.horizontal,
- child: DataTable(
- columnSpacing: 14,
- headingRowHeight: 40,
- dataRowMaxHeight: 44,
- columns: [
- DataColumn(label: Text(isArabic ? '#' : '#', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))),
- DataColumn(label: Text(isArabic ? 'الفريق' : 'Team', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
- DataColumn(label: Text(isArabic ? 'لعب' : 'P', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'فاز' : 'W', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'تعادل' : 'D', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'خسر' : 'L', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'له' : 'GF', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'عليه' : 'GA', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? '+/-' : 'GD', style: const TextStyle(color: Colors.white70))),
- DataColumn(label: Text(isArabic ? 'النقاط' : 'PTS', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))),
- ],
- rows: rows.asMap().entries.map((entry) {
- final rank = entry.key + 1;
- final r = entry.value;
-
- return DataRow(
- cells: [
- DataCell(Text('$rank', style: TextStyle(color: rank <= 2 ? VSPColors.accent : Colors.white, fontWeight: FontWeight.bold))),
- DataCell(Text(r['team_name']?.toString() ?? 'Team', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
- DataCell(Text('${r['played'] ?? 0}', style: const TextStyle(color: Colors.white70))),
- DataCell(Text('${r['won'] ?? 0}', style: const TextStyle(color: Colors.green))),
- DataCell(Text('${r['drawn'] ?? 0}', style: const TextStyle(color: Colors.orange))),
- DataCell(Text('${r['lost'] ?? 0}', style: const TextStyle(color: Colors.red))),
- DataCell(Text('${r['goals_for'] ?? 0}', style: const TextStyle(color: Colors.white70))),
- DataCell(Text('${r['goals_against'] ?? 0}', style: const TextStyle(color: Colors.white70))),
- DataCell(Text('${r['goal_difference'] ?? 0}', style: const TextStyle(color: Colors.white70))),
- DataCell(Text('${r['points'] ?? 0}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14))),
- ],
- );
- }).toList(),
- ),
- ),
- );
- },
- );
- }
-
- Widget _buildTimelineAndBracketsTab(bool isArabic) {
- return SingleChildScrollView(
- padding: const EdgeInsets.all(VSPSpacing.md),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- // Live Standings Table (For League & Group Systems)
- _buildStandingsSection(isArabic),
-
- // Brackets Button
- PrimaryButton(
- text: isArabic ? 'عرض شجرة القرعة والمواجهات' : 'View Tournament Brackets',
- height: 48,
- color: VSPColors.accent,
- textColor: Colors.black,
- onPressed: () {
- Navigator.push(
- context,
- MaterialPageRoute(
- builder: (_) => TournamentBracketsScreen(
- championship: widget.championship,
- isOwner: false,
- ),
- ),
- );
- },
- ),
- const SizedBox(height: VSPSpacing.lg),
-
- // Live Match Fixtures Stream
- StreamBuilder<List<TournamentMatch>>(
- stream: _matchesStream,
- builder: (context, snapshot) {
- if (!snapshot.hasData || snapshot.data!.isEmpty) {
- return Container(
- width: double.infinity,
- padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
- decoration: BoxDecoration(
- gradient: LinearGradient(
- begin: Alignment.topLeft,
- end: Alignment.bottomRight,
- colors: [
- VSPColors.surface,
- VSPColors.accent.withValues(alpha: 0.04),
- ],
- ),
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(
- color: VSPColors.accent.withValues(alpha: 0.15),
- width: 1,
- ),
- ),
- child: Column(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Container(
- width: 72,
- height: 72,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- color: VSPColors.accent.withValues(alpha: 0.1),
- border: Border.all(
- color: VSPColors.accent.withValues(alpha: 0.25),
- width: 1.5,
- ),
- ),
- child: const Icon(
- Iconsax.calendar_1_copy,
- color: VSPColors.accent,
- size: 32,
- ),
- ),
- const SizedBox(height: 18),
- Text(
- isArabic ? 'لم يتم إعداد المباريات بعد' : 'No Matches Scheduled Yet',
- style: const TextStyle(
- color: Colors.white,
- fontWeight: FontWeight.w800,
- fontSize: 15,
- ),
- textAlign: TextAlign.center,
- ),
- const SizedBox(height: 8),
- Text(
- isArabic
- ? 'سيتم الإعلان عن جدول المباريات بمجرد اكتمال التسجيل'
- : 'Match schedule will be announced once registration is complete',
- style: const TextStyle(
- color: VSPColors.textSecondary,
- fontSize: 12,
- height: 1.5,
- ),
- textAlign: TextAlign.center,
- ),
- ],
- ),
- );
-
- }
-
- final matches = snapshot.data!;
-
- // Helper: Arabic round label
- String roundLabelAr(int roundIndex) {
- if (widget.championship.type == 'GroupsAndKnockout' && roundIndex == 99) {
- return 'دور المجموعات';
- }
- if (widget.championship.type == 'League') {
- return 'مباريات الدوري';
- }
- switch (roundIndex) {
- case 0: return 'المباراة النهائية';
- case 1: return 'نصف النهائي';
- case 2: return 'ربع النهائي';
- case 3: return 'دور الـ 16';
- case 4: return 'دور الـ 32';
- case 5: return 'دور الـ 64';
- default: return 'الجولة ${roundIndex + 1}';
- }
- }
-
- // Group matches by roundIndex (highest roundIndex = earliest round)
- final rounds = <int>{};
- for (final m in matches) { rounds.add(m.roundIndex); }
- final sortedRounds = rounds.toList()..sort((a, b) => b.compareTo(a));
-
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- isArabic ? 'المباريات والمواجهات' : 'Match Fixtures',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
- ),
- const SizedBox(height: VSPSpacing.md),
- ...sortedRounds.map((roundIdx) {
- final roundMatches = matches.where((m) => m.roundIndex == roundIdx).toList()
- ..sort((a, b) => a.matchIndex.compareTo(b.matchIndex));
- final roundLabel = isArabic ? roundLabelAr(roundIdx) : roundMatches.first.roundLabel;
-
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- // Round Header
- Padding(
- padding: const EdgeInsets.only(top: 8, bottom: 8),
- child: Row(
- children: [
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.15),
- borderRadius: BorderRadius.circular(20),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
- ),
- child: Text(
- roundLabel,
- style: const TextStyle(
- color: VSPColors.accent,
- fontSize: 11,
- fontWeight: FontWeight.w800,
- ),
- ),
- ),
- const SizedBox(width: 8),
- Expanded(
- child: Divider(color: VSPColors.divider.withValues(alpha: 0.4), height: 1),
- ),
- ],
- ),
- ),
- // Matches in this round
- ...roundMatches.map((m) {
- final homeName = m.homeTeamName ?? '';
- final awayName = m.awayTeamName ?? '';
- final matchNum = m.matchIndex + 1;
-
- // Format scheduled time
- String? scheduledLabel;
- if (m.scheduledTime != null) {
- final t = m.scheduledTime!;
- scheduledLabel = '${t.day}/${t.month} ${t.hour.toString().padLeft(2,'0')}:${t.minute.toString().padLeft(2,'0')}';
- }
-
- return Container(
- margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(
- color: m.isCompleted
- ? VSPColors.accent.withValues(alpha: 0.3)
- : VSPColors.divider.withValues(alpha: 0.4),
- ),
- ),
- child: Column(
- children: [
- // Match meta: match number + date
- Container(
- padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 6),
- decoration: const BoxDecoration(
- color: VSPColors.surfaceAlt,
- borderRadius: BorderRadius.only(
- topLeft: Radius.circular(VSPRadius.md),
- topRight: Radius.circular(VSPRadius.md),
- ),
- ),
- child: Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(
- isArabic ? 'مباراة $matchNum' : 'Match $matchNum',
- style: const TextStyle(
- color: VSPColors.textSecondary,
- fontSize: 11,
- fontWeight: FontWeight.w600,
- ),
- ),
- if (scheduledLabel != null)
- Row(
- children: [
- const Icon(Iconsax.calendar_1_copy, size: 11, color: VSPColors.textSecondary),
- const SizedBox(width: 4),
- Text(
- scheduledLabel,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
- ),
- ],
- )
- else
- Text(
- isArabic ? 'لم يحدد التاريخ' : 'TBD',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
- ),
- ],
- ),
- ),
- // Teams + Score/VS
- Padding(
- padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 12),
- child: Row(
- children: [
- Expanded(
- child: Text(
- homeName.isNotEmpty ? homeName : (isArabic ? 'فريق 1' : 'Team 1'),
- textAlign: TextAlign.center,
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- ),
- ),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
- decoration: BoxDecoration(
- color: m.isCompleted
- ? VSPColors.accent.withValues(alpha: 0.15)
- : VSPColors.background,
- borderRadius: BorderRadius.circular(20),
- ),
- child: Text(
- m.isCompleted ? '${m.homeScore} - ${m.awayScore}' : 'VS',
- style: TextStyle(
- color: m.isCompleted ? VSPColors.accent : VSPColors.textSecondary,
- fontWeight: FontWeight.w900,
- fontSize: 13,
- ),
- ),
- ),
- Expanded(
- child: Text(
- awayName.isNotEmpty ? awayName : (isArabic ? 'فريق 2' : 'Team 2'),
- textAlign: TextAlign.center,
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- ),
- ),
- ],
- ),
- ),
- ],
- ),
- );
- }),
- const SizedBox(height: 4),
- ],
- );
- }),
- ],
- );
- },
- ),
- ],
- ),
- );
- }
-
- Widget _buildTopScorersTab(bool isArabic) {
- return _buildScorersList(isArabic);
- }
-
- Widget _buildScorersList(bool isArabic) {
- return FutureBuilder<List<Map<String, dynamic>>>(
- future: TournamentRepository().getTopScorersForChampionship(widget.championship.id),
- builder: (context, snapshot) {
- if (snapshot.connectionState == ConnectionState.waiting) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
- }
-
- final scorers = snapshot.data ?? [];
- if (scorers.isEmpty) {
- return Center(
- child: Column(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- const Icon(Iconsax.award_copy, color: VSPColors.textSecondary, size: 40),
- const SizedBox(height: 12),
- Text(
- isArabic ? 'لم يتم تسجيل أهداف بعد في هذه البطولة' : 'No goals recorded yet in this tournament',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
- ),
- ],
- ),
- );
- }
-
- return ListView.builder(
- padding: const EdgeInsets.all(VSPSpacing.md),
- itemCount: scorers.length,
- itemBuilder: (context, index) {
-                final item = scorers[index];
-                final rank = index + 1;
-                final String name = item['name'] ?? '';
-                final String team = item['team'] ?? '';
-                final int goals = item['goals'] as int? ?? 0;
-
-                Color rankColor = VSPColors.surfaceAlt;
-                String rankEmoji = '#';
-                if (rank == 1) {
-                  rankColor = VSPColors.accent;
-                  rankEmoji = '🥇';
-                } else if (rank == 2) {
-                  rankColor = VSPColors.accent.withValues(alpha: 0.7);
-                  rankEmoji = '🥈';
-                } else if (rank == 3) {
-                  rankColor = VSPColors.accent.withValues(alpha: 0.5);
-                  rankEmoji = '🥉';
-                }
- return Container(
- margin: const EdgeInsets.only(bottom: 8),
- padding: const EdgeInsets.all(12),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider, width: 0.5),
- ),
- child: Row(
- children: [
- Container(
- width: 36,
- height: 36,
- decoration: BoxDecoration(
- color: rankColor.withValues(alpha: 0.15),
- shape: BoxShape.circle,
- ),
- child: Center(
- child: Text(
- rankEmoji,
- style: TextStyle(
- color: rank <= 3 ? rankColor : VSPColors.textSecondary,
- fontWeight: FontWeight.bold,
- fontSize: rank <= 3 ? 16 : 12,
- ),
- ),
- ),
- ),
- const SizedBox(width: 12),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- name,
- style: const TextStyle(
- color: Colors.white,
- fontWeight: FontWeight.bold,
- fontSize: 14,
- ),
- ),
- if (team.isNotEmpty && team != 'فريق غير محدد') ...[
- const SizedBox(height: 2),
- Text(
- team,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
- ),
- ],
- ],
- ),
- ),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.15),
- borderRadius: BorderRadius.circular(VSPRadius.sm),
- ),
- child: Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 12),
- const SizedBox(width: 4),
- Text(
- '$goals ${isArabic ? "أهداف" : "goals"}',
- style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
- ),
- ],
- ),
- ),
- ],
- ),
- );
- },
- );
- },
- );
- }
-
-
-
- Widget _buildRulesAndInfoTab(bool isArabic) {
- final championship = widget.championship;
-
- return SingleChildScrollView(
- padding: const EdgeInsets.all(VSPSpacing.md),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- _buildInfoSection(
- isArabic ? 'وصف عن البطولة' : 'About Tournament',
- championship.rules.isNotEmpty
- ? championship.rules
- : (isArabic ? 'بطولة رسمية تنافسية لفرق كرة القدم بمدينة ${championship.governorate.isNotEmpty ? championship.governorate : "مصر"}.' : 'Official competitive football tournament.'),
- ),
- const SizedBox(height: 16),
- _buildInfoSection(
- isArabic ? 'آلية تسليم الجوائز المالية' : 'Prize Handover & Distribution',
- isArabic
- ? '• تُسلم الجوائز والمكافآت المالية للفرق الفائزة بالمركز الأول والوصيف فور انتهاء المباراة النهائية مباشرة.\n• التسليم يتم نقداً بالملعب أو عبر تحويل فوري معتمد (InstaPay / المحفظة الإلكترونية) بمعرفة إدارة الملعب والمنظم.'
- : '• Monetary prizes are awarded to the Champion and Runner-up immediately post-final match.\n• Prizes are handed on-pitch in cash or via instant verified InstaPay / E-Wallet transfer by stadium organizers.',
- ),
- const SizedBox(height: 16),
- _buildInfoSection(
- isArabic ? 'قوانين المباريات' : 'Match Rules',
- isArabic
- ? '• مدة المباراة: ${championship.matchDuration > 0 ? "${championship.matchDuration} دقيقة" : "غير محددة"}.\n'
- '• عدد اللاعبين الأساسيين لكل فريق: ${championship.minPlayersPerTeam} لاعبين.\n'
- '• الحد الأقصى للاعبين في التشكيلة: ${championship.maxPlayersPerTeam} لاعبين.\n'
- '• احتساب النقاط: ${championship.winningPoints} نقاط للفوز، ${championship.drawPoints} نقطة للتعادل، ${championship.lossPoints} للهزيمة.'
- : '• Match Duration: ${championship.matchDuration > 0 ? "${championship.matchDuration} mins" : "TBD"}.\n'
- '• Min Players: ${championship.minPlayersPerTeam}.\n'
- '• Max Players: ${championship.maxPlayersPerTeam}.\n'
- '• Points: ${championship.winningPoints} Win / ${championship.drawPoints} Draw / ${championship.lossPoints} Loss.',
- ),
- const SizedBox(height: 16),
- _buildInfoSection(
- isArabic ? 'تعليمات وإرشادات مهمة' : 'Important Instructions',
- isArabic
- ? '• يرجى التواجد بالملعب قبل موعد المباراة بـ 15 دقيقة على الأقل.\n'
- '• يجب التزام جميع الفرق بالزي الرياضي الموحد.\n'
- '• أي بطاقة حمراء تؤدي لإيقاف اللاعب المباراة التالية.'
- : '• Please arrive 15 minutes prior to kickoff.\n'
- '• Unified sports gear is required.\n'
- '• Red card suspends player for next match.',
- ),
- ],
- ),
- );
- }
-
- Widget _buildInfoSection(String title, String content) {
- return Container(
- width: double.infinity,
- padding: const EdgeInsets.all(VSPSpacing.md),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider, width: 0.5),
- ),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- title,
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
- ),
- const SizedBox(height: 8),
- Text(
- content,
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.6),
- ),
- ],
- ),
- );
- }
-
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          _tabController.animateTo(index);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? VSPColors.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(VSPRadius.full),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.black : VSPColors.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : VSPColors.textSecondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
