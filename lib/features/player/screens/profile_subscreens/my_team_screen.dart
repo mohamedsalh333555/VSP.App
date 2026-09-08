@@ -12,15 +12,15 @@ import '../../../../core/services/logger_service.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../core/utils/phone_utils.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../widgets/add_player_sheet.dart';
 import '../../widgets/my_team/team_achievements_section.dart';
 import '../../widgets/my_team/team_action_buttons.dart';
+import '../../widgets/my_team/team_dialogs.dart';
+import '../../widgets/my_team/team_management_service.dart';
 import '../../widgets/my_team/team_members_section.dart';
 import '../../widgets/my_team/team_profile_form.dart';
 import '../../widgets/my_team/team_stats_header.dart';
@@ -218,10 +218,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         );
       } catch (e) {
         if (mounted) {
-          final errorMsg = e.toString().replaceAll('Exception:', '').trim();
-          final displayMsg = errorMsg == 'active_match_or_tournament_error'
-              ? AppLocalizations.of(context)!.teamMemberDeleteLockError
-              : errorMsg;
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          final displayMsg = TeamManagementService.formatTeamErrorMessage(e, isArabic: isAr);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error),
           );
@@ -378,32 +376,15 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         );
       }
 
-      List<String> finalUids = [user.uid];
-      List<String> finalImages = [user.profileImageUrl ?? ''];
-      for (var member in _teamMembers) {
-        finalUids.add(member.uid);
-        finalImages.add(member.profileImageUrl ?? '');
-      }
+      final payload = TeamManagementService.buildCreateTeamPayload(
+        name: _teamNameController.text,
+        sportType: _selectedSport,
+        user: user,
+        logoUrl: logoUrl,
+        members: _teamMembers,
+      );
 
-      final teamId = await TeamRepository().createTeam({
-        'name': _teamNameController.text.trim(),
-        'sportType': _selectedSport,
-        'captainName': user.name ?? 'Captain',
-        'captainImageUrl': user.profileImageUrl ?? '',
-        'logoUrl': logoUrl ?? '',
-        'captainPhone': PhoneUtils.normalize(user.phone ?? ''),
-        'memberUids': finalUids,
-        'playerImages': finalImages,
-        'playersCount': finalUids.length,
-        'governorate': user.governorate ?? 'Cairo',
-        'stadium': 'TBD',
-        'date': 'Upcoming',
-        'points': 0,
-        'wins': 0,
-        'championshipsWon': 0,
-        'unlockedBadges': [],
-        'currentWinningStreak': 0,
-      });
+      final teamId = await TeamRepository().createTeam(payload);
 
       if (teamId != null && mounted) {
         await _initialLoad();
@@ -438,22 +419,16 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         );
       }
 
-      List<String> finalUids = [team.memberUids.first];
-      List<String> finalImages = [user?.profileImageUrl ?? team.playerImages.first];
-      for (var member in _teamMembers) {
-        finalUids.add(member.uid);
-        finalImages.add(member.profileImageUrl ?? '');
-      }
+      final payload = TeamManagementService.buildUpdateTeamPayload(
+        name: _teamNameController.text,
+        sportType: _selectedSport,
+        existingTeam: team,
+        user: user,
+        logoUrl: logoUrl,
+        members: _teamMembers,
+      );
 
-      await TeamRepository().updateTeam(team.id, {
-        'name': _teamNameController.text.trim(),
-        'sportType': _selectedSport,
-        'logoUrl': logoUrl ?? team.logoUrl,
-        'captainImageUrl': user?.profileImageUrl ?? team.captainImageUrl,
-        'memberUids': finalUids,
-        'playerImages': finalImages,
-        'playersCount': finalUids.length,
-      });
+      await TeamRepository().updateTeam(team.id, payload);
 
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -471,135 +446,19 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   }
 
   void _showLeaveConfirmation(Team team, String userId) {
-    final bool isLeavingCaptain = _isCaptain(team);
-    final String contentText = isLeavingCaptain
-        ? 'أنت كابتن الفريق. عند مغادرتك، سيتم نقل شارة الكابتنة وقيادة الفريق تلقائياً إلى العضو التالي. هل أنت متأكد؟'
-        : 'هل أنت متأكد من رغبتك في مغادرة هذا الفريق؟';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(
-          isLeavingCaptain ? 'مغادرة وتسليم الكابتنة' : 'مغادرة الفريق',
-          style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          contentText,
-          style: const TextStyle(color: VSPColors.textSecondary, height: 1.4),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-        actions: [
-          Row(children: [
-            Expanded(
-              child: PrimaryButton(
-                text: 'إلغاء',
-                height: 48,
-                color: VSPColors.surfaceAlt,
-                textColor: VSPColors.textPrimary,
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            const SizedBox(width: VSPSpacing.md),
-            Expanded(
-              child: PrimaryButton(
-                text: 'تأكيد المغادرة',
-                height: 48,
-                color: VSPColors.error,
-                textColor: Colors.white,
-                onPressed: () async {
-                  Navigator.pop(context);
-                  setState(() => _isSaving = true);
-                  try {
-                    await TeamRepository().removeMemberFromTeam(team.id, userId, '');
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(isLeavingCaptain
-                          ? 'تمت مغادرة الفريق ونقل شارة الكابتنة بنجاح.'
-                          : 'تمت مغادرة الفريق بنجاح.'),
-                      backgroundColor: VSPColors.success,
-                    ));
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    final errorMsg = e.toString().replaceAll('Exception:', '').trim();
-                    final displayMsg = errorMsg == 'active_match_or_tournament_error'
-                        ? AppLocalizations.of(context)!.teamMemberDeleteLockError
-                        : errorMsg;
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error));
-                  } finally {
-                    if (mounted) setState(() => _isSaving = false);
-                  }
-                },
-              ),
-            ),
-          ]),
-        ],
-      ),
+    TeamDialogs.showLeaveConfirmation(
+      context,
+      team: team,
+      userId: userId,
+      isCaptain: _isCaptain(team),
+      onSavingStarted: () => setState(() => _isSaving = true),
+      onSavingFinished: () {
+        if (mounted) setState(() => _isSaving = false);
+      },
     );
   }
 
   void _showDeleteConfirmation(Team team) {
-    final l10n = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(l10n.deleteTeam, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
-        content: Text(l10n.deleteTeamConfirm, style: const TextStyle(color: VSPColors.textSecondary)),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-        actions: [
-          Row(children: [
-            Expanded(
-              child: PrimaryButton(
-                text: l10n.cancel,
-                height: 48,
-                color: VSPColors.surfaceAlt,
-                textColor: VSPColors.textPrimary,
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-            const SizedBox(width: VSPSpacing.md),
-            Expanded(
-              child: PrimaryButton(
-                text: l10n.delete,
-                height: 48,
-                color: VSPColors.error,
-                textColor: VSPColors.background,
-                onPressed: () async {
-                  Navigator.pop(context);
-                  try {
-                    final success = await TeamRepository().deleteTeam(team.id);
-                    if (!context.mounted) return;
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.teamDeletedSuccess), backgroundColor: VSPColors.error));
-                      if (!context.mounted) return;
-                      Navigator.pop(context);
-                    }
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-                    final errStr = e.toString();
-                    String msg = isAr ? 'حدث خطأ أثناء حذف الفريق' : 'Error deleting team';
-                    if (errStr.contains('active_match_or_tournament_error') || errStr.contains('team_in_tournament')) {
-                      msg = isAr
-                          ? 'لا يمكن حذف الفريق لوجود مباريات قادمة أو بطولة نشطة! '
-                          : 'Cannot delete team with upcoming matches or active tournament! ';
-                    }
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(SnackBar(content: Text(msg), backgroundColor: VSPColors.error));
-                  }
-                },
-              ),
-            ),
-          ]),
-        ],
-      ),
-    );
+    TeamDialogs.showDeleteConfirmation(context, team: team);
   }
 }
