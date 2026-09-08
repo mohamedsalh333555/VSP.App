@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
-import 'package:uuid/uuid.dart';
 import '../services/logger_service.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/team_repository.dart';
@@ -9,6 +8,8 @@ import '../utils/app_date_formatter.dart';
 import '../constants/egypt_governorates.dart';
 import '../services/notification_handler.dart';
 import '../../data/models.dart';
+import 'tournament/tournament_payload_builder.dart';
+import 'tournament/tournament_bracket_engine.dart';
 
 class TournamentRepository {
  final SupabaseClient _supabase = Supabase.instance.client;
@@ -152,19 +153,6 @@ class TournamentRepository {
 
   Future<String?> createChampionship(Map<String, dynamic> data) async {
     try {
-      final sanitizedData = Map<String, dynamic>.from(data);
-      sanitizedData.remove('joinedTeams');
-      sanitizedData.remove('joined_teams');
-      sanitizedData.remove('status');
-      sanitizedData.remove('creatorId');
-      sanitizedData.remove('creator_id');
-
-      String rawType = (sanitizedData['type'] ?? 'Cup').toString();
-      String dbType = rawType;
-      if (rawType == 'GroupsAndKnockout' || rawType == 'groups_and_knockout') {
-        dbType = 'Groups';
-      }
-
       final currentUserId = _supabase.auth.currentUser?.id;
       bool isApproved = false;
       if (currentUserId != null) {
@@ -186,41 +174,12 @@ class TournamentRepository {
         }
       }
 
-      final pgData = {
-        'name': sanitizedData['name'],
-        'type': dbType,
-        'sport_type': sanitizedData['sportType'] ?? sanitizedData['sport_type'] ?? 'Football',
-        'logo_url': sanitizedData['logoUrl'] ?? sanitizedData['logo_url'] ?? '',
-        'start_date': sanitizedData['startDate'] ?? sanitizedData['start_date'],
-        'end_date': sanitizedData['endDate'] ?? sanitizedData['end_date'],
-        'entry_fee': sanitizedData['entryFee'] ?? sanitizedData['entry_fee'] ?? 0.0,
-        'grand_prize': sanitizedData['grandPrize'] ?? sanitizedData['grand_prize'] ?? 0.0,
-        'max_teams': sanitizedData['maxTeams'] ?? sanitizedData['max_teams'] ?? 16,
-        'owner_id': (sanitizedData['ownerId'] != null && sanitizedData['ownerId'].toString().isNotEmpty)
-            ? sanitizedData['ownerId']
-            : (sanitizedData['owner_id'] != null && sanitizedData['owner_id'].toString().isNotEmpty
-                ? sanitizedData['owner_id']
-                : (_supabase.auth.currentUser?.id ?? '')),
-        'governorate': sanitizedData['governorate'] ?? 'Cairo',
-        'rules': sanitizedData['rules'] ?? '',
-        'status': 'open',
-        'is_approved': isApproved, // Only pre-approved if creator is admin/co_founder
-        'joined_teams': [],
-        'paid_teams': [],
-        'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
-        
-        // Flat settings columns
-        'max_players_per_team': sanitizedData['maxPlayersPerTeam'] ?? sanitizedData['max_players_per_team'] ?? 11,
-        'min_players_per_team': sanitizedData['minPlayersPerTeam'] ?? sanitizedData['min_players_per_team'] ?? 5,
-        'winning_points': sanitizedData['winningPoints'] ?? sanitizedData['winning_points'] ?? 3,
-        'draw_points': sanitizedData['drawPoints'] ?? sanitizedData['draw_points'] ?? 1,
-        'loss_points': sanitizedData['lossPoints'] ?? sanitizedData['loss_points'] ?? 0,
-        'match_duration': sanitizedData['matchDuration'] ?? sanitizedData['match_duration'] ?? 30,
-        'is_back_and_forth': sanitizedData['isBackAndForth'] ?? sanitizedData['is_back_and_forth'] ?? false,
-        'trophy_medals': sanitizedData['trophyMedals'] ?? sanitizedData['trophy_medals'] ?? true,
-        'red_card_suspension': sanitizedData['redCardSuspension'] ?? sanitizedData['red_card_suspension'] ?? true,
-        'fair_play_scoring': sanitizedData['fairPlayScoring'] ?? sanitizedData['fair_play_scoring'] ?? false,
-      };
+      // Delegate all payload mapping to the pure builder
+      final pgData = TournamentPayloadBuilder.buildCreatePayload(
+        data,
+        isAdminApproved: isApproved,
+        fallbackOwnerId: currentUserId ?? '',
+      );
 
       try {
         final response = await _supabase
@@ -286,86 +245,20 @@ class TournamentRepository {
   }
 
  Future<bool> updateChampionship(String id, Map<String, dynamic> data) async {
- try {
- final pgData = <String, dynamic>{};
- if (data.containsKey('name')) pgData['name'] = data['name'];
- if (data.containsKey('type')) pgData['type'] = data['type'];
- if (data.containsKey('sportType')) pgData['sport_type'] = data['sportType'];
- if (data.containsKey('sport_type')) pgData['sport_type'] = data['sport_type'];
- if (data.containsKey('logoUrl')) pgData['logo_url'] = data['logoUrl'];
- if (data.containsKey('logo_url')) pgData['logo_url'] = data['logo_url'];
- if (data.containsKey('startDate')) pgData['start_date'] = data['startDate'];
- if (data.containsKey('start_date')) pgData['start_date'] = data['start_date'];
- if (data.containsKey('endDate')) pgData['end_date'] = data['endDate'];
- if (data.containsKey('end_date')) pgData['end_date'] = data['end_date'];
- if (data.containsKey('entryFee')) pgData['entry_fee'] = data['entryFee'];
- if (data.containsKey('entry_fee')) pgData['entry_fee'] = data['entry_fee'];
- if (data.containsKey('grandPrize')) pgData['grand_prize'] = data['grandPrize'];
- if (data.containsKey('grand_prize')) pgData['grand_prize'] = data['grand_prize'];
- if (data.containsKey('maxTeams')) pgData['max_teams'] = data['maxTeams'];
- if (data.containsKey('max_teams')) pgData['max_teams'] = data['max_teams'];
- if (data.containsKey('governorate')) pgData['governorate'] = data['governorate'];
- if (data.containsKey('rules')) pgData['rules'] = data['rules'];
- if (data.containsKey('paymentMethods')) pgData['payment_methods'] = data['paymentMethods'];
- if (data.containsKey('payment_methods')) pgData['payment_methods'] = data['payment_methods'];
+  try {
+   // Delegate all payload mapping to the pure builder
+   final pgData = TournamentPayloadBuilder.buildUpdatePayload(data);
+   if (pgData.isEmpty) return true;
 
- // Flat settings columns
- if (data.containsKey('maxPlayersPerTeam')) pgData['max_players_per_team'] = data['maxPlayersPerTeam'];
- if (data.containsKey('max_players_per_team')) pgData['max_players_per_team'] = data['max_players_per_team'];
- if (data.containsKey('minPlayersPerTeam')) pgData['min_players_per_team'] = data['minPlayersPerTeam'];
- if (data.containsKey('min_players_per_team')) pgData['min_players_per_team'] = data['min_players_per_team'];
- if (data.containsKey('winningPoints')) pgData['winning_points'] = data['winningPoints'];
- if (data.containsKey('winning_points')) pgData['winning_points'] = data['winning_points'];
- if (data.containsKey('drawPoints')) pgData['draw_points'] = data['drawPoints'];
- if (data.containsKey('draw_points')) pgData['draw_points'] = data['draw_points'];
- if (data.containsKey('lossPoints')) pgData['loss_points'] = data['lossPoints'];
- if (data.containsKey('loss_points')) pgData['loss_points'] = data['loss_points'];
- if (data.containsKey('matchDuration')) pgData['match_duration'] = data['matchDuration'];
- if (data.containsKey('match_duration')) pgData['match_duration'] = data['match_duration'];
- if (data.containsKey('isBackAndForth')) pgData['is_back_and_forth'] = data['isBackAndForth'];
- if (data.containsKey('is_back_and_forth')) pgData['is_back_and_forth'] = data['is_back_and_forth'];
- if (data.containsKey('trophyMedals')) pgData['trophy_medals'] = data['trophyMedals'];
- if (data.containsKey('trophy_medals')) pgData['trophy_medals'] = data['trophy_medals'];
- if (data.containsKey('redCardSuspension')) pgData['red_card_suspension'] = data['redCardSuspension'];
- if (data.containsKey('red_card_suspension')) pgData['red_card_suspension'] = data['red_card_suspension'];
- if (data.containsKey('fairPlayScoring')) pgData['fair_play_scoring'] = data['fairPlayScoring'];
- if (data.containsKey('fair_play_scoring')) pgData['fair_play_scoring'] = data['fair_play_scoring'];
-
- if (data.containsKey('settings') && data['settings'] is Map) {
- final settings = data['settings'] as Map;
- if (settings.containsKey('maxPlayers')) pgData['max_players_per_team'] = settings['maxPlayers'];
- if (settings.containsKey('max_players')) pgData['max_players_per_team'] = settings['max_players'];
- if (settings.containsKey('minPlayers')) pgData['min_players_per_team'] = settings['minPlayers'];
- if (settings.containsKey('min_players')) pgData['min_players_per_team'] = settings['min_players'];
- if (settings.containsKey('winningPoints')) pgData['winning_points'] = settings['winningPoints'];
- if (settings.containsKey('winning_points')) pgData['winning_points'] = settings['winning_points'];
- if (settings.containsKey('drawPoints')) pgData['draw_points'] = settings['drawPoints'];
- if (settings.containsKey('draw_points')) pgData['draw_points'] = settings['draw_points'];
- if (settings.containsKey('lossPoints')) pgData['loss_points'] = settings['lossPoints'];
- if (settings.containsKey('loss_points')) pgData['loss_points'] = settings['loss_points'];
- if (settings.containsKey('matchDuration')) pgData['match_duration'] = settings['matchDuration'];
- if (settings.containsKey('match_duration')) pgData['match_duration'] = settings['match_duration'];
- if (settings.containsKey('isBackAndForth')) pgData['is_back_and_forth'] = settings['isBackAndForth'];
- if (settings.containsKey('is_back_and_forth')) pgData['is_back_and_forth'] = settings['is_back_and_forth'];
- if (settings.containsKey('trophyMedals')) pgData['trophy_medals'] = settings['trophyMedals'];
- if (settings.containsKey('trophy_medals')) pgData['trophy_medals'] = settings['trophy_medals'];
- if (settings.containsKey('redCardSuspension')) pgData['red_card_suspension'] = settings['redCardSuspension'];
- if (settings.containsKey('red_card_suspension')) pgData['red_card_suspension'] = settings['red_card_suspension'];
- if (settings.containsKey('fairPlayScoring')) pgData['fair_play_scoring'] = settings['fairPlayScoring'];
- if (settings.containsKey('fair_play_scoring')) pgData['fair_play_scoring'] = settings['fair_play_scoring'];
- }
-
- if (pgData.isEmpty) return true;
-
- await _supabase
- .from('championships')
- .update(pgData)
- .eq('id', id);
- return true;
- } catch (e) {
- debugPrint('Error updating championship: $e');
- return false;
- }
+   await _supabase
+    .from('championships')
+    .update(pgData)
+    .eq('id', id);
+   return true;
+  } catch (e) {
+   debugPrint('Error updating championship: $e');
+   return false;
+  }
  }
 
  Future<bool> joinChampionship(
@@ -625,232 +518,42 @@ class TournamentRepository {
       final List<String> teamIds = isPaidTourney
           ? List<String>.from(champDoc['paid_teams'] ?? [])
           : List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
-      int totalTeams = teamIds.length;
+      final int totalTeams = teamIds.length;
       if (totalTeams < 2) {
         throw Exception(isPaidTourney
             ? 'يجب وجود فريقين مسددين لرسوم الاشتراك على الأقل لبدء البطولة.'
             : 'يجب وجود فريقين على الأقل لبدء البطولة.');
       }
 
- final String? rawStartDate = champDoc['start_date'] ?? champDoc['startDate'];
- if (rawStartDate != null) {
- final startDate = DateTime.parse(rawStartDate);
- if (DateTime.now().isBefore(startDate)) {
- final formattedDate = AppDateFormatter.formatFullDate(startDate, 'ar');
- throw Exception('لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.');
- }
- }
+      final String? rawStartDate = champDoc['start_date'] ?? champDoc['startDate'];
+      if (rawStartDate != null) {
+        final startDate = DateTime.parse(rawStartDate);
+        if (DateTime.now().isBefore(startDate)) {
+          final formattedDate = AppDateFormatter.formatFullDate(startDate, 'ar');
+          throw Exception('لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.');
+        }
+      }
 
- final int configuredMaxTeams = champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;
- 
- // Calculate target bracket capacity (must be a power of 2: 4, 8, 16, 32)
- int bracketCapacity = 4;
- if (configuredMaxTeams == 4 || configuredMaxTeams == 8 || configuredMaxTeams == 16 || configuredMaxTeams == 32) {
- if (configuredMaxTeams >= totalTeams) {
- bracketCapacity = configuredMaxTeams;
- } else {
- int p = 4;
- while (p < totalTeams && p < 32) {
- p *= 2;
- }
- bracketCapacity = p;
- }
- } else {
- int p = 4;
- while (p < totalTeams && p < 32) {
- p *= 2;
- }
- bracketCapacity = p;
- }
+      final int configuredMaxTeams = champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;
+      final int bracketCapacity = TournamentBracketEngine.computeBracketCapacity(
+        totalTeams, configuredMaxTeams,
+      );
 
- // Total rounds calculation for binary tree:
- // bracketCapacity = 32 -> 5 rounds (4,3,2,1,0)
- // bracketCapacity = 16 -> 4 rounds (3,2,1,0)
- // bracketCapacity = 8 -> 3 rounds (2,1,0)
- // bracketCapacity = 4 -> 2 rounds (1,0)
- int totalBracketRounds = (log(bracketCapacity) / log(2)).round();
- int startRoundIndex = totalBracketRounds - 1;
+      final teams = await getTeamsByIds(teamIds);
+      final teamMap = {for (var t in teams) t.id: t.name};
 
- final teams = await getTeamsByIds(teamIds);
- final teamMap = {for (var t in teams) t.id: t.name};
+      final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
+      final List<String?> slots = List.generate(bracketCapacity, (index) {
+        return index < shuffledIds.length ? shuffledIds[index] : null;
+      });
 
- final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
- 
- // Fill slots array of length bracketCapacity with team IDs (or null for BYEs)
- final List<String?> slots = List.generate(bracketCapacity, (index) {
- if (index < shuffledIds.length) {
- return shuffledIds[index];
- }
- return null; // BYE slot
- });
-
- final Map<String, String> matchUuidMap = {};
- String getMatchId(int r, int m) {
- final key = '${r}_$m';
- if (!matchUuidMap.containsKey(key)) {
- final rng = Random();
- final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
- bytes[6] = (bytes[6] & 0x0f) | 0x40;
- bytes[8] = (bytes[8] & 0x3f) | 0x80;
- final buf = StringBuffer();
- for (int i = 0; i < 16; i++) {
- if (i == 4 || i == 6 || i == 8 || i == 10) buf.write('-');
- buf.write(bytes[i].toRadixString(16).padLeft(2, '0'));
- }
- matchUuidMap[key] = buf.toString();
- }
- return matchUuidMap[key]!;
- }
-
- // Map to store match data for all rounds before bulk insertion
- final Map<String, Map<String, dynamic>> matchesMap = {};
-
- // 1. Initialize all matches for all rounds (from startRoundIndex down to 0)
- for (int r = startRoundIndex; r >= 0; r--) {
- int matchCount = (pow(2, r)).toInt();
- for (int m = 0; m < matchCount; m++) {
- final matchId = getMatchId(r, m);
- final nextMatchId = (r > 0) ? getMatchId(r - 1, m ~/ 2) : null;
-
- matchesMap[matchId] = {
- 'id': matchId,
- 'championship_id': championshipId,
- 'round_index': r,
- 'match_index': m,
- 'next_match_id': nextMatchId,
- 'home_team_id': null,
- 'home_team_name': null,
- 'away_team_id': null,
- 'away_team_name': null,
- 'home_score': null,
- 'away_score': null,
- 'winner_id': null,
- };
- }
- }
-
- // 2. Populate First Round (r = startRoundIndex)
- int firstRoundMatches = (pow(2, startRoundIndex)).toInt();
- for (int m = 0; m < firstRoundMatches; m++) {
- final matchId = getMatchId(startRoundIndex, m);
- final String? homeId = slots[m * 2];
- final String? awayId = slots[m * 2 + 1];
-
- final matchData = matchesMap[matchId]!;
- matchData['home_team_id'] = homeId;
- matchData['home_team_name'] = homeId != null ? teamMap[homeId] : null;
- matchData['away_team_id'] = awayId;
- matchData['away_team_name'] = awayId != null ? teamMap[awayId] : null;
-
- // BYE LOGIC handling
- if (homeId != null && awayId == null) {
- // Home team automatically advances via BYE
- matchData['winner_id'] = homeId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
- 
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- final isHomeSlot = m % 2 == 0;
- if (isHomeSlot) {
- nextMatch['home_team_id'] = homeId;
- nextMatch['home_team_name'] = teamMap[homeId];
- } else {
- nextMatch['away_team_id'] = homeId;
- nextMatch['away_team_name'] = teamMap[homeId];
- }
- }
- } else if (homeId == null && awayId != null) {
- // Away team automatically advances via BYE
- matchData['winner_id'] = awayId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
-
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- final isHomeSlot = m % 2 == 0;
- if (isHomeSlot) {
- nextMatch['home_team_id'] = awayId;
- nextMatch['home_team_name'] = teamMap[awayId];
- } else {
- nextMatch['away_team_id'] = awayId;
- nextMatch['away_team_name'] = teamMap[awayId];
- }
- }
- }
- }
-
- // 3. Cascade any subsequent BYE auto-advances for rounds r = startRoundIndex - 1 down to 1
- bool isSubtreeEmpty(int roundIdx, int matchIdx) {
- final mId = getMatchId(roundIdx, matchIdx);
- final mData = matchesMap[mId];
- if (mData == null) return true;
- if (mData['home_team_id'] != null || mData['away_team_id'] != null || mData['winner_id'] != null) {
- return false;
- }
- if (roundIdx < startRoundIndex) {
- bool homeSub = isSubtreeEmpty(roundIdx + 1, matchIdx * 2);
- bool awaySub = isSubtreeEmpty(roundIdx + 1, matchIdx * 2 + 1);
- return homeSub && awaySub;
- }
- return true;
- }
-
- for (int r = startRoundIndex - 1; r >= 1; r--) {
- int matchCount = (pow(2, r)).toInt();
- for (int m = 0; m < matchCount; m++) {
- final matchId = getMatchId(r, m);
- final matchData = matchesMap[matchId]!;
-
- final String? homeId = matchData['home_team_id'];
- final String? awayId = matchData['away_team_id'];
-
- final bool feederAwayEmpty = isSubtreeEmpty(r + 1, m * 2 + 1);
- final bool feederHomeEmpty = isSubtreeEmpty(r + 1, m * 2);
-
- if (homeId != null && awayId == null && feederAwayEmpty) {
- matchData['winner_id'] = homeId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
-
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- final isHomeSlot = m % 2 == 0;
- if (isHomeSlot) {
- nextMatch['home_team_id'] = homeId;
- nextMatch['home_team_name'] = teamMap[homeId];
- } else {
- nextMatch['away_team_id'] = homeId;
- nextMatch['away_team_name'] = teamMap[homeId];
- }
- }
- } else if (homeId == null && awayId != null && feederHomeEmpty) {
- matchData['winner_id'] = awayId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
-
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- final isHomeSlot = m % 2 == 0;
- if (isHomeSlot) {
- nextMatch['home_team_id'] = awayId;
- nextMatch['home_team_name'] = teamMap[awayId];
- } else {
- nextMatch['away_team_id'] = awayId;
- nextMatch['away_team_name'] = teamMap[awayId];
- }
- }
- }
- }
- }
-
- // 4. Bulk insert matches into database (Round 0 -> Round 1 -> Round 2 to satisfy next_match_id FK constraint)
- final allMatchesToInsert = matchesMap.values.toList();
- allMatchesToInsert.sort((a, b) => (a['round_index'] as int).compareTo(b['round_index'] as int));
+      // Delegate all bracket computation to the pure engine
+      final allMatchesToInsert = TournamentBracketEngine.buildKnockoutMatchList(
+        championshipId: championshipId,
+        bracketCapacity: bracketCapacity,
+        slots: slots,
+        teamMap: teamMap,
+      );
  if (allMatchesToInsert.isNotEmpty) {
  await _supabase.from('tournament_matches').insert(allMatchesToInsert);
  }
@@ -1675,71 +1378,15 @@ class TournamentRepository {
 
  final teams = await getTeamsByIds(teamIds);
  final teamMap = {for (var t in teams) t.id: t.name};
-
  final isTwoLegs = champDoc['is_two_legs'] == true || champDoc['isTwoLegs'] == true;
 
- final List<String?> teamList = List.from(teamIds);
- if (teamList.length % 2 != 0) {
- teamList.add(null);
- }
-
- final int numTeams = teamList.length;
- final int numWeeks = numTeams - 1;
- final int matchesPerWeek = numTeams ~/ 2;
-
- List<Map<String, dynamic>> matchesToInsert = [];
-
- for (int week = 0; week < numWeeks; week++) {
- for (int match = 0; match < matchesPerWeek; match++) {
- final homeIdx = (week + match) % (numTeams - 1);
- var awayIdx = (numTeams - 1 - match + week) % (numTeams - 1);
-
- if (match == 0) {
- awayIdx = numTeams - 1;
- }
-
- final homeId = teamList[homeIdx];
- final awayId = teamList[awayIdx];
-
- if (homeId != null && awayId != null) {
- final matchUuid = const Uuid().v4();
- matchesToInsert.add({
- 'id': matchUuid,
- 'championship_id': championshipId,
- 'round_index': 0,
- 'match_index': matchesToInsert.length,
- 'week_number': week + 1,
- 'stage': 'league',
- 'home_team_id': homeId,
- 'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
- 'away_team_id': awayId,
- 'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
- });
- }
- }
- }
-
- if (isTwoLegs) {
- final int firstLegWeeks = numWeeks;
- final int firstLegMatchesCount = matchesToInsert.length;
-
- for (int i = 0; i < firstLegMatchesCount; i++) {
- final m = matchesToInsert[i];
- final matchUuid = const Uuid().v4();
- matchesToInsert.add({
- 'id': matchUuid,
- 'championship_id': championshipId,
- 'round_index': 0,
- 'match_index': matchesToInsert.length,
- 'week_number': (m['week_number'] as int) + firstLegWeeks,
- 'stage': 'league',
- 'home_team_id': m['away_team_id'],
- 'home_team_name': m['away_team_name'],
- 'away_team_id': m['home_team_id'],
- 'away_team_name': m['home_team_name'],
- });
- }
- }
+ // Delegate league fixture generation to the pure engine
+ final matchesToInsert = TournamentBracketEngine.buildLeagueMatchList(
+  championshipId: championshipId,
+  teamIds: teamIds,
+  teamMap: teamMap,
+  isTwoLegs: isTwoLegs,
+ );
 
  if (matchesToInsert.isNotEmpty) {
  await _supabase.from('tournament_matches').insert(matchesToInsert);
@@ -1778,55 +1425,13 @@ class TournamentRepository {
  final teams = await getTeamsByIds(teamIds);
  final teamMap = {for (var t in teams) t.id: t.name};
 
- final shuffled = List<String>.from(teamIds)..shuffle(Random());
- final List<String> groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
- List<Map<String, dynamic>> matchesToInsert = [];
-
- for (int g = 0; g < numGroups; g++) {
- final String groupName = groupNames[g];
- final List<String> groupTeamIds = [];
-
- for (int i = 0; i < shuffled.length; i++) {
- if (i % numGroups == g) {
- groupTeamIds.add(shuffled[i]);
- }
- }
-
- final List<String?> teamList = List.from(groupTeamIds);
- if (teamList.length % 2 != 0) teamList.add(null);
-
- final int numTeams = teamList.length;
- final int numWeeks = numTeams - 1;
- final int matchesPerWeek = numTeams ~/ 2;
-
- for (int week = 0; week < numWeeks; week++) {
- for (int match = 0; match < matchesPerWeek; match++) {
- final homeIdx = (week + match) % (numTeams - 1);
- var awayIdx = (numTeams - 1 - match + week) % (numTeams - 1);
- if (match == 0) awayIdx = numTeams - 1;
-
- final homeId = teamList[homeIdx];
- final awayId = teamList[awayIdx];
-
- if (homeId != null && awayId != null) {
- matchesToInsert.add({
- 'id': const Uuid().v4(),
- 'championship_id': championshipId,
- 'round_index': 99,
- 'match_index': matchesToInsert.length,
- 'group_name': groupName,
- 'week_number': week + 1,
- 'stage': 'group_stage',
- 'home_team_id': homeId,
- 'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
- 'away_team_id': awayId,
- 'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
- });
- }
- }
- }
- }
+ // Delegate group fixture generation to the pure engine
+ final matchesToInsert = TournamentBracketEngine.buildGroupMatchList(
+  championshipId: championshipId,
+  teamIds: teamIds,
+  teamMap: teamMap,
+  numGroups: numGroups,
+ );
 
  if (matchesToInsert.isNotEmpty) {
  await _supabase.from('tournament_matches').insert(matchesToInsert);
@@ -1868,16 +1473,11 @@ class TournamentRepository {
  groupQualifiersMap[groupName] = groupList;
  }
 
- // FIX: Perform cross-group pairing with correct odd-group handling.
- // For an even number of groups (A,B,C,D): pair A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2.
- // For an odd number of groups (A,B,C): A & B are cross-paired, C's teams are
- // appended at the end and will automatically receive BYE slots in the first round.
  List<Map<String, String>> qualifiedTeams = [];
 
  if (numGroups >= 2 && qualifyingPerGroup >= 2) {
  for (int g = 0; g < numGroups; g += 2) {
  if (g + 1 < numGroups) {
- // ─── Even pair: cross-seed groups g and g+1 ───
  final g1 = groupNames[g];
  final g2 = groupNames[g + 1];
 
@@ -1889,16 +1489,12 @@ class TournamentRepository {
  final g2_1st = g2List.isNotEmpty ? g2List[0] : null;
  final g2_2nd = g2List.length > 1 ? g2List[1] : null;
 
- // Pair A1 vs B2
  if (g1_1st != null) qualifiedTeams.add(g1_1st);
  if (g2_2nd != null) qualifiedTeams.add(g2_2nd);
 
- // Pair B1 vs A2
  if (g2_1st != null) qualifiedTeams.add(g2_1st);
  if (g1_2nd != null) qualifiedTeams.add(g1_2nd);
  } else {
- // ─── Odd group: no paired group. Append teams at end; they'll get BYE
- // slots in the first knockout round and advance automatically. ───
  final g1 = groupNames[g];
  final g1List = groupQualifiersMap[g1] ?? [];
  qualifiedTeams.addAll(g1List);
@@ -1908,122 +1504,24 @@ class TournamentRepository {
  groupQualifiersMap.values.forEach(qualifiedTeams.addAll);
  }
 
- if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
+  if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
 
- final int totalKnockoutTeams = qualifiedTeams.length;
+  // Delegate Groups to Knockout seeding computation to the pure engine
+  final knockoutMatches = TournamentBracketEngine.buildKnockoutFromQualifiedTeams(
+   championshipId: championshipId,
+   qualifiedTeams: qualifiedTeams,
+  );
 
- // FIX: Dynamic bracket capacity — always nearest power of 2 ≥ totalKnockoutTeams.
- // This ensures an odd number of qualifiers (e.g. 6 from 3 groups × 2 each)
- // is correctly padded to 8 (next power of 2) with BYE slots, not left as 6.
- int targetCapacity = 2;
- while (targetCapacity < totalKnockoutTeams) {
- targetCapacity *= 2;
- }
-
- final int totalRounds = (log(targetCapacity) / log(2)).round();
- final int startRoundIndex = totalRounds - 1;
-
- final Map<String, String> matchUuidMap = {};
- String getMatchId(int r, int m) {
- final key = '${r}_$m';
- if (!matchUuidMap.containsKey(key)) {
- matchUuidMap[key] = const Uuid().v4();
- }
- return matchUuidMap[key]!;
- }
-
- // Build all rounds using a map (matchId → data) to allow BYE propagation
- final Map<String, Map<String, dynamic>> matchesMap = {};
-
- for (int r = startRoundIndex; r >= 0; r--) {
- final int matchCount = (pow(2, r)).toInt();
- for (int m = 0; m < matchCount; m++) {
- final matchId = getMatchId(r, m);
- final nextMatchId = (r > 0) ? getMatchId(r - 1, m ~/ 2) : null;
- matchesMap[matchId] = {
- 'id': matchId,
- 'championship_id': championshipId,
- 'round_index': r,
- 'match_index': m,
- 'next_match_id': nextMatchId,
- 'stage': 'knockout',
- 'home_team_id': null,
- 'home_team_name': null,
- 'away_team_id': null,
- 'away_team_name': null,
- 'winner_id': null,
- };
- }
- }
-
- // Seed first round with qualified teams (or null for BYE slots)
- // qualifiedTeams are already in cross-paired order; remaining slots are BYEs.
- final List<String?> slots = List.generate(targetCapacity, (i) {
- return i < qualifiedTeams.length ? qualifiedTeams[i]['id'] : null;
- });
- final List<String?> slotNames = List.generate(targetCapacity, (i) {
- return i < qualifiedTeams.length ? qualifiedTeams[i]['name'] : null;
- });
-
- final int firstRoundMatchCount = (pow(2, startRoundIndex)).toInt();
- for (int m = 0; m < firstRoundMatchCount; m++) {
- final matchId = getMatchId(startRoundIndex, m);
- final matchData = matchesMap[matchId]!;
- final String? homeId = slots[m * 2];
- final String? awayId = slots[m * 2 + 1];
-
- matchData['home_team_id'] = homeId;
- matchData['home_team_name'] = slotNames[m * 2];
- matchData['away_team_id'] = awayId;
- matchData['away_team_name'] = slotNames[m * 2 + 1];
-
- // BYE auto-advance: one team, no opponent → winner is determined immediately.
- if (homeId != null && awayId == null) {
- matchData['winner_id'] = homeId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- if (m % 2 == 0) {
- nextMatch['home_team_id'] = homeId;
- nextMatch['home_team_name'] = slotNames[m * 2];
- } else {
- nextMatch['away_team_id'] = homeId;
- nextMatch['away_team_name'] = slotNames[m * 2];
- }
- }
- } else if (homeId == null && awayId != null) {
- matchData['winner_id'] = awayId;
- matchData['home_score'] = 0;
- matchData['away_score'] = 0;
- final nextMatchId = matchData['next_match_id'];
- if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
- final nextMatch = matchesMap[nextMatchId]!;
- if (m % 2 == 0) {
- nextMatch['home_team_id'] = awayId;
- nextMatch['home_team_name'] = slotNames[m * 2 + 1];
- } else {
- nextMatch['away_team_id'] = awayId;
- nextMatch['away_team_name'] = slotNames[m * 2 + 1];
- }
- }
- }
- }
-
- final List<Map<String, dynamic>> knockoutMatches = matchesMap.values.toList();
- knockoutMatches.sort((a, b) => (a['round_index'] as int).compareTo(b['round_index'] as int));
-
- if (knockoutMatches.isNotEmpty) {
- await _supabase.from('tournament_matches').insert(knockoutMatches);
- }
-
-    debugPrint(' Successfully advanced group winners to Knockout stage with cross-group pairings (BYE-safe)!');
-    } catch (e) {
-      debugPrint('Error advancing groups to knockout: $e');
-      rethrow;
-    }
+  if (knockoutMatches.isNotEmpty) {
+  await _supabase.from('tournament_matches').insert(knockoutMatches);
   }
+
+     debugPrint(' Successfully advanced group winners to Knockout stage!');
+     } catch (e) {
+       debugPrint('Error advancing groups to knockout: $e');
+       rethrow;
+     }
+   }
 
   /// بث مباشر لحظي لتفاصيل بطولة معينة (Realtime Stream with REST Fallback)
   Stream<Championship?> getSingleChampionshipStream(String championshipId) async* {
