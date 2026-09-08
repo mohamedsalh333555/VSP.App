@@ -10,6 +10,7 @@ import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
 import '../services/paymob_service.dart';
+import 'booking/booking_domain_rules.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -570,11 +571,11 @@ class SupabaseBookingRepository implements BookingRepository {
  final booking = await getBookingById(bookingId);
  if (booking == null) return false;
 
- // Elo Fraud Prevention: Time-Lock Result Submission
- if (DateTime.now().toUtc().isBefore(booking.endTime.toUtc())) {
- VSPLogger.w(' Result submission blocked: Match has not ended yet for booking $bookingId');
- throw Exception("Cannot submit results before the match officially ends.");
- }
+  // Elo Fraud Prevention: Time-Lock Result Submission
+  if (BookingDomainRules.isResultSubmissionTimeLocked(booking.endTime, DateTime.now())) {
+  VSPLogger.w(' Result submission blocked: Match has not ended yet for booking $bookingId');
+  throw Exception("Cannot submit results before the match officially ends.");
+  }
 
  final currentMatchStatus = booking.matchResultStatus;
  final submittedBy = booking.resultSubmittedByTeamId;
@@ -689,8 +690,7 @@ class SupabaseBookingRepository implements BookingRepository {
           .where((b) {
             if (b.status == BookingStatus.cancelled) return false;
             if (b.status == BookingStatus.pending) {
-              final createdAtLocal = b.createdAt.toLocal();
-              final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
+              final isExpired = BookingDomainRules.isPendingBookingExpired(b.createdAt, DateTime.now());
               if (isExpired) return false;
             }
             return true;
@@ -722,10 +722,8 @@ class SupabaseBookingRepository implements BookingRepository {
               .where((b) {
                 if (b.status == BookingStatus.cancelled) return false;
 
-                // Fix: If booking is pending and older than 5 minutes without payment, ignore it (does not block slot)
                 if (b.status == BookingStatus.pending) {
-                  final createdAtLocal = b.createdAt.toLocal();
-                  final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
+                  final isExpired = BookingDomainRules.isPendingBookingExpired(b.createdAt, DateTime.now());
                   if (isExpired) return false;
                 }
 
@@ -829,12 +827,11 @@ class SupabaseBookingRepository implements BookingRepository {
  final createdAt = booking.createdAt;
  final startTime = booking.startTime;
 
- bool shouldExpire = false;
- if (now.difference(createdAt).inHours >= 4) {
- shouldExpire = true;
- } else if (startTime.difference(now).inHours <= 12) {
- shouldExpire = true;
- }
+  final shouldExpire = BookingDomainRules.shouldChallengeExpire(
+   createdAt: createdAt,
+   startTime: startTime,
+   now: now,
+  );
 
  if (shouldExpire) {
  await _supabase.from('bookings').update({
@@ -1008,21 +1005,17 @@ class SupabaseBookingRepository implements BookingRepository {
         throw Exception('قيمة العربون (${depositPaid.toStringAsFixed(0)} ج.م) لا يمكن أن تتجاوز إجمالي سعر الحجز (${booking.totalPrice.toStringAsFixed(0)} ج.م).');
       }
 
-      // ضبط تلقائي متسق لحالة الدفع لمنع التناقض المالي
-      String normalizedPaymentStatus = paymentStatus;
-      bool normalizedIsPaid = booking?.isPaid ?? false;
-      bool normalizedIsDepositPaid = isDepositPaid;
-
-      if (booking != null && booking.totalPrice > 0) {
-        if (depositPaid >= booking.totalPrice) {
-          normalizedPaymentStatus = 'paid';
-          normalizedIsPaid = true;
-          normalizedIsDepositPaid = true;
-        } else if (depositPaid > 0) {
-          normalizedPaymentStatus = 'deposit_paid';
-          normalizedIsDepositPaid = true;
-        }
-      }
+      // Normalize payment status using the pure domain rule engine
+      final normalized = BookingDomainRules.normalizeManualBookingPayment(
+        depositPaid: depositPaid,
+        totalPrice: booking?.totalPrice ?? 0,
+        currentIsPaid: booking?.isPaid ?? false,
+        currentIsDepositPaid: isDepositPaid,
+        currentPaymentStatus: paymentStatus,
+      );
+      final normalizedPaymentStatus = normalized.paymentStatus;
+      final normalizedIsPaid = normalized.isPaid;
+      final normalizedIsDepositPaid = normalized.isDepositPaid;
 
       await _supabase.from('bookings').update({
         'player_team_name': name.trim(),
