@@ -1,34 +1,29 @@
-import '../../../core/utils/app_date_formatter.dart';
-import '../../../l10n/app_localizations.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:async';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../../core/services/image_pick_service.dart';
-import 'package:geolocator/geolocator.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/vsp_back_button.dart';
-import '../../../core/ui/components/vsp_card.dart';
-import '../../../core/repositories/stadium_repository.dart';
-import '../../../core/services/storage_service.dart';
-import '../../../core/providers/auth_provider.dart' as app_auth;
-import 'package:provider/provider.dart';
-import '../../../shared/widgets/vsp_upload_widgets.dart';
-import '../../../core/utils/vsp_feedback.dart';
-import '../../../core/services/logger_service.dart';
-import '../../../core/constants/egypt_governorates.dart';
-import 'package:geocoding/geocoding.dart';
-import '../../../shared/widgets/custom_text_field.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/providers/auth_provider.dart' as app_auth;
+import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/services/image_pick_service.dart';
+import '../../../core/services/logger_service.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_feedback.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
+
+import '../widgets/add_stadium/add_stadium_location_picker_sheet.dart';
+import '../widgets/add_stadium/add_stadium_step_indicator.dart';
+import '../widgets/add_stadium/add_stadium_step1_details.dart';
+import '../widgets/add_stadium/add_stadium_step2_features.dart';
+import '../widgets/add_stadium/add_stadium_step3_images.dart';
 
 class AddStadiumWizard extends StatefulWidget {
  final String? stadiumId;
@@ -571,459 +566,42 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
 
 
- Future<void> _resolveLocationAndAddress(double lat, double lng) async {
- try {
- setState(() {
- _latitude = lat;
- _longitude = lng;
- });
- if (widget.stadiumId == null) {
- _saveDoubleToPrefs('lat', lat);
- _saveDoubleToPrefs('lng', lng);
- }
 
- List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng).timeout(const Duration(seconds: 5));
- if (placemarks.isNotEmpty) {
- final place = placemarks.first;
- final subLocality = place.subLocality ?? '';
- final locality = place.locality ?? '';
- final administrativeArea = place.administrativeArea ?? '';
-
- final readableAddress = EgyptGovernorates.formatSmartLocation(
- subLocality: subLocality,
- locality: locality,
- subAdministrativeArea: place.subAdministrativeArea,
- administrativeArea: administrativeArea,
- rawAddress: place.name,
- );
-
- setState(() {
- _locationController.text = readableAddress;
- final rawName = place.administrativeArea ?? place.subAdministrativeArea ?? place.locality;
- final resolved = EgyptGovernorates.resolveGoogleName(rawName);
- if (resolved != null) {
- _governorate = resolved;
- }
- VSPLogger.i(' Address resolved to: $readableAddress, Governorate: ${_governorate ?? "Unassigned"}');
- });
- if (widget.stadiumId == null) {
- _saveToPrefs('location', readableAddress);
- if (_governorate != null) {
- _saveToPrefs('governorate', _governorate!);
- }
- }
- } else {
- setState(() {
- _locationController.text = 'Lat: $lat, Long: $lng';
- });
- if (widget.stadiumId == null) {
- _saveToPrefs('location', 'Lat: $lat, Long: $lng');
- }
- }
- } catch (e) {
- VSPLogger.e(' Geocoding error', e);
- setState(() {
- _locationController.text = 'Lat: $lat, Long: $lng';
- });
- if (widget.stadiumId == null) {
- _saveToPrefs('location', 'Lat: $lat, Long: $lng');
- }
- }
- }
-
- Future<List<Map<String, dynamic>>> _searchLocation(String query, String langCode) async {
- final trimmedQuery = query.trim();
- if (trimmedQuery.isEmpty) return [];
-
- final List<Map<String, dynamic>> results = [];
- final Set<String> seen = {};
-
- // 1. Prioritize local search matches from EgyptGovernorates
- try {
- final isAr = langCode == 'ar';
- EgyptGovernorates.governorateToArabic.forEach((enName, arName) {
- if (enName.toLowerCase().contains(trimmedQuery.toLowerCase()) ||
- arName.contains(trimmedQuery)) {
- final displayName = isAr ? 'محافظة $arName - مصر' : '$enName Governorate, Egypt';
- if (!seen.contains(displayName)) {
- seen.add(displayName);
- results.add({
- 'display_name': displayName,
- 'governorate': enName,
- 'lat': 30.0444,
- 'lon': 31.2357,
- });
- }
- }
- });
- } catch (e) {
- debugPrint('Local governorate search notice: $e');
- }
-
- // 2. Native device geocoding first
- try {
- final locations = await locationFromAddress('$trimmedQuery, Egypt')
- .timeout(const Duration(seconds: 5));
- if (locations.isNotEmpty) {
- for (var loc in locations.take(3)) {
- final key = '${loc.latitude},${loc.longitude}';
- if (!seen.contains(key)) {
- seen.add(key);
- results.add({
- 'display_name': '$trimmedQuery, مصر',
- 'lat': loc.latitude,
- 'lon': loc.longitude,
- });
- }
- }
- }
- } catch (e) {
- debugPrint('Native geocoding notice: $e');
- }
-
- // 3. Fallback to OpenStreetMap Nominatim with 5s timeout and error handling
- if (results.isEmpty) {
- try {
- final url = Uri.parse(
- 'https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(trimmedQuery)}&countrycodes=eg&accept-language=$langCode&limit=5'
- );
- final response = await http.get(url, headers: {
- 'User-Agent': 'VSP_Application/1.0',
- }).timeout(const Duration(seconds: 5));
-
- if (response.statusCode == 200) {
- final List data = json.decode(response.body);
- for (var item in data) {
- final lat = double.tryParse(item['lat']?.toString() ?? '') ?? 0.0;
- final lon = double.tryParse(item['lon']?.toString() ?? '') ?? 0.0;
- final name = item['display_name'] ?? '';
- final key = '$lat,$lon';
- if (!seen.contains(key) && lat != 0.0 && lon != 0.0) {
- seen.add(key);
- results.add({
- 'display_name': name,
- 'lat': lat,
- 'lon': lon,
- });
- }
- }
- }
- } catch (e) {
- VSPLogger.e('Error searching location via Nominatim', e);
- }
- }
-
- return results;
- }
-
- Future<void> _openMapPicker() async {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- 
- setState(() => _isLocationLoading = true);
- 
- LatLng initialLocation = const LatLng(30.0444, 31.2357); // Cairo fallback
- 
- try {
- if (await Geolocator.isLocationServiceEnabled()) {
- LocationPermission permission = await Geolocator.checkPermission();
- if (permission == LocationPermission.denied) {
- permission = await Geolocator.requestPermission();
- }
- if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
- Position position = await Geolocator.getCurrentPosition(
- locationSettings: const LocationSettings(
- accuracy: LocationAccuracy.high,
- timeLimit: Duration(seconds: 5),
- ),
- );
- initialLocation = LatLng(position.latitude, position.longitude);
- }
- }
- } catch (e) {
- VSPLogger.w('Could not fetch location for map start: $e');
- } finally {
- setState(() => _isLocationLoading = false);
- }
-
- if (!mounted) return;
-
- LatLng selectedCoords = initialLocation;
- final MapController mapController = MapController();
- final TextEditingController searchController = TextEditingController();
- List<Map<String, dynamic>> searchResults = [];
- bool isSearching = false;
-
- Future<void> performSearch(String query, StateSetter setSheetState) async {
- if (query.trim().isEmpty) return;
- setSheetState(() {
- isSearching = true;
- });
- final results = await _searchLocation(query, isArabic ? 'ar' : 'en');
- setSheetState(() {
- searchResults = results;
- isSearching = false;
- });
- }
-
- await showModalBottomSheet<void>(
- context: context,
- isScrollControlled: true,
- backgroundColor: Colors.transparent,
- builder: (sheetContext) {
- return StatefulBuilder(
- builder: (BuildContext builderContext, StateSetter setSheetState) {
- return Container(
- height: MediaQuery.of(builderContext).size.height * 0.85,
- decoration: const BoxDecoration(
- color: VSPColors.background,
- borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
- ),
- child: ClipRRect(
- borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
- child: Stack(
- children: [
- FlutterMap(
- mapController: mapController,
- options: MapOptions(
- initialCenter: initialLocation,
- initialZoom: 15.0,
- interactionOptions: const InteractionOptions(
- flags: InteractiveFlag.all,
- ),
- onPositionChanged: (position, hasGesture) {
- selectedCoords = position.center;
- },
- ),
- children: [
- TileLayer(
- urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
- userAgentPackageName: 'com.vsp.app',
- ),
- ],
- ),
- Align(
- alignment: Alignment.center,
- child: Container(
- transform: Matrix4.translationValues(0, -20, 0),
- child: const Icon(Iconsax.location_copy,
- color: VSPColors.accent,
- size: 48,
- shadows: [
- Shadow(
- color: Colors.black45,
- offset: Offset(0, 4),
- blurRadius: 6,
- ),
- ],
- ),
- ),
- ),
- 
- // Floating Search Overlay
- Positioned(
- top: 16,
- left: 16,
- right: 16,
- child: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 12),
- decoration: BoxDecoration(
- color: VSPColors.surface.withValues(alpha: 0.95),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider),
- boxShadow: const [
- BoxShadow(
- color: Colors.black26,
- blurRadius: 10,
- offset: Offset(0, 4),
- ),
- ],
- ),
- child: Row(
- children: [
- const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 22),
- const SizedBox(width: 8),
- Expanded(
- child: TextField(
- controller: searchController,
- textInputAction: TextInputAction.search,
- style: const TextStyle(color: Colors.white, fontSize: 14),
- decoration: InputDecoration(
- border: InputBorder.none,
- hintText: isArabic 
- ? 'ابحث عن منطقة، شارع أو مدينة في مصر...' 
- : 'Search area, street or city in Egypt...',
- hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
- ),
- onSubmitted: (val) => performSearch(val, setSheetState),
- ),
- ),
- if (isSearching)
- const SizedBox(
- width: 18,
- height: 18,
- child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
- )
- else if (searchController.text.isNotEmpty)
- IconButton(
- icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
- onPressed: () {
- searchController.clear();
- setSheetState(() {
- searchResults = [];
- });
- },
- ),
- ],
- ),
- ),
- if (searchResults.isNotEmpty) ...[
- const SizedBox(height: 6),
- Container(
- constraints: const BoxConstraints(maxHeight: 200),
- decoration: BoxDecoration(
- color: VSPColors.surface.withValues(alpha: 0.95),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider),
- ),
- child: ListView.separated(
- shrinkWrap: true,
- padding: EdgeInsets.zero,
- itemCount: searchResults.length,
- separatorBuilder: (context, index) => const Divider(color: VSPColors.divider, height: 1),
- itemBuilder: (context, index) {
- final result = searchResults[index];
- return ListTile(
- dense: true,
- leading: const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 18),
- title: Text(
- result['display_name'],
- maxLines: 2,
- overflow: TextOverflow.ellipsis,
- style: const TextStyle(color: Colors.white, fontSize: 13),
- ),
- onTap: () {
- final target = LatLng(result['lat'], result['lon']);
- selectedCoords = target;
- mapController.move(target, 16.0);
- setSheetState(() {
- searchResults = [];
- });
- },
- );
- },
- ),
- ),
- ],
- ],
- ),
- ),
- 
- Positioned(
- top: 16,
- right: 16,
- child: Container(
- decoration: BoxDecoration(
- color: VSPColors.surface,
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.divider),
- ),
- child: IconButton(
- icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 20),
- onPressed: () => Navigator.pop(sheetContext),
- ),
- ),
- ),
- 
- // Floating GPS button
- Positioned(
- bottom: MediaQuery.of(builderContext).padding.bottom + 109,
- right: 16,
- child: Container(
- decoration: BoxDecoration(
- color: VSPColors.surface.withValues(alpha: 0.95),
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.divider),
- boxShadow: const [
- BoxShadow(
- color: Colors.black26,
- blurRadius: 6,
- offset: Offset(0, 3),
- ),
- ],
- ),
- child: IconButton(
- icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 24),
- onPressed: () async {
- setSheetState(() {
- isSearching = true;
- });
- try {
- Position position = await Geolocator.getCurrentPosition(
- locationSettings: const LocationSettings(
- accuracy: LocationAccuracy.high,
- timeLimit: Duration(seconds: 5),
- ),
- );
- final target = LatLng(position.latitude, position.longitude);
- selectedCoords = target;
- mapController.move(target, 16.0);
- } catch (e) {
- if (mounted) {
- VSPFeedback.showError(context, 'Could not fetch current GPS location');
- }
- } finally {
- setSheetState(() {
- isSearching = false;
- });
- }
- },
- ),
- ),
- ),
- 
- Positioned(
- bottom: MediaQuery.of(builderContext).padding.bottom + 16,
- left: 16,
- right: 16,
- child: ElevatedButton(
- onPressed: () async {
- Navigator.pop(sheetContext);
- setState(() => _isLocationLoading = true);
- await _resolveLocationAndAddress(selectedCoords.latitude, selectedCoords.longitude);
- if (!mounted) return;
- setState(() => _isLocationLoading = false);
- VSPFeedback.showSuccess(
- context,
- isArabic ? 'تم تحديد موقع الملعب بنجاح! ' : 'Stadium location selected successfully! ',
- );
- },
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- padding: const EdgeInsets.symmetric(vertical: 16),
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.md),
- ),
- elevation: 8,
- ),
- child: Text(
- isArabic ? 'تأكيد الموقع' : 'Confirm Location',
- style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
- ),
- ),
- ),
- ],
- ),
- ),
- );
- },
- );
- },
- );
- }
+  Future<void> _openMapPicker() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLocationLoading = true);
+    try {
+      final result = await AddStadiumLocationPickerSheet.show(
+        context,
+        initialLat: _latitude,
+        initialLng: _longitude,
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _latitude = result.latitude;
+          _longitude = result.longitude;
+          _locationController.text = result.address;
+          if (result.governorate != null) {
+            _governorate = result.governorate;
+          }
+        });
+        if (widget.stadiumId == null) {
+          _saveDoubleToPrefs('lat', result.latitude);
+          _saveDoubleToPrefs('lng', result.longitude);
+          _saveToPrefs('location', result.address);
+          if (result.governorate != null) {
+            _saveToPrefs('governorate', result.governorate!);
+          }
+        }
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم تحديد موقع الملعب بنجاح! 📍' : 'Stadium location selected successfully! 📍',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLocationLoading = false);
+    }
+  }
 
  Future<void> _selectTime(BuildContext context, bool isMainStart) async {
  final TimeOfDay? picked = await showTimePicker(
@@ -1544,959 +1122,127 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
  // --- UI Building ---
 
- @override
- Widget build(BuildContext context) {
- return PopScope(
- canPop: false,
- onPopInvokedWithResult: (didPop, result) async {
- if (didPop) return;
- if (_currentStep > 0) {
- _previousPage();
- return;
- }
- final shouldLeave = await _showDiscardConfirmation();
- if (shouldLeave && context.mounted) {
- Navigator.pop(context);
- }
- },
- child: Scaffold(
- backgroundColor: VSPColors.background,
- appBar: AppBar(
- backgroundColor: VSPColors.background,
- leading: VSPBackButton(onTap: _previousPage),
- title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
- centerTitle: true,
- elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: const Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
- ),
- body: GestureDetector(
- onTap: () => FocusScope.of(context).unfocus(),
- behavior: HitTestBehavior.opaque,
- child: SafeArea(
- child: Column(
- children: [
- const SizedBox(height: 10),
- _buildStepIndicator(),
- const SizedBox(height: 20),
- Expanded(
- child: PageView(
- controller: _pageController,
- physics: const NeverScrollableScrollPhysics(),
- children: [
- _buildStep1Details(),
- _buildStep2Features(),
- _buildStep3Images(),
- ],
- ),
- ),
- ],
- ),
- ),
- ),
- ),
- );
- }
 
- Widget _buildStepIndicator() {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final labels = [
- isArabic ? 'البيانات' : 'Details',
- isArabic ? 'الخدمات' : 'Features',
- isArabic ? 'الصور' : 'Photos',
- ];
-
- // Goal Gradient Effect progress calculations
- final bool isEditing = widget.stadiumId != null;
- final int percent = _currentStep == 0 ? 33 : (_currentStep == 1 ? 66 : 100);
- final String progressText = isEditing
- ? (isArabic ? ' تعديل بيانات وتفاصيل الملعب الحالي' : ' Editing current stadium details')
- : (_currentStep == 0
- ? (isArabic ? ' الخطوة 1 من 3: أدخل البيانات الأساسية للملعب' : ' Step 1 of 3: Enter basic details')
- : (_currentStep == 1
- ? (isArabic ? ' الخطوة 2 من 3: حدد الميزات والخدمات المتاحة' : ' Step 2 of 3: Select features & options')
- : (isArabic ? ' الخطوة 3 من 3: أضف صور الملعب والمعاينة النهائية' : ' Step 3 of 3: Add photos & preview')));
-
- return Padding(
- padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
- child: Column(
- children: [
- // Goal Gradient Progress Banner (Only shown when adding a new stadium)
- if (!isEditing)
- Container(
- width: double.infinity,
- padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
- margin: const EdgeInsets.only(bottom: 12),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.1),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
- ),
- child: Row(
- children: [
- Expanded(
- child: Text(
- progressText,
- style: const TextStyle(
- color: VSPColors.accent,
- fontSize: 12,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
- decoration: BoxDecoration(
- color: VSPColors.accent,
- borderRadius: BorderRadius.circular(10),
- ),
- child: Text(
- '$percent%',
- style: const TextStyle(
- color: Colors.black,
- fontSize: 11,
- fontWeight: FontWeight.w900,
- ),
- ),
- ),
- ],
- ),
- ),
-
- // Stepper Lines and Circles
- Stack(
- children: [
- // Background Connecting Lines
- Positioned(
- left: 28 / 2 + 12,
- right: 28 / 2 + 12,
- top: 28 / 2 - 1,
- child: Row(
- children: [
- Expanded(
- child: Container(
- height: 2,
- color: _currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
- ),
- ),
- Expanded(
- child: Container(
- height: 2,
- color: _currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
- ),
- ),
- ],
- ),
- ),
- // Stepper Circles and Text
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: List.generate(3, (i) {
- final isActive = i <= _currentStep;
- final isCurrent = i == _currentStep;
- return Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Container(
- width: 28,
- height: 28,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- color: isActive ? VSPColors.accent : VSPColors.surface,
- border: Border.all(
- color: isActive ? VSPColors.accent : VSPColors.divider,
- width: 2,
- ),
- ),
- child: Center(
- child: i < _currentStep
- ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
- : Text(
- '${i + 1}',
- style: TextStyle(
- color: isActive ? Colors.black : VSPColors.textSecondary,
- fontSize: 12,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- ),
- const SizedBox(height: 4),
- Text(
- labels[i],
- style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
- fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
- fontSize: 9,
- ),
- ),
- ],
- );
- }),
- ),
- ],
- ),
- ],
- ),
- );
- }
-
- // --- Steps ---
-
- Widget _buildStep1Details() {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
- padding: EdgeInsets.only(
- left: VSPSpacing.md,
- right: VSPSpacing.md,
- top: VSPSpacing.md,
- bottom: MediaQuery.of(context).viewInsets.bottom > 0
- ? MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md
- : (MediaQuery.of(context).padding.bottom > 0
- ? MediaQuery.of(context).padding.bottom + VSPSpacing.md
- : VSPSpacing.md),
- ),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- // Single Unified Interactive Location Selector Field
- Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- AppLocalizations.of(context)!.location,
- style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
- ),
- const SizedBox(height: VSPSpacing.xs),
- GestureDetector(
- onTap: (widget.stadiumId != null || _isLocationLoading) ? null : _openMapPicker,
- child: Container(
- width: double.infinity,
- height: VSPSize.inputHeight,
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.input),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
- ),
- child: Row(
- children: [
- Icon(
- widget.stadiumId != null ? Iconsax.lock_copy : Iconsax.location_copy,
- color: VSPColors.accent,
- size: 20,
- ),
- const SizedBox(width: 12),
- Expanded(
- child: Text(
- _locationController.text.isNotEmpty
- ? _locationController.text
- : (isArabic ? 'اضغط لتحديد موقع الملعب على الخريطة ' : 'Tap to select stadium location on map '),
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- style: TextStyle(
- color: _locationController.text.isNotEmpty ? Colors.white : VSPColors.textSecondary,
- fontSize: 13,
- fontWeight: _locationController.text.isNotEmpty ? FontWeight.bold : FontWeight.normal,
- ),
- ),
- ),
- if (_isLocationLoading)
- const SizedBox(
- width: 18,
- height: 18,
- child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
- )
- else if (_locationController.text.isNotEmpty)
- const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18)
- else
- Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 18),
- ],
- ),
- ),
- ),
- ],
- ),
- const SizedBox(height: 16),
- _buildTextField(AppLocalizations.of(context)!.stadiumName, isArabic ? 'أدخل اسم ملعبك' : 'Enter Stadium Name', controller: _nameController, maxLength: 50),
- const SizedBox(height: 16),
- _buildTextField(
- isArabic ? 'رقم هاتف الملعب' : 'Stadium Phone Number',
- '01xxxxxxxxx',
- controller: _stadiumPhoneController,
- maxLength: 15,
- keyboardType: TextInputType.phone,
- inputFormatters: [FilteringTextInputFormatter.digitsOnly],
- ),
- const SizedBox(height: 16),
- _buildSportDropdown(),
- const SizedBox(height: 16),
- _buildTextField(
- AppLocalizations.of(context)!.pricePerHour, 
- '0.0', 
- controller: _priceController, 
- maxLength: 7,
- keyboardType: const TextInputType.numberWithOptions(decimal: true),
- inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
- ),
- const SizedBox(height: 16),
- _buildTextField(
- AppLocalizations.of(context)!.playersTeam, 
- isArabic ? "اكتب رقم عدد الفريق الواحد" : "Write the number of players for a single team", 
- controller: _capacityController,
- maxLength: 2,
- keyboardType: TextInputType.number,
- inputFormatters: [FilteringTextInputFormatter.digitsOnly],
- ),
- const SizedBox(height: 16),
- 
- Text(AppLocalizations.of(context)!.workingHours, style: const TextStyle(color: VSPColors.textSecondary)),
- Row(children: [
- Expanded(child: GestureDetector(onTap: () => _selectTime(context, true), child: _buildTimeBox(_formatTime(_startTime, AppLocalizations.of(context)!.start), isSelected: _startTime != null))),
- const SizedBox(width: 10),
- Expanded(child: GestureDetector(onTap: () => _selectTime(context, false), child: _buildTimeBox(_formatTime(_endTime, AppLocalizations.of(context)!.end), isSelected: _endTime != null))),
- ]),
- if (_endTime != null) ...[
- const SizedBox(height: 8),
- Row(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
- const SizedBox(width: 6),
- Expanded(
- child: Builder(
- builder: (context) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final selectedEndStr = _formatTime(_endTime, '');
- 
- return Text(
- isArabic 
- ? "ملاحظة: اختيار وقت الإغلاق ($selectedEndStr) يعني أن الملعب يغلق فعلياً وينتهي آخر حجز في هذا الوقت."
- : "Note: Selecting closing time ($selectedEndStr) means the pitch actually closes and the last booking ends at this time.",
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
- );
- }
- ),
- ),
- ],
- ),
- ],
- 
- const SizedBox(height: 12),
- // Break Time Switch
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(AppLocalizations.of(context)!.setDailyBreak, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
- Switch.adaptive(
- value: _isSplitShift,
- onChanged: _updateIsSplitShift,
- activeColor: VSPColors.accent,
- ),
- ],
- ),
- 
- if (_isSplitShift) ...[
- const SizedBox(height: 8),
- ..._breakTimes.asMap().entries.map((entry) {
- final index = entry.key;
- final bt = entry.value;
- final bStart = bt['start'];
- final bEnd = bt['end'];
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- if (index > 0) const SizedBox(height: 12),
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(
- isArabic ? 'فترة راحة ${index + 1}' : 'Break ${index + 1}',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
- ),
- if (_breakTimes.length > 1)
- IconButton(
- padding: EdgeInsets.zero,
- constraints: const BoxConstraints(),
- icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
- onPressed: () {
- setState(() {
- _breakTimes.removeAt(index);
- });
- },
- ),
- ],
- ),
- const SizedBox(height: 6),
- Row(children: [
- Expanded(child: GestureDetector(onTap: () => _selectTimeForBreak(context, index, true), child: _buildTimeBox(_formatTime(bStart, AppLocalizations.of(context)!.breakStart), isSelected: bStart != null))),
- const SizedBox(width: 10),
- Expanded(child: GestureDetector(onTap: () => _selectTimeForBreak(context, index, false), child: _buildTimeBox(_formatTime(bEnd, AppLocalizations.of(context)!.breakEnd), isSelected: bEnd != null))),
- ]),
- ],
- );
- }),
- const SizedBox(height: 12),
- Align(
- alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
- child: TextButton.icon(
- onPressed: () {
- setState(() {
- _breakTimes.add({'start': null, 'end': null});
- });
- },
- icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),
- label: Text(
- isArabic ? 'إضافة فترة راحة أخرى' : 'Add Another Break', 
- style: const TextStyle(color: VSPColors.accent, fontSize: 13),
- ),
- ),
- ),
- if (!_isSplitShiftValid) ...[
- const SizedBox(height: 8),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
- decoration: BoxDecoration(
- color: VSPColors.error.withValues(alpha: 0.1),
- borderRadius: BorderRadius.circular(VSPRadius.sm),
- border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
- ),
- child: Row(
- children: [
- const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 16),
- const SizedBox(width: 8),
- Expanded(
- child: Text(
- isArabic
- ? 'ساعات الراحة يجب أن تكون داخل مواعيد العمل الرسمية للملعب!'
- : 'Break hours must fall strictly inside the opening and closing hours!',
- style: const TextStyle(color: VSPColors.error, fontSize: 12),
- ),
- ),
- ],
- ),
- ),
- ],
- ],
- 
- const SizedBox(height: 16),
- Row(children: [
- Expanded(child: _buildTextField(
- isArabic ? 'الطول (متر)' : 'Length', 
- isArabic ? 'متر' : 'm', 
- controller: _lengthController,
- keyboardType: TextInputType.number,
- inputFormatters: [FilteringTextInputFormatter.digitsOnly],
- )),
- const SizedBox(width: 10),
- Expanded(child: _buildTextField(
- isArabic ? 'العرض (متر)' : 'Width', 
- isArabic ? 'متر' : 'm', 
- controller: _widthController,
- keyboardType: TextInputType.number,
- inputFormatters: [FilteringTextInputFormatter.digitsOnly],
- )),
- ]),
- 
- const SizedBox(height: 16),
- _buildTextField(
- isArabic ? 'ملاحظات وتعليمات الملعب' : 'Notes', 
- isArabic 
- ? 'مثال: الحضور قبل الموعد بـ 10 دقائق، الحفاظ على أرضية الملعب...' 
- : 'Ex: We ensure a professional environment. Please arrive on time...', 
- controller: _notesController, 
- maxLines: 3,
- maxLength: 500,
- ),
- const SizedBox(height: 8),
- SingleChildScrollView(
- keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
- scrollDirection: Axis.horizontal,
- child: Row(
- children: (isArabic 
- ? ['الالتزام بالموعد', 'الحفاظ على النظافة', 'ممنوع التدخين', 'إحضار الكرة الخاصة بك']
- : ['Punctuality', 'Cleanliness', 'No Smoking', 'Bring your own ball'])
- .map((template) => Padding(
- padding: const EdgeInsets.only(right: 8),
- child: ActionChip(
- label: Text(template, style: const TextStyle(fontSize: 12)),
- backgroundColor: VSPColors.surface,
- labelStyle: const TextStyle(color: VSPColors.accent),
- onPressed: () {
- final currentText = _notesController.text;
- final prefix = currentText.isEmpty ? '' : '$currentText\n';
- setState(() => _notesController.text = '$prefix• $template');
- },
- ),
- )).toList(),
- ),
- ),
-
- const SizedBox(height: 30),
- _buildPrimaryButton(isArabic ? 'متابعة' : 'Continue', _nextPage),
- SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
- ],
- ),
- );
- }
-
- Widget _buildStep2Features() {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return SingleChildScrollView(
- keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
- padding: EdgeInsets.only(
- left: VSPSpacing.md,
- right: VSPSpacing.md,
- top: VSPSpacing.md,
- bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
- ),
- child: Column(
- children: [
- _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == null ? null : _selectedBathOption == 'Yes', _updateBathOption),
- const SizedBox(height: 20),
- _buildYesNoSection(AppLocalizations.of(context)!.cafeteria, _cafeteria, _updateCafeteria),
- const SizedBox(height: 20),
- _buildYesNoSection(AppLocalizations.of(context)!.garage, _garage, _updateGarage),
- const SizedBox(height: 20),
- _buildYesNoSection(AppLocalizations.of(context)!.changingRoom, _changingRoom, _updateChangingRoom),
- const SizedBox(height: 20),
- _buildTextField(
- AppLocalizations.of(context)!.seatCount, 
- '0', 
- controller: _seatsController,
- maxLength: 5,
- keyboardType: TextInputType.number,
- inputFormatters: [FilteringTextInputFormatter.digitsOnly],
- ),
- 
- const SizedBox(height: 30),
- const Divider(color: VSPColors.divider),
- const SizedBox(height: 20),
- 
- Align(
- alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
- child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
- ),
- const SizedBox(height: 16),
- _buildYesNoSection(AppLocalizations.of(context)!.ballAvailableLabel, _hasBall, _updateHasBall),
- 
- if (_hasBall == true) ...[
- const SizedBox(height: 16),
- _buildTextField(
- isArabic ? 'سعر تأجير الكرة (ج.م)' : 'Ball Rental Price (EGP)', 
- '0.0', 
- controller: _ballPriceController,
- maxLength: 5,
- keyboardType: const TextInputType.numberWithOptions(decimal: true),
- inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
- ),
- ],
- const SizedBox(height: 20),
- const Divider(color: VSPColors.divider),
- const SizedBox(height: 20),
- // ── Deposit (العربون) ──
- Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Row(
- children: [
- const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 18),
- const SizedBox(width: 8),
- Text(
- isArabic ? 'اشتراط عربون حجز' : 'Require Booking Deposit',
- style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
- ),
- ],
- ),
- Switch.adaptive(
- value: _requireDeposit,
- onChanged: _updateRequireDeposit,
- activeColor: VSPColors.accent,
- ),
- ],
- ),
- const SizedBox(height: 4),
- Text(
- isArabic 
- ? 'اشتراط دفع عربون مسبق لا يتجاوز 50% من سعر الساعة.'
- : 'Require upfront deposit that cannot exceed 50% of the hourly stadium price.',
- style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
- ),
- if (_requireDeposit) ...[
- const SizedBox(height: 12),
- _buildTextField(
- isArabic ? 'قيمة العربون (ج.م)' : 'Deposit Amount (EGP)',
- '0',
- controller: _depositController,
- maxLength: 7,
- keyboardType: const TextInputType.numberWithOptions(decimal: true),
- inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
- ),
- ],
- ],
- ),
- const SizedBox(height: 40),
- _buildPrimaryButton(isArabic ? 'متابعة' : 'Continue', _nextPage),
- SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
- ],
- ),
- );
- }
-
- Widget _buildStep3Images() {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return SingleChildScrollView(
- keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
- padding: EdgeInsets.only(
- left: VSPSpacing.md,
- right: VSPSpacing.md,
- top: VSPSpacing.md,
- bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
- ),
- child: Column(
- children: [
- Text(
- AppLocalizations.of(context)!.stadiumGallery,
- style: Theme.of(context).textTheme.displaySmall,
- ),
- const SizedBox(height: VSPSpacing.xs),
- Text(
- AppLocalizations.of(context)!.stadiumPhotosHint,
- style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
- ),
- const SizedBox(height: 24),
- 
- VspUploadMainCard(
- title: isArabic ? 'إضافة صورة جديدة' : 'Add New Photo',
- helper: isArabic ? 'صور JPG, JPEG, PNG أقل من 10 ميجابايت' : 'JPG, JPEG, PNG less than 10MB',
- isLoading: _isUploading,
- onTap: _pickImage,
- ),
- 
- const SizedBox(height: 20),
- 
- if (_images.isNotEmpty)
- Column(
- children: _images.asMap().entries.map((entry) {
- final index = entry.key;
- final img = entry.value;
- return _buildUploadCard(
- title: isArabic ? 'صورة الملعب ${index + 1}' : 'Stadium Photo ${index + 1}',
- fileUrl: img['url'],
- isUploading: img['isUploading'] ?? false,
- progress: img['progress'] ?? 0,
-                  statusLabel: img['statusLabel'],
- onTap: _pickImage, 
- onDelete: () async {
- if (img['url'] != null) {
- await _storageService.deleteFile(img['url']!);
- }
- setState(() => _images.remove(img));
- },
- thumbnail: img['url'] != null 
- ? ClipRRect(
- borderRadius: BorderRadius.circular(8),
- child: CachedNetworkImage(
- imageUrl: img['url']!,
- width: 40,
- height: 40,
- fit: BoxFit.cover,
- memCacheWidth: 100,
- memCacheHeight: 100,
- placeholder: (_, __) => Container(width: 40, height: 40, color: VSPColors.surface),
- errorWidget: (_, __, ___) => const Icon(Iconsax.image_copy, size: 20),
- ),
- )
- : (img['file'] != null 
- ? ClipRRect(
- borderRadius: BorderRadius.circular(8),
- child: Image.file(img['file']!, width: 40, height: 40, fit: BoxFit.cover),
- )
- : null),
- );
- }).toList(),
- ),
-
- const SizedBox(height: 40),
- _buildPrimaryButton(isArabic ? 'إرسال الملعب' : 'Submit Stadium', _nextPage, isLoading: _isSaving),
- SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
- ],
- ),
- );
- }
-
-
-
- // --- Widgets ---
-
- Widget _buildTextField(
- String label, 
- String hint, {
- required TextEditingController controller, 
- bool readOnly = false, 
- int maxLines = 1,
- int? maxLength,
- TextInputType? keyboardType,
- List<TextInputFormatter>? inputFormatters,
- }) {
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
- const SizedBox(height: VSPSpacing.xs),
- CustomTextField(
- controller: controller,
- hintText: hint,
- keyboardType: keyboardType ?? (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
- maxLength: maxLength,
- maxLines: maxLines,
- inputFormatters: inputFormatters,
- onChanged: (val) {
- if (readOnly) {
- // If it's read only but somehow changed (not ideal for CustomTextField but keeping simple)
- }
- },
- ),
- ],
- );
- }
-
- String _getLocalizedSport(String sport, bool isAr) {
- if (!isAr) return sport;
- switch (sport) {
- case 'Football':
- return 'كرة القدم';
- case 'Basketball':
- return 'كرة السلة';
- case 'Volleyball':
- return 'الكرة الطائرة';
- case 'Padel':
- return 'بادل';
- case 'Handball':
- return 'كرة اليد';
- case 'Tennis':
- return 'تنس';
- default:
- return sport;
- }
- }
-
- Widget _buildSportDropdown() {
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- AppLocalizations.of(context)!.sportTypeLabel,
- style: Theme.of(context).textTheme.labelMedium?.copyWith(
- color: VSPColors.textSecondary,
- ),
- ),
- const SizedBox(height: VSPSpacing.xs),
- Container(
- height: VSPSize.inputHeight,
- padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.input),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
- ),
- child: DropdownButtonHideUnderline(
- child: DropdownButton<String>(
- value: _selectedSportType,
- hint: Text(
- AppLocalizations.of(context)!.selectSport,
- style: Theme.of(context).textTheme.bodyMedium?.copyWith(
- color: VSPColors.textSecondary,
- ),
- ),
- dropdownColor: VSPColors.surface,
- isExpanded: true,
- items: VSPConstants.sports
- .map((e) => DropdownMenuItem(
- value: e,
- child: Text(_getLocalizedSport(e, isAr), style: Theme.of(context).textTheme.bodyMedium),
- ))
- .toList(),
- onChanged: (val) => setState(() => _selectedSportType = val),
- ),
- ),
- ),
- ],
- );
- }
-
- Widget _buildTimeBox(String text, {bool isSelected = false}) {
- return Container(
- height: VSPSize.inputHeight,
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accentSoft : VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.input),
- border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.1)),
- ),
- child: Center(child: Text(text, style: TextStyle(color: isSelected ? VSPColors.accent : VSPColors.textPrimary))),
- );
- }
-
- Widget _buildYesNoSection(String label, bool? value, ValueChanged<bool> onChanged) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(label, style: const TextStyle(color: Colors.white)),
- Row(
- children: [
- _optionBtn(isArabic ? 'نعم' : 'Yes', value == true, () => onChanged(true)),
- const SizedBox(width: 10),
- _optionBtn(isArabic ? 'لا' : 'No', value != null && value == false, () => onChanged(false)),
- ],
- )
- ],
- );
- }
-
- Widget _optionBtn(String text, bool selected, VoidCallback onTap) {
- return GestureDetector(
- onTap: onTap,
- child: Container(
- padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
- decoration: BoxDecoration(
- color: selected ? VSPColors.accent : VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- ),
- child: Text(text, style: TextStyle(color: selected ? Colors.black : VSPColors.textPrimary)),
- ),
- );
- }
-
- Widget _buildPrimaryButton(String text, VoidCallback onPressed, {bool isLoading = false}) {
- return AnimatedOpacity(
- duration: const Duration(milliseconds: 500),
- opacity: 1.0, // Always visible for now, but could be tied to form validity logic
- child: PrimaryButton(
- text: text,
- onPressed: isLoading ? () {} : onPressed,
- isLoading: isLoading,
- ),
- );
- }
-
-  Widget _buildUploadCard({
-    required String title,
-    required String? fileUrl,
-    required bool isUploading,
-    required int progress,
-    String? statusLabel,
-    required VoidCallback onTap,
-    required VoidCallback onDelete,
-    Widget? thumbnail,
-  }) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return InkWell(
- onTap: fileUrl == null ? onTap : null,
- child: VSPCard(
- padding: const EdgeInsets.all(VSPSpacing.md),
- margin: const EdgeInsets.only(bottom: VSPSpacing.md),
- child: Row(
- children: [
- if (thumbnail != null)
- Stack(
- clipBehavior: Clip.none,
- children: [
- thumbnail,
- if (fileUrl != null)
- Positioned(
- right: -4,
- bottom: -4,
- child: Container(
- decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
- padding: const EdgeInsets.all(1),
- child: const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
- ),
- ),
- ],
- )
- else
- Icon(
- fileUrl != null ? Iconsax.tick_circle_copy : Iconsax.export_3_copy,
- color: fileUrl != null ? Colors.green : VSPColors.accent,
- size: 32,
- ),
- const SizedBox(width: 12),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- title,
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
- ),
- const SizedBox(height: 4),
- if (isUploading)
- Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- children: [
- const SizedBox(
- width: 12,
- height: 12,
- child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
- ),
- const SizedBox(width: 6),
- Text(
- isArabic ? "جاري الرفع... $progress%" : "Uploading... $progress%",
- style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600),
- ),
- ],
- ),
- const SizedBox(height: 6),
- ClipRRect(
- borderRadius: BorderRadius.circular(4),
- child: LinearProgressIndicator(
- value: (progress <= 0) ? null : progress / 100.0,
- backgroundColor: Colors.orange.withValues(alpha: 0.2),
- color: Colors.orange,
- minHeight: 4,
- ),
- ),
- ],
- )
- else if (fileUrl != null)
- Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
- const SizedBox(width: 4),
- Text(
- isArabic ? "تم الرفع بنجاح" : "Uploaded successfully",
- style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
- ),
- ],
- )
- else
- Text(
- isArabic ? "اضغط للرفع" : "Tap to upload (JPG, PNG <10MB)",
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
- ),
- ],
- ),
- ),
- if (fileUrl != null) ...[
- const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 22),
- const SizedBox(width: 8),
- ],
- IconButton(
- icon: const Icon(Iconsax.trash_copy, color: Colors.red),
- onPressed: onDelete,
- ),
- ],
- ),
- ),
- );
- }
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (_currentStep > 0) {
+          _previousPage();
+          return;
+        }
+        final shouldLeave = await _showDiscardConfirmation();
+        if (shouldLeave && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: VSPColors.background,
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          leading: VSPBackButton(onTap: _previousPage),
+          title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
+          centerTitle: true,
+          elevation: 0,
+          actions: [
+            if (widget.stadiumId != null)
+              IconButton(
+                icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
+                onPressed: () => _showDeleteConfirmationDialog(),
+              ),
+          ],
+        ),
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                AddStadiumStepIndicator(
+                  currentStep: _currentStep,
+                  isEditing: widget.stadiumId != null,
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      AddStadiumStep1Details(
+                        nameController: _nameController,
+                        stadiumPhoneController: _stadiumPhoneController,
+                        priceController: _priceController,
+                        capacityController: _capacityController,
+                        locationController: _locationController,
+                        lengthController: _lengthController,
+                        widthController: _widthController,
+                        notesController: _notesController,
+                        selectedSportType: _selectedSportType,
+                        startTime: _startTime,
+                        endTime: _endTime,
+                        isSplitShift: _isSplitShift,
+                        breakTimes: _breakTimes,
+                        isSplitShiftValid: _isSplitShiftValid,
+                        isLocationLoading: _isLocationLoading,
+                        isEditing: widget.stadiumId != null,
+                        onSelectSport: (val) => setState(() => _selectedSportType = val),
+                        onSelectTime: (isMainStart) => _selectTime(context, isMainStart),
+                        onToggleSplitShift: _updateIsSplitShift,
+                        onSelectBreakTime: (index, isStart) => _selectTimeForBreak(context, index, isStart),
+                        onAddBreak: () => setState(() => _breakTimes.add({'start': null, 'end': null})),
+                        onRemoveBreak: (index) => setState(() => _breakTimes.removeAt(index)),
+                        onOpenMapPicker: _openMapPicker,
+                        onAddNoteTemplate: (template) {
+                          final currentText = _notesController.text;
+                          final prefix = currentText.isEmpty ? '' : '$currentText\n';
+                          setState(() => _notesController.text = '$prefix• $template');
+                        },
+                        onNext: _nextPage,
+                      ),
+                      AddStadiumStep2Features(
+                        seatsController: _seatsController,
+                        ballPriceController: _ballPriceController,
+                        depositController: _depositController,
+                        selectedBathOption: _selectedBathOption,
+                        cafeteria: _cafeteria,
+                        garage: _garage,
+                        changingRoom: _changingRoom,
+                        hasBall: _hasBall,
+                        requireDeposit: _requireDeposit,
+                        onUpdateBathOption: _updateBathOption,
+                        onUpdateCafeteria: _updateCafeteria,
+                        onUpdateGarage: _updateGarage,
+                        onUpdateChangingRoom: _updateChangingRoom,
+                        onUpdateHasBall: _updateHasBall,
+                        onUpdateRequireDeposit: _updateRequireDeposit,
+                        onNext: _nextPage,
+                      ),
+                      AddStadiumStep3Images(
+                        images: _images,
+                        isUploading: _isUploading,
+                        isSaving: _isSaving,
+                        onPickImage: _pickImage,
+                        onDeleteImage: (img) async {
+                          if (img['url'] != null) {
+                            await _storageService.deleteFile(img['url']!);
+                          }
+                          setState(() => _images.remove(img));
+                        },
+                        onSubmit: _nextPage,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _showDeleteConfirmationDialog() async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
