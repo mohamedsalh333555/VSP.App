@@ -206,17 +206,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isArabic
-                    ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
-                    : 'Webhook response timed out. You can retry or choose another method.',
-              ),
-              backgroundColor: VSPColors.error,
-            ),
-          );
+          _showWebhookTimeoutMessage();
         }
       },
     );
@@ -336,6 +326,46 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 
+  void _showWebhookTimeoutMessage() {
+    if (!mounted) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isArabic
+              ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
+              : 'Webhook response timed out. You can retry or choose another method.',
+        ),
+        backgroundColor: VSPColors.error,
+      ),
+    );
+  }
+
+  AppBar _buildAppBar(BuildContext context, AppLocalizations l10n, bool isArabic, bool isChampionship) {
+    return AppBar(
+      backgroundColor: VSPColors.background,
+      elevation: 0,
+      leading: IconButton(
+        icon: Icon(
+          isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
+          color: VSPColors.textPrimary,
+          size: 20,
+        ),
+        onPressed: () async {
+          final cancel = await _confirmCancel(context, isChampionship, isArabic);
+          if (cancel == true && context.mounted) Navigator.pop(context);
+        },
+      ),
+      centerTitle: true,
+      title: Text(
+        isChampionship
+            ? (isArabic ? 'تأكيد اشتراك البطولة' : 'Championship Payment')
+            : l10n.confirmBooking,
+        style: Theme.of(context).textTheme.displaySmall,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -353,28 +383,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       },
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        appBar: AppBar(
-          backgroundColor: VSPColors.background,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-              color: VSPColors.textPrimary,
-              size: 20,
-            ),
-            onPressed: () async {
-              final cancel = await _confirmCancel(context, isChampionship, isArabic);
-              if (cancel == true && context.mounted) Navigator.pop(context);
-            },
-          ),
-          centerTitle: true,
-          title: Text(
-            isChampionship
-                ? (isArabic ? 'تأكيد اشتراك البطولة' : 'Championship Payment')
-                : l10n.confirmBooking,
-            style: Theme.of(context).textTheme.displaySmall,
-          ),
-        ),
+        appBar: _buildAppBar(context, l10n, isArabic, isChampionship),
         body: Stack(
           children: [
             const PaymentBackgroundGlow(),
@@ -385,7 +394,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 1. Hold Countdown Timer Banner & Amount Header
                     PaymentCountdownHeader(
                       remainingSeconds: _remainingSeconds,
                       amountToPay: amountToPay,
@@ -394,19 +402,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       currency: l10n.egCurrency,
                       isArabic: isArabic,
                     ),
-
                     const SizedBox(height: 16),
-
-                    // 2. Interactive Payment Method Selector
                     PaymentMethodSelector(
                       selectedMethod: _selectedMethod,
                       isArabic: isArabic,
                       onMethodChanged: (val) => setState(() => _selectedMethod = val),
                     ),
-
                     const SizedBox(height: 16),
-
-                    // 3. Financial Breakdown Card
                     PaymentBreakdownCard(
                       bookingDraft: widget.bookingDraft,
                       isChampionship: isChampionship,
@@ -414,10 +416,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       amountToPay: amountToPay,
                       isArabic: isArabic,
                     ),
-
                     const SizedBox(height: 20),
-
-                    // 4. Security Guarantee and CTA Button
                     PaymentSecurityFooter(
                       isLoading: _isLoading,
                       isAwaitingWebhook: _isAwaitingWebhook,

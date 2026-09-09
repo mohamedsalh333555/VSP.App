@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/chat_screen.dart';
 import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
+import 'player_booking_cancel_dialog.dart';
 import 'reschedule_action_banner.dart';
 
 /// Comprehensive individual booking card for upcoming and history bookings in player bookings screen.
@@ -89,114 +87,7 @@ class PlayerBookingCard extends StatelessWidget {
   }
 
   void _showCancelDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bool hasDeposit = booking.isDepositPaid && booking.depositPaid > 0;
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-        title: Text(
-          l10n.cancelBooking,
-          style: Theme.of(dialogCtx).textTheme.titleLarge,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.cancelBookingConfirm,
-              style: Theme.of(dialogCtx).textTheme.bodyMedium,
-            ),
-            if (hasDeposit) ...[
-              const SizedBox(height: VSPSpacing.md),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Iconsax.rotate_left_copy, color: VSPColors.accent, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isArabic
-                            ? 'سيتم استرداد مبلغ العربون تلقائياً وإرجاعه إلى حسابك البنكي (InstaPay) أو محفظتك الإلكترونية التي دفعت منها خلال دقائق معدودة .'
-                            : 'The deposit will be automatically refunded directly to your mobile wallet or bank account linked to InstaPay within minutes .',
-                        style: const TextStyle(
-                          color: VSPColors.accent,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  text: l10n.keepBooking,
-                  height: 48,
-                  color: VSPColors.surfaceAlt,
-                  textColor: VSPColors.textPrimary,
-                  onPressed: () => Navigator.pop(dialogCtx),
-                ),
-              ),
-              const SizedBox(width: VSPSpacing.md),
-              Expanded(
-                child: PrimaryButton(
-                  text: l10n.cancel,
-                  height: 48,
-                  color: VSPColors.error,
-                  textColor: VSPColors.background,
-                  onPressed: () async {
-                    final provider = Provider.of<BookingProvider>(context, listen: false);
-                    final messenger = ScaffoldMessenger.of(context);
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(l10n.cancelling),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                    Navigator.pop(dialogCtx);
-                    final success = await provider.cancelBooking(booking.id);
-                    if (success) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.cancelSuccess),
-                          backgroundColor: VSPColors.warning,
-                        ),
-                      );
-                    } else {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(provider.errorMessage ?? l10n.cancelFailed),
-                          backgroundColor: VSPColors.error,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+    PlayerBookingCancelDialog.show(context, booking);
   }
 
   @override
