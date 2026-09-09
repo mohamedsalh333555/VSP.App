@@ -17,6 +17,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'notification/notification_filter_service.dart';
 
 class NotificationService {
  // Singleton pattern
@@ -373,38 +374,8 @@ class NotificationService {
  }
  }
 
- Future<bool> _shouldShowNotification(String? type) async {
- try {
- final prefs = await SharedPreferences.getInstance();
- final general = prefs.getBool('notif_general') ?? true;
- if (!general) return false;
-
- if (type == null) return true;
-
- switch (type) {
- case 'chat':
- return prefs.getBool('notif_chat') ?? true;
- case 'booking_new':
- case 'booking_confirmed':
- case 'booking_cancelled':
- return prefs.getBool('notif_cash_bookings') ?? true;
- case 'team_transfer':
- case 'team_invite':
- case 'info':
- return prefs.getBool('notif_team_transfers') ?? true;
- case 'match_reminder':
- return prefs.getBool('notif_match_reminders') ?? true;
- case 'challenge':
- case 'challenge_accepted':
- case 'challenge_declined':
- return prefs.getBool('notif_challenge_results') ?? true;
- default:
- return true;
- }
- } catch (_) {
- return true;
- }
- }
+  Future<bool> _shouldShowNotification(String? type) =>
+      NotificationFilterService.shouldShowNotification(type);
 
  void _showInAppAlert(RemoteMessage message) async {
  final context = _navigatorKey?.currentContext;
