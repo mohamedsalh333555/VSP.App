@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/stadium_repository.dart';
 import '../ui/tokens/vsp_tokens.dart';
-import '../utils/geo_helper.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/fast_cache_service.dart';
+import '../services/stadium/stadium_filter_service.dart';
 
 class StadiumProvider with ChangeNotifier {
  final StadiumRepository _databaseService = StadiumRepository();
@@ -43,29 +43,9 @@ class StadiumProvider with ChangeNotifier {
  String? get activeQuickFilter => _activeQuickFilter;
 
  List<Stadium> get stadiums {
- List<Stadium> baseList = _isFilterActive ? _filteredStadiums : _stadiums;
- if (_activeQuickFilter == 'night_shift') {
- return baseList.where((s) => _isNightShiftStadium(s)).toList();
- } else if (_activeQuickFilter == 'no_deposit') {
- return baseList.where((s) => !s.needsDeposit || s.depositAmount <= 0).toList();
- }
- return baseList;
- }
-
- bool _isNightShiftStadium(Stadium stadium) {
- final closing = stadium.closingTime.toLowerCase();
- if (closing.contains('am') || closing.contains('صباحاً') || closing.contains('00:') || closing.contains('01:') || closing.contains('02:') || closing.contains('03:') || closing.contains('04:') || closing.contains('05:') || closing.contains('24')) {
- return true;
- }
- final features = stadium.features;
- if (features is Map && features['workingHours'] is Map) {
- final end = features['workingHours']['end']?.toString().toLowerCase() ?? '';
- if (end.contains('am') || end.contains('صباحاً') || end.contains('01:') || end.contains('02:') || end.contains('03:') || end.contains('04:')) {
- return true;
- }
- }
- return false;
- }
+    final baseList = _isFilterActive ? _filteredStadiums : _stadiums;
+    return StadiumFilterService.applyQuickFilter(baseList, _activeQuickFilter);
+  }
 
  void toggleQuickFilter(String filterKey) {
  if (_activeQuickFilter == filterKey) {
@@ -249,15 +229,8 @@ class StadiumProvider with ChangeNotifier {
  }
  }
 
- // Filter stadiums by location (Robust)
- List<Stadium> filterByLocation(String location) {
- final query = location.trim().toLowerCase();
- if (query.isEmpty) return _stadiums;
- 
- return _stadiums.where((stadium) => 
- stadium.location.toLowerCase().contains(query)
- ).toList();
- }
+  List<Stadium> filterByLocation(String location) =>
+      StadiumFilterService.filterByLocation(_stadiums, location);
 
  // Filter stadiums by governorate
  void applyGovernorateFilter(String? governorate) {
@@ -274,24 +247,11 @@ class StadiumProvider with ChangeNotifier {
  fetchStadiums(isRefresh: true);
  }
 
- // Filter stadiums by price range
- List<Stadium> filterByPriceRange(double minPrice, double maxPrice) {
- return _stadiums.where((stadium) => 
- stadium.pricePerHour >= minPrice && stadium.pricePerHour <= maxPrice
- ).toList();
- }
+  List<Stadium> filterByPriceRange(double minPrice, double maxPrice) =>
+      StadiumFilterService.filterByPriceRange(_stadiums, minPrice, maxPrice);
 
- // Search stadiums (Robust)
- List<Stadium> searchStadiums(String query) {
- final cleanQuery = query.trim().toLowerCase();
- final sourceList = _isFilterActive ? _filteredStadiums : _stadiums;
- if (cleanQuery.isEmpty) return sourceList;
-
- return sourceList.where((stadium) => 
- stadium.name.toLowerCase().contains(cleanQuery) ||
- stadium.location.toLowerCase().contains(cleanQuery)
- ).toList();
- }
+  List<Stadium> searchStadiums(String query) =>
+      StadiumFilterService.searchStadiums(_isFilterActive ? _filteredStadiums : _stadiums, query);
 
  double get maxStadiumPrice {
  if (_stadiums.isEmpty) return 2000.0;
@@ -299,53 +259,12 @@ class StadiumProvider with ChangeNotifier {
  return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
  }
 
- /// Returns unique registered sports dynamically from stadiums database, filtered by active configuration
- List<String> get availableSportTypes {
- final sports = _stadiums
- .map((s) => s.type)
- .where((t) => t.trim().isNotEmpty && VSPConstants.activeSports.contains(t.trim()))
- .toSet()
- .toList();
- if (sports.isEmpty) return List<String>.from(VSPConstants.activeSports);
- return sports;
- }
+  List<String> get availableSportTypes =>
+      StadiumFilterService.getAvailableSportTypes(_stadiums, VSPConstants.activeSports);
 
  // Private helper to check dynamic features mapping safely
  bool _checkAmenity(Stadium stadium, String amenity) {
- final dynamic feats = stadium.features;
- final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
-
- // 1. Payment & Deposit
- if (amenity == 'No Deposit Needed' || amenity == 'حجز بدون عربون (دفع نقدي)') {
- return !stadium.needsDeposit;
- }
-
- // 2. Real Owner Amenities (Strictly matching owner inputs)
- if (amenity == 'Showers & Baths' || amenity == 'دش وحمام') {
- return featMap['bathOption'] == 'Yes' || featMap['hasShower'] == true || featMap['shower'] == true;
- }
- if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
- return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
- }
- if (amenity == 'Night Floodlights' || amenity == 'كشافات إضاءة ليلاً') {
- return stadium.hasJerash || featMap['hasLighting'] == true || featMap['lighting'] == true;
- }
- if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
- return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
- }
- if (amenity == 'Ball Provided' || amenity == 'كرة متوفرة' || amenity == 'كرة') {
- return stadium.hasBall || featMap['hasBall'] == true;
- }
- if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
- return stadium.hasSeats || featMap['hasSeats'] == true;
- }
- if (amenity == 'Garage & Parking' || amenity == 'جراج سيارات') {
- return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
- }
-
- // Fallback checks
- final key = amenity.replaceAll(' ', '').toLowerCase();
- return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
+    return StadiumFilterService.checkAmenity(stadium, amenity);
  }
 
  // Apply complex filters with server-side pagination support
@@ -444,33 +363,14 @@ class StadiumProvider with ChangeNotifier {
  }
 
  // Sort stadiums by distance
- void sortByDistance(Position? userPosition) {
- if (userPosition == null) return;
-
- _stadiums.sort((a, b) {
- if (a.lat == null || a.lng == null) return 1;
- if (b.lat == null || b.lng == null) return -1;
-
- final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
- final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
- 
- return distA.compareTo(distB);
- });
-
- if (_isFilterActive) {
- _filteredStadiums.sort((a, b) {
- if (a.lat == null || a.lng == null) return 1;
- if (b.lat == null || b.lng == null) return -1;
-
- final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
- final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
- 
- return distA.compareTo(distB);
- });
- }
-
- notifyListeners();
- }
+  void sortByDistance(Position? userPosition) {
+    if (userPosition == null) return;
+    StadiumFilterService.sortStadiumsByDistance(_stadiums, userPosition.latitude, userPosition.longitude);
+    if (_isFilterActive) {
+      StadiumFilterService.sortStadiumsByDistance(_filteredStadiums, userPosition.latitude, userPosition.longitude);
+    }
+    notifyListeners();
+  }
 
  // Reset all filters
  void clearFilters() {
