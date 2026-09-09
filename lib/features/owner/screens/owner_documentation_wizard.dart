@@ -14,10 +14,10 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../widgets/documentation/doc_wizard_step_indicator.dart';
 import '../widgets/documentation/doc_image_source_sheet.dart';
-import '../widgets/documentation/doc_step_commercial_register.dart';
-import '../widgets/documentation/doc_step_tax_card.dart';
-import '../widgets/documentation/doc_step_national_id.dart';
 import '../widgets/documentation/doc_under_review_dialog.dart';
+import '../widgets/documentation/doc_wizard_dialogs.dart';
+import '../widgets/documentation/doc_wizard_hydrator.dart';
+import '../widgets/documentation/doc_wizard_steps_pager.dart';
 
 class OwnerDocumentationWizard extends StatefulWidget {
   const OwnerDocumentationWizard({super.key});
@@ -60,50 +60,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     final user = auth.userModel;
     if (user == null) return;
 
-    final addData = user.additionalData ?? {};
-    final docs = (addData['verificationDocuments'] is Map)
-        ? (addData['verificationDocuments'] as Map<dynamic, dynamic>)
-        : addData;
-
-    final String? cr = (docs['commercialRegister'] ??
-            docs['commercialRegisterUrl'] ??
-            addData['commercialRegister'] ??
-            addData['commercialRegisterUrl'] ??
-            addData['contractUrl'])
-        ?.toString();
-    final String? tc = (docs['taxCard'] ??
-            docs['taxCardUrl'] ??
-            addData['taxCard'] ??
-            addData['taxCardUrl'])
-        ?.toString();
-    final String? idF = (docs['idFront'] ??
-            docs['nationalIdFrontUrl'] ??
-            docs['idFrontUrl'] ??
-            addData['idFront'] ??
-            addData['nationalIdFrontUrl'] ??
-            addData['ownerIdUrl'])
-        ?.toString();
-    final String? idB = (docs['idBack'] ??
-            docs['nationalIdBackUrl'] ??
-            docs['idBackUrl'] ??
-            addData['idBack'] ??
-            addData['nationalIdBackUrl'])
-        ?.toString();
+    final hydrated = DocWizardHydrator.hydrate(user.additionalData);
 
     setState(() {
-      if (cr != null && cr.isNotEmpty) _uploadedDocUrls['commercialRegister'] = cr;
-      if (tc != null && tc.isNotEmpty) _uploadedDocUrls['taxCard'] = tc;
-      if (idF != null && idF.isNotEmpty) _uploadedDocUrls['idFront'] = idF;
-      if (idB != null && idB.isNotEmpty) _uploadedDocUrls['idBack'] = idB;
-
-      // Smart Step Auto-Advance:
-      if (_uploadedDocUrls['commercialRegister'] != null && _uploadedDocUrls['taxCard'] == null) {
-        _currentStep = 1;
-      } else if (_uploadedDocUrls['commercialRegister'] != null &&
-          _uploadedDocUrls['taxCard'] != null &&
-          (_uploadedDocUrls['idFront'] == null || _uploadedDocUrls['idBack'] == null)) {
-        _currentStep = 2;
-      }
+      _uploadedDocUrls.addAll(hydrated.docUrls);
+      _currentStep = hydrated.initialStep;
 
       if (_currentStep > 0 && _pageController.hasClients) {
         _pageController.jumpToPage(_currentStep);
@@ -363,37 +324,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       canPop: !isUploadingAny,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: VSPColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            title: Text(
-              isArabic ? 'إلغاء رفع المستندات؟' : 'Cancel Document Upload?',
-              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
-            ),
-            content: Text(
-              isArabic
-                  ? 'جاري رفع المستندات الآن، هل أنت متأكد من رغبتك في إيقاف الرفع والخروج؟'
-                  : 'Documents are currently uploading. Are you sure you want to stop and exit?',
-              style: const TextStyle(color: VSPColors.textSecondary),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(isArabic ? 'متابعة الرفع' : 'Continue Upload',
-                    style: const TextStyle(color: VSPColors.accent)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-                child: Text(isArabic ? 'إلغاء وخروج' : 'Cancel & Exit'),
-              ),
-            ],
-          ),
-        );
-        if (confirm == true && context.mounted) {
+        final confirm = await DocWizardDialogs.showCancelUploadConfirmation(context);
+        if (confirm && context.mounted) {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();
           } else {
@@ -426,53 +358,14 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               DocWizardStepIndicator(currentStep: _currentStep),
               const SizedBox(height: VSPSpacing.md),
               Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    DocStepCommercialRegister(
-                      uploadedUrl: _uploadedDocUrls['commercialRegister'],
-                      isUploading: _uploadingStatus['commercialRegister'] ?? false,
-                      isSaving: _isSaving,
-                      onUploadTap: () => _handleUploadSourceSelection(
-                        OwnerDocumentType.commercialRegister,
-                        'commercialRegister',
-                      ),
-                      onDeleteTap: () =>
-                          setState(() => _uploadedDocUrls['commercialRegister'] = null),
-                      onNext: _nextPage,
-                    ),
-                    DocStepTaxCard(
-                      uploadedUrl: _uploadedDocUrls['taxCard'],
-                      isUploading: _uploadingStatus['taxCard'] ?? false,
-                      isSaving: _isSaving,
-                      onUploadTap: () => _handleUploadSourceSelection(
-                        OwnerDocumentType.taxCard,
-                        'taxCard',
-                      ),
-                      onDeleteTap: () => setState(() => _uploadedDocUrls['taxCard'] = null),
-                      onNext: _nextPage,
-                    ),
-                    DocStepNationalId(
-                      idFrontUrl: _uploadedDocUrls['idFront'],
-                      idBackUrl: _uploadedDocUrls['idBack'],
-                      isFrontUploading: _uploadingStatus['idFront'] ?? false,
-                      isBackUploading: _uploadingStatus['idBack'] ?? false,
-                      isSaving: _isSaving,
-                      onUploadFrontTap: () => _handleUploadSourceSelection(
-                        OwnerDocumentType.nationalIdFront,
-                        'idFront',
-                      ),
-                      onDeleteFrontTap: () =>
-                          setState(() => _uploadedDocUrls['idFront'] = null),
-                      onUploadBackTap: () => _handleUploadSourceSelection(
-                        OwnerDocumentType.nationalIdBack,
-                        'idBack',
-                      ),
-                      onDeleteBackTap: () => setState(() => _uploadedDocUrls['idBack'] = null),
-                      onSubmit: _nextPage,
-                    ),
-                  ],
+                child: DocWizardStepsPager(
+                  pageController: _pageController,
+                  uploadedDocUrls: _uploadedDocUrls,
+                  uploadingStatus: _uploadingStatus,
+                  isSaving: _isSaving,
+                  onUploadTap: _handleUploadSourceSelection,
+                  onDeleteTap: (key) => setState(() => _uploadedDocUrls[key] = null),
+                  onNextPage: _nextPage,
                 ),
               ),
             ],
