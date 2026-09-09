@@ -3,9 +3,10 @@ import '../../data/models.dart';
 import '../services/logger_service.dart';
 
 class OwnerRepository {
- final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _client;
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
- OwnerRepository();
+  OwnerRepository({SupabaseClient? client}) : _client = client;
 
  Stream<List<Booking>> getOwnerBookings(String ownerId) {
  return _supabase

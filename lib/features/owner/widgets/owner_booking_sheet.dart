@@ -10,12 +10,12 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
-import 'booking_sheet/booking_sheet_cancel_dialog.dart';
 import 'booking_sheet/booking_sheet_details_form.dart';
 import 'booking_sheet/booking_sheet_duration_selector.dart';
 import 'booking_sheet/booking_sheet_form_fields.dart';
 import 'booking_sheet/booking_sheet_header.dart';
 import 'booking_sheet/booking_sheet_time_stadium_card.dart';
+import 'booking_sheet/owner_booking_sheet_coordinator.dart';
 import 'booking_sheet/owner_booking_sheet_service.dart';
 
 export 'booking_sheet/owner_booking_modal.dart';
@@ -99,78 +99,24 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     );
   }
 
-  Future<void> _handleConfirmCashPayment(Booking booking, bool isArabic) async {
-    setState(() => _isSaving = true);
-    try {
-      final parentCtx = widget.parentContext;
-      final totalPrice = booking.totalPrice > 0 ? booking.totalPrice : widget.selectedStadium.basePrice;
-      final authProvider = Provider.of<AuthProvider>(parentCtx, listen: false);
-      final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid ?? booking.ownerId;
-
-      final rpcRes = await OwnerRepository().confirmCashBookingAtomic(
-        bookingId: booking.id,
-        ownerId: uid,
-        totalPrice: totalPrice,
+  Future<void> _handleConfirmCashPayment(Booking booking, bool isArabic) =>
+      OwnerBookingSheetCoordinator.confirmCashPayment(
+        context: context,
+        parentContext: widget.parentContext,
+        booking: booking,
+        selectedStadium: widget.selectedStadium,
+        isArabic: isArabic,
+        setLoading: (v) => setState(() => _isSaving = v),
       );
 
-      if (rpcRes is Map && rpcRes['success'] == false) {
-        throw Exception(rpcRes['message']?.toString() ?? 'Failed to confirm cash payment');
-      }
-
-      if (mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.',
-        );
-      }
-      if (parentCtx.mounted) {
-        final auth = Provider.of<AuthProvider>(parentCtx, listen: false);
-        final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
-        if (currentUid != null) {
-          await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-        }
-      }
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        VSPFeedback.showError(context, '${isArabic ? "تعذر تأكيد الدفع:" : "Failed to confirm cash:"} $e');
-      }
-    }
-  }
-
-  Future<void> _handleExtendOngoingMatch(Booking booking, bool isArabic) async {
-    final parentCtx = widget.parentContext;
-    final newEndTime = booking.endTime.add(const Duration(minutes: 30));
-
-    setState(() => _isSaving = true);
-    try {
-      await OwnerRepository().extendBookingEndTime(
-        bookingId: booking.id,
-        newEndTime: newEndTime,
+  Future<void> _handleExtendOngoingMatch(Booking booking, bool isArabic) =>
+      OwnerBookingSheetCoordinator.extendOngoingMatch(
+        context: context,
+        parentContext: widget.parentContext,
+        booking: booking,
+        isArabic: isArabic,
+        setLoading: (v) => setState(() => _isSaving = v),
       );
-
-      if (mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
-        );
-      }
-      if (parentCtx.mounted) {
-        final auth = Provider.of<AuthProvider>(parentCtx, listen: false);
-        final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
-        if (currentUid != null) {
-          await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-        }
-      }
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $e');
-      }
-    }
-  }
 
   Future<void> _handleConfirmBooking(AppLocalizations l10n, bool isArabic) async {
     final String customerName = _nameController.text.trim().isNotEmpty
@@ -356,38 +302,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     }
   }
 
-  Future<void> _handleCancelBooking(Booking booking, AppLocalizations l10n, bool isArabic) async {
-    final parentCtx = widget.parentContext;
-    final nav = Navigator.of(context);
-    final confirm = await BookingSheetCancelDialog.show(
-      context: context,
-      title: l10n.cancelBooking,
-      content: l10n.cancelBookingConfirm,
-      cancelBtn: l10n.cancelBtn,
-      confirmBtn: l10n.confirmBtn,
-    );
-
-    if (confirm == true && mounted) {
-      setState(() => _isDeleting = true);
-      if (!parentCtx.mounted) return;
-      final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking.id);
-      if (!mounted) return;
-      if (!success) {
-        final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
-        VSPFeedback.showError(
-          context,
-          err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ' : 'Failed to cancel booking '),
-        );
-        return;
-      }
-      if (!parentCtx.mounted) return;
-      final uid = Provider.of<AuthProvider>(parentCtx, listen: false).currentUser?.uid;
-      if (uid != null) {
-        await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid, forceRefresh: true);
-      }
-      if (mounted) nav.pop();
-    }
-  }
+  Future<void> _handleCancelBooking(Booking booking, AppLocalizations l10n, bool isArabic) =>
+      OwnerBookingSheetCoordinator.cancelBooking(
+        context: context,
+        parentContext: widget.parentContext,
+        booking: booking,
+        l10n: l10n,
+        isArabic: isArabic,
+        setDeleting: (v) => setState(() => _isDeleting = v),
+      );
 
   @override
   Widget build(BuildContext context) {
