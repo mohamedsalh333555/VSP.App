@@ -9,6 +9,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../screens/global_search_screen.dart';
 import '../filter_bottom_sheet.dart';
 import 'home_feed_sections.dart';
+import '../../../copilot/screens/vsp_copilot_sheet.dart';
 
 /// الشريط العلوي للشاشة الرئيسية للاعب (الصورة الشخصية، الترحيب، شارة الإشعارات، وشريط البحث مع الفلتر)
 class HomeTopBar extends StatelessWidget {
@@ -93,6 +94,20 @@ class HomeTopBar extends StatelessWidget {
                   ),
                 ),
                 HomeNotificationBadge(userId: auth.currentUser?.uid ?? ''),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                  tooltip: 'VSP Copilot',
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    VspCopilotSheet.show(
+                      context,
+                      isArabic: Localizations.localeOf(context).languageCode == 'ar',
+                    );
+                  },
+                ),
               ],
             ),
             const SizedBox(height: 16),
