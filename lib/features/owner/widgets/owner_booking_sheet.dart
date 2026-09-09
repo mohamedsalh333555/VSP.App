@@ -1,6 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -395,26 +394,16 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final booking = widget.slot['booking'] as Booking?;
-    final now = DateTime.now();
-
-    final bool isEdit = widget.isEdit && booking != null;
-    final bool isPastCompleted = isEdit && (now.isAfter(booking.endTime) || booking.status == BookingStatus.completed);
-    final bool isManualBooking = isEdit &&
-        (booking.paymentTransactionId?.startsWith('MANUAL') == true ||
-            (booking.paymentMethod == 'cash' && booking.createdByUserId == booking.ownerId));
-    final bool isOnlinePaid = isEdit && !isManualBooking && (booking.isPaid || booking.paymentStatus == 'paid');
-    final bool isUpcomingOnlinePaid = isEdit && isOnlinePaid && !isPastCompleted;
-    final bool isOwnerManual = isEdit && isManualBooking;
-    final bool isUpcomingPendingCash = isEdit && !isOnlinePaid && !isPastCompleted && !isOwnerManual;
-    final bool isNewSlot = !widget.isEdit || booking == null;
-    final bool isOngoingActiveMatch = isEdit && !isPastCompleted && now.isAfter(booking.startTime) && now.isBefore(booking.endTime);
-    final bool isReadOnly = isPastCompleted || isUpcomingOnlinePaid;
+    final flags = OwnerBookingSheetService.resolveStateFlags(
+      isEditProp: widget.isEdit,
+      booking: booking,
+    );
 
     final modalTitle = OwnerBookingSheetService.getModalTitle(
-      isNewSlot: isNewSlot,
-      isPastCompleted: isPastCompleted,
-      isUpcomingOnlinePaid: isUpcomingOnlinePaid,
-      isUpcomingPendingCash: isUpcomingPendingCash,
+      isNewSlot: flags.isNewSlot,
+      isPastCompleted: flags.isPastCompleted,
+      isUpcomingOnlinePaid: flags.isUpcomingOnlinePaid,
+      isUpcomingPendingCash: flags.isUpcomingPendingCash,
       isArabic: isArabic,
       manualBookingTitle: l10n.manualBookingTitle,
     );
@@ -423,9 +412,13 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
     final int maxMins = _getMaxAvailableMinutes();
 
-    final formattedSlotTime = widget.isEdit && booking != null
-        ? '${DateFormat('hh:mm a').format(booking.startTime.toLocal())} - ${DateFormat('EEEE').format(booking.startTime.toLocal())}'
-        : '${DateFormat('hh:mm a').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)).add(Duration(hours: widget.slot['hour'] as int, minutes: widget.slot['minute'] as int)))} - ${DateFormat('EEEE').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)))}';
+    final formattedSlotTime = OwnerBookingSheetService.formatSlotTime(
+      isEdit: widget.isEdit,
+      booking: booking,
+      baseDate: widget.baseDate,
+      selectedDayIndex: widget.selectedDayIndex,
+      slot: widget.slot,
+    );
 
     return Container(
       constraints: BoxConstraints(
@@ -450,7 +443,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         children: [
           BookingSheetHeader(
             title: modalTitle,
-            showDeleteButton: (isOwnerManual && !isPastCompleted) || isUpcomingPendingCash,
+            showDeleteButton: (flags.isOwnerManual && !flags.isPastCompleted) || flags.isUpcomingPendingCash,
             isDeleting: _isDeleting,
             onDelete: () => _handleCancelBooking(booking!, l10n, isArabic),
           ),
@@ -462,11 +455,11 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (isUpcomingOnlinePaid)
-                    UpcomingOnlinePaidActions(booking: booking),
-                  if (isOngoingActiveMatch)
+                  if (flags.isUpcomingOnlinePaid)
+                    UpcomingOnlinePaidActions(booking: booking!),
+                  if (flags.isOngoingActiveMatch)
                     OngoingMatchBanner(
-                      booking: booking,
+                      booking: booking!,
                       isSaving: _isSaving,
                       onExtendMatch: () => _handleExtendOngoingMatch(booking, isArabic),
                     ),
@@ -477,7 +470,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                   BookingSheetDurationSelector(
                     selectedMinutes: _selectedMinutes,
                     maxMins: maxMins,
-                    isCompletedBooking: isPastCompleted,
+                    isCompletedBooking: flags.isPastCompleted,
                     onDurationChanged: (newMins) => setState(() => _selectedMinutes = newMins),
                   ),
                   const SizedBox(height: 14),
@@ -485,7 +478,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                   PlayerCounterField(
                     playerCount: _playerCount,
                     maxPlayers: widget.selectedStadium.playersPerTeam * 2,
-                    isReadOnly: isReadOnly,
+                    isReadOnly: flags.isReadOnly,
                     onIncrement: () => setState(() => _playerCount++),
                     onDecrement: () => setState(() => _playerCount--),
                   ),
@@ -495,7 +488,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     phoneController: _phoneController,
                     noteController: _noteController,
                     collectedAmountController: _collectedAmountController,
-                    isReadOnly: isReadOnly,
+                    isReadOnly: flags.isReadOnly,
                     isArabic: isArabic,
                     customerNameLabel: l10n.customerName,
                     internalNotesLabel: l10n.internalNotes,
@@ -509,9 +502,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           BookingSheetBottomActions(
             booking: booking,
             isEdit: widget.isEdit,
-            isPastCompleted: isPastCompleted,
-            isUpcomingPendingCash: isUpcomingPendingCash,
-            isUpcomingOnlinePaid: isUpcomingOnlinePaid,
+            isPastCompleted: flags.isPastCompleted,
+            isUpcomingPendingCash: flags.isUpcomingPendingCash,
+            isUpcomingOnlinePaid: flags.isUpcomingOnlinePaid,
             isSaving: _isSaving,
             isDeleting: _isDeleting,
             onConfirmCashPayment: () {

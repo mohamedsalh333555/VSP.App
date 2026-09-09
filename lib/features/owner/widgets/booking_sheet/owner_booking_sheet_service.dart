@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/phone_utils.dart';
 import '../../../../data/models.dart';
@@ -240,5 +241,87 @@ class OwnerBookingSheetService {
 
     return updateMap;
   }
+
+  /// Evaluates and groups state flags for UI rendering and interactions.
+  static BookingSheetStateFlags resolveStateFlags({
+    required bool isEditProp,
+    required Booking? booking,
+    DateTime? now,
+  }) {
+    final currentNow = now ?? DateTime.now();
+    final bool isEdit = isEditProp && booking != null;
+    final bool isPastCompleted = isEdit &&
+        (currentNow.isAfter(booking.endTime) || booking.status == BookingStatus.completed);
+    final bool isManualBooking = isEdit &&
+        (booking.paymentTransactionId?.startsWith('MANUAL') == true ||
+            (booking.paymentMethod == 'cash' && booking.createdByUserId == booking.ownerId));
+    final bool isOnlinePaid = isEdit && !isManualBooking && (booking.isPaid || booking.paymentStatus == 'paid');
+    final bool isUpcomingOnlinePaid = isEdit && isOnlinePaid && !isPastCompleted;
+    final bool isOwnerManual = isEdit && isManualBooking;
+    final bool isUpcomingPendingCash = isEdit && !isOnlinePaid && !isPastCompleted && !isOwnerManual;
+    final bool isNewSlot = !isEditProp || booking == null;
+    final bool isOngoingActiveMatch = isEdit && !isPastCompleted && currentNow.isAfter(booking.startTime) && currentNow.isBefore(booking.endTime);
+    final bool isReadOnly = isPastCompleted || isUpcomingOnlinePaid;
+
+    return BookingSheetStateFlags(
+      isEdit: isEdit,
+      isPastCompleted: isPastCompleted,
+      isManualBooking: isManualBooking,
+      isOnlinePaid: isOnlinePaid,
+      isUpcomingOnlinePaid: isUpcomingOnlinePaid,
+      isOwnerManual: isOwnerManual,
+      isUpcomingPendingCash: isUpcomingPendingCash,
+      isNewSlot: isNewSlot,
+      isOngoingActiveMatch: isOngoingActiveMatch,
+      isReadOnly: isReadOnly,
+    );
+  }
+
+  /// Formats the header slot time string.
+  static String formatSlotTime({
+    required bool isEdit,
+    required Booking? booking,
+    required DateTime baseDate,
+    required int selectedDayIndex,
+    required Map<String, dynamic> slot,
+  }) {
+    if (isEdit && booking != null) {
+      final local = booking.startTime.toLocal();
+      return '${DateFormat('hh:mm a').format(local)} - ${DateFormat('EEEE').format(local)}';
+    }
+    final targetDate = baseDate.add(Duration(days: selectedDayIndex));
+    final start = targetDate.add(Duration(
+      hours: slot['hour'] as int,
+      minutes: slot['minute'] as int,
+    ));
+    return '${DateFormat('hh:mm a').format(start)} - ${DateFormat('EEEE').format(targetDate)}';
+  }
+}
+
+/// Holds all evaluated state flags for the booking sheet modal.
+class BookingSheetStateFlags {
+  final bool isEdit;
+  final bool isPastCompleted;
+  final bool isManualBooking;
+  final bool isOnlinePaid;
+  final bool isUpcomingOnlinePaid;
+  final bool isOwnerManual;
+  final bool isUpcomingPendingCash;
+  final bool isNewSlot;
+  final bool isOngoingActiveMatch;
+  final bool isReadOnly;
+
+  const BookingSheetStateFlags({
+    required this.isEdit,
+    required this.isPastCompleted,
+    required this.isManualBooking,
+    required this.isOnlinePaid,
+    required this.isUpcomingOnlinePaid,
+    required this.isOwnerManual,
+    required this.isUpcomingPendingCash,
+    required this.isNewSlot,
+    required this.isOngoingActiveMatch,
+    required this.isReadOnly,
+  });
 }
 
