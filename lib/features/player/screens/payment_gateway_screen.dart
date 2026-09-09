@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -107,72 +106,41 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     setState(() => _isLoading = true);
 
-    if (widget.isTournamentPayment) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
+    try {
+      final booking = await _coordinator.resolveInitialBooking(
+        isTournamentPayment: widget.isTournamentPayment,
+        existingBooking: widget.existingBooking,
+        existingBookingId: widget.existingBookingId,
+        userId: userId,
+        bookingDraft: widget.bookingDraft,
+        fetchBookingById: bookingProvider.getBookingById,
+        createBooking: bookingProvider.createBooking,
+      );
 
-    if (widget.existingBooking != null) {
+      if (!mounted) return;
+      setState(() {
+        _booking = booking;
+        _isLoading = false;
+      });
+
+      if (booking != null) {
+        _initBookingRealtimeListener(booking.id);
+      } else if (!widget.isTournamentPayment) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        final errorMsg = bookingProvider.errorMessage ??
+            (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
+        VSPFeedback.showError(context, errorMsg);
+        Navigator.pop(context);
+      }
+    } catch (e) {
       if (mounted) {
-        setState(() {
-          _booking = widget.existingBooking;
-          _isLoading = false;
-        });
-        _initBookingRealtimeListener(widget.existingBooking!.id);
-      }
-      return;
-    } else if (widget.existingBookingId != null) {
-      final existing = await bookingProvider.getBookingById(widget.existingBookingId!);
-      if (existing != null && mounted) {
-        setState(() {
-          _booking = existing;
-          _isLoading = false;
-        });
-        _initBookingRealtimeListener(existing.id);
-        return;
-      }
-    }
-
-    if (userId != null) {
-      try {
-        await _coordinator.cleanupStaleBookings(
-          isTournamentPayment: widget.isTournamentPayment,
-          userId: userId,
-          stadiumId: widget.bookingDraft.stadiumId,
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر بدء عملية الحجز: $e' : 'Failed to initialize booking: $e',
         );
-
-        if (!mounted) return;
-        final draft = PaymentCheckoutService.preparePendingDraft(widget.bookingDraft);
-        final booking = await bookingProvider.createBooking(draft, userId);
-        if (booking != null) {
-          if (mounted) {
-            setState(() {
-              _booking = booking;
-              _isLoading = false;
-            });
-            _initBookingRealtimeListener(booking.id);
-          }
-        } else {
-          if (mounted) {
-            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-            final errorMsg = bookingProvider.errorMessage ??
-                (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
-            VSPFeedback.showError(context, errorMsg);
-            Navigator.pop(context);
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          VSPFeedback.showError(
-            context,
-            isArabic ? 'تعذر بدء عملية الحجز: $e' : 'Failed to initialize booking: $e',
-          );
-          Navigator.pop(context);
-        }
+        Navigator.pop(context);
       }
-    } else {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -259,28 +227,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
 
-    final baseAmount = PaymentCheckoutService.calculateBasePayableAmount(
-      needsDeposit: widget.bookingDraft.needsDeposit,
-      depositPaid: widget.bookingDraft.depositPaid,
-      totalPrice: widget.bookingDraft.totalPrice,
-    );
-    final totalAmount = PaymentCheckoutService.calculateTotalAmountWithFees(baseAmount);
-    final selectedIntegrationId = PaymentCheckoutService.getIntegrationId(_selectedMethod);
-    final paymentRefId = PaymentCheckoutService.generatePaymentReference(
+    final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
+      draft: widget.bookingDraft,
+      selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
-      playerTeamId: widget.bookingDraft.playerTeamId,
       bookingId: _booking?.id,
-      timestampMs: DateTime.now().millisecondsSinceEpoch,
-    );
-
-    final paymobUrl = await PaymobService.getCheckoutUrlFromServer(
-      amountInEgp: totalAmount,
-      bookingId: paymentRefId,
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
-      integrationId: selectedIntegrationId,
-      isTournamentPayment: widget.isTournamentPayment,
     );
 
     final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;

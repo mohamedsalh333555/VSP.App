@@ -69,4 +69,39 @@ class PaymentCheckoutService {
   }) {
     return status == 'confirmed' || paymentStatus == 'paid';
   }
+
+  /// Requests Paymob checkout URL using standard fee and reference calculations.
+  static Future<String?> requestPaymobCheckoutUrl({
+    required BookingDraft draft,
+    required String selectedMethod,
+    required bool isTournamentPayment,
+    String? bookingId,
+    required String userEmail,
+    required String userName,
+    required String userPhone,
+  }) async {
+    final baseAmount = calculateBasePayableAmount(
+      needsDeposit: draft.needsDeposit,
+      depositPaid: draft.depositPaid,
+      totalPrice: draft.totalPrice,
+    );
+    final totalAmount = calculateTotalAmountWithFees(baseAmount);
+    final selectedIntegrationId = getIntegrationId(selectedMethod);
+    final paymentRefId = generatePaymentReference(
+      isTournamentPayment: isTournamentPayment,
+      playerTeamId: draft.playerTeamId,
+      bookingId: bookingId,
+      timestampMs: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    return PaymobService.getCheckoutUrlFromServer(
+      amountInEgp: totalAmount,
+      bookingId: paymentRefId,
+      userEmail: userEmail,
+      userName: userName,
+      userPhone: userPhone,
+      integrationId: selectedIntegrationId,
+      isTournamentPayment: isTournamentPayment,
+    );
+  }
 }

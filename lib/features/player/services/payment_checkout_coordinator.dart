@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
+import 'payment_checkout_service.dart';
 
 /// Coordinates asynchronous polling, timers, subscriptions, and safe lock release
 /// for the payment checkout screen.
@@ -124,6 +125,33 @@ class PaymentCheckoutCoordinator {
   /// Simulates test payment webhook in development/staging.
   Future<void> simulateTestPaymentWebhook(String bookingId) async {
     await bookingRepo.simulateTestPaymentWebhook(bookingId);
+  }
+
+  /// Resolves the initial booking state (returns existing or creates a pending booking).
+  Future<Booking?> resolveInitialBooking({
+    required bool isTournamentPayment,
+    required Booking? existingBooking,
+    required String? existingBookingId,
+    required String? userId,
+    required BookingDraft bookingDraft,
+    required Future<Booking?> Function(String id) fetchBookingById,
+    required Future<Booking?> Function(BookingDraft draft, String userId) createBooking,
+  }) async {
+    if (isTournamentPayment) return null;
+    if (existingBooking != null) return existingBooking;
+    if (existingBookingId != null) {
+      return await fetchBookingById(existingBookingId);
+    }
+    if (userId != null) {
+      await cleanupStaleBookings(
+        isTournamentPayment: isTournamentPayment,
+        userId: userId,
+        stadiumId: bookingDraft.stadiumId,
+      );
+      final draft = PaymentCheckoutService.preparePendingDraft(bookingDraft);
+      return await createBooking(draft, userId);
+    }
+    return null;
   }
 
   /// Cancels all active timers and stream subscriptions.
