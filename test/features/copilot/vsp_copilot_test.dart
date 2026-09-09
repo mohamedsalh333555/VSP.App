@@ -10,7 +10,7 @@ class MockVspCopilotService extends VspCopilotService {
   const MockVspCopilotService(this.onSendMessage);
 
   @override
-  Future<CopilotMessage> sendMessage(String text) async {
+  Future<CopilotMessage> sendMessage(String text, {String? conversationId}) async {
     return onSendMessage(text);
   }
 }

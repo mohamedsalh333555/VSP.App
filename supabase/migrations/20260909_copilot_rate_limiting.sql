@@ -40,23 +40,29 @@ AS $$
 DECLARE
   v_count INT;
 BEGIN
-  -- 1. Clean up old entries older than window
-  DELETE FROM public.rate_limit_logs
-  WHERE created_at < NOW() - (p_window_seconds || ' seconds')::INTERVAL;
+  -- 1. 🔒 Transaction-scoped advisory lock using native two-key integer signature (classid, objid)
+  -- Completely serializes concurrent calls for the exact (user + action) with zero cross-action contention
+  PERFORM pg_advisory_xact_lock(hashtext(p_user_id::text), hashtext(p_action));
 
-  -- 2. Count recent requests for this user and action
+  -- 2. Fast index-backed cleanup strictly for this user and action
+  DELETE FROM public.rate_limit_logs
+  WHERE user_id = p_user_id
+    AND action = p_action
+    AND created_at < NOW() - (p_window_seconds || ' seconds')::INTERVAL;
+
+  -- 3. Count recent requests within the sliding window
   SELECT COUNT(*) INTO v_count
   FROM public.rate_limit_logs
   WHERE user_id = p_user_id
     AND action = p_action
     AND created_at >= NOW() - (p_window_seconds || ' seconds')::INTERVAL;
 
-  -- 3. Reject if limit reached
+  -- 4. Reject if limit reached
   IF v_count >= p_max_requests THEN
     RETURN FALSE;
   END IF;
 
-  -- 4. Record new request
+  -- 5. Record new request atomically inside the lock
   INSERT INTO public.rate_limit_logs (user_id, action, created_at)
   VALUES (p_user_id, p_action, NOW());
 

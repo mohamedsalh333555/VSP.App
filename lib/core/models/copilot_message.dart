@@ -43,10 +43,36 @@ class CopilotStadiumSummary {
   };
 }
 
+/// Represents a conversation session
+@immutable
+class CopilotConversation {
+  final String id;
+  final String title;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const CopilotConversation({
+    required this.id,
+    required this.title,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory CopilotConversation.fromMap(Map<String, dynamic> map) {
+    return CopilotConversation(
+      id: map['id']?.toString() ?? '',
+      title: map['title']?.toString() ?? 'محادثة جديدة',
+      createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(map['updated_at']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
 /// Represents a chat message between the user and VSP Copilot
 @immutable
 class CopilotMessage {
   final String id;
+  final String? conversationId;
   final String sender; // 'user' | 'assistant'
   final String text;
   final DateTime timestamp;
@@ -54,6 +80,7 @@ class CopilotMessage {
 
   const CopilotMessage({
     required this.id,
+    this.conversationId,
     required this.sender,
     required this.text,
     required this.timestamp,
@@ -63,22 +90,43 @@ class CopilotMessage {
   bool get isUser => sender == 'user';
   bool get hasStadiums => stadiumResults.isNotEmpty;
 
-  factory CopilotMessage.user(String text) {
+  factory CopilotMessage.user(String text, {String? conversationId}) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
+      conversationId: conversationId,
       sender: 'user',
       text: text,
       timestamp: DateTime.now(),
     );
   }
 
-  factory CopilotMessage.assistant(String text, {List<CopilotStadiumSummary> stadiums = const []}) {
+  factory CopilotMessage.assistant(
+    String text, {
+    String? conversationId,
+    List<CopilotStadiumSummary> stadiums = const [],
+  }) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
+      conversationId: conversationId,
       sender: 'assistant',
       text: text,
       timestamp: DateTime.now(),
       stadiumResults: stadiums,
+    );
+  }
+
+  factory CopilotMessage.fromMap(Map<String, dynamic> map) {
+    final rawStadiums = map['stadium_results'] as List<dynamic>? ?? [];
+    return CopilotMessage(
+      id: map['id']?.toString() ?? '',
+      conversationId: map['conversation_id']?.toString(),
+      sender: map['role']?.toString() ?? 'assistant',
+      text: map['content']?.toString() ?? '',
+      timestamp: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
+      stadiumResults: rawStadiums
+          .whereType<Map<String, dynamic>>()
+          .map((s) => CopilotStadiumSummary.fromMap(s))
+          .toList(),
     );
   }
 }

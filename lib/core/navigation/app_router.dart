@@ -24,6 +24,7 @@ import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
 import '../../data/models.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../features/copilot/screens/vsp_copilot_screen.dart';
 
 class AppRouter {
  static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
@@ -100,6 +101,10 @@ class AppRouter {
  GoRoute(
  path: '/player',
  builder: (context, state) => const PlayerHomeScreen(),
+ ),
+ GoRoute(
+ path: '/copilot',
+ builder: (context, state) => const VspCopilotScreen(),
  ),
  GoRoute(
  path: '/offline',

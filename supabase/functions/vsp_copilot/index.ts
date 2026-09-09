@@ -79,7 +79,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // 4. ⏱️ Rate Limiting: 10 requests per minute per user
+    // 5. ⏱️ Rate Limiting: 10 requests per minute per user (atomic advisory lock)
     const { data: isAllowed, error: rateLimitErr } = await supabase.rpc("check_rate_limit", {
       p_user_id: callerUser.id,
       p_action: "copilot_chat",
@@ -94,9 +94,10 @@ serve(async (req: Request) => {
       );
     }
 
-    // 5. Parse Request Body
+    // 6. Parse Request Body
     const body = await req.json();
     const userMessage = (body.message ?? "").toString().trim();
+    let conversationId = (body.conversation_id ?? "").toString().trim();
 
     if (!userMessage) {
       return new Response(
@@ -105,14 +106,69 @@ serve(async (req: Request) => {
       );
     }
 
-    // 6. Gemini API Interaction (with single searchStadiums tool)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+    // 7. Conversation Session Management
+    if (conversationId) {
+      const { data: existingConv } = await supabase
+        .from("copilot_conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .eq("user_id", callerUser.id)
+        .maybeSingle();
 
-    const systemPrompt = "أنت كابتن VSP، المساعد الذكي لتطبيق VSP لحجز الملاعب والبطولات في مصر. تتحدث بلهجة مصرية مهذبة ومرحبة. يمكنك استكشاف الملاعب باستخدام أداة searchStadiums عند طلب المستخدم البحث عن ملاعب أو أوقات لعب.";
+      if (!existingConv) {
+        conversationId = ""; // fallback to new conversation if invalid or mismatched user
+      }
+    }
+
+    if (!conversationId) {
+      const generatedTitle = userMessage.length > 35
+        ? userMessage.substring(0, 35) + "..."
+        : userMessage;
+
+      const { data: newConv, error: convErr } = await supabase
+        .from("copilot_conversations")
+        .insert({
+          user_id: callerUser.id,
+          title: generatedTitle,
+        })
+        .select("id")
+        .single();
+
+      if (convErr || !newConv) {
+        throw new Error("Failed to initialize conversation session: " + (convErr?.message || ""));
+      }
+      conversationId = newConv.id;
+    }
+
+    // 8. Build Multi-Turn History for Gemini
+    const { data: priorMessages } = await supabase
+      .from("copilot_messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+      .limit(8);
+
+    const contents: any[] = [];
+    if (priorMessages && priorMessages.length > 0) {
+      for (const msg of priorMessages) {
+        contents.push({
+          role: msg.role === "user" ? "user" : "model",
+          parts: [{ text: msg.content }],
+        });
+      }
+    }
+    contents.push({
+      role: "user",
+      parts: [{ text: userMessage }],
+    });
+
+    // 9. Gemini API Interaction (with single searchStadiums tool)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+    const systemPrompt = "أنت كابتن VSP، المساعد الذكي لتطبيق VSP لحجز الملاعب والبطولات في مصر. تتحدث بلهجة مصرية مهذبة ومرحبة. يمكنك استكشاف الملاعب باستخدام أداة searchStadiums عند طلب المستخدم البحث عن ملاعب أو أوقات لعب. وتتذكر ما دار بينكما في سياق المحادثة السابقة.";
 
     const firstPayload = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: "user", parts: [{ text: userMessage }] }],
+      contents: contents,
       tools: [{ functionDeclarations: [searchStadiumsTool] }],
     };
 
@@ -143,7 +199,7 @@ serve(async (req: Request) => {
       const governorate = (args.governorate || "").toString().trim();
       const maxPrice = Number(args.max_price);
 
-      // 7. 🛡️ Read-Only Query with strict .limit(10)
+      // 10. 🛡️ Read-Only Query with strict .limit(10)
       let query = supabase
         .from("stadiums")
         .select("id, name, governorate, price_per_hour, image_url, rating")
@@ -167,23 +223,25 @@ serve(async (req: Request) => {
       stadiumResults = stadiums || [];
 
       // Second turn to summarize findings in natural Arabic
+      const secondContents = [
+        ...contents,
+        candidate1,
+        {
+          role: "user",
+          parts: [
+            {
+              functionResponse: {
+                name: "searchStadiums",
+                response: { count: stadiumResults.length, stadiums: stadiumResults },
+              },
+            },
+          ],
+        },
+      ];
+
       const secondPayload = {
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [
-          { role: "user", parts: [{ text: userMessage }] },
-          candidate1,
-          {
-            role: "user",
-            parts: [
-              {
-                functionResponse: {
-                  name: "searchStadiums",
-                  response: { count: stadiumResults.length, stadiums: stadiumResults },
-                },
-              },
-            ],
-          },
-        ],
+        contents: secondContents,
       };
 
       const geminiRes2 = await fetch(geminiUrl, {
@@ -204,9 +262,33 @@ serve(async (req: Request) => {
       assistantReply = candidate1?.parts?.[0]?.text || "أهلاً بك يا كابتن، كيف أقدر أساعدك اليوم في ملاعب VSP؟";
     }
 
-    // 8. Return formatted payload to client
+    // 11. Persist Messages & Update Conversation in Database
+    await supabase.from("copilot_messages").insert([
+      {
+        conversation_id: conversationId,
+        user_id: callerUser.id,
+        role: "user",
+        content: userMessage,
+        stadium_results: [],
+      },
+      {
+        conversation_id: conversationId,
+        user_id: callerUser.id,
+        role: "assistant",
+        content: assistantReply,
+        stadium_results: stadiumResults,
+      },
+    ]);
+
+    await supabase
+      .from("copilot_conversations")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", conversationId);
+
+    // 12. Return payload to client
     return new Response(
       JSON.stringify({
+        conversation_id: conversationId,
         message: assistantReply,
         stadiums: stadiumResults,
       }),
