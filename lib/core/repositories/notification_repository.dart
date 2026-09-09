@@ -4,9 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 
 class NotificationRepository {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _client;
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
-  NotificationRepository();
+  NotificationRepository({SupabaseClient? client}) : _client = client;
 
   Map<String, dynamic> _mapToCamelCase(Map<String, dynamic> data) {
     return {

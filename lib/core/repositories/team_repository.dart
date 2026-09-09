@@ -2,59 +2,32 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../constants/egypt_governorates.dart';
-import '../repositories/notification_repository.dart';
 import '../services/logger_service.dart';
-import '../utils/phone_utils.dart';
 import 'team/team_opponent_service.dart';
 import 'team/team_payload_builder.dart';
+import 'team/team_roster_coordinator.dart';
 
 class TeamRepository {
   final SupabaseClient? _client;
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
+  late final TeamRosterCoordinator _rosterCoordinator;
 
-  TeamRepository({SupabaseClient? client}) : _client = client;
+  TeamRepository({
+    SupabaseClient? client,
+    TeamRosterCoordinator? rosterCoordinator,
+  }) : _client = client {
+    _rosterCoordinator = rosterCoordinator ?? TeamRosterCoordinator(client: client);
+  }
 
- Future<List<String>> getTeamMemberUids(String teamId) async {
- final response = await _supabase
- .from('team_members')
- .select('user_id')
- .eq('team_id', teamId);
- return (response as List).map((row) => row['user_id'].toString()).toList();
- }
+  Future<List<String>> getTeamMemberUids(String teamId) =>
+      _rosterCoordinator.getTeamMemberUids(teamId);
 
- Future<List<String>> getTeamPlayerImages(List<String> memberUids) async {
- if (memberUids.isEmpty) return [];
- final response = await _supabase
- .from('users')
- .select('profile_image_url')
- .inFilter('id', memberUids);
- return (response as List)
- .map((row) => row['profile_image_url']?.toString() ?? '')
- .toList();
- }
+  Future<List<String>> getTeamPlayerImages(List<String> memberUids) =>
+      _rosterCoordinator.getTeamPlayerImages(memberUids);
 
- /// Fetch list of player profiles (id, name, phone, position) for members of a team
- Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) async {
- try {
- final memberUids = await getTeamMemberUids(teamId);
- if (memberUids.isEmpty) return [];
-
- final response = await _supabase
- .from('users')
- .select('id, name, phone, position')
- .inFilter('id', memberUids);
-
- return (response as List).map((row) => {
- 'uid': row['id']?.toString() ?? '',
- 'name': row['name']?.toString() ?? 'Player',
- 'phone': row['phone']?.toString() ?? '',
- 'position': row['position']?.toString() ?? 'Player',
- }).toList();
- } catch (e) {
- debugPrint('Error getting team member profiles: $e');
- return [];
- }
- }
+  /// Fetch list of player profiles (id, name, phone, position) for members of a team
+  Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) =>
+      _rosterCoordinator.getTeamMemberProfiles(teamId);
 
   Future<bool> checkIsTeamOfficial(String teamId) =>
       TeamOpponentService.checkIsTeamOfficial(
@@ -133,11 +106,11 @@ class TeamRepository {
  await _supabase.from('team_members').insert(memberRows);
  }
 
- if (memberUids.length > 1) {
- for (int i = 1; i < memberUids.length; i++) {
- _sendJoinNotification(memberUids[i].toString());
- }
- }
+  if (memberUids.length > 1) {
+  for (int i = 1; i < memberUids.length; i++) {
+  _rosterCoordinator.sendJoinNotification(memberUids[i].toString());
+  }
+  }
 
  return teamId;
  } on PostgrestException catch (e) {
@@ -281,100 +254,11 @@ class TeamRepository {
  }
  }
 
- Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
- try {
- final memberUids = await getTeamMemberUids(teamId);
- if (memberUids.length >= 12) {
- throw Exception("تنبيه: عذراً، اكتمل الحد الأقصى لأعضاء الفريق (12 لاعباً كحد أقصى).");
- }
+  Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) =>
+      _rosterCoordinator.addMemberToTeam(teamId, userId, imageUrl);
 
- final userTeamMemberships = await _supabase
- .from('team_members')
- .select('team_id')
- .eq('user_id', userId);
- if ((userTeamMemberships as List).length >= 3) {
- throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى).");
- }
-
- await _supabase.from('team_members').insert({
- 'team_id': teamId,
- 'user_id': userId,
- });
- _sendJoinNotification(userId);
- } on PostgrestException catch (e) {
- if (e.message.contains('الحد الأقصى') || e.message.contains('limit') || e.message.contains('12')) {
- throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى) أو الفريق اكتمال (12 لاعباً).");
- }
- rethrow;
- } catch (e) {
- debugPrint('Error adding member to team: $e');
- rethrow;
- }
- }
-
-  Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
-    try {
-      final nowIso = DateTime.now().toUtc().toIso8601String();
-      final activeBookings = await _supabase
-          .from('bookings')
-          .select('id')
-          .eq('status', 'confirmed')
-          .or('player_team_id.eq.$teamId,opponent_team_id.eq.$teamId')
-          .gt('end_time', nowIso)
-          .limit(1);
-
-      final bool hasActiveMatch = (activeBookings as List).isNotEmpty;
-
-      final activeTournaments = await _supabase
-          .from('championships')
-          .select('id')
-          .inFilter('status', ['open', 'ongoing'])
-          .contains('joined_teams', [teamId]);
-      final bool hasActiveTournament = (activeTournaments as List).isNotEmpty;
-      
-      if (hasActiveMatch || hasActiveTournament) {
-        throw Exception("active_match_or_tournament_error");
-      }
-
-      // Automatic Captain Transfer: If the departing user is the captain, transfer to next member
-      final teamData = await _supabase
-          .from('teams')
-          .select('captain_id')
-          .eq('id', teamId)
-          .maybeSingle();
-
-      final String currentCaptainId = teamData?['captain_id']?.toString() ?? '';
-      if (currentCaptainId == userId) {
-        final allMembers = await getTeamMemberUids(teamId);
-        final remainingMembers = allMembers.where((uid) => uid != userId).toList();
-
-        if (remainingMembers.isNotEmpty) {
-          final nextCaptainId = remainingMembers.first;
-          final nextCaptainUser = await _supabase
-              .from('users')
-              .select('name, phone, profile_image_url')
-              .eq('id', nextCaptainId)
-              .maybeSingle();
-
-          await _supabase.from('teams').update({
-            'captain_id': nextCaptainId,
-            'captain_name': nextCaptainUser?['name'] ?? 'Captain',
-            'captain_phone': PhoneUtils.normalize(nextCaptainUser?['phone']?.toString() ?? ''),
-            'captain_image_url': nextCaptainUser?['profile_image_url'] ?? '',
-          }).eq('id', teamId);
-        }
-      }
-
-      await _supabase
-          .from('team_members')
-          .delete()
-          .eq('team_id', teamId)
-          .eq('user_id', userId);
-    } catch (e) {
-      debugPrint('Error removing member from team: $e');
-      rethrow;
-    }
-  }
+  Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) =>
+      _rosterCoordinator.removeMemberFromTeam(teamId, userId, imageUrl);
 
  Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
   try {
@@ -445,37 +329,9 @@ class TeamRepository {
  }
  }
 
-  Future<void> _sendJoinNotification(String userId) async {
-    try {
-      await NotificationRepository().sendNotification(
-        userId,
-        AppNotification(
-          id: '',
-          title: " New Team Transfer!",
-          body: "You have been drafted to join a new team. Get ready for the next match!",
-          type: "info",
-          createdAt: DateTime.now(),
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error sending join notification: $e');
-    }
-  }
-
   /// Stream user's membership changes
-  Stream<List<Map<String, dynamic>>> streamUserMembership(String userId) {
-    return _supabase
-        .from('team_members')
-        .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((err) {
-          VSPLogger.w('Membership realtime stream notice: $err');
-        });
-  }
+  Stream<List<Map<String, dynamic>>> streamUserMembership(String userId) =>
+      _rosterCoordinator.streamUserMembership(userId);
 
   /// Stream single team updates
   Stream<List<Map<String, dynamic>>> streamTeam(String teamId) {
