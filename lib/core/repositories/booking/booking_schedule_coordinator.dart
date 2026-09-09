@@ -186,6 +186,7 @@ class BookingScheduleCoordinator {
 
   /// Simulates test payment webhook during development.
   Future<void> simulateTestPaymentWebhook(String bookingId) async {
+    if (!kDebugMode) return;
     try {
       await _supabase.rpc('process_paymob_webhook', params: {
         'p_booking_id': bookingId,

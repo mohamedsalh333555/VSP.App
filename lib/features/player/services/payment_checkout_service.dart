@@ -67,7 +67,9 @@ class PaymentCheckoutService {
     String? status,
     String? paymentStatus,
   }) {
-    return status == 'confirmed' || paymentStatus == 'paid';
+    return status == 'confirmed' ||
+        paymentStatus == 'paid' ||
+        paymentStatus == 'partially_paid';
   }
 
   /// Requests Paymob checkout URL using standard fee and reference calculations.

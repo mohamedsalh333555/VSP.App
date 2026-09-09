@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -261,7 +262,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
           if (_booking != null) {
             final bookingId = _booking!.id;
-            await _coordinator.simulateTestPaymentWebhook(bookingId);
+            if (kDebugMode) {
+              await _coordinator.simulateTestPaymentWebhook(bookingId);
+            }
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {

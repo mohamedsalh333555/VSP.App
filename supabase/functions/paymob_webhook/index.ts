@@ -369,13 +369,23 @@ serve(async (req: Request) => {
         });
       }
 
+      const isDepositOnly = Boolean(existingBooking.needs_deposit) &&
+        Number(existingBooking.deposit_amount) > 0 &&
+        paidAmountEgp < (Number(existingBooking.total_price) - 0.5);
+
+      const updatedIsPaid = !isDepositOnly;
+      const updatedPaymentStatus = isDepositOnly ? "partially_paid" : "paid";
+      const updatedDepositPaid = isDepositOnly ? Number(existingBooking.deposit_amount) : paidAmountEgp;
+      const remainingAmount = isDepositOnly ? Math.max(0, Number(existingBooking.total_price) - updatedDepositPaid) : 0;
+
       const { data: booking, error: updateError } = await supabase
         .from("bookings")
         .update({
           status: "confirmed",
-          is_paid: true,
-          payment_status: "paid",
+          is_paid: updatedIsPaid,
+          payment_status: updatedPaymentStatus,
           is_deposit_paid: true,
+          deposit_paid: updatedDepositPaid,
           payment_transaction_id: `PAYMOB_${transactionId}`,
           paymob_txn_id: transactionId,
           payment_method: obj.source_data?.sub_type || "paymob",
@@ -394,24 +404,45 @@ serve(async (req: Request) => {
 
         // Send notifications
         const amountEgp = paidAmountEgp.toFixed(0);
-        await supabase.from("notifications").insert([
-          {
-            user_id: booking.owner_id,
-            title: "تم استلام دفعة حجز مؤكدة 💰",
-            body: `تم دفع مبلغ ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"}`,
-            type: "payment_received",
-            booking_id: bookingId,
-            is_read: false,
-          },
-          {
-            user_id: booking.user_id || booking.created_by_user_id,
-            title: "تأكيد الحجز والدفع ⚽",
-            body: `تم سداد حجزك بنجاح في ${booking.stadium_name || "الملعب"}`,
-            type: "booking_confirmed",
-            booking_id: bookingId,
-            is_read: false,
-          },
-        ]);
+        const remainingEgp = remainingAmount.toFixed(0);
+
+        const ownerNotification = isDepositOnly
+          ? {
+              user_id: booking.owner_id,
+              title: "تم استلام عربون حجز 💰",
+              body: `تم دفع عربون بقيمة ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
+              type: "deposit_received",
+              booking_id: bookingId,
+              is_read: false,
+            }
+          : {
+              user_id: booking.owner_id,
+              title: "تم استلام دفعة حجز مؤكدة 💰",
+              body: `تم دفع مبلغ ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"} بالكامل`,
+              type: "payment_received",
+              booking_id: bookingId,
+              is_read: false,
+            };
+
+        const playerNotification = isDepositOnly
+          ? {
+              user_id: booking.user_id || booking.created_by_user_id,
+              title: "تأكيد سداد العربون ⚽",
+              body: `تم سداد العربون (${amountEgp} ج.م) بنجاح لحجزك في ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
+              type: "booking_confirmed",
+              booking_id: bookingId,
+              is_read: false,
+            }
+          : {
+              user_id: booking.user_id || booking.created_by_user_id,
+              title: "تأكيد الحجز والدفع ⚽",
+              body: `تم سداد حجزك بالكامل بنجاح في ${booking.stadium_name || "الملعب"}`,
+              type: "booking_confirmed",
+              booking_id: bookingId,
+              is_read: false,
+            };
+
+        await supabase.from("notifications").insert([ownerNotification, playerNotification]);
       }
     } else {
       // Payment failed
