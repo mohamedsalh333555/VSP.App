@@ -8,12 +8,13 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
-import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/tournament/wizard/tournament_basics_step.dart';
 import '../widgets/tournament/wizard/tournament_scheduling_step.dart';
 import '../widgets/tournament/wizard/tournament_step_indicator.dart';
 import '../widgets/tournament/wizard/tournament_system_step.dart';
+import '../widgets/tournament/wizard/tournament_wizard_bottom_bar.dart';
+import '../widgets/tournament/wizard/tournament_wizard_coordinator.dart';
 import '../widgets/tournament/wizard/tournament_wizard_draft_service.dart';
 import 'owner_tournament_dashboard_screen.dart';
 
@@ -283,100 +284,86 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   Future<void> _handleSave() async {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (_nameController.text.trim().isEmpty) {
-      VSPFeedback.showError(context, isAr ? 'يرجى إدخال اسم البطولة' : 'Please enter tournament name');
+    final error = TournamentWizardCoordinator.validateSubmission(
+      name: _nameController.text,
+      fee: _feeController.text,
+      prize: _prizeController.text,
+      startDate: _startDate,
+      endDate: _endDate,
+      selectedTeams: _selectedTeams,
+      isAr: isAr,
+    );
+    if (error != null) {
+      VSPFeedback.showError(context, error);
       return;
     }
-    if (_feeController.text.trim().isEmpty) {
-      VSPFeedback.showError(context, isAr ? 'يرجى إدخال رسوم الاشتراك في البطولة' : 'Please enter tournament entry fee');
-      return;
-    }
-    if (_prizeController.text.trim().isEmpty) {
-      VSPFeedback.showError(context, isAr ? 'يرجى إدخال قيمة الجائزة الكبرى' : 'Please enter grand prize amount');
-      return;
-    }
-    if (!_endDate.isAfter(_startDate)) {
-      VSPFeedback.showError(context, isAr ? 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء!' : 'End date must be strictly after start date!');
-      return;
-    }
-    final maxTeamsNum = int.tryParse(_selectedTeams) ?? 0;
-    if (maxTeamsNum != 4 && maxTeamsNum != 8 && maxTeamsNum != 16 && maxTeamsNum != 32) {
-      VSPFeedback.showError(context, isAr ? 'عدد الفرق يجب أن يكون (4، 8، 16، 32) فقط!' : 'Number of teams must be a power of 2 (4, 8, 16, 32)!');
-      return;
-    }
+
     setState(() => _isLoading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid ?? auth.userModel?.uid ?? '';
+      final currentUid = auth.currentUser?.uid ??
+          auth.firebaseUser?.uid ??
+          auth.userModel?.uid ??
+          '';
       final currentGov = auth.governorate.trim().isNotEmpty
           ? auth.governorate
           : (auth.userModel?.governorate ?? 'القاهرة');
 
-      final champData = {
-        'name': _nameController.text.trim(),
-        'type': _selectedType,
-        'sportType': _selectedSport,
-        'startDate': _startDate.toIso8601String(),
-        'endDate': _endDate.toIso8601String(),
-        'governorate': currentGov,
-        'ownerId': currentUid,
-        'image': widget.tournament?.imageUrl ?? '',
-        'teamsCount': int.parse(_selectedTeams),
-        'maxTeams': int.parse(_selectedTeams),
-        'grandPrize': double.tryParse(_prizeController.text.trim()) ?? 0.0,
-        'entryFee': double.tryParse(_feeController.text.trim()) ?? 0.0,
-        'number_of_groups': _numberOfGroups,
-        'numberOfGroups': _numberOfGroups,
-        'qualifying_per_group': _qualifyingPerGroup,
-        'qualifyingPerGroup': _qualifyingPerGroup,
-        'is_two_legs': _isTwoLegs,
-        'isTwoLegs': _isTwoLegs,
-        'rules': widget.tournament?.rules ?? '',
-        'paymentMethods': widget.tournament?.paymentMethods ?? ['cash'],
-        'settings': {
-          'maxPlayers': widget.tournament?.maxPlayersPerTeam ?? 11,
-          'minPlayers': widget.tournament?.minPlayersPerTeam ?? 5,
-          'winningPoints': widget.tournament?.winningPoints ?? 3,
-          'drawPoints': widget.tournament?.drawPoints ?? 1,
-          'lossPoints': widget.tournament?.lossPoints ?? 0,
-          'matchDuration': int.tryParse(_durationController.text.trim()) ?? 30,
-          'isBackAndForth': widget.tournament?.isBackAndForth ?? false,
-          'trophyMedals': widget.tournament?.trophyMedals ?? true,
-          'redCardSuspension': widget.tournament?.redCardSuspension ?? true,
-          'fairPlayScoring': widget.tournament?.fairPlayScoring ?? false,
-        },
-      };
+      final champData = TournamentWizardCoordinator.buildTournamentPayload(
+        name: _nameController.text,
+        type: _selectedType,
+        sportType: _selectedSport,
+        startDate: _startDate,
+        endDate: _endDate,
+        governorate: currentGov,
+        ownerId: currentUid,
+        selectedTeams: _selectedTeams,
+        prize: _prizeController.text,
+        fee: _feeController.text,
+        numberOfGroups: _numberOfGroups,
+        qualifyingPerGroup: _qualifyingPerGroup,
+        isTwoLegs: _isTwoLegs,
+        duration: _durationController.text,
+        existingTournament: widget.tournament,
+      );
 
-      if (widget.tournament != null) {
-        // UPDATE
-        final success = await TournamentRepository().updateChampionship(widget.tournament!.id, champData);
-        if (success && mounted) {
+      final isEditing = widget.tournament != null;
+      final result = await TournamentWizardCoordinator.submitTournament(
+        payload: champData,
+        isEditing: isEditing,
+        tournamentId: widget.tournament?.id,
+      );
+
+      if (result.success && mounted) {
+        if (isEditing) {
           VSPFeedback.showSuccess(context, 'Tournament updated successfully.');
           Navigator.pop(context);
-        } else if (!success && mounted) {
-          VSPFeedback.showError(context, 'فشل تعديل البطولة. يرجى المحاولة مرة أخرى.');
-        }
-      } else {
-        // CREATE
-        final id = await TournamentRepository().createChampionship(champData);
-        if (id != null && mounted) {
+        } else {
           await _clearTournamentDraft();
           if (!mounted) return;
           VSPFeedback.showSuccess(context, 'Tournament created successfully.');
           Navigator.pop(context);
 
           try {
-            final newChampList = await TournamentRepository().getChampionshipsStream(sportType: _selectedSport).first;
-            final newChamp = newChampList.firstWhere((c) => c.id == id);
+            final newChampList = await TournamentRepository()
+                .getChampionshipsStream(sportType: _selectedSport)
+                .first;
+            final newChamp =
+                newChampList.firstWhere((c) => c.id == result.createdId);
             if (mounted) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerTournamentDashboardScreen(championship: newChamp)));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OwnerTournamentDashboardScreen(
+                    championship: newChamp,
+                  ),
+                ),
+              );
             }
-          } catch (e) {
-            // Fallback
-          }
-        } else if (id == null && mounted) {
-          VSPFeedback.showError(context, 'فشل إنشاء البطولة. يرجى التحقق من دورك والاتصال بالإنترنت.');
+          } catch (_) {}
         }
+      } else if (mounted && result.errorMessage != null) {
+        VSPFeedback.showError(context, result.errorMessage!);
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, 'Error: $e');
@@ -421,23 +408,29 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                         nameController: _nameController,
                         selectedSport: _selectedSport,
                         availableSports: _availableSports,
-                        onSportChanged: (sport) => setState(() => _selectedSport = sport),
+                        onSportChanged: (sport) =>
+                            setState(() => _selectedSport = sport),
                         feeController: _feeController,
                         selectedType: _selectedType,
-                        onTypeChanged: (type) => setState(() => _selectedType = type),
+                        onTypeChanged: (type) =>
+                            setState(() => _selectedType = type),
                         isEditing: isEditing,
                       )
                     : _currentStep == 1
                         ? TournamentSystemStep(
                             selectedType: _selectedType,
                             selectedTeams: _selectedTeams,
-                            onTeamsChanged: (teams) => setState(() => _selectedTeams = teams),
+                            onTeamsChanged: (teams) =>
+                                setState(() => _selectedTeams = teams),
                             numberOfGroups: _numberOfGroups,
-                            onGroupsChanged: (g) => setState(() => _numberOfGroups = g),
+                            onGroupsChanged: (g) =>
+                                setState(() => _numberOfGroups = g),
                             qualifyingPerGroup: _qualifyingPerGroup,
-                            onQualifyingChanged: (q) => setState(() => _qualifyingPerGroup = q),
+                            onQualifyingChanged: (q) =>
+                                setState(() => _qualifyingPerGroup = q),
                             isTwoLegs: _isTwoLegs,
-                            onTwoLegsChanged: (v) => setState(() => _isTwoLegs = v),
+                            onTwoLegsChanged: (v) =>
+                                setState(() => _isTwoLegs = v),
                           )
                         : TournamentSchedulingStep(
                             startDate: _startDate,
@@ -452,48 +445,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-          VSPSpacing.md,
-          VSPSpacing.md,
-          VSPSpacing.md,
-          MediaQuery.of(context).padding.bottom + VSPSpacing.md,
-        ),
-        color: VSPColors.background,
-        child: Row(
-          children: [
-            if (_currentStep > 0) ...[
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: OutlinedButton(
-                    onPressed: _prevStep,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: VSPColors.textSecondary,
-                      side: const BorderSide(color: VSPColors.divider),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                    ),
-                    child: Text(l10n.backButton),
-                  ),
-                ),
-              ),
-              const SizedBox(width: VSPSpacing.md),
-            ],
-            Expanded(
-              flex: 2,
-              child: SizedBox(
-                height: 56,
-                child: PrimaryButton(
-                  text: _currentStep == 2
-                      ? (isEditing ? l10n.updateChanges : l10n.createTournamentTitle)
-                      : l10n.nextButton,
-                  isLoading: _isLoading,
-                  onPressed: _isLoading ? () {} : _nextStep,
-                ),
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: TournamentWizardBottomBar(
+        currentStep: _currentStep,
+        isLoading: _isLoading,
+        isEditing: isEditing,
+        onPrev: _prevStep,
+        onNext: _nextStep,
       ),
     );
   }
