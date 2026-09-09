@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -13,13 +12,9 @@ import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/services/image_pick_service.dart';
-import '../../../core/utils/vsp_feedback.dart';
 
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
-import '../widgets/owner_notification_button.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
 import '../widgets/dashboard/owner_pro_overview_card.dart';
@@ -27,6 +22,8 @@ import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_basic_financial_glance.dart';
 import '../widgets/dashboard/owner_glanceable_timeline.dart';
 import '../widgets/dashboard/owner_pro_upgrade_teaser.dart';
+import '../widgets/dashboard/owner_dashboard_header.dart';
+import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -143,7 +140,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 1. الهيدر الموحد وشارة الباقة
-                _buildSleekHeader(auth, isProOwner, isArabic),
+                OwnerDashboardHeader(
+                  auth: auth,
+                  isProOwner: isProOwner,
+                  isArabic: isArabic,
+                  onUpgrade: () => _showProUpgradeSheet(context),
+                ),
                 const SizedBox(height: 14),
 
                 // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
@@ -160,7 +162,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 // 3. المحتوى المتفرع حسب الباقة (Basic vs Pro)
                 if (isProOwner) ...[
                   // شريط التبويب المقسم (Pill Segmented Switcher)
-                  _buildProSegmentedTabs(isArabic),
+                  OwnerProSegmentedTabs(
+                    selectedIndex: _selectedProTabIndex,
+                    onTabSelected: (index) => setState(() => _selectedProTabIndex = index),
+                    isArabic: isArabic,
+                  ),
                   const SizedBox(height: 12),
 
                   // شريط فلاتر الملاعب الأفقي (يظهر فقط إذا كان المالك يمتلك أكثر من ملعب)
@@ -246,285 +252,5 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       ),
     );
   }
-
-  /// 1. الهيدر الموحد الفاخر بالأفاتار النيوني وشارة الباقة
-  Widget _buildSleekHeader(AuthProvider auth, bool isProOwner, bool isArabic) {
-    final user = auth.userModel;
-    final rawName = user?.name?.trim();
-    final String name = (rawName != null && rawName.isNotEmpty)
-        ? rawName
-        : (isArabic ? 'كابتن الملعب' : 'Pitch Owner');
-    final isTrial = user?.isInActiveTrial == true;
-    final photoUrl = user?.profileImageUrl;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Owner Identity with Glow Avatar, Name & Pro Badge
-        Expanded(
-          child: Row(
-            children: [
-              // 1. Avatar with Neon Green Glow Ring & Quick Edit Badge
-              GestureDetector(
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  final picked = await ImagePickService.pick(
-                    context,
-                    aspectRatio: CropAspectRatioPreset.square,
-                  );
-                  if (picked != null && mounted) {
-                    try {
-                      await auth.updateProfilePhoto(picked);
-                      if (mounted) {
-                        VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث الصورة بنجاح' : 'Photo updated');
-                      }
-                    } catch (_) {
-                      if (mounted) {
-                        VSPFeedback.showError(context, isArabic ? 'فشل تحديث الصورة' : 'Failed to update photo');
-                      }
-                    }
-                  }
-                },
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: isProOwner
-                            ? const SweepGradient(
-                                colors: [
-                                  VSPColors.accent,
-                                  Color(0xFF84CC16),
-                                  Color(0xFF22C55E),
-                                  VSPColors.accent,
-                                ],
-                              )
-                            : null,
-                        color: isProOwner ? null : const Color(0xFF1E1E24),
-                        border: isProOwner ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
-                        boxShadow: isProOwner
-                            ? [
-                                BoxShadow(
-                                  color: VSPColors.accent.withValues(alpha: 0.35),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      padding: EdgeInsets.all(isProOwner ? 2.5 : 0),
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF141417),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: (photoUrl != null && photoUrl.trim().isNotEmpty)
-                            ? CachedNetworkImage(
-                                imageUrl: photoUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (_, __) => const Center(
-                                  child: SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
-                                  ),
-                                ),
-                                errorWidget: (_, __, ___) => _buildAvatarFallback(name),
-                              )
-                            : _buildAvatarFallback(name),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -1,
-                      right: isArabic ? null : -1,
-                      left: isArabic ? -1 : null,
-                      child: Container(
-                        width: 19,
-                        height: 19,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E24),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.5),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Iconsax.edit_2_copy,
-                          size: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // 2. Name & Pro Badge Pill
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Badge Pill (Pro / Basic)
-                    GestureDetector(
-                      onTap: () => _showProUpgradeSheet(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isProOwner
-                              ? VSPColors.accent.withValues(alpha: 0.16)
-                              : Colors.white.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                          border: Border.all(
-                            color: isProOwner
-                                ? VSPColors.accent.withValues(alpha: 0.5)
-                                : Colors.white.withValues(alpha: 0.12),
-                            width: 0.8,
-                          ),
-                          boxShadow: isProOwner
-                              ? [
-                                  BoxShadow(
-                                    color: VSPColors.accent.withValues(alpha: 0.2),
-                                    blurRadius: 8,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Text(
-                          isProOwner
-                              ? 'Pro'
-                              : (isTrial ? (isArabic ? 'تجريبي' : 'Trial') : 'Basic'),
-                          style: TextStyle(
-                            color: isProOwner ? VSPColors.accent : Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 10),
-
-        // Notifications Button (Kept in place)
-                OwnerNotificationButton(userId: auth.currentUser?.uid ?? ''),
-      ],
-    );
-  }
-
-  Widget _buildAvatarFallback(String name) {
-    final initials = name.trim().isNotEmpty ? name.trim().substring(0, 1).toUpperCase() : 'M';
-    return Center(
-      child: Text(
-        initials,
-        style: const TextStyle(
-          color: VSPColors.accent,
-          fontSize: 18,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-    );
-  }
-
-
-  /// 4. شريط التبويب المقسم (Pill Segmented Switcher) - مطابق 100% لنمط وحجم تبويبات التطبيق الفاخرة
-  Widget _buildProSegmentedTabs(bool isArabic) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.full),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
-      ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            alignment: _selectedProTabIndex == 0
-                ? AlignmentDirectional.centerStart
-                : AlignmentDirectional.centerEnd,
-            child: FractionallySizedBox(
-              widthFactor: 0.5,
-              child: Container(
-                height: 42,
-                decoration: BoxDecoration(
-                  color: VSPColors.accent,
-                  borderRadius: BorderRadius.circular(VSPRadius.full),
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              _buildProTabButton(
-                title: isArabic ? 'نظرة عامة' : 'Overview',
-                index: 0,
-              ),
-              _buildProTabButton(
-                title: isArabic ? 'التحليلات' : 'Insights',
-                index: 1,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProTabButton({required String title, required int index}) {
-    final isSelected = _selectedProTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          setState(() => _selectedProTabIndex = index);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          alignment: Alignment.center,
-          child: Text(
-            title,
-            style: TextStyle(
-              color: isSelected ? Colors.black : VSPColors.textSecondary,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
 
 }
