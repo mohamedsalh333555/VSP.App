@@ -9,6 +9,9 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
+import '../widgets/payment/paymob_callback_url_parser.dart';
+import '../widgets/payment/paymob_still_waiting_dialog.dart';
+import '../widgets/payment/paymob_web_fallback_view.dart';
 
 class PaymobWebViewScreen extends StatefulWidget {
  final String initialUrl;
@@ -157,67 +160,21 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  }
  }
 
- Future<void> _showStillWaitingDialog() async {
- _pollingTimer?.cancel();
- _pollingTimer = null;
+  Future<void> _showStillWaitingDialog() async {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
 
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final result = await showDialog<bool>(
- context: context,
- barrierDismissible: false,
- builder: (ctx) => AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: Row(
- children: [
- const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 22),
- const SizedBox(width: 10),
- Expanded(
- child: Text(
- isArabic ? 'الدفع يستغرق وقتاً أطول من المتوقع ' : 'Payment Taking Longer ',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
- ),
- ),
- ],
- ),
- content: Text(
- isArabic
- ? 'عملية التأكيد مع بوابة الدفع تستغرق وقتاً إضافياً. يمكنك مواصلة الانتظار (سنتحقق تلقائياً كل 10 ثوانٍ) أو الإلغاء ورجوع لشاشة الحجز.'
- : 'Payment confirmation is taking longer than expected. You can keep waiting (we will auto-check every 10s) or cancel.',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
- ),
- actions: [
- TextButton(
- onPressed: () => Navigator.pop(ctx, false), // Keep waiting
- child: Text(
- isArabic ? 'استمرار الانتظار' : 'Keep Waiting',
- style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
- ),
- ),
- ElevatedButton(
- onPressed: () => Navigator.pop(ctx, true), // Cancel & pop
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
- ),
- child: Text(isArabic ? 'إلغاء' : 'Cancel'),
- ),
- ],
- ),
- );
+    final result = await PaymobStillWaitingDialog.show(context);
+    if (!mounted || _isPopped) return;
 
- if (!mounted || _isPopped) return;
-
- if (result == true) {
- _popFailure();
- } else {
- // Set next 3-minute ceiling threshold (e.g. 180s, 360s, 540s...)
- final elapsed = DateTime.now().difference(_sessionStartTime).inSeconds;
- _nextDialogThresholdSeconds = ((elapsed ~/ 180) + 1) * 180;
- _start10sPolling();
- }
- }
+    if (result == true) {
+      _popFailure();
+    } else {
+      final elapsed = DateTime.now().difference(_sessionStartTime).inSeconds;
+      _nextDialogThresholdSeconds = ((elapsed ~/ 180) + 1) * 180;
+      _start10sPolling();
+    }
+  }
 
  @override
  void dispose() {
@@ -265,12 +222,8 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  if (mounted) setState(() => _isLoading = false);
  _checkCallbackUrl(url);
 
- // SEC-FIX: لا تحقن أكواد JS إلا إذا كان النطاق يتبع بوابة الدفع أو البنك الآمن
- final lowerUrl = url.toLowerCase();
- final isSafeDomain = lowerUrl.contains('paymob.com') || 
- lowerUrl.contains('nbe.com.eg') || 
- lowerUrl.contains('banquemisr.com') || 
- lowerUrl.contains('cibeg.com');
+  // SEC-FIX: لا تحقن أكواد JS إلا إذا كان النطاق يتبع بوابة الدفع أو البنك الآمن
+  final isSafeDomain = PaymobCallbackUrlParser.isSafeDomain(url);
 
  if (isSafeDomain) {
  try {
@@ -325,46 +278,11 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   void _checkCallbackUrl(String url) {
     if (_isPopped) return;
 
-    final lowerUrl = url.toLowerCase();
-    
-    // Ignore bank 3DS ACS domains during OTP input
-    final isBank3DsDomain = lowerUrl.contains('nbe.com.eg') ||
-        lowerUrl.contains('banquemisr.com') ||
-        lowerUrl.contains('cibeg.com') ||
-        lowerUrl.contains('mpgs') ||
-        lowerUrl.contains('acs') ||
-        lowerUrl.contains('3dsecure') ||
-        lowerUrl.contains('cardholder');
-    if (isBank3DsDomain) return;
-
-    final isPaymobEndpoint = lowerUrl.contains('/post_pay') || 
-        lowerUrl.contains('accept.paymob.com') || 
-        lowerUrl.contains('checkout.paymob.com') ||
-        lowerUrl.contains('paymob.com') ||
-        lowerUrl.contains('vsp_payment_callback') ||
-        lowerUrl.contains('/payment-status');
-
-    // التقاط حالات نجاح Paymob الصريحة (بما فيها Unified Checkout payment-status)
-    final isExplicitSuccess = isPaymobEndpoint &&
-        (lowerUrl.contains('success=true') || 
-        lowerUrl.contains('txn_response_code=approved') || 
-        lowerUrl.contains('txn_response_code=00') ||
-        lowerUrl.contains('txn_response_code=0') ||
-        lowerUrl.contains('approved=true') ||
-        lowerUrl.contains('/payment-status') ||
-        lowerUrl.contains('standalone')) &&
-        !lowerUrl.contains('success=false') &&
-        !lowerUrl.contains('pending=true');
-
-    final isExplicitFailure = isPaymobEndpoint &&
-        (lowerUrl.contains('success=false') || 
-        lowerUrl.contains('txn_response_code=declined') || 
-        lowerUrl.contains('authentication_not_supported'));
-
-    if (isExplicitSuccess) {
+    final status = PaymobCallbackUrlParser.evaluateUrl(url);
+    if (status == PaymobCallbackStatus.success) {
       _popSuccess();
-    } else if (isExplicitFailure) {
-      if (lowerUrl.contains('authentication_not_supported')) {
+    } else if (status == PaymobCallbackStatus.failure) {
+      if (url.toLowerCase().contains('authentication_not_supported')) {
         debugPrint('[Paymob] returned AUTHENTICATION_NOT_SUPPORTED for card pan.');
       }
       _popFailure();
@@ -405,56 +323,17 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  ),
  ),
  body: kIsWeb || _controller == null
- ? Center(
- child: Padding(
- padding: const EdgeInsets.all(VSPSpacing.xl),
- child: Column(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- const Icon(Iconsax.card_pos_copy, size: 64, color: VSPColors.accent),
- const SizedBox(height: VSPSpacing.lg),
- Text(
- isArabic ? 'جاري فتح بوابة الدفع الآمنة...' : 'Opening secure payment gateway...',
- style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
- textAlign: TextAlign.center,
- ),
- const SizedBox(height: VSPSpacing.md),
- Text(
- isArabic
- ? 'يرجى إتمام عملية الدفع في النافذة الجديدة، ثم العودة للتطبيق.'
- : 'Please complete the payment in the new browser tab, then return here.',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
- textAlign: TextAlign.center,
- ),
- const SizedBox(height: VSPSpacing.xl),
- ElevatedButton.icon(
- onPressed: () => _launchInWebBrowser(widget.initialUrl),
- icon: const Icon(Iconsax.export_3_copy, size: 18),
- label: Text(isArabic ? 'إعادة فتح نافذة الدفع' : 'Re-open Payment Window'),
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
- ),
- ),
- const SizedBox(height: 16),
- TextButton.icon(
- onPressed: () async {
- final isConfirmed = await _checkBookingStatusDb();
- if (isConfirmed) {
- _popSuccess();
- } else {
- _showStillWaitingDialog();
- }
- },
- icon: const Icon(Icons.refresh, size: 16, color: VSPColors.accent),
- label: Text(isArabic ? 'التحقق من الدفع يدويًا' : 'Verify Payment Status', style: const TextStyle(color: VSPColors.accent)),
- ),
- ],
- ),
- ),
- )
+ ? PaymobWebFallbackView(
+     onReopen: () => _launchInWebBrowser(widget.initialUrl),
+     onManualVerify: () async {
+       final isConfirmed = await _checkBookingStatusDb();
+       if (isConfirmed) {
+         _popSuccess();
+       } else {
+         _showStillWaitingDialog();
+       }
+     },
+   )
  : Stack(
  children: [
  WebViewWidget(controller: _controller!),
