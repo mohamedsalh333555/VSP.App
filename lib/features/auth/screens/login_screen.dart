@@ -1,7 +1,6 @@
 import '../../../shared/widgets/vsp_auth_header.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,10 +8,11 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
-import '../../../shared/widgets/social_auth_button.dart';
-import 'package:go_router/go_router.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../widgets/forgot_password_dialog.dart';
+import '../widgets/login_footer.dart';
+import '../widgets/login_social_auth_row.dart';
 
 class LoginScreen extends StatefulWidget {
  const LoginScreen({super.key});
@@ -40,98 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
  super.dispose();
  }
 
- void _showForgotPasswordDialog(BuildContext context) {
- final resetEmailController = TextEditingController();
- showDialog(
- context: context,
- builder: (dialogContext) {
- bool isLoading = false;
- return StatefulBuilder(
- builder: (context, setDialogState) {
- return AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- ),
- title: Text(
- AppLocalizations.of(context)!.forgotPassword,
- style: Theme.of(context).textTheme.titleLarge,
- ),
- content: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Text(
- AppLocalizations.of(context)!.forgotPasswordSubtitle,
- style: Theme.of(context).textTheme.bodySmall?.copyWith(
- color: VSPColors.textSecondary,
- height: 1.5,
- ),
- ),
- const SizedBox(height: 16),
- CustomTextField(
- controller: resetEmailController,
- keyboardType: TextInputType.emailAddress,
- hintText: AppLocalizations.of(context)!.emailAddress,
- prefixIcon: Iconsax.sms_copy,
- ),
- ],
- ),
- actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
- actions: [
- Row(
- children: [
- Expanded(
- child: TextButton(
- onPressed: () => Navigator.pop(dialogContext),
- child: Text(
- AppLocalizations.of(context)!.cancel,
- style: const TextStyle(color: VSPColors.textSecondary),
- ),
- ),
- ),
- const SizedBox(width: 8),
- Expanded(
- child: ElevatedButton(
- onPressed: isLoading ? null : () async {
- final email = resetEmailController.text.trim();
- if (email.isEmpty || !email.contains('@')) {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.invalidEmail);
- return;
- }
- setDialogState(() => isLoading = true);
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.resetPassword(email);
- if (!dialogContext.mounted) return;
- Navigator.pop(dialogContext);
- if (context.mounted) {
- if (success) {
- VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
- } else {
- VSPFeedback.showError(context, authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError);
- }
- }
- },
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.md),
- ),
- ),
- child: isLoading
- ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
- : Text(AppLocalizations.of(context)!.submit, style: const TextStyle(fontWeight: FontWeight.bold)),
- ),
- ),
- ],
- ),
- ],
- );
- },
- );
- },
- ).then((_) => resetEmailController.dispose());
- }
+
 
  void _handleLogin() async {
  // Basic Validation
@@ -299,182 +208,70 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
 
  
- const SizedBox(height: 12),
- Align(
- alignment: Alignment.centerRight,
- child: TextButton(
- onPressed: () => _showForgotPasswordDialog(context),
- child: Text(
- AppLocalizations.of(context)!.forgotPassword,
- style: Theme.of(context).textTheme.labelMedium?.copyWith(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- ),
+  const SizedBox(height: 12),
+  Align(
+  alignment: Alignment.centerRight,
+  child: TextButton(
+  onPressed: () => ForgotPasswordDialog.show(context),
+  child: Text(
+  AppLocalizations.of(context)!.forgotPassword,
+  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+  color: VSPColors.accent,
+  fontWeight: FontWeight.bold,
+  ),
+  ),
+  ),
+  ),
 
  const SizedBox(height: 32),
 
- VSPAnimatedButton(
- text: AppLocalizations.of(context)!.login,
- onPressed: () {
- if (_isLoading) return;
- _handleLogin();
- },
- isLoading: _isLoading,
- ),
+  VSPAnimatedButton(
+    text: AppLocalizations.of(context)!.login,
+    onPressed: () {
+      if (_isLoading) return;
+      _handleLogin();
+    },
+    isLoading: _isLoading,
+  ),
 
- const SizedBox(height: 30),
+  const SizedBox(height: 30),
 
- // ── Divider ──
- Row(
- children: [
- const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
- Padding(
- padding: const EdgeInsets.symmetric(horizontal: 12),
- child: Text(
- AppLocalizations.of(context)!.orContinueWith,
- style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
- ),
- ),
- const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
- ],
- ),
+  // ── Divider ──
+  Row(
+    children: [
+      const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text(
+          AppLocalizations.of(context)!.orContinueWith,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: VSPColors.textSecondary.withValues(alpha: 0.6),
+              ),
+        ),
+      ),
+      const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
+    ],
+  ),
 
- const SizedBox(height: 20),
+  const SizedBox(height: 20),
 
- Row(
- children: [
- if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
- Expanded(
- child: SocialAuthButton(
- height: 56,
- iconWidget: Row(
- mainAxisSize: MainAxisSize.min,
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Image.asset(
- 'assets/images/apple_logo.png',
- width: 20,
- height: 20,
- color: VSPColors.textPrimary,
- ),
- const SizedBox(width: 10),
- Text(
- 'Apple',
- style: Theme.of(context).textTheme.labelLarge?.copyWith(
- fontWeight: FontWeight.bold,
- color: VSPColors.textPrimary,
- ),
- ),
- ],
- ),
- onPressed: _isLoading ? null : () async {
- HapticFeedback.mediumImpact();
- setState(() => _isLoading = true);
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.signInWithApple(isLoginOnly: true);
+  LoginSocialAuthRow(
+    isLoading: _isLoading,
+    onLoadingChanged: (val) => setState(() => _isLoading = val),
+  ),
 
- if (!context.mounted) return;
- setState(() => _isLoading = false);
+  const SizedBox(height: 32),
 
- if (success) {
- HapticFeedback.lightImpact();
- context.go('/');
- } else {
- HapticFeedback.vibrate();
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showError(context, authProvider.errorMessage ?? (isAr ? 'فشل تسجيل الدخول عبر Apple' : 'Apple Sign-In failed'));
- }
- },
- ),
- ),
- const SizedBox(width: 12),
- ],
+  const LoginFooter(),
 
- Expanded(
- child: SocialAuthButton(
- height: 56,
- iconWidget: Row(
- mainAxisSize: MainAxisSize.min,
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Image.asset(
- 'assets/images/google_logo.png',
- width: 22,
- height: 22,
- ),
- const SizedBox(width: 10),
- Text(
- AppLocalizations.of(context)!.continueWithGoogle,
- style: Theme.of(context).textTheme.labelLarge?.copyWith(
- fontWeight: FontWeight.bold,
- color: VSPColors.textPrimary,
- ),
- ),
- ],
- ),
- onPressed: _isLoading ? null : () async {
- HapticFeedback.mediumImpact();
- setState(() => _isLoading = true);
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final success = await authProvider.signInWithGoogle(isLoginOnly: true);
-
- if (!context.mounted) return;
- setState(() => _isLoading = false);
-
- if (success) {
- HapticFeedback.lightImpact();
- // GoRouter handles declarative navigation to /, /verify-email, /onboarding, or /owner
- } else {
- HapticFeedback.vibrate();
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showError(context, authProvider.errorMessage ?? (isAr ? 'فشل تسجيل الدخول عبر Google' : 'Google Sign-In failed'));
- }
- },
- ),
- ),
- ],
- ),
-					const SizedBox(height: 32),
-
-					// Don't have an account? Sign up
-					Row(
-						mainAxisAlignment: MainAxisAlignment.center,
-						children: [
-							Text(
-								AppLocalizations.of(context)!.dontHaveAccount,
-								style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-										color: VSPColors.textSecondary,
-										fontSize: 14,
-									),
-							),
-							const SizedBox(width: 6),
-							GestureDetector(
-								onTap: () {
-									context.go('/welcome');
-								},
-								child: Text(
-									AppLocalizations.of(context)!.signUp,
-									style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-											color: VSPColors.accent,
-											fontWeight: FontWeight.bold,
-											fontSize: 14,
-										),
-								),
-							),
-						],
-					),
-
- const SizedBox(height: 40),
- ],
- ),
- ),
- ),
- ],
- ),
- ),
- );
- }
+  const SizedBox(height: 40),
+],
+),
+),
+),
+],
+),
+),
+);
+}
 }
