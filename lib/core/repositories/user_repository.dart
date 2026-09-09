@@ -5,7 +5,11 @@ import '../constants/egypt_governorates.dart';
 import '../utils/phone_utils.dart';
 
 class UserRepository {
- final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _client;
+
+  UserRepository({SupabaseClient? client}) : _client = client;
+
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
  Future<UserModel?> getUserByPhone(String phone) async {
  try {

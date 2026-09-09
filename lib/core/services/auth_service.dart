@@ -9,7 +9,11 @@ import 'secure_storage_service.dart';
 import '../config/app_env.dart';
 
 class AuthService {
-  final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _client;
+
+  AuthService({SupabaseClient? client}) : _client = client;
+
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
   // Get current user
   User? get currentUser => _supabase.auth.currentUser;

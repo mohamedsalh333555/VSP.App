@@ -5,39 +5,30 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../models/user_model.dart';
-import '../repositories/user_repository.dart';
 import '../services/auth_service.dart';
-import '../services/storage_service.dart';
-import '../services/notification_service.dart';
-import '../services/location_service.dart';
+import 'auth/auth_account_coordinator.dart';
 import 'auth/auth_location_coordinator.dart';
-import 'auth/auth_oauth_coordinator.dart';
 import 'auth/auth_onboarding_coordinator.dart';
 import 'auth/auth_otp_service.dart';
+import 'auth/auth_profile_coordinator.dart';
 import 'auth/auth_profile_service.dart';
 import 'auth/auth_realtime_coordinator.dart';
 import 'auth/auth_registration_form_state.dart';
-import 'auth/auth_registration_service.dart';
 import 'auth/auth_session_listener.dart';
+import 'auth/auth_session_sync_coordinator.dart';
 import 'auth/auth_sign_out_handler.dart';
-import 'auth/auth_user_data_fetcher.dart';
 
 export '../extensions/supabase_user_extension.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  final StorageService _storageService = StorageService();
-  final NotificationService _notificationService = NotificationService();
-  final LocationService _locationService = LocationService();
-  final UserRepository _userRepository = UserRepository();
-
-  late final AuthOAuthCoordinator _oauthCoordinator;
+  late final AuthAccountCoordinator _accountCoordinator;
   late final AuthProfileService _profileService;
-  late final AuthRegistrationService _registrationService;
   late final AuthRealtimeCoordinator _realtimeCoordinator;
-  late final AuthUserDataFetcher _userDataFetcher;
+  late final AuthSessionSyncCoordinator _sessionSyncCoordinator;
   late final AuthOtpService _otpService;
   late final AuthLocationCoordinator _locationCoordinator;
+  late final AuthProfileCoordinator _profileCoordinator;
   StreamSubscription<User?>? _authSubscription;
 
   // Supabase user state
@@ -82,24 +73,21 @@ class AuthProvider with ChangeNotifier {
 
   AuthProvider({
     AuthService? authService,
-    UserRepository? userRepository,
-    StorageService? storageService,
-    LocationService? locationService,
-    AuthOAuthCoordinator? oauthCoordinator,
+    AuthAccountCoordinator? accountCoordinator,
     AuthProfileService? profileService,
-    AuthRegistrationService? registrationService,
     AuthRealtimeCoordinator? realtimeCoordinator,
-    AuthUserDataFetcher? userDataFetcher,
+    AuthSessionSyncCoordinator? sessionSyncCoordinator,
     AuthOtpService? otpService,
     AuthLocationCoordinator? locationCoordinator,
+    AuthProfileCoordinator? profileCoordinator,
   }) {
-    _oauthCoordinator = oauthCoordinator ?? AuthOAuthCoordinator(authService: _authService, userRepository: _userRepository);
-    _profileService = profileService ?? AuthProfileService(authService: _authService, storageService: _storageService, locationService: _locationService, userRepository: _userRepository);
-    _registrationService = registrationService ?? AuthRegistrationService(authService: _authService, userRepository: _userRepository);
+    _accountCoordinator = accountCoordinator ?? AuthAccountCoordinator();
+    _profileService = profileService ?? AuthProfileService(authService: _authService);
     _realtimeCoordinator = realtimeCoordinator ?? AuthRealtimeCoordinator();
-    _userDataFetcher = userDataFetcher ?? AuthUserDataFetcher(userRepository: _userRepository);
-    _otpService = otpService ?? AuthOtpService(registrationService: _registrationService);
+    _sessionSyncCoordinator = sessionSyncCoordinator ?? AuthSessionSyncCoordinator();
+    _otpService = otpService ?? AuthOtpService();
     _locationCoordinator = locationCoordinator ?? AuthLocationCoordinator(profileService: _profileService);
+    _profileCoordinator = profileCoordinator ?? AuthProfileCoordinator(profileService: _profileService);
 
     _initOnboarding();
 
@@ -170,7 +158,7 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _userDataFetcher.fetch(user: user, currentUserType: _form.userType);
+    final result = await _sessionSyncCoordinator.fetchUserData(user: user, currentUserType: _form.userType);
     _isFetchingUser = false;
     _isLoading = false;
     _isInitializing = false;
@@ -189,9 +177,9 @@ class AuthProvider with ChangeNotifier {
     _dataFetchError = result.dataFetchError;
 
     if (_userModel != null) {
-      _updateFcmToken(user.id);
+      _sessionSyncCoordinator.updateFcmToken(user.id);
       _startRealtimeUserListener(user.id);
-      _notificationService.listenToRealtimeNotifications(user.id);
+      _sessionSyncCoordinator.listenToRealtimeNotifications(user.id);
     }
     notifyListeners();
   }
@@ -202,21 +190,15 @@ class AuthProvider with ChangeNotifier {
     _dataFetchError = false;
     notifyListeners();
 
-    final res = await _userDataFetcher.retryDataFetch(_firebaseUser!.id);
+    final model = await _sessionSyncCoordinator.retryDataFetch(_firebaseUser!.id);
     _isLoading = false;
-    if (res.userModel != null) {
-      _userModel = res.userModel;
-      _updateFcmToken(_firebaseUser!.id);
+    if (model != null) {
+      _userModel = model;
       _dataFetchError = false;
     } else {
       _dataFetchError = true;
     }
     notifyListeners();
-  }
-
-  Future<void> _updateFcmToken(String uid) async {
-    final token = await _notificationService.getToken();
-    await _userDataFetcher.updateFcmToken(uid, token);
   }
 
   void setUserType(String type) { _form.userType = type; notifyListeners(); }
@@ -229,21 +211,17 @@ class AuthProvider with ChangeNotifier {
   void setPassword(String password) => _form.password = password;
 
   Future<bool> createAccount() => _runAuthAction(() async {
-    final res = await _registrationService.createAccount(
+    final res = await _accountCoordinator.createAccount(
       currentUser: _firebaseUser,
       currentUserModel: _userModel,
-      password: _form.password,
-      name: _form.name,
-      phone: _form.phone,
-      position: _form.position,
-      userType: _form.userType,
+      form: _form,
     );
     if (res.success && res.userModel != null) _userModel = res.userModel;
     return (success: res.success, error: res.error);
   });
 
   Future<bool> signInWithGoogle({bool isLoginOnly = false}) => _runAuthAction(() async {
-    final res = await _oauthCoordinator.signInWithGoogle(isLoginOnly: isLoginOnly, userType: _form.userType);
+    final res = await _accountCoordinator.signInWithGoogle(isLoginOnly: isLoginOnly, userType: _form.userType);
     if (res.success && res.user != null) {
       _firebaseUser = res.user;
       await _fetchUserData(res.user!);
@@ -252,7 +230,7 @@ class AuthProvider with ChangeNotifier {
   });
 
   Future<bool> signInWithApple({bool isLoginOnly = false}) => _runAuthAction(() async {
-    final res = await _oauthCoordinator.signInWithApple(isLoginOnly: isLoginOnly, userType: _form.userType);
+    final res = await _accountCoordinator.signInWithApple(isLoginOnly: isLoginOnly, userType: _form.userType);
     if (res.success && res.user != null) {
       _firebaseUser = res.user;
       await _fetchUserData(res.user!);
@@ -272,7 +250,7 @@ class AuthProvider with ChangeNotifier {
     required String role,
     Map<String, dynamic>? userData,
   }) => _runAuthAction(() async {
-    final res = await _registrationService.signUp(
+    final res = await _accountCoordinator.signUp(
       email: email, password: password, role: role, governorate: _form.governorate, userData: userData,
     );
     if (res.success) {
@@ -283,7 +261,7 @@ class AuthProvider with ChangeNotifier {
   });
 
   Future<bool> signIn({required String email, required String password}) => _runAuthAction(() async {
-    final res = await _registrationService.signIn(email: email, password: password);
+    final res = await _accountCoordinator.signIn(email: email, password: password);
     if (res.success) {
       _firebaseUser = res.user;
       _userModel = res.userModel;
@@ -292,7 +270,7 @@ class AuthProvider with ChangeNotifier {
   });
 
   Future<void> abortRegistration() async {
-    await _registrationService.abortRegistration(_firebaseUser, _userModel);
+    await _accountCoordinator.abortRegistration(user: _firebaseUser, userModel: _userModel);
     await signOut();
   }
 
@@ -301,7 +279,7 @@ class AuthProvider with ChangeNotifier {
       user: _firebaseUser,
       userModelUid: _userModel?.uid,
       authService: _authService,
-      notificationService: _notificationService,
+      notificationService: _sessionSyncCoordinator.notificationService,
       onClearRealtime: _stopRealtimeUserListener,
     );
     _firebaseUser = null;
@@ -319,26 +297,26 @@ class AuthProvider with ChangeNotifier {
     if (_firebaseUser == null) return false;
     _isLoading = true;
     notifyListeners();
-    final res = await _profileService.updateProfile(
+    final updated = await _profileCoordinator.updateProfile(
       authUser: _firebaseUser,
       currentUserModel: _userModel,
       userType: _form.userType,
       data: data,
     );
-    if (res.success) _userModel = res.updatedModel;
+    if (updated != null) _userModel = updated;
     _isLoading = false;
     notifyListeners();
-    return res.success;
+    return updated != null;
   }
 
   Future<bool> completeOwnerRegistration({required String verificationStatus}) async {
-    final res = await _registrationService.completeOwnerRegistration(
+    final model = await _accountCoordinator.completeOwnerRegistration(
       authUser: _firebaseUser,
       currentUserModel: _userModel,
       verificationStatus: verificationStatus,
     );
-    if (res.success && res.userModel != null) {
-      _userModel = res.userModel;
+    if (model != null) {
+      _userModel = model;
       notifyListeners();
       return true;
     }
@@ -347,22 +325,27 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> toggleFavoriteStadium(String stadiumId) async {
     if (_userModel == null) return;
-    final list = _profileService.toggleFavoriteStadiumList(currentFavorites: _userModel!.favoriteStadiums, stadiumId: stadiumId);
-    await updateProfile({'favoriteStadiums': list});
+    final updated = await _profileCoordinator.toggleFavoriteStadium(
+      authUser: _firebaseUser,
+      currentUserModel: _userModel,
+      userType: _form.userType,
+      stadiumId: stadiumId,
+    );
+    if (updated != null) {
+      _userModel = updated;
+      notifyListeners();
+    }
   }
 
   Future<void> updateProfilePhoto(XFile file) async {
     if (_firebaseUser == null) return;
     await _runAuthAction(() async {
-      final res = await _profileService.uploadProfilePhoto(
+      final res = await _profileCoordinator.updateProfilePhoto(
         authUser: _firebaseUser,
         currentUserModel: _userModel,
         file: file,
       );
-      if (res.success && res.imageUrl != null) {
-        if (_userModel != null) _userModel = _userModel!.copyWith(profileImageUrl: res.imageUrl);
-        await updateProfile({'profileImageUrl': res.imageUrl});
-      }
+      if (res.success && res.updatedModel != null) _userModel = res.updatedModel;
       return (success: res.success, error: res.error);
     });
   }
@@ -377,7 +360,7 @@ class AuthProvider with ChangeNotifier {
     String? p2pVodafone,
     String? p2pBank,
   }) => _runAuthAction(() async {
-    final res = await _oauthCoordinator.completeSocialRegistration(
+    final res = await _accountCoordinator.completeSocialRegistration(
       firebaseUser: _firebaseUser,
       currentUserModel: _userModel,
       userType: _form.userType,
@@ -446,9 +429,9 @@ class AuthProvider with ChangeNotifier {
   Future<bool> deleteAccount() async {
     if (_userModel == null) return false;
     return _runAuthAction(() async {
-      final res = await _profileService.deleteAccount(_userModel!);
+      final res = await _profileCoordinator.deleteAccount(currentUserModel: _userModel);
       if (res.success) await signOut();
-      return (success: res.success, error: res.error);
+      return res;
     });
   }
 
@@ -487,9 +470,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> payRehabilitationFine() => _runAuthAction(() async {
-    if (_firebaseUser == null) return (success: false, error: null);
-    final ok = await _profileService.payRehabilitationFine(_firebaseUser!.id);
-    if (ok && _userModel != null) _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
-    return (success: ok, error: ok ? null : 'فشل سداد الغرامة');
+    final res = await _profileCoordinator.payRehabilitationFine(authUser: _firebaseUser);
+    if (res.success && _userModel != null) _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
+    return res;
   });
 }
