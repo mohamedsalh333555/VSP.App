@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -14,6 +13,9 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
+import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
+import '../widgets/owner_onboarding/owner_onboarding_location_section.dart';
+import '../widgets/owner_onboarding/owner_payout_info_card.dart';
 
 class OwnerOnboardingScreen extends StatefulWidget {
   const OwnerOnboardingScreen({super.key});
@@ -173,7 +175,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || !context.mounted) return;
-        final shouldSignOut = await _showExitDialog(context);
+        final shouldSignOut = await OwnerOnboardingExitDialog.show(context);
         if (shouldSignOut == true) await auth.abortRegistration();
       },
       child: Scaffold(
@@ -193,7 +195,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
                 VSPAuthHeader(
                   showLogo: true,
                   onBack: () async {
-                    final shouldSignOut = await _showExitDialog(context);
+                    final shouldSignOut = await OwnerOnboardingExitDialog.show(context);
                     if (shouldSignOut == true) await auth.abortRegistration();
                   },
                 ),
@@ -254,64 +256,19 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
                   prefixIcon: Iconsax.call_copy,
                 ),
                 const SizedBox(height: 20),
-                _buildGovernorateHeader(l10n),
-                const SizedBox(height: 8),
-                if (_isLocationFallbackActive) _buildLocationWarning(l10n),
-                _buildGovernorateDropdown(),
+                OwnerOnboardingLocationSection(
+                  selectedGovernorate: _selectedGovernorate,
+                  isFetchingLocation: _isFetchingLocation,
+                  isLocationFallbackActive: _isLocationFallbackActive,
+                  onGovernorateChanged: (v) => setState(() => _selectedGovernorate = v),
+                  onAutoDetectTapped: _fetchAutoLocation,
+                ),
                 const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        const Icon(Iconsax.wallet_1_copy, color: VSPColors.accent, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n.payoutInfoTitle,
-                            style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.payoutInfoSubtitle,
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildLabel(l10n.instapayAddress),
-                      CustomTextField(
-                        controller: _instapayController,
-                        hintText: 'username@instapay',
-                        textInputAction: TextInputAction.next,
-                        prefixIcon: Iconsax.wallet_1_copy,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildLabel(l10n.walletNumber),
-                      CustomTextField(
-                        controller: _vodafoneController,
-                        hintText: '01xxxxxxxxx',
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                        prefixIcon: Iconsax.call_copy,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildLabel(l10n.bankAccountIban),
-                      CustomTextField(
-                        controller: _bankController,
-                        hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
-                        textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _handleSubmit(),
-                        prefixIcon: Iconsax.card_copy,
-                      ),
-                    ],
-                  ),
+                OwnerPayoutInfoCard(
+                  instapayController: _instapayController,
+                  vodafoneController: _vodafoneController,
+                  bankController: _bankController,
+                  onSubmitted: _handleSubmit,
                 ),
               ],
             ),
@@ -375,105 +332,10 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     );
   }
 
-  Widget _buildGovernorateHeader(AppLocalizations l10n) {
-    return Row(
-      children: [
-        Text(l10n.governorate, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500)),
-        const Spacer(),
-        if (_isFetchingLocation)
-          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
-        else
-          GestureDetector(
-            onTap: _fetchAutoLocation,
-            child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildLocationWarning(AppLocalizations l10n) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: VSPColors.error.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.error.withValues(alpha: 0.5)),
-      ),
-      child: Text(
-        l10n.locationAutoDetectFailed,
-        style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold, height: 1.5),
-      ),
-    );
-  }
-
-  Widget _buildGovernorateDropdown() {
-    const govs = EgyptGovernorates.allGovernorates;
-    return Container(
-      height: VSPSize.inputHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.input),
-        border: Border.all(
-          color: _isLocationFallbackActive ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.1),
-          width: _isLocationFallbackActive ? 2.0 : 1.0,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedGovernorate,
-          dropdownColor: VSPColors.surface,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
-          isExpanded: true,
-          style: Theme.of(context).textTheme.bodyMedium,
-          onChanged: (v) {
-            if (v != null) setState(() => _selectedGovernorate = v);
-          },
-          items: govs
-              .map<DropdownMenuItem<String>>((v) => DropdownMenuItem<String>(
-                    value: v,
-                    child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-                  ))
-              .toList(),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(text, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500)),
-    );
-  }
-
-  Future<bool?> _showExitDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-        child: AlertDialog(
-          backgroundColor: VSPColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-          title: Text(l10n.cancelRegistrationTitle, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
-          content: Text(l10n.cancelRegistrationContent, style: const TextStyle(color: VSPColors.textSecondary, height: 1.5)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.continueRegistration, style: const TextStyle(color: VSPColors.accent)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, elevation: 0),
-              child: Text(l10n.cancelAndSignOut),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
