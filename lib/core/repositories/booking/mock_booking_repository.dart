@@ -174,6 +174,20 @@ class MockBookingRepository implements BookingRepository {
   }
 
   @override
+  Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) async {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _bookings
+        .where((b) =>
+            b.stadiumId == stadiumId &&
+            b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+            b.startTime.isBefore(endOfDay) &&
+            b.status != BookingStatus.cancelled)
+        .toList();
+  }
+
+  @override
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
     final index = _bookings.indexWhere((b) => b.id == bookingId);
     if (index != -1) {

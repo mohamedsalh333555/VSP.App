@@ -35,6 +35,7 @@ abstract class BookingRepository {
   });
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid);
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date);
+  Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date);
   Future<void> autoReconcilePastBookings(String ownerId);
   Future<List<Booking>> getUnpaidBookingsForUser(String userId);
   Future<void> autoExpirePendingChallenges();
@@ -202,6 +203,7 @@ class SupabaseBookingRepository implements BookingRepository {
     );
   }
 
+  @override
   Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) =>
       _queryCoordinator.fetchStadiumBookingsDirectly(stadiumId, date);
 

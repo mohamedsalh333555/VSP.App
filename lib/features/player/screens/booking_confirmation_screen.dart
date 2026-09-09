@@ -22,6 +22,7 @@ class BookingConfirmationScreen extends StatefulWidget {
   final DateTime? selectedDate;
   final String bookingType; // 'Personal', 'Team', 'Challenge'
   final Team? opponentTeam;
+  final List<String>? initialSelectedSlots;
 
   const BookingConfirmationScreen({
     super.key,
@@ -29,6 +30,7 @@ class BookingConfirmationScreen extends StatefulWidget {
     this.selectedDate,
     this.bookingType = 'Personal',
     this.opponentTeam,
+    this.initialSelectedSlots,
   });
 
   @override
@@ -66,6 +68,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void initState() {
     super.initState();
     _selectedDate = widget.selectedDate ?? _operationalBaseDate;
+    if (widget.initialSelectedSlots != null) {
+      _selectedTimeSlots.addAll(widget.initialSelectedSlots!);
+    }
     _isPrivate = !_isOpenJoin;
     _fetchUserTeam();
   }
