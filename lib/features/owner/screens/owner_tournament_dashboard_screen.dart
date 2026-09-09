@@ -9,13 +9,13 @@ import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/app_error_handler.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
-import '../../../shared/widgets/primary_button.dart';
 import '../widgets/tournament/tournament_bracket_preview_dialog.dart';
+import '../widgets/tournament/tournament_dashboard_bottom_bar.dart';
+import '../widgets/tournament/tournament_dashboard_dialogs.dart';
 import '../widgets/tournament/tournament_manual_team_sheet.dart';
 import '../widgets/tournament/tournament_overview_card.dart';
 import '../widgets/tournament/tournament_prize_delivery_dialog.dart';
 import '../widgets/tournament/tournament_team_card.dart';
-import 'tournament_brackets_screen.dart';
 
 class OwnerTournamentDashboardScreen extends StatefulWidget {
   final Championship championship;
@@ -64,49 +64,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       final unpaidTeams = teams.where((t) => !_currentChampionship.paidTeams.contains(t.id)).toList();
       if (unpaidTeams.isNotEmpty) {
         final unpaidNames = unpaidTeams.map((t) => t.name).join(', ');
-        final proceed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) {
-            final l10n = AppLocalizations.of(context)!;
-            return AlertDialog(
-              backgroundColor: VSPColors.surface,
-              surfaceTintColor: Colors.transparent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-              title: Text(l10n.warning, style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold)),
-              content: Text(
-                l10n.unpaidTeamsWarning(unpaidNames),
-                style: const TextStyle(color: VSPColors.textSecondary),
-              ),
-              actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-              actions: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: PrimaryButton(
-                        text: l10n.cancel,
-                        height: 44,
-                        color: VSPColors.surfaceAlt,
-                        textColor: VSPColors.textPrimary,
-                        onPressed: () => Navigator.pop(ctx, false),
-                      ),
-                    ),
-                    const SizedBox(width: VSPSpacing.md),
-                    Expanded(
-                      child: PrimaryButton(
-                        text: _currentChampionship.entryFee > 0
-                            ? (Localizations.localeOf(context).languageCode == 'ar' ? 'فهمت ذلك' : 'Understood')
-                            : l10n.proceedAnyway,
-                        height: 44,
-                        color: VSPColors.warning,
-                        textColor: Colors.black,
-                        onPressed: () => Navigator.pop(ctx, _currentChampionship.entryFee <= 0),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            );
-          },
+        final proceed = await TournamentDashboardDialogs.showUnpaidTeamsWarning(
+          context,
+          unpaidNames: unpaidNames,
+          entryFee: _currentChampionship.entryFee,
         );
         if (proceed != true) return;
       }
@@ -150,44 +111,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     final teamCount = _currentChampionship.joinedTeams.length;
 
     if (teamCount < _currentChampionship.maxTeams) {
-      final shouldForceStart = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: VSPColors.surface,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Text(AppLocalizations.of(ctx)!.forceStartTournament, style: Theme.of(ctx).textTheme.titleLarge),
-          content: Text(
-            AppLocalizations.of(ctx)!.forceStartWarning(teamCount, _currentChampionship.maxTeams),
-            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-          ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    text: AppLocalizations.of(ctx)!.cancel,
-                    height: 44,
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.textPrimary,
-                    onPressed: () => Navigator.pop(ctx, false),
-                  ),
-                ),
-                const SizedBox(width: VSPSpacing.md),
-                Expanded(
-                  child: PrimaryButton(
-                    text: AppLocalizations.of(ctx)!.forceStart,
-                    height: 44,
-                    color: VSPColors.warning,
-                    textColor: Colors.black,
-                    onPressed: () => Navigator.pop(ctx, true),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      final shouldForceStart = await TournamentDashboardDialogs.showForceStartConfirmation(
+        context,
+        teamCount: teamCount,
+        maxTeams: _currentChampionship.maxTeams,
       );
 
       if (shouldForceStart != true) return;
@@ -407,73 +334,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                           ),
                   ),
 
-                  Container(
-                    padding: EdgeInsets.fromLTRB(
-                      VSPSpacing.md,
-                      VSPSpacing.md,
-                      VSPSpacing.md,
-                      VSPSpacing.md + MediaQuery.of(context).padding.bottom,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (currentChamp.status == 'open')
-                          PrimaryButton(
-                            text: AppLocalizations.of(context)!.generateDrawStart,
-                            isLoading: _isLoading,
-                            onPressed: _handleStartTournament,
-                          ),
-
-                        if (currentChamp.status != 'open')
-                          PrimaryButton(
-                            text: AppLocalizations.of(context)!.viewBrackets.toUpperCase(),
-                            color: VSPColors.accent.withValues(alpha: 0.1),
-                            textColor: VSPColors.accent,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TournamentBracketsScreen(
-                                    championship: currentChamp,
-                                    isOwner: true,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-
-                        if (currentChamp.status == 'completed' || currentChamp.championTeamName != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: VSPColors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(VSPRadius.md),
-                              border: Border.all(color: VSPColors.accent, width: 1.5),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
-                                const SizedBox(width: 10),
-                                Text(
-                                  Localizations.localeOf(context).languageCode == 'ar'
-                                      ? 'بطل البطولة: ${currentChamp.championTeamName ?? ""}'
-                                      : 'Champion: ${currentChamp.championTeamName ?? ""}',
-                                  style: const TextStyle(
-                                      color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                  TournamentDashboardBottomBar(
+                    championship: currentChamp,
+                    isLoading: _isLoading,
+                    onStartTournament: _handleStartTournament,
                   ),
                 ],
               );
