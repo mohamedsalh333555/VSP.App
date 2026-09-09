@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -13,8 +12,11 @@ import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
+import '../widgets/championship_details/championship_bottom_bar.dart';
 import '../widgets/championship_details/championship_details_header.dart';
+import '../widgets/championship_details/championship_governorate_dialog.dart';
 import '../widgets/championship_details/championship_matches_tab.dart';
+import '../widgets/championship_details/championship_pill_tab_bar.dart';
 import '../widgets/championship_details/championship_rules_tab.dart';
 import '../widgets/championship_details/championship_squad_builder_sheet.dart';
 import '../widgets/championship_details/championship_top_scorers_tab.dart';
@@ -116,64 +118,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
 
       // INTER-GOVERNORATE ATTENDANCE CONFIRMATION: Verify commitment if championship is hosted in another governorate
       if (!mounted) return;
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      final champGovRaw = activeChamp.governorate.trim();
-      final playerGovRaw = auth.governorate.trim();
-
-      final champGovStd = EgyptGovernorates.resolveGoogleName(champGovRaw) ?? champGovRaw;
-      final playerGovStd = EgyptGovernorates.resolveGoogleName(playerGovRaw) ?? playerGovRaw;
-
-      if (champGovStd.isNotEmpty &&
-          playerGovStd.isNotEmpty &&
-          champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: VSPColors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.xl),
-              side: const BorderSide(color: VSPColors.divider),
-            ),
-            title: Row(
-              children: [
-                const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 22),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isArabic ? 'تأكيد موقع البطولة' : 'Confirm Tournament Location',
-                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              isArabic
-                  ? 'هذه البطولة تُقام في ملاعب محافظة [$champGovRaw]. هل أنت وفريقك مستعدون للالتزام بالحضور وخوض المباريات في الموعد والمكان المحدد؟'
-                  : 'This tournament is hosted in [$champGovRaw]. Are you and your team committed to attending and playing on-site as scheduled?',
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
-            ),
-            actionsPadding: const EdgeInsets.all(16),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-              ),
-              PrimaryButton(
-                text: isArabic ? 'نعم، ملتزمون بالحضور' : 'Yes, We Will Attend',
-                height: 44,
-                onPressed: () => Navigator.pop(ctx, true),
-              ),
-            ],
-          ),
-        );
-
-        if (confirmed != true) {
-          return;
-        }
-      }
+      final isConfirmed = await ChampionshipGovernorateDialog.shouldConfirmAndUserConfirmed(
+        context: context,
+        championshipGovernorate: activeChamp.governorate,
+        playerGovernorate: auth.governorate,
+      );
+      if (!isConfirmed) return;
 
       if (!mounted) return;
       final result = await Navigator.push<bool>(
@@ -299,43 +249,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               ),
 
               // 2. Pill Segmented Switcher
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.full),
-                  border: Border.all(color: VSPColors.divider, width: 0.5),
-                ),
-                child: AnimatedBuilder(
-                  animation: _tabController,
-                  builder: (context, _) {
-                    final currentIndex = _tabController.index;
-                    return Row(
-                      children: [
-                        _buildPillTabItem(
-                          index: 0,
-                          currentIndex: currentIndex,
-                          title: isArabic ? 'المباريات' : 'Matches',
-                          icon: Iconsax.calendar_1_copy,
-                        ),
-                        _buildPillTabItem(
-                          index: 1,
-                          currentIndex: currentIndex,
-                          title: isArabic ? 'الهدافين' : 'Scorers',
-                          icon: Iconsax.award_copy,
-                        ),
-                        _buildPillTabItem(
-                          index: 2,
-                          currentIndex: currentIndex,
-                          title: isArabic ? 'القواعد' : 'Rules',
-                          icon: Iconsax.document_text_copy,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
+              ChampionshipPillTabBar(tabController: _tabController),
               const SizedBox(height: 10),
 
               // 3. Tab Body Views
@@ -359,59 +273,38 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               ),
 
               // 4. Floating Action / Bottom Button Area
-              Container(
-                padding: EdgeInsets.fromLTRB(
-                  VSPSpacing.md,
-                  VSPSpacing.sm,
-                  VSPSpacing.md,
-                  MediaQuery.of(context).padding.bottom + VSPSpacing.md,
-                ),
-                decoration: const BoxDecoration(
-                  color: VSPColors.surface,
-                  border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-                ),
-                child: (isTeamRegistered && _myTeam != null)
-                    ? PrimaryButton(
-                        text: isArabic ? 'فريقك مسجّل بالبطولة | إدارة التشكيلة ' : 'Team Registered | Manage Roster ',
-                        color: VSPColors.accent,
-                        textColor: Colors.black,
-                        onPressed: () async {
-                          final updated = await Navigator.push<bool>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ManageTournamentRosterScreen(
-                                championship: championship,
-                                team: _myTeam!,
-                              ),
-                            ),
-                          );
-                          if (updated == true && mounted) {
-                            setState(() {});
-                          }
-                        },
-                      )
-                    : (isFull || championship.status == 'ongoing' || championship.status == 'completed')
-                        ? PrimaryButton(
-                            text: isFull && championship.status != 'ongoing' && championship.status != 'completed'
-                                ? (isArabic ? 'مكتمل العدد (مشاهدة القرعة والجدول)' : 'Fully Booked (View Brackets)')
-                                : AppLocalizations.of(context)!.viewBrackets,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => TournamentBracketsScreen(
-                                    championship: championship,
-                                    isOwner: false,
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : PrimaryButton(
-                            text: isArabic ? 'انضمام للبطولة الآن ' : AppLocalizations.of(context)!.join,
-                            isLoading: _isJoining,
-                            onPressed: _isJoining ? null : () => _handleJoin(championship),
-                          ),
+              ChampionshipBottomBar(
+                championship: championship,
+                myTeam: _myTeam,
+                isTeamRegistered: isTeamRegistered,
+                isFull: isFull,
+                isJoining: _isJoining,
+                onManageRoster: () async {
+                  final updated = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ManageTournamentRosterScreen(
+                        championship: championship,
+                        team: _myTeam!,
+                      ),
+                    ),
+                  );
+                  if (updated == true && mounted) {
+                    setState(() {});
+                  }
+                },
+                onViewBrackets: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TournamentBracketsScreen(
+                        championship: championship,
+                        isOwner: false,
+                      ),
+                    ),
+                  );
+                },
+                onJoin: () => _handleJoin(championship),
               ),
             ],
           ),
@@ -419,52 +312,5 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       },
     );
   }
-
-  Widget _buildPillTabItem({
-    required int index,
-    required int currentIndex,
-    required String title,
-    required IconData icon,
-  }) {
-    final isSelected = currentIndex == index;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          _tabController.animateTo(index);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(VSPRadius.full),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected ? Colors.black : VSPColors.textSecondary,
-              ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isSelected ? Colors.black : VSPColors.textSecondary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
+
