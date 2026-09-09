@@ -1,16 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import '../ui/tokens/vsp_tokens.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
-import '../../features/player/screens/booking_success_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
-import '../repositories/booking_repository.dart';
 import '../services/logger_service.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,6 +13,7 @@ import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification/notification_filter_service.dart';
+import 'notification/notification_ui_helper.dart';
 
 class NotificationService {
  // Singleton pattern
@@ -93,7 +89,10 @@ class NotificationService {
 
  if (message.notification != null) {
  _showLocalNotification(message);
- _showInAppAlert(message);
+ NotificationUiHelper.showInAppAlert(
+ context: _navigatorKey?.currentContext,
+ message: message,
+ );
  }
  });
 
@@ -223,14 +222,14 @@ class NotificationService {
  // 1. MATCH DETAILS / BOOKING DEEP LINK
  if (bookingId != null && bookingId.isNotEmpty) {
  if (type == 'chat') {
- _navigateToChat(context, bookingId);
+ NotificationUiHelper.navigateToChat(context, bookingId);
  return;
  }
  try {
  GoRouter.of(context).push('/match/$bookingId');
  return;
  } catch (_) {
- _navigateToBooking(context, bookingId);
+ NotificationUiHelper.navigateToBooking(context, bookingId);
  return;
  }
  }
@@ -251,34 +250,6 @@ class NotificationService {
  context,
  MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
  );
- }
- }
-
- Future<void> _navigateToChat(BuildContext context, String bookingId) async {
- try {
- final booking = await SupabaseBookingRepository().getBookingById(bookingId);
- if (booking != null && context.mounted) {
- Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
- );
- }
- } catch (e) {
- VSPLogger.e('Error navigating to chat', e);
- }
- }
-
- Future<void> _navigateToBooking(BuildContext context, String bookingId) async {
- try {
- final booking = await SupabaseBookingRepository().getBookingById(bookingId);
- if (booking != null && context.mounted) {
- Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
- );
- }
- } catch (e) {
- VSPLogger.e('Error navigating to booking', e);
  }
  }
 
@@ -369,7 +340,7 @@ class NotificationService {
  try {
  await NotificationRepository().sendNotification(uid, appNotif);
  } catch (e) {
- VSPLogger.e('Error saving booking confirmation to Supabase', e);
+VSPLogger.e('Error saving booking confirmation to Supabase', e);
  }
  }
  }
@@ -377,68 +348,12 @@ class NotificationService {
   Future<bool> _shouldShowNotification(String? type) =>
       NotificationFilterService.shouldShowNotification(type);
 
- void _showInAppAlert(RemoteMessage message) async {
- final context = _navigatorKey?.currentContext;
- if (context == null) return;
+  RealtimeChannel? _realtimeNotifChannel;
 
- final String? notifBookingId = message.data['bookingId'] ?? message.data['booking_id'];
- if (ChatScreen.activeBookingId != null && (notifBookingId == ChatScreen.activeBookingId || message.data['type'] == 'chat')) {
- return; // Suppress foreground snackbar when user is inside the active chat screen
- }
+  void listenToRealtimeNotifications(String userId) {
+    stopRealtimeNotificationsListener();
 
- try {
- final prefs = await SharedPreferences.getInstance();
- final soundEnabled = prefs.getBool('notif_sound') ?? true;
-
- if (soundEnabled) {
- HapticFeedback.heavyImpact();
- }
- 
- if (!context.mounted) return;
-
- ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(
- content: Row(
- children: [
- const Icon(Iconsax.messages_3_copy, color: Colors.black, size: 20),
- const SizedBox(width: 12),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- mainAxisSize: MainAxisSize.min,
- children: [
- Text(
- message.notification?.title ?? 'New Message',
- style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
- ),
- Text(
- message.notification?.body ?? '',
- style: const TextStyle(color: Colors.black, fontSize: 11),
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- ),
- ],
- ),
- ),
- ],
- ),
- backgroundColor: VSPColors.accent,
- behavior: SnackBarBehavior.floating,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
- duration: const Duration(seconds: 4),
- ),
- );
- } catch (e) {
- VSPLogger.e('Error showing in-app alert snackbar', e);
- }
- }
-
- RealtimeChannel? _realtimeNotifChannel;
-
- void listenToRealtimeNotifications(String userId) {
- stopRealtimeNotificationsListener();
-
- VSPLogger.i(' Subscribing to Supabase Realtime Notifications for user: $userId');
+    VSPLogger.i(' Subscribing to Supabase Realtime Notifications for user: $userId');
  _realtimeNotifChannel = Supabase.instance.client
  .channel('public:notifications:user_id=eq.$userId')
  .onPostgresChanges(
