@@ -6,6 +6,7 @@ import '../../core/utils/vsp_feedback.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'date_picker/vsp_date_picker_calculator.dart';
 import 'date_picker/vsp_date_picker_step_chip.dart';
+import 'date_picker/vsp_date_picker_step_views.dart';
 
 /// VSP Custom 3-Step Date Picker Dialog
 /// Fully aligned with VSP Design System (Tokens, Neon Glow, Haptics, Glassmorphism)
@@ -299,220 +300,43 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  );
  }
 
- Widget _buildStepListContent(bool isAr) {
- if (_currentStep == 0) {
- // Step 1: Years List
- final List<int> years = VspDatePickerCalculator.generateYears(
- minYear: widget.minYear,
- maxYear: widget.maxYear,
- );
-
- return ListView.separated(
- controller: _scrollController,
- physics: const BouncingScrollPhysics(),
- padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
- itemCount: years.length,
- separatorBuilder: (_, __) => const SizedBox(height: 8),
- itemBuilder: (context, index) {
- final year = years[index];
- final isSelected = _selectedYear == year;
-
- return GestureDetector(
- onTap: () {
- VSPFeedback.triggerTap();
- setState(() {
- _selectedYear = year;
- _currentStep = 1; // Auto advance to month step
- });
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 150),
- height: 52,
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.divider,
- width: isSelected ? 2.0 : 1.0,
- ),
- boxShadow: isSelected
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.3),
- blurRadius: 12,
- offset: const Offset(0, 4),
- ),
- ]
- : null,
- ),
- child: Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(
- '$year',
- style: TextStyle(
- color: isSelected ? Colors.black : Colors.white,
- fontSize: 20,
- fontWeight: FontWeight.w900,
- letterSpacing: 0.5,
- ),
- ),
- if (isSelected)
- const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
- ],
- ),
- ),
- );
- },
- );
- } else if (_currentStep == 1) {
- // Step 2: Months List
- return ListView.separated(
- physics: const BouncingScrollPhysics(),
- padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
- itemCount: VspDatePickerCalculator.months.length,
- separatorBuilder: (_, __) => const SizedBox(height: 8),
- itemBuilder: (context, index) {
- final monthItem = VspDatePickerCalculator.months[index];
- final monthNum = monthItem['number'] as int;
- final isSelected = _selectedMonth == monthNum;
- final monthName = VspDatePickerCalculator.getMonthName(monthNum, isArabic: isAr);
-
- return GestureDetector(
- onTap: () {
- VSPFeedback.triggerTap();
- setState(() {
- _selectedMonth = monthNum;
- _currentStep = 2; // Auto advance to day step
- });
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 150),
- height: 54,
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.divider,
- width: isSelected ? 2.0 : 1.0,
- ),
- boxShadow: isSelected
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.3),
- blurRadius: 12,
- offset: const Offset(0, 4),
- ),
- ]
- : null,
- ),
- child: Row(
- children: [
- Container(
- width: 34,
- height: 34,
- decoration: BoxDecoration(
- color: isSelected ? Colors.black.withValues(alpha: 0.18) : VSPColors.background,
- shape: BoxShape.circle,
- ),
- child: Center(
- child: Text(
- monthNum.toString().padLeft(2, '0'),
- style: TextStyle(
- color: isSelected ? Colors.black : VSPColors.accent,
- fontSize: 14,
- fontWeight: FontWeight.w900,
- ),
- ),
- ),
- ),
- const SizedBox(width: 14),
- Expanded(
- child: Text(
- monthName,
- style: TextStyle(
- color: isSelected ? Colors.black : Colors.white,
- fontSize: 18,
- fontWeight: FontWeight.w900,
- ),
- ),
- ),
- if (isSelected)
- const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
- ],
- ),
- ),
- );
- },
- );
- } else {
- // Step 3: Days List
- final totalDays = VspDatePickerCalculator.daysInMonth(
- _selectedYear ?? DateTime.now().year,
- _selectedMonth ?? 1,
- );
- final List<int> days = List.generate(totalDays, (index) => index + 1);
-
- return ListView.separated(
- physics: const BouncingScrollPhysics(),
- padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
- itemCount: days.length,
- separatorBuilder: (_, __) => const SizedBox(height: 8),
- itemBuilder: (context, index) {
- final day = days[index];
- final isSelected = _selectedDay == day;
-
- return GestureDetector(
- onTap: () {
- VSPFeedback.triggerTap();
- setState(() {
- _selectedDay = day;
- });
- _finishSelection();
- },
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 150),
- height: 52,
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.divider,
- width: isSelected ? 2.0 : 1.0,
- ),
- boxShadow: isSelected
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.3),
- blurRadius: 12,
- offset: const Offset(0, 4),
- ),
- ]
- : null,
- ),
- child: Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(
- day.toString().padLeft(2, '0'),
- style: TextStyle(
- color: isSelected ? Colors.black : Colors.white,
- fontSize: 20,
- fontWeight: FontWeight.w900,
- ),
- ),
- if (isSelected)
- const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
- ],
- ),
- ),
- );
- },
- );
- }
- }
+  Widget _buildStepListContent(bool isAr) {
+    if (_currentStep == 0) {
+      return VspDatePickerYearStep(
+        controller: _scrollController,
+        minYear: widget.minYear,
+        maxYear: widget.maxYear,
+        selectedYear: _selectedYear,
+        onYearSelected: (year) {
+          setState(() {
+            _selectedYear = year;
+            _currentStep = 1;
+          });
+        },
+      );
+    } else if (_currentStep == 1) {
+      return VspDatePickerMonthStep(
+        selectedMonth: _selectedMonth,
+        isAr: isAr,
+        onMonthSelected: (month) {
+          setState(() {
+            _selectedMonth = month;
+            _currentStep = 2;
+          });
+        },
+      );
+    } else {
+      return VspDatePickerDayStep(
+        selectedYear: _selectedYear,
+        selectedMonth: _selectedMonth,
+        selectedDay: _selectedDay,
+        onDaySelected: (day) {
+          setState(() {
+            _selectedDay = day;
+          });
+          _finishSelection();
+        },
+      );
+    }
+  }
 }
-
