@@ -24,6 +24,7 @@ import '../widgets/dashboard/owner_glanceable_timeline.dart';
 import '../widgets/dashboard/owner_pro_upgrade_teaser.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
+import '../widgets/dashboard/owner_quick_cash_card.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -190,6 +191,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       isArabic: isArabic,
                     ),
                     const SizedBox(height: 16),
+                    OwnerQuickCashCard(
+                      allBookings: allBookings,
+                      stadiums: stadiums,
+                      selectedStadiumFilter: _selectedStadiumFilter,
+                      isArabic: isArabic,
+                    ),
                     OwnerGlanceableTimeline(
                       allBookings: allBookings,
                       selectedStadiumFilter: _selectedStadiumFilter,
@@ -225,6 +232,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     isArabic: isArabic,
                   ),
                   const SizedBox(height: 16),
+                  OwnerQuickCashCard(
+                    allBookings: allBookings,
+                    stadiums: stadiums,
+                    selectedStadiumFilter: _selectedStadiumFilter,
+                    isArabic: isArabic,
+                  ),
                   OwnerGlanceableTimeline(
                     allBookings: allBookings,
                     selectedStadiumFilter: _selectedStadiumFilter,

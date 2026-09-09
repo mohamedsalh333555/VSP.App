@@ -32,10 +32,15 @@ class AppDateFormatter {
   /// Format time as hour and minute (e.g., "08:30 م" in AR, "08:30 PM" in EN)
   static String formatTime(DateTime date, String locale) {
     final localDate = date.toLocal();
-    if (locale.toLowerCase().startsWith('ar')) {
-      return DateFormat('hh:mm a', 'ar').format(localDate);
-    } else {
-      return DateFormat('hh:mm a', 'en').format(localDate);
+    final isArabic = locale.toLowerCase().startsWith('ar');
+    try {
+      if (isArabic) {
+        return DateFormat('hh:mm a', 'ar').format(localDate);
+      } else {
+        return DateFormat('hh:mm a', 'en').format(localDate);
+      }
+    } catch (_) {
+      return formatHourMin(localDate.hour, localDate.minute, isArabic);
     }
   }
 
