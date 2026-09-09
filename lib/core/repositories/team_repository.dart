@@ -5,10 +5,14 @@ import '../constants/egypt_governorates.dart';
 import '../repositories/notification_repository.dart';
 import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
+import 'team/team_opponent_service.dart';
 import 'team/team_payload_builder.dart';
 
 class TeamRepository {
- final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient? _client;
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
+
+  TeamRepository({SupabaseClient? client}) : _client = client;
 
  Future<List<String>> getTeamMemberUids(String teamId) async {
  final response = await _supabase
@@ -52,46 +56,12 @@ class TeamRepository {
  }
  }
 
- /// خوارزمية كشف الفرق الوهمية (Fake Team Protection)
- /// الفريق يصبح رسمياً ويؤثر في نقاط الـ Elo والترتيب إذا:
- /// 1. خاض مباراة واحدة موثقة سابقة على الأقل.
- /// 2. ألكابتن والأعضاء لديهم أرقام هواتف موثقة ومختلفة (5+ أعضاء).
- Future<bool> checkIsTeamOfficial(String teamId) async {
- try {
- final team = await getTeam(teamId);
- if (team == null) return false;
-
- // أ. إذا كان للفريق تاريخ مباريات موثقة سابقة
- if (team.matchesPlayed > 0) {
- return true;
- }
-
- // ب. التثبت من وجود 5 أعضاء على الأقل بأرقام هواتف موثقة ومختلفة باستخدام captainId الفريق
- final memberUids = await getTeamMemberUids(teamId);
- final captainId = team.captainId.isNotEmpty ? team.captainId : (memberUids.isNotEmpty ? memberUids.first : '');
- if (captainId.isEmpty) return false;
-
- final allUids = memberUids.contains(captainId) ? memberUids : [captainId, ...memberUids];
- if (allUids.length < 5) return false;
-
- final response = await _supabase
- .from('users')
- .select('phone')
- .inFilter('id', allUids);
-
- final phones = (response as List)
- .map((row) => PhoneUtils.normalize(row['phone']?.toString()))
- .where((p) => p != null && p.isNotEmpty)
- .cast<String>()
- .toSet();
-
- // يجب وجود 5 أرقام هواتف فريدة ومختلفة
- return phones.length >= 5;
- } catch (e) {
- debugPrint('Error checking team official status: $e');
- return false;
- }
- }
+  Future<bool> checkIsTeamOfficial(String teamId) =>
+      TeamOpponentService.checkIsTeamOfficial(
+        supabase: _supabase,
+        repository: this,
+        teamId: teamId,
+      );
 
  /// تحديث نتائج المباراة ونقاط الـ Elo فقط للمباريات الرسمية
  Future<void> updateMatchResult(String bookingId, String homeTeamId, String awayTeamId, MatchOutcome finalOutcome) async {
@@ -267,80 +237,18 @@ class TeamRepository {
         });
   }
 
- Future<List<Team>> searchOpponentTeams(String query) async {
- try {
- final response = await _supabase
- .from('teams')
- .select('*, team_members(user_id, users(profile_image_url))')
- .or('name.ilike.%$query%,captain_phone.ilike.%$query%');
- 
- final List<Team> teams = [];
- for (final doc in (response as List)) {
- final teamId = doc['id'].toString();
- final membersList = doc['team_members'] as List? ?? [];
- final List<String> memberUids = [];
- final List<String> playerImages = [];
- 
- for (var m in membersList) {
- final uid = m['user_id']?.toString();
- if (uid != null) memberUids.add(uid);
- final userMap = m['users'];
- if (userMap is Map && userMap['profile_image_url'] != null) {
- playerImages.add(userMap['profile_image_url'].toString());
- }
- }
- 
- final data = Map<String, dynamic>.from(doc);
- data['memberUids'] = memberUids;
- data['playerImages'] = playerImages;
- data['playersCount'] = memberUids.length;
- 
- teams.add(Team.fromFirestore(data, teamId));
- }
- return teams;
- } catch (e) {
- return [];
- }
- }
+  Future<List<Team>> searchOpponentTeams(String query) =>
+      TeamOpponentService.searchOpponentTeams(
+        supabase: _supabase,
+        query: query,
+      );
 
- Future<List<Team>> getPreviousOpponents(String teamId) async {
- try {
- final team = await getTeam(teamId);
- if (team == null || team.playedOpponents.isEmpty) return [];
- 
- final response = await _supabase
- .from('teams')
- .select('*, team_members(user_id, users(profile_image_url))')
- .inFilter('id', team.playedOpponents);
- 
- final List<Team> teams = [];
- for (final doc in (response as List)) {
- final id = doc['id'].toString();
- final membersList = doc['team_members'] as List? ?? [];
- final List<String> memberUids = [];
- final List<String> playerImages = [];
- 
- for (var m in membersList) {
- final uid = m['user_id']?.toString();
- if (uid != null) memberUids.add(uid);
- final userMap = m['users'];
- if (userMap is Map && userMap['profile_image_url'] != null) {
- playerImages.add(userMap['profile_image_url'].toString());
- }
- }
- 
- final data = Map<String, dynamic>.from(doc);
- data['memberUids'] = memberUids;
- data['playerImages'] = playerImages;
- data['playersCount'] = memberUids.length;
- 
- teams.add(Team.fromFirestore(data, id));
- }
- return teams;
- } catch (e) {
- return [];
- }
- }
+  Future<List<Team>> getPreviousOpponents(String teamId) =>
+      TeamOpponentService.getPreviousOpponents(
+        supabase: _supabase,
+        repository: this,
+        teamId: teamId,
+      );
 
  Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
  try {
