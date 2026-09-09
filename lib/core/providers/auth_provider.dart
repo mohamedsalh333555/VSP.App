@@ -5,20 +5,23 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../models/user_model.dart';
+import '../repositories/user_repository.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../services/location_service.dart';
-import '../repositories/user_repository.dart';
-import 'auth/auth_draft_cleaner.dart';
 import 'auth/auth_oauth_coordinator.dart';
 import 'auth/auth_onboarding_coordinator.dart';
+import 'auth/auth_otp_service.dart';
 import 'auth/auth_profile_service.dart';
 import 'auth/auth_realtime_coordinator.dart';
 import 'auth/auth_registration_form_state.dart';
 import 'auth/auth_registration_service.dart';
 import 'auth/auth_session_listener.dart';
+import 'auth/auth_sign_out_handler.dart';
 import 'auth/auth_user_data_fetcher.dart';
+
+export '../extensions/supabase_user_extension.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -32,6 +35,7 @@ class AuthProvider with ChangeNotifier {
   late final AuthRegistrationService _registrationService;
   late final AuthRealtimeCoordinator _realtimeCoordinator;
   late final AuthUserDataFetcher _userDataFetcher;
+  late final AuthOtpService _otpService;
   StreamSubscription<User?>? _authSubscription;
 
   // Supabase user state
@@ -85,12 +89,14 @@ class AuthProvider with ChangeNotifier {
     AuthRegistrationService? registrationService,
     AuthRealtimeCoordinator? realtimeCoordinator,
     AuthUserDataFetcher? userDataFetcher,
+    AuthOtpService? otpService,
   }) {
     _oauthCoordinator = oauthCoordinator ?? AuthOAuthCoordinator(authService: _authService, userRepository: _userRepository);
     _profileService = profileService ?? AuthProfileService(authService: _authService, storageService: _storageService, locationService: _locationService, userRepository: _userRepository);
     _registrationService = registrationService ?? AuthRegistrationService(authService: _authService, userRepository: _userRepository);
     _realtimeCoordinator = realtimeCoordinator ?? AuthRealtimeCoordinator();
     _userDataFetcher = userDataFetcher ?? AuthUserDataFetcher(userRepository: _userRepository);
+    _otpService = otpService ?? AuthOtpService(registrationService: _registrationService);
 
     _initOnboarding();
 
@@ -288,16 +294,13 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    if (_firebaseUser != null) {
-      try {
-        await Supabase.instance.client.from('users').update({'fcm_token': null}).eq('id', _firebaseUser!.id);
-      } catch (_) {}
-    }
-
-    await AuthDraftCleaner.clearSessionDrafts(_firebaseUser?.id ?? _userModel?.uid);
-    _stopRealtimeUserListener();
-    _notificationService.stopRealtimeNotificationsListener();
-    await _authService.signOut();
+    await AuthSignOutHandler.performSignOut(
+      user: _firebaseUser,
+      userModelUid: _userModel?.uid,
+      authService: _authService,
+      notificationService: _notificationService,
+      onClearRealtime: _stopRealtimeUserListener,
+    );
     _firebaseUser = null;
     _userModel = null;
     _form.userType = null;
@@ -395,18 +398,17 @@ class AuthProvider with ChangeNotifier {
   });
 
   Future<bool> sendVerificationCode() => _runAuthAction(() async {
-    await Future.delayed(const Duration(seconds: 1));
-    _form.verificationCode = '123456';
-    return (success: true, error: null);
+    final ok = await _otpService.sendVerificationCode(_form);
+    return (success: ok, error: null);
   });
 
   Future<bool> verifyCode(String code) => _runAuthAction(() async {
-    final match = code == _form.verificationCode && _form.verificationCode != null;
+    final match = _otpService.verifyCode(_form, code);
     return (success: match, error: match ? null : 'رمز التحقق غير صحيح');
   });
 
   Future<bool> resetPassword(String email) => _runAuthAction(() async {
-    final ok = await _registrationService.resetPassword(email);
+    final ok = await _otpService.resetPassword(email);
     return (success: ok, error: ok ? null : 'Failed to send password reset email');
   });
 
@@ -449,7 +451,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> verifyOtp({required String email, required String token}) => _runAuthAction(() async {
-    final ok = await _registrationService.verifyOtp(email: email, token: token);
+    final ok = await _otpService.verifyOtp(email: email, token: token);
     if (ok) {
       _firebaseUser = _authService.currentUser;
       if (_firebaseUser != null) await _fetchUserData(_firebaseUser!);
@@ -457,7 +459,7 @@ class AuthProvider with ChangeNotifier {
     return (success: ok, error: ok ? null : 'Failed to verify OTP');
   });
 
-  Future<bool> resendOtp() => _registrationService.resendOtp();
+  Future<bool> resendOtp() => _otpService.resendOtp();
 
   void _startRealtimeUserListener(String userId) {
     _realtimeCoordinator.startRealtimeUserListener(
@@ -492,8 +494,4 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     return ok;
   }
-}
-
-extension SupabaseUserExtension on User {
-  String get uid => id;
 }
