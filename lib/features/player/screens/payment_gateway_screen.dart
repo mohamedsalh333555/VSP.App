@@ -6,11 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/repositories/booking_repository.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
+import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
@@ -44,13 +44,10 @@ class PaymentGatewayScreen extends StatefulWidget {
 }
 
 class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
+  final PaymentCheckoutCoordinator _coordinator = PaymentCheckoutCoordinator();
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
   Booking? _booking;
-  StreamSubscription? _bookingSubscription;
-  Timer? _webhookTimeoutTimer;
-  Timer? _fallbackPollingTimer;
-  Timer? _countdownTimer;
   int _remainingSeconds = 300; // 5 minutes atomic hold timer
   bool _paymentCompleted = false;
   String _selectedMethod = 'card'; // 'card', 'wallet'
@@ -63,22 +60,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   void _startCountdownTimer() {
-    _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (!mounted) return;
-      if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
-      } else {
-        _countdownTimer?.cancel();
-        if (!_paymentCompleted && _booking != null) {
-          if (!mounted) return;
+    _coordinator.startCountdownTimer(
+      initialSeconds: _remainingSeconds,
+      onTick: (remaining) {
+        if (mounted) setState(() => _remainingSeconds = remaining);
+      },
+      onExpired: () async {
+        if (!_paymentCompleted && _booking != null && mounted) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.uid;
           if (userId != null && PaymentCheckoutService.shouldCleanupStaleBookings(
             isTournamentPayment: widget.isTournamentPayment,
             existingBookingId: widget.existingBookingId,
           )) {
-            await _cleanupStalePendingBookings(userId);
+            await _coordinator.cleanupStaleBookings(
+              isTournamentPayment: widget.isTournamentPayment,
+              userId: userId,
+              stadiumId: widget.bookingDraft.stadiumId,
+            );
           }
           if (mounted) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -89,17 +88,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             Navigator.pop(context);
           }
         }
-      }
-    });
+      },
+    );
   }
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
-    _webhookTimeoutTimer?.cancel();
-    _fallbackPollingTimer?.cancel();
-    _bookingSubscription?.cancel();
-    _bookingSubscription = null;
+    _coordinator.dispose();
     super.dispose();
   }
 
@@ -140,14 +135,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     if (userId != null) {
       try {
-        await _cleanupStalePendingBookings(userId);
+        await _coordinator.cleanupStaleBookings(
+          isTournamentPayment: widget.isTournamentPayment,
+          userId: userId,
+          stadiumId: widget.bookingDraft.stadiumId,
+        );
 
         if (!mounted) return;
-        final draft = widget.bookingDraft.copyWith(
-          paymentStatus: 'pending',
-          paymentMethod: 'paymob',
-          isPaid: false,
-        );
+        final draft = PaymentCheckoutService.preparePendingDraft(widget.bookingDraft);
         final booking = await bookingProvider.createBooking(draft, userId);
         if (booking != null) {
           if (mounted) {
@@ -181,20 +176,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
   }
 
-  Future<void> _cleanupStalePendingBookings(String userId) async {
-    if (widget.isTournamentPayment) return;
-    await SupabaseBookingRepository().cleanupStalePendingBookings(
-      userId: userId,
-      stadiumId: widget.bookingDraft.stadiumId,
-    );
-  }
-
   void _initBookingRealtimeListener(String bookingId) {
-    if (bookingId.startsWith('mock_')) return;
-    _bookingSubscription?.cancel();
-    _bookingSubscription = SupabaseBookingRepository().streamBookingStatus(bookingId).listen((data) async {
-      if (data.isNotEmpty) {
-        final bookingData = data.first;
+    _coordinator.listenToBookingStatus(
+      bookingId: bookingId,
+      onStatusUpdated: (bookingData) async {
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
@@ -214,41 +199,28 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             }
           }
         }
-      }
-    }, onError: (err) {
-      debugPrint('Real-time listener error: $err');
-    });
+      },
+      onError: (err) => debugPrint('Real-time listener error: $err'),
+    );
   }
 
   void _startFallbackPollingTimer(String bookingId) {
-    _fallbackPollingTimer?.cancel();
-    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-      if (!mounted || _paymentCompleted) {
-        timer.cancel();
-        return;
-      }
-      try {
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        final booking = await bookingProvider.getBookingById(bookingId);
-        if (booking != null && (booking.status == BookingStatus.confirmed || booking.isPaid)) {
-          timer.cancel();
-          _webhookTimeoutTimer?.cancel();
-          _fallbackPollingTimer?.cancel();
-          if (mounted && !_paymentCompleted) {
-            _paymentCompleted = true;
-            HapticFeedback.heavyImpact();
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookingSuccessScreen(booking: booking),
-              ),
-            );
-          }
+    _coordinator.startFallbackPolling(
+      bookingId: bookingId,
+      fetchBooking: (id) => Provider.of<BookingProvider>(context, listen: false).getBookingById(id),
+      onConfirmed: (booking) {
+        if (mounted && !_paymentCompleted) {
+          _paymentCompleted = true;
+          HapticFeedback.heavyImpact();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingSuccessScreen(booking: booking),
+            ),
+          );
         }
-      } catch (e) {
-        debugPrint('Fallback polling notice: $e');
-      }
-    });
+      },
+    );
   }
 
   Future<void> _startPaymobCheckout() async {
@@ -259,26 +231,27 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       _isAwaitingWebhook = true;
     });
 
-    _webhookTimeoutTimer?.cancel();
-    _webhookTimeoutTimer = Timer(const Duration(seconds: 90), () {
-      if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
-        setState(() {
-          _isAwaitingWebhook = false;
-          _isLoading = false;
-        });
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isArabic
-                  ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
-                  : 'Webhook response timed out. You can retry or choose another method.',
+    _coordinator.startWebhookTimeout(
+      onTimeout: () {
+        if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
+          setState(() {
+            _isAwaitingWebhook = false;
+            _isLoading = false;
+          });
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isArabic
+                    ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
+                    : 'Webhook response timed out. You can retry or choose another method.',
+              ),
+              backgroundColor: VSPColors.error,
             ),
-            backgroundColor: VSPColors.error,
-          ),
-        );
-      }
-    });
+          );
+        }
+      },
+    );
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
@@ -332,7 +305,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (mounted && (isPaidSuccess == true)) {
           if (widget.isTournamentPayment) {
             _paymentCompleted = true;
-            _countdownTimer?.cancel();
+            _coordinator.cancelCountdownTimer();
             Navigator.pop(context, true);
             return;
           }
@@ -344,7 +317,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
           if (_booking != null) {
             final bookingId = _booking!.id;
-            await SupabaseBookingRepository().simulateTestPaymentWebhook(bookingId);
+            await _coordinator.simulateTestPaymentWebhook(bookingId);
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {
@@ -385,25 +358,16 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _onCancelAndReleaseBooking(BuildContext dialogCtx) async {
-    _countdownTimer?.cancel();
-    _webhookTimeoutTimer?.cancel();
-    _bookingSubscription?.cancel();
-    try {
+    await _coordinator.releaseBookingSafely(
+      isTournamentPayment: widget.isTournamentPayment,
+      booking: _booking,
+    );
+    if (!widget.isTournamentPayment && mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.currentUser?.uid;
-
-      if (!widget.isTournamentPayment) {
-        if (_booking != null && !_booking!.id.startsWith('mock_')) {
-          await SupabaseBookingRepository().releaseBookingLock(_booking!.id);
-        }
-
-        if (userId != null && mounted) {
-          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-          bookingProvider.loadUserBookings(userId);
-        }
+      if (userId != null && mounted) {
+        Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
       }
-    } catch (e) {
-      debugPrint('Error releasing booking slot safely on Go Back: $e');
     }
 
     if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);

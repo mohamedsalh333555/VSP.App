@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/config/app_config.dart';
+import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/services/payment_checkout_service.dart';
 
 void main() {
@@ -101,6 +102,29 @@ void main() {
       expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isTrue);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
       expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
+    });
+
+    test('preparePendingDraft sets status to pending and method to paymob', () {
+      final now = DateTime(2026, 9, 9, 20, 0);
+      final draft = BookingDraft(
+        stadiumId: 'std-123',
+        stadiumName: 'Al Ahly Arena',
+        stadiumImageUrl: '',
+        ownerId: 'owner-456',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        bookingType: BookingType.openJoin,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 400.0,
+        currency: 'EGP',
+        depositPaid: 100.0,
+      );
+
+      final prepared = PaymentCheckoutService.preparePendingDraft(draft);
+      expect(prepared.paymentStatus, 'pending');
+      expect(prepared.paymentMethod, 'paymob');
+      expect(prepared.isPaid, isFalse);
     });
   });
 }

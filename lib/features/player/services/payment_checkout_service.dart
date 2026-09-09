@@ -1,9 +1,19 @@
 import '../../../core/config/app_config.dart';
 import '../../../core/services/paymob_service.dart';
+import '../../../data/models.dart';
 
 /// Pure domain service handling calculation, reference generation, and validation for payment checkout.
 class PaymentCheckoutService {
   const PaymentCheckoutService();
+
+  /// Prepares a pending booking draft ready for insertion into the database.
+  static BookingDraft preparePendingDraft(BookingDraft draft) {
+    return draft.copyWith(
+      paymentStatus: 'pending',
+      paymentMethod: 'paymob',
+      isPaid: false,
+    );
+  }
 
   /// Calculates the base payable amount depending on whether a deposit is required.
   static double calculateBasePayableAmount({
