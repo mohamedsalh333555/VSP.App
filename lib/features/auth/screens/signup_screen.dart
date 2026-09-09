@@ -16,6 +16,9 @@ import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../../../shared/widgets/vsp_position_selector.dart';
 import '../../../shared/widgets/vsp_terms_checkbox.dart';
 import '../services/signup_validation_service.dart';
+import '../widgets/signup/signup_date_of_birth_field.dart';
+import '../widgets/signup/signup_name_fields.dart';
+import '../widgets/signup/signup_password_strength_bar.dart';
 import '../widgets/signup_governorate_dropdown.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
@@ -266,74 +269,17 @@ class _SignupScreenState extends State<SignupScreen> {
  const SizedBox(height: 24),
  
  // Fields — First & Last Name
- Row(
- children: [
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- _buildLabel(AppLocalizations.of(context)!.firstName),
- CustomTextField(
- controller: _firstNameController,
- hintText: AppLocalizations.of(context)!.firstNameHint,
- textInputAction: TextInputAction.next,
- prefixIcon: Iconsax.user_copy,
- maxLength: 30,
- ),
- ],
- ),
- ),
- const SizedBox(width: 12),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- _buildLabel(AppLocalizations.of(context)!.lastName),
- CustomTextField(
- controller: _lastNameController,
- hintText: AppLocalizations.of(context)!.lastNameHint,
- textInputAction: TextInputAction.next,
- prefixIcon: Iconsax.user_copy,
- maxLength: 30,
- ),
- ],
- ),
- ),
- ],
- ),
+              SignupNameFields(
+                firstNameController: _firstNameController,
+                lastNameController: _lastNameController,
+              ),
 
- // Date of Birth
- const SizedBox(height: 16),
- _buildLabel(AppLocalizations.of(context)!.dateOfBirth),
- GestureDetector(
- onTap: _pickDateOfBirth,
- child: Container(
- height: VSPSize.inputHeight,
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.input),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
- ),
- child: Row(
- children: [
- const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
- const SizedBox(width: 12),
- Text(
- _dateOfBirth != null
- ? '${_dateOfBirth!.year}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}'
- : AppLocalizations.of(context)!.dateOfBirthPlaceholder,
- style: Theme.of(context).textTheme.bodyMedium?.copyWith(
- color: _dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary,
- ),
- ),
- const Spacer(),
- if (_dateOfBirth != null)
- const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
- ],
- ),
- ),
- ),
+              // Date of Birth
+              const SizedBox(height: 16),
+              SignupDateOfBirthField(
+                dateOfBirth: _dateOfBirth,
+                onTap: _pickDateOfBirth,
+              ),
  
  const SizedBox(height: 16),
  _buildLabel(widget.isOwner ? AppLocalizations.of(context)!.addPersonalPhoneNumber : AppLocalizations.of(context)!.phoneNumber),
@@ -409,7 +355,7 @@ class _SignupScreenState extends State<SignupScreen> {
  
  if (_passwordController.text.isNotEmpty) ...[
  const SizedBox(height: 8),
- _buildPasswordStrengthBar(),
+              SignupPasswordStrengthBar(password: _passwordController.text),
  ],
  
  const SizedBox(height: 16),
@@ -466,30 +412,7 @@ class _SignupScreenState extends State<SignupScreen> {
 );
 }
 
-  Widget _buildPasswordStrengthBar() {
-    final strength = SignupValidationService.calculatePasswordStrength(_passwordController.text);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(strength.label, style: TextStyle(color: strength.color, fontSize: 10, fontWeight: FontWeight.bold)),
-            Text('${(strength.score * 100).toInt()}%', style: TextStyle(color: strength.color, fontSize: 10)),
-          ],
-        ),
-        const SizedBox(height: 4),
-        LinearProgressIndicator(
-          value: strength.score,
-          backgroundColor: VSPColors.surfaceAlt,
-          valueColor: AlwaysStoppedAnimation<Color>(strength.color),
-          borderRadius: BorderRadius.circular(VSPRadius.xs),
-          minHeight: 4,
-        ),
-      ],
-    );
-  }
 
   Widget _buildLabel(String text) {
     return Padding(
