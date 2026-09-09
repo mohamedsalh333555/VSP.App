@@ -2,16 +2,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
-import '../repositories/match_repository.dart';
-import 'booking/booking_categorization_service.dart';
 import 'booking/booking_draft_storage.dart';
 import 'booking/booking_list_modifier.dart';
+import 'booking/booking_match_coordinator.dart';
 import 'booking/booking_sync_coordinator.dart';
 
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
   late final BookingRepository _repository;
   late final BookingSyncCoordinator _syncCoordinator;
+  late final BookingMatchCoordinator _matchCoordinator;
 
   List<Booking> _userBookings = [];
   List<Booking> _upcomingBookings = [];
@@ -45,9 +45,13 @@ class BookingProvider with ChangeNotifier {
   bool get hasMoreMatches => _hasMoreMatches;
   String? get errorMessage => _errorMessage;
 
-  BookingProvider({BookingRepository? repository}) {
+  BookingProvider({
+    BookingRepository? repository,
+    BookingMatchCoordinator? matchCoordinator,
+  }) {
     _repository = repository ?? SupabaseBookingRepository();
     _syncCoordinator = BookingSyncCoordinator(_repository);
+    _matchCoordinator = matchCoordinator ?? BookingMatchCoordinator();
     _restoreDraft();
   }
 
@@ -291,19 +295,13 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Fetch public matches directly from the unified active stream to avoid pagination mismatch
+  /// Fetch public matches directly from the unified active stream
   Future<void> fetchPublicMatches({bool isRefresh = false}) async {
     if (_isLoading) return;
-
-    if (isRefresh) {
-      _setLoading(true);
-    }
+    if (isRefresh) _setLoading(true);
 
     try {
-      final stream = MatchRepository().getPublicMatches();
-      final matches = await stream.first;
-
-      _publicMatches = List<Booking>.from(matches);
+      _publicMatches = await _matchCoordinator.fetchPublicMatches();
       _hasMoreMatches = false;
     } catch (e) {
       _errorMessage = 'Failed to fetch public matches: $e';
@@ -324,20 +322,11 @@ class BookingProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    try {
-      final success = await MatchRepository().joinPublicMatch(
-        bookingId,
-        userId,
-      );
-      _isLoading = false;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      _errorMessage = BookingCategorizationService.formatPublicMatchError(e);
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
+    final res = await _matchCoordinator.joinPublicMatch(bookingId: bookingId, userId: userId);
+    _isLoading = false;
+    _errorMessage = res.error;
+    notifyListeners();
+    return res.success;
   }
 
   /// Leave a public match
@@ -345,20 +334,11 @@ class BookingProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      final success = await MatchRepository().leavePublicMatch(
-        bookingId,
-        userId,
-      );
-      _isLoading = false;
-      notifyListeners();
-      return success;
-    } catch (e) {
-      _errorMessage = 'Error leaving match: $e';
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
+    final res = await _matchCoordinator.leavePublicMatch(bookingId: bookingId, userId: userId);
+    _isLoading = false;
+    _errorMessage = res.error;
+    notifyListeners();
+    return res.success;
   }
 
   /// Submit match result for Challenge bookings
