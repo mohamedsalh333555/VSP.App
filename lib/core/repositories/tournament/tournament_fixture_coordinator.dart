@@ -5,6 +5,8 @@ import '../../../data/models.dart';
 import '../../services/logger_service.dart';
 import '../../utils/app_date_formatter.dart';
 import 'tournament_bracket_engine.dart';
+import 'tournament_draw_notifier.dart';
+import 'tournament_group_advancer.dart';
 import 'tournament_stats_coordinator.dart';
 
 /// Coordinates fixture generation for Knockout, Round-Robin League, and Group stages,
@@ -13,18 +15,36 @@ class TournamentFixtureCoordinator {
   final SupabaseClient? _client;
   final Future<List<Team>> Function(List<String> ids)? _getTeamsByIds;
   final TournamentStatsCoordinator? _statsCoordinator;
+  final TournamentDrawNotifier? _drawNotifier;
+  final TournamentGroupAdvancer? _groupAdvancer;
 
   TournamentFixtureCoordinator({
     SupabaseClient? client,
     Future<List<Team>> Function(List<String> ids)? getTeamsByIds,
     TournamentStatsCoordinator? statsCoordinator,
+    TournamentDrawNotifier? drawNotifier,
+    TournamentGroupAdvancer? groupAdvancer,
   })  : _client = client,
         _getTeamsByIds = getTeamsByIds,
-        _statsCoordinator = statsCoordinator;
+        _statsCoordinator = statsCoordinator,
+        _drawNotifier = drawNotifier,
+        _groupAdvancer = groupAdvancer;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   TournamentStatsCoordinator get _statsCoord =>
       _statsCoordinator ?? TournamentStatsCoordinator(client: _client);
+  TournamentDrawNotifier get _notifier =>
+      _drawNotifier ??
+      TournamentDrawNotifier(
+        client: _client,
+        getTeamsByIds: _getTeamsByIds,
+      );
+  TournamentGroupAdvancer get _advancer =>
+      _groupAdvancer ??
+      TournamentGroupAdvancer(
+        client: _client,
+        statsCoordinator: _statsCoord,
+      );
 
   Future<List<Team>> _fetchTeams(List<String> ids) async {
     if (_getTeamsByIds != null) return _getTeamsByIds(ids);
@@ -296,177 +316,11 @@ class TournamentFixtureCoordinator {
   }
 
   /// Automatic qualification from group stages to knockout elimination bracket.
-  Future<void> advanceGroupsToKnockout(String championshipId) async {
-    try {
-      final champDoc = await _supabase
-          .from('championships')
-          .select()
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champDoc == null) return;
-
-      final int numGroups = int.tryParse(
-            (champDoc['number_of_groups'] ?? champDoc['numberOfGroups'] ?? 2)
-                .toString(),
-          ) ??
-          2;
-      final int qualifyingPerGroup = int.tryParse(
-            (champDoc['qualifying_per_group'] ??
-                    champDoc['qualifyingPerGroup'] ??
-                    2)
-                .toString(),
-          ) ??
-          2;
-      final List<String> groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
-      // Map to store qualified teams per group in rank order
-      final Map<String, List<Map<String, String>>> groupQualifiersMap = {};
-      for (int g = 0; g < numGroups; g++) {
-        final groupName = groupNames[g];
-        final standings = await _statsCoord.getChampionshipStandings(
-          championshipId,
-          groupName: groupName,
-        );
-
-        final groupList = <Map<String, String>>[];
-        for (int i = 0; i < min(qualifyingPerGroup, standings.length); i++) {
-          final row = standings[i];
-          groupList.add({
-            'id': row['team_id'].toString(),
-            'name': row['team_name'].toString(),
-            'group': groupName,
-          });
-        }
-        groupQualifiersMap[groupName] = groupList;
-      }
-
-      List<Map<String, String>> qualifiedTeams = [];
-
-      if (numGroups >= 2 && qualifyingPerGroup >= 2) {
-        for (int g = 0; g < numGroups; g += 2) {
-          if (g + 1 < numGroups) {
-            final g1 = groupNames[g];
-            final g2 = groupNames[g + 1];
-
-            final g1List = groupQualifiersMap[g1] ?? [];
-            final g2List = groupQualifiersMap[g2] ?? [];
-
-            final g1_1st = g1List.isNotEmpty ? g1List[0] : null;
-            final g1_2nd = g1List.length > 1 ? g1List[1] : null;
-            final g2_1st = g2List.isNotEmpty ? g2List[0] : null;
-            final g2_2nd = g2List.length > 1 ? g2List[1] : null;
-
-            if (g1_1st != null) qualifiedTeams.add(g1_1st);
-            if (g2_2nd != null) qualifiedTeams.add(g2_2nd);
-
-            if (g2_1st != null) qualifiedTeams.add(g2_1st);
-            if (g1_2nd != null) qualifiedTeams.add(g1_2nd);
-          } else {
-            final g1 = groupNames[g];
-            final g1List = groupQualifiersMap[g1] ?? [];
-            qualifiedTeams.addAll(g1List);
-          }
-        }
-      } else {
-        groupQualifiersMap.values.forEach(qualifiedTeams.addAll);
-      }
-
-      if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
-
-      // Delegate Groups to Knockout seeding computation to the pure engine
-      final knockoutMatches =
-          TournamentBracketEngine.buildKnockoutFromQualifiedTeams(
-        championshipId: championshipId,
-        qualifiedTeams: qualifiedTeams,
-      );
-
-      if (knockoutMatches.isNotEmpty) {
-        await _supabase.from('tournament_matches').insert(knockoutMatches);
-      }
-
-      debugPrint(
-        'Successfully advanced group winners to Knockout stage!',
-      );
-    } catch (e) {
-      debugPrint('Error advancing groups to knockout: $e');
-      rethrow;
-    }
-  }
+  Future<void> advanceGroupsToKnockout(String championshipId) =>
+      _advancer.advanceGroupsToKnockout(championshipId);
 
   /// Sends draw notification to members of all teams in the championship.
-  Future<void> sendDrawNotifications(String championshipId) async {
-    try {
-      final champ = await _supabase
-          .from('championships')
-          .select('name')
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champ == null) return;
-      final champName = champ['name']?.toString() ?? 'البطولة';
-
-      final response = await _supabase
-          .from('tournament_matches')
-          .select('home_team_id, away_team_id, home_team_name, away_team_name')
-          .eq('championship_id', championshipId);
-
-      final matchesList = response as List;
-      final Set<String> teamIds = {};
-      for (final m in matchesList) {
-        if (m['home_team_id'] != null) teamIds.add(m['home_team_id'].toString());
-        if (m['away_team_id'] != null) teamIds.add(m['away_team_id'].toString());
-      }
-
-      if (teamIds.isEmpty) return;
-
-      final allTeams = await _fetchTeams(teamIds.toList());
-      final Map<String, Team> teamMap = {for (var t in allTeams) t.id: t};
-
-      final List<Map<String, dynamic>> notificationsToInsert = [];
-
-      for (final matchData in matchesList) {
-        final String? homeId = matchData['home_team_id']?.toString();
-        final String? awayId = matchData['away_team_id']?.toString();
-        final String homeName = matchData['home_team_name']?.toString() ?? '';
-        final String awayName = matchData['away_team_name']?.toString() ?? '';
-
-        if (homeId != null && awayId != null) {
-          final homeTeam = teamMap[homeId];
-          if (homeTeam != null) {
-            for (final uid in homeTeam.memberUids) {
-              notificationsToInsert.add({
-                'user_id': uid,
-                'title': ' تم إجراء قرعة البطولة!',
-                'body':
-                    'فريقك سيواجه فريق ($awayName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!',
-                'type': 'info',
-                'created_at': DateTime.now().toUtc().toIso8601String(),
-                'is_read': false,
-              });
-            }
-          }
-
-          final awayTeam = teamMap[awayId];
-          if (awayTeam != null) {
-            for (final uid in awayTeam.memberUids) {
-              notificationsToInsert.add({
-                'user_id': uid,
-                'title': ' تم إجراء قرعة البطولة!',
-                'body':
-                    'فريقك سيواجه فريق ($homeName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!',
-                'type': 'info',
-                'created_at': DateTime.now().toUtc().toIso8601String(),
-                'is_read': false,
-              });
-            }
-          }
-        }
-      }
-
-      if (notificationsToInsert.isNotEmpty) {
-        await _supabase.from('notifications').insert(notificationsToInsert);
-      }
-    } catch (e) {
-      debugPrint('Error sending draw notifications: $e');
-    }
-  }
+  Future<void> sendDrawNotifications(String championshipId) =>
+      _notifier.sendDrawNotifications(championshipId);
 }
+

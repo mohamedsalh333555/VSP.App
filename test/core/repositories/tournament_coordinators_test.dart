@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/repositories/tournament/tournament_bracket_engine.dart';
+import 'package:vsp_application/core/repositories/tournament/tournament_draw_notifier.dart';
+import 'package:vsp_application/core/repositories/tournament/tournament_fixture_coordinator.dart';
+import 'package:vsp_application/core/repositories/tournament/tournament_group_advancer.dart';
 import 'package:vsp_application/core/repositories/tournament/tournament_payload_builder.dart';
 import 'package:vsp_application/core/repositories/tournament/tournament_query_coordinator.dart';
 import 'package:vsp_application/core/repositories/tournament_repository.dart';
@@ -157,6 +160,28 @@ void main() {
     });
   });
 
+  group('TournamentFixtureCoordinator & Sub-Coordinators Tests', () {
+    test('TournamentDrawNotifier instantiates safely without Supabase initialized', () {
+      final notifier = TournamentDrawNotifier();
+      expect(notifier, isNotNull);
+    });
+
+    test('TournamentGroupAdvancer instantiates safely without Supabase initialized', () {
+      final advancer = TournamentGroupAdvancer();
+      expect(advancer, isNotNull);
+    });
+
+    test('TournamentFixtureCoordinator instantiates with custom delegates safely', () {
+      final notifier = TournamentDrawNotifier();
+      final advancer = TournamentGroupAdvancer();
+      final coordinator = TournamentFixtureCoordinator(
+        drawNotifier: notifier,
+        groupAdvancer: advancer,
+      );
+      expect(coordinator, isNotNull);
+    });
+  });
+
   group('TournamentRepository Facade Tests', () {
     test('instantiates cleanly with lazy clients', () {
       final repo = TournamentRepository();
@@ -169,3 +194,4 @@ void main() {
     });
   });
 }
+
