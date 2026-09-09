@@ -10,6 +10,7 @@ import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import '../services/location_service.dart';
+import 'auth/auth_location_coordinator.dart';
 import 'auth/auth_oauth_coordinator.dart';
 import 'auth/auth_onboarding_coordinator.dart';
 import 'auth/auth_otp_service.dart';
@@ -36,12 +37,12 @@ class AuthProvider with ChangeNotifier {
   late final AuthRealtimeCoordinator _realtimeCoordinator;
   late final AuthUserDataFetcher _userDataFetcher;
   late final AuthOtpService _otpService;
+  late final AuthLocationCoordinator _locationCoordinator;
   StreamSubscription<User?>? _authSubscription;
 
   // Supabase user state
   User? _firebaseUser;
   UserModel? _userModel;
-  Position? _currentPosition;
   bool _hasCompletedOnboarding = false;
 
   // Form inputs state
@@ -72,7 +73,7 @@ class AuthProvider with ChangeNotifier {
   bool get isPlayer => _userModel != null ? !_userModel!.isOwnerRole : _form.userType == 'player';
   bool get isOwner => _userModel != null ? _userModel!.isOwnerRole : _form.userType == 'owner';
   User? get currentUser => _firebaseUser;
-  Position? get currentPosition => _currentPosition;
+  Position? get currentPosition => _locationCoordinator.currentPosition;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
   bool get hasDataFetchError => _dataFetchError;
   bool get isGhostUser => _isGhostUser;
@@ -90,6 +91,7 @@ class AuthProvider with ChangeNotifier {
     AuthRealtimeCoordinator? realtimeCoordinator,
     AuthUserDataFetcher? userDataFetcher,
     AuthOtpService? otpService,
+    AuthLocationCoordinator? locationCoordinator,
   }) {
     _oauthCoordinator = oauthCoordinator ?? AuthOAuthCoordinator(authService: _authService, userRepository: _userRepository);
     _profileService = profileService ?? AuthProfileService(authService: _authService, storageService: _storageService, locationService: _locationService, userRepository: _userRepository);
@@ -97,6 +99,7 @@ class AuthProvider with ChangeNotifier {
     _realtimeCoordinator = realtimeCoordinator ?? AuthRealtimeCoordinator();
     _userDataFetcher = userDataFetcher ?? AuthUserDataFetcher(userRepository: _userRepository);
     _otpService = otpService ?? AuthOtpService(registrationService: _registrationService);
+    _locationCoordinator = locationCoordinator ?? AuthLocationCoordinator(profileService: _profileService);
 
     _initOnboarding();
 
@@ -413,8 +416,7 @@ class AuthProvider with ChangeNotifier {
   });
 
   Future<String?> determineGPSGovernorate({bool force = false}) async {
-    final res = await _profileService.determineGPSGovernorate(force: force);
-    if (res.position != null) _currentPosition = res.position;
+    final res = await _locationCoordinator.determineGPSGovernorate(force: force);
     if (res.error != null) _errorMessage = res.error;
     if (res.governorate != null) _form.governorate = res.governorate!;
     notifyListeners();
@@ -484,14 +486,10 @@ class AuthProvider with ChangeNotifier {
     super.dispose();
   }
 
-  Future<bool> payRehabilitationFine() async {
-    if (_firebaseUser == null) return false;
-    _isLoading = true;
-    notifyListeners();
+  Future<bool> payRehabilitationFine() => _runAuthAction(() async {
+    if (_firebaseUser == null) return (success: false, error: null);
     final ok = await _profileService.payRehabilitationFine(_firebaseUser!.id);
     if (ok && _userModel != null) _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
-    _isLoading = false;
-    notifyListeners();
-    return ok;
-  }
+    return (success: ok, error: ok ? null : 'فشل سداد الغرامة');
+  });
 }
