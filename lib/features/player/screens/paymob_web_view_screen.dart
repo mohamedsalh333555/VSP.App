@@ -123,7 +123,8 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
       if (booking != null &&
           (booking.status == BookingStatus.confirmed ||
               booking.isPaid ||
-              booking.paymentStatus == 'paid')) {
+              booking.paymentStatus == 'paid' ||
+              booking.paymentStatus == 'partially_paid')) {
         return true;
       }
     } catch (e) {

@@ -20,6 +20,8 @@ import '../widgets/payment/payment_method_selector.dart';
 import '../widgets/payment/payment_security_footer.dart';
 import 'booking_success_screen.dart';
 import 'paymob_web_view_screen.dart';
+import 'player_home_screen.dart';
+import '../widgets/payment/payment_verification_modal.dart';
 
 /// Secure checkout and payment gateway screen for pitches and tournament entries.
 /// Manages atomic slot locks, Paymob webview checkout flow, and realtime webhook status updates.
@@ -50,6 +52,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Booking? _booking;
   int _remainingSeconds = 300; // 5 minutes atomic hold timer
   bool _paymentCompleted = false;
+  bool _isVerificationModalShowing = false;
   String _selectedMethod = 'card'; // 'card', 'wallet'
 
   @override
@@ -94,6 +97,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   @override
   void dispose() {
+    _closeVerificationModalIfShowing();
     _coordinator.dispose();
     super.dispose();
   }
@@ -159,6 +163,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
             if (updatedBooking != null && mounted) {
               _paymentCompleted = true;
+              _closeVerificationModalIfShowing();
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -180,6 +185,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       onConfirmed: (booking) {
         if (mounted && !_paymentCompleted) {
           _paymentCompleted = true;
+          _closeVerificationModalIfShowing();
           HapticFeedback.heavyImpact();
           Navigator.pushReplacement(
             context,
@@ -207,7 +213,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _isAwaitingWebhook = false;
             _isLoading = false;
           });
-          _showWebhookTimeoutMessage();
         }
       },
     );
@@ -262,6 +267,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
           if (_booking != null) {
             final bookingId = _booking!.id;
+            _showVerificationModal(bookingId, isArabic);
             if (kDebugMode) {
               await _coordinator.simulateTestPaymentWebhook(bookingId);
             }
@@ -329,19 +335,28 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 
-  void _showWebhookTimeoutMessage() {
-    if (!mounted) return;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isArabic
-              ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
-              : 'Webhook response timed out. You can retry or choose another method.',
-        ),
-        backgroundColor: VSPColors.error,
-      ),
-    );
+  void _showVerificationModal(String bookingId, bool isArabic) {
+    if (_isVerificationModalShowing || !mounted) return;
+    _isVerificationModalShowing = true;
+    PaymentVerificationModal.show(
+      context: context,
+      bookingId: bookingId,
+      isArabic: isArabic,
+      onGoToBookings: () {
+        _closeVerificationModalIfShowing();
+        _paymentCompleted = true;
+        _coordinator.cancelCountdownTimer();
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        playerHomeScreenKey.currentState?.switchToTab(3);
+      },
+    ).then((_) => _isVerificationModalShowing = false);
+  }
+
+  void _closeVerificationModalIfShowing() {
+    if (_isVerificationModalShowing && mounted) {
+      _isVerificationModalShowing = false;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
   }
 
   AppBar _buildAppBar(BuildContext context, AppLocalizations l10n, bool isArabic, bool isChampionship) {
