@@ -11,16 +11,13 @@ import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 
 import '../widgets/add_stadium/add_stadium_step_indicator.dart';
-import '../widgets/add_stadium/add_stadium_step1_details.dart';
-import '../widgets/add_stadium/add_stadium_step2_features.dart';
-import '../widgets/add_stadium/add_stadium_step3_images.dart';
 import '../widgets/add_stadium/stadium_wizard_controllers.dart';
 import '../widgets/add_stadium/stadium_wizard_data_loader.dart';
 import '../widgets/add_stadium/stadium_wizard_dialogs.dart';
 import '../widgets/add_stadium/stadium_wizard_draft_service.dart';
 import '../widgets/add_stadium/stadium_wizard_features_state.dart';
 import '../widgets/add_stadium/stadium_wizard_location_coordinator.dart';
-import '../widgets/add_stadium/stadium_wizard_media_coordinator.dart';
+import '../widgets/add_stadium/stadium_wizard_steps_pager.dart';
 import '../widgets/add_stadium/stadium_wizard_submit_service.dart';
 import '../widgets/add_stadium/stadium_wizard_time_coordinator.dart';
 import '../widgets/add_stadium/stadium_wizard_time_utils.dart';
@@ -398,87 +395,37 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      AddStadiumStep1Details(
-                        nameController: _c.name,
-                        stadiumPhoneController: _c.phone,
-                        priceController: _c.price,
-                        capacityController: _c.capacity,
-                        locationController: _c.location,
-                        lengthController: _c.length,
-                        widthController: _c.width,
-                        notesController: _c.notes,
-                        selectedSportType: _f.selectedSportType,
-                        startTime: _startTime,
-                        endTime: _endTime,
-                        isSplitShift: _isSplitShift,
-                        breakTimes: _breakTimes,
-                        isSplitShiftValid: _isSplitShiftValid,
-                        isLocationLoading: _isLocationLoading,
-                        isEditing: widget.stadiumId != null,
-                        onSelectSport: (val) => setState(() => _f.selectedSportType = val),
-                        onSelectTime: (isMainStart) => _selectTime(context, isMainStart),
-                        onToggleSplitShift: _updateSplitShift,
-                        onSelectBreakTime: (index, isStart) => _selectTimeForBreak(context, index, isStart),
-                        onAddBreak: () => setState(() => _breakTimes.add({'start': null, 'end': null})),
-                        onRemoveBreak: (index) => setState(() => _breakTimes.removeAt(index)),
-                        onOpenMapPicker: _openMapPicker,
-                        onAddNoteTemplate: (template) {
-                          final currentText = _c.notes.text;
-                          final prefix = currentText.isEmpty ? '' : '$currentText\n';
-                          setState(() => _c.notes.text = '$prefix• $template');
-                        },
-                        onNext: _nextPage,
-                      ),
-                      AddStadiumStep2Features(
-                        seatsController: _c.seats,
-                        ballPriceController: _c.ballPrice,
-                        depositController: _c.deposit,
-                        selectedBathOption: _f.selectedBathOption,
-                        cafeteria: _f.cafeteria,
-                        garage: _f.garage,
-                        changingRoom: _f.changingRoom,
-                        hasBall: _f.hasBall,
-                        requireDeposit: _f.requireDeposit,
-                        onUpdateBathOption: (val) => setState(() => _f.updateBathOption(val, uid: _uid, isEditing: widget.stadiumId != null)),
-                        onUpdateCafeteria: (val) => setState(() => _f.updateCafeteria(val, uid: _uid, isEditing: widget.stadiumId != null)),
-                        onUpdateGarage: (val) => setState(() => _f.updateGarage(val, uid: _uid, isEditing: widget.stadiumId != null)),
-                        onUpdateChangingRoom: (val) => setState(() => _f.updateChangingRoom(val, uid: _uid, isEditing: widget.stadiumId != null)),
-                        onUpdateHasBall: (val) => setState(() => _f.updateHasBall(val, uid: _uid, isEditing: widget.stadiumId != null)),
-                        onUpdateRequireDeposit: (val) => setState(() {
-                          _f.updateRequireDeposit(val, uid: _uid, isEditing: widget.stadiumId != null);
-                          if (!val) _c.deposit.clear();
-                        }),
-                        onNext: _nextPage,
-                      ),
-                      AddStadiumStep3Images(
-                        images: _images,
-                        isUploading: _isUploading,
-                        isSaving: _isSaving,
-                        onPickImage: () => StadiumWizardMediaCoordinator.pickAndUpload(
-                          context: context,
-                          images: _images,
-                          stadiumId: widget.stadiumId,
-                          uid: _uid,
-                          onStateChanged: () {
-                            if (mounted) setState(() {});
-                          },
-                        ),
-                        onDeleteImage: (img) => StadiumWizardMediaCoordinator.deleteImage(
-                          image: img,
-                          images: _images,
-                          stadiumId: widget.stadiumId,
-                          uid: _uid,
-                          onStateChanged: () {
-                            if (mounted) setState(() {});
-                          },
-                        ),
-                        onSubmit: _nextPage,
-                      ),
-                    ],
+                  child: StadiumWizardStepsPager(
+                    pageController: _pageController,
+                    controllers: _c,
+                    featuresState: _f,
+                    stadiumId: widget.stadiumId,
+                    uid: _uid,
+                    startTime: _startTime,
+                    endTime: _endTime,
+                    isSplitShift: _isSplitShift,
+                    breakTimes: _breakTimes,
+                    isSplitShiftValid: _isSplitShiftValid,
+                    isLocationLoading: _isLocationLoading,
+                    images: _images,
+                    isUploading: _isUploading,
+                    isSaving: _isSaving,
+                    onSelectSport: (val) => setState(() => _f.selectedSportType = val),
+                    onSelectTime: (isMainStart) => _selectTime(context, isMainStart),
+                    onToggleSplitShift: _updateSplitShift,
+                    onSelectBreakTime: (index, isStart) => _selectTimeForBreak(context, index, isStart),
+                    onAddBreak: () => setState(() => _breakTimes.add({'start': null, 'end': null})),
+                    onRemoveBreak: (index) => setState(() => _breakTimes.removeAt(index)),
+                    onOpenMapPicker: _openMapPicker,
+                    onAddNoteTemplate: (template) {
+                      final currentText = _c.notes.text;
+                      final prefix = currentText.isEmpty ? '' : '$currentText\n';
+                      setState(() => _c.notes.text = '$prefix• $template');
+                    },
+                    onNextPage: _nextPage,
+                    onStateChanged: () {
+                      if (mounted) setState(() {});
+                    },
                   ),
                 ),
               ],
