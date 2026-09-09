@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import 'add_stadium_step1_hours_section.dart';
+import 'add_stadium_step1_location_field.dart';
 
 class AddStadiumStep1Details extends StatelessWidget {
   final TextEditingController nameController;
@@ -62,14 +63,6 @@ class AddStadiumStep1Details extends StatelessWidget {
     required this.onNext,
   });
 
-  String _formatTime(TimeOfDay? time, String placeholder) {
-    if (time == null) return placeholder;
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute $period';
-  }
-
   String _getLocalizedSport(String sport, bool isAr) {
     if (!isAr) return sport;
     switch (sport) {
@@ -117,21 +110,11 @@ class AddStadiumStep1Details extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeBox(String text, {bool isSelected = false}) {
-    return Container(
-      height: VSPSize.inputHeight,
-      decoration: BoxDecoration(
-        color: isSelected ? VSPColors.accentSoft : VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.input),
-        border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.1)),
-      ),
-      child: Center(child: Text(text, style: TextStyle(color: isSelected ? VSPColors.accent : VSPColors.textPrimary))),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final l10n = AppLocalizations.of(context)!;
+
     return SingleChildScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.only(
@@ -148,65 +131,20 @@ class AddStadiumStep1Details extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Single Unified Interactive Location Selector Field
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context)!.location,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
-              ),
-              const SizedBox(height: VSPSpacing.xs),
-              GestureDetector(
-                onTap: (isEditing || isLocationLoading) ? null : onOpenMapPicker,
-                child: Container(
-                  width: double.infinity,
-                  height: VSPSize.inputHeight,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.input),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isEditing ? Iconsax.lock_copy : Iconsax.location_copy,
-                        color: VSPColors.accent,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          locationController.text.isNotEmpty
-                              ? locationController.text
-                              : (isArabic ? 'اضغط لتحديد موقع الملعب على الخريطة ' : 'Tap to select stadium location on map '),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: locationController.text.isNotEmpty ? Colors.white : VSPColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: locationController.text.isNotEmpty ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ),
-                      if (isLocationLoading)
-                        const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
-                        )
-                      else if (locationController.text.isNotEmpty)
-                        const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18)
-                      else
-                        Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          AddStadiumStep1LocationField(
+            locationController: locationController,
+            isEditing: isEditing,
+            isLocationLoading: isLocationLoading,
+            onOpenMapPicker: onOpenMapPicker,
           ),
           const SizedBox(height: 16),
-          _buildTextField(context, AppLocalizations.of(context)!.stadiumName, isArabic ? 'أدخل اسم ملعبك' : 'Enter Stadium Name', controller: nameController, maxLength: 50),
+          _buildTextField(
+            context,
+            l10n.stadiumName,
+            isArabic ? 'أدخل اسم ملعبك' : 'Enter Stadium Name',
+            controller: nameController,
+            maxLength: 50,
+          ),
           const SizedBox(height: 16),
           _buildTextField(
             context,
@@ -223,7 +161,7 @@ class AddStadiumStep1Details extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppLocalizations.of(context)!.sportTypeLabel,
+                l10n.sportTypeLabel,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: VSPColors.textSecondary,
                 ),
@@ -241,7 +179,7 @@ class AddStadiumStep1Details extends StatelessWidget {
                   child: DropdownButton<String>(
                     value: selectedSportType,
                     hint: Text(
-                      AppLocalizations.of(context)!.selectSport,
+                      l10n.selectSport,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: VSPColors.textSecondary,
                       ),
@@ -263,7 +201,7 @@ class AddStadiumStep1Details extends StatelessWidget {
           const SizedBox(height: 16),
           _buildTextField(
             context,
-            AppLocalizations.of(context)!.pricePerHour,
+            l10n.pricePerHour,
             '0.0',
             controller: priceController,
             maxLength: 7,
@@ -273,7 +211,7 @@ class AddStadiumStep1Details extends StatelessWidget {
           const SizedBox(height: 16),
           _buildTextField(
             context,
-            AppLocalizations.of(context)!.playersTeam,
+            l10n.playersTeam,
             isArabic ? 'اكتب رقم عدد الفريق الواحد' : 'Write the number of players for a single team',
             controller: capacityController,
             maxLength: 2,
@@ -282,122 +220,19 @@ class AddStadiumStep1Details extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          Text(AppLocalizations.of(context)!.workingHours, style: const TextStyle(color: VSPColors.textSecondary)),
-          Row(children: [
-            Expanded(child: GestureDetector(onTap: () => onSelectTime(true), child: _buildTimeBox(_formatTime(startTime, AppLocalizations.of(context)!.start), isSelected: startTime != null))),
-            const SizedBox(width: 10),
-            Expanded(child: GestureDetector(onTap: () => onSelectTime(false), child: _buildTimeBox(_formatTime(endTime, AppLocalizations.of(context)!.end), isSelected: endTime != null))),
-          ]),
-          if (endTime != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Builder(builder: (context) {
-                    final selectedEndStr = _formatTime(endTime, '');
-                    return Text(
-                      isArabic
-                          ? 'ملاحظة: اختيار وقت الإغلاق ($selectedEndStr) يعني أن الملعب يغلق فعلياً وينتهي آخر حجز في هذا الوقت.'
-                          : 'Note: Selecting closing time ($selectedEndStr) means the pitch actually closes and the last booking ends at this time.',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ],
-
-          const SizedBox(height: 12),
-          // Break Time Switch
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(AppLocalizations.of(context)!.setDailyBreak, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
-              Switch.adaptive(
-                value: isSplitShift,
-                onChanged: onToggleSplitShift,
-                activeColor: VSPColors.accent,
-              ),
-            ],
+          // Working Hours & Daily Breaks
+          AddStadiumStep1HoursSection(
+            startTime: startTime,
+            endTime: endTime,
+            isSplitShift: isSplitShift,
+            breakTimes: breakTimes,
+            isSplitShiftValid: isSplitShiftValid,
+            onSelectTime: onSelectTime,
+            onToggleSplitShift: onToggleSplitShift,
+            onSelectBreakTime: onSelectBreakTime,
+            onAddBreak: onAddBreak,
+            onRemoveBreak: onRemoveBreak,
           ),
-
-          if (isSplitShift) ...[
-            const SizedBox(height: 8),
-            ...breakTimes.asMap().entries.map((entry) {
-              final index = entry.key;
-              final bt = entry.value;
-              final bStart = bt['start'];
-              final bEnd = bt['end'];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (index > 0) const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        isArabic ? 'فترة راحة ${index + 1}' : 'Break ${index + 1}',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      if (breakTimes.length > 1)
-                        IconButton(
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
-                          onPressed: () => onRemoveBreak(index),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    Expanded(child: GestureDetector(onTap: () => onSelectBreakTime(index, true), child: _buildTimeBox(_formatTime(bStart, AppLocalizations.of(context)!.breakStart), isSelected: bStart != null))),
-                    const SizedBox(width: 10),
-                    Expanded(child: GestureDetector(onTap: () => onSelectBreakTime(index, false), child: _buildTimeBox(_formatTime(bEnd, AppLocalizations.of(context)!.breakEnd), isSelected: bEnd != null))),
-                  ]),
-                ],
-              );
-            }),
-            const SizedBox(height: 12),
-            Align(
-              alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: onAddBreak,
-                icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),
-                label: Text(
-                  isArabic ? 'إضافة فترة راحة أخرى' : 'Add Another Break',
-                  style: const TextStyle(color: VSPColors.accent, fontSize: 13),
-                ),
-              ),
-            ),
-            if (!isSplitShiftValid) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: VSPColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(VSPRadius.sm),
-                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isArabic
-                            ? 'ساعات الراحة يجب أن تكون داخل مواعيد العمل الرسمية للملعب!'
-                            : 'Break hours must fall strictly inside the opening and closing hours!',
-                        style: const TextStyle(color: VSPColors.error, fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
 
           const SizedBox(height: 16),
           Row(children: [
