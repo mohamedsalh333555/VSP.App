@@ -3,13 +3,15 @@ import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/match_repository.dart';
-import '../services/logger_service.dart';
 import 'booking/booking_categorization_service.dart';
 import 'booking/booking_draft_storage.dart';
+import 'booking/booking_list_modifier.dart';
+import 'booking/booking_sync_coordinator.dart';
 
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
   late final BookingRepository _repository;
+  late final BookingSyncCoordinator _syncCoordinator;
 
   List<Booking> _userBookings = [];
   List<Booking> _upcomingBookings = [];
@@ -18,7 +20,7 @@ class BookingProvider with ChangeNotifier {
   List<Booking> _publicMatches = []; // Dedicated list for paginated matches
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
-  StreamSubscription? _bookingSubscription;
+  String? _activeOwnerId;
 
   bool _isLoading = false;
   final bool _isLoadingMoreMatches = false;
@@ -43,8 +45,9 @@ class BookingProvider with ChangeNotifier {
   bool get hasMoreMatches => _hasMoreMatches;
   String? get errorMessage => _errorMessage;
 
-  BookingProvider() {
-    _repository = SupabaseBookingRepository();
+  BookingProvider({BookingRepository? repository}) {
+    _repository = repository ?? SupabaseBookingRepository();
+    _syncCoordinator = BookingSyncCoordinator(_repository);
     _restoreDraft();
   }
 
@@ -81,7 +84,8 @@ class BookingProvider with ChangeNotifier {
     int? maxPlayers,
   }) {
     if (_currentDraft != null) {
-      _currentDraft = _currentDraft!.copyWith(
+      _currentDraft = BookingListModifier.applyDraftUpdates(
+        _currentDraft!,
         paymentMethod: paymentMethod,
         paymentTransactionId: paymentTransactionId,
         isPrivate: isPrivate,
@@ -95,7 +99,7 @@ class BookingProvider with ChangeNotifier {
         playerTeamId: playerTeamId,
         playerTeamName: playerTeamName,
         currentPlayers: currentPlayers,
-        totalFieldCapacity: maxPlayers,
+        maxPlayers: maxPlayers,
       );
       BookingDraftStorage.save(_currentDraft);
       notifyListeners();
@@ -124,8 +128,8 @@ class BookingProvider with ChangeNotifier {
     try {
       final booking = await _repository.createBooking(_currentDraft!, userId);
       _currentBooking = booking;
-      _upcomingBookings.insert(0, booking);
-      _userBookings.insert(0, booking);
+      BookingListModifier.insertBooking(_upcomingBookings, booking);
+      BookingListModifier.insertBooking(_userBookings, booking);
       _currentDraft = null; // Clear draft after successful creation
 
       _isLoading = false;
@@ -148,15 +152,14 @@ class BookingProvider with ChangeNotifier {
     try {
       final booking = await _repository.createBooking(draft, userId);
       _currentBooking = booking;
-      _upcomingBookings.insert(0, booking);
-      _userBookings.insert(0, booking);
+      BookingListModifier.insertBooking(_upcomingBookings, booking);
+      BookingListModifier.insertBooking(_userBookings, booking);
 
       _isLoading = false;
       notifyListeners();
       return booking;
     } catch (e) {
-      final cleanMsg = e.toString().replaceAll('Exception: ', '').replaceAll('Failed to create booking: ', '');
-      _errorMessage = cleanMsg;
+      _errorMessage = BookingListModifier.formatCreationError(e);
       _isLoading = false;
       notifyListeners();
       return null;
@@ -165,97 +168,45 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   void loadUserBookings(String userId) {
-    // Direct REST API fetch to guarantee instant display even if Realtime Stream is delayed
-    try {
-      final repo = _repository;
-      if (repo is SupabaseBookingRepository) {
-        repo.getUserBookingsDirectly(userId).then((directList) {
-          if (directList.isNotEmpty) {
-            _userBookings = directList;
-            final categorized = BookingCategorizationService.categorizeUserBookings(
-              bookings: directList,
-              now: DateTime.now(),
-            );
-            _upcomingBookings = categorized.upcoming;
-            _pendingBookings = categorized.pending;
-            _historyBookings = categorized.history;
-            notifyListeners();
-          }
-        });
-      }
-    } catch (e, stack) {
-      VSPLogger.e('Error loading direct user bookings in BookingProvider', e, stack);
-    }
-
-    _bookingSubscription?.cancel();
-    _bookingSubscription = _repository
-        .getUserBookings(userId)
-        .listen(
-          (bookings) {
-            _userBookings = bookings;
-            final categorized = BookingCategorizationService.categorizeUserBookings(
-              bookings: bookings,
-              now: DateTime.now(),
-            );
-            _upcomingBookings = categorized.upcoming;
-            _pendingBookings = categorized.pending;
-            _historyBookings = categorized.history;
-            notifyListeners();
-          },
-          onError: (e) {
-            _errorMessage = 'Failed to load bookings: $e';
-            notifyListeners();
-          },
-        );
+    _syncCoordinator.syncUserBookings(
+      userId: userId,
+      onData: (userBookings, categorized) {
+        _userBookings = userBookings;
+        _upcomingBookings = categorized.upcoming;
+        _pendingBookings = categorized.pending;
+        _historyBookings = categorized.history;
+        notifyListeners();
+      },
+      onError: (e) {
+        _errorMessage = e;
+        notifyListeners();
+      },
+    );
   }
-
-  String? _activeOwnerId;
 
   /// Load owner's bookings (for stadium owners)
   Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds, bool forceRefresh = false}) async {
-    if (!forceRefresh && _activeOwnerId == ownerId && _bookingSubscription != null) {
+    if (!forceRefresh && _activeOwnerId == ownerId) {
       return;
     }
     _activeOwnerId = ownerId;
 
-    // Direct REST API fetch to guarantee instant data load even if WebSocket stream is silent
-    try {
-      final repo = _repository;
-      if (repo is SupabaseBookingRepository) {
-        final directBookings = await repo.fetchOwnerBookingsDirectly(ownerId);
-        if (directBookings.isNotEmpty) {
-          _userBookings = directBookings;
-          notifyListeners();
-        }
-      }
-    } catch (e, stack) {
-      VSPLogger.e('Error loading direct owner bookings in BookingProvider', e, stack);
-    }
-
-    _bookingSubscription?.cancel();
-    _bookingSubscription = _repository
-        .getOwnerBookings(ownerId, stadiumIds: stadiumIds)
-        .listen(
-          (bookings) {
-            final merged = BookingCategorizationService.mergeLocalManualBookings(
-              incomingBookings: bookings,
-              currentBookings: _userBookings,
-              cancellingIds: _cancellingIds,
-            );
-            _userBookings = merged;
-            final categorized = BookingCategorizationService.categorizeOwnerBookings(
-              bookings: merged,
-              now: DateTime.now(),
-            );
-            _upcomingBookings = categorized.upcoming;
-            _historyBookings = categorized.history;
-            notifyListeners();
-          },
-          onError: (e) {
-            _errorMessage = 'Failed to load bookings: $e';
-            notifyListeners();
-          },
-        );
+    await _syncCoordinator.syncOwnerBookings(
+      ownerId: ownerId,
+      stadiumIds: stadiumIds,
+      getCurrentBookings: () => _userBookings,
+      cancellingIds: _cancellingIds,
+      onData: (merged, categorized) {
+        _userBookings = merged;
+        _upcomingBookings = categorized.upcoming;
+        _historyBookings = categorized.history;
+        notifyListeners();
+      },
+      onError: (e) {
+        _errorMessage = e;
+        notifyListeners();
+      },
+    );
   }
 
   /// Cancel a booking
@@ -267,9 +218,9 @@ class BookingProvider with ChangeNotifier {
     try {
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
-        _upcomingBookings.removeWhere((b) => b.id == bookingId);
-        _userBookings.removeWhere((b) => b.id == bookingId);
-        _historyBookings.removeWhere((b) => b.id == bookingId);
+        BookingListModifier.removeBooking(_upcomingBookings, bookingId);
+        BookingListModifier.removeBooking(_userBookings, bookingId);
+        BookingListModifier.removeBooking(_historyBookings, bookingId);
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
         _errorMessage = 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
@@ -450,11 +401,8 @@ class BookingProvider with ChangeNotifier {
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
     final success = await _repository.updatePaymentStatus(bookingId, isPaid);
     if (success) {
-      final index = _userBookings.indexWhere((b) => b.id == bookingId);
-      if (index != -1) {
-        _userBookings[index] = _userBookings[index].copyWith(isPaid: isPaid);
-        notifyListeners();
-      }
+      BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+      notifyListeners();
     }
     return success;
   }
@@ -507,7 +455,7 @@ class BookingProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _bookingSubscription?.cancel();
+    _syncCoordinator.dispose();
     super.dispose();
   }
 }
