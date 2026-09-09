@@ -1,10 +1,8 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/user_repository.dart';
@@ -15,6 +13,8 @@ import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/support_service.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../widgets/inbox/owner_chat_item_card.dart';
+import '../widgets/inbox/user_search_delegate.dart';
 
 class OwnerInboxScreen extends StatefulWidget {
  const OwnerInboxScreen({super.key});
@@ -222,252 +222,58 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  );
  }
 
- Widget _buildChatRow({
- required BuildContext context,
- required String conversationId,
- required String otherUserId,
- required String type,
- required String ownerId,
- required String title,
- required String subtitle,
- required String timeStr,
- required String? avatar,
- required DateTime latestTime,
- required bool hasUnread,
- required int unreadCount,
- }) {
- return Padding(
- padding: const EdgeInsets.only(bottom: VSPSpacing.sm),
- child: InkWell(
- onTap: () async {
- final isSupport = type == 'support' || otherUserId.isEmpty;
- final dummyBooking = Booking(
- id: conversationId,
- stadiumId: isSupport ? 'support_chat' : 'direct_chat',
- stadiumName: title,
- ownerId: ownerId,
- startTime: latestTime,
- endTime: latestTime.add(const Duration(hours: 1)),
- bookingType: BookingType.personal,
- isPrivate: false,
- rentBall: false,
- totalPrice: 0,
- paymentMethod: 'none',
- status: BookingStatus.confirmed,
- createdByUserId: ownerId,
- createdAt: latestTime,
- joinedUserIds: [ownerId, if (otherUserId.isNotEmpty) otherUserId],
- );
- await Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => ChatScreen(booking: dummyBooking)),
- );
- if (mounted) {
- setState(() {});
- }
- },
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- child: VSPCard(
- padding: const EdgeInsets.all(16),
- border: hasUnread ? Border.all(color: VSPColors.accent, width: 1.5) : null,
- color: hasUnread ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
- child: Row(
- children: [
- CircleAvatar(
- radius: 24,
- backgroundColor: VSPColors.surfaceAlt,
- backgroundImage: avatar != null ? NetworkImage(avatar) : null,
- child: avatar == null
- ? const Icon(Iconsax.user_copy, color: VSPColors.accent)
- : null,
- ),
- const SizedBox(width: 14),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Expanded(
- child: Text(
- title,
- maxLines: 1,
- overflow: TextOverflow.ellipsis,
- style: Theme.of(context).textTheme.titleSmall?.copyWith(
- fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
- ),
- ),
- ),
- const SizedBox(width: 8),
- Text(
- timeStr,
- style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: VSPColors.textSecondary,
- ),
- ),
- ],
- ),
- const SizedBox(height: 4),
- Text(
- subtitle,
- style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- ),
- ),
- ],
- ),
- ),
- if (hasUnread) ...[
- const SizedBox(width: 12),
- CircleAvatar(
- radius: 10,
- backgroundColor: VSPColors.accent,
- child: Text(
- unreadCount > 0 ? '$unreadCount' : '',
- style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
- ),
- ),
- ],
- ],
- ),
- ),
- ),
- );
- }
-
- String _formatTime(DateTime date) {
- return DateFormat('hh:mm a').format(date);
- }
-}
-
-class UserSearchDelegate extends SearchDelegate<UserModel?> {
- final String currentUserId;
- final String currentUserRole;
-
- UserSearchDelegate({required this.currentUserId, required this.currentUserRole});
-
- @override
- String? get searchFieldLabel => 'بحث عن لاعبين...';
-
- @override
- ThemeData appBarTheme(BuildContext context) {
- return Theme.of(context).copyWith(
- appBarTheme: const AppBarTheme(
- backgroundColor: VSPColors.surface,
- iconTheme: IconThemeData(color: VSPColors.textPrimary),
- ),
- inputDecorationTheme: const InputDecorationTheme(
- hintStyle: TextStyle(color: VSPColors.textSecondary),
- focusedBorder: InputBorder.none,
- enabledBorder: InputBorder.none,
- ),
- );
- }
-
- @override
- List<Widget>? buildActions(BuildContext context) {
- return [
- IconButton(
- icon: const Icon(Iconsax.close_circle_copy),
- onPressed: () {
- query = '';
- },
- ),
- ];
- }
-
- @override
- Widget? buildLeading(BuildContext context) {
- return IconButton(
- icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy),
- onPressed: () {
- close(context, null);
- },
- );
- }
-
- @override
- Widget buildResults(BuildContext context) {
- return _buildSearchResults(context);
- }
-
- @override
- Widget buildSuggestions(BuildContext context) {
- return _buildSearchResults(context);
- }
-
- Widget _buildSearchResults(BuildContext context) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- 
- return FutureBuilder<List<UserModel>>(
- future: _searchUsers(query),
- builder: (context, snapshot) {
- if (snapshot.connectionState == ConnectionState.waiting) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
- }
-
- final users = snapshot.data ?? [];
- final filteredUsers = currentUserRole == 'owner'
- ? users.where((u) => u.role == 'player' && !u.hasStadium && u.uid != currentUserId).toList()
- : users.where((u) => u.uid != currentUserId).toList();
-
- if (filteredUsers.isEmpty) {
- return Center(
- child: Text(
- query.isEmpty
- ? (isArabic ? 'ابحث عن لاعبين لبدء المحادثة...' : 'Search for players to start a chat...')
- : (isArabic ? 'لم يتم العثور على لاعبين بهذا الاسم' : 'No players found'),
- style: const TextStyle(color: VSPColors.textSecondary),
- ),
- );
- }
-
- return ListView.builder(
- itemCount: filteredUsers.length,
- itemBuilder: (context, index) {
- final user = filteredUsers[index];
- final roleLabel = user.isOwnerRole
- ? (isArabic ? 'مالك ملعب' : 'Stadium Owner')
- : (isArabic ? 'لاعب' : 'Player');
-
- return ListTile(
- leading: CircleAvatar(
- backgroundColor: VSPColors.surfaceAlt,
- backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty)
- ? CachedNetworkImageProvider(user.profileImageUrl!)
- : null,
- child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty)
- ? const Icon(Iconsax.user_copy, color: VSPColors.accent)
- : null,
- ),
- title: Text(
- user.name ?? user.email,
- style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
- ),
- subtitle: Text(
- roleLabel,
- style: TextStyle(
- color: user.isOwnerRole ? VSPColors.accent : VSPColors.textSecondary,
- fontSize: 11,
- ),
- ),
- onTap: () {
- close(context, user);
- },
- );
- },
- );
- },
- );
- }
-
- Future<List<UserModel>> _searchUsers(String query) async {
-    return UserRepository().searchUsers(
-      currentUserId: currentUserId,
-      role: currentUserRole == 'owner' ? 'player' : null,
-      query: query,
+  Widget _buildChatRow({
+    required BuildContext context,
+    required String conversationId,
+    required String otherUserId,
+    required String type,
+    required String ownerId,
+    required String title,
+    required String subtitle,
+    required String timeStr,
+    required String? avatar,
+    required DateTime latestTime,
+    required bool hasUnread,
+    required int unreadCount,
+  }) {
+    return OwnerChatItemCard(
+      title: title,
+      subtitle: subtitle,
+      timeStr: timeStr,
+      avatar: avatar,
+      hasUnread: hasUnread,
+      unreadCount: unreadCount,
+      onTap: () async {
+        final isSupport = type == 'support' || otherUserId.isEmpty;
+        final dummyBooking = Booking(
+          id: conversationId,
+          stadiumId: isSupport ? 'support_chat' : 'direct_chat',
+          stadiumName: title,
+          ownerId: ownerId,
+          startTime: latestTime,
+          endTime: latestTime.add(const Duration(hours: 1)),
+          bookingType: BookingType.personal,
+          isPrivate: false,
+          rentBall: false,
+          totalPrice: 0,
+          paymentMethod: 'none',
+          status: BookingStatus.confirmed,
+          createdByUserId: ownerId,
+          createdAt: latestTime,
+          joinedUserIds: [ownerId, if (otherUserId.isNotEmpty) otherUserId],
+        );
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(booking: dummyBooking)),
+        );
+        if (mounted) {
+          setState(() {});
+        }
+      },
     );
+  }
+
+  String _formatTime(DateTime date) {
+    return DateFormat('hh:mm a').format(date);
   }
 }
