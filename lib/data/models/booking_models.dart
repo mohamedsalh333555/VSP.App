@@ -1,8 +1,10 @@
 export 'booking_enums.dart';
 export 'booking_draft.dart';
+export 'booking_mapper.dart';
 
 import 'booking_enums.dart';
 import 'booking_draft.dart';
+import 'booking_mapper.dart';
 
 /// Booking data model - Full booking record stored in DB
 class Booking {
@@ -146,226 +148,17 @@ class Booking {
  this.emergencyDowntimeHours,
  });
 
- /// Create Booking from Firestore/Supabase document
- factory Booking.fromMap(Map<String, dynamic> data, [String? id]) =>
- Booking.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+  /// Create Booking from Firestore/Supabase document
+  factory Booking.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Booking.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
 
- factory Booking.fromFirestore(Map<String, dynamic> data, String id) {
- final startTimeVal = data['startTime'] ?? data['start_time'];
- final endTimeVal = data['endTime'] ?? data['end_time'];
- final opDateVal = data['operationalDate'] ?? data['operational_date'];
- final createdAtVal = data['createdAt'] ?? data['created_at'];
- final updatedAtVal = data['updatedAt'] ?? data['updated_at'];
- final bookingTypeVal = data['bookingType'] ?? data['booking_type'];
- final statusVal = data['status'];
- final matchResultStatusVal = data['matchResultStatus'] ?? data['match_result_status'];
- final pendingOutcomeVal = data['pendingOutcome'] ?? data['pending_outcome'];
- final finalOutcomeVal = data['finalOutcome'] ?? data['final_outcome'];
+  factory Booking.fromFirestore(Map<String, dynamic> data, String id) =>
+      BookingMapper.fromFirestore(data, id);
 
- final int ppt = data['players_per_team'] ?? data['playersPerTeam'] ?? 5;
- final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? data['maxPlayers'] ?? data['max_players'] ?? (ppt * 2);
+  Map<String, dynamic> toMap() => toFirestore();
 
- return Booking(
- id: id,
- stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
- stadiumName: data['stadiumName'] ?? data['stadium_name'] ?? '',
- stadiumImageUrl: data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
- ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
- startTime: startTimeVal != null 
- ? (startTimeVal is DateTime 
- ? startTimeVal.toLocal() 
- : DateTime.parse(startTimeVal.toString()).toLocal())
- : DateTime.now(),
- endTime: endTimeVal != null 
- ? (endTimeVal is DateTime 
- ? endTimeVal.toLocal() 
- : DateTime.parse(endTimeVal.toString()).toLocal())
- : DateTime.now(),
- operationalDate: opDateVal != null
- ? (opDateVal is DateTime
- ? opDateVal
- : DateTime.tryParse(opDateVal.toString()))
- : null,
- bookingType: () {
- final val = bookingTypeVal?.toString().toLowerCase().replaceAll('_', '').replaceAll(' ', '') ?? '';
- if (val == 'openjoin' || val == 'openjoinmatch') return BookingType.openJoin;
- if (val == 'challenge' || val == 'challengematch') return BookingType.challenge;
- if (val == 'team') return BookingType.team;
- if (val == 'matchup' || val == 'matchups') return BookingType.matchup;
- return BookingType.personal;
- }(),
- playerTeamId: data['playerTeamId'] ?? data['player_team_id'],
- playerTeamName: data['playerTeamName'] ?? data['player_team_name'],
- playerTeamLogoUrl: data['playerTeamLogoUrl'] ?? data['player_team_logo_url'],
- hostName: data['hostName'] ?? data['host_name'],
- hostAvatarUrl: data['hostAvatarUrl'] ?? data['host_avatar_url'],
- opponentTeamId: (bookingTypeVal == 'challenge') ? (data['opponentTeamId'] ?? data['opponent_team_id']) : null,
- opponentTeamName: (bookingTypeVal == 'challenge') ? (data['opponentTeamName'] ?? data['opponent_team_name']) : null,
- opponentTeamLogoUrl: data['opponentTeamLogoUrl'] ?? data['opponent_team_logo_url'],
- isPrivate: data['isPrivate'] ?? data['is_private'] ?? false,
- rentBall: data['rentBall'] ?? data['rent_ball'] ?? false,
- totalPrice: (data['totalPrice'] ?? data['total_price'] ?? 0).toDouble(),
- currency: data['currency'] ?? 'EGP',
- paymentMethod: data['paymentMethod'] ?? data['payment_method'] ?? 'card',
- paymentTransactionId: data['paymentTransactionId'] ?? data['payment_transaction_id'],
- status: BookingStatus.values.firstWhere(
- (e) => e.name == statusVal,
- orElse: () => BookingStatus.pending,
- ),
- createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? data['user_id'] ?? '',
- createdAt: createdAtVal != null 
- ? (createdAtVal is DateTime 
- ? createdAtVal.toLocal() 
- : DateTime.parse(createdAtVal.toString()).toLocal())
- : DateTime.now(),
- updatedAt: updatedAtVal != null 
- ? (updatedAtVal is DateTime 
- ? updatedAtVal.toLocal() 
- : DateTime.parse(updatedAtVal.toString()).toLocal())
- : null,
- homeScore: data['homeScore'] ?? data['home_score'],
- awayScore: data['awayScore'] ?? data['away_score'],
- resultSubmittedByTeamId: data['resultSubmittedByTeamId'] ?? data['result_submitted_by_team_id'],
- matchResultStatus: MatchResultStatus.values.firstWhere(
- (e) => e.name == matchResultStatusVal,
- orElse: () => MatchResultStatus.noResult,
- ),
- pendingOutcome: pendingOutcomeVal != null 
- ? MatchOutcome.values.firstWhere((e) => e.name == pendingOutcomeVal) 
- : null,
- finalOutcome: finalOutcomeVal != null 
- ? MatchOutcome.values.firstWhere((e) => e.name == finalOutcomeVal) 
- : null,
- requiresAdminIntervention: data['requiresAdminIntervention'] ?? data['requires_admin_intervention'] ?? false,
- currentPlayers: data['currentPlayers'] ?? data['current_players'] ?? 1,
- playersPerTeam: ppt,
- totalFieldCapacity: tfc,
- pendingUserIds: (data['pendingUserIds'] ?? data['pending_user_ids']) is List ? ((data['pendingUserIds'] ?? data['pending_user_ids']) as List).map((e) => e.toString()).toList() : [],
- joinedUserIds: (data['joinedUserIds'] ?? data['joined_user_ids']) is List
- ? ((data['joinedUserIds'] ?? data['joined_user_ids']) as List)
- .map((e) => e.toString())
- .toList()
- : [],
- isPaid: data['isPaid'] ?? data['is_paid'] ?? false,
- paymentStatus: data['paymentStatus'] ?? data['payment_status'] ?? ((data['isPaid'] ?? data['is_paid']) == true ? 'paid' : 'pending'),
- playerPhone: data['playerPhone'] ?? data['player_phone'],
- notes: data['notes'],
- depositPaid: (data['deposit_paid'] ?? data['depositPaid'] ?? 0.0).toDouble(),
- isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
- instapay: data['instapay'] ?? data['insta_pay'],
- vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],
- binanceId: data['binanceId'] ?? data['binance_id'],
- lastMessage: data['last_message'] ?? data['lastMessage'],
- lastMessageTime: (data['last_message_time'] ?? data['lastMessageTime']) != null 
- ? DateTime.parse((data['last_message_time'] ?? data['lastMessageTime']).toString())
- : null,
- rescheduleStatus: data['reschedule_status'] ?? data['rescheduleStatus'] ?? 'none',
- proposedStartTime: (data['proposed_start_time'] ?? data['proposedStartTime']) != null
- ? DateTime.parse((data['proposed_start_time'] ?? data['proposedStartTime']).toString())
- : null,
- proposedEndTime: (data['proposed_end_time'] ?? data['proposedEndTime']) != null
- ? DateTime.parse((data['proposed_end_time'] ?? data['proposedEndTime']).toString())
- : null,
- emergencyCancelStatus: data['emergency_cancel_status'] ?? data['emergencyCancelStatus'] ?? 'none',
- emergencyReason: data['emergency_reason'] ?? data['emergencyReason'],
- emergencyDowntimeHours: data['emergency_downtime_hours'] ?? data['emergencyDowntimeHours'],
- );
- }
-
- Map<String, dynamic> toMap() => toFirestore();
-
- /// Convert Booking to Firestore map
- Map<String, dynamic> toFirestore() {
- return {
- 'stadium_id': stadiumId,
- 'stadiumId': stadiumId,
- 'stadium_name': stadiumName,
- 'stadiumName': stadiumName,
- 'stadium_image_url': stadiumImageUrl,
- 'stadiumImageUrl': stadiumImageUrl,
- 'owner_id': ownerId,
- 'ownerId': ownerId,
- 'start_time': startTime.toIso8601String(),
- 'startTime': startTime.toIso8601String(),
- 'end_time': endTime.toIso8601String(),
- 'endTime': endTime.toIso8601String(),
- 'operational_date': operationalDate?.toIso8601String().split('T').first,
- 'booking_type': bookingType.name,
- 'bookingType': bookingType.name,
- 'player_team_id': playerTeamId,
- 'playerTeamId': playerTeamId,
- 'player_team_name': playerTeamName,
- 'playerTeamName': playerTeamName,
- 'player_team_logo_url': playerTeamLogoUrl,
- 'playerTeamLogoUrl': playerTeamLogoUrl,
- 'host_name': hostName,
- 'hostName': hostName,
- 'host_avatar_url': hostAvatarUrl,
- 'hostAvatarUrl': hostAvatarUrl,
- 'opponent_team_id': opponentTeamId,
- 'opponentTeamId': opponentTeamId,
- 'opponent_team_name': opponentTeamName,
- 'opponentTeamName': opponentTeamName,
- 'opponent_team_logo_url': opponentTeamLogoUrl,
- 'opponentTeamLogoUrl': opponentTeamLogoUrl,
- 'is_private': isPrivate,
- 'isPrivate': isPrivate,
- 'rent_ball': rentBall,
- 'rentBall': rentBall,
- 'total_price': totalPrice,
- 'totalPrice': totalPrice,
- 'currency': currency,
- 'payment_method': paymentMethod,
- 'paymentMethod': paymentMethod,
- 'payment_transaction_id': paymentTransactionId,
- 'paymentTransactionId': paymentTransactionId,
- 'status': status.name,
- 'created_by_user_id': createdByUserId,
- 'createdByUserId': createdByUserId,
- 'created_at': createdAt.toIso8601String(),
- 'createdAt': createdAt.toIso8601String(),
- 'updated_at': updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
- 'updatedAt': updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
- 'home_score': homeScore,
- 'homeScore': homeScore,
- 'away_score': awayScore,
- 'awayScore': awayScore,
- 'result_submitted_by_team_id': resultSubmittedByTeamId,
- 'resultSubmittedByTeamId': resultSubmittedByTeamId,
- 'match_result_status': matchResultStatus.name,
- 'matchResultStatus': matchResultStatus.name,
- 'pending_outcome': pendingOutcome?.name,
- 'pendingOutcome': pendingOutcome?.name,
- 'final_outcome': finalOutcome?.name,
- 'finalOutcome': finalOutcome?.name,
- 'requires_admin_intervention': requiresAdminIntervention,
- 'requiresAdminIntervention': requiresAdminIntervention,
- 'current_players': currentPlayers,
- 'players_per_team': playersPerTeam,
- 'total_field_capacity': totalFieldCapacity,
- 'max_players': totalFieldCapacity, // backward compatibility
- 'joined_user_ids': joinedUserIds,
- 'joinedUserIds': joinedUserIds,
- 'pending_user_ids': pendingUserIds,
- 'pendingUserIds': pendingUserIds,
- 'is_paid': isPaid,
- 'isPaid': isPaid,
- 'payment_status': paymentStatus,
- 'paymentStatus': paymentStatus,
- 'player_phone': playerPhone,
- 'playerPhone': playerPhone,
- 'notes': notes,
- 'deposit_paid': depositPaid,
- 'is_deposit_paid': isDepositPaid,
- 'instapay': instapay,
- 'vodafone_cash': vodafoneCash,
- 'vodafoneCash': vodafoneCash,
- 'binance_id': binanceId,
- 'binanceId': binanceId,
- 'last_message': lastMessage,
- 'last_message_time': lastMessageTime?.toUtc().toIso8601String(),
- };
- }
+  /// Convert Booking to Firestore map
+  Map<String, dynamic> toFirestore() => BookingMapper.toFirestore(this);
 
  /// Create Booking from BookingDraft (after payment success)
  factory Booking.fromDraft({
