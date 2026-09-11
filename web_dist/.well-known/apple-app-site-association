@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.app.vsp.sports",
+        "paths": ["/match/*", "/team/*", "/championship/*", "/booking/*", "/payment-callback*"]
+      }
+    ]
+  }
+}

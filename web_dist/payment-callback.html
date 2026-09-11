@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VSP Sports - نتيجة الدفع</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #9FDF02;
+      --primary-glow: rgba(159, 223, 2, 0.35);
+      --bg: #090D14;
+      --card-bg: rgba(22, 27, 34, 0.85);
+      --card-border: rgba(159, 223, 2, 0.2);
+      --text: #F0F6FC;
+      --text-muted: #8B949E;
+      --danger: #FF4D4F;
+      --danger-glow: rgba(255, 77, 79, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #172605 0%, var(--bg) 75%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 40px 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .icon-container {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 42px;
+      position: relative;
+    }
+
+    .icon-success {
+      background: rgba(159, 223, 2, 0.15);
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 30px var(--primary-glow);
+    }
+
+    .icon-failed {
+      background: rgba(255, 77, 79, 0.15);
+      color: var(--danger);
+      border: 2px solid var(--danger);
+      box-shadow: 0 0 30px var(--danger-glow);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .details-box {
+      background: rgba(13, 17, 23, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      text-align: right;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      font-size: 14px;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--text-muted);
+    }
+
+    .detail-value {
+      font-weight: 700;
+      color: var(--text);
+      font-family: monospace, 'Cairo';
+      direction: ltr;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      font-size: 17px;
+      font-weight: 800;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 8px 24px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px var(--primary-glow);
+      filter: brightness(1.05);
+    }
+
+    .countdown {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card" id="resultCard">
+    <div id="iconBox" class="icon-container icon-success">✓</div>
+    <h1 id="titleText">تم تأكيد الدفع بنجاح!</h1>
+    <p class="subtitle" id="subtitleText">تم تسجيل حجزك وتأكيد المعاملة في منصة VSP Sports.</p>
+
+    <div class="details-box">
+      <div class="detail-row">
+        <span class="detail-label">رقم العملية (Transaction ID)</span>
+        <span class="detail-value" id="valTxn">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">رقم الطلب (Order ID)</span>
+        <span class="detail-value" id="valOrder">-</span>
+      </div>
+      <div class="detail-row" id="rowAmount" style="display:none;">
+        <span class="detail-label">المبلغ المدفوع</span>
+        <span class="detail-value" id="valAmount">-</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">حالة المعاملة</span>
+        <span class="detail-value" id="valStatus">مكتمل</span>
+      </div>
+    </div>
+
+    <a href="vspapp://payment-complete" class="btn btn-primary" id="returnBtn">
+      <span>العودة إلى تطبيق VSP</span>
+      <span>⚡</span>
+    </a>
+
+    <div class="countdown" id="countdownNotice">
+      جاري إعادة توجيهك إلى التطبيق تلقائياً خلال <span id="secs">5</span> ثوانٍ...
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const successParam = urlParams.get('success');
+    const isSuccess = successParam === 'true' || urlParams.get('txn_response_code') === 'APPROVED';
+    const txnId = urlParams.get('id') || urlParams.get('transaction_id') || '---';
+    const orderId = urlParams.get('order') || urlParams.get('order_id') || '---';
+    const amountCents = urlParams.get('amount_cents');
+
+    const iconBox = document.getElementById('iconBox');
+    const titleText = document.getElementById('titleText');
+    const subtitleText = document.getElementById('subtitleText');
+    const valTxn = document.getElementById('valTxn');
+    const valOrder = document.getElementById('valOrder');
+    const valStatus = document.getElementById('valStatus');
+    const returnBtn = document.getElementById('returnBtn');
+    const rowAmount = document.getElementById('rowAmount');
+    const valAmount = document.getElementById('valAmount');
+
+    valTxn.innerText = txnId;
+    valOrder.innerText = orderId;
+
+    if (amountCents) {
+      rowAmount.style.display = 'flex';
+      valAmount.innerText = (Number(amountCents) / 100).toFixed(2) + ' EGP';
+    }
+
+    const appDeepLink = `vspapp://payment-complete?success=${isSuccess}&id=${txnId}&order=${orderId}`;
+    returnBtn.href = appDeepLink;
+
+    if (!isSuccess) {
+      iconBox.className = 'icon-container icon-failed';
+      iconBox.innerText = '✕';
+      titleText.innerText = 'تعذر إتمام عملية الدفع';
+      subtitleText.innerText = 'لم يتم خصم أي مبلغ. يرجى المحاولة مرة أخرى أو اختيار وسيلة دفع بديلة.';
+      valStatus.innerText = 'فشل / ملغي';
+      valStatus.style.color = 'var(--danger)';
+    }
+
+    // Auto-launch deep link
+    window.location.href = appDeepLink;
+
+    // Countdown timer
+    let count = 5;
+    const secsSpan = document.getElementById('secs');
+    const timer = setInterval(() => {
+      count--;
+      if (secsSpan) secsSpan.innerText = count;
+      if (count <= 0) {
+        clearInterval(timer);
+        window.location.href = appDeepLink;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -62,3 +62,5 @@ node_modules
 scratch_check.dart
 scratch/
 bin/
+.firebase/
+supabase/.temp/

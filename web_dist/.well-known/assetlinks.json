@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vsp.sports",
+      "sha256_cert_fingerprints": [
+        "29:2E:E6:F0:B8:AD:97:13:19:CE:26:E5:1C:B3:FD:32:37:F9:15:F0:45:7A:60:C3:21:59:38:5E:60:33:B8:7D"
+      ]
+    }
+  }
+]

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>VSP Sports - منصة حجز الملاعب والبطولات الرياضية الأولى 🏆</title>
+  <meta name="description" content="احجز أفضل ملاعب كرة القدم والباديل، انضم للبطولات ومباريات 1v1، وأدر ملاعبك بسهولة مع منصة VSP Sports المدعومة بالذكاء الاصطناعي.">
+  <meta name="keywords" content="حجز ملاعب, كرة قدم, بادل, بطولات رياضية, VSP App, مصر, ملاعب القاهرة">
+
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vspapp.online/">
+  <meta property="og:title" content="VSP Sports - مستقبل إدارة وحجز الملاعب الرياضية 🏆">
+  <meta property="og:description" content="المنصة الأذكى والأسرع لحجز ملاعب كرة القدم والباديل، تنظيم البطولات، ومنافسات 1v1 مع محفظة رقمية ودعم Paymob.">
+  <meta property="og:image" content="https://vspapp.online/icons/Icon-512.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #9FDF02;
+      --primary-glow: rgba(159, 223, 2, 0.4);
+      --primary-hover: #8ecc02;
+      --bg-dark: #070A0F;
+      --bg-secondary: #0D121B;
+      --card-bg: rgba(22, 28, 38, 0.7);
+      --card-border: rgba(159, 223, 2, 0.15);
+      --text: #F0F6FC;
+      --text-muted: #8B949E;
+      --font-cairo: 'Cairo', sans-serif;
+      --font-outfit: 'Outfit', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      font-family: var(--font-cairo);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 20% 15%, rgba(159, 223, 2, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 80% 40%, rgba(14, 165, 233, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 50% 85%, rgba(159, 223, 2, 0.05) 0%, transparent 50%);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .brand img {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #FFF;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title span {
+      color: var(--primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 15px;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px var(--primary-glow);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: #FFF;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      position: relative;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: rgba(159, 223, 2, 0.1);
+      border: 1px solid var(--primary);
+      border-radius: 100px;
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      box-shadow: 0 0 25px rgba(159, 223, 2, 0.15);
+    }
+
+    .hero h1 {
+      font-size: 52px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 24px;
+      letter-spacing: -1px;
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, #9FDF02 0%, #38EF7D 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.lead {
+      max-width: 680px;
+      margin: 0 auto 36px;
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .cta-group {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    .cta-group .btn {
+      padding: 16px 32px;
+      font-size: 17px;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 960px;
+      margin: 0 auto;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--primary);
+      font-family: var(--font-outfit), var(--font-cairo);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 90px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-header h2 {
+      font-size: 36px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 32px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--card-border);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(159, 223, 2, 0.1);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(159, 223, 2, 0.12);
+      border: 1px solid rgba(159, 223, 2, 0.25);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+
+    /* Download Banner */
+    .download-section {
+      padding: 60px 0 100px;
+    }
+
+    .download-card {
+      background: linear-gradient(135deg, rgba(22, 28, 38, 0.95) 0%, rgba(13, 18, 27, 0.95) 100%);
+      border: 1px solid var(--primary);
+      border-radius: 32px;
+      padding: 60px 40px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(159, 223, 2, 0.15);
+    }
+
+    .download-card h2 {
+      font-size: 38px;
+      font-weight: 900;
+      margin-bottom: 16px;
+    }
+
+    .download-card p {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 36px;
+      font-size: 16px;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 40px 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero h1 { font-size: 38px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .stats-bar { grid-template-columns: repeat(2, 1fr); }
+      .navbar .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <div class="container">
+    <header class="navbar">
+      <a href="/" class="brand">
+        <img src="icons/Icon-192.png" alt="VSP Icon">
+        <div class="brand-title">VSP <span>Sports</span></div>
+      </a>
+      <nav class="nav-links">
+        <a href="#features">المميزات</a>
+        <a href="#stadiums">الملاعب والبطولات</a>
+        <a href="privacy.html">الخصوصية</a>
+        <a href="terms.html">الشروط</a>
+        <a href="refund.html">الاسترجاع</a>
+      </nav>
+      <div>
+        <a href="vspapp://open" class="btn btn-primary">
+          <span>فتح التطبيق</span>
+          <span>⚡</span>
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero container">
+    <div class="badge-pill">
+      <span>🔥 الجيل الجديد من المنصات الرياضية</span>
+    </div>
+    <h1>
+      احجز ملعبك المفضل، نافس في البطولات<br>
+      وعيش المتعة مع <span class="highlight">VSP Sports</span>
+    </h1>
+    <p class="lead">
+      المنصة الأولى المتكاملة لحجز ملاعب كرة القدم والباديل في مصر، تنظيم دوريات 1v1، ومساعد ذكي مدعوم بالـ AI لتسهيل إدارة الفرق والملاعب.
+    </p>
+
+    <div class="cta-group">
+      <a href="vspapp://booking" class="btn btn-primary">
+        <span>احجز ملعبك الآن</span>
+        <span>⚽</span>
+      </a>
+      <a href="https://vspapp.online/privacy.html" class="btn btn-secondary">
+        <span>وثائق الاعتماد والترخيص</span>
+        <span>🛡️</span>
+      </a>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-num">100%</div>
+        <div class="stat-label">تأكيد حجز لحظي</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">Paymob</div>
+        <div class="stat-label">دفع بنكي وإلكتروني آمن</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">AI Copilot</div>
+        <div class="stat-label">مساعد ذكي لتنظيم المباريات</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">دعم فني وتنسيق مباشر</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section container" id="features">
+    <div class="section-header">
+      <h2>كل ما تحتاجه في تجربة رياضية متكاملة</h2>
+      <p>صُممت منصة VSP لتلبي كافة تطلعات اللاعبين وأصحاب الملاعب بأحدث المعايير البرمجية</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🏟️</div>
+        <h3>حجز ملاعب فوري</h3>
+        <p>تصفح ملاعب كرة القدم والباديل القريبة منك، شاهد صور الملعب الحقيقية، واختر وقتك المفضل مع دفع العربون أو القيمة كاملة فوراً.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>بطولات وتحديات 1v1</h3>
+        <p>انضم للبطولات الرسمية أو انشئ مباراتك التنافسية. نظام تصنيف نقاط عادل يحسب إحصائيات الفوز ويرفع مستواك في قوائم المتصدرين.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <h3>VSP AI Copilot</h3>
+        <p>مساعد رياضي ذكي متصل بالنظام يساعدك في العثور على أوقات الفراغ المناسبة، تنظيم تشكيلة الفريق، واقتراح المباريات المتكافئة.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <h3>محفظة رقمية ودفع معتمد</h3>
+        <p>إيداع فوري عبر البطاقات البنكية، المحافظ الإلكترونية، أو فودافون كاش بالشراكة الرسمية مع بوابة الدفع الدولية Paymob.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>لوحة تحكم ملاك الملاعب</h3>
+        <p>لوحة تحكم حصرية لإدارة الحجوزات، مواعيد الصيانة، الإيرادات اليومية والشهرية، مع إمكانية إضافة حجوزات الهاتف يدوياً.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>روابط عميقة وتكامل فوري</h3>
+        <p>شارك روابط الحجز ودعوات المباريات على واتساب لتفتح التطبيق مباشرة لدى أصدقائك بفضل نظام Deep Links المعتمد.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download Call To Action -->
+  <section class="download-section container" id="download">
+    <div class="download-card">
+      <h2>ابدأ تجربة VSP الرياضية اليوم</h2>
+      <p>تطبيقك الشامل لكل حجوزات ومباريات الملاعب، متاح للأندرويد ونسخة الويب مباشرة.</p>
+      <div class="cta-group" style="margin-bottom: 0;">
+        <a href="vspapp://open" class="btn btn-primary">
+          <span>تحميل وفتح تطبيق VSP</span>
+          <span>📲</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <div>
+        <strong>VSP Sports Platform</strong> &copy; 2026 - جميع الحقوق محفوظة
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">سياسة الخصوصية</a>
+        <a href="terms.html">شروط الاستخدام</a>
+        <a href="refund.html">سياسة الاسترجاع</a>
+        <a href="mailto:support@vspapp.online">الدعم الفني</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

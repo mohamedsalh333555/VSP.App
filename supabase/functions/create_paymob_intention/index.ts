@@ -156,6 +156,7 @@ serve(async (req: Request) => {
         email: user_email.trim() || "customer@vsp.eg",
       },
       special_reference: booking_id,
+      redirection_url: "https://vspapp.online/payment-callback",
     };
 
     console.log(`📡 Creating Paymob intention for booking: ${booking_id} with amount: ${totalAmountEgp} EGP`);

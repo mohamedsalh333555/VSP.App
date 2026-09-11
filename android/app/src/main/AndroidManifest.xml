@@ -44,19 +44,21 @@
                 <data android:scheme="io.supabase.fluttervsp" android:host="reset-callback" />
             </intent-filter>
 
-            <!--
-                DEEP LINKING (App Links): 
-                Structural intent-filter placeholder for future domain-based deep linking.
-                Domain verification (vsp.app) is still pending in production.
-            -->
-            <!--
+            <!-- DEEP LINKING (Android App Links for vspapp.online): Verified via assetlinks.json -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="vsp.app" />
+                <data android:scheme="https" android:host="vspapp.online" />
             </intent-filter>
-            -->
+
+            <!-- Custom App Scheme for direct deep linking (Paymob callback, booking, shortcuts) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vspapp" />
+            </intent-filter>
         </activity>
 
         <!-- Required by image_cropper (UCrop library) for the crop screen on Android -->
