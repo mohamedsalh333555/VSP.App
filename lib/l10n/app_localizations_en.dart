@@ -392,7 +392,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancellationPolicy =>
-      'Full refund or deposit return is applicable if cancelled at least 2 hours before match kickoff.\n\nNo refund is provided if cancelled less than 2 hours prior to the scheduled match time.';
+      'Full refund (100%) is applicable if cancelled at least 6 hours before match kickoff, or at least 2 days (48 hours) prior for tournaments.\n\n20-Minute Grace Window: Cancellations within the first 20 minutes of booking are eligible for a refund minus non-refundable administrative and gateway processing fees.\n\nNo refund is provided if cancelled less than 6 hours prior to kickoff (or less than 2 days for tournaments) after the initial 20-minute window has expired.';
 
   @override
   String get liability => 'Liability:';
@@ -1451,7 +1451,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get faq3_a =>
-      'Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.';
+      'Yes, cancellations are allowed up to 6 hours before kickoff for pitch bookings (and 2 days for tournaments) for a full refund. Cancellations within the first 20 minutes are eligible for a refund minus administrative processing fees.';
 
   @override
   String get faq4_q => 'How do I create a team?';

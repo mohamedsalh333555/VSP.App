@@ -833,7 +833,7 @@ abstract class AppLocalizations {
   /// No description provided for @cancellationPolicy.
   ///
   /// In en, this message translates to:
-  /// **'Full refund or deposit return is applicable if cancelled at least 2 hours before match kickoff.\n\nNo refund is provided if cancelled less than 2 hours prior to the scheduled match time.'**
+  /// **'Full refund (100%) is applicable if cancelled at least 6 hours before match kickoff, or at least 2 days (48 hours) prior for tournaments.\n\n20-Minute Grace Window: Cancellations within the first 20 minutes of booking are eligible for a refund minus non-refundable administrative and gateway processing fees.\n\nNo refund is provided if cancelled less than 6 hours prior to kickoff (or less than 2 days for tournaments) after the initial 20-minute window has expired.'**
   String get cancellationPolicy;
 
   /// No description provided for @liability.
@@ -2759,7 +2759,7 @@ abstract class AppLocalizations {
   /// No description provided for @faq3_a.
   ///
   /// In en, this message translates to:
-  /// **'Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.'**
+  /// **'Yes, cancellations are allowed up to 6 hours before kickoff for pitch bookings (and 2 days for tournaments) for a full refund. Cancellations within the first 20 minutes are eligible for a refund minus administrative processing fees.'**
   String get faq3_a;
 
   /// No description provided for @faq4_q.

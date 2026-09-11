@@ -105,16 +105,19 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check 2-Hour Cancellation Policy for Players
+    // Check 6-Hour Cancellation Policy for Players & 20-Minute Grace Window
     const now = new Date();
     const matchStartTime = new Date(booking.start_time);
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const bookingCreatedAt = new Date(booking.created_at || booking.created_at_utc || now);
+    const minutesSinceCreation = (now.getTime() - bookingCreatedAt.getTime()) / (60 * 1000);
+    const isWithin20MinGrace = minutesSinceCreation >= 0 && minutesSinceCreation <= 20;
+    const sixHoursFromNow = new Date(now.getTime() + 6 * 60 * 60 * 1000);
 
-    if (isCallerPlayer && matchStartTime <= twoHoursFromNow) {
+    if (isCallerPlayer && matchStartTime <= sixHoursFromNow && !isWithin20MinGrace) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من ساعتين وفقاً للائحة الاسترداد.",
+          message: "لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من إتمام الحجز وفقاً للائحة الاسترداد).",
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -213,7 +216,16 @@ serve(async (req: Request) => {
     }
 
     // Exact, verified refund amount from immutable financial ledger
-    const verifiedRefundAmount = Number(paymentTx.amount);
+    let verifiedRefundAmount = Number(paymentTx.amount);
+
+    // If cancelled in the 20-minute grace window when match is less than 6 hours away:
+    // Deduct non-refundable administrative and payment gateway expenses (Paymob 2.4% + 3 EGP + platform fee)
+    let adminDeduction = 0;
+    if (isWithin20MinGrace && matchStartTime <= sixHoursFromNow) {
+      adminDeduction = Math.min(verifiedRefundAmount, Math.round((verifiedRefundAmount * 0.074 + 3.0) * 100) / 100);
+      verifiedRefundAmount = Math.max(0, verifiedRefundAmount - adminDeduction);
+      console.log(`ℹ️ Grace window cancellation: deducted admin fees ${adminDeduction} EGP. Net refund to Paymob: ${verifiedRefundAmount} EGP`);
+    }
 
     // Find Paymob Transaction ID from transaction record or booking fallback
     let paymobTxnId = paymentTx.paymob_transaction_id || booking.paymob_txn_id || booking.paymob_transaction_id || booking.payment_transaction_id;
