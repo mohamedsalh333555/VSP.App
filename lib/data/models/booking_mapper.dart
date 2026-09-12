@@ -125,6 +125,17 @@ class BookingMapper {
       emergencyCancelStatus: data['emergency_cancel_status'] ?? data['emergencyCancelStatus'] ?? 'none',
       emergencyReason: data['emergency_reason'] ?? data['emergencyReason'],
       emergencyDowntimeHours: data['emergency_downtime_hours'] ?? data['emergencyDowntimeHours'],
+      refundAmount: (data['refund_amount'] ?? data['refundAmount'] as num?)?.toDouble(),
+      refundTransactionId: (data['refund_transaction_id'] ?? data['refundTransactionId'] ?? data['refund_txn_id'])?.toString(),
+      refundedAt: (data['refunded_at'] ?? data['refundedAt']) != null
+          ? ((data['refunded_at'] ?? data['refundedAt']) is DateTime
+              ? ((data['refunded_at'] ?? data['refundedAt']) as DateTime).toLocal()
+              : DateTime.tryParse((data['refunded_at'] ?? data['refundedAt']).toString())?.toLocal())
+          : null,
+      refundPaymentMethod: (data['refund_payment_method'] ?? data['refundPaymentMethod'])?.toString(),
+      refundChannel: (data['refund_channel'] ?? data['refundChannel'])?.toString(),
+      refundEta: (data['refund_eta'] ?? data['refundEta'])?.toString(),
+      displayRefundRef: (data['display_refund_ref'] ?? data['displayRefundRef'])?.toString(),
     );
   }
 
@@ -218,6 +229,10 @@ class BookingMapper {
       'binanceId': booking.binanceId,
       'last_message': booking.lastMessage,
       'last_message_time': booking.lastMessageTime?.toUtc().toIso8601String(),
+      if (booking.refundAmount != null) 'refund_amount': booking.refundAmount,
+      if (booking.refundTransactionId != null) 'refund_transaction_id': booking.refundTransactionId,
+      if (booking.refundedAt != null) 'refunded_at': booking.refundedAt?.toUtc().toIso8601String(),
+      if (booking.refundPaymentMethod != null) 'refund_payment_method': booking.refundPaymentMethod,
     };
   }
 }

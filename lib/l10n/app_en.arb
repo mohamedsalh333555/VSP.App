@@ -1107,5 +1107,53 @@
  "refundFullPayment": "payment",
  "paymentGatewayUnavailable": "Failed to connect to payment gateway. Please try again later.",
  "verifyPaymentNow": "Verify Payment Status Now",
- "verifyingPayment": "Verifying payment status..."
+ "verifyingPayment": "Verifying payment status...",
+ "refundNoticeWallet": "Your {type} ({amount}) will be returned to your e-wallet within minutes.",
+ "@refundNoticeWallet": {
+ "placeholders": {
+ "type": {
+ "type": "String"
+ },
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "refundNoticeCard": "Your {type} ({amount}) will be returned to your bank card within 3–5 business days depending on your bank's policy.",
+ "@refundNoticeCard": {
+ "placeholders": {
+ "type": {
+ "type": "String"
+ },
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "refundNoticeCash": "Your {amount} will be refunded in cash upon cancellation.",
+ "@refundNoticeCash": {
+ "placeholders": {
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "refundSuccessWallet": "Booking cancelled. Your refund is on its way to your e-wallet.",
+ "refundSuccessCard": "Booking cancelled. Your refund will appear on your bank statement within 3–5 business days.",
+ "refundSuccessCash": "Booking cancelled. Cash refund will be processed.",
+ "refundReferenceLabel": "Refund Reference: {refId}",
+ "@refundReferenceLabel": {
+ "placeholders": {
+ "refId": {
+ "type": "String"
+ }
+ }
+ },
+ "refundChannelWalletBadge": "Refunded to Wallet 📱",
+ "refundChannelCardBadge": "Bank Refund 🏦",
+ "refundChannelCashBadge": "Cash Refund 💵",
+ "refundEtaMinutes": "Within minutes",
+ "refundEtaDays": "3–5 business days",
+ "copyRefId": "Copy Reference ID",
+ "refIdCopied": "Reference ID copied"
 }

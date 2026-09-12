@@ -320,12 +320,26 @@ serve(async (req: Request) => {
     // 8. HANDLE REFUND RESULTS & WRITE AUDIT TRAIL
     // =========================================================================
     if (refundSuccess) {
-      // SUCCESS: Update booking & transaction ledger
+      // SUCCESS: Detect refund channel & update booking & transaction ledger
+      const detectedRefundMethod = (() => {
+        const sub = (refundData?.source_data?.sub_type || refundData?.source_data?.type || booking.payment_method || "").toLowerCase();
+        if (sub.includes("wallet") || sub.includes("vodafone") || sub.includes("orange") || sub.includes("etisalat") || sub.includes("instapay")) {
+          return "wallet";
+        }
+        if (sub.includes("card") || sub.includes("paymob") || sub.includes("online")) {
+          return "card";
+        }
+        return booking.payment_method || "card";
+      })();
+
       await supabase
         .from("bookings")
         .update({
           status: "cancelled",
           payment_status: "refunded",
+          refund_transaction_id: refundTxnId,
+          refunded_at: now.toISOString(),
+          refund_payment_method: detectedRefundMethod,
           refund_amount: verifiedRefundAmount,
           refund_txn_id: refundTxnId,
           cancellation_reason: reason,

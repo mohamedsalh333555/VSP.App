@@ -9,6 +9,7 @@ import '../../screens/chat_screen.dart';
 import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
 import 'player_booking_cancel_dialog.dart';
+import 'refund_badge_widget.dart';
 import 'reschedule_action_banner.dart';
 
 /// Comprehensive individual booking card for upcoming and history bookings in player bookings screen.
@@ -199,6 +200,32 @@ class PlayerBookingCard extends StatelessWidget {
               ],
             ),
           ),
+          if (booking.status == BookingStatus.cancelled &&
+              (booking.paymentStatus == 'refunded' ||
+                  booking.refundAmount != null ||
+                  booking.refundTransactionId != null)) ...[
+            const SizedBox(height: VSPSpacing.sm),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: RefundBadgeWidget(
+                refundInfo: RefundInfo.fromBookingRow({
+                  'refund_channel': booking.refundChannel,
+                  'refund_eta': booking.refundEta,
+                  'display_refund_ref': booking.displayRefundRef ??
+                      booking.refundTransactionId ??
+                      booking.paymentTransactionId,
+                  'refunded_at': booking.refundedAt?.toIso8601String(),
+                  'refund_payment_method':
+                      booking.refundPaymentMethod ?? booking.paymentMethod,
+                  'payment_method': booking.paymentMethod,
+                  'refund_amount': booking.refundAmount ??
+                      (booking.depositPaid > 0
+                          ? booking.depositPaid
+                          : booking.totalPrice),
+                }),
+              ),
+            ),
+          ],
           if (booking.bookingType == BookingType.challenge && booking.opponentTeamName != null) ...[
             const SizedBox(height: VSPSpacing.sm),
             Container(

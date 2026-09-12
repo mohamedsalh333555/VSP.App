@@ -1,10 +1,12 @@
 export 'booking_enums.dart';
 export 'booking_draft.dart';
 export 'booking_mapper.dart';
+export 'refund_info.dart';
 
 import 'booking_enums.dart';
 import 'booking_draft.dart';
 import 'booking_mapper.dart';
+import 'refund_info.dart';
 
 /// Booking data model - Full booking record stored in DB
 class Booking {
@@ -85,9 +87,30 @@ class Booking {
  final String? emergencyReason;
  final int? emergencyDowntimeHours;
 
+ // Smart Refund Fields
+ final double? refundAmount;
+ final String? refundTransactionId;
+ final DateTime? refundedAt;
+ final String? refundPaymentMethod;
+ final String? refundChannel;
+ final String? refundEta;
+ final String? displayRefundRef;
+
  // Backward compatibility getters
  int get maxPlayers => totalFieldCapacity;
  String get userId => createdByUserId;
+
+ RefundInfo get refundInfo => RefundInfo.fromBookingRow({
+   'refund_channel': refundChannel,
+   'refund_eta': refundEta,
+   'display_refund_ref': displayRefundRef ?? refundTransactionId ?? paymentTransactionId,
+   'refunded_at': refundedAt?.toIso8601String(),
+   'refund_payment_method': refundPaymentMethod ?? paymentMethod,
+   'payment_method': paymentMethod,
+   'refund_amount': refundAmount ?? (depositPaid > 0 ? depositPaid : totalPrice),
+   'deposit_paid': depositPaid,
+   'total_price': totalPrice,
+ });
 
  Booking({
  required this.id,
@@ -146,6 +169,13 @@ class Booking {
  this.emergencyCancelStatus = 'none',
  this.emergencyReason,
  this.emergencyDowntimeHours,
+ this.refundAmount,
+ this.refundTransactionId,
+ this.refundedAt,
+ this.refundPaymentMethod,
+ this.refundChannel,
+ this.refundEta,
+ this.displayRefundRef,
  });
 
   /// Create Booking from Firestore/Supabase document

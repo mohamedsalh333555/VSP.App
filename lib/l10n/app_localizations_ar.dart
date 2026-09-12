@@ -2321,4 +2321,57 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get verifyingPayment => 'جاري التحقق من الدفع...';
+
+  @override
+  String refundNoticeWallet(String type, String amount) {
+    return 'سيتم استرداد $type ($amount) إلى محفظتك الإلكترونية خلال دقائق معدودة.';
+  }
+
+  @override
+  String refundNoticeCard(String type, String amount) {
+    return 'سيتم تحويل $type ($amount) إلى حساب بطاقتك البنكية خلال 3 إلى 5 أيام عمل بحسب نظام بنكك.';
+  }
+
+  @override
+  String refundNoticeCash(String amount) {
+    return 'سيتم استرداد $amount نقداً فور إلغاء الحجز.';
+  }
+
+  @override
+  String get refundSuccessWallet =>
+      'تم إلغاء الحجز بنجاح وجاري إيداع المبلغ في محفظتك.';
+
+  @override
+  String get refundSuccessCard =>
+      'تم إلغاء الحجز بنجاح، وتستغرق المعاملة البنكية 3–5 أيام عمل للظهور في كشف حساب بطاقتك.';
+
+  @override
+  String get refundSuccessCash =>
+      'تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ نقداً.';
+
+  @override
+  String refundReferenceLabel(String refId) {
+    return 'رقم إيصال الاسترداد: $refId';
+  }
+
+  @override
+  String get refundChannelWalletBadge => 'مسترد للمحفظة 📱';
+
+  @override
+  String get refundChannelCardBadge => 'مسترد بنكياً 🏦';
+
+  @override
+  String get refundChannelCashBadge => 'مسترد نقداً 💵';
+
+  @override
+  String get refundEtaMinutes => 'خلال دقائق';
+
+  @override
+  String get refundEtaDays => '3–5 أيام عمل';
+
+  @override
+  String get copyRefId => 'نسخ رقم الإيصال';
+
+  @override
+  String get refIdCopied => 'تم نسخ رقم الإيصال';
 }

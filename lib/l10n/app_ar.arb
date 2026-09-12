@@ -732,5 +732,41 @@
  "refundFullPayment": "المبلغ المدفوع",
  "paymentGatewayUnavailable": "عذراً، تعذر الاتصال ببوابة الدفع حالياً. يرجى المحاولة مرة أخرى لاحقاً.",
  "verifyPaymentNow": "تحقق من حالة الحجز الآن",
- "verifyingPayment": "جاري التحقق من الدفع..."
+ "verifyingPayment": "جاري التحقق من الدفع...",
+ "refundNoticeWallet": "سيتم استرداد {type} ({amount}) إلى محفظتك الإلكترونية خلال دقائق معدودة.",
+ "@refundNoticeWallet": {
+   "placeholders": {
+     "type": { "type": "String" },
+     "amount": { "type": "String" }
+   }
+ },
+ "refundNoticeCard": "سيتم تحويل {type} ({amount}) إلى حساب بطاقتك البنكية خلال 3 إلى 5 أيام عمل بحسب نظام بنكك.",
+ "@refundNoticeCard": {
+   "placeholders": {
+     "type": { "type": "String" },
+     "amount": { "type": "String" }
+   }
+ },
+ "refundNoticeCash": "سيتم استرداد {amount} نقداً فور إلغاء الحجز.",
+ "@refundNoticeCash": {
+   "placeholders": {
+     "amount": { "type": "String" }
+   }
+ },
+ "refundSuccessWallet": "تم إلغاء الحجز بنجاح وجاري إيداع المبلغ في محفظتك.",
+ "refundSuccessCard": "تم إلغاء الحجز بنجاح، وتستغرق المعاملة البنكية 3–5 أيام عمل للظهور في كشف حساب بطاقتك.",
+ "refundSuccessCash": "تم إلغاء الحجز بنجاح وسيتم استرداد المبلغ نقداً.",
+ "refundReferenceLabel": "رقم إيصال الاسترداد: {refId}",
+ "@refundReferenceLabel": {
+   "placeholders": {
+     "refId": { "type": "String" }
+   }
+ },
+ "refundChannelWalletBadge": "مسترد للمحفظة 📱",
+ "refundChannelCardBadge": "مسترد بنكياً 🏦",
+ "refundChannelCashBadge": "مسترد نقداً 💵",
+ "refundEtaMinutes": "خلال دقائق",
+ "refundEtaDays": "3–5 أيام عمل",
+ "copyRefId": "نسخ رقم الإيصال",
+ "refIdCopied": "تم نسخ رقم الإيصال"
 }

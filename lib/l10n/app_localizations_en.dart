@@ -2342,4 +2342,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifyingPayment => 'Verifying payment status...';
+
+  @override
+  String refundNoticeWallet(String type, String amount) {
+    return 'Your $type ($amount) will be returned to your e-wallet within minutes.';
+  }
+
+  @override
+  String refundNoticeCard(String type, String amount) {
+    return 'Your $type ($amount) will be returned to your bank card within 3–5 business days depending on your bank\'s policy.';
+  }
+
+  @override
+  String refundNoticeCash(String amount) {
+    return 'Your $amount will be refunded in cash upon cancellation.';
+  }
+
+  @override
+  String get refundSuccessWallet =>
+      'Booking cancelled. Your refund is on its way to your e-wallet.';
+
+  @override
+  String get refundSuccessCard =>
+      'Booking cancelled. Your refund will appear on your bank statement within 3–5 business days.';
+
+  @override
+  String get refundSuccessCash =>
+      'Booking cancelled. Cash refund will be processed.';
+
+  @override
+  String refundReferenceLabel(String refId) {
+    return 'Refund Reference: $refId';
+  }
+
+  @override
+  String get refundChannelWalletBadge => 'Refunded to Wallet 📱';
+
+  @override
+  String get refundChannelCardBadge => 'Bank Refund 🏦';
+
+  @override
+  String get refundChannelCashBadge => 'Cash Refund 💵';
+
+  @override
+  String get refundEtaMinutes => 'Within minutes';
+
+  @override
+  String get refundEtaDays => '3–5 business days';
+
+  @override
+  String get copyRefId => 'Copy Reference ID';
+
+  @override
+  String get refIdCopied => 'Reference ID copied';
 }

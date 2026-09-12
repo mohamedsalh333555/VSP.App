@@ -4399,6 +4399,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verifying payment status...'**
   String get verifyingPayment;
+
+  /// No description provided for @refundNoticeWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {type} ({amount}) will be returned to your e-wallet within minutes.'**
+  String refundNoticeWallet(String type, String amount);
+
+  /// No description provided for @refundNoticeCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {type} ({amount}) will be returned to your bank card within 3–5 business days depending on your bank\'s policy.'**
+  String refundNoticeCard(String type, String amount);
+
+  /// No description provided for @refundNoticeCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {amount} will be refunded in cash upon cancellation.'**
+  String refundNoticeCash(String amount);
+
+  /// No description provided for @refundSuccessWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled. Your refund is on its way to your e-wallet.'**
+  String get refundSuccessWallet;
+
+  /// No description provided for @refundSuccessCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled. Your refund will appear on your bank statement within 3–5 business days.'**
+  String get refundSuccessCard;
+
+  /// No description provided for @refundSuccessCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled. Cash refund will be processed.'**
+  String get refundSuccessCash;
+
+  /// No description provided for @refundReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund Reference: {refId}'**
+  String refundReferenceLabel(String refId);
+
+  /// No description provided for @refundChannelWalletBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded to Wallet 📱'**
+  String get refundChannelWalletBadge;
+
+  /// No description provided for @refundChannelCardBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Refund 🏦'**
+  String get refundChannelCardBadge;
+
+  /// No description provided for @refundChannelCashBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Refund 💵'**
+  String get refundChannelCashBadge;
+
+  /// No description provided for @refundEtaMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Within minutes'**
+  String get refundEtaMinutes;
+
+  /// No description provided for @refundEtaDays.
+  ///
+  /// In en, this message translates to:
+  /// **'3–5 business days'**
+  String get refundEtaDays;
+
+  /// No description provided for @copyRefId.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Reference ID'**
+  String get copyRefId;
+
+  /// No description provided for @refIdCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference ID copied'**
+  String get refIdCopied;
 }
 
 class _AppLocalizationsDelegate

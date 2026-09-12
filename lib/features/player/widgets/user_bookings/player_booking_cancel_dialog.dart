@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import 'refund_notice_widget.dart';
 
 class PlayerBookingCancelDialog {
   const PlayerBookingCancelDialog._();
@@ -14,16 +14,27 @@ class PlayerBookingCancelDialog {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // ✅ يشمل كل أنواع الدفع الأونلاين
-    final bool isPaidOnline =
-        booking.paymentMethod == 'paymob' ||
-        booking.paymentStatus == 'paid' ||
-        booking.paymentStatus == 'partially_paid' ||
-        (booking.isDepositPaid && booking.depositPaid > 0);
+    // 1. تحديد بيانات وسيلة الدفع والاسترداد
+    final paymentMethod = booking.paymentMethod;
 
-    // المبلغ المسترد: العربون لو موجود، وإلا المبلغ الكامل
-    final double refundableAmount =
-        booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice;
+    // 2. تحديد قناة الاسترداد والمدة المتوقعة
+    final refundChannel = switch (paymentMethod.toLowerCase()) {
+      'wallet' || 'vodafone_cash' || 'instapay' => RefundChannel.wallet,
+      'card' || 'paymob' || 'online'            => RefundChannel.card,
+      _                                          => RefundChannel.cash,
+    };
+
+    final refundInfo = RefundInfo(
+      channel: refundChannel,
+      eta: refundChannel == RefundChannel.card
+          ? RefundEta.businessDays
+          : (refundChannel == RefundChannel.wallet ? RefundEta.minutes : RefundEta.immediate),
+      refundAmount: booking.refundAmount ??
+          (booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice),
+    );
+
+    final amountFormatted =
+        '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}';
 
     return showDialog<void>(
       context: context,
@@ -39,15 +50,11 @@ class PlayerBookingCancelDialog {
           children: [
             Text(l10n.cancelBookingConfirm,
                 style: Theme.of(dialogCtx).textTheme.bodyMedium),
-            if (isPaidOnline) ...[
-              const SizedBox(height: VSPSpacing.md),
-              _RefundNotice(
-                isArabic: isArabic,
-                refundableAmount: refundableAmount,
-                isDeposit: booking.depositPaid > 0 &&
-                    booking.depositPaid < booking.totalPrice,
-              ),
-            ],
+            const SizedBox(height: VSPSpacing.md),
+            RefundNoticeWidget(
+              refundInfo: refundInfo,
+              amountFormatted: amountFormatted,
+            ),
           ],
         ),
         actionsPadding: const EdgeInsets.symmetric(
@@ -57,55 +64,9 @@ class PlayerBookingCancelDialog {
             context: context,
             dialogCtx: dialogCtx,
             booking: booking,
+            refundInfo: refundInfo,
             l10n: l10n,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RefundNotice extends StatelessWidget {
-  final bool isArabic;
-  final double refundableAmount;
-  final bool isDeposit;
-
-  const _RefundNotice({
-    required this.isArabic,
-    required this.refundableAmount,
-    required this.isDeposit,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final amountText = '${refundableAmount.toStringAsFixed(0)} ${l10n.egCurrency}';
-    final typeText = isDeposit ? l10n.refundDeposit : l10n.refundFullPayment;
-    final message = l10n.refundNoticeAuto(typeText, amountText);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: VSPColors.accent.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Iconsax.rotate_left_copy,
-              color: VSPColors.accent, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: VSPColors.accent,
-                fontSize: 12,
-                height: 1.4,
-              ),
-            ),
+            isArabic: isArabic,
           ),
         ],
       ),
@@ -117,13 +78,17 @@ class _CancelDialogActions extends StatelessWidget {
   final BuildContext context;
   final BuildContext dialogCtx;
   final Booking booking;
+  final RefundInfo refundInfo;
   final AppLocalizations l10n;
+  final bool isArabic;
 
   const _CancelDialogActions({
     required this.context,
     required this.dialogCtx,
     required this.booking,
+    required this.refundInfo,
     required this.l10n,
+    required this.isArabic,
   });
 
   @override
@@ -163,9 +128,13 @@ class _CancelDialogActions extends StatelessWidget {
     Navigator.pop(dialogCtx);
     final success = await provider.cancelBooking(booking.id);
     if (success) {
+      final successMsg = isArabic
+          ? refundInfo.refundSuccessText()
+          : refundInfo.localizedSuccessText(l10n);
       messenger.showSnackBar(SnackBar(
-        content: Text(l10n.cancelSuccess),
-        backgroundColor: VSPColors.warning,
+        content: Text(successMsg),
+        backgroundColor: VSPColors.accent,
+        behavior: SnackBarBehavior.floating,
       ));
     } else {
       messenger.showSnackBar(SnackBar(

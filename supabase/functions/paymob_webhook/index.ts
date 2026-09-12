@@ -342,6 +342,59 @@ serve(async (req: Request) => {
       });
     }
 
+    // 3.5 Handle Paymob Refund Callback if is_refunded is true
+    if (obj.is_refunded === true) {
+      const refundAmount = (obj.amount_cents || 0) / 100;
+      const refundTxnId = String(obj.id || transactionId);
+      const refundMethod = (() => {
+        const subType = (obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+        if (subType.includes("wallet") || subType.includes("vodafone") || subType.includes("orange") || subType.includes("etisalat") || subType.includes("instapay")) {
+          return "wallet";
+        }
+        if (subType.includes("card") || subType.includes("paymob") || subType.includes("online")) {
+          return "card";
+        }
+        return "card";
+      })();
+
+      console.log(`💸 Paymob Webhook Refund confirmed for booking ${bookingId} via ${refundMethod} (Tx: ${refundTxnId})`);
+
+      await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          payment_status: "refunded",
+          refund_transaction_id: refundTxnId,
+          refunded_at: new Date().toISOString(),
+          refund_payment_method: refundMethod,
+          refund_amount: refundAmount,
+          cancelled_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", bookingId);
+
+      // Notify player about successful refund
+      const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
+      if (playerUserId) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: playerUserId,
+            title: "تم اعتماد الاسترداد المالي! 💸",
+            body: `تم استرداد مبلغ (${refundAmount.toFixed(0)} ج.م) لحجز ${existingBooking.stadium_name || 'الملعب'} بنجاح.`,
+            type: "refund_success",
+            created_at: new Date().toISOString(),
+          });
+        } catch (notifErr) {
+          console.warn("Non-blocking: failed to send refund notification in webhook", notifErr);
+        }
+      }
+
+      return new Response(JSON.stringify({ status: "refund_processed", booking_id: bookingId }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // 4. Update Booking Status atomically if transaction succeeded
     if (isSuccess) {
       const paidAmountEgp = (obj.amount_cents || 0) / 100;
