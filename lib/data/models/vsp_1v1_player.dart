@@ -27,14 +27,20 @@ class VSP1v1Player {
       VSP1v1Player.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
 
   factory VSP1v1Player.fromFirestore(Map<String, dynamic> data, String id) {
+    final tackles = (data['tackles'] ?? 0).toInt();
+    final goals = (data['goals'] ?? 0).toInt();
+    final skillPoints = (data['skillPoints'] ?? data['skill_points'] ?? data['skills'] ?? 0).toInt();
+    final computedPoints = tackles + goals + skillPoints;
+    final totalPoints = (data['totalPoints'] ?? data['total_points'] ?? computedPoints).toInt();
+
     return VSP1v1Player(
       id: id,
-      name: data['name'] ?? 'Unknown',
-      avatarUrl: data['avatarUrl'] ?? '',
-      totalPoints: (data['totalPoints'] ?? 0).toInt(),
-      skillPoints: (data['skillPoints'] ?? 0).toInt(),
-      goals: (data['goals'] ?? 0).toInt(),
-      tackles: (data['tackles'] ?? 0).toInt(),
+      name: data['name'] ?? data['player_name'] ?? 'Unknown',
+      avatarUrl: data['avatarUrl'] ?? data['avatar_url'] ?? '',
+      totalPoints: totalPoints,
+      skillPoints: skillPoints,
+      goals: goals,
+      tackles: tackles,
       titles: (data['titles'] ?? 0).toInt(),
       rank: (data['rank'] ?? 99).toInt(),
       trend: data['trend'] ?? 'stable',
@@ -59,11 +65,11 @@ class VSP1v1Player {
 
   static List<VSP1v1Player> getMockStandings() {
     return [
-      VSP1v1Player(id: '1', name: 'Ahmed', avatarUrl: '', totalPoints: 100, skillPoints: 50, goals: 20, tackles: 10, rank: 1),
-      VSP1v1Player(id: '2', name: 'Mohamed', avatarUrl: '', totalPoints: 80, skillPoints: 40, goals: 15, tackles: 8, rank: 2),
-      VSP1v1Player(id: '3', name: 'Ali', avatarUrl: '', totalPoints: 60, skillPoints: 30, goals: 10, tackles: 5, rank: 3),
-      VSP1v1Player(id: '4', name: 'Hassan', avatarUrl: '', totalPoints: 40, skillPoints: 20, goals: 5, tackles: 2, rank: 4),
-      VSP1v1Player(id: '5', name: 'Ibrahim', avatarUrl: '', totalPoints: 20, skillPoints: 10, goals: 2, tackles: 1, rank: 5),
+      VSP1v1Player(id: '1', name: 'أحمد زيزو (الحريف)', avatarUrl: '', totalPoints: 16, skillPoints: 6, goals: 6, tackles: 4, titles: 5, rank: 1, trend: 'up'),
+      VSP1v1Player(id: '2', name: 'محمود تريكة', avatarUrl: '', totalPoints: 13, skillPoints: 5, goals: 5, tackles: 3, titles: 3, rank: 2, trend: 'up'),
+      VSP1v1Player(id: '3', name: 'كريم بنزيما المعادي', avatarUrl: '', totalPoints: 10, skillPoints: 3, goals: 4, tackles: 3, titles: 2, rank: 3, trend: 'stable'),
+      VSP1v1Player(id: '4', name: 'يوسف فانتاسي', avatarUrl: '', totalPoints: 7, skillPoints: 2, goals: 3, tackles: 2, titles: 1, rank: 4, trend: 'down'),
+      VSP1v1Player(id: '5', name: 'علي مهارة', avatarUrl: '', totalPoints: 5, skillPoints: 2, goals: 2, tackles: 1, titles: 0, rank: 5, trend: 'stable'),
     ];
   }
 }

@@ -223,6 +223,36 @@ class LeagueRepository {
         }
 
         if (tournament == null) {
+          final globalResponse = await _supabase
+              .from('vsp_1vs1_players')
+              .select('*')
+              .order('total_points', ascending: false)
+              .limit(50);
+          final globalList = globalResponse as List<dynamic>;
+          if (globalList.isNotEmpty) {
+            final List<VSP1v1Player> players = [];
+            for (int i = 0; i < globalList.length; i++) {
+              final data = globalList[i];
+              final tackles = (data['tackles'] ?? 0) as int;
+              final goals = (data['goals'] ?? 0) as int;
+              final skills = (data['skill_points'] ?? data['skills'] ?? 0) as int;
+              final total = (data['total_points'] ?? (tackles + goals + skills)) as int;
+              players.add(VSP1v1Player(
+                id: data['id'].toString(),
+                name: data['name'] ?? data['player_name'] ?? 'لاعب',
+                avatarUrl: data['avatar_url'] ?? '',
+                totalPoints: total,
+                skillPoints: skills,
+                goals: goals,
+                tackles: tackles,
+                titles: (data['titles'] ?? (i == 0 ? 1 : 0)) as int,
+                rank: i + 1,
+                trend: data['trend'] ?? (i == 0 ? 'up' : 'stable'),
+              ));
+            }
+            if (!controller.isClosed) controller.add(players);
+            return;
+          }
           if (!controller.isClosed) controller.add([]);
           return;
         }
@@ -237,14 +267,18 @@ class LeagueRepository {
         final List<VSP1v1Player> players = [];
         for (int i = 0; i < rawList.length; i++) {
           final data = rawList[i];
+          final tackles = (data['tackles'] ?? 0) as int;
+          final goals = (data['goals'] ?? 0) as int;
+          final skills = (data['skills'] ?? data['skill_points'] ?? 0) as int;
+          final totalPoints = (data['total_points'] ?? (tackles + goals + skills)) as int;
           players.add(VSP1v1Player(
             id: data['id'].toString(),
-            name: data['player_name'] ?? 'لاعب',
+            name: data['player_name'] ?? data['name'] ?? 'لاعب',
             avatarUrl: data['avatar_url'] ?? '',
-            totalPoints: (data['total_points'] ?? 0) as int,
-            skillPoints: (data['skills'] ?? 0) as int,
-            goals: (data['goals'] ?? 0) as int,
-            tackles: (data['tackles'] ?? 0) as int,
+            totalPoints: totalPoints,
+            skillPoints: skills,
+            goals: goals,
+            tackles: tackles,
             titles: i == 0 ? 1 : 0,
             rank: i + 1,
             trend: i == 0 ? 'up' : 'stable',

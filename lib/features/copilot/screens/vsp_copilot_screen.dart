@@ -10,6 +10,8 @@ import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
+import '../../player/screens/champion_screen.dart';
+import '../../player/screens/player_home_screen.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
 import '../widgets/copilot_starter_prompts.dart';
@@ -175,6 +177,74 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     }
   }
 
+  void _handleExecuteAction(CopilotAction action) {
+    HapticFeedback.mediumImpact();
+    final actionType = action.actionType.toUpperCase();
+    final route = action.route.toLowerCase();
+
+    if (actionType == 'PROFILE_UPDATED') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: Colors.black, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  action.label.isNotEmpty ? action.label : 'تم تحديث بياناتك بنجاح!',
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF00E676),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
+    if (route.contains('team') || route.contains('my-team')) {
+      context.pop();
+      playerHomeScreenKey.currentState?.switchToTab(1);
+    } else if (route.contains('1v1') || route.contains('tournament') || route.contains('championship')) {
+      context.pop();
+      playerHomeScreenKey.currentState?.switchToTab(2);
+      if (route.contains('1v1')) {
+        championScreenKey.currentState?.switchToTab(1);
+      }
+    } else if (route.contains('booking') || route.contains('match')) {
+      context.pop();
+      playerHomeScreenKey.currentState?.switchToTab(3);
+    } else if (route.contains('profile') || route.contains('setting')) {
+      context.pop();
+      playerHomeScreenKey.currentState?.switchToTab(4);
+    } else {
+      try {
+        context.push(action.route);
+      } catch (e) {
+        debugPrint('[VspCopilotScreen] Navigate error: $e');
+      }
+    }
+  }
+
+  void _handleSelectTournament(CopilotTournamentSummary t) {
+    HapticFeedback.lightImpact();
+    if (t.type == '1v1') {
+      context.pop();
+      playerHomeScreenKey.currentState?.switchToTab(2);
+      championScreenKey.currentState?.switchToTab(1);
+    } else {
+      context.push('/championship/${t.id}');
+    }
+  }
+
+  void _handleJoinMatch(CopilotOpenMatchSummary m) {
+    HapticFeedback.lightImpact();
+    context.push('/match/${m.id}');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = widget.isArabic ?? (Localizations.maybeLocaleOf(context)?.languageCode != 'en');
@@ -272,6 +342,9 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           message: msg,
           isArabic: isArabic,
           onBookStadium: _handleBookStadium,
+          onExecuteAction: _handleExecuteAction,
+          onSelectTournament: _handleSelectTournament,
+          onJoinMatch: _handleJoinMatch,
         );
       },
     );

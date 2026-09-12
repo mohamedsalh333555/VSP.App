@@ -112,7 +112,6 @@ class VspCopilotService {
         final returnedConvId = data['conversation_id']?.toString() ?? conversationId;
         final rawStadiums = data['stadiums'];
         final List<CopilotStadiumSummary> stadiums = [];
-
         if (rawStadiums is List) {
           for (final item in rawStadiums) {
             if (item is Map<String, dynamic>) {
@@ -123,10 +122,45 @@ class VspCopilotService {
           }
         }
 
+        final rawTournaments = data['tournaments'];
+        final List<CopilotTournamentSummary> tournaments = [];
+        if (rawTournaments is List) {
+          for (final item in rawTournaments) {
+            if (item is Map<String, dynamic>) {
+              tournaments.add(CopilotTournamentSummary.fromMap(item));
+            } else if (item is Map) {
+              tournaments.add(CopilotTournamentSummary.fromMap(Map<String, dynamic>.from(item)));
+            }
+          }
+        }
+
+        final rawMatches = data['open_matches'];
+        final List<CopilotOpenMatchSummary> openMatches = [];
+        if (rawMatches is List) {
+          for (final item in rawMatches) {
+            if (item is Map<String, dynamic>) {
+              openMatches.add(CopilotOpenMatchSummary.fromMap(item));
+            } else if (item is Map) {
+              openMatches.add(CopilotOpenMatchSummary.fromMap(Map<String, dynamic>.from(item)));
+            }
+          }
+        }
+
+        final rawAction = data['action'];
+        CopilotAction? action;
+        if (rawAction is Map<String, dynamic>) {
+          action = CopilotAction.fromMap(rawAction);
+        } else if (rawAction is Map) {
+          action = CopilotAction.fromMap(Map<String, dynamic>.from(rawAction));
+        }
+
         return CopilotMessage.assistant(
           replyText,
           conversationId: returnedConvId,
           stadiums: stadiums,
+          tournaments: tournaments,
+          openMatches: openMatches,
+          action: action,
         );
       }
 

@@ -245,5 +245,125 @@ void main() {
 
       expect(newChatTriggered, isTrue);
     });
+
+    testWidgets('CopilotChatBubble renders action card and triggers onExecuteAction callback', (tester) async {
+      CopilotAction? executedAction;
+
+      final msg = CopilotMessage.assistant(
+        'وديتك لشاشة فريقي يا كابتن',
+        action: const CopilotAction(
+          actionType: 'NAVIGATE',
+          route: '/my-team',
+          label: 'الانتقال لشاشة فريقي',
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CopilotChatBubble(
+              message: msg,
+              isArabic: true,
+              onExecuteAction: (a) => executedAction = a,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('وديتك لشاشة فريقي يا كابتن'), findsOneWidget);
+      expect(find.text('الانتقال لشاشة فريقي'), findsOneWidget);
+
+      await tester.tap(find.text('الانتقال لشاشة فريقي'));
+      await tester.pumpAndSettle();
+
+      expect(executedAction, isNotNull);
+      expect(executedAction!.route, '/my-team');
+    });
+
+    testWidgets('CopilotChatBubble renders tournaments and open matches carousels', (tester) async {
+      CopilotTournamentSummary? selectedTourney;
+      CopilotOpenMatchSummary? joinedMatch;
+
+      final msg = CopilotMessage.assistant(
+        'دي البطولات والماتشات المتاحة:',
+        tournaments: [
+          const CopilotTournamentSummary(
+            id: 't1',
+            name: 'كأس VSP الذهبي',
+            grandPrize: 15000,
+            entryFee: 500,
+          ),
+        ],
+        openMatches: [
+          CopilotOpenMatchSummary(
+            id: 'm1',
+            stadiumName: 'ملعب المعادي',
+            currentPlayers: 8,
+            maxPlayers: 10,
+            notes: 'ناقص 2 لاعيبة',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: CopilotChatBubble(
+                message: msg,
+                isArabic: true,
+                onSelectTournament: (t) => selectedTourney = t,
+                onJoinMatch: (m) => joinedMatch = m,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('كأس VSP الذهبي'), findsOneWidget);
+      expect(find.text('ملعب المعادي'), findsOneWidget);
+      expect(find.text('ناقص 2 لاعبين'), findsOneWidget);
+
+      await tester.tap(find.text('عرض'));
+      await tester.pumpAndSettle();
+      expect(selectedTourney?.name, 'كأس VSP الذهبي');
+
+      await tester.tap(find.text('انضم'));
+      await tester.pumpAndSettle();
+      expect(joinedMatch?.stadiumName, 'ملعب المعادي');
+    });
+
+    testWidgets('CopilotChatBubble renders PROFILE_UPDATED action badge correctly', (tester) async {
+      CopilotAction? executedAction;
+
+      final msg = CopilotMessage.assistant(
+        'تمام يا كابتن! تم تغيير مركزك إلى مهاجم بنجاح.',
+        action: const CopilotAction(
+          actionType: 'PROFILE_UPDATED',
+          route: '/profile',
+          label: 'تم تغيير مركزك إلى مهاجم بنجاح ✅',
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CopilotChatBubble(
+              message: msg,
+              isArabic: true,
+              onExecuteAction: (a) => executedAction = a,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('تم تغيير مركزك إلى مهاجم بنجاح ✅'), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+
+      await tester.tap(find.text('تم تغيير مركزك إلى مهاجم بنجاح ✅'));
+      await tester.pumpAndSettle();
+
+      expect(executedAction?.actionType, 'PROFILE_UPDATED');
+    });
   });
 }

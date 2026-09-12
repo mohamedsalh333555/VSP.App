@@ -10,19 +10,16 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// 1. Tool: searchStadiums
 const searchStadiumsTool = {
   name: "searchStadiums",
-  description: "بحث واستكشاف الملاعب الرياضية المتاحة في مصر بالمنطقة أو السعر",
+  description: "بحث واستكشاف الملاعب الرياضية المتاحة في مصر بالمنطقة أو السعر أو المواعيد. استدعِ هذه الأداة فوراً عندما يسأل المستخدم عن الملاعب أو أسعار الحجز.",
   parameters: {
     type: "OBJECT",
     properties: {
       governorate: {
         type: "STRING",
         description: "المحافظة أو المنطقة المراد البحث فيها (مثل: القاهرة، الجيزة، المعادي، مدينة نصر)",
-      },
-      date: {
-        type: "STRING",
-        description: "تاريخ اليوم أو التاريخ المطلوب بالصيغة YYYY-MM-DD",
       },
       max_price: {
         type: "NUMBER",
@@ -31,6 +28,131 @@ const searchStadiumsTool = {
     },
   },
 };
+
+// 2. Tool: searchTournaments
+const searchTournamentsTool = {
+  name: "searchTournaments",
+  description: "البحث عن بطولات كرة القدم المتاحة للاشتراك، سواء بطولات خماسية للفرق (5x5) أو بطولات فردية (1v1) ومعرفة جوائزها وشروطها وتاريخها. استدعِ هذه الأداة فوراً عندما يسأل المستخدم عن البطولات أو الجوائز المالية أو الكؤوس.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      tournament_type: {
+        type: "STRING",
+        description: "نوع البطولة: '5v5' لبطولات الفرق، أو '1v1' للتحديات الفردية، أو 'all' للكل",
+      },
+      governorate: {
+        type: "STRING",
+        description: "المحافظة (اختياري)",
+      },
+    },
+  },
+};
+
+// 3. Tool: get1v1Leaderboard
+const get1v1LeaderboardTool = {
+  name: "get1v1Leaderboard",
+  description: "عرض جدول ترتيب المتصدرين في دوري 1 ضد 1 الفردي (الحريفة) وأرقامهم. النقاط تُحسب بمجموع: (الأهداف + المهارات + قطع الكرات). استدعِ هذه الأداة فوراً عندما يسأل المستخدم عن الأول أو الترتيب أو المتصدر أو الرانك.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      limit: {
+        type: "NUMBER",
+        description: "عدد اللاعبين المطلوب عرضهم (افتراضي 5)",
+      },
+    },
+  },
+};
+
+// 4. Tool: getOpenMatches
+const getOpenMatchesTool = {
+  name: "getOpenMatches",
+  description: "البحث عن مباريات وحجوزات خماسية مفتوحة ناقصها لاعيبة للانضمام فوراً واللعب (Open Join Matches). استدعِ هذه الأداة فوراً كلما سأل المستخدم عن ماتش ناقصه لاعيبة أو تقسيمة مفتوحة حتى لو لم يذكر محافظة معينة.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      governorate: {
+        type: "STRING",
+        description: "المحافظة أو المنطقة (اختياري)",
+      },
+    },
+  },
+};
+
+// 5. Tool: executeAppAction
+const executeAppActionTool = {
+  name: "executeAppAction",
+  description: "توجيه المستخدم لشاشة داخل التطبيق وتنفيذ أمر التنقل، مثل: وديني لفريقي، افتح البطولات، وريني دوري 1v1، إعداداتي، البروفايل، حجوزاتي. استدعِ هذه الأداة فوراً عندما يطلب المستخدم الذهاب لشاشة معينة.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      action_type: {
+        type: "STRING",
+        description: "نوع الإجراء: دائماً 'NAVIGATE'",
+      },
+      route: {
+        type: "STRING",
+        description: "المسار داخل التطبيق: '/tournaments' للبطولات، '/1v1' لدوري 1v1، '/my-team' لإدارة فريقي، '/bookings' لحجوزاتي، '/profile' للبروفايل، '/settings' للإعدادات",
+      },
+      label: {
+        type: "STRING",
+        description: "عنوان الإجراء بالعربية ليظهر كزر للمستخدم (مثال: 'الانتقال لصفحة فريقي')",
+      },
+    },
+    required: ["action_type", "route", "label"],
+  },
+};
+
+// 6. Tool: updateUserProfile
+const updateUserProfileTool = {
+  name: "updateUserProfile",
+  description: "تحديث وتعديل بيانات الملف الشخصي للمستخدم مباشرة في قاعدة البيانات، مثل تغيير المركز المفضل (مهاجم، مدافع، خط وسط، حارس مرمى) أو المحافظة أو الاسم أو رقم الهاتف. استدعِ هذه الأداة فوراً عندما يطلب المستخدم تعديل أي من بياناته الشخصية دون سؤاله.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      position: {
+        type: "STRING",
+        description: "مركز اللاعب المفضل: 'مهاجم'، 'خط وسط'، 'مدافع'، أو 'حارس مرمى'",
+      },
+      governorate: {
+        type: "STRING",
+        description: "المحافظة (مثل: القاهرة، الجيزة، الإسكندرية)",
+      },
+      name: {
+        type: "STRING",
+        description: "اسم المستخدم الجديد إذا طلب تعديله",
+      },
+      phone: {
+        type: "STRING",
+        description: "رقم الهاتف الجديد إذا طلب تعديله",
+      },
+    },
+  },
+};
+
+// 7. Tool: getUserBookingsAndRefunds
+const getUserBookingsAndRefundsTool = {
+  name: "getUserBookingsAndRefunds",
+  description: "الاستعلام عن حجوزات المستخدم وسجل العمليات وتتبع حالة استرداد الأموال والمبالغ المسترجعة (Refunds) أو الإلغاءات. استدعِ هذه الأداة فوراً عندما يسأل المستخدم عن حجزه، فلوسه، الاسترداد، أو إلغاء حجز ليطمئن.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      query_type: {
+        type: "STRING",
+        description: "نوع الاستعلام: 'all' للكل، أو 'refunds' للمستردات والإلغاءات، أو 'active' للحجوزات القادمة",
+      },
+    },
+  },
+};
+
+const allCopilotTools = [
+  searchStadiumsTool,
+  searchTournamentsTool,
+  get1v1LeaderboardTool,
+  getOpenMatchesTool,
+  executeAppActionTool,
+  updateUserProfileTool,
+  getUserBookingsAndRefundsTool,
+];
 
 serve(async (req: Request) => {
   // 1. CORS Preflight
@@ -69,17 +191,14 @@ serve(async (req: Request) => {
       );
     }
 
-    // 4. Check GEMINI_API_KEY server secret (optional with smart fallback)
+    // 4. Check GEMINI_API_KEY
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    if (!geminiApiKey) {
-      console.warn("⚠️ GEMINI_API_KEY is not set in environment. Activating Smart Resilient Fallback Engine.");
-    }
 
-    // 5. ⏱️ Rate Limiting: 10 requests per minute per user (atomic advisory lock)
+    // 5. Rate Limiting
     const { data: isAllowed, error: rateLimitErr } = await supabase.rpc("check_rate_limit", {
       p_user_id: callerUser.id,
       p_action: "copilot_chat",
-      p_max_requests: 10,
+      p_max_requests: 20,
       p_window_seconds: 60,
     });
 
@@ -112,7 +231,7 @@ serve(async (req: Request) => {
         .maybeSingle();
 
       if (!existingConv) {
-        conversationId = ""; // fallback to new conversation if invalid or mismatched user
+        conversationId = "";
       }
     }
 
@@ -159,19 +278,41 @@ serve(async (req: Request) => {
     });
 
     let stadiumResults: any[] = [];
+    let tournamentResults: any[] = [];
+    let leaderboardResults: any[] = [];
+    let openMatchResults: any[] = [];
+    let appAction: any = null;
     let assistantReply = "";
     let handledByGemini = false;
 
-    // 9. Gemini API Interaction (if key is configured)
+    // 9. Gemini 2.5 Flash Interaction
     if (geminiApiKey) {
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-        const systemPrompt = "أنت كابتن VSP، المساعد الذكي لتطبيق VSP لحجز الملاعب والبطولات في مصر. تتحدث بلهجة مصرية مهذبة ومرحبة. يمكنك استكشاف الملاعب باستخدام أداة searchStadiums عند طلب المستخدم البحث عن ملاعب أو أوقات لعب. وتتذكر ما دار بينكما في سياق المحادثة السابقة.";
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+        const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
+تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
+
+قاعدة إلزامية وصارمة لا استثناء فيها:
+عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون طرح أي أسئلة استفسارية أو توضيحية أولاً:
+1. ماتشات ناقصة لاعيبة أو تقسيمة: استدعِ getOpenMatches فوراً.
+2. بطولات أو كؤوس أو جوائز: استدعِ searchTournaments فوراً.
+3. الأول أو الترتيب أو دوري 1v1 أو النقاط: استدعِ get1v1Leaderboard فوراً.
+4. البحث عن ملاعب أو أسعار: استدعِ searchStadiums فوراً.
+5. تغيير المركز أو تعديل بيانات الملف الشخصي (مثل "غير مركزي لمهاجم"): استدعِ updateUserProfile فوراً.
+6. الاستفسار عن حجز، فلوس، استرداد أموال، أو تتبع المستحقات: استدعِ getUserBookingsAndRefunds فوراً وطمئن المستخدم باحترافية.
+7. طلب الذهاب لشاشة معينة (وديني فريقي، افتح البطولات، وريني البروفايل، الإعدادات، الحجوزات): استدعِ executeAppAction فوراً.
+
+فلسفة احتساب نقاط دوري 1 ضد 1 الفردي (الحريفة):
+- كل هدف = +1 نقطة.
+- كل مهارة ناجحة/استعراض = +1 نقطة.
+- كل قطع كرة/استخلاص = +1 نقطة.
+- إجمالي النقاط = (أهداف + مهارات + قطع كرات).
+- أرقام البطولة الواقعية للبطل تتراوح بين 10 إلى 20 نقطة طوال البطولة (مثل المتصدر أحمد زيزو بـ 16 نقطة: 6 أهداف + 6 مهارات + 4 قطع كرات). وضّح هذه المعادلة دائماً باعتزاز واحترافية.`;
 
         const firstPayload = {
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: contents,
-          tools: [{ functionDeclarations: [searchStadiumsTool] }],
+          tools: [{ functionDeclarations: allCopilotTools }],
         };
 
         const geminiRes1 = await fetch(geminiUrl, {
@@ -185,45 +326,149 @@ serve(async (req: Request) => {
           const candidate1 = geminiData1.candidates?.[0]?.content;
           const functionCallPart = candidate1?.parts?.find((p: any) => p.functionCall);
 
-          if (functionCallPart && functionCallPart.functionCall.name === "searchStadiums") {
+          if (functionCallPart) {
+            const funcName = functionCallPart.functionCall.name;
             const args = functionCallPart.functionCall.args || {};
-            const governorate = (args.governorate || "").toString().trim();
-            const maxPrice = Number(args.max_price);
+            let toolResponseData: any = {};
 
-            // 10. 🛡️ Read-Only Query with strict .limit(10)
-            let query = supabase
-              .from("stadiums")
-              .select("id, name, governorate, price_per_hour, image_url, rating")
-              .eq("is_verified", true)
-              .eq("is_blocked", false)
-              .eq("is_deleted_by_owner", false);
+            if (funcName === "searchStadiums") {
+              const governorate = (args.governorate || "").toString().trim();
+              const maxPrice = Number(args.max_price);
 
-            if (governorate.length > 0) {
-              query = query.ilike("governorate", `%${governorate}%`);
+              let query = supabase
+                .from("stadiums")
+                .select("id, name, governorate, price_per_hour, image_url, rating")
+                .eq("is_verified", true)
+                .eq("is_blocked", false)
+                .eq("is_deleted_by_owner", false);
+
+              if (governorate.length > 0) query = query.ilike("governorate", `%${governorate}%`);
+              if (maxPrice > 0) query = query.lte("price_per_hour", maxPrice);
+              query = query.order("rating", { ascending: false }).limit(10);
+
+              const { data: stadiums } = await query;
+              stadiumResults = stadiums || [];
+              toolResponseData = { count: stadiumResults.length, stadiums: stadiumResults };
+
+            } else if (funcName === "searchTournaments") {
+              const tType = (args.tournament_type || "all").toString().toLowerCase();
+              const gov = (args.governorate || "").toString().trim();
+
+              const results: any = {};
+              if (tType === "all" || tType === "5v5") {
+                let q5v5 = supabase.from("championships").select("id, name, type, grand_prize, entry_fee, max_teams, status, governorate").eq("status", "open");
+                if (gov) q5v5 = q5v5.ilike("governorate", `%${gov}%`);
+                const { data: champs } = await q5v5.limit(5);
+                results.team_tournaments_5v5 = champs || [];
+              }
+              if (tType === "all" || tType === "1v1") {
+                let q1v1 = supabase.from("vsp_1v1_tournaments").select("id, name, status, prize_pool, entry_fee, target_player_count, governorate").eq("status", "registration_open");
+                if (gov) q1v1 = q1v1.ilike("governorate", `%${gov}%`);
+                const { data: t1v1 } = await q1v1.limit(5);
+                results.individual_tournaments_1v1 = t1v1 || [];
+              }
+              tournamentResults = [...(results.team_tournaments_5v5 || []), ...(results.individual_tournaments_1v1 || [])];
+              toolResponseData = results;
+
+            } else if (funcName === "get1v1Leaderboard") {
+              const limit = Number(args.limit) || 5;
+              const { data: players } = await supabase
+                .from("vsp_1vs1_players")
+                .select("name, total_points, skill_points, goals, tackles, titles, trend")
+                .order("total_points", { ascending: false })
+                .limit(limit);
+
+              leaderboardResults = players || [];
+              toolResponseData = {
+                formula: "total_points = tackles + goals + skill_points",
+                top_players: leaderboardResults,
+              };
+
+            } else if (funcName === "getOpenMatches") {
+              const { data: matches } = await supabase
+                .from("bookings")
+                .select("id, stadium_name, start_time, current_players, max_players, notes, total_price")
+                .eq("booking_type", "open_join")
+                .eq("status", "confirmed")
+                .gte("start_time", new Date().toISOString())
+                .order("start_time", { ascending: true })
+                .limit(5);
+
+              openMatchResults = matches || [];
+              toolResponseData = { open_matches: openMatchResults };
+
+            } else if (funcName === "executeAppAction") {
+              appAction = {
+                action_type: args.action_type || "NAVIGATE",
+                route: args.route || "/tournaments",
+                label: args.label || "فتح الشاشة",
+              };
+              toolResponseData = { status: "ready_to_navigate", action: appAction };
+
+            } else if (funcName === "updateUserProfile") {
+              const updates: any = { updated_at: new Date().toISOString() };
+              if (args.position) updates.position = args.position;
+              if (args.governorate) updates.governorate = args.governorate;
+              if (args.name) updates.name = args.name;
+              if (args.phone) updates.phone = args.phone;
+
+              const { error: updateErr } = await supabase
+                .from("users")
+                .update(updates)
+                .eq("id", callerUser.id);
+
+              if (updateErr) {
+                toolResponseData = { success: false, error: updateErr.message };
+              } else {
+                appAction = {
+                  action_type: "PROFILE_UPDATED",
+                  route: "/profile",
+                  label: `تم تعديل ${args.position ? 'المركز إلى ' + args.position : 'بياناتك'} بنجاح ✅`,
+                  params: updates,
+                };
+                toolResponseData = {
+                  success: true,
+                  updated_fields: updates,
+                  message: "تم تحديث بيانات البروفايل بنجاح في قاعدة البيانات",
+                };
+              }
+
+            } else if (funcName === "getUserBookingsAndRefunds") {
+              const { data: userBookings } = await supabase
+                .from("bookings")
+                .select("id, stadium_name, start_time, status, payment_status, total_price, refund_amount, refunded_at, cancellation_reason")
+                .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+                .order("created_at", { ascending: false })
+                .limit(5);
+
+              const bookingsList = userBookings || [];
+              const refunds = bookingsList.filter((b: any) => (b.refund_amount && Number(b.refund_amount) > 0) || b.refunded_at || b.status === "cancelled");
+
+              appAction = {
+                action_type: "NAVIGATE",
+                route: "/bookings",
+                label: "عرض سجل الحجوزات والمستحقات 📋",
+              };
+
+              toolResponseData = {
+                total_bookings: bookingsList.length,
+                recent_bookings: bookingsList,
+                refund_related_bookings: refunds,
+                has_refunds: refunds.length > 0,
+              };
             }
-            if (maxPrice > 0) {
-              query = query.lte("price_per_hour", maxPrice);
-            }
 
-            query = query.order("rating", { ascending: false }).limit(10);
-
-            const { data: stadiums, error: queryErr } = await query;
-            if (queryErr) {
-              console.error("Database query error:", queryErr);
-            }
-            stadiumResults = stadiums || [];
-
-            // Second turn to summarize findings in natural Arabic
+            // Second turn for natural conversational response
             const secondContents = [
               ...contents,
               candidate1,
               {
-                role: "user",
+                role: "function",
                 parts: [
                   {
                     functionResponse: {
-                      name: "searchStadiums",
-                      response: { count: stadiumResults.length, stadiums: stadiumResults },
+                      name: funcName,
+                      response: toolResponseData,
                     },
                   },
                 ],
@@ -244,87 +489,88 @@ serve(async (req: Request) => {
             if (geminiRes2.ok) {
               const geminiData2 = await geminiRes2.json();
               assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            } else {
-              assistantReply = stadiumResults.length > 0
-                ? `لقيتلك ${stadiumResults.length} ملاعب متاحة تناسب طلبك يا كابتن:`
-                : "للأسف ملقتش ملاعب مطابقة للشروط دي حالياً، تحب نجرب منطقة تانية؟";
+            }
+
+            if (!assistantReply) {
+              if (funcName === "get1v1Leaderboard") {
+                assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
+              } else if (funcName === "searchTournaments") {
+                assistantReply = "لقيتلك البطولات النشطة وجاهزة للتسجيل يا كابتن:";
+              } else if (funcName === "getOpenMatches") {
+                assistantReply = "دي الماتشات المفتوحة اللي ناقصها لعيبة ومتاحة تنضم ليها فوراً:";
+              } else if (funcName === "updateUserProfile") {
+                assistantReply = "تم يا كابتن! عدلتلك بياناتك في البروفايل بنجاح ⚽";
+              } else if (funcName === "getUserBookingsAndRefunds") {
+                assistantReply = "يا كابتن، راجعتلك سجل حجوزاتك ومستحقاتك وكل العمليات مسجلة ومضمونة في VSP:";
+              } else {
+                assistantReply = "تمام يا كابتن، طلبك جاهز!";
+              }
             }
             handledByGemini = true;
+
           } else {
             assistantReply = candidate1?.parts?.[0]?.text || "";
             if (assistantReply.trim().length > 0) {
               handledByGemini = true;
             }
           }
-        } else {
-          console.warn("Gemini API non-ok status:", geminiRes1.status);
         }
       } catch (geminiErr) {
-        console.warn("Gemini API network error, falling back to smart search:", geminiErr);
+        console.warn("Gemini API error, falling back to smart engine:", geminiErr);
       }
     }
 
-    // 🛡️ Intelligent NLP & Database Fallback (Runs when GEMINI_API_KEY is missing or Gemini fails)
+    // 🛡️ Intelligent Fallback Engine
     if (!handledByGemini) {
-      const egyptianGovs = [
-        "القاهرة", "الجيزة", "المعادي", "مدينة نصر", "التجمع", "الدقي", "المهندسين",
-        "الشيخ زايد", "أكتوبر", "الإسكندرية", "الشروق", "العبور", "حلوان", "شبرا",
-        "طنطا", "المنصورة", "الشرقية", "الهرم", "فيصل", "الزمالك", "الرحاب", "مدينتي"
-      ];
-      let detectedGov = "";
-      for (const gov of egyptianGovs) {
-        if (userMessage.includes(gov)) {
-          detectedGov = gov;
-          break;
-        }
-      }
+      if (userMessage.includes("بطول") || userMessage.includes("كأس") || (userMessage.includes("دوري") && !userMessage.includes("1v1"))) {
+        const { data: champs } = await supabase.from("championships").select("name, grand_prize, entry_fee").eq("status", "open").limit(3);
+        const { data: t1v1 } = await supabase.from("vsp_1v1_tournaments").select("name, prize_pool").eq("status", "registration_open").limit(2);
+        tournamentResults = [...(champs || []), ...(t1v1 || [])];
+        appAction = { action_type: "NAVIGATE", route: "/tournaments", label: "فتح صفحة البطولات 🏆" };
+        assistantReply = "يا كابتن! دي أحدث البطولات النشطة على VSP:\n" +
+          (champs || []).map((c: any) => `🏆 ${c.name} - جائزة: ${c.grand_prize} ج.م`).join("\n") + "\n" +
+          (t1v1 || []).map((t: any) => `⚡ ${t.name} - جائزة: ${t.prize_pool} ج.م`).join("\n");
+      } else if (userMessage.includes("الأول") || userMessage.includes("ترتيب") || userMessage.includes("1v1") || userMessage.includes("متصدر")) {
+        const { data: players } = await supabase.from("vsp_1vs1_players").select("name, total_points, goals, tackles, skill_points").order("total_points", { ascending: false }).limit(4);
+        leaderboardResults = players || [];
+        appAction = { action_type: "NAVIGATE", route: "/1v1", label: "عرض دوري الـ 1v1 بالكامل ⚡" };
+        assistantReply = "يا كابتن، جدول متصدري دوري الـ 1v1 (النقاط = أهداف + مهارات + قطع كرات):\n" +
+          (players || []).map((p: any, i: number) => `${i + 1}. ${p.name}: ${p.total_points} نقطة (${p.goals} هدف، ${p.skill_points} مهارة، ${p.tackles} قطع)`).join("\n");
+      } else if (userMessage.includes("ناقص") || userMessage.includes("ماتش") || userMessage.includes("تقسيمة") || userMessage.includes("انضم")) {
+        const { data: matches } = await supabase.from("bookings").select("id, stadium_name, current_players, max_players, notes, total_price, start_time").eq("booking_type", "open_join").limit(3);
+        openMatchResults = matches || [];
+        appAction = { action_type: "NAVIGATE", route: "/bookings", label: "استعراض كل الماتشات المفتوحة ⚽" };
+        assistantReply = "الماتشات المفتوحة اللي محتاجة لعيبة الآن يا كابتن:";
+      } else if (userMessage.includes("فريق") || userMessage.includes("فرقتي")) {
+        appAction = { action_type: "NAVIGATE", route: "/my-team", label: "الانتقال لصفحة فريقي 🛡️" };
+        assistantReply = "حاضر يا كابتن! هوديك لصفحة إدارة فريقك وقائمتك دلوقتي.";
+      } else if (userMessage.includes("مركزي") || userMessage.includes("بروفايل") || userMessage.includes("عدل") || userMessage.includes("غير")) {
+        let pos = "";
+        if (userMessage.includes("مهاجم")) pos = "مهاجم";
+        else if (userMessage.includes("مدافع")) pos = "مدافع";
+        else if (userMessage.includes("حارس")) pos = "حارس مرمى";
+        else if (userMessage.includes("وسط")) pos = "خط وسط";
 
-      let maxPrice = 0;
-      const priceMatch = userMessage.match(/(\d{2,4})\s*(جنيه|ج|egp)?/i);
-      if (priceMatch) {
-        maxPrice = parseInt(priceMatch[1], 10);
-      } else if (userMessage.includes("رخيص") || userMessage.includes("اقتصادي")) {
-        maxPrice = 350;
-      }
-
-      let query = supabase
-        .from("stadiums")
-        .select("id, name, governorate, price_per_hour, image_url, rating")
-        .eq("is_verified", true)
-        .eq("is_blocked", false)
-        .eq("is_deleted_by_owner", false);
-
-      if (detectedGov) {
-        query = query.ilike("governorate", `%${detectedGov}%`);
-      }
-      if (maxPrice > 0) {
-        query = query.lte("price_per_hour", maxPrice);
-      }
-
-      query = query.order("rating", { ascending: false }).limit(10);
-      const { data: stadiums } = await query;
-      stadiumResults = stadiums || [];
-
-      if (stadiumResults.length > 0) {
-        if (detectedGov && maxPrice > 0) {
-          assistantReply = `يا كابتن! بحثتلك في ${detectedGov} ولقيت ${stadiumResults.length} ملاعب ممتازة في حدود ${maxPrice} جنيه تناسب طلبك تماماً:`;
-        } else if (detectedGov) {
-          assistantReply = `يا كابتن! بحثتلك في ${detectedGov} ولقيت ${stadiumResults.length} ملاعب متاحة وتقييمها عالي وجاهزة للحجز:`;
-        } else if (maxPrice > 0) {
-          assistantReply = `تمام يا كابتن! دي أفضل ملاعب بأسعار في حدود ${maxPrice} جنيه أو أقل:`;
+        if (pos) {
+          await supabase.from("users").update({ position: pos, updated_at: new Date().toISOString() }).eq("id", callerUser.id);
+          appAction = { action_type: "PROFILE_UPDATED", route: "/profile", label: `تم تغيير مركزك إلى ${pos} بنجاح ✅` };
+          assistantReply = `تمام يا كابتن! تم تغيير مركزك المفضل في بروفايلك إلى (${pos}) بنجاح في قاعدة البيانات.`;
         } else {
-          assistantReply = `أهلاً بك يا كابتن! دي تشكيلة من أفضل الملاعب المتاحة على VSP وتقييماتها عالية ومتاحة للحجز الآن:`;
+          appAction = { action_type: "NAVIGATE", route: "/profile", label: "فتح الملف الشخصي 👤" };
+          assistantReply = "تقدر تعدل بياناتك وبروفايلك بالكامل من هنا يا كابتن:";
         }
+      } else if (userMessage.includes("فلوس") || userMessage.includes("استرداد") || userMessage.includes("حجزي") || userMessage.includes("ملغي") || userMessage.includes("ريفاوند")) {
+        const { data: bookings } = await supabase.from("bookings").select("stadium_name, status, total_price, refund_amount, refunded_at").or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`).limit(3);
+        appAction = { action_type: "NAVIGATE", route: "/bookings", label: "مراجعة سجل حجوزاتك ومستحقاتك 📋" };
+        assistantReply = "متقلقش خالص يا كابتن، كل عملياتك المالية وحجوزاتك مسجلة ومضمونة في VSP! تقدر تراجع تفاصيل الحجز والمستردات فوراً من شاشة حجوزاتي.";
       } else {
-        if (detectedGov) {
-          assistantReply = `يا كابتن، حالياً مفيش ملاعب متاحة مسجلة في منطقة "${detectedGov}" بالشروط دي، تحب نجرب نبحث في منطقة تانية قريبة منها؟`;
-        } else {
-          assistantReply = `أهلاً بك يا كابتن في VSP! أنا كابتن VSP الذكي، تقدر تقولي بتدور على ملعب في أي منطقة أو بسعر كام، وأنا هجيبلك أفضل الخيارات فوراً!`;
-        }
+        const { data: stadiums } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false).limit(5);
+        stadiumResults = stadiums || [];
+        assistantReply = "أهلاً بك يا كابتن! دي أبرز الملاعب المتاحة على VSP للحجز الفوري وتقييمها عالي:";
       }
     }
 
-    // 11. Persist Messages & Update Conversation in Database
+    // 10. Persist Messages & Update Conversation
     await supabase.from("copilot_messages").insert([
       {
         conversation_id: conversationId,
@@ -347,19 +593,23 @@ serve(async (req: Request) => {
       .update({ updated_at: new Date().toISOString() })
       .eq("id", conversationId);
 
-    // 12. Return payload to client
+    // 11. Return enriched payload
     return new Response(
       JSON.stringify({
         conversation_id: conversationId,
         message: assistantReply,
         stadiums: stadiumResults,
+        tournaments: tournamentResults,
+        leaderboard: leaderboardResults,
+        open_matches: openMatchResults,
+        action: appAction,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {
-    console.error("Unhandled Error in vsp_copilot:", err);
+    console.error("VSP Copilot function error:", err);
     return new Response(
-      JSON.stringify({ error: "Internal Server Error", details: err?.message || String(err) }),
+      JSON.stringify({ error: err.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
