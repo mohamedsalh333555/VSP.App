@@ -34,7 +34,42 @@ class StadiumWizardLocationCoordinator {
       if (context.mounted) {
         VSPFeedback.showSuccess(
           context,
-          isArabic ? 'تم تحديد موقع الملعب بنجاح! 📍' : 'Stadium location selected successfully! 📍',
+          isArabic ? 'تم تحديد موقع الملعب بنجاح' : 'Stadium location selected successfully',
+        );
+      }
+    }
+
+    return result;
+  }
+
+  /// Opens the manual address modal without map tiles and persists the coordinates & address.
+  static Future<LocationResult?> pickManualLocation(
+    BuildContext context, {
+    required String? currentGov,
+    required String? currentAddress,
+    required String? uid,
+    required bool isEditing,
+  }) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final result = await AddStadiumLocationPickerSheet.showManualAddressDialog(
+      context,
+      initialGovernorate: currentGov,
+      initialAddress: currentAddress,
+    );
+
+    if (result != null) {
+      if (!isEditing) {
+        StadiumWizardDraftService.saveDouble(uid, 'lat', result.latitude);
+        StadiumWizardDraftService.saveDouble(uid, 'lng', result.longitude);
+        StadiumWizardDraftService.saveString(uid, 'location', result.address);
+        if (result.governorate != null) {
+          StadiumWizardDraftService.saveString(uid, 'governorate', result.governorate!);
+        }
+      }
+      if (context.mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم حفظ عنوان الملعب بنجاح' : 'Stadium address saved successfully',
         );
       }
     }

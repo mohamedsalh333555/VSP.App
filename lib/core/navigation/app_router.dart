@@ -10,6 +10,7 @@ import '../../features/auth/screens/player_onboarding_screen.dart';
 import '../../features/auth/screens/owner_onboarding_screen.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
 import '../../features/auth/screens/set_new_password_screen.dart';
+import '../../features/auth/screens/select_role_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
@@ -85,7 +86,10 @@ class AppRouter {
  path: '/set-new-password',
  builder: (context, state) => const SetNewPasswordScreen(),
  ),
-
+ GoRoute(
+ path: '/select-role',
+ builder: (context, state) => const SelectRoleScreen(),
+ ),
  GoRoute(
  path: '/facility-onboarding',
  builder: (context, state) => const FacilityOnboardingScreen(),
@@ -190,12 +194,16 @@ class AppRouter {
  }
 
  // 3. Ghost user onboarding check
- if (isGhostUser) {
- final role = authProvider.userType ?? authProvider.userModel?.role ?? 'player';
- final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
- if (path != targetPath) return targetPath;
- return null;
- }
+  if (isGhostUser) {
+    final role = authProvider.userType ?? authProvider.userModel?.role;
+    if (role == null) {
+      if (path != '/select-role') return '/select-role';
+      return null;
+    }
+    final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
+    if (path != targetPath) return targetPath;
+    return null;
+  }
 
  // 4. User data loading check
  if (userModel == null) {
@@ -224,24 +232,38 @@ class AppRouter {
  return null;
  }
 
- // 6. Registration detail check (missing phone)
- final rawPhone = userModel.phone?.trim() ?? '';
- final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
- final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
- if (!hasPhone) {
- final role = authProvider.userType ?? userModel.role;
- final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
- if (path != targetPath) return targetPath;
- return null;
- }
+  // 6. Admin / Co-Founder flow bypass
+  if (authProvider.isAdmin) {
+    if (path == '/welcome' ||
+        path == '/splash' ||
+        path == '/login' ||
+        path.startsWith('/create-account') ||
+        path.startsWith('/signup') ||
+        path == '/onboarding-player' ||
+        path == '/onboarding-owner') {
+      return '/';
+    }
+    return null;
+  }
 
- // 7. Owner flow gating
+  // 7. Registration detail check (missing phone)
+  final rawPhone = userModel.phone?.trim() ?? '';
+  final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
+  final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
+  if (!hasPhone) {
+    final role = authProvider.userType ?? userModel.role;
+    final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
+    if (path != targetPath) return targetPath;
+    return null;
+  }
+
+  // 8. Owner flow gating
  if (isOwner) {
  if (path.startsWith('/match/') || path.startsWith('/team/')) {
  return '/owner';
  }
 
- final bool isOnboardingConfirmed = userModel.additionalData?['isOnboardingConfirmed'] == true;
+  final bool isOnboardingConfirmed = userModel.isOnboardingConfirmed;
  
  if (!userModel.hasStadium || !isOnboardingConfirmed) {
  if (path != '/facility-onboarding') return '/facility-onboarding';

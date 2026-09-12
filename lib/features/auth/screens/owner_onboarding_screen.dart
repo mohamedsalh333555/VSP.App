@@ -15,7 +15,6 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_location_section.dart';
-import '../widgets/owner_onboarding/owner_payout_info_card.dart';
 
 class OwnerOnboardingScreen extends StatefulWidget {
   const OwnerOnboardingScreen({super.key});
@@ -30,9 +29,6 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _instapayController = TextEditingController();
-  final _vodafoneController = TextEditingController();
-  final _bankController = TextEditingController();
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
   bool _isFetchingLocation = false;
@@ -95,16 +91,8 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
-    _instapayController.dispose();
-    _vodafoneController.dispose();
-    _bankController.dispose();
     super.dispose();
   }
-
-  bool get _hasAtLeastOnePayment =>
-      _instapayController.text.trim().isNotEmpty ||
-      _vodafoneController.text.trim().isNotEmpty ||
-      _bankController.text.trim().isNotEmpty;
 
   Future<void> _handleSubmit() async {
     final l10n = AppLocalizations.of(context)!;
@@ -128,10 +116,6 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       VSPFeedback.showError(context, l10n.invalidPhone);
       return;
     }
-    if (!_hasAtLeastOnePayment) {
-      VSPFeedback.showError(context, l10n.atLeastOnePayoutMethod);
-      return;
-    }
 
     setState(() => _isLoading = true);
     try {
@@ -143,9 +127,6 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         name: fullName,
         governorate: _selectedGovernorate,
         dateOfBirth: _dateOfBirth,
-        p2pInstapay: _instapayController.text.trim().isNotEmpty ? _instapayController.text.trim() : null,
-        p2pVodafone: _vodafoneController.text.trim().isNotEmpty ? _vodafoneController.text.trim() : null,
-        p2pBank: _bankController.text.trim().isNotEmpty ? _bankController.text.trim() : null,
       );
 
       if (!mounted) return;
@@ -263,13 +244,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
                   onGovernorateChanged: (v) => setState(() => _selectedGovernorate = v),
                   onAutoDetectTapped: _fetchAutoLocation,
                 ),
-                const SizedBox(height: 24),
-                OwnerPayoutInfoCard(
-                  instapayController: _instapayController,
-                  vodafoneController: _vodafoneController,
-                  bankController: _bankController,
-                  onSubmitted: _handleSubmit,
-                ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

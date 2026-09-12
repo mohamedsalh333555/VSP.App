@@ -716,5 +716,21 @@
  "selectPreferredPosition": "يرجى اختيار مركزك المفضل",
  "atLeastOnePayoutMethod": "يرجى إدخال وسيلة واحدة على الأقل لاستلام المستحقات",
  "iAgreeTo": "أوافق على ",
- "pleaseAgreeToTerms": "يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة."
+ "pleaseAgreeToTerms": "يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة.",
+ "refundNoticeAuto": "سيتم استرداد {type} ({amount}) تلقائياً إلى بطاقتك البنكية أو محفظتك الإلكترونية خلال دقائق.",
+ "@refundNoticeAuto": {
+  "placeholders": {
+   "type": {
+    "type": "String"
+   },
+   "amount": {
+    "type": "String"
+   }
+  }
+ },
+ "refundDeposit": "العربون",
+ "refundFullPayment": "المبلغ المدفوع",
+ "paymentGatewayUnavailable": "عذراً، تعذر الاتصال ببوابة الدفع حالياً. يرجى المحاولة مرة أخرى لاحقاً.",
+ "verifyPaymentNow": "تحقق من حالة الحجز الآن",
+ "verifyingPayment": "جاري التحقق من الدفع..."
 }

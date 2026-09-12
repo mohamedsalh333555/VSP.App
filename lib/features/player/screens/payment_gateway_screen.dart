@@ -53,6 +53,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   int _remainingSeconds = 300; // 5 minutes atomic hold timer
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
+  BuildContext? _verificationModalContext;
   String _selectedMethod = 'card'; // 'card', 'wallet'
 
   @override
@@ -207,8 +208,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     });
 
     _coordinator.startWebhookTimeout(
+      timeout: const Duration(minutes: 5),
       onTimeout: () {
         if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
+          if (_isVerificationModalShowing) {
+            debugPrint('Webhook timeout elapsed but verification modal is still showing.');
+            return;
+          }
           setState(() {
             _isAwaitingWebhook = false;
             _isLoading = false;
@@ -238,9 +244,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (paymobUrl != null && paymobUrl.isNotEmpty) {
       try {
         if (!mounted) return;
-        setState(() {
-          _remainingSeconds += 300; // 5 minutes additional grace period for 3DS OTP entry
-        });
+        _coordinator.cancelCountdownTimer();
         final isPaidSuccess = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
@@ -274,6 +278,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {
+          _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
             _isLoading = false;
@@ -288,6 +293,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
         if (mounted) {
+          if (!_paymentCompleted) _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
             _isLoading = false;
@@ -300,11 +306,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           _isAwaitingWebhook = false;
           _isLoading = false;
         });
+        final l10n = AppLocalizations.of(context);
         VSPFeedback.showError(
           context,
-          isArabic
-              ? 'عذراً، متعذر الاتصال ببوابة Paymob حالياً. يرجى التأكد من مفتاح API في السيرفر.'
-              : 'Failed to obtain Paymob checkout token.',
+          l10n?.paymentGatewayUnavailable ??
+              (isArabic
+                  ? 'عذراً، تعذر الاتصال ببوابة الدفع حالياً. يرجى المحاولة مرة أخرى لاحقاً.'
+                  : 'Failed to connect to payment gateway. Please try again later.'),
         );
       }
     }
@@ -338,24 +346,39 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   void _showVerificationModal(String bookingId, bool isArabic) {
     if (_isVerificationModalShowing || !mounted) return;
     _isVerificationModalShowing = true;
-    PaymentVerificationModal.show(
+    showDialog(
       context: context,
-      bookingId: bookingId,
-      isArabic: isArabic,
-      onGoToBookings: () {
-        _closeVerificationModalIfShowing();
-        _paymentCompleted = true;
-        _coordinator.cancelCountdownTimer();
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        playerHomeScreenKey.currentState?.switchToTab(3);
+      barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (modalCtx) {
+        _verificationModalContext = modalCtx;
+        return PaymentVerificationModal(
+          bookingId: bookingId,
+          isArabic: isArabic,
+          onGoToBookings: () {
+            _closeVerificationModalIfShowing();
+            _paymentCompleted = true;
+            _coordinator.cancelCountdownTimer();
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            playerHomeScreenKey.currentState?.switchToTab(3);
+          },
+        );
       },
-    ).then((_) => _isVerificationModalShowing = false);
+    ).then((_) {
+      _verificationModalContext = null;
+      _isVerificationModalShowing = false;
+    });
   }
 
   void _closeVerificationModalIfShowing() {
-    if (_isVerificationModalShowing && mounted) {
+    if (_isVerificationModalShowing) {
       _isVerificationModalShowing = false;
-      Navigator.of(context, rootNavigator: true).pop();
+      if (_verificationModalContext != null && _verificationModalContext!.mounted) {
+        Navigator.of(_verificationModalContext!).pop();
+        _verificationModalContext = null;
+      } else if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
     }
   }
 

@@ -31,6 +31,7 @@ class StadiumWizardStepsPager extends StatelessWidget {
   final VoidCallback onAddBreak;
   final ValueChanged<int> onRemoveBreak;
   final VoidCallback onOpenMapPicker;
+  final VoidCallback onOpenManualPicker;
   final ValueChanged<String> onAddNoteTemplate;
   final VoidCallback onNextPage;
   final VoidCallback onStateChanged;
@@ -58,6 +59,7 @@ class StadiumWizardStepsPager extends StatelessWidget {
     required this.onAddBreak,
     required this.onRemoveBreak,
     required this.onOpenMapPicker,
+    required this.onOpenManualPicker,
     required this.onAddNoteTemplate,
     required this.onNextPage,
     required this.onStateChanged,
@@ -93,6 +95,7 @@ class StadiumWizardStepsPager extends StatelessWidget {
           onAddBreak: onAddBreak,
           onRemoveBreak: onRemoveBreak,
           onOpenMapPicker: onOpenMapPicker,
+          onOpenManualPicker: onOpenManualPicker,
           onAddNoteTemplate: onAddNoteTemplate,
           onNext: onNextPage,
         ),

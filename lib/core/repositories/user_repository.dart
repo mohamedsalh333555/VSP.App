@@ -222,12 +222,27 @@ class UserRepository {
     try {
       await _supabase.from('users').update({
         'has_stadium': true,
+        'is_onboarding_confirmed': true,
         'additional_data': additionalData,
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', uid);
       return true;
     } catch (e, stack) {
       VSPLogger.e('Error updating user onboarding status', e, stack);
+      return false;
+    }
+  }
+
+  /// Update owner onboarding confirmed flag directly in Supabase
+  Future<bool> updateOnboardingConfirmed(String uid, bool confirmed) async {
+    try {
+      await _supabase.from('users').update({
+        'is_onboarding_confirmed': confirmed,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', uid);
+      return true;
+    } catch (e, stack) {
+      VSPLogger.e('Error updating is_onboarding_confirmed', e, stack);
       return false;
     }
   }

@@ -82,7 +82,7 @@ class PaymentCheckoutCoordinator {
 
   /// Starts a timeout timer for awaiting webhook confirmation.
   void startWebhookTimeout({
-    Duration timeout = const Duration(seconds: 90),
+    Duration timeout = const Duration(seconds: 300),
     required VoidCallback onTimeout,
   }) {
     _webhookTimeoutTimer?.cancel();

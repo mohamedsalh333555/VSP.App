@@ -33,6 +33,7 @@ class UserModel {
   final DateTime? trialEndsAt;
   final DateTime? subscriptionExpiresAt;
   final String favoriteSport;
+  final bool isOnboardingConfirmed;
 
   UserModel({
     required this.uid,
@@ -61,12 +62,14 @@ class UserModel {
     this.trialEndsAt,
     this.subscriptionExpiresAt,
     this.favoriteSport = 'Football',
+    this.isOnboardingConfirmed = false,
   });
 
-  bool get isOwner => role == 'owner' || role == 'admin' || role == 'co_founder';
-  bool get isPlayer => !isOwner;
-  bool get isOwnerRole => role == 'owner' || role == 'admin' || role == 'co_founder';
-  bool get isPlayerRole => !isOwnerRole;
+  bool get isOwner => role == 'owner';
+  bool get isAdmin => role == 'admin' || role == 'co_founder' || role == 'super_admin';
+  bool get isPlayer => !isOwner && !isAdmin;
+  bool get isOwnerRole => role == 'owner';
+  bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
   DateTime? get effectiveTrialEndsAt =>
       trialEndsAt ?? createdAt?.add(const Duration(days: 60));
@@ -173,6 +176,9 @@ class UserModel {
           ? DateTime.tryParse((data['subscription_expires_at'] ?? data['subscriptionExpiresAt']).toString())
           : null,
       favoriteSport: data['favorite_sport'] ?? data['favoriteSport'] ?? 'Football',
+      isOnboardingConfirmed: data['is_onboarding_confirmed'] == true ||
+          data['isOnboardingConfirmed'] == true ||
+          (addData['isOnboardingConfirmed'] == true),
     );
   }
 
@@ -206,6 +212,7 @@ class UserModel {
       'trial_ends_at': trialEndsAt?.toUtc().toIso8601String(),
       'subscription_expires_at': subscriptionExpiresAt?.toUtc().toIso8601String(),
       'favorite_sport': favoriteSport,
+      'is_onboarding_confirmed': isOnboardingConfirmed,
     };
   }
 
@@ -239,6 +246,7 @@ class UserModel {
     DateTime? trialEndsAt,
     DateTime? subscriptionExpiresAt,
     String? favoriteSport,
+    bool? isOnboardingConfirmed,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -267,6 +275,7 @@ class UserModel {
       trialEndsAt: trialEndsAt ?? this.trialEndsAt,
       subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,
       favoriteSport: favoriteSport ?? this.favoriteSport,
+      isOnboardingConfirmed: isOnboardingConfirmed ?? this.isOnboardingConfirmed,
     );
   }
 }

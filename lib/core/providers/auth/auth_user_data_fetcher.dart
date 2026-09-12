@@ -99,11 +99,12 @@ class AuthUserDataFetcher {
         isLoginOnly: isLoginOnly,
         userData: userData,
       )) {
-        VSPLogger.w("Unregistered social account attempted sign-in for UID: ${user.id}");
+        VSPLogger.w("Unregistered social account attempted sign-in for UID: ${user.id} -> redirecting to onboarding as ghost user");
         await prefs.remove('pending_oauth_is_login_only');
         return const UserDataFetchResult(
-          shouldSignOut: true,
-          errorMessage: 'هذا الحساب غير مسجل مسبقاً. يرجى إنشاء حساب جديد أولاً.',
+          shouldSignOut: false,
+          isGhostUser: true,
+          errorMessage: null,
         );
       }
 

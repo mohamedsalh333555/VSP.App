@@ -2321,4 +2321,25 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pleaseAgreeToTerms =>
       'Please agree to the Terms of Service & Privacy Policy to continue.';
+
+  @override
+  String refundNoticeAuto(String type, String amount) {
+    return 'Your $type ($amount) will be automatically refunded to your card or wallet within minutes.';
+  }
+
+  @override
+  String get refundDeposit => 'deposit';
+
+  @override
+  String get refundFullPayment => 'payment';
+
+  @override
+  String get paymentGatewayUnavailable =>
+      'Failed to connect to payment gateway. Please try again later.';
+
+  @override
+  String get verifyPaymentNow => 'Verify Payment Status Now';
+
+  @override
+  String get verifyingPayment => 'Verifying payment status...';
 }

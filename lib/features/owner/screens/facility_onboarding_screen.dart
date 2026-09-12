@@ -125,23 +125,19 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () async {
-                  final uid = authProvider.currentUser?.uid;
-                  final updatedAdditional =
-                      FacilityOnboardingService.buildOnboardingConfirmedPayload(
-                    authProvider.userModel?.additionalData,
-                  );
+                  final uid = authProvider.currentUser?.uid ?? authProvider.userModel?.uid;
                   if (uid != null) {
-                    await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
+                    await UserRepository().updateOnboardingConfirmed(uid, true);
                   }
                   await authProvider.updateProfile({
-                    'additionalData': updatedAdditional,
+                    'is_onboarding_confirmed': true,
                   });
                   if (context.mounted) {
                     context.go('/owner');
                   }
                 },
                 child: Text(
-                  isAr ? 'استكشاف لوحة التحكم أولاً' : 'Explore Dashboard First',
+                  isAr ? 'هضيف الملعب بعدين' : "I'll add stadium later",
                   style: const TextStyle(
                     color: VSPColors.textSecondary,
                     fontSize: 14,

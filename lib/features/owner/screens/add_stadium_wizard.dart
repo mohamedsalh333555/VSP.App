@@ -181,6 +181,31 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     }
   }
 
+  Future<void> _openManualLocationPicker() async {
+    setState(() => _isLocationLoading = true);
+    try {
+      final result = await StadiumWizardLocationCoordinator.pickManualLocation(
+        context,
+        currentGov: _governorate,
+        currentAddress: _c.location.text,
+        uid: _uid,
+        isEditing: widget.stadiumId != null,
+      );
+      if (result != null && mounted) {
+        setState(() {
+          _latitude = result.latitude;
+          _longitude = result.longitude;
+          _c.location.text = result.address;
+          if (result.governorate != null) {
+            _governorate = result.governorate;
+          }
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _isLocationLoading = false);
+    }
+  }
+
   Future<void> _selectTime(BuildContext context, bool isMainStart) async {
     final picked = await StadiumWizardTimeCoordinator.selectShiftTime(
       context,
@@ -417,6 +442,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     onAddBreak: () => setState(() => _breakTimes.add({'start': null, 'end': null})),
                     onRemoveBreak: (index) => setState(() => _breakTimes.removeAt(index)),
                     onOpenMapPicker: _openMapPicker,
+                    onOpenManualPicker: _openManualLocationPicker,
                     onAddNoteTemplate: (template) {
                       final currentText = _c.notes.text;
                       final prefix = currentText.isEmpty ? '' : '$currentText\n';

@@ -162,12 +162,17 @@ class BookingScheduleCoordinator {
     }
   }
 
-  /// Cancels stale pending bookings for user and stadium.
+  /// Cancels stale pending bookings for user and stadium older than 10 minutes.
   Future<void> cleanupStalePendingBookings({
     required String userId,
     required String stadiumId,
   }) async {
     try {
+      final tenMinutesAgo = DateTime.now()
+          .subtract(const Duration(minutes: 10))
+          .toUtc()
+          .toIso8601String();
+
       await _supabase
           .from('bookings')
           .update({
@@ -177,7 +182,8 @@ class BookingScheduleCoordinator {
           })
           .eq('created_by_user_id', userId)
           .eq('stadium_id', stadiumId)
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .lt('created_at', tenMinutesAgo);
       debugPrint('Stale pending bookings transitioned to expired/cancelled safely.');
     } catch (e) {
       debugPrint('Error cleaning up stale bookings: $e');

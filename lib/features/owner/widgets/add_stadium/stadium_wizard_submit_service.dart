@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../../core/repositories/stadium_repository.dart';
+import '../../../../core/repositories/user_repository.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'stadium_wizard_draft_service.dart';
@@ -136,7 +137,11 @@ class StadiumWizardSubmitService {
       if (context.mounted) {
         if (stadiumId == null) {
           await StadiumWizardDraftService.clearDraft(uid);
-          await auth.updateProfile({'hasStadium': true});
+          await UserRepository().updateOnboardingConfirmed(user.uid, true);
+          await auth.updateProfile({
+            'hasStadium': true,
+            'is_onboarding_confirmed': true,
+          });
         }
         await auth.refreshProfile();
 

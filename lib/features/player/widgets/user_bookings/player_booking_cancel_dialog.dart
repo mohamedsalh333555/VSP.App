@@ -7,32 +7,46 @@ import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
-/// Cancellation confirmation dialog for [PlayerBookingCard].
-///
-/// Shows a deposit-refund notice when the booking has a paid deposit,
-/// then performs the cancellation through [BookingProvider].
 class PlayerBookingCancelDialog {
   const PlayerBookingCancelDialog._();
 
   static Future<void> show(BuildContext context, Booking booking) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bool hasDeposit = booking.isDepositPaid && booking.depositPaid > 0;
+
+    // ✅ يشمل كل أنواع الدفع الأونلاين
+    final bool isPaidOnline =
+        booking.paymentMethod == 'paymob' ||
+        booking.paymentStatus == 'paid' ||
+        booking.paymentStatus == 'partially_paid' ||
+        (booking.isDepositPaid && booking.depositPaid > 0);
+
+    // المبلغ المسترد: العربون لو موجود، وإلا المبلغ الكامل
+    final double refundableAmount =
+        booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice;
 
     return showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-        title: Text(l10n.cancelBooking, style: Theme.of(dialogCtx).textTheme.titleLarge),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.xl)),
+        title: Text(l10n.cancelBooking,
+            style: Theme.of(dialogCtx).textTheme.titleLarge),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.cancelBookingConfirm, style: Theme.of(dialogCtx).textTheme.bodyMedium),
-            if (hasDeposit) ...[
+            Text(l10n.cancelBookingConfirm,
+                style: Theme.of(dialogCtx).textTheme.bodyMedium),
+            if (isPaidOnline) ...[
               const SizedBox(height: VSPSpacing.md),
-              _DepositRefundNotice(isArabic: isArabic),
+              _RefundNotice(
+                isArabic: isArabic,
+                refundableAmount: refundableAmount,
+                isDeposit: booking.depositPaid > 0 &&
+                    booking.depositPaid < booking.totalPrice,
+              ),
             ],
           ],
         ),
@@ -51,14 +65,24 @@ class PlayerBookingCancelDialog {
   }
 }
 
-// ── Private sub-widgets ───────────────────────────────────────────────────────
-
-class _DepositRefundNotice extends StatelessWidget {
+class _RefundNotice extends StatelessWidget {
   final bool isArabic;
-  const _DepositRefundNotice({required this.isArabic});
+  final double refundableAmount;
+  final bool isDeposit;
+
+  const _RefundNotice({
+    required this.isArabic,
+    required this.refundableAmount,
+    required this.isDeposit,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final amountText = '${refundableAmount.toStringAsFixed(0)} ${l10n.egCurrency}';
+    final typeText = isDeposit ? l10n.refundDeposit : l10n.refundFullPayment;
+    final message = l10n.refundNoticeAuto(typeText, amountText);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -70,13 +94,12 @@ class _DepositRefundNotice extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Iconsax.rotate_left_copy, color: VSPColors.accent, size: 18),
+          const Icon(Iconsax.rotate_left_copy,
+              color: VSPColors.accent, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              isArabic
-                  ? 'سيتم استرداد مبلغ العربون تلقائياً وإرجاعه إلى حسابك البنكي (InstaPay) أو محفظتك الإلكترونية التي دفعت منها خلال دقائق معدودة .'
-                  : 'The deposit will be automatically refunded directly to your mobile wallet or bank account linked to InstaPay within minutes .',
+              message,
               style: const TextStyle(
                 color: VSPColors.accent,
                 fontSize: 12,
@@ -123,7 +146,7 @@ class _CancelDialogActions extends StatelessWidget {
             height: 48,
             color: VSPColors.error,
             textColor: VSPColors.background,
-            onPressed: () => _performCancellation(),
+            onPressed: _performCancellation,
           ),
         ),
       ],

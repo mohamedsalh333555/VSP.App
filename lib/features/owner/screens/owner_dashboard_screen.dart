@@ -104,11 +104,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     final isProOwner = userModel?.isProPlan == true;
 
     bool isExpired = false;
+    int? remainingTrialDays;
+    bool showTrialEndingSoon = false;
+
     if (userModel != null) {
       if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
         isExpired = false;
       } else {
         isExpired = userModel.isPlanExpired;
+      }
+
+      final trialEnds = userModel.effectiveTrialEndsAt;
+      if (trialEnds != null && userModel.isInActiveTrial) {
+        remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
+        // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
+        showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
       }
     }
 
@@ -153,7 +163,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 if (userModel != null)
                   OwnerVerificationBanner(userModel: userModel, isArabic: isArabic),
 
-                // 2.1 تنبيه انتهاء الاشتراك إن وجد
+                // 2.1 تنبيه اقتراب انتهاء التجربة المجانية (اليوم 51-60 فقط)
+                if (showTrialEndingSoon && remainingTrialDays != null)
+                  OwnerTrialEndingSoonAlert(
+                    remainingDays: remainingTrialDays,
+                    isArabic: isArabic,
+                    onUpgrade: () => _showProUpgradeSheet(context),
+                  ),
+
+                // 2.2 تنبيه انتهاء الاشتراك إن وجد (بعد اليوم 60)
                 if (userModel != null && isExpired)
                   OwnerSubscriptionExpiredAlert(
                     isArabic: isArabic,

@@ -4363,6 +4363,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please agree to the Terms of Service & Privacy Policy to continue.'**
   String get pleaseAgreeToTerms;
+
+  /// No description provided for @refundNoticeAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {type} ({amount}) will be automatically refunded to your card or wallet within minutes.'**
+  String refundNoticeAuto(String type, String amount);
+
+  /// No description provided for @refundDeposit.
+  ///
+  /// In en, this message translates to:
+  /// **'deposit'**
+  String get refundDeposit;
+
+  /// No description provided for @refundFullPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'payment'**
+  String get refundFullPayment;
+
+  /// No description provided for @paymentGatewayUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to connect to payment gateway. Please try again later.'**
+  String get paymentGatewayUnavailable;
+
+  /// No description provided for @verifyPaymentNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Payment Status Now'**
+  String get verifyPaymentNow;
+
+  /// No description provided for @verifyingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying payment status...'**
+  String get verifyingPayment;
 }
 
 class _AppLocalizationsDelegate

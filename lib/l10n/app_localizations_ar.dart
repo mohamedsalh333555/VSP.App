@@ -2300,4 +2300,25 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get pleaseAgreeToTerms =>
       'يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة.';
+
+  @override
+  String refundNoticeAuto(String type, String amount) {
+    return 'سيتم استرداد $type ($amount) تلقائياً إلى بطاقتك البنكية أو محفظتك الإلكترونية خلال دقائق.';
+  }
+
+  @override
+  String get refundDeposit => 'العربون';
+
+  @override
+  String get refundFullPayment => 'المبلغ المدفوع';
+
+  @override
+  String get paymentGatewayUnavailable =>
+      'عذراً، تعذر الاتصال ببوابة الدفع حالياً. يرجى المحاولة مرة أخرى لاحقاً.';
+
+  @override
+  String get verifyPaymentNow => 'تحقق من حالة الحجز الآن';
+
+  @override
+  String get verifyingPayment => 'جاري التحقق من الدفع...';
 }

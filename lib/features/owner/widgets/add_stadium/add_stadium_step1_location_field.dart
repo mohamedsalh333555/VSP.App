@@ -8,6 +8,7 @@ class AddStadiumStep1LocationField extends StatelessWidget {
   final bool isEditing;
   final bool isLocationLoading;
   final VoidCallback onOpenMapPicker;
+  final VoidCallback onOpenManualPicker;
 
   const AddStadiumStep1LocationField({
     super.key,
@@ -15,6 +16,7 @@ class AddStadiumStep1LocationField extends StatelessWidget {
     required this.isEditing,
     required this.isLocationLoading,
     required this.onOpenMapPicker,
+    required this.onOpenManualPicker,
   });
 
   @override
@@ -89,6 +91,32 @@ class AddStadiumStep1LocationField extends StatelessWidget {
             ),
           ),
         ),
+        if (!isEditing)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: InkWell(
+              onTap: isLocationLoading ? null : onOpenManualPicker,
+              borderRadius: BorderRadius.circular(VSPRadius.xs),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Iconsax.edit_2_copy, size: 14, color: VSPColors.accent),
+                    const SizedBox(width: 6),
+                    Text(
+                      isArabic ? 'أو كتابة العنوان يدوياً (بدون خريطة)' : 'Or enter address manually (without map)',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

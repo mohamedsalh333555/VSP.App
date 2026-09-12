@@ -82,9 +82,10 @@ class OwnerVerificationBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            const Text(
-              '🏆',
-              style: TextStyle(fontSize: 18),
+            const Icon(
+              Iconsax.cup_copy,
+              color: Color(0xFF34D399),
+              size: 20,
             ),
           ],
         ),
@@ -132,7 +133,7 @@ class OwnerVerificationBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isArabic ? 'المستندات قيد المراجعة ⏳' : 'Documents Under Review ⏳',
+                    isArabic ? 'المستندات قيد المراجعة' : 'Documents Under Review',
                     style: const TextStyle(
                       color: Color(0xFFE0F2FE),
                       fontSize: 13.5,
@@ -185,7 +186,7 @@ class OwnerVerificationBanner extends StatelessWidget {
     final Color primaryColor = isRejected ? VSPColors.error : const Color(0xFFF59E0B);
     final String title = isRejected
         ? (isArabic ? 'تم رفض بعض المستندات' : 'Documents Need Attention')
-        : (isArabic ? 'منشأتك غير موثقة بعد 📄' : 'Facility Verification Required 📄');
+        : (isArabic ? 'منشأتك غير موثقة بعد' : 'Facility Verification Required');
     final String subtitle = isRejected
         ? (isArabic ? 'يرجى مراجعة وتحديث الوثائق المطلوبة لاعتماد منشأتك.' : 'Please update your uploaded documents for approval.')
         : (isArabic ? 'يرجى رفع السجل التجاري والبطاقة الضريبية لتفعيل ظهور ملاعبك للاعبين.' : 'Upload commercial registry & tax card to make your pitches visible to players.');
@@ -332,6 +333,103 @@ class OwnerSubscriptionExpiredAlert extends StatelessWidget {
               child: Text(
                 isArabic ? 'تجديد' : 'Renew',
                 style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// بنر العد التنازلي للتجربة المجانية (يظهر فقط في آخر 10 أيام: اليوم 51 إلى 60)
+class OwnerTrialEndingSoonAlert extends StatelessWidget {
+  final int remainingDays;
+  final bool isArabic;
+  final VoidCallback onUpgrade;
+
+  const OwnerTrialEndingSoonAlert({
+    super.key,
+    required this.remainingDays,
+    required this.isArabic,
+    required this.onUpgrade,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String daysText;
+    if (remainingDays <= 0) {
+      daysText = isArabic ? 'اليوم الأخير' : 'Last day';
+    } else if (remainingDays == 1) {
+      daysText = isArabic ? 'يوم واحد' : '1 day';
+    } else if (remainingDays == 2) {
+      daysText = isArabic ? 'يومان' : '2 days';
+    } else {
+      daysText = isArabic ? '$remainingDays أيام' : '$remainingDays days';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Iconsax.timer_1_copy,
+            color: Color(0xFFF59E0B),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isArabic
+                      ? 'باقي $daysText على انتهاء التجربة المجانية'
+                      : '$daysText left in your free trial',
+                  style: const TextStyle(
+                    color: Color(0xFFFEF3C7),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isArabic
+                      ? 'قم بالترقية الآن لضمان استمرار استقبال الحجوزات دون انقطاع.'
+                      : 'Upgrade now to ensure uninterrupted booking reception.',
+                  style: const TextStyle(
+                    color: Color(0xFFFDE68A),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onUpgrade,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+              ),
+              child: Text(
+                isArabic ? 'ترقية' : 'Upgrade',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

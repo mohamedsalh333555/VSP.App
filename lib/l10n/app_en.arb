@@ -1091,5 +1091,21 @@
  "selectPreferredPosition": "Please select your preferred position",
  "atLeastOnePayoutMethod": "Please provide at least one payout method",
  "iAgreeTo": "I agree to the ",
- "pleaseAgreeToTerms": "Please agree to the Terms of Service & Privacy Policy to continue."
+ "pleaseAgreeToTerms": "Please agree to the Terms of Service & Privacy Policy to continue.",
+ "refundNoticeAuto": "Your {type} ({amount}) will be automatically refunded to your card or wallet within minutes.",
+ "@refundNoticeAuto": {
+ "placeholders": {
+ "type": {
+ "type": "String"
+ },
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "refundDeposit": "deposit",
+ "refundFullPayment": "payment",
+ "paymentGatewayUnavailable": "Failed to connect to payment gateway. Please try again later.",
+ "verifyPaymentNow": "Verify Payment Status Now",
+ "verifyingPayment": "Verifying payment status..."
 }

@@ -31,6 +31,7 @@ class AddStadiumStep1Details extends StatelessWidget {
   final VoidCallback onAddBreak;
   final ValueChanged<int> onRemoveBreak;
   final VoidCallback onOpenMapPicker;
+  final VoidCallback onOpenManualPicker;
   final ValueChanged<String> onAddNoteTemplate;
   final VoidCallback onNext;
 
@@ -59,6 +60,7 @@ class AddStadiumStep1Details extends StatelessWidget {
     required this.onAddBreak,
     required this.onRemoveBreak,
     required this.onOpenMapPicker,
+    required this.onOpenManualPicker,
     required this.onAddNoteTemplate,
     required this.onNext,
   });
@@ -136,6 +138,7 @@ class AddStadiumStep1Details extends StatelessWidget {
             isEditing: isEditing,
             isLocationLoading: isLocationLoading,
             onOpenMapPicker: onOpenMapPicker,
+            onOpenManualPicker: onOpenManualPicker,
           ),
           const SizedBox(height: 16),
           _buildTextField(

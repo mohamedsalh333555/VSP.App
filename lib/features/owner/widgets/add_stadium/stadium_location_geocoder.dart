@@ -25,6 +25,43 @@ class LocationResult {
 class StadiumLocationGeocoder {
   static const LatLng cairoFallback = LatLng(30.0444, 31.2357);
 
+  /// Approximate center coordinates for Egyptian governorates used in offline/manual fallback
+  static const Map<String, LatLng> governorateCoordinates = {
+    'Cairo': LatLng(30.0444, 31.2357),
+    'Giza': LatLng(30.0131, 31.2089),
+    'Alexandria': LatLng(31.2001, 29.9187),
+    'Dakahlia': LatLng(31.0409, 31.3785),
+    'Red Sea': LatLng(27.2579, 33.8116),
+    'Beheira': LatLng(31.0364, 30.4689),
+    'Faiyum': LatLng(29.3084, 30.8428),
+    'Gharbia': LatLng(30.7865, 31.0004),
+    'Ismailia': LatLng(30.5965, 32.2715),
+    'Monufia': LatLng(30.5972, 30.9876),
+    'Qalyubia': LatLng(30.3292, 31.2168),
+    'Sharqia': LatLng(30.5765, 31.5041),
+    'Suez': LatLng(29.9668, 32.5498),
+    'Aswan': LatLng(24.0889, 32.8998),
+    'Asyut': LatLng(27.1809, 31.1837),
+    'Beni Suef': LatLng(29.0661, 31.0994),
+    'Port Said': LatLng(31.2653, 32.3019),
+    'Damietta': LatLng(31.4175, 31.8144),
+    'Kafr El Sheikh': LatLng(31.1107, 30.9388),
+    'Matrouh': LatLng(31.3543, 27.2373),
+    'Minya': LatLng(28.0871, 30.7618),
+    'Qena': LatLng(26.1551, 32.7160),
+    'Sohag': LatLng(26.5569, 31.6948),
+    'South Sinai': LatLng(28.9585, 34.0306),
+    'North Sinai': LatLng(30.6085, 33.6176),
+    'Luxor': LatLng(25.6872, 32.6396),
+    'New Valley': LatLng(25.4514, 30.5463),
+  };
+
+  /// Returns center coordinates for a governorate name or Cairo as fallback
+  static LatLng getCoordinatesForGovernorate(String? governorate) {
+    if (governorate == null || governorate.isEmpty) return cairoFallback;
+    return governorateCoordinates[governorate] ?? cairoFallback;
+  }
+
   /// Attempts to fetch the device's current GPS position with permission checks and timeout.
   static Future<LatLng?> getCurrentGpsPosition() async {
     try {
