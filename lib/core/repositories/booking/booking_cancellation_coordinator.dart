@@ -72,8 +72,10 @@ class BookingCancellationCoordinator {
                   })
                   .eq('id', bookingId);
             } on PostgrestException catch (pe) {
-              if (pe.message.contains('cannot_cancel_within_2_hours')) {
-                VSPLogger.w('Cannot cancel booking within 2 hours: ${pe.message}');
+              if (pe.message.contains('cannot_cancel_within_6_hours') ||
+                  pe.message.contains('cannot_cancel_within_2_hours') ||
+                  pe.message.contains('6 ساعات')) {
+                VSPLogger.w('Cannot cancel booking within 6 hours: ${pe.message}');
                 return false;
               } else {
                 rethrow;
