@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سياسة الخصوصية | VSP Sports Platform</title>
+  <title>سياسة الخصوصية وحماية البيانات الشخصية | VSP Sports Platform</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,56 +23,79 @@
     h1 { color: var(--primary); font-size: 32px; font-weight: 900; margin-bottom: 24px; border-bottom: 2px solid var(--border); padding-bottom: 16px; }
     h2 { color: #FFF; font-size: 20px; font-weight: 700; margin-top: 32px; margin-bottom: 12px; }
     p { color: var(--text-muted); font-size: 15px; margin-bottom: 16px; }
-    ul { margin-right: 24px; margin-bottom: 16px; color: var(--text-muted); font-size: 15px; }
+    ul, ol { margin-right: 24px; margin-bottom: 16px; color: var(--text-muted); font-size: 15px; }
     li { margin-bottom: 8px; }
     .header-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 30px; }
     .header-logo img { width: 50px; height: 50px; border-radius: 12px; object-fit: contain; }
     .header-logo span { font-size: 22px; font-weight: 900; color: #FFF; }
     a { color: var(--primary); text-decoration: none; }
-    a:hover { text-decoration: underline; }
     .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); text-align: center; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header-logo">
-      <img src="logo.png" alt="VSP Logo">
+      <img src="assets/logo.png" alt="VSP Logo">
       <span>VSP Sports Platform</span>
     </div>
 
-    <h1>سياسة الخصوصية وحماية البيانات</h1>
-    <p>تاريخ السريان: سبتمبر 2026</p>
+    <h1>سياسة الخصوصية وحماية البيانات الشخصية</h1>
+    <p>آخر تحديث: سبتمبر 2026 | النطاق الرسمي: <strong>vspapp.online</strong></p>
 
-    <p>مرحباً بك في منصة <strong>VSP Sports</strong>. نحرص كل الحرص على حماية خصوصيتك وأمان بياناتك الشخصية عند استخدام تطبيقنا وخدماتنا الإلكترونية عبر النطاق <strong>vspapp.online</strong>.</p>
+    <p>تلتزم منصة وتطبيق VSP بحماية بياناتك الشخصية ومعالجتها بمسؤولية وفقاً لأحكام <strong>قانون حماية البيانات الشخصية المصري رقم 151 لسنة 2020</strong> وأفضل الممارسات الدولية.</p>
 
-    <h2>1. المعلومات التي نقوم بجمعها</h2>
+    <h2>1. البيانات التي نقوم بجمعها</h2>
     <ul>
-      <li><strong>بيانات الحساب:</strong> الاسم، رقم الهاتف، عنوان البريد الإلكتروني، وتاريخ الميلاد أو العمر الرياضي.</li>
-      <li><strong>بيانات الموقع الجغرافي (Location):</strong> نطلب إذن الوصول للموقع الجغرافي للمساعدة في تحديد الملاعب القريبة منك وعرض نتائج البحث الميدانية بدقة.</li>
-      <li><strong>الوسائط والكاميرا:</strong> لتمكين المستخدمين وملاك الملاعب من رفع صور الملاعب، إثبات الهوية، أو تحديث الصورة الشخصية.</li>
-      <li><strong>بيانات الدفع والعمليات المالية:</strong> تتم معالجة جميع المدفوعات عبر بوابات معتمدة ومتوافقة مع معايير الأمان العالمية (PCI-DSS) عبر شريكنا <strong>Paymob</strong>. لا نقوم بحفظ أرقام البطاقات البنكية السرية أو رموز CVC على خوادمنا.</li>
+      <li><strong>بيانات التسجيل الأساسية:</strong>
+        <ul>
+          <li>اللاعب: الاسم بالكامل (الاسم الأول واسم العائلة)، رقم الهاتف المحمول، البريد الإلكتروني، المحافظة، والمركز المفضل في الملعب (اختياري).</li>
+          <li>صاحب الملعب: الاسم، الهاتف، تفاصيل المنشأة الرياضية، وبيانات تسوية المستحقات المالية (عنوان InstaPay IPN، رقم المحفظة، أو الحساب البنكي / IBAN).</li>
+        </ul>
+      </li>
+      <li><strong>بيانات الموقع الجغرافي (GPS):</strong> تُجمع بموافقة صريحة من المستخدم لغرضين محددين:
+        <ol>
+          <li>ترتيب وعرض الملاعب الأقرب جغرافياً في النطاق الجغرافي للعميل.</li>
+          <li>إثبات التواجد الجغرافي بالملعب للفصل في منازعات الحضور والتغيب (Dispute No-Show).</li>
+        </ol>
+      </li>
+      <li><strong>إذن الكاميرا ومعرض الصور (Camera & Gallery):</strong> إذن اختياري يُطلب حصراً لتمكين اللاعبين من رفع وتعديل الصور الشخصية (Avatar) وشعارات الفرق، ولتمكين أصحاب المنشآت من رفع صور الملاعب وتجهيزاتها.</li>
+      <li><strong>النشاط الرياضي والسجلات:</strong> سجل الحجوزات، إحصائيات المباريات، تصنيف Elo، وسجل تقييم اللعب النظيف (Fair Play Score).</li>
     </ul>
 
-    <h2>2. كيفية استخدام البيانات</h2>
+    <h2>2. سرية وأمن المعاملات المالية (PCI-DSS & Paymob)</h2>
+    <p>تتم كافة عمليات السداد عبر بيئة مشفرة ومؤمنة تديرها بوابة الدفع المعتمدة والممتثلة لقواعد البنك المركزي المصري ومعايير أمان بطاقات الدفع العالمية (PCI-DSS).</p>
+    <p style="color:#9FDF02;font-weight:bold;">🔒 تأكيد قاطع: لا تطلع منصة VSP ولا تخزن إطلاقاً أرقام البطاقات الائتمانية الكاملة أو رموز التحقق السرية (CVV).</p>
+
+    <h2>3. نطاق مشاركة البيانات مع أطراف ثالثة</h2>
+    <p>لا نقوم ببيع أو تأجير أي بيانات شخصية. تقتصر مشاركة البيانات المحدودة على:</p>
+    <ol>
+      <li><strong>أصحاب الملاعب (Stadium Owners):</strong> مشاركة بيانات الحجز الأساسية (اسم اللاعب، رقم الهاتف، توقيت الحجز) للتحقق من هوية الحاجز عند الاستقبال.</li>
+      <li><strong>بوابة الدفع (Paymob):</strong> لمعالجة العمليات، وتسوية مستحقات الملاعب، ومكافحة الاحتيال.</li>
+      <li><strong>الجهات القضائية والرسمية:</strong> فقط في حال وجود أمر قضائي رسمي ملزم طبقاً لأحكام القانون المصري.</li>
+    </ol>
+
+    <h2>4. الإشعارات والتنبيهات (Push Notifications)</h2>
+    <p>يستخدم التطبيق إشعارات الهاتف لإرسال: تأكيدات الحجز، التذكير بمواعيد المباريات قبل بدئها، إشعارات قرعة وجداول البطولات، وتحديثات نتائج المباريات. يمكن للمستخدم تعطيل الإشعارات في أي وقت من إعدادات جهازه.</p>
+
+    <h2>5. حق حذف الحساب والبيانات (Right to be Forgotten)</h2>
+    <p>وفقاً لأحكام قانون حماية البيانات الشخصية المصري رقم 151 لسنة 2020:</p>
     <ul>
-      <li>تأكيد وتنظيم حجوزات الملاعب والمباريات.</li>
-      <li>إرسال إشعارات لحظية (Push Notifications) عبر Firebase للتذكير بمواعيد المباريات وتحديثات البطولات.</li>
-      <li>تأمين الحسابات ومكافحة الاحتيال والتلاعب في نتائج المنافسات.</li>
+      <li>يحق للمستخدم طلب تعديل بياناته أو حذف حسابه وبياناته نهائياً من خوادمنا.</li>
+      <li>يمكن تنفيذ ذلك مباشرة عبر الذهاب إلى: تطبيق VSP -> الإعدادات -> «حذف الحساب نهائياً»، أو بمراسلة الدعم الفني عبر: <a href="mailto:vspapp.eg@gmail.com">vspapp.eg@gmail.com</a>.</li>
     </ul>
 
-    <h2>3. مشاركة البيانات مع أطراف ثالثة</h2>
-    <p>نحن لا نبيع أو نؤجر بياناتك الشخصية لأي جهة تجارية إطلاقاً. تتم مشاركة البيانات الضرورية فقط مع:</p>
+    <h2>6. بيانات التواصل الرسمية</h2>
     <ul>
-      <li>ملاك الملاعب المعتمدين لتأكيد حجزك واسم الحاجز ورقم التواصل.</li>
-      <li>بوابة الدفع الإلكتروني المعتمدة (Paymob) لتنفيذ المعاملة المالية.</li>
-      <li>خدمات البنية التحتية السحابية الموثوقة (Google Cloud / Supabase).</li>
+      <li><strong>الجهة:</strong> منصة VSP الرياضية</li>
+      <li><strong>النطاق الرسمي:</strong> <a href="https://vspapp.online">https://vspapp.online</a></li>
+      <li><strong>المقر:</strong> أسوان، جمهورية مصر العربية</li>
+      <li><strong>البريد الإلكتروني:</strong> <a href="mailto:vspapp.eg@gmail.com">vspapp.eg@gmail.com</a></li>
+      <li><strong>خدمة العملاء والهاتف:</strong> <span dir="ltr">+201100229462</span></li>
     </ul>
-
-    <h2>4. حذف الحساب والبيانات (Right to Erasure)</h2>
-    <p>يحق لك في أي وقت طلب حذف حسابك وبياناتك المرتبطة بالكامل مباشرة من داخل التطبيق عبر صفحة الإعدادات الشخصية > "حذف الحساب"، أو بمراسلة فريق الدعم الفني عبر: <a href="mailto:support@vspapp.online">support@vspapp.online</a>.</p>
 
     <div class="footer">
       جميع الحقوق محفوظة &copy; 2026 منصة VSP Sports (vspapp.online)
+      <p style="font-size:13px;color:#8B949E;margin-top:10px;">المقر الرئيسي: أسوان، جمهورية مصر العربية | هاتف: +201100229462 | بريد: vspapp.eg@gmail.com</p>
     </div>
   </div>
 </body>
