@@ -45,6 +45,7 @@ void main() {
             onAddBreak: () {},
             onRemoveBreak: (_) {},
             onOpenMapPicker: () {},
+            onOpenManualPicker: () {},
             onAddNoteTemplate: (_) {},
             onNextPage: () {},
             onStateChanged: () {},

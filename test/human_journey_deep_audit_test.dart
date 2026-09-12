@@ -55,6 +55,9 @@ class FakeAuthProvider implements AuthProvider {
   bool get isOwner => _isOwner;
 
   @override
+  bool get isAdmin => _userModel?.isAdmin ?? false;
+
+  @override
   bool get hasDataFetchError => _hasDataFetchError;
 
   @override

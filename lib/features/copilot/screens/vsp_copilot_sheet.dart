@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/models/copilot_message.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../player/screens/booking_confirmation_screen.dart';
 
 /// Simple chat sheet for VSP Copilot POC with single read-only search tool.
 class VspCopilotSheet extends StatefulWidget {
@@ -36,6 +38,28 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   static const String _singleQuickPromptAr = 'دور لي على ملاعب فاضية النهاردة';
   static const String _singleQuickPromptEn = 'Find available pitches today';
+
+  Future<void> _handleBookStadium(CopilotStadiumSummary summary) async {
+    Navigator.of(context).pop();
+
+    try {
+      final repo = StadiumRepository();
+      final stadium = await repo.getStadiumById(summary.id);
+      if (stadium != null && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BookingConfirmationScreen(
+              stadium: stadium,
+              selectedDate: DateTime.now(),
+              initialSelectedSlots: const ['08:00 PM - 09:00 PM'],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('[VspCopilotSheet] _handleBookStadium error: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -221,52 +245,59 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final s = stadiums[i];
-          return Container(
-            width: 200,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF142019),
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        s.name,
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (s.rating > 0) ...[
-                      const Icon(Icons.star, color: Colors.amber, size: 13),
-                      const SizedBox(width: 2),
-                      Text(
-                        s.rating.toStringAsFixed(1),
-                        style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ],
+              onTap: () => _handleBookStadium(s),
+              child: Container(
+                width: 200,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF142019),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
-                Text(
-                  s.governorate.isNotEmpty ? s.governorate : (widget.isArabic ? 'مصر' : 'Egypt'),
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                ),
-                Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            s.name,
+                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (s.rating > 0) ...[
+                          const Icon(Icons.star, color: Colors.amber, size: 13),
+                          const SizedBox(width: 2),
+                          Text(
+                            s.rating.toStringAsFixed(1),
+                            style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ],
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white54),
+                    Text(
+                      s.governorate.isNotEmpty ? s.governorate : (widget.isArabic ? 'مصر' : 'Egypt'),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
+                          style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white54),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           );
         },

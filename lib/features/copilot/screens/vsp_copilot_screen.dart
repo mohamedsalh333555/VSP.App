@@ -5,8 +5,10 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
@@ -135,18 +137,29 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     }
   }
 
-  void _handleBookStadium(CopilotStadiumSummary summary) {
+  Future<void> _handleBookStadium(CopilotStadiumSummary summary) async {
     final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
-    final existingStadium = stadiumProvider.stadiums.cast().firstWhere(
-      (s) => s.id == summary.id,
+    Stadium? targetStadium = stadiumProvider.stadiums.cast<Stadium?>().firstWhere(
+      (s) => s?.id == summary.id,
       orElse: () => null,
     );
 
-    if (existingStadium != null) {
+    if (targetStadium == null) {
+      try {
+        final repo = StadiumRepository();
+        targetStadium = await repo.getStadiumById(summary.id);
+      } catch (e) {
+        debugPrint('[VspCopilotScreen] getStadiumById error: $e');
+      }
+    }
+
+    if (!mounted) return;
+
+    if (targetStadium != null) {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => BookingConfirmationScreen(
-            stadium: existingStadium,
+            stadium: targetStadium!,
             selectedDate: DateTime.now(),
             initialSelectedSlots: const ['08:00 PM - 09:00 PM'],
           ),
@@ -155,8 +168,8 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('تم اختيار ملعب ${summary.name} - جاري استعراض الملاعب'),
-          backgroundColor: VSPColors.accent,
+          content: Text('تعذر تحميل بيانات ملعب ${summary.name} حالياً، يرجى المحاولة لاحقاً'),
+          backgroundColor: Colors.redAccent,
         ),
       );
     }

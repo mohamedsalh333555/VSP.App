@@ -27,6 +27,7 @@ void main() {
             isEditing: false,
             isLocationLoading: false,
             onOpenMapPicker: () {},
+            onOpenManualPicker: () {},
           ),
         ),
       );
@@ -43,6 +44,7 @@ void main() {
             isEditing: false,
             isLocationLoading: false,
             onOpenMapPicker: () {},
+            onOpenManualPicker: () {},
           ),
         ),
       );
@@ -59,6 +61,7 @@ void main() {
             isEditing: false,
             isLocationLoading: true,
             onOpenMapPicker: () {},
+            onOpenManualPicker: () {},
           ),
         ),
       );
@@ -77,6 +80,7 @@ void main() {
             isEditing: false,
             isLocationLoading: false,
             onOpenMapPicker: () => tapped = true,
+            onOpenManualPicker: () {},
           ),
         ),
       );
@@ -95,6 +99,7 @@ void main() {
             isEditing: true,
             isLocationLoading: false,
             onOpenMapPicker: () => tapped = true,
+            onOpenManualPicker: () {},
           ),
         ),
       );

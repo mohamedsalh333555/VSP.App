@@ -69,14 +69,10 @@ serve(async (req: Request) => {
       );
     }
 
-    // 4. Check GEMINI_API_KEY server secret
+    // 4. Check GEMINI_API_KEY server secret (optional with smart fallback)
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     if (!geminiApiKey) {
-      console.error("🚨 Missing GEMINI_API_KEY in server environment!");
-      return new Response(
-        JSON.stringify({ error: "Server Configuration Error: GEMINI_API_KEY missing" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.warn("⚠️ GEMINI_API_KEY is not set in environment. Activating Smart Resilient Fallback Engine.");
     }
 
     // 5. ⏱️ Rate Limiting: 10 requests per minute per user (atomic advisory lock)
@@ -162,44 +158,135 @@ serve(async (req: Request) => {
       parts: [{ text: userMessage }],
     });
 
-    // 9. Gemini API Interaction (with single searchStadiums tool)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
-    const systemPrompt = "أنت كابتن VSP، المساعد الذكي لتطبيق VSP لحجز الملاعب والبطولات في مصر. تتحدث بلهجة مصرية مهذبة ومرحبة. يمكنك استكشاف الملاعب باستخدام أداة searchStadiums عند طلب المستخدم البحث عن ملاعب أو أوقات لعب. وتتذكر ما دار بينكما في سياق المحادثة السابقة.";
-
-    const firstPayload = {
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: contents,
-      tools: [{ functionDeclarations: [searchStadiumsTool] }],
-    };
-
-    const geminiRes1 = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(firstPayload),
-    });
-
-    if (!geminiRes1.ok) {
-      const errText = await geminiRes1.text();
-      console.error("Gemini API Error:", geminiRes1.status, errText);
-      return new Response(
-        JSON.stringify({ error: "AI Provider Error", details: errText }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const geminiData1 = await geminiRes1.json();
-    const candidate1 = geminiData1.candidates?.[0]?.content;
-    const functionCallPart = candidate1?.parts?.find((p: any) => p.functionCall);
-
     let stadiumResults: any[] = [];
     let assistantReply = "";
+    let handledByGemini = false;
 
-    if (functionCallPart && functionCallPart.functionCall.name === "searchStadiums") {
-      const args = functionCallPart.functionCall.args || {};
-      const governorate = (args.governorate || "").toString().trim();
-      const maxPrice = Number(args.max_price);
+    // 9. Gemini API Interaction (if key is configured)
+    if (geminiApiKey) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+        const systemPrompt = "أنت كابتن VSP، المساعد الذكي لتطبيق VSP لحجز الملاعب والبطولات في مصر. تتحدث بلهجة مصرية مهذبة ومرحبة. يمكنك استكشاف الملاعب باستخدام أداة searchStadiums عند طلب المستخدم البحث عن ملاعب أو أوقات لعب. وتتذكر ما دار بينكما في سياق المحادثة السابقة.";
 
-      // 10. 🛡️ Read-Only Query with strict .limit(10)
+        const firstPayload = {
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: contents,
+          tools: [{ functionDeclarations: [searchStadiumsTool] }],
+        };
+
+        const geminiRes1 = await fetch(geminiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(firstPayload),
+        });
+
+        if (geminiRes1.ok) {
+          const geminiData1 = await geminiRes1.json();
+          const candidate1 = geminiData1.candidates?.[0]?.content;
+          const functionCallPart = candidate1?.parts?.find((p: any) => p.functionCall);
+
+          if (functionCallPart && functionCallPart.functionCall.name === "searchStadiums") {
+            const args = functionCallPart.functionCall.args || {};
+            const governorate = (args.governorate || "").toString().trim();
+            const maxPrice = Number(args.max_price);
+
+            // 10. 🛡️ Read-Only Query with strict .limit(10)
+            let query = supabase
+              .from("stadiums")
+              .select("id, name, governorate, price_per_hour, image_url, rating")
+              .eq("is_verified", true)
+              .eq("is_blocked", false)
+              .eq("is_deleted_by_owner", false);
+
+            if (governorate.length > 0) {
+              query = query.ilike("governorate", `%${governorate}%`);
+            }
+            if (maxPrice > 0) {
+              query = query.lte("price_per_hour", maxPrice);
+            }
+
+            query = query.order("rating", { ascending: false }).limit(10);
+
+            const { data: stadiums, error: queryErr } = await query;
+            if (queryErr) {
+              console.error("Database query error:", queryErr);
+            }
+            stadiumResults = stadiums || [];
+
+            // Second turn to summarize findings in natural Arabic
+            const secondContents = [
+              ...contents,
+              candidate1,
+              {
+                role: "user",
+                parts: [
+                  {
+                    functionResponse: {
+                      name: "searchStadiums",
+                      response: { count: stadiumResults.length, stadiums: stadiumResults },
+                    },
+                  },
+                ],
+              },
+            ];
+
+            const secondPayload = {
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: secondContents,
+            };
+
+            const geminiRes2 = await fetch(geminiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(secondPayload),
+            });
+
+            if (geminiRes2.ok) {
+              const geminiData2 = await geminiRes2.json();
+              assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            } else {
+              assistantReply = stadiumResults.length > 0
+                ? `لقيتلك ${stadiumResults.length} ملاعب متاحة تناسب طلبك يا كابتن:`
+                : "للأسف ملقتش ملاعب مطابقة للشروط دي حالياً، تحب نجرب منطقة تانية؟";
+            }
+            handledByGemini = true;
+          } else {
+            assistantReply = candidate1?.parts?.[0]?.text || "";
+            if (assistantReply.trim().length > 0) {
+              handledByGemini = true;
+            }
+          }
+        } else {
+          console.warn("Gemini API non-ok status:", geminiRes1.status);
+        }
+      } catch (geminiErr) {
+        console.warn("Gemini API network error, falling back to smart search:", geminiErr);
+      }
+    }
+
+    // 🛡️ Intelligent NLP & Database Fallback (Runs when GEMINI_API_KEY is missing or Gemini fails)
+    if (!handledByGemini) {
+      const egyptianGovs = [
+        "القاهرة", "الجيزة", "المعادي", "مدينة نصر", "التجمع", "الدقي", "المهندسين",
+        "الشيخ زايد", "أكتوبر", "الإسكندرية", "الشروق", "العبور", "حلوان", "شبرا",
+        "طنطا", "المنصورة", "الشرقية", "الهرم", "فيصل", "الزمالك", "الرحاب", "مدينتي"
+      ];
+      let detectedGov = "";
+      for (const gov of egyptianGovs) {
+        if (userMessage.includes(gov)) {
+          detectedGov = gov;
+          break;
+        }
+      }
+
+      let maxPrice = 0;
+      const priceMatch = userMessage.match(/(\d{2,4})\s*(جنيه|ج|egp)?/i);
+      if (priceMatch) {
+        maxPrice = parseInt(priceMatch[1], 10);
+      } else if (userMessage.includes("رخيص") || userMessage.includes("اقتصادي")) {
+        maxPrice = 350;
+      }
+
       let query = supabase
         .from("stadiums")
         .select("id, name, governorate, price_per_hour, image_url, rating")
@@ -207,59 +294,34 @@ serve(async (req: Request) => {
         .eq("is_blocked", false)
         .eq("is_deleted_by_owner", false);
 
-      if (governorate.length > 0) {
-        query = query.ilike("governorate", `%${governorate}%`);
+      if (detectedGov) {
+        query = query.ilike("governorate", `%${detectedGov}%`);
       }
       if (maxPrice > 0) {
         query = query.lte("price_per_hour", maxPrice);
       }
 
       query = query.order("rating", { ascending: false }).limit(10);
-
-      const { data: stadiums, error: queryErr } = await query;
-      if (queryErr) {
-        console.error("Database query error:", queryErr);
-      }
+      const { data: stadiums } = await query;
       stadiumResults = stadiums || [];
 
-      // Second turn to summarize findings in natural Arabic
-      const secondContents = [
-        ...contents,
-        candidate1,
-        {
-          role: "user",
-          parts: [
-            {
-              functionResponse: {
-                name: "searchStadiums",
-                response: { count: stadiumResults.length, stadiums: stadiumResults },
-              },
-            },
-          ],
-        },
-      ];
-
-      const secondPayload = {
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: secondContents,
-      };
-
-      const geminiRes2 = await fetch(geminiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(secondPayload),
-      });
-
-      if (geminiRes2.ok) {
-        const geminiData2 = await geminiRes2.json();
-        assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      if (stadiumResults.length > 0) {
+        if (detectedGov && maxPrice > 0) {
+          assistantReply = `يا كابتن! بحثتلك في ${detectedGov} ولقيت ${stadiumResults.length} ملاعب ممتازة في حدود ${maxPrice} جنيه تناسب طلبك تماماً:`;
+        } else if (detectedGov) {
+          assistantReply = `يا كابتن! بحثتلك في ${detectedGov} ولقيت ${stadiumResults.length} ملاعب متاحة وتقييمها عالي وجاهزة للحجز:`;
+        } else if (maxPrice > 0) {
+          assistantReply = `تمام يا كابتن! دي أفضل ملاعب بأسعار في حدود ${maxPrice} جنيه أو أقل:`;
+        } else {
+          assistantReply = `أهلاً بك يا كابتن! دي تشكيلة من أفضل الملاعب المتاحة على VSP وتقييماتها عالية ومتاحة للحجز الآن:`;
+        }
       } else {
-        assistantReply = stadiumResults.length > 0
-          ? `لقيتلك ${stadiumResults.length} ملاعب متاحة تناسب طلبك يا كابتن:`
-          : "للأسف ملقتش ملاعب مطابقة للشروط دي حالياً، تحب نجرب منطقة تانية؟";
+        if (detectedGov) {
+          assistantReply = `يا كابتن، حالياً مفيش ملاعب متاحة مسجلة في منطقة "${detectedGov}" بالشروط دي، تحب نجرب نبحث في منطقة تانية قريبة منها؟`;
+        } else {
+          assistantReply = `أهلاً بك يا كابتن في VSP! أنا كابتن VSP الذكي، تقدر تقولي بتدور على ملعب في أي منطقة أو بسعر كام، وأنا هجيبلك أفضل الخيارات فوراً!`;
+        }
       }
-    } else {
-      assistantReply = candidate1?.parts?.[0]?.text || "أهلاً بك يا كابتن، كيف أقدر أساعدك اليوم في ملاعب VSP؟";
     }
 
     // 11. Persist Messages & Update Conversation in Database
