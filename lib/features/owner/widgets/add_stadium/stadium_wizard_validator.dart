@@ -55,21 +55,16 @@ class StadiumWizardValidator {
           : 'Please select working hours (start and end)';
     }
 
-    // ── Split-Shift Validation ──
+    // ── Split-Shift Validation (Strictly Optional) ──
     if (isSplitShift) {
-      if (breakTimes.isEmpty) {
-        return isArabic
-            ? 'يرجى إضافة فترة راحة واحدة على الأقل عند تفعيل الراحة.'
-            : 'Please add at least one break time.';
-      }
-
+      // Break times are optional: if empty or unconfigured, we do not block the user.
       for (var i = 0; i < breakTimes.length; i++) {
         final bStart = breakTimes[i]['start'];
         final bEnd = breakTimes[i]['end'];
+
+        // If times are null/incomplete, treat as optional and ignore without blocking
         if (bStart == null || bEnd == null) {
-          return isArabic
-              ? 'يرجى تحديد وقت البداية والنهاية لفترة الراحة ${i + 1}.'
-              : 'Please set start and end times for Break ${i + 1}.';
+          continue;
         }
 
         int t(TimeOfDay time) => time.hour * 60 + time.minute;

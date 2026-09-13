@@ -50,18 +50,20 @@ class LocationService {
  return (null, null);
  }
 
- // Get Position safely using getLastKnownPosition first or getCurrentPosition with a strict timeLimit
+ // Get Position safely with high accuracy GPS for reliable governorate resolution
  Position? position;
  try {
- position = await Geolocator.getLastKnownPosition();
- position ??= await Geolocator.getCurrentPosition(
+ position = await Geolocator.getCurrentPosition(
  locationSettings: const LocationSettings(
- accuracy: LocationAccuracy.low,
- timeLimit: Duration(seconds: 4),
+ accuracy: LocationAccuracy.high,
+ timeLimit: Duration(seconds: 8),
  ),
  );
  } catch (e) {
- VSPLogger.w("Could not obtain current GPS position: $e");
+ VSPLogger.w("High accuracy GPS fetch timed out or unavailable, falling back to last known: $e");
+ try {
+ position = await Geolocator.getLastKnownPosition();
+ } catch (_) {}
  }
 
  if (position == null) {
@@ -86,21 +88,24 @@ class LocationService {
  VSPLogger.w("Geocoding lookup failed: $e");
  }
 
- if (placemarks.isNotEmpty) {
- final rawName = placemarks.first.administrativeArea ?? placemarks.first.subAdministrativeArea ?? placemarks.first.locality;
- final newGov = EgyptGovernorates.resolveGoogleName(rawName);
+ final rawName = placemarks.isNotEmpty
+ ? (placemarks.first.administrativeArea ??
+ placemarks.first.subAdministrativeArea ??
+ placemarks.first.locality)
+ : null;
+
+ final newGov = EgyptGovernorates.resolveGovernorateWithCoordinates(
+ lat: position.latitude,
+ lng: position.longitude,
+ rawGeocodeName: rawName,
+ );
  
  await prefs.setString('last_location_update', now.toIso8601String());
  await prefs.setDouble('last_lat', position.latitude);
  await prefs.setDouble('last_lng', position.longitude);
- if (newGov != null) {
  await prefs.setString('last_resolved_governorate', newGov);
- }
 
  return (position, newGov);
- }
- final cachedGov = prefs.getString('last_resolved_governorate');
- return (position, cachedGov);
  } else {
  VSPLogger.i(" GPS Optimized: Using cached location (Throttled)");
  final cachedGov = prefs.getString('last_resolved_governorate');

@@ -34,6 +34,7 @@ class MockLlmCopilotService extends VspCopilotService {
     String? message,
     String? text,
     String? conversationId,
+    String? governorate,
   }) async {
     return onSendMessage(message ?? text ?? '', conversationId);
   }
@@ -99,15 +100,16 @@ void main() {
       );
 
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      expect(find.text('ملاعب قريبة مني الآن'), findsOneWidget);
-      expect(find.text('ماتشات خماسية ناقصها لاعيبة'), findsOneWidget);
-      expect(find.text('ملاعب فاضية للحجز الليلة'), findsOneWidget);
-      expect(find.text('البطولات والتحديات المتاحة حالياً'), findsOneWidget);
+      expect(find.text('يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟ 🎯'), findsOneWidget);
+      expect(find.text('فين ألعب النهارده؟'), findsOneWidget);
+      expect(find.text('في ماتش ناقص لاعيب؟'), findsOneWidget);
+      expect(find.text('أرخص ملعب قريب مني'), findsOneWidget);
+      expect(find.text('في بطولات أقدر أشترك فيها؟'), findsOneWidget);
 
-      await tester.tap(find.text('ملاعب قريبة مني الآن'));
+      await tester.tap(find.text('فين ألعب النهارده؟'));
       await tester.pump();
 
-      expect(clickedPrompt, 'ملاعب قريبة مني الآن');
+      expect(clickedPrompt, 'فين ألعب النهارده؟');
     });
 
     testWidgets('CopilotChatBubble renders copy button and handles stadium book click', (tester) async {
@@ -196,15 +198,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Starts with starter prompts in empty state
-      expect(find.text('ملاعب قريبة مني الآن'), findsOneWidget);
+      expect(find.text('فين ألعب النهارده؟'), findsOneWidget);
 
       // Tap starter prompt
-      await tester.tap(find.text('ملاعب قريبة مني الآن'));
+      await tester.tap(find.text('فين ألعب النهارده؟'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       // Prompt is sent and bubble appears
-      expect(find.text('رد تجريبي على: ملاعب قريبة مني الآن'), findsOneWidget);
+      expect(find.text('رد تجريبي على: فين ألعب النهارده؟'), findsOneWidget);
       expect(find.text('ملعب التجمع'), findsOneWidget);
     });
 

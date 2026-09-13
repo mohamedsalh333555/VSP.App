@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -103,7 +105,13 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
     });
     _scrollToBottom();
 
-    final response = await widget.copilotService.sendMessage(message: text);
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    final userGov = auth?.userModel?.governorate ?? 'أسوان';
+
+    final response = await widget.copilotService.sendMessage(
+      message: text,
+      governorate: userGov,
+    );
 
     if (mounted) {
       setState(() {
@@ -117,14 +125,19 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final quickPrompt = widget.isArabic ? _singleQuickPromptAr : _singleQuickPromptEn;
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    final userGov = auth?.userModel?.governorate;
+    final quickPrompt = widget.isArabic
+        ? (userGov != null ? 'دور لي على ملاعب فاضية في $userGov' : _singleQuickPromptAr)
+        : _singleQuickPromptEn;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.78,
       margin: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+        border: Border.all(color: VSPColors.borderLight, width: 1),
       ),
       child: Column(
         children: [
@@ -206,7 +219,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
             decoration: BoxDecoration(
-              color: isUser ? VSPColors.accent : const Color(0xFF1C2B22),
+              color: isUser ? VSPColors.accent : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(14),
                 topRight: const Radius.circular(14),
@@ -214,7 +227,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                 bottomRight: Radius.circular(isUser ? 2 : 14),
               ),
               border: Border.all(
-                color: isUser ? Colors.transparent : VSPColors.accent.withValues(alpha: 0.2),
+                color: isUser ? Colors.transparent : VSPColors.borderLight,
               ),
             ),
             child: Text(
@@ -254,9 +267,9 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                 width: 200,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF142019),
+                  color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(color: VSPColors.borderLight),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,8 +324,9 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C2B22),
+          color: VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: VSPColors.borderLight),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -367,13 +381,21 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: widget.isArabic ? 'اكتب طلبك للبحث عن ملاعب...' : 'Search pitches...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 filled: true,
-                fillColor: const Color(0xFF142019),
+                fillColor: VSPColors.inputFill,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.borderLight, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.borderLight, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.accent, width: 1.2),
                 ),
               ),
               onSubmitted: (_) => _handleSendMessage(),

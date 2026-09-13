@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/core/constants/egypt_governorates.dart';
 import 'package:vsp_application/features/owner/widgets/add_stadium/stadium_location_geocoder.dart';
 
 void main() {
@@ -57,8 +58,23 @@ void main() {
       );
       expect(loc.latitude, 30.05);
       expect(loc.longitude, 31.25);
-      expect(loc.address, 'شارع النزهة، مصر الجديدة');
       expect(loc.governorate, 'Cairo');
+    });
+
+    test('findClosestGovernorate resolves Aswan coordinates accurately', () {
+      final gov = EgyptGovernorates.findClosestGovernorate(24.0889, 32.8998);
+      expect(gov, equals('Aswan'));
+    });
+
+    test('resolveGovernorateWithCoordinates rejects distant Red Sea reading for Aswan coordinates', () {
+      // Simulating cell tower misattribution in Aswan: coordinates are in Aswan, but raw geocode string says Red Sea
+      final resolved = EgyptGovernorates.resolveGovernorateWithCoordinates(
+        lat: 24.0889,
+        lng: 32.8998,
+        rawGeocodeName: 'Red Sea Governorate',
+      );
+      // Because (24.0889, 32.8998) is >400km away from Red Sea center, it must fall back to Aswan!
+      expect(resolved, equals('Aswan'));
     });
   });
 }

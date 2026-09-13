@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/banner_slider_widget.dart';
-import 'book_tonight_card.dart';
 import 'home_feed_sections.dart';
 import 'home_stadiums_section.dart';
 import 'home_top_bar.dart';
@@ -35,8 +34,6 @@ class HomeFeedContent extends StatelessWidget {
                 children: [
                   const SizedBox(height: 10),
                   const BannerSliderWidget(placement: 'home_slider'),
-                  const SizedBox(height: 10),
-                  BookTonightCard(onNavigate: onNavigate),
                   const SizedBox(height: 14),
                   const HomeStadiumsSection(),
                   const SizedBox(height: 16),

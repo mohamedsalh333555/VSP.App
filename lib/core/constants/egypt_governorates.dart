@@ -26,8 +26,56 @@ class EgyptGovernorates {
     'Sharqia',
     'Sohag',
     'South Sinai',
-    'Suez'
+    'Suez',
   ];
+
+  static const Map<String, (double, double)> governorateCoordinates = {
+    'Cairo': (30.0444, 31.2357),
+    'Giza': (30.0131, 31.2089),
+    'Alexandria': (31.2001, 29.9187),
+    'Dakahlia': (31.0409, 31.3785),
+    'Red Sea': (27.2579, 33.8116),
+    'Beheira': (31.0364, 30.4689),
+    'Faiyum': (29.3084, 30.8428),
+    'Gharbia': (30.7865, 31.0004),
+    'Ismailia': (30.5965, 32.2715),
+    'Monufia': (30.5972, 30.9876),
+    'Qalyubia': (30.3292, 31.2168),
+    'Sharqia': (30.5765, 31.5041),
+    'Suez': (29.9668, 32.5498),
+    'Aswan': (24.0889, 32.8998),
+    'Asyut': (27.1809, 31.1837),
+    'Beni Suef': (29.0661, 31.0994),
+    'Port Said': (31.2653, 32.3019),
+    'Damietta': (31.4175, 31.8144),
+    'Kafr El Sheikh': (31.1107, 30.9388),
+    'Matrouh': (31.3543, 27.2373),
+    'Minya': (28.0871, 30.7618),
+    'Qena': (26.1551, 32.7160),
+    'Sohag': (26.5569, 31.6948),
+    'South Sinai': (28.9585, 34.0306),
+    'North Sinai': (30.6085, 33.6176),
+    'Luxor': (25.6872, 32.6396),
+    'New Valley': (25.4514, 30.5463),
+  };
+
+  /// Returns the geographically closest Egyptian governorate given GPS coordinates.
+  static String findClosestGovernorate(double lat, double lng) {
+    String closestGov = 'Cairo';
+    double minDistance = double.infinity;
+
+    governorateCoordinates.forEach((gov, coords) {
+      final dLat = lat - coords.$1;
+      final dLng = lng - coords.$2;
+      final distSquared = (dLat * dLat) + (dLng * dLng);
+      if (distSquared < minDistance) {
+        minDistance = distSquared;
+        closestGov = gov;
+      }
+    });
+
+    return closestGov;
+  }
 
   static const Map<String, String> _googleToStandard = {
     'al iskandariyah': 'Alexandria',
@@ -195,15 +243,41 @@ class EgyptGovernorates {
       return _googleToStandard[cleanedStr]!;
     }
 
-    // Aggressive matching strategy
+    // Safe substantial match strategy (avoid false positives on short substrings)
     for (var key in _googleToStandard.keys) {
-      if (cleanedStr.contains(key) || key.contains(cleanedStr)) {
+      if (cleanedStr == key) {
+        return _googleToStandard[key]!;
+      }
+      if (key.length >= 4 && cleanedStr.contains(key)) {
         return _googleToStandard[key]!;
       }
     }
 
     // If completely unknown, return null
     return null;
+  }
+
+  /// Resolves Egyptian governorate with mathematical coordinate proximity check
+  /// to eliminate false cell-tower cross-governorate readings (e.g. Aswan vs Red Sea).
+  static String resolveGovernorateWithCoordinates({
+    required double lat,
+    required double lng,
+    String? rawGeocodeName,
+  }) {
+    if (rawGeocodeName != null && rawGeocodeName.isNotEmpty) {
+      final resolved = resolveGoogleName(rawGeocodeName);
+      if (resolved != null && governorateCoordinates.containsKey(resolved)) {
+        final coords = governorateCoordinates[resolved]!;
+        final dLat = lat - coords.$1;
+        final dLng = lng - coords.$2;
+        // Verify resolved governorate is within reasonable proximity (< 180 km)
+        if ((dLat * dLat + dLng * dLng) < 3.0) {
+          return resolved;
+        }
+      }
+    }
+    // Geographically closest Egyptian governorate fallback
+    return findClosestGovernorate(lat, lng);
   }
 
   /// Smart formatter that converts raw Google Maps placemarks into clean Arabic [Governorate - Markaz/City] format

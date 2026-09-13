@@ -77,21 +77,6 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
           }
         } else {
           stadiumProvider.applyGovernorateFilter(gov);
-
-          // Silent GPS check deferred to not block smooth screen entry
-          Future.delayed(const Duration(seconds: 2), () async {
-            if (!mounted) return;
-            try {
-              final gpsGov = await auth.determineGPSGovernorate();
-              if (gpsGov != null && gpsGov != gov) {
-                if (mounted) {
-                  showGovernorateChangeAlert(context, auth, gpsGov, stadiumProvider);
-                }
-              }
-            } catch (e) {
-              debugPrint('Silent startup GPS check failed: $e');
-            }
-          });
         }
         // Load user bookings to populate Live Match Radar
         final userId = auth.currentUser?.uid;

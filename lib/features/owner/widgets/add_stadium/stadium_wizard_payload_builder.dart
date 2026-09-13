@@ -25,6 +25,11 @@ class StadiumWizardPayloadBuilder {
     required List<Map<String, TimeOfDay?>> breakTimes,
     required List<String> uploadedUrls,
   }) {
+    final validBreaks = isSplitShift
+        ? breakTimes.where((bt) => bt['start'] != null && bt['end'] != null).toList()
+        : <Map<String, TimeOfDay?>>[];
+    final hasValidBreaks = isSplitShift && validBreaks.isNotEmpty;
+
     return {
       'stadiumPhone': stadiumPhone.trim(),
       'sportType': sportType,
@@ -42,17 +47,17 @@ class StadiumWizardPayloadBuilder {
         'start': StadiumWizardTimeUtils.formatTime(startTime, '16:00:00'),
         'end': StadiumWizardTimeUtils.formatTime(endTime, '23:00:00'),
       },
-      'isSplitShift': isSplitShift,
-      'breakTimes': isSplitShift
-          ? breakTimes.map((bt) => {
+      'isSplitShift': hasValidBreaks,
+      'breakTimes': hasValidBreaks
+          ? validBreaks.map((bt) => {
                 'start': StadiumWizardTimeUtils.formatTime(bt['start'], ''),
                 'end': StadiumWizardTimeUtils.formatTime(bt['end'], ''),
               }).toList()
           : [],
-      'breakTime': (isSplitShift && breakTimes.isNotEmpty)
+      'breakTime': hasValidBreaks
           ? {
-              'start': StadiumWizardTimeUtils.formatTime(breakTimes.first['start'], ''),
-              'end': StadiumWizardTimeUtils.formatTime(breakTimes.first['end'], ''),
+              'start': StadiumWizardTimeUtils.formatTime(validBreaks.first['start'], ''),
+              'end': StadiumWizardTimeUtils.formatTime(validBreaks.first['end'], ''),
             }
           : null,
       'allImages': uploadedUrls,

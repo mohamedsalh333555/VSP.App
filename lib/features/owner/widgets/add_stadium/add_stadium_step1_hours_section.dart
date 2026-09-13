@@ -159,17 +159,16 @@ class AddStadiumStep1HoursSection extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    if (breakTimes.length > 1)
-                      IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const Icon(
-                          Iconsax.trash_copy,
-                          color: VSPColors.error,
-                          size: 20,
-                        ),
-                        onPressed: () => onRemoveBreak(index),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Iconsax.trash_copy,
+                        color: VSPColors.error,
+                        size: 20,
                       ),
+                      onPressed: () => onRemoveBreak(index),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),

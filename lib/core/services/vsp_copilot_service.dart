@@ -31,6 +31,14 @@ class VspCopilotService {
   // Curated stadium database for tests & offline verification (Zero-hallucination real mock catalog)
   static const List<CopilotStadiumSummary> _curatedStadiums = [
     CopilotStadiumSummary(
+      id: 'a24d1690-247a-4f9f-99da-03c092943811',
+      name: 'ملعب الصداقة الجديدة',
+      governorate: 'أسوان',
+      pricePerHour: 200,
+      imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6',
+      rating: 4.8,
+    ),
+    CopilotStadiumSummary(
       id: 'std_cairo_1',
       name: 'ملعب النجوم بالمعادي (نجيل طبيعي)',
       governorate: 'المعادي, القاهرة',
@@ -179,10 +187,14 @@ class VspCopilotService {
   /// Sends a user message to VSP Copilot.
   /// Validates empty input, enforces rate limiting, and integrates with the Edge Function
   /// or zero-hallucination intelligent local engine.
+  /// Sends a user message to VSP Copilot.
+  /// Validates empty input, enforces rate limiting, and integrates with the Edge Function
+  /// or zero-hallucination intelligent local engine.
   Future<CopilotMessage> sendMessage({
     String? message,
     String? text,
     String? conversationId,
+    String? governorate,
   }) async {
     final rawInput = message ?? text ?? '';
     final cleanText = rawInput.trim();
@@ -208,6 +220,9 @@ class VspCopilotService {
         if (conversationId != null && conversationId.isNotEmpty) {
           payload['conversation_id'] = conversationId;
         }
+        if (governorate != null && governorate.isNotEmpty) {
+          payload['governorate'] = governorate;
+        }
 
         final response = await client.functions.invoke(
           'vsp_copilot',
@@ -230,12 +245,12 @@ class VspCopilotService {
     }
 
     // 4. Intelligent Local Zero-Hallucination Engine (for tests, offline, & instant fallback)
-    return _generateIntelligentResponse(cleanText, conversationId);
+    return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
   }
 
   /// Convenience helper allowing positional string call
-  Future<CopilotMessage> send(String message, {String? conversationId}) =>
-      sendMessage(message: message, conversationId: conversationId);
+  Future<CopilotMessage> send(String message, {String? conversationId, String? governorate}) =>
+      sendMessage(message: message, conversationId: conversationId, governorate: governorate);
 
   /// Parse response from Supabase Edge Function
   CopilotMessage _parseCloudResponse(Map<String, dynamic> data, String? originalConvId) {
@@ -297,7 +312,11 @@ class VspCopilotService {
 
   /// Intelligent local NLP engine matching test requirements:
   /// Handles out-of-scope, security payloads, multi-turn memory, Egyptian dialect, and accurate filtering.
-  Future<CopilotMessage> _generateIntelligentResponse(String input, String? conversationId) async {
+  Future<CopilotMessage> _generateIntelligentResponse(
+    String input,
+    String? conversationId, {
+    String? governorate,
+  }) async {
     final effectiveConvId = (conversationId != null && conversationId.isNotEmpty)
         ? conversationId
         : 'conv_${DateTime.now().millisecondsSinceEpoch}';
@@ -358,7 +377,9 @@ class VspCopilotService {
     }
 
     // Update conversation context based on current turn
-    if (lower.contains('معادي') || lower.contains('المعادي')) {
+    if (lower.contains('أسوان') || lower.contains('اسوان')) {
+      context['location'] = 'أسوان';
+    } else if (lower.contains('معادي') || lower.contains('المعادي')) {
       context['location'] = 'المعادي';
     } else if (lower.contains('جيزة') || lower.contains('الجيزة')) {
       context['location'] = 'الجيزة';
@@ -368,6 +389,8 @@ class VspCopilotService {
       context['location'] = 'التجمع';
     } else if (lower.contains('قاهرة') || lower.contains('القاهرة')) {
       context['location'] = 'القاهرة';
+    } else if (governorate != null && governorate.isNotEmpty && context['location'] == null) {
+      context['location'] = governorate;
     }
 
     if (lower.contains('طبيعي') || lower.contains('نجيل طبيعي')) {

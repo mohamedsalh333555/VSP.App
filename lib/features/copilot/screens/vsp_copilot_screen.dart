@@ -13,6 +13,7 @@ import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
 import '../../player/screens/champion_screen.dart';
 import '../../player/screens/player_home_screen.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
 import '../widgets/copilot_starter_prompts.dart';
@@ -124,9 +125,13 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     });
     _scrollToBottom();
 
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    final userGov = auth?.userModel?.governorate ?? 'أسوان';
+
     final response = await widget.copilotService.sendMessage(
       message: text,
       conversationId: _activeConversationId,
+      governorate: userGov,
     );
 
     if (mounted) {
@@ -290,10 +295,8 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       backgroundColor: VSPColors.surface,
       elevation: 0,
       centerTitle: true,
-      leading: IconButton(
-        icon: const Icon(Iconsax.textalign_justifycenter_copy, color: VSPColors.accent, size: 22),
-        tooltip: isArabic ? 'سجل المحادثات' : 'Chat History',
-        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      leading: const Center(
+        child: VSPBackButton(),
       ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
@@ -321,14 +324,16 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Iconsax.messages_2_copy, color: VSPColors.accent, size: 20),
+          tooltip: isArabic ? 'سجل المحادثات' : 'Chat History',
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        IconButton(
           icon: const Icon(Icons.add_circle_outline_rounded, color: VSPColors.accent, size: 22),
           tooltip: isArabic ? 'محادثة جديدة' : 'New Chat',
           onPressed: _handleStartNewChat,
         ),
-        IconButton(
-          icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 22),
-          onPressed: () => context.pop(),
-        ),
+        const SizedBox(width: 6),
       ],
     );
   }
@@ -359,8 +364,8 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
-        color: Color(0xFF142019),
-        border: Border(top: BorderSide(color: Colors.white10)),
+        color: VSPColors.surface,
+        border: Border(top: BorderSide(color: VSPColors.borderLight, width: 1)),
       ),
       child: Row(
         children: [
@@ -371,14 +376,22 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
               minLines: 1,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: isArabic ? 'اسأل كابتن VSP عن أي ملعب...' : 'Ask VSP Copilot...',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                hintText: isArabic ? 'اسأل كابتن VSP عن الملاعب والبطولات...' : 'Ask VSP Copilot...',
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 filled: true,
-                fillColor: const Color(0xFF1C2B22),
+                fillColor: VSPColors.inputFill,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(VSPRadius.lg),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.borderLight, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.borderLight, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  borderSide: const BorderSide(color: VSPColors.accent, width: 1.2),
                 ),
               ),
               onSubmitted: (_) => _handleSendMessage(),

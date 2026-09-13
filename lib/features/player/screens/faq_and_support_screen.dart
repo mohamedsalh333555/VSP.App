@@ -91,18 +91,18 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: _launchWhatsApp,
-                          icon: const Icon(Iconsax.headphones_copy, size: 16, color: Colors.white),
+                          icon: const Icon(Iconsax.headphones_copy, size: 16, color: Colors.black),
                           label: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
                               isArabic ? 'واتساب الدعم' : 'WhatsApp Support',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
                               maxLines: 1,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF25D366),
-                            foregroundColor: Colors.white,
+                            backgroundColor: VSPColors.accent,
+                            foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                             elevation: 0,
@@ -149,14 +149,14 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
               _buildFAQTile(
                 question: isArabic ? 'كيف أضيف ملعبي وأتحكم في ساعات العمل والأسعار؟' : 'How do I add my stadium and manage pricing & working hours?',
                 answer: isArabic 
-                  ? 'من خلال زر "إضافة ملعب جديد" في لوحة التحكم، يمكنك رفع صور الملعب، تحديد سعر الساعة، وإضافة فترات الراحة وساعات العمل اليومية بكل سهولة.'
-                  : 'Use the "Add New Stadium" button in your dashboard to upload photos, set hourly rates, and define daily operating hours.',
+                  ? 'من خلال زر "إضافة ملعب جديد" في لوحة التحكم، يمكنك رفع صور الملعب، تحديد سعر الساعة، وإضافة فترات الراحة (اختيارية) وتحديد ساعات العمل اليومية بكل سهولة.'
+                  : 'Use the "Add New Stadium" button in your dashboard to upload photos, set hourly rates, add optional breaks, and define daily operating hours.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'كيف أحصل على مبالغ الحجوزات والعربون من اللاعبين؟' : 'How do I receive booking payments and deposits from players?',
                 answer: isArabic 
-                  ? 'يمكنك إضافة بيانات وسائل الدفع الخاصة بك (انستا باي أو فودافون كاش أو حساب بنكي) في إعدادات الحساب، لتصلك مبالغ العربون والحجوزات فورياً.'
-                  : 'Add your preferred payout method (InstaPay, Vodafone Cash, or Bank Transfer) in Account Settings to receive player deposits directly.',
+                  ? 'يمكنك إضافة بيانات وسائل الدفع والتحصيل الخاصة بك (إنستاباي، المحافظ الإلكترونية، أو الحساب البنكي) في إعدادات الحساب لتصلك مبالغ العربون والحجوزات فورياً.'
+                  : 'Add your preferred payout method (InstaPay, Mobile Wallets, or Bank Transfer) in Account Settings to receive player deposits directly.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'كيف أتحكم في جدول الحجوزات وحظر أوقات معينة؟' : 'How do I manage my schedule and block unavailable slots?',
@@ -167,27 +167,45 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
               _buildFAQTile(
                 question: isArabic ? 'كيف أنظم البطولات والتحديات على ملعبي؟' : 'How do I create and organize tournaments on my stadium?',
                 answer: isArabic 
-                  ? 'من تبويب "البطولات"، يمكنك إطلاق بطولة جديدة، تحديد رسوم الاشتراك والجوائز، وتوليد مواعيد المباريات والشجرة التنافسية تلقائياً.'
+                  ? 'من تبويب "البطولات"، يمكنك إطلاق بطولة جديدة، تحديد رسوم الاشتراك والجوائز، وتوليد مواعيد المباريات والشجرة التنافسية الإقصائية تلقائياً.'
                   : 'Go to the Tournaments section to initiate a new tournament, specify entry fees & prizes, and generate match brackets automatically.',
+              ),
+              _buildFAQTile(
+                question: isArabic ? 'ما هي باقات الاشتراك لأصحاب الملاعب (Basic vs PRO)؟' : 'What are the subscription plans for stadium owners (Basic vs PRO)?',
+                answer: isArabic 
+                  ? 'تمنحك الباقة الأساسية تشغيل ملعب واحد مجاناً لمدة شهرين كاملين لتقييم المنظومة، بينما تمنحك الباقة الاحترافية (PRO) إدارة حتى 3 ملاعب كاملة، تحليلات متقدمة للإيرادات وساعات الذروة، وأولوية الظهور في نتائج البحث.'
+                  : 'The Basic plan offers free management of 1 pitch for 2 months, while the PRO plan includes managing up to 3 pitches, advanced analytics for peak hours, and priority search visibility.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'ما هي رسوم المنصة وكيف يتم تسوية الخدمات؟' : 'What are the platform fees for stadium owners?',
                 answer: isArabic 
-                  ? 'تتميز المنصة بتقديم خدمات إدارة الملاعب والبطولات مجاناً لأصحاب الملاعب، مع تحصيل رسوم خدمة بسيطة من الحاكز لضمان التشغيل والتأمين التقني.'
-                  : 'VSP provides full stadium management and tournament features for owners free of platform commissions, with transparent processing fees.',
+                  ? 'تتميز المنصة بتقديم خدمات إدارة الملاعب والبطولات مجاناً لأصحاب الملاعب، مع تحصيل رسوم خدمة رقمية بسيطة ومؤمنة عند الدفع الإلكتروني لضمان جودة التشغيل.'
+                  : 'VSP provides full stadium management and tournament features for owners free of platform commissions, with transparent secure processing fees.',
               ),
             ] else ...[
               _buildFAQTile(
                 question: isArabic ? 'كيف يمكنني حجز ملعب وإلغاء الحجز؟' : 'How can I book a stadium and cancel a booking?',
                 answer: isArabic 
-                  ? 'يمكنك اختيار الملعب والوقت المناسب من القائمة الرئيسية، واختيار الدفع بالعربون أو بالكامل. يمكنك إلغاء الحجز قبل الموعد وفقاً لسياسة الملعب.'
-                  : 'Choose a pitch and convenient time slot from the main menu, select full or deposit payment, and confirm your booking instantly.',
+                  ? 'يمكنك اختيار الملعب والوقت المناسب من القائمة الرئيسية، واختيار الدفع بالعربون أو بالكامل عبر البطاقات البنكية، المحافظ الإلكترونية، أو إنستاباي. يمكنك إلغاء الحجز واسترداد العربون وفقاً لسياسة الإلغاء المحددة للملعب.'
+                  : 'Choose a pitch and convenient slot, pay deposit or full amount via cards, mobile wallets, or InstaPay. Cancellations follow the stadium cancellation policy.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'كيف أنضم إلى مباراة عامة أو أحجز مكاناً في تحدي؟' : 'How do I join an open match or book a spot in a challenge?',
                 answer: isArabic 
                   ? 'يمكنك تصفح المباريات العامة في قسم "المباريات"، واختيار المراكز الشاغرة والانضمام فورياً لتلعب مع لاعبين في منطقتك.'
                   : 'Browse open matches under the Matches tab, select an available position, and join local games near your governorate.',
+              ),
+              _buildFAQTile(
+                question: isArabic ? 'كيف أشترك في البطولات وتحديات 1v1؟' : 'How do I register for tournaments and 1v1 challenges?',
+                answer: isArabic 
+                  ? 'من قسم "البطولات"، يمكنك استعراض البطولات المفتوحة والتسجيل بقائمة فريقك ودفع الرسوم إلكترونياً، أو المشاركة في دوري ملك الـ 1v1 الفردي لحصد الجوائز والنقاط.'
+                  : 'Navigate to Tournaments to explore open cups, register your team squad and pay fees online, or compete in 1v1 individual showdowns.',
+              ),
+              _buildFAQTile(
+                question: isArabic ? 'ما هي وظيفة كابتن VSP الذكي (VSP Copilot)؟' : 'What is VSP Copilot (AI Football Assistant)?',
+                answer: isArabic 
+                  ? 'هو مساعدك الرياضي الذكي المدعوم بالذكاء الاصطناعي، يمكنك محادثته باللهجة الكروية لاقتراح الملاعب المتاحة الليلة، مقارنة الأسعار، ومعرفة المواعيد والبطولات الشاغرة فوراً.'
+                  : 'Your AI football assistant ready to find available nearby pitches, compare rates, and recommend tournament fixtures instantly.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'ما هو نظام تصنيف مهارة الفرق وكيف يُحسب الدوري؟' : 'What is team skill ranking and how is the leaderboard calculated?',

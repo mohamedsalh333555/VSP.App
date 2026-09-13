@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -35,7 +36,7 @@ class CopilotChatBubble extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
             decoration: BoxDecoration(
-              color: isUser ? VSPColors.accent : const Color(0xFF1C2B22),
+              color: isUser ? VSPColors.accent : VSPColors.surface,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -43,21 +44,82 @@ class CopilotChatBubble extends StatelessWidget {
                 bottomRight: Radius.circular(isUser ? 4 : 16),
               ),
               border: Border.all(
-                color: isUser ? Colors.transparent : VSPColors.accent.withValues(alpha: 0.2),
+                color: isUser ? Colors.transparent : VSPColors.borderLight,
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  message.text,
-                  style: TextStyle(
-                    color: isUser ? Colors.black : VSPColors.textPrimary,
-                    fontSize: 14,
-                    height: 1.45,
-                    fontWeight: isUser ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
+                isUser
+                    ? Text(
+                        message.text,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                          height: 1.45,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : MarkdownBody(
+                        data: message.text,
+                        shrinkWrap: true,
+                        styleSheet: MarkdownStyleSheet(
+                          p: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                          strong: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          em: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 14,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          listBullet: const TextStyle(
+                            color: VSPColors.accent,
+                            fontSize: 14,
+                          ),
+                          h1: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          h2: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          h3: const TextStyle(
+                            color: VSPColors.accent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          code: const TextStyle(
+                            color: VSPColors.accent,
+                            fontSize: 13,
+                            fontFamily: 'monospace',
+                          ),
+                          codeblockDecoration: BoxDecoration(
+                            color: VSPColors.surface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: VSPColors.borderLight),
+                          ),
+                          blockquote: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          blockquoteDecoration: const BoxDecoration(
+                            border: Border(
+                              right: BorderSide(color: VSPColors.accent, width: 3),
+                            ),
+                          ),
+                        ),
+                      ),
                 if (!isUser) ...[
                   const SizedBox(height: 6),
                   Align(
@@ -118,10 +180,8 @@ class CopilotChatBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isProfileUpdated
-                  ? const [Color(0xFF143B22), Color(0xFF0D2516)]
-                  : const [Color(0xFF1B3828), Color(0xFF14241B)],
+            gradient: const LinearGradient(
+              colors: [VSPColors.surfaceAlt, VSPColors.surface],
             ),
             borderRadius: BorderRadius.circular(VSPRadius.md),
             border: Border.all(
@@ -184,9 +244,9 @@ class CopilotChatBubble extends StatelessWidget {
                 width: 230,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF142019),
+                  color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(color: VSPColors.borderLight),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,9 +340,9 @@ class CopilotChatBubble extends StatelessWidget {
                 width: 240,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF142019),
+                  color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(color: VSPColors.borderLight),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,9 +426,9 @@ class CopilotChatBubble extends StatelessWidget {
                 width: 240,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF142019),
+                  color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(color: VSPColors.borderLight),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,9 +514,9 @@ class CopilotLoadingBubble extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C2B22),
+          color: VSPColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15)),
+          border: Border.all(color: VSPColors.borderLight),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,

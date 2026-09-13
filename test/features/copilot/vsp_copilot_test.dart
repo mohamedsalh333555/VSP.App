@@ -14,6 +14,7 @@ class MockVspCopilotService extends VspCopilotService {
     String? message,
     String? text,
     String? conversationId,
+    String? governorate,
   }) async {
     return onSendMessage(message ?? text ?? '');
   }

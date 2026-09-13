@@ -213,6 +213,7 @@ serve(async (req: Request) => {
     const body = await req.json();
     const userMessage = (body.message ?? "").toString().trim();
     let conversationId = (body.conversation_id ?? "").toString().trim();
+    const requestedGov = (body.governorate ?? "").toString().trim();
 
     if (!userMessage) {
       return new Response(
@@ -220,6 +221,17 @@ serve(async (req: Request) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Fetch caller user profile from DB to personalize and bind governorate
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("name, governorate, position, role")
+      .eq("id", callerUser.id)
+      .maybeSingle();
+
+    const userGov = requestedGov || userProfile?.governorate || "أسوان";
+    const userName = userProfile?.name || "يا كابتن";
+    const userPosition = userProfile?.position || "مهاجم";
 
     // 7. Conversation Session Management
     if (conversationId) {
@@ -292,10 +304,19 @@ serve(async (req: Request) => {
         const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
 تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
 
+سياق المستخدم الحالي:
+- اسم اللاعب: ${userName}
+- المحافظة الحالية: ${userGov}
+- المركز المفضل: ${userPosition}
+عندما يسأل المستخدم عن ملاعب قريبة، أو ملاعب للحجز، أو ماتشات، أو بطولات دون ذكر محافظة معينة، استخدم محافظته الحالية (${userGov}) كخيار افتراضي للبحث والتحقق!
+
 قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
 1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية وتعتمد عليها حصراً في كل معلومة.
 2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
-3. إذا عادت نتائج أداة searchTournaments أو searchStadiums فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات" أو "لا توجد ملاعب مطابقة حالياً". لا تخترع أسماء بطولات أبداً مثل "ملك الـ 1v1" أو "تحدي الحريفة"!
+3. إذا عادت نتائج أداة searchStadiums فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً ملاعب مسجلة في محافظة [المحافظة] على تطبيق VSP". لا تخترع أي ملاعب أو مواعيد وهمية أبداً!
+4. إذا عادت نتائج أداة searchTournaments فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات". لا تخترع أسماء بطولات أبداً مثل "ملك الـ 1v1" أو "تحدي الحريفة"!
+5. إذا عادت نتائج أداة getOpenMatches فارغة (0 نتائج)، يجب أن تصرح بأنه لا توجد مباريات خماسية مفتوحة تحتاج لاعبين حالياً.
+6. إذا بحث المستخدم في محافظة ولم يجد ملاعب، أخبره بالملعب المتاح في قاعدة البيانات الحالية بكل وضوح وشفافية.
 
 قاعدة إلزامية وصارمة لاستدعاء الأدوات:
 عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون تأليف ودون طرح أي أسئلة استفسارية أولاً:
@@ -336,7 +357,10 @@ serve(async (req: Request) => {
             let toolResponseData: any = {};
 
             if (funcName === "searchStadiums") {
-              const governorate = (args.governorate || "").toString().trim();
+              let governorate = (args.governorate || "").toString().trim();
+              if (!governorate || governorate.includes("قريب") || governorate.includes("هنا") || governorate.includes("عندي")) {
+                governorate = userGov;
+              }
               const maxPrice = Number(args.max_price);
 
               let query = supabase
@@ -352,7 +376,7 @@ serve(async (req: Request) => {
 
               const { data: stadiums } = await query;
               stadiumResults = stadiums || [];
-              toolResponseData = { count: stadiumResults.length, stadiums: stadiumResults };
+              toolResponseData = { count: stadiumResults.length, governorate: governorate, stadiums: stadiumResults };
 
             } else if (funcName === "searchTournaments") {
               const tType = (args.tournament_type || "all").toString().toLowerCase();
@@ -495,12 +519,21 @@ serve(async (req: Request) => {
               assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
             }
 
-            // 🛡️ Zero-Hallucination Guard: If searchTournaments returned 0 rows, never allow hallucinated tournament text!
+            // 🛡️ Zero-Hallucination Guard: When DB returns 0 rows, strictly prevent any hallucinated text!
             if (funcName === "searchTournaments" && tournamentResults.length === 0) {
-              assistantReply = "عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في منطقتك. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!";
+              const targetGov = (args.governorate || userGov).toString().trim();
+              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
+            } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
+              const targetGov = (args.governorate || userGov).toString().trim();
+              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
+            } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
+              assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
             } else if (!assistantReply) {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
+              } else if (funcName === "searchStadiums") {
+                const targetGov = (args.governorate || userGov).toString().trim();
+                assistantReply = `يا كابتن! دي الملاعب المتاحة على VSP في ${targetGov} للحجز الفوري:`;
               } else if (funcName === "searchTournaments") {
                 assistantReply = "لقيتلك البطولات النشطة وجاهزة للتسجيل يا كابتن:";
               } else if (funcName === "getOpenMatches") {
@@ -562,7 +595,11 @@ serve(async (req: Request) => {
         const { data: matches } = await supabase.from("bookings").select("id, stadium_name, current_players, max_players, notes, total_price, start_time").eq("booking_type", "open_join").limit(3);
         openMatchResults = matches || [];
         appAction = { action_type: "NAVIGATE", route: "/bookings", label: "استعراض كل الماتشات المفتوحة ⚽" };
-        assistantReply = "الماتشات المفتوحة اللي محتاجة لعيبة الآن يا كابتن:";
+        if (openMatchResults.length === 0) {
+          assistantReply = "يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة ناقصها لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
+        } else {
+          assistantReply = "الماتشات المفتوحة اللي محتاجة لعيبة الآن يا كابتن:";
+        }
       } else if (userMessage.includes("فريق") || userMessage.includes("فرقتي")) {
         appAction = { action_type: "NAVIGATE", route: "/my-team", label: "الانتقال لصفحة فريقي 🛡️" };
         assistantReply = "حاضر يا كابتن! هوديك لصفحة إدارة فريقك وقائمتك دلوقتي.";
@@ -586,9 +623,23 @@ serve(async (req: Request) => {
         appAction = { action_type: "NAVIGATE", route: "/bookings", label: "مراجعة سجل حجوزاتك ومستحقاتك 📋" };
         assistantReply = "متقلقش خالص يا كابتن، كل عملياتك المالية وحجوزاتك مسجلة ومضمونة في VSP! تقدر تراجع تفاصيل الحجز والمستردات فوراً من شاشة حجوزاتي.";
       } else {
-        const { data: stadiums } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false).limit(5);
-        stadiumResults = stadiums || [];
-        assistantReply = "أهلاً بك يا كابتن! دي أبرز الملاعب المتاحة على VSP للحجز الفوري وتقييمها عالي:";
+        let qStadiums = supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false);
+        if (userGov) {
+          qStadiums = qStadiums.ilike("governorate", `%${userGov}%`);
+        }
+        const { data: localStadiums } = await qStadiums.limit(5);
+        if (localStadiums && localStadiums.length > 0) {
+          stadiumResults = localStadiums;
+          assistantReply = `أهلاً بك يا ${userName}! دي أبرز الملاعب المتاحة على VSP في ${userGov} للحجز الفوري وتقييمها عالي:`;
+        } else {
+          const { data: allStadiums } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false).limit(5);
+          stadiumResults = allStadiums || [];
+          if (stadiumResults.length > 0) {
+            assistantReply = `أهلاً بك يا ${userName}! بحثتلك في قاعدة البيانات، ولقيت الملعب النشط حالياً على VSP:`;
+          } else {
+            assistantReply = `أهلاً بك يا ${userName}! بحثت في قاعدة بيانات VSP ولا توجد ملاعب مسجلة حالياً.`;
+          }
+        }
       }
     }
 

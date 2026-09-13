@@ -440,7 +440,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     onToggleSplitShift: _updateSplitShift,
                     onSelectBreakTime: (index, isStart) => _selectTimeForBreak(context, index, isStart),
                     onAddBreak: () => setState(() => _breakTimes.add({'start': null, 'end': null})),
-                    onRemoveBreak: (index) => setState(() => _breakTimes.removeAt(index)),
+                    onRemoveBreak: (index) {
+                      setState(() {
+                        _breakTimes.removeAt(index);
+                        if (_breakTimes.isEmpty) {
+                          _isSplitShift = false;
+                          if (widget.stadiumId == null) {
+                            StadiumWizardDraftService.saveBool(_uid, 'is_split_shift', false);
+                          }
+                        }
+                      });
+                    },
                     onOpenMapPicker: _openMapPicker,
                     onOpenManualPicker: _openManualLocationPicker,
                     onAddNoteTemplate: (template) {

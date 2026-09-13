@@ -72,7 +72,7 @@ class OwnerVerificationBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isArabic ? 'ملاعبك نشطة ومتاحة لجميع اللاعبين على المنصة' : 'Your pitches are live & available for players to book',
+                    isArabic ? 'ملعبك النشط ومتاح لجميع اللاعبين على التطبيق' : 'Your active pitch is live & available on the app',
                     style: TextStyle(
                       color: const Color(0xFFA7F3D0).withValues(alpha: 0.85),
                       fontSize: 11,

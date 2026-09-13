@@ -17,28 +17,26 @@ class CopilotStarterPrompts extends StatelessWidget {
   });
 
   List<Map<String, dynamic>> _getPrompts(bool ar, String? gov) {
-    final govLabel = (gov != null && gov.trim().isNotEmpty) ? gov.trim() : null;
-
     if (ar) {
       return [
         {
-          'title': govLabel != null ? 'ملاعب قريبة مني في $govLabel' : 'ملاعب قريبة مني الآن',
-          'subtitle': 'أفضل الملاعب المتاحة بالقرب منك للحجز الفوري',
+          'title': 'فين ألعب النهارده؟',
+          'subtitle': 'لاقيلي أقرب ملعب متاح دلوقتي',
           'icon': Icons.near_me_rounded,
         },
         {
-          'title': 'ماتشات خماسية ناقصها لاعيبة',
-          'subtitle': 'انضم لمباراة مفتوحة وتقسيمة محتاجة حريفة',
+          'title': 'في ماتش ناقص لاعيب؟',
+          'subtitle': 'انضم لتقسيمة خماسي ناقصاها حريف',
           'icon': Icons.sports_soccer_rounded,
         },
         {
-          'title': 'ملاعب فاضية للحجز الليلة',
-          'subtitle': 'احجز مباراة سريعة في الساعات المسائية',
-          'icon': Icons.nightlight_round,
+          'title': 'أرخص ملعب قريب مني',
+          'subtitle': 'أحسن سعر مقابل أحسن ملعب',
+          'icon': Icons.savings_rounded,
         },
         {
-          'title': 'البطولات والتحديات المتاحة حالياً',
-          'subtitle': 'جوائز مالية وتنافس خماسي ودوري الحريفة 1v1',
+          'title': 'في بطولات أقدر أشترك فيها؟',
+          'subtitle': 'بطولات وتحديات فردية متاحة دلوقتي',
           'icon': Icons.emoji_events_rounded,
         },
       ];
@@ -46,23 +44,23 @@ class CopilotStarterPrompts extends StatelessWidget {
 
     return [
       {
-        'title': govLabel != null ? 'Pitches near me in $govLabel' : 'Pitches near me now',
-        'subtitle': 'Best verified venues available for instant booking',
+        'title': 'Where can I play today?',
+        'subtitle': 'Find me the nearest available pitch now',
         'icon': Icons.near_me_rounded,
       },
       {
-        'title': 'Open matches looking for players',
-        'subtitle': 'Join open pick-up games looking for teammates',
+        'title': 'Any open matches nearby?',
+        'subtitle': 'Join a pick-up game looking for players',
         'icon': Icons.sports_soccer_rounded,
       },
       {
-        'title': 'Available pitches tonight',
-        'subtitle': 'Fast-track evening slots for quick matches',
-        'icon': Icons.nightlight_round,
+        'title': 'Cheapest pitch near me',
+        'subtitle': 'Best value for money venues around you',
+        'icon': Icons.savings_rounded,
       },
       {
-        'title': 'Active tournaments & 1v1 challenges',
-        'subtitle': 'Explore cash prize leagues and individual rankings',
+        'title': 'Any tournaments I can join?',
+        'subtitle': 'Active leagues and 1v1 challenges available now',
         'icon': Icons.emoji_events_rounded,
       },
     ];
@@ -115,7 +113,28 @@ class CopilotStarterPrompts extends StatelessWidget {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.borderLight),
+            ),
+            child: Text(
+              isArabic
+                  ? 'يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟ 🎯'
+                  : 'Hey Captain! Tell me what you need — a pitch, a match, or a tournament? 🎯',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: VSPColors.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // VSP Design System Prompt Cards
           ListView.separated(
@@ -130,8 +149,8 @@ class CopilotStarterPrompts extends StatelessWidget {
                   borderRadius: BorderRadius.circular(VSPRadius.card),
                   gradient: const LinearGradient(
                     colors: [
-                      Color(0xFF162414), // Subtle dark green tint
-                      VSPColors.surface, // Zinc 900
+                      VSPColors.surfaceAlt, // Zinc 800
+                      VSPColors.surface,    // Zinc 900
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,

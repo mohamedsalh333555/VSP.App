@@ -69,6 +69,70 @@ void main() {
       expect(res, isNull);
     });
 
+    test('validateStep0 allows empty or null breakTimes when isSplitShift is true (strictly optional)', () {
+      final resEmpty = StadiumWizardValidator.validateStep0(
+        location: 'Cairo, Egypt',
+        name: 'Camp Nou',
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        price: '150',
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [],
+        isArabic: false,
+      );
+      expect(resEmpty, isNull);
+
+      final resNullBreak = StadiumWizardValidator.validateStep0(
+        location: 'Cairo, Egypt',
+        name: 'Camp Nou',
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        price: '150',
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [{'start': null, 'end': null}],
+        isArabic: false,
+      );
+      expect(resNullBreak, isNull);
+    });
+
+    test('validateStep0 validates completed breaks and rejects out-of-bounds break', () {
+      final resValidBreak = StadiumWizardValidator.validateStep0(
+        location: 'Cairo, Egypt',
+        name: 'Camp Nou',
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        price: '150',
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [
+          {'start': const TimeOfDay(hour: 18, minute: 0), 'end': const TimeOfDay(hour: 19, minute: 0)}
+        ],
+        isArabic: false,
+      );
+      expect(resValidBreak, isNull);
+
+      final resInvalidBreak = StadiumWizardValidator.validateStep0(
+        location: 'Cairo, Egypt',
+        name: 'Camp Nou',
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        price: '150',
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [
+          {'start': const TimeOfDay(hour: 10, minute: 0), 'end': const TimeOfDay(hour: 11, minute: 0)}
+        ],
+        isArabic: true,
+      );
+      expect(resInvalidBreak, contains('فترة الراحة 1 يجب أن تكون داخل مواعيد العمل الرسمية'));
+    });
+
     test('validateStep1 checks features and deposit limits', () {
       final nullFeatures = StadiumWizardValidator.validateStep1(
         selectedBathOption: null,
@@ -169,6 +233,66 @@ void main() {
       expect(features['ballPrice'], equals(25.0));
       expect(features['workingHours']['start'], equals('16:00:00'));
       expect(features['allImages'], contains('https://example.com/img1.jpg'));
+    });
+
+    test('buildFeatures filters incomplete breakTimes and sets isSplitShift to false if empty', () {
+      final features = StadiumWizardPayloadBuilder.buildFeatures(
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        floorType: 'Turf',
+        bathOption: 'Yes',
+        cafeteria: true,
+        garage: false,
+        changingRoom: true,
+        seats: '50',
+        length: '40',
+        width: '20',
+        hasBall: false,
+        ballPrice: 0.0,
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [
+          {'start': null, 'end': null},
+          {'start': const TimeOfDay(hour: 17, minute: 0), 'end': null},
+        ],
+        uploadedUrls: [],
+      );
+
+      expect(features['isSplitShift'], isFalse);
+      expect(features['breakTimes'], isEmpty);
+      expect(features['breakTime'], isNull);
+    });
+
+    test('buildFeatures preserves valid completed breakTimes', () {
+      final features = StadiumWizardPayloadBuilder.buildFeatures(
+        stadiumPhone: '01012345678',
+        sportType: 'Football',
+        floorType: 'Turf',
+        bathOption: 'Yes',
+        cafeteria: true,
+        garage: false,
+        changingRoom: true,
+        seats: '50',
+        length: '40',
+        width: '20',
+        hasBall: false,
+        ballPrice: 0.0,
+        startTime: const TimeOfDay(hour: 16, minute: 0),
+        endTime: const TimeOfDay(hour: 23, minute: 0),
+        isSplitShift: true,
+        breakTimes: [
+          {'start': const TimeOfDay(hour: 18, minute: 0), 'end': const TimeOfDay(hour: 19, minute: 0)},
+          {'start': null, 'end': null},
+        ],
+        uploadedUrls: [],
+      );
+
+      expect(features['isSplitShift'], isTrue);
+      expect(features['breakTimes'].length, equals(1));
+      expect(features['breakTimes'].first['start'], equals('18:00:00'));
+      expect(features['breakTimes'].first['end'], equals('19:00:00'));
+      expect(features['breakTime']['start'], equals('18:00:00'));
     });
 
     test('buildUpdatePayload builds proper schema map', () {
