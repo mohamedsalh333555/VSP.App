@@ -40,11 +40,16 @@ class Vsp1v1LeagueTab extends StatefulWidget {
   State<Vsp1v1LeagueTab> createState() => _Vsp1v1LeagueTabState();
 }
 
-class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab> {
+class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   bool _isProcessingPayment = false;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final auth = Provider.of<AuthProvider>(context);
     final userGovRaw = auth.userModel?.governorate ?? auth.governorate;
     final userGov = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? userGovRaw;

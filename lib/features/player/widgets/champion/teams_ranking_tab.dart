@@ -10,24 +10,72 @@ import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import 'champion_podium_components.dart';
 
-class TeamsRankingTab extends StatelessWidget {
-  final Stream<List<Team>> teamsStream;
+class TeamsRankingTab extends StatefulWidget {
+  final Stream<List<Team>>? teamsStream;
   final String selectedLocation;
   final String selectedSport;
   final VoidCallback onRetry;
+  final TeamRepository? teamRepository;
 
   const TeamsRankingTab({
     super.key,
-    required this.teamsStream,
+    this.teamsStream,
     required this.selectedLocation,
     required this.selectedSport,
     required this.onRetry,
+    this.teamRepository,
   });
 
   @override
+  State<TeamsRankingTab> createState() => _TeamsRankingTabState();
+}
+
+class _TeamsRankingTabState extends State<TeamsRankingTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  late Stream<List<Team>> _stream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStream();
+  }
+
+  void _initStream() {
+    if (widget.teamsStream != null) {
+      _stream = widget.teamsStream!;
+    } else {
+      _stream = (widget.teamRepository ?? TeamRepository()).getTeams();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TeamsRankingTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.teamsStream != null && widget.teamsStream != oldWidget.teamsStream) {
+      _stream = widget.teamsStream!;
+    } else if (widget.teamsStream == null &&
+        oldWidget.selectedLocation != widget.selectedLocation) {
+      setState(() {
+        _initStream();
+      });
+    }
+  }
+
+  void _handleRetry() {
+    setState(() {
+      _initStream();
+    });
+    widget.onRetry();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return StreamBuilder<List<Team>>(
-      stream: teamsStream,
+      stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -35,21 +83,21 @@ class TeamsRankingTab extends StatelessWidget {
         if (snapshot.hasError) {
           return VSPErrorState(
             customMessage: snapshot.error?.toString(),
-            onRetry: onRetry,
+            onRetry: _handleRetry,
           );
         }
 
         final List<Team> allTeams = snapshot.data ?? [];
 
         final teams = allTeams.where((team) {
-          final matchesLocation = selectedLocation == 'All' ||
-              team.governorate.toLowerCase() == selectedLocation.toLowerCase() ||
-              EgyptGovernorates.resolveGoogleName(team.governorate) == selectedLocation ||
+          final matchesLocation = widget.selectedLocation == 'All' ||
+              team.governorate.toLowerCase() == widget.selectedLocation.toLowerCase() ||
+              EgyptGovernorates.resolveGoogleName(team.governorate) == widget.selectedLocation ||
               (EgyptGovernorates.resolveGoogleName(team.governorate) != null &&
                   EgyptGovernorates.resolveGoogleName(team.governorate) ==
-                      EgyptGovernorates.resolveGoogleName(selectedLocation));
+                      EgyptGovernorates.resolveGoogleName(widget.selectedLocation));
 
-          final matchesSport = team.sportType.toLowerCase() == selectedSport.toLowerCase();
+          final matchesSport = team.sportType.toLowerCase() == widget.selectedSport.toLowerCase();
 
           return matchesLocation && matchesSport;
         }).toList();
@@ -59,7 +107,7 @@ class TeamsRankingTab extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Text(
-                AppLocalizations.of(context)!.noTeamsInLoc(championTranslateItem(context, selectedLocation)),
+                AppLocalizations.of(context)!.noTeamsInLoc(championTranslateItem(context, widget.selectedLocation)),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
               ),

@@ -4,10 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/league_repository.dart';
-import '../../../core/repositories/team_repository.dart';
-import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import '../widgets/champion/champion_podium_components.dart';
 import '../widgets/champion/championships_list_tab.dart';
@@ -25,61 +22,6 @@ class ChampionScreen extends StatefulWidget {
 
 class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
-  // Stream memoization to prevent recreation on rebuild
-  Stream<List<Championship>>? _championshipsStream;
-  String? _lastChampionshipsKey;
-  Stream<List<Championship>> _getChampionshipsStream() {
-    final key = '${_selectedLocation}_$_selectedSport';
-    if (_championshipsStream != null && _lastChampionshipsKey == key) {
-      return _championshipsStream!;
-    }
-    _lastChampionshipsKey = key;
-    _championshipsStream = TournamentRepository().getChampionshipsStream(
-      governorate: _selectedLocation,
-      sportType: _selectedSport,
-    );
-    return _championshipsStream!;
-  }
-
-  Stream<List<Team>>? _teamsStream;
-  Stream<List<Team>> _getTeamsStream() {
-    _teamsStream ??= TeamRepository().getTeams();
-    return _teamsStream!;
-  }
-
-  Stream<Map<String, dynamic>?>? _active1v1Stream;
-  String? _last1v1Location;
-  Stream<Map<String, dynamic>?> _getActive1v1Stream(String effectiveLocation) {
-    if (_active1v1Stream != null && _last1v1Location == effectiveLocation) {
-      return _active1v1Stream!;
-    }
-    _last1v1Location = effectiveLocation;
-    _active1v1Stream = LeagueRepository().getActive1v1TournamentStream(governorate: effectiveLocation);
-    return _active1v1Stream!;
-  }
-
-  Stream<List<Map<String, dynamic>>>? _tournamentPlayersStream;
-  String? _lastTourneyPlayersId;
-  Stream<List<Map<String, dynamic>>> _getTournamentPlayersStream(String tournamentId) {
-    if (_tournamentPlayersStream != null && _lastTourneyPlayersId == tournamentId) {
-      return _tournamentPlayersStream!;
-    }
-    _lastTourneyPlayersId = tournamentId;
-    _tournamentPlayersStream = LeagueRepository().getTournamentPlayersStream(tournamentId, isCompleted: false);
-    return _tournamentPlayersStream!;
-  }
-
-  Stream<List<VSP1v1Player>>? _standingsStream;
-  String? _lastStandingsId;
-  Stream<List<VSP1v1Player>> _getStandingsStream(String? tourneyId) {
-    if (_standingsStream != null && _lastStandingsId == tourneyId) {
-      return _standingsStream!;
-    }
-    _lastStandingsId = tourneyId;
-    _standingsStream = LeagueRepository().get1v1Standings(tournamentId: tourneyId);
-    return _standingsStream!;
-  }
-
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
@@ -295,13 +237,12 @@ class ChampionScreenState extends State<ChampionScreen>
                 physics: const BouncingScrollPhysics(),
                 children: [
                   ChampionshipsListTab(
-                    championshipsStream: _getChampionshipsStream(),
                     selectedLocation: _selectedLocation,
+                    selectedSport: _selectedSport,
                     onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
                     onRetry: () => setState(() {}),
                   ),
                   TeamsRankingTab(
-                    teamsStream: _getTeamsStream(),
                     selectedLocation: _selectedLocation,
                     selectedSport: _selectedSport,
                     onRetry: () => setState(() {}),
@@ -309,9 +250,9 @@ class ChampionScreenState extends State<ChampionScreen>
                   Vsp1v1LeagueTab(
                     selectedLocation: _selectedLocation,
                     onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
-                    getActive1v1Stream: _getActive1v1Stream,
-                    getTournamentPlayersStream: _getTournamentPlayersStream,
-                    getStandingsStream: _getStandingsStream,
+                    getActive1v1Stream: (loc) => LeagueRepository().getActive1v1TournamentStream(governorate: loc),
+                    getTournamentPlayersStream: (id) => LeagueRepository().getTournamentPlayersStream(id, isCompleted: false),
+                    getStandingsStream: (id) => LeagueRepository().get1v1Standings(tournamentId: id),
                     onRetry: () => setState(() {}),
                   ),
                 ],

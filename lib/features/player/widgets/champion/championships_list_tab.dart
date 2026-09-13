@@ -7,34 +7,91 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
 import '../championship_card.dart';
 
-class ChampionshipsListTab extends StatelessWidget {
-  final Stream<List<Championship>> championshipsStream;
+class ChampionshipsListTab extends StatefulWidget {
+  final Stream<List<Championship>>? championshipsStream;
   final String selectedLocation;
+  final String selectedSport;
   final ValueChanged<String> onLocationChanged;
   final VoidCallback onRetry;
+  final TournamentRepository? tournamentRepository;
 
   const ChampionshipsListTab({
     super.key,
-    required this.championshipsStream,
+    this.championshipsStream,
     required this.selectedLocation,
+    this.selectedSport = 'Football',
     required this.onLocationChanged,
     required this.onRetry,
+    this.tournamentRepository,
   });
 
   @override
+  State<ChampionshipsListTab> createState() => _ChampionshipsListTabState();
+}
+
+class _ChampionshipsListTabState extends State<ChampionshipsListTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  late Stream<List<Championship>> _stream;
+
+  @override
+  void initState() {
+    super.initState();
+    _initStream();
+  }
+
+  void _initStream() {
+    if (widget.championshipsStream != null) {
+      _stream = widget.championshipsStream!;
+    } else {
+      _stream = (widget.tournamentRepository ?? TournamentRepository())
+          .getChampionshipsStream(
+        governorate: widget.selectedLocation,
+        sportType: widget.selectedSport,
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ChampionshipsListTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.championshipsStream != null &&
+        widget.championshipsStream != oldWidget.championshipsStream) {
+      _stream = widget.championshipsStream!;
+    } else if (widget.championshipsStream == null &&
+        (oldWidget.selectedLocation != widget.selectedLocation ||
+            oldWidget.selectedSport != widget.selectedSport)) {
+      setState(() {
+        _initStream();
+      });
+    }
+  }
+
+  void _handleRetry() {
+    setState(() {
+      _initStream();
+    });
+    widget.onRetry();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userGovRaw = auth.userModel?.governorate ?? auth.governorate;
     final userGov = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? userGovRaw;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isDifferentGov = userGov.isNotEmpty && selectedLocation.toLowerCase() != userGov.toLowerCase();
+    final isDifferentGov = userGov.isNotEmpty && widget.selectedLocation.toLowerCase() != userGov.toLowerCase();
 
     return StreamBuilder<List<Championship>>(
-      stream: championshipsStream,
+      stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -57,7 +114,7 @@ class ChampionshipsListTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   TextButton.icon(
-                    onPressed: onRetry,
+                    onPressed: _handleRetry,
                     icon: const Icon(Icons.refresh, color: VSPColors.accent, size: 16),
                     label: Text(
                       isArabic ? 'إعادة المحاولة' : 'Retry',
@@ -90,12 +147,12 @@ class ChampionshipsListTab extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        isArabic ? 'تتصفح بطولات: $selectedLocation' : 'Viewing: $selectedLocation',
+                        isArabic ? 'تتصفح بطولات: ${widget.selectedLocation}' : 'Viewing: ${widget.selectedLocation}',
                         style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     InkWell(
-                      onTap: () => onLocationChanged(userGov),
+                      onTap: () => widget.onLocationChanged(userGov),
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -121,7 +178,7 @@ class ChampionshipsListTab extends StatelessWidget {
                             Icon(Iconsax.cup_copy, color: Colors.white.withValues(alpha: 0.1), size: 64),
                             const SizedBox(height: 16),
                             Text(
-                              AppLocalizations.of(context)!.noChampionshipsInLoc(selectedLocation),
+                              AppLocalizations.of(context)!.noChampionshipsInLoc(widget.selectedLocation),
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                             ),
@@ -130,7 +187,7 @@ class ChampionshipsListTab extends StatelessWidget {
                               PrimaryButton(
                                 text: isArabic ? 'العودة لبطولات $userGov' : 'Return to $userGov Tournaments',
                                 height: 44,
-                                onPressed: () => onLocationChanged(userGov),
+                                onPressed: () => widget.onLocationChanged(userGov),
                               ),
                             ],
                           ],
