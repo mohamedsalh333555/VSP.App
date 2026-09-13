@@ -189,7 +189,7 @@ class VspCopilotService {
 
     // 1. Validation: Throw Exception on empty or whitespace-only messages
     if (cleanText.isEmpty) {
-      throw FormatException('الرجاء إدخال رسالة صحيحة للبحث (Message cannot be empty or whitespace).');
+      throw const FormatException('الرجاء إدخال رسالة صحيحة للبحث (Message cannot be empty or whitespace).');
     }
 
     // 2. Sliding Window Rate Limiting (10 requests per 60 seconds)
