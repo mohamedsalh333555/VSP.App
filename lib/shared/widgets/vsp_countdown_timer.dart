@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 
 class VSPCountdownTimer extends StatefulWidget {
   final DateTime targetDate;

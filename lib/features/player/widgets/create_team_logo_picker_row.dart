@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../l10n/app_localizations.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Logo picker row used inside [CreateTeamSheet].
 ///

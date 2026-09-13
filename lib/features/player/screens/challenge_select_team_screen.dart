@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import '../widgets/challenge/challenge_team_card.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
-import '../../../../core/providers/booking_provider.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 
