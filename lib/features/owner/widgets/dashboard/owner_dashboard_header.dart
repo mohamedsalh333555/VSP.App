@@ -163,62 +163,97 @@ class OwnerDashboardHeader extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // 2. Name & Pro Badge Pill
+              // 2. Name & Status Badges
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: VSPColors.textPrimary,
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ),
+                        if (user?.isIdentityVerified == true || user?.verificationStatus == 'approved') ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(VSPRadius.full),
+                              border: Border.all(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Iconsax.verify_copy,
+                                  color: Color(0xFF34D399),
+                                  size: 11,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  isArabic ? 'معتمد' : 'Verified',
+                                  style: const TextStyle(
+                                    color: Color(0xFF34D399),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 4),
 
-                    // Badge Pill (Pro / Basic)
-                    GestureDetector(
-                      onTap: onUpgrade,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isProOwner
-                              ? VSPColors.accent.withValues(alpha: 0.16)
-                              : Colors.white.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                          border: Border.all(
-                            color: isProOwner
-                                ? VSPColors.accent.withValues(alpha: 0.5)
-                                : Colors.white.withValues(alpha: 0.12),
-                            width: 0.8,
-                          ),
-                          boxShadow: isProOwner
-                              ? [
-                                  BoxShadow(
-                                    color: VSPColors.accent.withValues(alpha: 0.2),
-                                    blurRadius: 8,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Text(
-                          isProOwner
-                              ? 'Pro'
-                              : (isTrial ? (isArabic ? 'فترة مجانية' : 'Free Trial') : 'Basic'),
-                          style: TextStyle(
-                            color: isProOwner ? VSPColors.accent : Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.4,
+                    // Badge Pill (Pro / Basic / Free Trial)
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: onUpgrade,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isProOwner
+                                  ? VSPColors.accent.withValues(alpha: 0.14)
+                                  : Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(VSPRadius.full),
+                              border: Border.all(
+                                color: isProOwner
+                                    ? VSPColors.accent.withValues(alpha: 0.35)
+                                    : Colors.white.withValues(alpha: 0.08),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              isProOwner
+                                  ? 'PRO'
+                                  : (isTrial ? (isArabic ? 'فترة مجانية' : 'Free Trial') : 'Basic'),
+                              style: TextStyle(
+                                color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

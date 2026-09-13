@@ -18,51 +18,58 @@ class OwnerProUpgradeTeaser extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            VSPColors.surface,
-            VSPColors.accent.withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.crown_copy, color: VSPColors.accent, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                isArabic ? 'ضاعف أرباحك مع الباقة الاحترافية (PRO)' : 'Maximize Growth with PRO Plan',
-                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.w900),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Iconsax.crown_copy, color: Color(0xFFF59E0B), size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isArabic ? 'ضاعف أرباحك مع الباقة الاحترافية (PRO)' : 'Maximize Growth with PRO Plan',
+                  style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             isArabic
                 ? 'أدر حتى 3 ملاعب كاملة، واحصل على مركز التحليلات العميقة، وتقارير نسبة الإشغال، ورسوم بيانية لأفضل أيام الأسبوع وساعات الذروة.'
                 : 'Operate up to 3 pitches, get Deep Insights Center, Occupancy rate analytics, and weekly revenue & peak hour charts.',
-            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.45),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           GestureDetector(
             onTap: onUpgrade,
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: VSPColors.accent,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
+                color: VSPColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
               ),
               child: Center(
                 child: Text(
-                  isArabic ? 'ترقية الآن (1000 ج.م / شهر)' : 'Upgrade to Pro (1000 EGP)',
-                  style: const TextStyle(color: Colors.black, fontSize: 12.5, fontWeight: FontWeight.w900),
+                  isArabic ? 'ترقية الآن (1000 ج.م / شهر)' : 'Upgrade to PRO (1000 EGP / mo)',
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

@@ -22,74 +22,9 @@ class OwnerVerificationBanner extends StatelessWidget {
     final bool isPending = !isApproved && (userModel.verificationStatus == 'pending' || userModel.verificationStatus == 'under_review');
     final bool isRejected = !isApproved && userModel.verificationStatus == 'rejected';
 
-    // 1. منشأة معتمدة وموثقة رسمياً
+    // 1. منشأة معتمدة وموثقة رسمياً (تظهر كبادج فخر أنيق وموثوق في الهيدر مباشرة بجانب الاسم)
     if (isApproved) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF10B981).withValues(alpha: 0.14),
-              const Color(0xFF047857).withValues(alpha: 0.08),
-            ],
-            begin: AlignmentDirectional.centerStart,
-            end: AlignmentDirectional.centerEnd,
-          ),
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(
-            color: const Color(0xFF10B981).withValues(alpha: 0.35),
-            width: 0.9,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Iconsax.verify_copy,
-                color: Color(0xFF34D399),
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    isArabic ? 'منشأة رياضية موثقة ومعتمدة رسمياً' : 'Officially Verified Sports Facility',
-                    style: const TextStyle(
-                      color: Color(0xFFD1FAE5),
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isArabic ? 'ملعبك النشط ومتاح لجميع اللاعبين على التطبيق' : 'Your active pitch is live & available on the app',
-                    style: TextStyle(
-                      color: const Color(0xFFA7F3D0).withValues(alpha: 0.85),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            const Icon(
-              Iconsax.cup_copy,
-              color: Color(0xFF34D399),
-              size: 20,
-            ),
-          ],
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     // 2. المستندات قيد المراجعة من الإدارة

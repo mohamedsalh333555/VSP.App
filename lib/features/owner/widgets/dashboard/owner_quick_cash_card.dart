@@ -208,16 +208,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF13221A),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,12 +218,13 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.18),
+                  color: Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 ),
-                child: const Icon(Iconsax.wallet_check_copy, color: VSPColors.accent, size: 18),
+                child: const Icon(Iconsax.wallet_check_copy, color: VSPColors.accent, size: 17),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -245,11 +239,12 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       widget.isArabic
                           ? 'متبقي للتحصيل: ${totalRemainingCash.toInt()} ج.م'
                           : 'Pending collection: ${totalRemainingCash.toInt()} EGP',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w600),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -257,19 +252,19 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.15),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: Text(
                   '${pendingCashBookings.length} ${widget.isArabic ? 'قيد التحصيل' : 'Pending'}',
-                  style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(color: Colors.white12, height: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.05), height: 1),
           const SizedBox(height: 10),
           for (int i = 0; i < pendingCashBookings.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
@@ -288,9 +283,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,14 +293,14 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   AppDateFormatter.formatTime(b.startTime.toLocal(), locale),
-                  style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.textPrimary, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 8),
@@ -337,8 +332,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                   height: 36,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
+                      backgroundColor: const Color(0xFF10B981),
+                      foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                       padding: EdgeInsets.zero,
@@ -348,7 +343,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                         ? const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.check, size: 16),
                     label: Text(
@@ -365,7 +360,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                   height: 36,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                      backgroundColor: Colors.white.withValues(alpha: 0.02),
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                       padding: EdgeInsets.zero,
                     ),

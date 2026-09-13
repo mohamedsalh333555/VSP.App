@@ -115,31 +115,48 @@ class OwnerGlanceableTimeline extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isOngoing ? const Color(0xFF12231A) : VSPColors.surface,
+                  color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                   border: Border.all(
                     color: isOngoing
-                        ? VSPColors.accent.withValues(alpha: 0.35)
-                        : Colors.white.withValues(alpha: 0.05),
+                        ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.06),
+                    width: 1,
                   ),
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
                         color: isOngoing
-                            ? VSPColors.accentSoft
+                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
                             : Colors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(VSPRadius.sm),
                       ),
-                      child: Text(
-                        AppDateFormatter.formatTime(b.startTime.toLocal(), locale),
-                        style: TextStyle(
-                          color: isOngoing ? VSPColors.accent : VSPColors.textPrimary,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isOngoing) ...[
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(right: 5),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF34D399),
+                              ),
+                            ),
+                          ],
+                          Text(
+                            AppDateFormatter.formatTime(b.startTime.toLocal(), locale),
+                            style: TextStyle(
+                              color: isOngoing ? const Color(0xFF34D399) : VSPColors.textPrimary,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 12),
