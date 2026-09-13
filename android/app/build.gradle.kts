@@ -19,7 +19,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "app.vsp.sports"
     compileSdk = 35
-    // ndkVersion = "30.0.15729638"
+    ndkVersion = "30.0.15729638"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -87,4 +87,10 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+}
+
+tasks.configureEach {
+    if (name.contains("CMake")) {
+        enabled = false
+    }
 }
