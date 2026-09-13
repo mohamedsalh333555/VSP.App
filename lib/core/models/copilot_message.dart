@@ -197,6 +197,10 @@ class CopilotMessage {
   bool get hasOpenMatches => openMatchResults.isNotEmpty;
   bool get hasAction => action != null;
 
+  /// Compatibility alias getters for test suite and client callers
+  String get message => text;
+  List<CopilotStadiumSummary> get stadiums => stadiumResults;
+
   factory CopilotMessage.user(String text, {String? conversationId}) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),

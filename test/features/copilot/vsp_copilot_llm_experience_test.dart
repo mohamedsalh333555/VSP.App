@@ -30,8 +30,12 @@ class MockLlmCopilotService extends VspCopilotService {
   Future<bool> deleteConversation(String conversationId) async => true;
 
   @override
-  Future<CopilotMessage> sendMessage(String text, {String? conversationId}) async {
-    return onSendMessage(text, conversationId);
+  Future<CopilotMessage> sendMessage({
+    String? message,
+    String? text,
+    String? conversationId,
+  }) async {
+    return onSendMessage(message ?? text ?? '', conversationId);
   }
 }
 
@@ -95,15 +99,15 @@ void main() {
       );
 
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      expect(find.text('ملاعب 5 ضد 5 في القاهرة'), findsOneWidget);
-      expect(find.text('ملاعب مفتوحة الليلة بعد 8 مساءً'), findsOneWidget);
-      expect(find.text('أرخص الملاعب المتاحة حالياً'), findsOneWidget);
-      expect(find.text('ملاعب تقييمها أعلى من 4.5 نجوم'), findsOneWidget);
+      expect(find.text('ملاعب قريبة مني الآن'), findsOneWidget);
+      expect(find.text('ماتشات خماسية ناقصها لاعيبة'), findsOneWidget);
+      expect(find.text('ملاعب فاضية للحجز الليلة'), findsOneWidget);
+      expect(find.text('البطولات والتحديات المتاحة حالياً'), findsOneWidget);
 
-      await tester.tap(find.text('ملاعب 5 ضد 5 في القاهرة'));
+      await tester.tap(find.text('ملاعب قريبة مني الآن'));
       await tester.pump();
 
-      expect(clickedPrompt, 'ملاعب 5 ضد 5 في القاهرة');
+      expect(clickedPrompt, 'ملاعب قريبة مني الآن');
     });
 
     testWidgets('CopilotChatBubble renders copy button and handles stadium book click', (tester) async {
@@ -192,15 +196,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Starts with starter prompts in empty state
-      expect(find.text('ملاعب 5 ضد 5 في القاهرة'), findsOneWidget);
+      expect(find.text('ملاعب قريبة مني الآن'), findsOneWidget);
 
       // Tap starter prompt
-      await tester.tap(find.text('ملاعب 5 ضد 5 في القاهرة'));
+      await tester.tap(find.text('ملاعب قريبة مني الآن'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
       // Prompt is sent and bubble appears
-      expect(find.text('رد تجريبي على: ملاعب 5 ضد 5 في القاهرة'), findsOneWidget);
+      expect(find.text('رد تجريبي على: ملاعب قريبة مني الآن'), findsOneWidget);
       expect(find.text('ملعب التجمع'), findsOneWidget);
     });
 

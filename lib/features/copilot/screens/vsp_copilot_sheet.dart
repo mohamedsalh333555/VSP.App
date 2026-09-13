@@ -103,7 +103,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
     });
     _scrollToBottom();
 
-    final response = await widget.copilotService.sendMessage(text);
+    final response = await widget.copilotService.sendMessage(message: text);
 
     if (mounted) {
       setState(() {

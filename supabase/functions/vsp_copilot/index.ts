@@ -292,22 +292,26 @@ serve(async (req: Request) => {
         const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
 تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
 
-قاعدة إلزامية وصارمة لا استثناء فيها:
-عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون طرح أي أسئلة استفسارية أو توضيحية أولاً:
-1. ماتشات ناقصة لاعيبة أو تقسيمة: استدعِ getOpenMatches فوراً.
-2. بطولات أو كؤوس أو جوائز: استدعِ searchTournaments فوراً.
+قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
+1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية وتعتمد عليها حصراً في كل معلومة.
+2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
+3. إذا عادت نتائج أداة searchTournaments أو searchStadiums فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات" أو "لا توجد ملاعب مطابقة حالياً". لا تخترع أسماء بطولات أبداً مثل "ملك الـ 1v1" أو "تحدي الحريفة"!
+
+قاعدة إلزامية وصارمة لاستدعاء الأدوات:
+عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون تأليف ودون طرح أي أسئلة استفسارية أولاً:
+1. بطولات أو كؤوس أو جوائز أو بطولات فردية (1v1): استدعِ searchTournaments فوراً.
+2. ماتشات ناقصة لاعيبة أو تقسيمة: استدعِ getOpenMatches فوراً.
 3. الأول أو الترتيب أو دوري 1v1 أو النقاط: استدعِ get1v1Leaderboard فوراً.
 4. البحث عن ملاعب أو أسعار: استدعِ searchStadiums فوراً.
-5. تغيير المركز أو تعديل بيانات الملف الشخصي (مثل "غير مركزي لمهاجم"): استدعِ updateUserProfile فوراً.
-6. الاستفسار عن حجز، فلوس، استرداد أموال، أو تتبع المستحقات: استدعِ getUserBookingsAndRefunds فوراً وطمئن المستخدم باحترافية.
-7. طلب الذهاب لشاشة معينة (وديني فريقي، افتح البطولات، وريني البروفايل، الإعدادات، الحجوزات): استدعِ executeAppAction فوراً.
+5. تغيير المركز أو تعديل بيانات الملف الشخصي: استدعِ updateUserProfile فوراً.
+6. الاستفسار عن حجز، فلوس، استرداد أموال: استدعِ getUserBookingsAndRefunds فوراً.
+7. طلب الذهاب لشاشة معينة: استدعِ executeAppAction فوراً.
 
 فلسفة احتساب نقاط دوري 1 ضد 1 الفردي (الحريفة):
 - كل هدف = +1 نقطة.
 - كل مهارة ناجحة/استعراض = +1 نقطة.
 - كل قطع كرة/استخلاص = +1 نقطة.
-- إجمالي النقاط = (أهداف + مهارات + قطع كرات).
-- أرقام البطولة الواقعية للبطل تتراوح بين 10 إلى 20 نقطة طوال البطولة (مثل المتصدر أحمد زيزو بـ 16 نقطة: 6 أهداف + 6 مهارات + 4 قطع كرات). وضّح هذه المعادلة دائماً باعتزاز واحترافية.`;
+- إجمالي النقاط = (أهداف + مهارات + قطع كرات).`;
 
         const firstPayload = {
           systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -491,7 +495,10 @@ serve(async (req: Request) => {
               assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
             }
 
-            if (!assistantReply) {
+            // 🛡️ Zero-Hallucination Guard: If searchTournaments returned 0 rows, never allow hallucinated tournament text!
+            if (funcName === "searchTournaments" && tournamentResults.length === 0) {
+              assistantReply = "عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في منطقتك. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!";
+            } else if (!assistantReply) {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
               } else if (funcName === "searchTournaments") {
@@ -509,9 +516,20 @@ serve(async (req: Request) => {
             handledByGemini = true;
 
           } else {
-            assistantReply = candidate1?.parts?.[0]?.text || "";
-            if (assistantReply.trim().length > 0) {
-              handledByGemini = true;
+            // 🛡️ Anti-hallucination: If user asked about tournaments, stadiums, or leaderboard, but Gemini skipped tool call, fall back to live DB queries!
+            const needsTool = userMessage.includes("بطول") ||
+                              userMessage.includes("كأس") ||
+                              userMessage.includes("دوري") ||
+                              userMessage.includes("1v1") ||
+                              userMessage.includes("ملعب") ||
+                              userMessage.includes("ملاعب");
+            if (needsTool) {
+              handledByGemini = false;
+            } else {
+              assistantReply = candidate1?.parts?.[0]?.text || "";
+              if (assistantReply.trim().length > 0) {
+                handledByGemini = true;
+              }
             }
           }
         }
@@ -527,9 +545,13 @@ serve(async (req: Request) => {
         const { data: t1v1 } = await supabase.from("vsp_1v1_tournaments").select("name, prize_pool").eq("status", "registration_open").limit(2);
         tournamentResults = [...(champs || []), ...(t1v1 || [])];
         appAction = { action_type: "NAVIGATE", route: "/tournaments", label: "فتح صفحة البطولات 🏆" };
-        assistantReply = "يا كابتن! دي أحدث البطولات النشطة على VSP:\n" +
-          (champs || []).map((c: any) => `🏆 ${c.name} - جائزة: ${c.grand_prize} ج.م`).join("\n") + "\n" +
-          (t1v1 || []).map((t: any) => `⚡ ${t.name} - جائزة: ${t.prize_pool} ج.م`).join("\n");
+        if (tournamentResults.length === 0) {
+          assistantReply = "يا كابتن، حالياً لا توجد بطولات مفتوحة للتسجيل في قاعدة بيانات VSP. تقدر تتابع صفحة البطولات أولاً بأول، أو تطلب مني البحث عن ملاعب أو ماتشات مفتوحة تنضم ليها!";
+        } else {
+          assistantReply = "يا كابتن! دي أحدث البطولات النشطة على VSP:\n" +
+            (champs || []).map((c: any) => `🏆 ${c.name} - جائزة: ${c.grand_prize} ج.م`).join("\n") + "\n" +
+            (t1v1 || []).map((t: any) => `⚡ ${t.name} - جائزة: ${t.prize_pool} ج.م`).join("\n");
+        }
       } else if (userMessage.includes("الأول") || userMessage.includes("ترتيب") || userMessage.includes("1v1") || userMessage.includes("متصدر")) {
         const { data: players } = await supabase.from("vsp_1vs1_players").select("name, total_points, goals, tackles, skill_points").order("total_points", { ascending: false }).limit(4);
         leaderboardResults = players || [];

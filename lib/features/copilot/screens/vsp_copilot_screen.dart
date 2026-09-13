@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
@@ -124,7 +125,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     _scrollToBottom();
 
     final response = await widget.copilotService.sendMessage(
-      text,
+      message: text,
       conversationId: _activeConversationId,
     );
 
@@ -250,9 +251,12 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     final isArabic = widget.isArabic ?? (Localizations.maybeLocaleOf(context)?.languageCode != 'en');
     final hasMessages = _messages.isNotEmpty;
 
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    final userGov = auth?.userModel?.governorate;
+
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: VSPColors.surface,
+      backgroundColor: VSPColors.background,
       drawer: CopilotConversationsDrawer(
         conversations: _conversations,
         activeConversationId: _activeConversationId,
@@ -271,6 +275,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
                   : CopilotStarterPrompts(
                       onSelectPrompt: _handleSendMessage,
                       isArabic: isArabic,
+                      userGovernorate: userGov,
                     ),
             ),
             _buildInputBar(isArabic),
