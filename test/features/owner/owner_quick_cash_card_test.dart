@@ -78,7 +78,7 @@ void main() {
         ),
       );
 
-      expect(find.text('جميع مدفوعات اليوم مؤكدة بالكامل 💰 ✓'), findsOneWidget);
+      expect(find.text('جميع مدفوعات اليوم مؤكدة بالكامل ✓'), findsOneWidget);
     });
 
     testWidgets('Renders cash collection card with remaining amount and allows 1-tap confirmation', (tester) async {
@@ -103,7 +103,7 @@ void main() {
       );
 
       // Verify header and counters
-      expect(find.text('تحصيل كاش اليوم 💵'), findsOneWidget);
+      expect(find.text('تحصيل كاش اليوم'), findsOneWidget);
       expect(find.text('Captain Ahmed'), findsOneWidget);
       expect(find.text('300 ج.م'), findsOneWidget); // 400 total - 100 deposit = 300 remaining
       expect(find.text('عربون مدفوع إلكترونياً: 100 ج.م ✓'), findsOneWidget);
@@ -118,7 +118,7 @@ void main() {
 
       // Check receipt prompt bottom sheet
       expect(find.text('تم تأكيد استلام النقدية!'), findsOneWidget);
-      expect(find.text('إرسال إيصال عبر واتساب 📲'), findsOneWidget);
+      expect(find.text('إرسال إيصال عبر واتساب'), findsOneWidget);
 
       // Dismiss bottom sheet and advance timer for toast cleanup
       await tester.tap(find.text('إغلاق'));

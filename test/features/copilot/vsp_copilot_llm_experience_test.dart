@@ -100,7 +100,7 @@ void main() {
       );
 
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      expect(find.text('يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟ 🎯'), findsOneWidget);
+      expect(find.text('يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟'), findsOneWidget);
       expect(find.text('فين ألعب النهارده؟'), findsOneWidget);
       expect(find.text('في ماتش ناقص لاعيب؟'), findsOneWidget);
       expect(find.text('أرخص ملعب قريب مني'), findsOneWidget);

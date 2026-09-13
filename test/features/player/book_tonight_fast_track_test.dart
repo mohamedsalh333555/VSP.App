@@ -139,8 +139,8 @@ void main() {
         ),
       );
 
-      expect(find.text('جاهز تلعب الليلة؟ ⚽'), findsOneWidget);
-      expect(find.text('سريع ⚡'), findsOneWidget);
+      expect(find.text('جاهز تلعب الليلة؟'), findsOneWidget);
+      expect(find.text('سريع'), findsOneWidget);
     });
 
     testWidgets('BookTonightSheet renders open slots and navigates with preselected slots', (tester) async {
@@ -174,7 +174,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('ساعات الليلة الشاغرة 🌙'), findsOneWidget);
+      expect(find.text('ساعات الليلة الشاغرة'), findsOneWidget);
       expect(find.text('Camp Nou Cairo'), findsOneWidget);
 
       // Find slot chips
