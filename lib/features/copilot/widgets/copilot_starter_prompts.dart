@@ -123,8 +123,8 @@ class CopilotStarterPrompts extends StatelessWidget {
             ),
             child: Text(
               isArabic
-                  ? 'يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟ 🎯'
-                  : 'Hey Captain! Tell me what you need — a pitch, a match, or a tournament? 🎯',
+                  ? 'يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟'
+                  : 'Hey Captain! Tell me what you need — a pitch, a match, or a tournament?',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: VSPColors.textPrimary,

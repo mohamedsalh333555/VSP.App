@@ -67,12 +67,17 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     );
                   },
                 ),
-                Positioned(
-                  top: 40,
-                  right: 16,
-                  child: IconButton(
-                    icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 28),
-                    onPressed: () => Navigator.pop(dialogCtx),
+                PositionedDirectional(
+                  top: 0,
+                  end: 0,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: IconButton(
+                        icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 28),
+                        onPressed: () => Navigator.pop(dialogCtx),
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -114,6 +119,17 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
         decoration: BoxDecoration(
           color: VSPColors.background.withValues(alpha: 0.6),
           shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.12),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Icon(icon, color: color, size: 20),
       ),
@@ -193,35 +209,44 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
           ),
 
           // 3. Top Action Bar (Back, Share, Favorite)
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const VSPBackButton(),
-                  Row(
-                    children: [
-                      _buildCircularIcon(
-                        icon: Iconsax.share_copy,
-                        onTap: () => SharePlus.instance.share(
-                          ShareParams(text: l10n.shareStadiumText(widget.stadium.name, widget.stadium.location)),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    VSPBackButton(
+                      size: 40,
+                      backgroundColor: VSPColors.background.withValues(alpha: 0.6),
+                    ),
+                    Row(
+                      children: [
+                        _buildCircularIcon(
+                          icon: Iconsax.share_copy,
+                          onTap: () => SharePlus.instance.share(
+                            ShareParams(text: l10n.shareStadiumText(widget.stadium.name, widget.stadium.location)),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Consumer<AuthProvider>(
-                        builder: (context, auth, _) {
-                          final isFav = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
-                          return _buildCircularIcon(
-                            icon: isFav ? Iconsax.heart : Iconsax.heart_copy,
-                            color: VSPColors.accent,
-                            onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 12),
+                        Consumer<AuthProvider>(
+                          builder: (context, auth, _) {
+                            final isFav = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
+                            return _buildCircularIcon(
+                              icon: isFav ? Iconsax.heart : Iconsax.heart_copy,
+                              color: VSPColors.accent,
+                              onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

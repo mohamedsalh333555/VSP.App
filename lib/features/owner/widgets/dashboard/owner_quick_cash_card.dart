@@ -50,8 +50,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       VSPFeedback.showSuccess(
         context,
         widget.isArabic
-            ? 'تم استلام وتأكيد النقدية وتحديث الحسابات 💵'
-            : 'Cash received & confirmed successfully 💵',
+            ? 'تم استلام وتأكيد النقدية وتحديث الحسابات'
+            : 'Cash received & confirmed successfully',
       );
       _promptSendReceipt(booking);
     }
@@ -129,7 +129,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             ),
             const SizedBox(height: 20),
             PrimaryButton(
-              text: widget.isArabic ? 'إرسال إيصال عبر واتساب 📲' : 'Send Receipt on WhatsApp 📲',
+              text: widget.isArabic ? 'إرسال إيصال عبر واتساب' : 'Send Receipt on WhatsApp',
               onPressed: () async {
                 Navigator.pop(ctx);
                 await VSPLauncherUtils.openWhatsApp(
@@ -188,7 +188,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                widget.isArabic ? 'جميع مدفوعات اليوم مؤكدة بالكامل 💰 ✓' : 'All today cash collections settled 💰 ✓',
+                widget.isArabic ? 'جميع مدفوعات اليوم مؤكدة بالكامل ✓' : 'All today cash collections settled ✓',
                 style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
@@ -238,7 +238,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.isArabic ? 'تحصيل كاش اليوم 💵' : "Today's Cash Collection 💵",
+                      widget.isArabic ? 'تحصيل كاش اليوم' : "Today's Cash Collection",
                       style: const TextStyle(
                         color: VSPColors.textPrimary,
                         fontSize: 14,

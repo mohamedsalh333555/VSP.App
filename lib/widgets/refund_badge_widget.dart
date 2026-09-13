@@ -101,7 +101,7 @@ class RefundBadgeWidget extends StatelessWidget {
         if (refundInfo.channel == RefundChannel.card) ...[
           const SizedBox(height: 4),
           Text(
-            '⏱ $etaText ${isArabic ? 'للظهور في بنكك' : 'to reflect in your bank'}',
+            '$etaText ${isArabic ? 'للظهور في بنكك' : 'to reflect in your bank'}',
             style: TextStyle(
               fontSize: 11,
               color: hintTextColor,

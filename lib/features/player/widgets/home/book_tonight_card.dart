@@ -81,7 +81,7 @@ class BookTonightCard extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Text(
-                              isArabic ? 'جاهز تلعب الليلة؟ ⚽' : 'Ready to play tonight? ⚽',
+                              isArabic ? 'جاهز تلعب الليلة؟' : 'Ready to play tonight?',
                               style: const TextStyle(
                                 color: VSPColors.textPrimary,
                                 fontSize: 15,
@@ -98,7 +98,7 @@ class BookTonightCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              isArabic ? 'سريع ⚡' : 'Fast ⚡',
+                              isArabic ? 'سريع' : 'Fast',
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 10,

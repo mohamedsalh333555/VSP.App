@@ -15,6 +15,7 @@ import '../../../../shared/widgets/stadium_card.dart';
 import '../../screens/all_stadiums_screen.dart';
 import '../../screens/stadium_details_screen.dart';
 import 'home_feed_sections.dart';
+import 'home_governorate_modal.dart';
 
 /// قسم الملاعب القريبة في الصفحة الرئيسية (مع معالجة الحالة الفارغة والبديل الجغرافي)
 class HomeStadiumsSection extends StatelessWidget {
@@ -87,7 +88,7 @@ class HomeStadiumsSection extends StatelessWidget {
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: VSPColors.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -104,6 +105,28 @@ class HomeStadiumsSection extends StatelessWidget {
                           color: VSPColors.accent,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        showLocationPickerHelper(context, context.read<AuthProvider>());
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent,
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
+                        ),
+                        child: Text(
+                          AppLocalizations.of(context)!.localeName == 'ar' ? 'تغيير' : 'Change',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),

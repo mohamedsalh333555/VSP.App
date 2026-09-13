@@ -2376,13 +2376,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get refundChannelWalletBadge => 'Refunded to Wallet 📱';
+  String get refundChannelWalletBadge => 'Refunded to Wallet';
 
   @override
-  String get refundChannelCardBadge => 'Bank Refund 🏦';
+  String get refundChannelCardBadge => 'Bank Refund';
 
   @override
-  String get refundChannelCashBadge => 'Cash Refund 💵';
+  String get refundChannelCashBadge => 'Cash Refund';
 
   @override
   String get refundEtaMinutes => 'Within minutes';

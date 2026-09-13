@@ -35,9 +35,9 @@ class FilterSportsPanel extends StatelessWidget {
             final isSelected = entry.value;
             final String rawName = entry.key;
             final String label = rawName.toLowerCase() == 'football'
-                ? (isArabic ? 'كرة القدم ⚽' : 'Football ⚽')
+                ? (isArabic ? 'كرة القدم' : 'Football')
                 : rawName.toLowerCase() == 'padel'
-                    ? (isArabic ? 'بادل 🎾' : 'Padel 🎾')
+                    ? (isArabic ? 'بادل' : 'Padel')
                     : rawName;
 
             return ChoiceChip(

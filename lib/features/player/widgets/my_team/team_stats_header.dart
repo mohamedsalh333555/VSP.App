@@ -42,14 +42,14 @@ class TeamStatsHeader extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Text('👑', style: TextStyle(fontSize: 20)),
+                    const SizedBox.shrink(),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'فريق يضم بطل 1v1 رسمي! 🏆' : 'Home of Official 1v1 Champion! 🏆',
+                            isArabic ? 'فريق يضم بطل 1v1 رسمي!' : 'Home of Official 1v1 Champion!',
                             style: const TextStyle(
                               color: Color(0xFFFDE047),
                               fontWeight: FontWeight.bold,

@@ -98,8 +98,8 @@ class RefundNoticeWidget extends StatelessWidget {
   };
 
   String _channelIcon(RefundChannel channel) => switch (channel) {
-    RefundChannel.wallet => '📱',
-    RefundChannel.card   => '🏦',
-    RefundChannel.cash   => '💵',
+    RefundChannel.wallet => '',
+    RefundChannel.card   => '',
+    RefundChannel.cash   => '',
   };
 }

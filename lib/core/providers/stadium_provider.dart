@@ -138,12 +138,33 @@ class StadiumProvider with ChangeNotifier {
  final List<Stadium> newStadiums = result['items'];
  _lastDocument = result['lastDoc'];
 
- if (isRefresh) {
- _stadiums = newStadiums;
- _isGeographicFallback = false;
- } else {
- _stadiums.addAll(newStadiums);
- }
+      if (isRefresh) {
+        if (newStadiums.isEmpty &&
+            _selectedGovernorate != null &&
+            _selectedGovernorate!.isNotEmpty &&
+            _selectedGovernorate != 'All') {
+          // 🚀 Smart Fallback: Fetch available verified stadiums across Egypt
+          final fallbackResult = await _databaseService.getStadiumsPaginated(
+            limit: 10,
+            startAfter: null,
+            governorate: 'All',
+          );
+          final List<Stadium> fallbackStadiums = fallbackResult['items'];
+          if (fallbackStadiums.isNotEmpty) {
+            _stadiums = fallbackStadiums;
+            _lastDocument = fallbackResult['lastDoc'];
+            _isGeographicFallback = true;
+          } else {
+            _stadiums = [];
+            _isGeographicFallback = false;
+          }
+        } else {
+          _stadiums = newStadiums;
+          _isGeographicFallback = false;
+        }
+      } else {
+        _stadiums.addAll(newStadiums);
+      }
 
  if (newStadiums.length < 10) {
  _hasMore = false;

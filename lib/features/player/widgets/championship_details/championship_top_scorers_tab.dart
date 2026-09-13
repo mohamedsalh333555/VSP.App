@@ -51,13 +51,13 @@ class ChampionshipTopScorersTab extends StatelessWidget {
             String rankEmoji = '#';
             if (rank == 1) {
               rankColor = VSPColors.accent;
-              rankEmoji = '🥇';
+              rankEmoji = '#1';
             } else if (rank == 2) {
               rankColor = VSPColors.accent.withValues(alpha: 0.7);
-              rankEmoji = '🥈';
+              rankEmoji = '#2';
             } else if (rank == 3) {
               rankColor = VSPColors.accent.withValues(alpha: 0.5);
-              rankEmoji = '🥉';
+              rankEmoji = '#3';
             }
 
             return Container(

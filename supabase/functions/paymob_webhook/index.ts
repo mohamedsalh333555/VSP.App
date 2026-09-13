@@ -61,80 +61,170 @@ serve(async (req: Request) => {
     });
   }
 
+  // 1. Initialize Supabase Client early for comprehensive audit logging
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   try {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const payload = await req.json();
-    const obj = payload.obj || payload;
+    const rawUrl = req.url;
+    const url = new URL(rawUrl);
+    const receivedHmac = url.searchParams.get("hmac");
 
-    if (!obj || !obj.id) {
-      return new Response(JSON.stringify({ error: "Invalid Paymob payload" }), {
+    let payload: any = {};
+    try {
+      payload = await req.json();
+    } catch (parseErr: any) {
+      try {
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "invalid_json",
+          payload: { error: "Failed to parse JSON body", rawUrl },
+          signature_verified: false,
+          status: "rejected",
+          error_message: `JSON parse error: ${parseErr?.message}`,
+        });
+      } catch (_) {}
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // 🔒 1. Verify HMAC Signature strictly (Fail-Closed)
+    const obj = payload.obj || payload;
+    const transactionId = String(obj?.id || "");
+    const orderId = String(obj?.order?.id ?? obj?.order ?? "");
+    const specialReference = String(obj?.special_reference || obj?.order?.merchant_order_id || "");
+
+    // Extract booking_id safely
+    let bookingId: string | null = null;
+    if (specialReference.includes("_")) {
+      const candidate = specialReference.startsWith("VSP_BOOKING_")
+        ? specialReference.replace("VSP_BOOKING_", "").split("_")[0]
+        : specialReference.split("_")[0];
+      if (candidate.length === 36) bookingId = candidate;
+    } else if (specialReference.length === 36) {
+      bookingId = specialReference;
+    }
+
+    // 🔒 2. Validate payload presence
+    if (!obj || !obj.id) {
+      try {
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "invalid_payload",
+          txn_id: transactionId || null,
+          order_id: orderId || null,
+          booking_id: bookingId,
+          payload: payload,
+          signature_verified: false,
+          status: "rejected",
+          error_message: "Missing obj or obj.id in payload",
+        });
+      } catch (_) {}
+      return new Response(JSON.stringify({ error: "Invalid Paymob payload: missing obj.id" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // 🔒 3. Verify HMAC Secret exists in Server Environment
     const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET");
     if (!hmacSecret) {
       console.error("🚨 CRITICAL: PAYMOB_HMAC_SECRET environment variable is missing on server!");
+      try {
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "server_misconfig",
+          txn_id: transactionId || null,
+          order_id: orderId || null,
+          booking_id: bookingId,
+          payload: payload,
+          signature_verified: false,
+          status: "server_error",
+          error_message: "PAYMOB_HMAC_SECRET environment variable is missing on server",
+        });
+      } catch (_) {}
       return new Response(
         JSON.stringify({ error: "Server Configuration Error: Missing PAYMOB_HMAC_SECRET" }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    const url = new URL(req.url);
-    const receivedHmac = url.searchParams.get("hmac");
+    // 🔒 4. Check for received HMAC signature query param
     if (!receivedHmac) {
       console.error("❌ Rejected: Missing HMAC signature in webhook request parameters");
+      try {
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "missing_hmac",
+          txn_id: transactionId || null,
+          order_id: orderId || null,
+          booking_id: bookingId,
+          payload: { ...payload, queryParams: Object.fromEntries(url.searchParams.entries()) },
+          signature_verified: false,
+          status: "rejected",
+          error_message: "Missing HMAC signature in query parameters (?hmac=...)",
+        });
+      } catch (_) {}
       return new Response(
         JSON.stringify({ error: "Unauthorized: Missing HMAC signature query parameter" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
 
+    // 🔒 5. Compute & verify HMAC signature
     const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
-    if (calculatedHmac.toLowerCase() !== receivedHmac.toLowerCase()) {
+    const isHmacValid = calculatedHmac.toLowerCase() === receivedHmac.toLowerCase();
+
+    if (!isHmacValid) {
       console.error("❌ Paymob Webhook HMAC Verification Failed! Signatures do not match.");
+      try {
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "hmac_mismatch",
+          txn_id: transactionId || null,
+          order_id: orderId || null,
+          booking_id: bookingId,
+          payload: {
+            receivedHmac,
+            calculatedHmacPrefix: calculatedHmac.substring(0, 8) + "...",
+            objSummary: {
+              id: obj.id,
+              order: obj.order?.id ?? obj.order,
+              amount_cents: obj.amount_cents,
+              success: obj.success,
+            },
+          },
+          signature_verified: false,
+          status: "rejected",
+          error_message: "HMAC signatures do not match",
+        });
+      } catch (_) {}
       return new Response(
         JSON.stringify({ error: "Unauthorized: Invalid HMAC signature" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
     }
+
     console.log("✅ HMAC Signature Verified Successfully!");
 
-    // 2. Initialize Supabase Client with Service Role Key
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const transactionId = String(obj.id);
     const isSuccess = Boolean(obj.success) && !Boolean(obj.pending);
-    const specialReference = String(obj.special_reference || obj.order?.merchant_order_id || "");
-
-    // Extract booking_id
-    let bookingId: string | null = null;
-    if (specialReference.includes("_")) {
-      bookingId = specialReference.startsWith("VSP_BOOKING_")
-        ? specialReference.replace("VSP_BOOKING_", "").split("_")[0]
-        : specialReference.split("_")[0];
-    } else if (specialReference.length > 0) {
-      bookingId = specialReference;
-    }
 
     console.log(`🔔 Webhook received for Booking: ${bookingId} | Success: ${isSuccess} | Tx: ${transactionId}`);
 
-    // 3. Log into webhook_logs
+    // 6. Log successful verified transaction into webhook_logs
     try {
       await supabase.from("webhook_logs").insert({
         provider: "paymob",
         event_type: "transaction_response",
         txn_id: transactionId,
         order_id: String(obj.order?.id ?? obj.order ?? ""),
-        booking_id: bookingId && bookingId.length === 36 ? bookingId : null,
+        booking_id: bookingId,
         payload: obj,
         signature_verified: true,
         status: isSuccess ? "success" : "failed",
@@ -455,6 +545,32 @@ serve(async (req: Request) => {
       } else if (booking) {
         console.log(`🎉 Booking ${bookingId} confirmed successfully via Paymob payment!`);
 
+        // Record confirmed payment in immutable transactions ledger
+        try {
+          await supabase.from("transactions").insert({
+            user_id: booking.created_by_user_id || booking.user_id,
+            booking_id: bookingId,
+            amount: paidAmountEgp,
+            type: isDepositOnly ? "deposit" : "payment",
+            status: "completed",
+            payment_method: obj.source_data?.sub_type || "paymob",
+            reference_number: transactionId,
+            paymob_transaction_id: transactionId,
+            description: `دفع ${isDepositOnly ? 'عربون' : 'قيمة'} حجز ملعب: ${booking.stadium_name || 'الملعب'}`,
+            metadata: {
+              paymob_order_id: String(obj.order?.id ?? obj.order ?? ""),
+              paymob_transaction_id: transactionId,
+              is_deposit: isDepositOnly,
+              payment_method: obj.source_data?.sub_type || "paymob",
+            },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+          console.log(`📝 Financial transaction record created in transactions table for booking ${bookingId}`);
+        } catch (txInsertErr) {
+          console.error("⚠️ Failed to insert into transactions table:", txInsertErr);
+        }
+
         // Send notifications
         const amountEgp = paidAmountEgp.toFixed(0);
         const remainingEgp = remainingAmount.toFixed(0);
@@ -462,7 +578,7 @@ serve(async (req: Request) => {
         const ownerNotification = isDepositOnly
           ? {
               user_id: booking.owner_id,
-              title: "تم استلام عربون حجز 💰",
+              title: "تم استلام عربون حجز",
               body: `تم دفع عربون بقيمة ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
               type: "deposit_received",
               booking_id: bookingId,
@@ -470,7 +586,7 @@ serve(async (req: Request) => {
             }
           : {
               user_id: booking.owner_id,
-              title: "تم استلام دفعة حجز مؤكدة 💰",
+              title: "تم استلام دفعة حجز مؤكدة",
               body: `تم دفع مبلغ ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"} بالكامل`,
               type: "payment_received",
               booking_id: bookingId,
@@ -480,7 +596,7 @@ serve(async (req: Request) => {
         const playerNotification = isDepositOnly
           ? {
               user_id: booking.user_id || booking.created_by_user_id,
-              title: "تأكيد سداد العربون ⚽",
+              title: "تأكيد سداد العربون",
               body: `تم سداد العربون (${amountEgp} ج.م) بنجاح لحجزك في ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
               type: "booking_confirmed",
               booking_id: bookingId,
@@ -488,7 +604,7 @@ serve(async (req: Request) => {
             }
           : {
               user_id: booking.user_id || booking.created_by_user_id,
-              title: "تأكيد الحجز والدفع ⚽",
+              title: "تأكيد الحجز والدفع",
               body: `تم سداد حجزك بالكامل بنجاح في ${booking.stadium_name || "الملعب"}`,
               type: "booking_confirmed",
               booking_id: bookingId,

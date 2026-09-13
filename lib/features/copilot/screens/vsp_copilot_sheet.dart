@@ -69,8 +69,8 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
     _messages.add(
       CopilotMessage.assistant(
         widget.isArabic
-            ? 'أهلاً يا كابتن! أنا كابتن VSP ⚡. أقدر أساعدك تبحث وتستكشف أفضل الملاعب المتاحة بالمنطقة والسعر.'
-            : 'Welcome Captain! I am VSP Copilot ⚡. I can help you search and explore pitches by area and price.',
+            ? 'أهلاً يا كابتن! أنا كابتن VSP. أقدر أساعدك تبحث وتستكشف أفضل الملاعب المتاحة بالمنطقة والسعر.'
+            : 'Welcome Captain! I am VSP Copilot. I can help you search and explore pitches by area and price.',
       ),
     );
   }

@@ -4445,19 +4445,19 @@ abstract class AppLocalizations {
   /// No description provided for @refundChannelWalletBadge.
   ///
   /// In en, this message translates to:
-  /// **'Refunded to Wallet 📱'**
+  /// **'Refunded to Wallet'**
   String get refundChannelWalletBadge;
 
   /// No description provided for @refundChannelCardBadge.
   ///
   /// In en, this message translates to:
-  /// **'Bank Refund 🏦'**
+  /// **'Bank Refund'**
   String get refundChannelCardBadge;
 
   /// No description provided for @refundChannelCashBadge.
   ///
   /// In en, this message translates to:
-  /// **'Cash Refund 💵'**
+  /// **'Cash Refund'**
   String get refundChannelCashBadge;
 
   /// No description provided for @refundEtaMinutes.

@@ -51,6 +51,7 @@ class Booking {
  final DateTime? updatedAt;
  final String? playerPhone;
  final String? notes;
+ final String? cancellationReason;
 
  // Match Result (for Challenge bookings)
  final int? homeScore;
@@ -156,6 +157,7 @@ class Booking {
  this.paymentStatus = 'pending',
  this.playerPhone,
  this.notes,
+ this.cancellationReason,
  this.depositPaid = 0.0,
  this.isDepositPaid = false,
  this.instapay,

@@ -217,7 +217,8 @@ class StadiumRepository {
       if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
         if (standardGov != null) {
-          query = query.eq('governorate', standardGov);
+          final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
+          query = query.or('governorate.eq.$standardGov,governorate.eq.$arGov');
         }
       }
 

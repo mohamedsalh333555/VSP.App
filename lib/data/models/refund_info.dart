@@ -77,9 +77,9 @@ class RefundInfo {
   bool get hasReference => refundTransactionId != null && refundTransactionId!.isNotEmpty;
 
   String get badgeText => switch (channel) {
-    RefundChannel.wallet => 'مسترد للمحفظة 📱',
-    RefundChannel.card   => 'مسترد بنكياً 🏦',
-    RefundChannel.cash   => 'مسترد نقداً 💵',
+    RefundChannel.wallet => 'مسترد للمحفظة',
+    RefundChannel.card   => 'مسترد بنكياً',
+    RefundChannel.cash   => 'مسترد نقداً',
   };
 
   String get etaText => switch (eta) {

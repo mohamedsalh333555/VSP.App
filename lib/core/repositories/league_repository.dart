@@ -23,7 +23,8 @@ class LeagueRepository {
 
         if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
           final stdGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
-          query = query.eq('governorate', stdGov);
+          final arGov = EgyptGovernorates.governorateToArabic[stdGov] ?? stdGov;
+          query = query.or('governorate.eq.$stdGov,governorate.eq.$arGov');
         }
 
         final response = await query
@@ -213,7 +214,8 @@ class LeagueRepository {
 
           if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
             final stdGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
-            query = query.eq('governorate', stdGov);
+            final arGov = EgyptGovernorates.governorateToArabic[stdGov] ?? stdGov;
+            query = query.or('governorate.eq.$stdGov,governorate.eq.$arGov');
           }
 
           tournament = await query

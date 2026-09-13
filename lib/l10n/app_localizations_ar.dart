@@ -2355,13 +2355,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get refundChannelWalletBadge => 'مسترد للمحفظة 📱';
+  String get refundChannelWalletBadge => 'مسترد للمحفظة';
 
   @override
-  String get refundChannelCardBadge => 'مسترد بنكياً 🏦';
+  String get refundChannelCardBadge => 'مسترد بنكياً';
 
   @override
-  String get refundChannelCashBadge => 'مسترد نقداً 💵';
+  String get refundChannelCashBadge => 'مسترد نقداً';
 
   @override
   String get refundEtaMinutes => 'خلال دقائق';

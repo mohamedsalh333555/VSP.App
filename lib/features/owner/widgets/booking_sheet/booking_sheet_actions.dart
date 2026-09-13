@@ -57,7 +57,7 @@ class OngoingMatchBanner extends StatelessWidget {
             onPressed: isSaving ? null : onExtendMatch,
             icon: const Icon(Iconsax.add_circle_copy, size: 14),
             label: Text(
-              isArabic ? 'تمديد (+30د) ⏱' : 'Extend (+30m) ⏱',
+              isArabic ? 'تمديد (+30د)' : 'Extend (+30m)',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
             ),
             style: ElevatedButton.styleFrom(

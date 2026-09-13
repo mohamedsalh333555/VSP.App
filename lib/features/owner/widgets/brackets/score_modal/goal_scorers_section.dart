@@ -65,7 +65,7 @@ class GoalScorersList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '⚽ ${g.playerName}',
+                        g.playerName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,

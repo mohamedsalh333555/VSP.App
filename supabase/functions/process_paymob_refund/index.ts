@@ -160,21 +160,33 @@ serve(async (req: Request) => {
     }
 
     // =========================================================================
-    // 🔒 6. STRICT FINANCIAL LEDGER VERIFICATION (IMMUTABLE SOURCE OF TRUTH)
+    // 🔒 6. FINANCIAL LEDGER VERIFICATION (IMMUTABLE SOURCE OF TRUTH + FALLBACK)
     // =========================================================================
-    // Do NOT rely on mutable columns in bookings table (e.g. total_price or deposit_amount).
-    // Find the verified completed payment transaction from the immutable transactions ledger.
     const { data: paymentTx, error: txErr } = await supabase
       .from("transactions")
-      .select("id, amount, paymob_transaction_id, status, type")
+      .select("id, amount, paymob_transaction_id, reference_number, status, type")
       .eq("booking_id", bookingId)
       .eq("status", "completed")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (txErr || !paymentTx || !paymentTx.amount || Number(paymentTx.amount) <= 0) {
-      console.error(`🚨 Security Failure: No verified completed payment transaction found in transactions table for booking ${bookingId}`);
+    let verifiedRefundAmount = 0;
+    let paymobTxnId: string | null = null;
+
+    if (paymentTx && paymentTx.amount && Number(paymentTx.amount) > 0) {
+      verifiedRefundAmount = Number(paymentTx.amount);
+      paymobTxnId = paymentTx.paymob_transaction_id || paymentTx.reference_number || booking.paymob_txn_id || booking.payment_transaction_id;
+    } else if (booking.paymob_txn_id || booking.payment_transaction_id) {
+      // Resilient Fallback: If webhook transaction row is missing for previous bookings,
+      // recover verified amount and txn ID safely from the booking record
+      verifiedRefundAmount = Number(booking.deposit_paid || booking.deposit_amount || booking.total_price || 0);
+      paymobTxnId = booking.paymob_txn_id || booking.payment_transaction_id;
+      console.log(`ℹ️ Recovered payment details from booking record: Amount=${verifiedRefundAmount} EGP, Txn=${paymobTxnId}`);
+    }
+
+    if (!verifiedRefundAmount || verifiedRefundAmount <= 0) {
+      console.error(`🚨 Security Failure: No verified completed payment transaction found for booking ${bookingId}`);
 
       // Fail-Closed: Mark as refund_failed and alert Admins for manual review
       await supabase
@@ -197,7 +209,7 @@ serve(async (req: Request) => {
       if (admins && admins.length > 0) {
         const adminNotifications = admins.map((admin) => ({
           user_id: admin.id,
-          title: "تنبيه أمني: تعذر التحقق من المبلغ المدفوع للاسترداد 🚨",
+          title: "تنبيه أمني: تعذر التحقق من المبلغ المدفوع للاسترداد",
           body: `فشل التحقق المالي للحجز #${bookingId.substring(0, 8)}. لا يوجد قيد دفع مطابق ومكتمل في جدول المعاملات. يرجى المراجعة اليدوية.`,
           type: "admin_alert",
           created_at: now.toISOString(),
@@ -215,9 +227,6 @@ serve(async (req: Request) => {
       );
     }
 
-    // Exact, verified refund amount from immutable financial ledger
-    let verifiedRefundAmount = Number(paymentTx.amount);
-
     // If cancelled in the 20-minute grace window when match is less than 6 hours away:
     // Deduct non-refundable administrative and payment gateway expenses (Paymob 2.4% + 3 EGP + platform fee)
     let adminDeduction = 0;
@@ -226,9 +235,6 @@ serve(async (req: Request) => {
       verifiedRefundAmount = Math.max(0, verifiedRefundAmount - adminDeduction);
       console.log(`ℹ️ Grace window cancellation: deducted admin fees ${adminDeduction} EGP. Net refund to Paymob: ${verifiedRefundAmount} EGP`);
     }
-
-    // Find Paymob Transaction ID from transaction record or booking fallback
-    let paymobTxnId = paymentTx.paymob_transaction_id || booking.paymob_txn_id || booking.paymob_transaction_id || booking.payment_transaction_id;
 
     // Strip non-numeric prefixes (e.g. "PAYMOB_12345" -> "12345")
     if (typeof paymobTxnId === "string") {
@@ -357,6 +363,7 @@ serve(async (req: Request) => {
         status: "completed",
         payment_method: booking.payment_method || "paymob",
         paymob_transaction_id: refundTxnId,
+        reference_number: refundTxnId,
         description: `استرداد إلكتروني ناجح لقيمة حجز: ${booking.stadium_name}`,
         created_at: now.toISOString(),
       });
@@ -366,7 +373,7 @@ serve(async (req: Request) => {
       if (playerUserId) {
         await supabase.from("notifications").insert({
           user_id: playerUserId,
-          title: "تم استرداد المبلغ بنجاح! 💸",
+          title: "تم استرداد المبلغ بنجاح",
           body: `تم إرجاع مبلغ (${verifiedRefundAmount} ج.م) الخاص بحجز ${booking.stadium_name} إلى بطاقتك / محفظتك الإلكترونية بنجاح.`,
           type: "refund_success",
           created_at: now.toISOString(),
@@ -377,7 +384,7 @@ serve(async (req: Request) => {
       if (booking.owner_id) {
         await supabase.from("notifications").insert({
           user_id: booking.owner_id,
-          title: "إلغاء حجز في ملعبك ⚠️",
+          title: "إلغاء حجز في ملعبك",
           body: `قام اللاعب بإلغاء حجزه المقرر في ${booking.stadium_name} وتم إتاحة الموعد مجدداً.`,
           type: "booking_cancelled",
           created_at: now.toISOString(),
@@ -428,7 +435,7 @@ serve(async (req: Request) => {
       if (admins && admins.length > 0) {
         const adminNotifications = admins.map((admin) => ({
           user_id: admin.id,
-          title: "تنبيه: فشل استرداد آلي عبر Paymob 🚨",
+          title: "تنبيه: فشل استرداد آلي عبر Paymob",
           body: `تعذر الاسترداد الآلي للحجز #${bookingId.substring(0, 8)} بمبلغ ${verifiedRefundAmount} ج.م. يرجى مراجعة لوحة Paymob لتنفيذ الاسترداد يدوياً.`,
           type: "admin_alert",
           created_at: now.toISOString(),

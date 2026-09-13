@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -162,7 +163,7 @@ class PlayerBookingCard extends StatelessWidget {
               if (booking.status == BookingStatus.cancelled) ...[
                 ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', Colors.red),
               ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
-                ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد ⏳' : 'Pending Payment ⏳', Colors.amber),
+                ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', Colors.amber),
               ] else if (!isHistory) ...[
                 ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
               ] else ...[
@@ -200,32 +201,59 @@ class PlayerBookingCard extends StatelessWidget {
               ],
             ),
           ),
-          if (booking.status == BookingStatus.cancelled &&
-              (booking.paymentStatus == 'refunded' ||
-                  booking.refundAmount != null ||
-                  booking.refundTransactionId != null)) ...[
-            const SizedBox(height: VSPSpacing.sm),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: RefundBadgeWidget(
-                refundInfo: RefundInfo.fromBookingRow({
-                  'refund_channel': booking.refundChannel,
-                  'refund_eta': booking.refundEta,
-                  'display_refund_ref': booking.displayRefundRef ??
-                      booking.refundTransactionId ??
-                      booking.paymentTransactionId,
-                  'refunded_at': booking.refundedAt?.toIso8601String(),
-                  'refund_payment_method':
-                      booking.refundPaymentMethod ?? booking.paymentMethod,
-                  'payment_method': booking.paymentMethod,
-                  'refund_amount': booking.refundAmount ??
-                      (booking.depositPaid > 0
-                          ? booking.depositPaid
-                          : booking.totalPrice),
-                }),
-              ),
-            ),
-          ],
+          // 🔒 REFUND BADGE LOGIC: Strictly verify real refund vs unconfirmed payment
+          Builder(builder: (context) {
+            final bool hasRealRefund = booking.status == BookingStatus.cancelled &&
+                (booking.paymentStatus == 'refunded' ||
+                    ((booking.refundTransactionId != null &&
+                            booking.refundTransactionId!.isNotEmpty) &&
+                        (booking.refundAmount != null &&
+                            booking.refundAmount! > 0)));
+
+            final bool isUnconfirmedPayment = booking.status == BookingStatus.cancelled &&
+                !hasRealRefund &&
+                (booking.cancellationReason == 'Cancelled by user during payment checkout' ||
+                    (booking.paymentMethod.toLowerCase() != 'cash' &&
+                        (booking.depositPaid > 0 ||
+                            booking.isDepositPaid ||
+                            booking.isPaid ||
+                            booking.paymentStatus == 'pending')));
+
+            if (hasRealRefund) {
+              return Padding(
+                padding: const EdgeInsets.only(top: VSPSpacing.sm),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: RefundBadgeWidget(
+                    refundInfo: RefundInfo.fromBookingRow({
+                      'refund_channel': booking.refundChannel,
+                      'refund_eta': booking.refundEta,
+                      'display_refund_ref': booking.displayRefundRef ??
+                          booking.refundTransactionId ??
+                          booking.paymentTransactionId,
+                      'refunded_at': booking.refundedAt?.toIso8601String(),
+                      'refund_payment_method':
+                          booking.refundPaymentMethod ?? booking.paymentMethod,
+                      'payment_method': booking.paymentMethod,
+                      'refund_amount': booking.refundAmount ??
+                          (booking.depositPaid > 0
+                              ? booking.depositPaid
+                              : booking.totalPrice),
+                    }),
+                  ),
+                ),
+              );
+            } else if (isUnconfirmedPayment) {
+              return Padding(
+                padding: const EdgeInsets.only(top: VSPSpacing.sm),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _buildContactSupportRefundBadge(context, isArabic),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
           if (booking.bookingType == BookingType.challenge && booking.opponentTeamName != null) ...[
             const SizedBox(height: VSPSpacing.sm),
             Container(
@@ -322,6 +350,49 @@ class PlayerBookingCard extends StatelessWidget {
             ChallengeResultActions(booking: booking, myTeamId: myTeamId),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildContactSupportRefundBadge(BuildContext context, bool isArabic) {
+    return GestureDetector(
+      onTap: () {
+        final cleanRef = booking.id.length >= 8
+            ? booking.id.substring(0, 8).toUpperCase()
+            : booking.id.toUpperCase();
+        final msg = isArabic
+            ? 'مرحباً فريق دعم VSP، قمت بسداد حجز رقم #$cleanRef في ${booking.stadiumName} وتم إلغاء الحجز، وأحتاج المساعدة للتحقق من استرداد المبلغ.'
+            : 'Hello VSP Support, I paid for booking #$cleanRef at ${booking.stadiumName} and the booking was cancelled. Please help verify my refund.';
+        VSPLauncherUtils.openWhatsApp(context, phone: '201100229462', message: msg);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Iconsax.message_question_copy,
+              size: 13,
+              color: Color(0xFFF59E0B),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              isArabic ? 'تواصل معنا لاسترداد مبلغك' : 'Contact us for refund',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFF59E0B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

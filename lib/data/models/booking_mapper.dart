@@ -106,6 +106,7 @@ class BookingMapper {
       paymentStatus: data['paymentStatus'] ?? data['payment_status'] ?? ((data['isPaid'] ?? data['is_paid']) == true ? 'paid' : 'pending'),
       playerPhone: data['playerPhone'] ?? data['player_phone'],
       notes: data['notes'],
+      cancellationReason: (data['cancellation_reason'] ?? data['cancellationReason'])?.toString(),
       depositPaid: (data['deposit_paid'] ?? data['depositPaid'] ?? 0.0).toDouble(),
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
       instapay: data['instapay'] ?? data['insta_pay'],

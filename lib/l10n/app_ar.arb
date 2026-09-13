@@ -762,11 +762,10 @@
      "refId": { "type": "String" }
    }
  },
- "refundChannelWalletBadge": "مسترد للمحفظة 📱",
- "refundChannelCardBadge": "مسترد بنكياً 🏦",
- "refundChannelCashBadge": "مسترد نقداً 💵",
+ "refundChannelWalletBadge": "مسترد للمحفظة",
+ "refundChannelCardBadge": "مسترد بنكياً",
+ "refundChannelCashBadge": "مسترد نقداً",
  "refundEtaMinutes": "خلال دقائق",
  "refundEtaDays": "3–5 أيام عمل",
  "copyRefId": "نسخ رقم الإيصال",
  "refIdCopied": "تم نسخ رقم الإيصال"
-}

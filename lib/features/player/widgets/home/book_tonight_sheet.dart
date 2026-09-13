@@ -132,7 +132,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'ساعات الليلة الشاغرة 🌙' : 'Open Slots Tonight 🌙',
+                        isArabic ? 'ساعات الليلة الشاغرة' : 'Open Slots Tonight',
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
                           fontSize: 18,
@@ -187,7 +187,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
             Icon(Iconsax.calendar_tick_copy, color: VSPColors.textSecondary.withValues(alpha: 0.4), size: 56),
             const SizedBox(height: 16),
             Text(
-              isArabic ? 'ملاعب الليلة مكتملة الحجز بالكامل! 🌟' : 'All Pitches Fully Booked Tonight! 🌟',
+              isArabic ? 'ملاعب الليلة مكتملة الحجز بالكامل!' : 'All Pitches Fully Booked Tonight!',
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -202,7 +202,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
             const SizedBox(height: 20),
             if (widget.onNavigate != null)
               PrimaryButton(
-                text: isArabic ? 'استكشف مباريات تحتاج لاعبين 👥' : 'Explore Open Matches 👥',
+                text: isArabic ? 'استكشف مباريات تحتاج لاعبين' : 'Explore Open Matches',
                 onPressed: () {
                   Navigator.pop(context);
                   widget.onNavigate!(1); // Switch to Matches tab

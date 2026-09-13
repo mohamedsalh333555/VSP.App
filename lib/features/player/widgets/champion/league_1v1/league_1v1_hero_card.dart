@@ -204,7 +204,7 @@ class League1v1HeroCard extends StatelessWidget {
       final dt = DateTime.parse(rawIso).toLocal();
       final now = DateTime.now();
       final diff = dt.difference(now);
-      if (diff.isNegative) return 'انطلقت الفعالية الآن ⏱️';
+      if (diff.isNegative) return 'انطلقت الفعالية الآن';
       if (diff.inDays > 0) {
         final hours = diff.inHours % 24;
         return 'متبقي ${diff.inDays} يوم و $hours ساعة';

@@ -14,7 +14,7 @@ class StadiumWizardDialogs {
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
-          isArabic ? 'تجاهل التغييرات؟ ⚠️' : 'Discard changes? ⚠️',
+          isArabic ? 'تجاهل التغييرات؟' : 'Discard changes?',
           style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
         ),
         content: Text(
@@ -51,7 +51,7 @@ class StadiumWizardDialogs {
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
-          isArabic ? 'إخفاء وحذف الملعب؟ ⚠️' : 'Hide & Delete Stadium? ⚠️',
+          isArabic ? 'إخفاء وحذف الملعب؟' : 'Hide & Delete Stadium?',
           style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
         ),
         content: Text(
@@ -109,8 +109,8 @@ class StadiumWizardDialogs {
             VSPFeedback.showSuccess(
               context,
               isArabic
-                  ? 'تم حذف الملعب نهائياً واختفاؤه من التطبيق بنجاح! 🗑️'
-                  : 'Stadium deleted permanently and hidden from app! 🗑️',
+                  ? 'تم حذف الملعب نهائياً واختفاؤه من التطبيق بنجاح!'
+                  : 'Stadium deleted permanently and hidden from app!',
             );
             onDeleted();
           }

@@ -1149,9 +1149,9 @@
  }
  }
  },
- "refundChannelWalletBadge": "Refunded to Wallet 📱",
- "refundChannelCardBadge": "Bank Refund 🏦",
- "refundChannelCashBadge": "Cash Refund 💵",
+ "refundChannelWalletBadge": "Refunded to Wallet",
+ "refundChannelCardBadge": "Bank Refund",
+ "refundChannelCashBadge": "Cash Refund",
  "refundEtaMinutes": "Within minutes",
  "refundEtaDays": "3–5 business days",
  "copyRefId": "Copy Reference ID",

@@ -89,130 +89,168 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
       child: Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
           decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            color: const Color(0xFF14171E),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: _isProlongedWait
-                  ? const Color(0xFF38BDF8).withValues(alpha: 0.4)
-                  : VSPColors.accent.withValues(alpha: 0.4),
-              width: 1.5,
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: (_isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent)
-                    .withValues(alpha: 0.2),
-                blurRadius: 30,
-                spreadRadius: 2,
+                color: Colors.black.withValues(alpha: 0.7),
+                blurRadius: 32,
+                offset: const Offset(0, 12),
               ),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // 1. Sleek Pulsing Header Icon
               ScaleTransition(
                 scale: _pulseAnimation,
                 child: Container(
-                  width: 72,
-                  height: 72,
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: (_isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent)
-                        .withValues(alpha: 0.15),
+                        .withValues(alpha: 0.1),
                     border: Border.all(
-                      color: _isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent,
-                      width: 2,
+                      color: (_isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent)
+                          .withValues(alpha: 0.28),
+                      width: 1.5,
                     ),
                   ),
-                  child: Icon(
-                    _isProlongedWait ? Iconsax.clock_copy : Iconsax.shield_tick_copy,
-                    color: _isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent,
-                    size: 36,
+                  child: Center(
+                    child: Icon(
+                      _isProlongedWait ? Iconsax.clock_copy : Iconsax.security_safe_copy,
+                      color: _isProlongedWait ? const Color(0xFF38BDF8) : VSPColors.accent,
+                      size: 28,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
+
+              // 2. Title & Subtitle
               Text(
                 _isProlongedWait
-                    ? (widget.isArabic ? 'طلبك قيد المعالجة والتأكيد ⏳' : 'Processing Confirmation ⏳')
-                    : (widget.isArabic ? 'جاري تأكيد حجزك رسمياً 🛡️' : 'Securing Your Booking 🛡️'),
+                    ? (widget.isArabic ? 'طلبك قيد المعالجة والتأكيد' : 'Processing Confirmation')
+                    : (widget.isArabic ? 'تأكيد حجز الملعب' : 'Securing Stadium Booking'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 _isProlongedWait
                     ? (widget.isArabic
-                        ? 'إذا تم خصم المبلغ من حسابك، حجزك مضمون ومحمي 100%. جاري استكمال الربط البنكي.'
-                        : 'If payment was deducted, your booking is 100% secured. Bank sync is completing.')
+                        ? 'إذا تم خصم المبلغ من حسابك، حجزك مضمون ومحمي. جاري استكمال التأكيد البنكي.'
+                        : 'If payment was deducted, your booking is safe. Bank sync is completing.')
                     : (widget.isArabic
-                        ? 'مبلغك في أمان تام ومحمي 100%. جاري تثبيت حجزك في جدول الملعب...'
-                        : 'Your money is 100% secure. Locking your slot in stadium calendar...'),
+                        ? 'لحظات ويتم قفل الساعة بجدول الملعب وإصدار تذكرتك فورياً...'
+                        : 'Locking your slot in the stadium calendar and issuing your ticket...'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
-                  fontSize: 13,
-                  height: 1.5,
+                  fontSize: 12.5,
+                  height: 1.45,
                 ),
               ),
-              const SizedBox(height: 24),
-              _buildStepRow(
-                icon: Iconsax.card_tick_copy,
-                title: widget.isArabic ? 'استلام تفويض السداد من البنك' : 'Bank authorization received',
-                isDone: true,
-                isActive: false,
+              const SizedBox(height: 20),
+
+              // 3. Elegant Inner Steps Container
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                ),
+                child: Column(
+                  children: [
+                    _buildStepRow(
+                      title: widget.isArabic ? 'استلام تفويض السداد البنكي' : 'Bank payment authorized',
+                      isDone: true,
+                      isActive: false,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    _buildStepRow(
+                      title: widget.isArabic ? 'تثبيت وحجز الساعة بجدول الملعب' : 'Locking pitch slot in calendar',
+                      isDone: false,
+                      isActive: !_isProlongedWait,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.05)),
+                    ),
+                    _buildStepRow(
+                      title: widget.isArabic ? 'إصدار تذكرة الحجز الرسمية' : 'Issuing official match pass',
+                      isDone: false,
+                      isActive: false,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
-              _buildStepRow(
-                icon: Iconsax.calendar_tick_copy,
-                title: widget.isArabic ? 'تثبيت وحجز الساعة بجدول الملعب' : 'Locking pitch slot in calendar',
-                isDone: false,
-                isActive: !_isProlongedWait,
-              ),
-              const SizedBox(height: 12),
-              _buildStepRow(
-                icon: Iconsax.ticket_copy,
-                title: widget.isArabic ? 'إصدار تذكرة الحجز الرسمية' : 'Issuing official match pass',
-                isDone: false,
-                isActive: false,
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+
+              // 4. Bottom Action / Progress
               if (_isProlongedWait) ...[
                 PrimaryButton(
-                  text: widget.isArabic ? 'متابعة في قائمة حجوزاتي 📋' : 'Go to My Bookings 📋',
-                  height: 48,
+                  text: widget.isArabic ? 'متابعة في قائمة حجوزاتي' : 'Go to My Bookings',
+                  height: 46,
                   onPressed: widget.onGoToBookings,
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 46,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF25D366)),
+                      backgroundColor: Colors.white.withValues(alpha: 0.02),
+                      side: BorderSide(color: const Color(0xFF25D366).withValues(alpha: 0.6)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
-                    icon: const Icon(Iconsax.message_copy, color: Color(0xFF25D366), size: 18),
+                    icon: const Icon(Iconsax.message_copy, color: Color(0xFF25D366), size: 17),
                     label: Text(
                       widget.isArabic ? 'مساعدة فورية عبر واتساب' : 'WhatsApp Instant Support',
-                      style: const TextStyle(color: Color(0xFF25D366), fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: Color(0xFF25D366), fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                     onPressed: _contactSupport,
                   ),
                 ),
               ] else ...[
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 15,
+                      height: 15,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      widget.isArabic ? 'جاري التحقق الفوري مع البنك...' : 'Verifying transaction...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: VSPColors.textSecondary.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -223,7 +261,6 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
   }
 
   Widget _buildStepRow({
-    required IconData icon,
     required String title,
     required bool isDone,
     required bool isActive,
@@ -231,40 +268,42 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
     return Row(
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isDone
-                ? VSPColors.success.withValues(alpha: 0.15)
-                : (isActive ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt),
+                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                : (isActive ? VSPColors.accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04)),
             border: Border.all(
               color: isDone
-                  ? VSPColors.success
-                  : (isActive ? VSPColors.accent : Colors.white24),
-              width: 1.5,
+                  ? const Color(0xFF10B981)
+                  : (isActive ? VSPColors.accent : Colors.white.withValues(alpha: 0.12)),
+              width: 1.2,
             ),
           ),
           child: Center(
             child: isDone
-                ? const Icon(Icons.check, size: 16, color: VSPColors.success)
+                ? const Icon(Icons.check, size: 13, color: Color(0xFF10B981))
                 : (isActive
                     ? const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                        width: 10,
+                        height: 10,
+                        child: CircularProgressIndicator(strokeWidth: 1.8, color: VSPColors.accent),
                       )
-                    : Icon(icon, size: 14, color: VSPColors.textSecondary)),
+                    : const SizedBox.shrink()),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12.5,
               fontWeight: (isDone || isActive) ? FontWeight.w600 : FontWeight.normal,
-              color: (isDone || isActive) ? VSPColors.textPrimary : VSPColors.textSecondary,
+              color: isDone
+                  ? VSPColors.textPrimary
+                  : (isActive ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.6)),
             ),
           ),
         ),

@@ -39,7 +39,7 @@ class FilterLocationPanel extends StatelessWidget {
             child: DropdownButton<String>(
               value: selectedGov,
               hint: Text(
-                isArabic ? 'عرض كل المحافظات 📍' : 'All Governorates 📍',
+                isArabic ? 'عرض كل المحافظات' : 'All Governorates',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
               dropdownColor: VSPColors.surfaceAlt,
