@@ -11,6 +11,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../widgets/tournament/tournament_bracket_preview_dialog.dart';
 import '../widgets/tournament/tournament_dashboard_bottom_bar.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/tournament/tournament_dashboard_dialogs.dart';
 import '../widgets/tournament/tournament_manual_team_sheet.dart';
 import '../widgets/tournament/tournament_overview_card.dart';
@@ -176,18 +177,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_1_copy
-                : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            Navigator.pop(context);
-          },
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           _currentChampionship.name,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold),

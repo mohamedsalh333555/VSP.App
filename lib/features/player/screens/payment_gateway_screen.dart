@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -22,6 +21,7 @@ import 'booking_success_screen.dart';
 import 'paymob_web_view_screen.dart';
 import 'player_home_screen.dart';
 import '../widgets/payment/payment_verification_modal.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 
 /// Secure checkout and payment gateway screen for pitches and tournament entries.
 /// Manages atomic slot locks, Paymob webview checkout flow, and realtime webhook status updates.
@@ -386,13 +386,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     return AppBar(
       backgroundColor: VSPColors.background,
       elevation: 0,
-      leading: IconButton(
-        icon: Icon(
-          isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-          color: VSPColors.textPrimary,
-          size: 20,
-        ),
-        onPressed: () async {
+      leading: VSPBackButton(
+        onTap: () async {
           final cancel = await _confirmCancel(context, isChampionship, isArabic);
           if (cancel == true && context.mounted) Navigator.pop(context);
         },

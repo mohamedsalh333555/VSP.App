@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/egypt_governorates.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import 'stadium_location_geocoder.dart';
@@ -18,21 +19,15 @@ class AddStadiumLocationPickerSheet {
     double? initialLng,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    LatLng initialLocation = LatLng(initialLat ?? 30.0444, initialLng ?? 31.2357); // Cairo fallback
-
-    // Attempt GPS position if no coordinates passed
-    if (initialLat == null || initialLng == null) {
-      final gps = await StadiumLocationGeocoder.getCurrentGpsPosition();
-      if (gps != null) initialLocation = gps;
-    }
-
-    if (!context.mounted) return null;
+    final LatLng initialLocation = LatLng(initialLat ?? 30.0444, initialLng ?? 31.2357); // Cairo fallback
 
     LatLng selectedCoords = initialLocation;
     final MapController mapController = MapController();
     final TextEditingController searchController = TextEditingController();
     List<Map<String, dynamic>> searchResults = [];
     bool isSearching = false;
+    bool isResolving = false;
+    bool hasTriggeredGps = false;
 
     Future<void> performSearch(String query, StateSetter setSheetState) async {
       if (query.trim().isEmpty) return;
@@ -44,15 +39,23 @@ class AddStadiumLocationPickerSheet {
       });
     }
 
-    LocationResult? finalResult;
-
-    await showModalBottomSheet<void>(
+    return await showModalBottomSheet<LocationResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext builderContext, StateSetter setSheetState) {
+            // Trigger GPS centering in background without blocking opening
+            if (!hasTriggeredGps && initialLat == null && initialLng == null) {
+              hasTriggeredGps = true;
+              StadiumLocationGeocoder.getCurrentGpsPosition().then((gps) {
+                if (gps != null && builderContext.mounted) {
+                  selectedCoords = gps;
+                  mapController.move(gps, 15.0);
+                }
+              });
+            }
             return Container(
               height: MediaQuery.of(builderContext).size.height * 0.85,
               decoration: const BoxDecoration(
@@ -267,15 +270,11 @@ class AddStadiumLocationPickerSheet {
                       bottom: MediaQuery.of(builderContext).padding.bottom + 76,
                       left: 16,
                       right: 16,
-                      child: Center(
                         child: InkWell(
                           onTap: () async {
                             final manualRes = await showManualAddressDialog(context);
-                            if (manualRes != null) {
-                              finalResult = manualRes;
-                              if (sheetContext.mounted) {
-                                Navigator.pop(sheetContext);
-                              }
+                            if (manualRes != null && sheetContext.mounted) {
+                              Navigator.pop(sheetContext, manualRes);
                             }
                           },
                           child: Container(
@@ -310,21 +309,36 @@ class AddStadiumLocationPickerSheet {
                           ),
                         ),
                       ),
-                    ),
 
                     Positioned(
                       bottom: MediaQuery.of(builderContext).padding.bottom + 16,
                       left: 16,
                       right: 16,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.pop(sheetContext);
-                          final res = await StadiumLocationGeocoder.resolveCoordinates(
-                            selectedCoords.latitude,
-                            selectedCoords.longitude,
-                          );
-                          finalResult = res;
-                        },
+                        onPressed: isResolving
+                            ? null
+                            : () async {
+                                setSheetState(() => isResolving = true);
+                                try {
+                                  final res = await StadiumLocationGeocoder.resolveCoordinates(
+                                    selectedCoords.latitude,
+                                    selectedCoords.longitude,
+                                  );
+                                  if (sheetContext.mounted) {
+                                    Navigator.pop(sheetContext, res);
+                                  }
+                                } catch (e) {
+                                  VSPLogger.w('Failed to resolve coordinates: $e');
+                                  if (sheetContext.mounted) {
+                                    final fallback = LocationResult(
+                                      latitude: selectedCoords.latitude,
+                                      longitude: selectedCoords.longitude,
+                                      address: '${selectedCoords.latitude.toStringAsFixed(5)}, ${selectedCoords.longitude.toStringAsFixed(5)}',
+                                    );
+                                    Navigator.pop(sheetContext, fallback);
+                                  }
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.accent,
                           foregroundColor: Colors.black,
@@ -334,10 +348,19 @@ class AddStadiumLocationPickerSheet {
                           ),
                           elevation: 8,
                         ),
-                        child: Text(
-                          isArabic ? 'تأكيد الموقع' : 'Confirm Location',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                        child: isResolving
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Text(
+                                isArabic ? 'تأكيد الموقع' : 'Confirm Location',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                       ),
                     ),
                   ],
@@ -348,8 +371,6 @@ class AddStadiumLocationPickerSheet {
         );
       },
     );
-
-    return finalResult;
   }
 
   /// Displays an offline/manual address entry modal sheet allowing the owner to enter the address without map tiles.

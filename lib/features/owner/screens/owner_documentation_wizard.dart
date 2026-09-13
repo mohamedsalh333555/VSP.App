@@ -338,13 +338,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         appBar: AppBar(
           backgroundColor: VSPColors.background,
           elevation: 0,
-          leadingWidth: 60,
-          leading: Center(
-            child: Padding(
-              padding: const EdgeInsetsDirectional.only(start: 12),
-              child: VSPBackButton(onTap: _previousPage),
-            ),
-          ),
+          leading: VSPBackButton(onTap: _previousPage),
           title: Text(
             AppLocalizations.of(context)!.ownerInformationTitle,
             style: Theme.of(context).textTheme.displaySmall,

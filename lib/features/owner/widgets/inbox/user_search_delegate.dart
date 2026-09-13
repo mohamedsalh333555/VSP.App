@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/repositories/user_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 
 /// Search delegate allowing owners to search for players or users to start direct chats.
 class UserSearchDelegate extends SearchDelegate<UserModel?> {
@@ -51,15 +52,8 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
 
   @override
   Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: Icon(
-        Localizations.localeOf(context).languageCode == 'ar'
-            ? Iconsax.arrow_right_1_copy
-            : Iconsax.arrow_left_2_copy,
-      ),
-      onPressed: () {
-        close(context, null);
-      },
+    return VSPBackButton(
+      onTap: () => close(context, null),
     );
   }
 

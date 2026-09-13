@@ -46,56 +46,58 @@ class _VSPBackButtonState extends State<VSPBackButton>
  super.dispose();
  }
 
- @override
- Widget build(BuildContext context) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  @override
+  Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
 
- return Container(
- margin: widget.margin,
- child: ScaleTransition(
- scale: _scale,
- child: GestureDetector(
- onTapDown: (_) => _controller.reverse(),
- onTapUp: (_) => _controller.forward(),
- onTapCancel: () => _controller.forward(),
- onTap: () {
- HapticFeedback.lightImpact();
- if (widget.onTap != null) {
- widget.onTap!();
- } else {
- Navigator.maybePop(context);
- }
- },
- child: Container(
- width: widget.size,
- height: widget.size,
- decoration: BoxDecoration(
- color: VSPColors.surfaceAlt,
- shape: BoxShape.circle,
- border: Border.all(
- color: VSPColors.glassBorder,
- width: 1,
- ),
- boxShadow: [
- BoxShadow(
- color: Colors.black.withValues(alpha: 0.25),
- blurRadius: 8,
- offset: const Offset(0, 2),
- ),
- ],
- ),
- child: Center(
- child: Icon(
- isArabic
- ? Iconsax.arrow_right_3_copy
- : Iconsax.arrow_left_2_copy,
- color: widget.iconColor ?? Colors.white,
- size: 18,
- ),
- ),
- ),
- ),
- ),
- );
- }
+    return Center(
+      child: Container(
+        margin: widget.margin,
+        child: ScaleTransition(
+          scale: _scale,
+          child: GestureDetector(
+            onTapDown: (_) => _controller.reverse(),
+            onTapUp: (_) => _controller.forward(),
+            onTapCancel: () => _controller.forward(),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              if (widget.onTap != null) {
+                widget.onTap!();
+              } else {
+                Navigator.maybePop(context);
+              }
+            },
+            child: Container(
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: VSPColors.glassBorder,
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  isRtl
+                      ? Iconsax.arrow_right_3_copy
+                      : Iconsax.arrow_left_2_copy,
+                  color: widget.iconColor ?? Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -8,6 +7,7 @@ import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/roster/roster_capacity_card.dart';
 import '../widgets/roster/roster_guest_players_section.dart';
 import '../widgets/roster/roster_team_members_section.dart';
@@ -282,13 +282,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
           isAr ? 'إدارة تشكيلة الفريق بالبطولة' : 'Manage Tournament Roster',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
-        leading: IconButton(
-          icon: Icon(
-            isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))

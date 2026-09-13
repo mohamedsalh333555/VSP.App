@@ -103,11 +103,12 @@ class StadiumLocationGeocoder {
           final displayName = isAr ? 'محافظة $arName - مصر' : '$enName Governorate, Egypt';
           if (!seen.contains(displayName)) {
             seen.add(displayName);
+            final coords = getCoordinatesForGovernorate(enName);
             results.add({
               'display_name': displayName,
               'governorate': enName,
-              'lat': 30.0444,
-              'lon': 31.2357,
+              'lat': coords.latitude,
+              'lon': coords.longitude,
             });
           }
         }

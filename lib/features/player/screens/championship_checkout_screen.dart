@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -11,6 +10,7 @@ import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/championship_checkout/checkout_championship_header.dart';
 import '../widgets/championship_checkout/checkout_financial_card.dart';
 import '../widgets/championship_checkout/checkout_guest_players_section.dart';
@@ -273,13 +273,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
           'التسجيل في البطولة',
