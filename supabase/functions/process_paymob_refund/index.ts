@@ -176,12 +176,12 @@ serve(async (req: Request) => {
 
     if (paymentTx && paymentTx.amount && Number(paymentTx.amount) > 0) {
       verifiedRefundAmount = Number(paymentTx.amount);
-      paymobTxnId = paymentTx.paymob_transaction_id || paymentTx.reference_number || booking.paymob_txn_id || booking.payment_transaction_id;
-    } else if (booking.paymob_txn_id || booking.payment_transaction_id) {
+      paymobTxnId = paymentTx.paymob_transaction_id || paymentTx.reference_number || booking.paymob_transaction_id || booking.paymob_txn_id || booking.payment_transaction_id;
+    } else if (booking.paymob_transaction_id || booking.paymob_txn_id || booking.payment_transaction_id) {
       // Resilient Fallback: If webhook transaction row is missing for previous bookings,
       // recover verified amount and txn ID safely from the booking record
       verifiedRefundAmount = Number(booking.deposit_paid || booking.deposit_amount || booking.total_price || 0);
-      paymobTxnId = booking.paymob_txn_id || booking.payment_transaction_id;
+      paymobTxnId = booking.paymob_transaction_id || booking.paymob_txn_id || booking.payment_transaction_id;
       console.log(`ℹ️ Recovered payment details from booking record: Amount=${verifiedRefundAmount} EGP, Txn=${paymobTxnId}`);
     }
 

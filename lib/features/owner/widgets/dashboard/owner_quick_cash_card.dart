@@ -54,6 +54,13 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             : 'Cash received & confirmed successfully',
       );
       _promptSendReceipt(booking);
+    } else if (!success && mounted) {
+      VSPFeedback.showError(
+        context,
+        widget.isArabic
+            ? 'تعذر تأكيد استلام النقدية، يرجى المحاولة مرة أخرى'
+            : 'Could not confirm cash, please try again',
+      );
     }
   }
 
@@ -113,7 +120,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
             ),
             const SizedBox(height: 16),
-            const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 36),
+            const Icon(Iconsax.receipt_2_copy, color: VSPColors.accent, size: 36),
             const SizedBox(height: 12),
             Text(
               widget.isArabic ? 'تم تأكيد استلام النقدية!' : 'Cash Receipt Confirmed!',
@@ -184,11 +191,11 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
         ),
         child: Row(
           children: [
-            const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 16),
+            const Icon(Iconsax.wallet_2_copy, color: VSPColors.accent, size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                widget.isArabic ? 'جميع مدفوعات اليوم مؤكدة بالكامل ✓' : 'All today cash collections settled ✓',
+                widget.isArabic ? 'جميع مدفوعات اليوم مؤكدة بالكامل' : 'All today cash collections settled',
                 style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
@@ -224,7 +231,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 ),
-                child: const Icon(Iconsax.wallet_check_copy, color: VSPColors.accent, size: 17),
+                child: const Icon(Iconsax.wallet_2_copy, color: VSPColors.accent, size: 17),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -320,7 +327,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
           if (deposit > 0) ...[
             const SizedBox(height: 4),
             Text(
-              widget.isArabic ? 'عربون مدفوع إلكترونياً: ${deposit.toInt()} ج.م ✓' : 'Online deposit paid: ${deposit.toInt()} EGP ✓',
+              widget.isArabic ? 'عربون مدفوع إلكترونياً: ${deposit.toInt()} ج.م' : 'Online deposit paid: ${deposit.toInt()} EGP',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10.5),
             ),
           ],
@@ -345,9 +352,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                             height: 14,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Icon(Icons.check, size: 16),
+                        : const Icon(Iconsax.wallet_3_copy, size: 16),
                     label: Text(
-                      widget.isArabic ? 'تم استلام الكاش ✓' : 'Confirm Cash Received ✓',
+                      widget.isArabic ? 'تم استلام الكاش' : 'Confirm Cash Received',
                       style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),

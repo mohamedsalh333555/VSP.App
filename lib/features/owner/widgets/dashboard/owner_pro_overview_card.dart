@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
-import '../../screens/owner_ledger_screen.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كارت النظرة العامة للتحليلات للباقة الاحترافية (Pro Overview Analytics)
@@ -156,7 +155,7 @@ class OwnerProOverviewCard extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()));
+                  onSettleDues();
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

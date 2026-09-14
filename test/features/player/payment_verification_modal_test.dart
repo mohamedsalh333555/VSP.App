@@ -26,10 +26,10 @@ void main() {
       expect(find.text('إصدار تذكرة الحجز الرسمية'), findsOneWidget);
       expect(goToBookingsCalled, isFalse);
 
-      // Wait 19 seconds for prolonged wait state to activate
-      await tester.pump(const Duration(seconds: 19));
+      // Wait 40 seconds for prolonged wait state to activate (threshold: 38s)
+      await tester.pump(const Duration(seconds: 40));
 
-      // After 18s prolonged wait, reassurance and quick actions should appear
+      // After 38s prolonged wait, reassurance and quick actions should appear
       expect(find.text('طلبك قيد المعالجة والتأكيد'), findsOneWidget);
       expect(find.text('متابعة في قائمة حجوزاتي'), findsOneWidget);
       expect(find.text('مساعدة فورية عبر واتساب'), findsOneWidget);
@@ -60,8 +60,8 @@ void main() {
       expect(find.text('Locking pitch slot in calendar'), findsOneWidget);
       expect(find.text('Issuing official match pass'), findsOneWidget);
 
-      // Advance clock past 18 seconds
-      await tester.pump(const Duration(seconds: 19));
+      // Advance clock past 38 seconds
+      await tester.pump(const Duration(seconds: 40));
 
       expect(find.text('Processing Confirmation'), findsOneWidget);
       expect(find.text('Go to My Bookings'), findsOneWidget);

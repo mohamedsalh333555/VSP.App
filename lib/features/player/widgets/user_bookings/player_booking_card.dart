@@ -204,15 +204,21 @@ class PlayerBookingCard extends StatelessWidget {
           // 🔒 REFUND BADGE LOGIC: Strictly verify real refund vs unconfirmed payment
           Builder(builder: (context) {
             final bool hasRealRefund = booking.status == BookingStatus.cancelled &&
-                (booking.paymentStatus == 'refunded' ||
-                    ((booking.refundTransactionId != null &&
-                            booking.refundTransactionId!.isNotEmpty) &&
-                        (booking.refundAmount != null &&
-                            booking.refundAmount! > 0)));
+                booking.paymentStatus == 'refunded' &&
+                ((booking.refundTransactionId != null &&
+                        booking.refundTransactionId!.isNotEmpty) ||
+                    (booking.refundAmount != null &&
+                        booking.refundAmount! > 0));
+
+            final bool isRefundPending = booking.status == BookingStatus.cancelled &&
+                !hasRealRefund &&
+                booking.paymentStatus == 'refund_pending';
 
             final bool isUnconfirmedPayment = booking.status == BookingStatus.cancelled &&
                 !hasRealRefund &&
-                (booking.cancellationReason == 'Cancelled by user during payment checkout' ||
+                !isRefundPending &&
+                (booking.paymentStatus == 'refund_failed' ||
+                    booking.cancellationReason == 'Cancelled by user during payment checkout' ||
                     (booking.paymentMethod.toLowerCase() != 'cash' &&
                         (booking.depositPaid > 0 ||
                             booking.isDepositPaid ||
@@ -241,6 +247,14 @@ class PlayerBookingCard extends StatelessWidget {
                               : booking.totalPrice),
                     }),
                   ),
+                ),
+              );
+            } else if (isRefundPending) {
+              return Padding(
+                padding: const EdgeInsets.only(top: VSPSpacing.sm),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: _buildProcessingRefundBadge(context, isArabic),
                 ),
               );
             } else if (isUnconfirmedPayment) {
@@ -393,6 +407,41 @@ class PlayerBookingCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProcessingRefundBadge(BuildContext context, bool isArabic) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFF38BDF8).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 11,
+            height: 11,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isArabic ? 'جاري الاسترداد البنكي...' : 'Bank refund processing...',
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF38BDF8),
+            ),
+          ),
+        ],
       ),
     );
   }

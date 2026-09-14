@@ -531,6 +531,7 @@ serve(async (req: Request) => {
           deposit_paid: updatedDepositPaid,
           payment_transaction_id: `PAYMOB_${transactionId}`,
           paymob_txn_id: transactionId,
+          paymob_transaction_id: transactionId,
           payment_method: obj.source_data?.sub_type || "paymob",
           webhook_verified: true,
           webhook_processed_at: new Date().toISOString(),
@@ -547,16 +548,17 @@ serve(async (req: Request) => {
 
         // Record confirmed payment in immutable transactions ledger
         try {
+          const effectiveUserId = booking.created_by_user_id || booking.user_id || existingBooking.created_by_user_id || existingBooking.user_id;
           await supabase.from("transactions").insert({
-            user_id: booking.created_by_user_id || booking.user_id,
+            user_id: effectiveUserId,
             booking_id: bookingId,
-            amount: paidAmountEgp,
+            amount: updatedDepositPaid,
             type: isDepositOnly ? "deposit" : "payment",
             status: "completed",
             payment_method: obj.source_data?.sub_type || "paymob",
             reference_number: transactionId,
             paymob_transaction_id: transactionId,
-            description: `دفع ${isDepositOnly ? 'عربون' : 'قيمة'} حجز ملعب: ${booking.stadium_name || 'الملعب'}`,
+            description: `دفع ${isDepositOnly ? 'عربون' : 'كامل'} حجز ملعب: ${booking.stadium_name || existingBooking.stadium_name || 'الملعب'}`,
             metadata: {
               paymob_order_id: String(obj.order?.id ?? obj.order ?? ""),
               paymob_transaction_id: transactionId,

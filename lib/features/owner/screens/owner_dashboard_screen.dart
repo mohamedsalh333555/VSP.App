@@ -21,7 +21,6 @@ import '../widgets/dashboard/owner_pro_overview_card.dart';
 import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_basic_financial_glance.dart';
 import '../widgets/dashboard/owner_glanceable_timeline.dart';
-import '../widgets/dashboard/owner_pro_upgrade_teaser.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
 import '../widgets/dashboard/owner_quick_cash_card.dart';
@@ -136,13 +135,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
           color: VSPColors.accent,
           backgroundColor: VSPColors.surface,
           onRefresh: () async {
-            await auth.refreshProfile();
+            final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+            if (uid == null) return;
             if (context.mounted) {
-              final uid = auth.currentUser?.uid;
-              if (uid != null) {
-                await Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-              }
+              Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
             }
+            await Future.wait([
+              if (context.mounted)
+                Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true),
+              auth.refreshProfile(),
+            ]);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -268,13 +270,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       }
                     },
                   ),
-                  const SizedBox(height: 16),
-                  OwnerProUpgradeTeaser(
-                    onUpgrade: () => _showProUpgradeSheet(context),
-                    isArabic: isArabic,
-                  ),
                 ],
-
                 const SizedBox(height: 80),
               ],
             ),

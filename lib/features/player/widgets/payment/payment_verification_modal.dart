@@ -59,8 +59,8 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // بعد 18 ثانية في حال تأخر رد بوابة الدفع، نتحول لحالة التطمين الإيجابي بدلاً من إظهار أخطاء مرعبة
-    _delayTimer = Timer(const Duration(seconds: 18), () {
+    // بعد 38 ثانية في حال تأخر رد بوابة الدفع لأسباب شبكة، نتحول لحالة التطمين الإيجابي بدلاً من إظهار أخطاء مرعبة
+    _delayTimer = Timer(const Duration(seconds: 38), () {
       if (mounted) setState(() => _isProlongedWait = true);
     });
   }

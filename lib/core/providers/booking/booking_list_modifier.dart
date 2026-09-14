@@ -18,7 +18,11 @@ class BookingListModifier {
   static void updatePaymentStatus(List<Booking> list, String bookingId, bool isPaid) {
     final index = list.indexWhere((b) => b.id == bookingId);
     if (index != -1) {
-      list[index] = list[index].copyWith(isPaid: isPaid);
+      list[index] = list[index].copyWith(
+        isPaid: isPaid,
+        paymentStatus: isPaid ? 'paid' : list[index].paymentStatus,
+        depositPaid: isPaid ? list[index].totalPrice : list[index].depositPaid,
+      );
     }
   }
 

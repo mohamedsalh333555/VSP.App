@@ -5,7 +5,6 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../data/models.dart';
-import '../../screens/owner_bookings_screen.dart';
 
 /// جدول حجوزات اليوم الموحد
 class OwnerGlanceableTimeline extends StatelessWidget {
@@ -52,7 +51,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()));
+                onNavigateToBookings();
               },
               child: Text(
                 isArabic ? 'عرض الكل' : 'View All',

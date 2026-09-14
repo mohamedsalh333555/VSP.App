@@ -382,6 +382,8 @@ class BookingProvider with ChangeNotifier {
     final success = await _repository.updatePaymentStatus(bookingId, isPaid);
     if (success) {
       BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+      BookingListModifier.updatePaymentStatus(_upcomingBookings, bookingId, isPaid);
+      BookingListModifier.updatePaymentStatus(_historyBookings, bookingId, isPaid);
       notifyListeners();
     }
     return success;
