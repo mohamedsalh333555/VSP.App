@@ -81,7 +81,8 @@ void main() {
         now: now,
       );
 
-      expect(categorized.upcoming.length, 2); // futureBooking and pendingRecentBooking (future)
+      expect(categorized.upcoming.length, 1);
+      expect(categorized.upcoming.first.id, 'b_future');
       expect(categorized.pending.length, 1);
       expect(categorized.pending.first.id, 'b_pending');
       expect(categorized.history.length, 1);
