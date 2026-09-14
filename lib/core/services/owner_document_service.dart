@@ -1,17 +1,18 @@
-﻿import 'package:image_picker/image_picker.dart' show XFile;
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart' show XFile;
+import '../repositories/user_repository.dart';
 import 'storage_service.dart';
 
-enum OwnerDocumentType {
-  commercialRegister,
-  nationalIdFront,
-  nationalIdBack,
-  taxCard,
-}
+export '../repositories/user_repository.dart' show OwnerDocumentType;
 
 class OwnerDocumentService {
-  final _supabase = Supabase.instance.client;
-  final StorageService _storage = StorageService();
+  final StorageService _storage;
+  final UserRepository _userRepository;
+
+  OwnerDocumentService({
+    StorageService? storage,
+    UserRepository? userRepository,
+  }) : _storage = storage ?? StorageService(),
+       _userRepository = userRepository ?? UserRepository();
 
   Future<String> uploadAndSave({
     required OwnerDocumentType type,
@@ -20,47 +21,14 @@ class OwnerDocumentService {
   }) async {
     // 1) رفع الملف على Storage
     final url = await _storage.uploadOwnerDocument(
-        file: file,
-        ownerId: uid,
-        documentType: type.name,
+      file: file,
+      ownerId: uid,
+      documentType: type.name,
     );
     if (url == null) throw 'Upload failed';
 
-    // 2) تحديد اسم الحقل
-    String fieldName;
-    switch (type) {
-      case OwnerDocumentType.commercialRegister:
-        fieldName = 'commercialRegisterUrl';
-        break;
-      case OwnerDocumentType.nationalIdFront:
-        fieldName = 'nationalIdFrontUrl';
-        break;
-      case OwnerDocumentType.nationalIdBack:
-        fieldName = 'nationalIdBackUrl';
-        break;
-      case OwnerDocumentType.taxCard:
-        fieldName = 'taxCardUrl';
-        break;
-    }
-
-    // 3) جلب الـ additional_data الحالي لتعديل الـ verificationDocuments داخله
-    final response = await _supabase
-        .from('users')
-        .select('additional_data')
-        .eq('id', uid)
-        .maybeSingle();
-
-    final additionalData = Map<String, dynamic>.from(response?['additional_data'] ?? {});
-    final verificationDocuments = Map<String, dynamic>.from(additionalData['verificationDocuments'] ?? {});
-    verificationDocuments[fieldName] = url;
-    additionalData['verificationDocuments'] = verificationDocuments;
-
-    // 4) تحديث الحقل في جدول users
-    await _supabase.from('users').update({
-      'additional_data': additionalData,
-      
-      'verification_status': 'pending',
-    }).eq('id', uid);
+    // 2) تفويض التحديث في قاعدة البيانات إلى UserRepository عبر الواجهة المكتوبة بقوة والمحمية
+    await _userRepository.updateVerificationDocument(uid, type, url);
 
     return url;
   }

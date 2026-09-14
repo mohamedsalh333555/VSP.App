@@ -48,10 +48,14 @@ class OwnerBookingSheetCoordinator {
         throw Exception(rpcRes['message']?.toString() ?? 'Failed to confirm cash payment');
       }
 
+      final isAlreadyConfirmed = rpcRes is Map && rpcRes['already_confirmed'] == true;
+
       if (context.mounted) {
         VSPFeedback.showSuccess(
           context,
-          isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.',
+          isAlreadyConfirmed
+              ? (isArabic ? 'الحجز مؤكد ومسدد بالفعل مسبقاً.' : 'Booking is already confirmed and paid.')
+              : (isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.'),
         );
       }
       if (parentContext.mounted) {

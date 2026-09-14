@@ -4,6 +4,15 @@ import '../services/logger_service.dart';
 import '../constants/egypt_governorates.dart';
 import '../utils/phone_utils.dart';
 
+enum OwnerDocumentType {
+  nationalId,
+  nationalIdFront,
+  nationalIdBack,
+  commercialRegister,
+  taxCard,
+  stadiumOwnershipProof,
+}
+
 class UserRepository {
   final SupabaseClient? _client;
 
@@ -11,196 +20,245 @@ class UserRepository {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
- Future<UserModel?> getUserByPhone(String phone) async {
- try {
- final cleanPhone = phone.trim();
- if (cleanPhone.isEmpty) return null;
- final response = await _supabase
- .from('users')
- .select()
- .eq('phone', cleanPhone)
- .maybeSingle();
-
- if (response == null) return null;
- return UserModel.fromFirestore(response);
- } catch (e) {
- VSPLogger.e('Error getting user by phone', e);
- return null;
- }
- }
-
- Future<Map<String, dynamic>?> getUserData(String uid) async {
- try {
- final response = await _supabase
- .from('users')
- .select()
- .eq('id', uid)
- .maybeSingle();
- return response;
- } catch (e) {
- VSPLogger.e('Error fetching user data for UID: $uid', e);
- return null;
- }
- }
-
- Future<List<UserModel>> getUsersByIds(List<String> ids) async {
- if (ids.isEmpty) return [];
- try {
- final response = await _supabase
- .from('users')
- .select()
- .inFilter('id', ids);
- 
- return (response as List).map((data) => UserModel.fromFirestore(data as Map<String, dynamic>)).toList();
- } catch (e) {
- VSPLogger.e('Error getting users by IDs', e);
- return [];
- }
- }
-
- Map<String, dynamic> _convertToSnakeCase(Map<String, dynamic> map) {
- final snakeCaseMap = <String, dynamic>{};
- map.forEach((key, value) {
- final snakeKey = key
- .replaceAllMapped(RegExp(r'[A-Z]'), (match) => '_${match.group(0)!.toLowerCase()}')
- .toLowerCase();
- snakeCaseMap[snakeKey] = value;
- });
- return snakeCaseMap;
- }
-
- Future<bool> updateUserProfile(
- String userId, 
- Map<String, dynamic> data, {
- User? authUser,
- String? role,
- }) async {
- final snakeData = _convertToSnakeCase(data);
-
- final securedData = Map<String, dynamic>.from(snakeData);
- // Client-side sanitation complementing server-side security triggers
- const restrictedKeys = [
- 'role',
- 'id',
- 'uid',
- 'email',
- 'created_at',
- 'points',
- 'wallet_balance',
- 'is_blocked',
- 'no_show_count',
- 'is_identity_verified',
- 'verification_status',
- 'has_stadium',
- 'is_registration_complete',
- 'subscription_plan',
- 'trial_ends_at',
- 'subscription_expires_at',
- 'total_platform_fees',
- 'cash_booking_banned',
- ];
- 
- for (final key in restrictedKeys) {
- securedData.remove(key);
- }
- 
- if (!data.containsKey('is_email_verified') && !data.containsKey('isEmailVerified')) {
- securedData.remove('is_email_verified');
- }
- 
- if (securedData.containsKey('governorate')) {
- final String? gov = securedData['governorate']?.toString();
- if (gov != null) {
- final standardGov = EgyptGovernorates.resolveGoogleName(gov);
- if (standardGov != null) {
- securedData['governorate'] = standardGov;
- } else {
- securedData.remove('governorate');
- }
- }
- }
-
- if (securedData.containsKey('phone')) {
- securedData['phone'] = PhoneUtils.normalize(securedData['phone']?.toString());
- }
-
- securedData['updated_at'] = DateTime.now().toUtc().toIso8601String();
-
- if (securedData.isEmpty) return true;
-
- try {
- await _supabase.from('users').update(securedData).eq('id', userId);
- return true;
- } catch (e) {
- VSPLogger.e('Error updating user profile $userId', e);
- return false;
- }
- }
-
- /// Securely set user role on signup via dedicated RPC set_user_role_on_signup
- Future<bool> setUserRole(String userId, String role) async {
- try {
- await _supabase.rpc('set_user_role_on_signup', params: {
- 'p_role': role,
- 'p_user_id': userId,
- });
- VSPLogger.i(' setUserRole persisted successfully for $userId with role: $role');
- return true;
- } catch (e) {
- VSPLogger.e('Error setting user role via RPC for $userId', e);
- return false;
- }
- }
-
- /// Trusted method to complete user registration via RPC complete_user_registration with fallback
- Future<bool> completeRegistrationFlags(String userId, Map<String, dynamic> additionalData) async {
- try {
- await _supabase.rpc('complete_user_registration', params: {
- 'p_user_id': userId,
- 'p_phone': additionalData['phone'] ?? additionalData['p_phone'],
- 'p_name': additionalData['name'] ?? additionalData['p_name'],
- 'p_position': additionalData['position'] ?? additionalData['p_position'],
- 'p_governorate': additionalData['governorate'] ?? additionalData['p_governorate'] ?? 'Cairo',
- 'p_date_of_birth': additionalData['date_of_birth'] ?? additionalData['p_date_of_birth'],
- 'p_p2p_instapay': additionalData['p2p_instapay'],
- 'p_p2p_vodafone': additionalData['p2p_vodafone'],
- 'p_p2p_bank': additionalData['p2p_bank'],
- });
- VSPLogger.i(' complete_user_registration RPC persisted successfully for $userId');
- return true;
- } catch (e) {
- VSPLogger.w('RPC complete_user_registration fallback to direct update for $userId: $e');
- try {
- final updateMap = <String, dynamic>{
- 'is_registration_complete': true,
- 'is_email_verified': true,
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- };
- if (additionalData['phone'] != null) updateMap['phone'] = additionalData['phone'];
- if (additionalData['name'] != null) updateMap['name'] = additionalData['name'];
- if (additionalData['position'] != null) updateMap['position'] = additionalData['position'];
- if (additionalData['governorate'] != null) updateMap['governorate'] = additionalData['governorate'];
- if (additionalData['date_of_birth'] != null) updateMap['date_of_birth'] = additionalData['date_of_birth'];
- if (additionalData['p2p_instapay'] != null) updateMap['p2p_instapay'] = additionalData['p2p_instapay'];
- if (additionalData['p2p_vodafone'] != null) updateMap['p2p_vodafone'] = additionalData['p2p_vodafone'];
- if (additionalData['p2p_bank'] != null) updateMap['p2p_bank'] = additionalData['p2p_bank'];
-
- await _supabase.from('users').update(updateMap).eq('id', userId);
- return true;
- } catch (innerErr) {
- VSPLogger.e('Direct update fallback failed for $userId', innerErr);
- return false;
- }
- }
- }
-
-  Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) async {
+  Future<UserModel?> getUserByPhone(String phone) async {
     try {
-      await _supabase.from('users').update({
-        'is_blocked': isBlocked,
-        if (warningMessage != null) 'last_warning': warningMessage,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', userId);
+      final cleanPhone = phone.trim();
+      if (cleanPhone.isEmpty) return null;
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('phone', cleanPhone)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return UserModel.fromFirestore(response);
+    } catch (e) {
+      VSPLogger.e('Error getting user by phone', e);
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('id', uid)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      VSPLogger.e('Error fetching user data for UID: $uid', e);
+      return null;
+    }
+  }
+
+  Future<List<UserModel>> getUsersByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      final response = await _supabase
+          .from('users')
+          .select()
+          .inFilter('id', ids);
+
+      return (response as List)
+          .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      VSPLogger.e('Error getting users by IDs', e);
+      return [];
+    }
+  }
+
+  Map<String, dynamic> _convertToSnakeCase(Map<String, dynamic> map) {
+    final snakeCaseMap = <String, dynamic>{};
+    map.forEach((key, value) {
+      final snakeKey = key
+          .replaceAllMapped(
+            RegExp(r'[A-Z]'),
+            (match) => '_${match.group(0)!.toLowerCase()}',
+          )
+          .toLowerCase();
+      snakeCaseMap[snakeKey] = value;
+    });
+    return snakeCaseMap;
+  }
+
+  Future<bool> updateUserProfile(
+    String userId,
+    Map<String, dynamic> data, {
+    User? authUser,
+    String? role,
+  }) async {
+    final snakeData = _convertToSnakeCase(data);
+
+    final securedData = Map<String, dynamic>.from(snakeData);
+    // Client-side sanitation complementing server-side security triggers
+    const restrictedKeys = [
+      'role',
+      'id',
+      'uid',
+      'email',
+      'created_at',
+      'points',
+      'wallet_balance',
+      'is_blocked',
+      'no_show_count',
+      'is_identity_verified',
+      'verification_status',
+      'has_stadium',
+      'is_registration_complete',
+      'subscription_plan',
+      'trial_ends_at',
+      'subscription_expires_at',
+      'total_platform_fees',
+      'cash_booking_banned',
+    ];
+
+    for (final key in restrictedKeys) {
+      securedData.remove(key);
+    }
+
+    if (!data.containsKey('is_email_verified') &&
+        !data.containsKey('isEmailVerified')) {
+      securedData.remove('is_email_verified');
+    }
+
+    if (securedData.containsKey('governorate')) {
+      final String? gov = securedData['governorate']?.toString();
+      if (gov != null) {
+        final standardGov = EgyptGovernorates.resolveGoogleName(gov);
+        if (standardGov != null) {
+          securedData['governorate'] = standardGov;
+        } else {
+          securedData.remove('governorate');
+        }
+      }
+    }
+
+    if (securedData.containsKey('phone')) {
+      securedData['phone'] = PhoneUtils.normalize(
+        securedData['phone']?.toString(),
+      );
+    }
+
+    securedData['updated_at'] = DateTime.now().toUtc().toIso8601String();
+
+    if (securedData.isEmpty) return true;
+
+    try {
+      await _supabase.from('users').update(securedData).eq('id', userId);
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error updating user profile $userId', e);
+      return false;
+    }
+  }
+
+  /// Securely set user role on signup via dedicated RPC set_user_role_on_signup
+  Future<bool> setUserRole(String userId, String role) async {
+    try {
+      await _supabase.rpc(
+        'set_user_role_on_signup',
+        params: {'p_role': role, 'p_user_id': userId},
+      );
+      VSPLogger.i(
+        ' setUserRole persisted successfully for $userId with role: $role',
+      );
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error setting user role via RPC for $userId', e);
+      return false;
+    }
+  }
+
+  /// Trusted method to complete user registration via RPC complete_user_registration with fallback
+  Future<bool> completeRegistrationFlags(
+    String userId,
+    Map<String, dynamic> additionalData,
+  ) async {
+    try {
+      await _supabase.rpc(
+        'complete_user_registration',
+        params: {
+          'p_user_id': userId,
+          'p_phone': additionalData['phone'] ?? additionalData['p_phone'],
+          'p_name': additionalData['name'] ?? additionalData['p_name'],
+          'p_position':
+              additionalData['position'] ?? additionalData['p_position'],
+          'p_governorate':
+              additionalData['governorate'] ??
+              additionalData['p_governorate'] ??
+              'Cairo',
+          'p_date_of_birth':
+              additionalData['date_of_birth'] ??
+              additionalData['p_date_of_birth'],
+          'p_p2p_instapay': additionalData['p2p_instapay'],
+          'p_p2p_vodafone': additionalData['p2p_vodafone'],
+          'p_p2p_bank': additionalData['p2p_bank'],
+        },
+      );
+      VSPLogger.i(
+        ' complete_user_registration RPC persisted successfully for $userId',
+      );
+      return true;
+    } catch (e) {
+      VSPLogger.w(
+        'RPC complete_user_registration fallback to direct update for $userId: $e',
+      );
+      try {
+        final updateMap = <String, dynamic>{
+          'is_registration_complete': true,
+          'is_email_verified': true,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        };
+        if (additionalData['phone'] != null) {
+          updateMap['phone'] = additionalData['phone'];
+        }
+        if (additionalData['name'] != null) {
+          updateMap['name'] = additionalData['name'];
+        }
+        if (additionalData['position'] != null) {
+          updateMap['position'] = additionalData['position'];
+        }
+        if (additionalData['governorate'] != null) {
+          updateMap['governorate'] = additionalData['governorate'];
+        }
+        if (additionalData['date_of_birth'] != null) {
+          updateMap['date_of_birth'] = additionalData['date_of_birth'];
+        }
+        if (additionalData['p2p_instapay'] != null) {
+          updateMap['p2p_instapay'] = additionalData['p2p_instapay'];
+        }
+        if (additionalData['p2p_vodafone'] != null) {
+          updateMap['p2p_vodafone'] = additionalData['p2p_vodafone'];
+        }
+        if (additionalData['p2p_bank'] != null) {
+          updateMap['p2p_bank'] = additionalData['p2p_bank'];
+        }
+
+        await _supabase.from('users').update(updateMap).eq('id', userId);
+        return true;
+      } catch (innerErr) {
+        VSPLogger.e('Direct update fallback failed for $userId', innerErr);
+        return false;
+      }
+    }
+  }
+
+  Future<void> updateUserModerationStatus(
+    String userId, {
+    required bool isBlocked,
+    String? warningMessage,
+  }) async {
+    try {
+      await _supabase
+          .from('users')
+          .update({
+            'is_blocked': isBlocked,
+            if (warningMessage != null) 'last_warning': warningMessage,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', userId);
 
       if (warningMessage != null) {
         await _supabase.from('notifications').insert({
@@ -208,24 +266,114 @@ class UserRepository {
           'title': 'Safety Warning ',
           'body': warningMessage,
           'type': 'warning',
-          'is_read': false,
           'created_at': DateTime.now().toUtc().toIso8601String(),
         });
       }
-    } catch (e) {
-      VSPLogger.e('Error updating user moderation status', e);
+    } catch (e, stack) {
+      VSPLogger.e(
+        'Failed to update moderation status for user: $userId',
+        e,
+        stack,
+      );
+      rethrow;
+    }
+  }
+
+  static const Map<OwnerDocumentType, String> _documentFieldMap = {
+    OwnerDocumentType.nationalId: 'nationalIdUrl',
+    OwnerDocumentType.nationalIdFront: 'nationalIdFrontUrl',
+    OwnerDocumentType.nationalIdBack: 'nationalIdBackUrl',
+    OwnerDocumentType.commercialRegister: 'commercialRegisterUrl',
+    OwnerDocumentType.taxCard: 'taxCardUrl',
+    OwnerDocumentType.stadiumOwnershipProof: 'stadiumOwnershipProofUrl',
+  };
+
+  static const Set<String> _allowedDocFieldNames = {
+    'nationalIdUrl',
+    'nationalIdFrontUrl',
+    'nationalIdBackUrl',
+    'commercialRegisterUrl',
+    'taxCardUrl',
+    'stadiumOwnershipProofUrl',
+  };
+
+  /// Strongly typed, injection-safe method to update owner verification documents.
+  Future<void> updateVerificationDocument(
+    String userId,
+    OwnerDocumentType docType,
+    String fileUrl,
+  ) async {
+    final fieldName = _documentFieldMap[docType];
+    if (fieldName == null) {
+      throw ArgumentError('Unsupported document type: $docType');
+    }
+    await updateOwnerVerificationDocument(
+      uid: userId,
+      docFieldName: fieldName,
+      fileUrl: fileUrl,
+    );
+  }
+
+  /// Updates an owner's verification documents stored in additional_data with strict whitelist enforcement.
+  Future<void> updateOwnerVerificationDocument({
+    required String uid,
+    required String docFieldName,
+    required String fileUrl,
+  }) async {
+    if (!_allowedDocFieldNames.contains(docFieldName)) {
+      throw ArgumentError(
+        'Unauthorized or invalid document field: $docFieldName',
+      );
+    }
+    try {
+      final response = await _supabase
+          .from('users')
+          .select('additional_data')
+          .eq('id', uid)
+          .maybeSingle();
+
+      final additionalData = Map<String, dynamic>.from(
+        response?['additional_data'] ?? {},
+      );
+      final verificationDocuments = Map<String, dynamic>.from(
+        additionalData['verificationDocuments'] ?? {},
+      );
+      verificationDocuments[docFieldName] = fileUrl;
+      additionalData['verificationDocuments'] = verificationDocuments;
+
+      await _supabase
+          .from('users')
+          .update({
+            'additional_data': additionalData,
+            'verification_status': 'pending',
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', uid);
+    } catch (e, stack) {
+      VSPLogger.e(
+        'Error updating owner verification document for $uid',
+        e,
+        stack,
+      );
+      rethrow;
     }
   }
 
   /// Update owner onboarding status and extra config safely in Supabase
-  Future<bool> updateOnboardingStatus(String uid, Map<String, dynamic> additionalData) async {
+  Future<bool> updateOnboardingStatus(
+    String uid,
+    Map<String, dynamic> additionalData,
+  ) async {
     try {
-      await _supabase.from('users').update({
-        'has_stadium': true,
-        'is_onboarding_confirmed': true,
-        'additional_data': additionalData,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', uid);
+      await _supabase
+          .from('users')
+          .update({
+            'has_stadium': true,
+            'is_onboarding_confirmed': true,
+            'additional_data': additionalData,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', uid);
       return true;
     } catch (e, stack) {
       VSPLogger.e('Error updating user onboarding status', e, stack);
@@ -236,10 +384,13 @@ class UserRepository {
   /// Update owner onboarding confirmed flag directly in Supabase
   Future<bool> updateOnboardingConfirmed(String uid, bool confirmed) async {
     try {
-      await _supabase.from('users').update({
-        'is_onboarding_confirmed': confirmed,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', uid);
+      await _supabase
+          .from('users')
+          .update({
+            'is_onboarding_confirmed': confirmed,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', uid);
       return true;
     } catch (e, stack) {
       VSPLogger.e('Error updating is_onboarding_confirmed', e, stack);
@@ -279,7 +430,9 @@ class UserRepository {
   }
 
   /// Batch-fetch user summary maps (id, name, profile_image_url) for quick caching
-  Future<List<Map<String, dynamic>>> getUserSummariesByIds(List<String> ids) async {
+  Future<List<Map<String, dynamic>>> getUserSummariesByIds(
+    List<String> ids,
+  ) async {
     if (ids.isEmpty) return [];
     try {
       final rows = await _supabase

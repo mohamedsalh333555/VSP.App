@@ -27,7 +27,7 @@ class AuthProvider with ChangeNotifier {
   StreamSubscription<User?>? _authSubscription;
 
   // Supabase user state
-  User? _firebaseUser;
+  User? _supabaseUser;
   UserModel? _userModel;
   bool _hasCompletedOnboarding = false;
 
@@ -44,10 +44,12 @@ class AuthProvider with ChangeNotifier {
   bool _preserveError = false;
 
   // Getters
-  User? get firebaseUser => _firebaseUser;
+  @Deprecated('Use currentUser instead')
+  User? get firebaseUser => _supabaseUser;
   UserModel? get userModel => _userModel;
   String? get userType => _form.userType;
-  String get email => _form.email ?? _firebaseUser?.email ?? _userModel?.email ?? '';
+  String get email =>
+      _form.email ?? _supabaseUser?.email ?? _userModel?.email ?? '';
   String? get name => _form.name ?? _userModel?.name;
   String? get phone => _form.phone;
   String get position => _userModel?.position ?? _form.position;
@@ -55,11 +57,13 @@ class AuthProvider with ChangeNotifier {
   String? get profileImageUrl => _userModel?.profileImageUrl;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _firebaseUser != null;
-  bool get isPlayer => _userModel != null ? _userModel!.isPlayer : _form.userType == 'player';
-  bool get isOwner => _userModel != null ? _userModel!.isOwner : _form.userType == 'owner';
+  bool get isAuthenticated => _supabaseUser != null;
+  bool get isPlayer =>
+      _userModel != null ? _userModel!.isPlayer : _form.userType == 'player';
+  bool get isOwner =>
+      _userModel != null ? _userModel!.isOwner : _form.userType == 'owner';
   bool get isAdmin => _userModel?.isAdmin ?? false;
-  User? get currentUser => _firebaseUser;
+  User? get currentUser => _supabaseUser;
   Position? get currentPosition => _c.location.currentPosition;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
   bool get hasDataFetchError => _dataFetchError;
@@ -77,21 +81,22 @@ class AuthProvider with ChangeNotifier {
     AuthOtpService? otpService,
     AuthLocationCoordinator? locationCoordinator,
     AuthProfileCoordinator? profileCoordinator,
-  })  : _authService = authService ?? AuthService(),
-        _c = coordinators ??
-            AuthCoordinators(
-              account: accountCoordinator,
-              profileService: profileService,
-              realtime: realtimeCoordinator,
-              sessionSync: sessionSyncCoordinator,
-              otp: otpService,
-              location: locationCoordinator,
-              profile: profileCoordinator,
-              authService: authService,
-            ) {
+  }) : _authService = authService ?? AuthService(),
+       _c =
+           coordinators ??
+           AuthCoordinators(
+             account: accountCoordinator,
+             profileService: profileService,
+             realtime: realtimeCoordinator,
+             sessionSync: sessionSyncCoordinator,
+             otp: otpService,
+             location: locationCoordinator,
+             profile: profileCoordinator,
+             authService: authService,
+           ) {
     _initOnboarding();
-    _firebaseUser = _authService.currentUser;
-    if (_firebaseUser != null) _fetchUserData(_firebaseUser!);
+    _supabaseUser = _authService.currentUser;
+    if (_supabaseUser != null) _fetchUserData(_supabaseUser!);
 
     _authSubscription = AuthSessionListener.start(
       authService: _authService,
@@ -105,12 +110,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _handleAuthStateChange(User? user) async {
-    if (user?.id == _firebaseUser?.id && _userModel != null) {
+    if (user?.id == _supabaseUser?.id && _userModel != null) {
       _isInitializing = false;
       notifyListeners();
       return;
     }
-    _firebaseUser = user;
+    _supabaseUser = user;
     if (!_preserveError) {
       _errorMessage = null;
     } else {
@@ -135,7 +140,9 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> _runAuthAction(Future<({bool success, String? error})> Function() action) async {
+  Future<bool> _runAuthAction(
+    Future<({bool success, String? error})> Function() action,
+  ) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -147,7 +154,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> refreshProfile() async {
-    if (_firebaseUser != null) await _fetchUserData(_firebaseUser!);
+    if (_supabaseUser != null) await _fetchUserData(_supabaseUser!);
   }
 
   Future<void> _fetchUserData(User user) async {
@@ -156,7 +163,10 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final result = await _c.sessionSync.fetchUserData(user: user, currentUserType: _form.userType);
+    final result = await _c.sessionSync.fetchUserData(
+      user: user,
+      currentUserType: _form.userType,
+    );
     _isFetchingUser = false;
     _isLoading = false;
     _isInitializing = false;
@@ -179,7 +189,7 @@ class AuthProvider with ChangeNotifier {
       _c.realtime.startRealtimeUserListener(
         userId: user.id,
         getUserModel: () => _userModel,
-        getFirebaseUser: () => _firebaseUser,
+        getFirebaseUser: () => _supabaseUser,
         onUserUpdated: (newModel) {
           _userModel = newModel;
           notifyListeners();
@@ -191,12 +201,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> retryDataFetch() async {
-    if (_firebaseUser == null) return;
+    if (_supabaseUser == null) return;
     _isLoading = true;
     _dataFetchError = false;
     notifyListeners();
 
-    final model = await _c.sessionSync.retryDataFetch(_firebaseUser!.id);
+    final model = await _c.sessionSync.retryDataFetch(_supabaseUser!.id);
     _isLoading = false;
     if (model != null) {
       _userModel = model;
@@ -207,18 +217,46 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void setUserType(String type) { _form.userType = type; notifyListeners(); }
-  void setEmail(String email) { _form.email = email; notifyListeners(); }
-  void setName(String name) { _form.name = name; notifyListeners(); }
-  void setPhone(String phone) { _form.phone = phone; notifyListeners(); }
-  void setPosition(String position) { _form.position = position; notifyListeners(); }
-  void setGovernorate(String gov) { _form.governorate = gov; notifyListeners(); }
-  void setVerificationCode(String code) { _form.verificationCode = code; notifyListeners(); }
+  void setUserType(String type) {
+    _form.userType = type;
+    notifyListeners();
+  }
+
+  void setEmail(String email) {
+    _form.email = email;
+    notifyListeners();
+  }
+
+  void setName(String name) {
+    _form.name = name;
+    notifyListeners();
+  }
+
+  void setPhone(String phone) {
+    _form.phone = phone;
+    notifyListeners();
+  }
+
+  void setPosition(String position) {
+    _form.position = position;
+    notifyListeners();
+  }
+
+  void setGovernorate(String gov) {
+    _form.governorate = gov;
+    notifyListeners();
+  }
+
+  void setVerificationCode(String code) {
+    _form.verificationCode = code;
+    notifyListeners();
+  }
+
   void setPassword(String password) => _form.password = password;
 
   Future<bool> createAccount() => _runAuthAction(() async {
     final res = await _c.account.createAccount(
-      currentUser: _firebaseUser,
+      currentUser: _supabaseUser,
       currentUserModel: _userModel,
       form: _form,
     );
@@ -226,23 +264,31 @@ class AuthProvider with ChangeNotifier {
     return (success: res.success, error: res.error);
   });
 
-  Future<bool> signInWithGoogle({bool isLoginOnly = false}) => _runAuthAction(() async {
-    final res = await _c.account.signInWithGoogle(isLoginOnly: isLoginOnly, userType: _form.userType);
-    if (res.success && res.user != null) {
-      _firebaseUser = res.user;
-      await _fetchUserData(res.user!);
-    }
-    return (success: res.success, error: res.error);
-  });
+  Future<bool> signInWithGoogle({bool isLoginOnly = false}) =>
+      _runAuthAction(() async {
+        final res = await _c.account.signInWithGoogle(
+          isLoginOnly: isLoginOnly,
+          userType: _form.userType,
+        );
+        if (res.success && res.user != null) {
+          _supabaseUser = res.user;
+          await _fetchUserData(res.user!);
+        }
+        return (success: res.success, error: res.error);
+      });
 
-  Future<bool> signInWithApple({bool isLoginOnly = false}) => _runAuthAction(() async {
-    final res = await _c.account.signInWithApple(isLoginOnly: isLoginOnly, userType: _form.userType);
-    if (res.success && res.user != null) {
-      _firebaseUser = res.user;
-      await _fetchUserData(res.user!);
-    }
-    return (success: res.success, error: res.error);
-  });
+  Future<bool> signInWithApple({bool isLoginOnly = false}) =>
+      _runAuthAction(() async {
+        final res = await _c.account.signInWithApple(
+          isLoginOnly: isLoginOnly,
+          userType: _form.userType,
+        );
+        if (res.success && res.user != null) {
+          _supabaseUser = res.user;
+          await _fetchUserData(res.user!);
+        }
+        return (success: res.success, error: res.error);
+      });
 
   void reset() {
     _form.reset();
@@ -257,38 +303,46 @@ class AuthProvider with ChangeNotifier {
     Map<String, dynamic>? userData,
   }) => _runAuthAction(() async {
     final res = await _c.account.signUp(
-      email: email, password: password, role: role, governorate: _form.governorate, userData: userData,
+      email: email,
+      password: password,
+      role: role,
+      governorate: _form.governorate,
+      userData: userData,
     );
     if (res.success) {
-      _firebaseUser = res.user;
+      _supabaseUser = res.user;
       _userModel = res.userModel;
     }
     return (success: res.success, error: res.error);
   });
 
-  Future<bool> signIn({required String email, required String password}) => _runAuthAction(() async {
-    final res = await _c.account.signIn(email: email, password: password);
-    if (res.success) {
-      _firebaseUser = res.user;
-      _userModel = res.userModel;
-    }
-    return (success: res.success, error: res.error);
-  });
+  Future<bool> signIn({required String email, required String password}) =>
+      _runAuthAction(() async {
+        final res = await _c.account.signIn(email: email, password: password);
+        if (res.success) {
+          _supabaseUser = res.user;
+          _userModel = res.userModel;
+        }
+        return (success: res.success, error: res.error);
+      });
 
   Future<void> abortRegistration() async {
-    await _c.account.abortRegistration(user: _firebaseUser, userModel: _userModel);
+    await _c.account.abortRegistration(
+      user: _supabaseUser,
+      userModel: _userModel,
+    );
     await signOut();
   }
 
   Future<void> signOut() async {
     await AuthSignOutHandler.performSignOut(
-      user: _firebaseUser,
+      user: _supabaseUser,
       userModelUid: _userModel?.uid,
       authService: _authService,
       notificationService: _c.sessionSync.notificationService,
       onClearRealtime: _c.realtime.stopRealtimeUserListener,
     );
-    _firebaseUser = null;
+    _supabaseUser = null;
     _userModel = null;
     _form.userType = null;
     _dataFetchError = false;
@@ -297,14 +351,15 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updatePassword(String newPassword) => _c.profileService.updatePassword(newPassword);
+  Future<bool> updatePassword(String newPassword) =>
+      _c.profileService.updatePassword(newPassword);
 
   Future<bool> updateProfile(Map<String, dynamic> data) async {
-    if (_firebaseUser == null) return false;
+    if (_supabaseUser == null) return false;
     _isLoading = true;
     notifyListeners();
     final updated = await _c.profile.updateProfile(
-      authUser: _firebaseUser,
+      authUser: _supabaseUser,
       currentUserModel: _userModel,
       userType: _form.userType,
       data: data,
@@ -315,9 +370,11 @@ class AuthProvider with ChangeNotifier {
     return updated != null;
   }
 
-  Future<bool> completeOwnerRegistration({required String verificationStatus}) async {
+  Future<bool> completeOwnerRegistration({
+    required String verificationStatus,
+  }) async {
     final model = await _c.account.completeOwnerRegistration(
-      authUser: _firebaseUser,
+      authUser: _supabaseUser,
       currentUserModel: _userModel,
       verificationStatus: verificationStatus,
     );
@@ -332,7 +389,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> toggleFavoriteStadium(String stadiumId) async {
     if (_userModel == null) return;
     final updated = await _c.profile.toggleFavoriteStadium(
-      authUser: _firebaseUser,
+      authUser: _supabaseUser,
       currentUserModel: _userModel,
       userType: _form.userType,
       stadiumId: stadiumId,
@@ -344,14 +401,16 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> updateProfilePhoto(XFile file) async {
-    if (_firebaseUser == null) return;
+    if (_supabaseUser == null) return;
     await _runAuthAction(() async {
       final res = await _c.profile.updateProfilePhoto(
-        authUser: _firebaseUser,
+        authUser: _supabaseUser,
         currentUserModel: _userModel,
         file: file,
       );
-      if (res.success && res.updatedModel != null) _userModel = res.updatedModel;
+      if (res.success && res.updatedModel != null) {
+        _userModel = res.updatedModel;
+      }
       return (success: res.success, error: res.error);
     });
   }
@@ -367,7 +426,7 @@ class AuthProvider with ChangeNotifier {
     String? p2pBank,
   }) => _runAuthAction(() async {
     final res = await _c.account.completeSocialRegistration(
-      firebaseUser: _firebaseUser,
+      firebaseUser: _supabaseUser,
       currentUserModel: _userModel,
       userType: _form.userType,
       fallbackGovernorate: _form.governorate,
@@ -389,11 +448,14 @@ class AuthProvider with ChangeNotifier {
     return (success: res.success, error: res.error);
   });
 
-  Future<bool> sendVerificationCode() => _runAuthAction(() => _c.otp.sendVerificationCode(_form));
+  Future<bool> sendVerificationCode() =>
+      _runAuthAction(() => _c.otp.sendVerificationCode(_form));
 
-  Future<bool> verifyCode(String code) => _runAuthAction(() async => _c.otp.verifyCode(_form, code));
+  Future<bool> verifyCode(String code) =>
+      _runAuthAction(() async => _c.otp.verifyCode(_form, code));
 
-  Future<bool> resetPassword(String email) => _runAuthAction(() => _c.otp.resetPassword(email));
+  Future<bool> resetPassword(String email) =>
+      _runAuthAction(() => _c.otp.resetPassword(email));
 
   Future<String?> determineGPSGovernorate({bool force = false}) async {
     final res = await _c.location.determineGPSGovernorate(force: force);
@@ -405,7 +467,9 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> updateUserLocation({bool force = false}) async {
     final newGov = await determineGPSGovernorate(force: force);
-    if (newGov != null && _userModel != null && _userModel!.governorate != newGov) {
+    if (newGov != null &&
+        _userModel != null &&
+        _userModel!.governorate != newGov) {
       await updateProfile({'governorate': newGov});
       return true;
     }
@@ -432,14 +496,15 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
-  Future<bool> verifyOtp({required String email, required String token}) => _runAuthAction(() async {
-    final res = await _c.otp.verifyOtp(email: email, token: token);
-    if (res.success) {
-      _firebaseUser = _authService.currentUser;
-      if (_firebaseUser != null) await _fetchUserData(_firebaseUser!);
-    }
-    return res;
-  });
+  Future<bool> verifyOtp({required String email, required String token}) =>
+      _runAuthAction(() async {
+        final res = await _c.otp.verifyOtp(email: email, token: token);
+        if (res.success) {
+          _supabaseUser = _authService.currentUser;
+          if (_supabaseUser != null) await _fetchUserData(_supabaseUser!);
+        }
+        return res;
+      });
 
   Future<bool> resendOtp() => _c.otp.resendOtp();
 
@@ -451,8 +516,10 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> payRehabilitationFine() => _runAuthAction(() async {
-    final res = await _c.profile.payRehabilitationFine(authUser: _firebaseUser);
-    if (res.success && _userModel != null) _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
+    final res = await _c.profile.payRehabilitationFine(authUser: _supabaseUser);
+    if (res.success && _userModel != null) {
+      _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
+    }
     return res;
   });
 }

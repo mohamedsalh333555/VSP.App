@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/owner_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -21,11 +22,24 @@ class OwnerLedgerScreen extends StatefulWidget {
 
 class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
   late final Stream<List<Map<String, dynamic>>> _transactionsStream;
+  Map<String, dynamic>? _summary;
 
   @override
   void initState() {
     super.initState();
     _transactionsStream = OwnerRepository().getTransactionsStream();
+    _loadSummary();
+  }
+
+  Future<void> _loadSummary() async {
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null) return;
+    final res = await OwnerRepository().getOwnerFinancialSummary(uid);
+    if (mounted) {
+      setState(() {
+        _summary = res;
+      });
+    }
   }
 
   Future<void> _exportLedgerCsv(BuildContext context, bool isAr) async {
@@ -83,6 +97,11 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
         leading: const VSPBackButton(),
         actions: [
           IconButton(
+            icon: const Icon(Iconsax.refresh_copy, color: Colors.white70),
+            tooltip: isAr ? 'تحديث السجل' : 'Refresh Ledger',
+            onPressed: () => _loadSummary(),
+          ),
+          IconButton(
             icon: const Icon(Iconsax.export_3_copy, color: Colors.white70),
             tooltip: isAr ? 'تصدير كشف الحساب' : 'Export Ledger',
             onPressed: () => _exportLedgerCsv(context, isAr),
@@ -103,7 +122,26 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           final transactions = snapshot.data ?? [];
 
-          if (transactions.isEmpty) {
+          // Authoritative DB summary values if loaded, fallback to transaction summation
+          double availableDigital = (_summary?['available_balance'] as num?)?.toDouble() ?? 0.0;
+          double totalPitchCash = (_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0;
+          final double cashDebt = (_summary?['accumulated_cash_debt'] as num?)?.toDouble() ?? 0.0;
+          final bool isDebtBlocked = _summary?['is_debt_blocked'] == true;
+
+          if (_summary == null) {
+            for (var doc in transactions) {
+              final type = doc['type']?.toString() ?? 'cash';
+              final amt = (doc['amount'] ?? 0).toDouble();
+
+              if (type == 'digital' || type == 'online' || type == 'paymob') {
+                availableDigital += amt;
+              } else if (type != 'match_win' && type != 'payout' && type != 'payout_pending' && type != 'payout_disbursed') {
+                totalPitchCash += amt;
+              }
+            }
+          }
+
+          if (transactions.isEmpty && _summary == null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -119,27 +157,13 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             );
           }
 
-          double totalPitchCash = 0;
-          double totalDigitalVsp = 0;
-
-          for (var doc in transactions) {
-            final type = doc['type']?.toString() ?? 'cash';
-            final amt = (doc['amount'] ?? 0).toDouble();
-
-            if (type == 'digital' || type == 'online' || type == 'paymob') {
-              totalDigitalVsp += amt;
-            } else if (type != 'match_win') {
-              totalPitchCash += amt;
-            }
-          }
-
           return Column(
             children: [
-              // كارت الرصيد الإلكتروني
+              // كارت الرصيد الإلكتروني المتاح للسحب
               OwnerDigitalBalanceCard(
-                digitalBalance: totalDigitalVsp,
+                digitalBalance: availableDigital,
                 isAr: isAr,
-                onRequestPayout: () => OwnerPayoutDialog.show(context, totalDigitalVsp, isAr),
+                onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
               ),
 
               // كارت التحصيل النقدي بالملعب
@@ -148,10 +172,46 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                 isAr: isAr,
               ),
 
+              // تنبيه المديونية النقدية للمنصة (إذا وجدت)
+              if (cashDebt > 0)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDebtBlocked ? Colors.red.withValues(alpha: 0.12) : Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isDebtBlocked ? Colors.redAccent.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isDebtBlocked ? Iconsax.warning_2_copy : Iconsax.info_circle_copy,
+                        size: 18,
+                        color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'مديونية عمولات الكاش: ${cashDebt.toStringAsFixed(1)} ج.م ${isDebtBlocked ? "(تم إيقاف الكاش لتجاوز الحد)" : "(الحد: 500 ج.م)"}'
+                              : 'Pitch Cash Debt: ${cashDebt.toStringAsFixed(1)} EGP ${isDebtBlocked ? "(Blocked)" : "(Limit: 500)"}',
+                          style: TextStyle(
+                            color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // قائمة المعاملات
               Expanded(
                 child: ListView.separated(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 4),
                   physics: const BouncingScrollPhysics(),
                   itemCount: transactions.length,
                   separatorBuilder: (context, index) => const SizedBox(height: 8),

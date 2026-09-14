@@ -35,7 +35,7 @@ class BookingCategorizationService {
   }) {
     final upcoming = bookings
         .where((b) =>
-            (b.status == BookingStatus.confirmed || b.status == BookingStatus.pending) &&
+            b.status == BookingStatus.confirmed &&
             b.endTime.isAfter(now))
         .toList();
 

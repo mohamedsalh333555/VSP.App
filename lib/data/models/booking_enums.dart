@@ -7,9 +7,20 @@ enum BookingStatus {
   cancelled, // User/owner cancelled
 }
 
+extension BookingStatusExtension on BookingStatus {
+  /// Ensures 'upcoming' is serialized as 'confirmed' to PostgreSQL.
+  String toDbValue() {
+    if (this == BookingStatus.upcoming) {
+      return 'confirmed';
+    }
+    return name;
+  }
+}
+
 enum MatchResultStatus { noResult, waitingOpponent, confirmed, disputed }
 
 enum MatchOutcome { homeWin, draw, awayWin }
+
 enum MatchResultChoice { weWon, draw, weLost }
 
 /// Booking Type Enum
@@ -29,4 +40,3 @@ enum PaymentSource {
   vodafoneCash, // محفظة فودافون كاش
   unknown,
 }
-
