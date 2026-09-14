@@ -40,23 +40,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   int _selectedProTabIndex = 0; // 0 = Overview (نظرة عامة), 1 = Insights (التحليلات)
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
-  OwnerFinancialMetrics? _cachedMetrics;
-  String? _lastMetricsKey;
 
   OwnerFinancialMetrics _getOrCalculateMetrics(List<Booking> allBookings) {
-    final key = '${allBookings.length}_${_ownerChampionships.length}_${_selectedTimePeriod}_$_selectedStadiumFilter';
-    if (_cachedMetrics != null && _lastMetricsKey == key) {
-      return _cachedMetrics!;
-    }
-    _lastMetricsKey = key;
-    _cachedMetrics = OwnerFinancialCalculator.calculate(
+    return OwnerFinancialCalculator.calculate(
       allBookings: allBookings,
       ownerChampionships: _ownerChampionships,
       timePeriod: _selectedTimePeriod,
       stadiumFilter: _selectedStadiumFilter,
     );
-    return _cachedMetrics!;
   }
+
 
   @override
   void initState() {

@@ -188,25 +188,31 @@ class StadiumProvider with ChangeNotifier {
  }
  }
 
- // Listen specifically to owner's stadiums
- void listenToOwnerStadiums(String ownerId) {
- _stadiumSubscription?.cancel();
- 
- _setError(null);
- _setLoading(true);
+  String? _listeningOwnerId;
 
- _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
- (data) {
- _stadiums = data;
- _errorMessage = null;
- _setLoading(false);
- },
- onError: (error) {
- _setError('Failed to fetch your stadiums: ${error.toString()}');
- _setLoading(false);
- },
- );
- }
+  // Listen specifically to owner's stadiums
+  void listenToOwnerStadiums(String ownerId, {bool forceRefresh = false}) {
+    if (!forceRefresh && _listeningOwnerId == ownerId && _stadiumSubscription != null && _stadiums.isNotEmpty) {
+      return;
+    }
+    _listeningOwnerId = ownerId;
+    _stadiumSubscription?.cancel();
+    
+    _setError(null);
+    _setLoading(true);
+
+    _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
+      (data) {
+        _stadiums = data;
+        _errorMessage = null;
+        _setLoading(false);
+      },
+      onError: (error) {
+        _setError('Failed to fetch your stadiums: ${error.toString()}');
+        _setLoading(false);
+      },
+    );
+  }
 
  // Get stadium by ID
  Future<Stadium?> getStadiumById(String stadiumId) async {

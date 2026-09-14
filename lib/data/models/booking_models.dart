@@ -358,6 +358,67 @@ class Booking {
  }
  return '${formatTime(startTime)} - ${formatTime(endTime)}';
  }
+
+  // =========================================================================
+  // Financial Domain Getters (Single Source of Truth)
+  // =========================================================================
+
+  /// تصنيف وسيلة الدفع بشكل قطعي وموحد عبر كل شاشات التطبيق
+  PaymentSource get paymentSource {
+    final m = paymentMethod.toLowerCase().trim();
+    final tx = (paymentTransactionId ?? '').toUpperCase();
+    if (m == 'cash' || tx.startsWith('MANUAL')) return PaymentSource.cash;
+    if (m.contains('instapay') || instapay != null) return PaymentSource.instapay;
+    if (m.contains('vodafone') || vodafoneCash != null) return PaymentSource.vodafoneCash;
+    if (m.contains('paymob') ||
+        m.contains('card') ||
+        m.contains('visa') ||
+        m.contains('mastercard') ||
+        m.contains('wallet') ||
+        m.contains('online') ||
+        tx.startsWith('PAYMOB')) {
+      return PaymentSource.paymob;
+    }
+    return PaymentSource.cash;
+  }
+
+  /// هل الحجز رقمي أونلاين أم نقدي بالملعب؟
+  bool get isDigital => paymentSource != PaymentSource.cash;
+
+  /// المبلغ المسدد فعلياً إلكترونياً (يدخل في المحفظة الإلكترونية القابلة للسحب)
+  double get digitalAmountPaid {
+    if (!isDigital) return 0.0;
+    if (isPaid || paymentStatus == 'paid') {
+      return totalPrice > 0 ? totalPrice : depositPaid;
+    }
+    return depositPaid > 0 ? depositPaid : 0.0;
+  }
+
+  /// الكاش المستلم فعلياً باليد في الملعب
+  double get pitchCashCollected {
+    if (isDigital) {
+      // إذا كان الحجز أونلاين ولكن تم دفع عربون فقط، وتم تحصيل الباقي كاش بالملعب
+      if (isPaid || paymentStatus == 'paid') {
+        final total = totalPrice > 0 ? totalPrice : depositPaid;
+        final onlinePart = depositPaid > 0 ? depositPaid : total;
+        return (total - onlinePart).clamp(0.0, 999999.0);
+      }
+      return 0.0;
+    } else {
+      // حجز كاش بالكامل
+      if (isPaid || paymentStatus == 'paid') {
+        return totalPrice > 0 ? totalPrice : depositPaid;
+      }
+      return depositPaid > 0 ? depositPaid : 0.0;
+    }
+  }
+
+  /// المتبقي المعلق الذي لم يُحصّل بعد
+  double get pendingReceivable {
+    final effectiveTotal = totalPrice > 0 ? totalPrice : depositPaid;
+    final totalCollected = digitalAmountPaid + pitchCashCollected;
+    return (effectiveTotal - totalCollected).clamp(0.0, 999999.0);
+  }
 }
 
 

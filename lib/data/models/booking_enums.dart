@@ -20,3 +20,13 @@ enum BookingType {
   team, // Legacy alias for challenge
   matchup, // Matchups mode: Duo or Winner Stays (مواجهات)
 }
+
+/// مصدر وسيلة الدفع الموحد للتطبيق
+enum PaymentSource {
+  cash, // دفع نقدي مباشر بالملعب
+  paymob, // دفع رقمي عبر Paymob (بطاقة / محفظة)
+  instapay, // تحويل بنكي فوري
+  vodafoneCash, // محفظة فودافون كاش
+  unknown,
+}
+

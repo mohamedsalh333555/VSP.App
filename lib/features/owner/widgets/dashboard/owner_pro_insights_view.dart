@@ -173,21 +173,12 @@ class OwnerProInsightsView extends StatelessWidget {
     double digitalRevenue = 0.0;
     double cashRevenue = 0.0;
     for (final b in periodBookings) {
-      final price = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      final method = b.paymentMethod.toLowerCase().trim();
-      final bool isDigital = b.isPaid ||
-          b.isDepositPaid ||
-          b.depositPaid > 0 ||
-          (method.isNotEmpty && method != 'cash' && method != 'كاش' && method != 'نقدي');
-
-      if (isDigital) {
-        digitalRevenue += price;
-      } else {
-        cashRevenue += price;
-      }
+      digitalRevenue += b.digitalAmountPaid;
+      cashRevenue += b.pitchCashCollected;
     }
     final double digitalPct = periodRevenue > 0 ? (digitalRevenue / periodRevenue * 100) : 0.0;
     final double cashPct = periodRevenue > 0 ? (cashRevenue / periodRevenue * 100) : 0.0;
+
 
     // =========================================================================
     // METRIC 3: STRATEGIC BUSINESS METRICS (الإشغال الفعلي + الإيراد الضائع)

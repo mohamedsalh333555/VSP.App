@@ -19,6 +19,15 @@ class OwnerFinancialMetrics {
     required this.activeBookingsCount,
     required this.periodBookings,
   });
+
+  /// كاش الملعب المستلم فعلياً
+  double get cashCollected => pitchCashRevenue;
+
+  /// رصيد المحفظة الإلكترونية أونلاين
+  double get digitalBalance => digitalVspBalance;
+
+  /// المبالغ المعلقة المتبقية على العملاء
+  double get pendingAmount => pendingReceivables;
 }
 
 /// محرك الحسابات المالية المفصول عن واجهة المستخدم (Pure Domain Financial Calculator)
@@ -61,40 +70,13 @@ class OwnerFinancialCalculator {
 
     for (final b in filteredBookings) {
       final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice);
-      final double paidAmount = isPaidInFull ? totalPrice : (b.depositPaid > 0 ? b.depositPaid : 0.0);
-      final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
-
-      pendingReceivables += remainingAmount;
+      digitalVspBalance += b.digitalAmountPaid;
+      pitchCashRevenue += b.pitchCashCollected;
+      pendingReceivables += b.pendingReceivable;
       totalPipeline += totalPrice;
 
-      final String method = b.paymentMethod.toLowerCase().trim();
-      final bool isManual = (method == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
-
-      final bool isOnlinePayment = !isManual && (
-        method.contains('paymob') ||
-        method.contains('card') ||
-        method.contains('visa') ||
-        method.contains('mastercard') ||
-        method.contains('wallet') ||
-        method.contains('online') ||
-        method.contains('instapay') ||
-        method.contains('vodafone') ||
-        (b.paymentTransactionId?.startsWith('PAYMOB') == true) ||
-        b.isPaid == true ||
-        b.paymentStatus == 'paid'
-      );
-
-      if (isOnlinePayment) {
-        final onlinePaid = (b.depositPaid > 0 ? b.depositPaid : paidAmount);
-        digitalVspBalance += onlinePaid;
-        pitchCashRevenue += (paidAmount - onlinePaid).clamp(0.0, 999999.0);
-      } else {
-        pitchCashRevenue += paidAmount;
-      }
-
       final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-      totalHours += (diffMinutes / 60.0);
+      totalHours += diffMinutes > 0 ? (diffMinutes / 60.0) : 1.0;
     }
 
     return OwnerFinancialMetrics(
