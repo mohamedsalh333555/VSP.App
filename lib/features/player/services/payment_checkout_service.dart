@@ -20,8 +20,9 @@ class PaymentCheckoutService {
     required bool needsDeposit,
     required double depositPaid,
     required double totalPrice,
+    bool isFullPayment = false,
   }) {
-    if (needsDeposit && depositPaid > 0) {
+    if (!isFullPayment && needsDeposit && depositPaid > 0) {
       return depositPaid;
     }
     return totalPrice;
@@ -81,11 +82,13 @@ class PaymentCheckoutService {
     required String userEmail,
     required String userName,
     required String userPhone,
+    bool isFullPayment = false,
   }) async {
     final baseAmount = calculateBasePayableAmount(
       needsDeposit: draft.needsDeposit,
       depositPaid: draft.depositPaid,
       totalPrice: draft.totalPrice,
+      isFullPayment: isFullPayment,
     );
     final totalAmount = calculateTotalAmountWithFees(baseAmount);
     final selectedIntegrationId = getIntegrationId(selectedMethod);
@@ -104,6 +107,7 @@ class PaymentCheckoutService {
       userPhone: userPhone,
       integrationId: selectedIntegrationId,
       isTournamentPayment: isTournamentPayment,
+      isFullPayment: isFullPayment,
     );
   }
 }

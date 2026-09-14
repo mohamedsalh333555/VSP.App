@@ -16,6 +16,7 @@ class PaymobService {
     required String userPhone,
     String? integrationId,
     bool isTournamentPayment = false,
+    bool isFullPayment = false,
   }) async {
     try {
       final activeIntegration = int.tryParse(integrationId ?? AppConfig.paymobCardIntegrationId) ?? 5772488;
@@ -25,6 +26,7 @@ class PaymobService {
         body: {
           'booking_id': bookingId,
           'is_tournament_payment': isTournamentPayment,
+          'is_full_payment': isFullPayment,
           'amount_egp': amountInEgp,
           'user_email': userEmail,
           'user_name': userName,
