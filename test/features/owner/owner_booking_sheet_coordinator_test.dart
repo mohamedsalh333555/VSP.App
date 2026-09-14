@@ -20,6 +20,15 @@ class MockOwnerRepo extends OwnerRepository {
   }
 
   @override
+  Future<dynamic> extendOngoingMatchAtomic({
+    required String bookingId,
+    int addedMinutes = 30,
+  }) async {
+    matchExtended = true;
+    return {'success': true};
+  }
+
+  @override
   Future<void> extendBookingEndTime({
     required String bookingId,
     required DateTime newEndTime,
