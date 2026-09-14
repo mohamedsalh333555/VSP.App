@@ -62,6 +62,7 @@ serve(async (req: Request) => {
     const {
       booking_id,
       is_tournament_payment = false,
+      is_full_payment = false,
       amount_egp,
       user_phone = "",
       user_name = "Player",
@@ -118,7 +119,7 @@ serve(async (req: Request) => {
       }
 
       // Trust only the DB price (prevent client price tampering)
-      finalBaseAmount = (booking.needs_deposit && Number(booking.deposit_amount) > 0)
+      finalBaseAmount = (!is_full_payment && booking.needs_deposit && Number(booking.deposit_amount) > 0)
         ? Number(booking.deposit_amount)
         : Number(booking.total_price);
     }

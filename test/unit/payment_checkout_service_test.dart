@@ -30,6 +30,16 @@ void main() {
       expect(amount2, 350.0);
     });
 
+    test('calculateBasePayableAmount returns totalPrice when isFullPayment is true even if needsDeposit is true', () {
+      final amount = PaymentCheckoutService.calculateBasePayableAmount(
+        needsDeposit: true,
+        depositPaid: 150.0,
+        totalPrice: 400.0,
+        isFullPayment: true,
+      );
+      expect(amount, 400.0);
+    });
+
     test('getIntegrationId returns wallet vs card integration ID accurately', () {
       expect(
         PaymentCheckoutService.getIntegrationId('wallet'),

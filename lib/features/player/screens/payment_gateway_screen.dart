@@ -237,6 +237,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
+      isFullPayment: widget.forceFullPayment,
     );
 
     final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
@@ -407,7 +408,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:');
-    final hasDeposit = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
+    final hasDeposit = !widget.forceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
 
     return PopScope(
