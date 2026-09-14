@@ -205,6 +205,17 @@ class OwnerRepository {
         .eq('id', bookingId);
   }
 
+  /// تمديد وقت انتهاء المباراة الجارية ذرياً مع فحص التضارب
+  Future<dynamic> extendOngoingMatchAtomic({
+    required String bookingId,
+    int addedMinutes = 30,
+  }) async {
+    return _supabase.rpc('owner_extend_match_atomic', params: {
+      'p_booking_id': bookingId,
+      'p_added_minutes': addedMinutes,
+    });
+  }
+
   /// إنشاء حجز يدوي ذرياً بواسطة المالك
   Future<dynamic> createManualBookingAtomic({
     required String ownerId,

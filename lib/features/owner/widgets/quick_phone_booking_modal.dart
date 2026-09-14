@@ -173,35 +173,24 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       final cleanPhone = rawPhone.isNotEmpty ? PhoneUtils.normalize(rawPhone) : null;
       final paidAmount = _currentPaidAmount;
       final totalPrice = _totalPrice;
-      final isFullyPaid = _isFullyPaid;
-      final isPartiallyPaid = _isPartiallyPaid;
 
-      final newBooking = {
-        'stadium_id': widget.stadium.id,
-        'stadium_name': widget.stadium.name,
-        'owner_id': ownerId,
-        'user_id': ownerId,
-        'created_by_user_id': ownerId,
-        'host_name': customerName,
-        'player_phone': cleanPhone,
-        'start_time': widget.startTime.toUtc().toIso8601String(),
-        'end_time': _effectiveEndTime.toUtc().toIso8601String(),
-        'status': 'confirmed',
-        'is_paid': isFullyPaid,
-        'payment_status': isFullyPaid ? 'paid' : (isPartiallyPaid ? 'partially_paid' : 'pending'),
-        'payment_method': 'cash',
-        'total_price': totalPrice,
-        'deposit_paid': paidAmount,
-        'is_deposit_paid': paidAmount > 0,
-        'booking_type': 'personal',
-        'is_private': true,
-        'payment_transaction_id': 'MANUAL_PHONE_$bookingRef',
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      };
+      final response = await OwnerRepository().createManualBookingAtomic(
+        ownerId: ownerId,
+        stadiumId: widget.stadium.id,
+        startTime: widget.startTime,
+        endTime: _effectiveEndTime,
+        customerName: customerName,
+        customerPhone: cleanPhone,
+        totalPrice: totalPrice,
+        collectedAmount: paidAmount,
+        playerCount: 1,
+      );
 
-      final response = await OwnerRepository().insertManualPhoneBooking(newBooking);
-      final createdBookingId = response['id']?.toString() ?? bookingRef;
+      if (response is Map && response['success'] == false) {
+        throw Exception(response['message']?.toString() ?? (isAr ? 'تعذر حفظ الحجز' : 'Failed to save booking'));
+      }
+
+      final createdBookingId = response?['booking_id']?.toString() ?? response?['id']?.toString() ?? bookingRef;
 
       if (!mounted) return;
       HapticFeedback.lightImpact();
@@ -237,10 +226,11 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         setState(() => _isSaving = false);
         final err = e.toString().toLowerCase();
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
-        if (err.contains('prevent_double_booking') || err.contains('duplicate')) {
+        if (err.contains('prevent_double_booking') || err.contains('duplicate') || err.contains('conflict')) {
           VSPFeedback.showError(context, isAr ? 'هذا الموعد تم حجزه للتو من لاعب آخر' : 'This slot was just booked by another player');
         } else {
-          VSPFeedback.showError(context, isAr ? 'حدث خطأ أثناء حفظ الحجز' : 'Failed to save phone booking');
+          final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
+          VSPFeedback.showError(context, cleanMsg.isNotEmpty ? cleanMsg : (isAr ? 'حدث خطأ أثناء حفظ الحجز' : 'Failed to save phone booking'));
         }
       }
     }

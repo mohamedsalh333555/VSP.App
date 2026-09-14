@@ -119,7 +119,10 @@ class OwnerScheduleSlotsBuilder {
             'hour': currentH,
             'minute': currentM,
             'type': isManual ? 'manual' : 'player',
-            'name': booking.playerTeamName ?? (isArSlot ? 'حجز يدوي' : 'Manual Booking'),
+            'name': (booking.playerTeamName?.trim().isNotEmpty == true
+                    ? booking.playerTeamName
+                    : (booking.hostName?.trim().isNotEmpty == true ? booking.hostName : null)) ??
+                (isArSlot ? 'حجز يدوي' : 'Manual Booking'),
             'booking': booking,
             'isManaged': true,
             'slotTime': slotTime,

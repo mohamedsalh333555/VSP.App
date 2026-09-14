@@ -14,12 +14,23 @@ class OwnerNotificationButton extends StatefulWidget {
 }
 
 class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
-  late final Stream<int> _unreadStream;
+  late Stream<int> _unreadStream;
 
   @override
   void initState() {
     super.initState();
     _unreadStream = NotificationRepository().getUnreadNotificationCount(widget.userId);
+  }
+
+  @override
+  void didUpdateWidget(covariant OwnerNotificationButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId && widget.userId.isNotEmpty) {
+      setState(() {
+        _unreadStream = NotificationRepository()
+            .getUnreadNotificationCount(widget.userId);
+      });
+    }
   }
 
   @override

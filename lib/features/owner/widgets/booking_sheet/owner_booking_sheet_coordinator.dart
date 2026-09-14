@@ -81,15 +81,25 @@ class OwnerBookingSheetCoordinator {
     required ValueSetter<bool> setLoading,
     OwnerRepository? ownerRepository,
   }) async {
-    final newEndTime = booking.endTime.add(const Duration(minutes: 30));
-
     setLoading(true);
     try {
       final repo = ownerRepository ?? OwnerRepository();
-      await repo.extendBookingEndTime(
+      final res = await repo.extendOngoingMatchAtomic(
         bookingId: booking.id,
-        newEndTime: newEndTime,
+        addedMinutes: 30,
       );
+
+      if (res is Map && res['success'] == false) {
+        if (context.mounted) {
+          setLoading(false);
+          final msg = res['message']?.toString() ??
+              (isArabic
+                  ? 'لا يمكن تمديد المباراة، يوجد حجز آخر يبدأ في هذا الوقت.'
+                  : 'Cannot extend match, another booking starts soon.');
+          VSPFeedback.showWarning(context, msg);
+        }
+        return;
+      }
 
       if (context.mounted) {
         VSPFeedback.showSuccess(
@@ -110,7 +120,8 @@ class OwnerBookingSheetCoordinator {
     } catch (e) {
       if (context.mounted) {
         setLoading(false);
-        VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $e');
+        final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
+        VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $cleanMsg');
       }
     }
   }
