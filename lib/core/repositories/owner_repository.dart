@@ -75,8 +75,8 @@ class OwnerRepository {
           .from('bookings')
           .select('total_price, platform_fee')
           .eq('owner_id', ownerId)
-          .neq('payment_method', 'cash')
-          .or('payment_status.eq.paid,is_paid.eq.true')
+          .neq('payment_source', 'cash')
+          .or('payment_reconcile_state.eq.fully_paid,payment_status.eq.paid,is_paid.eq.true')
           .neq('status', 'cancelled');
 
       double total = 0;

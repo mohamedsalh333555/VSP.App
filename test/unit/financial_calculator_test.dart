@@ -84,5 +84,34 @@ void main() {
       // Owner receives full pitch rental price: 100.00 EGP
       expect(baseAmount, equals(100.00));
     });
+
+    test('Validates normalized paymentSource and paymentReconcileState domain behavior', () {
+      final normalizedBooking = Booking(
+        id: 'b_norm',
+        stadiumId: 's1',
+        stadiumName: 'Stadium 1',
+        ownerId: 'owner1',
+        createdByUserId: 'u1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        isPrivate: true,
+        rentBall: false,
+        totalPrice: 300.0,
+        depositPaid: 100.0,
+        paymentMethod: 'cash',
+        paymentSource: 'paymob',
+        paymentReconcileState: 'partially_paid',
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.personal,
+        createdAt: now,
+      );
+
+      expect(normalizedBooking.effectivePaymentSource, equals('paymob'));
+      expect(normalizedBooking.effectivePaymentState, equals('partially_paid'));
+      expect(normalizedBooking.isDigital, isTrue);
+      expect(normalizedBooking.digitalAmountPaid, equals(100.0));
+      expect(normalizedBooking.pitchCashCollected, equals(0.0));
+      expect(normalizedBooking.pendingReceivable, equals(200.0)); // 300 total - 100 paid online = 200 pending at pitch
+    });
   });
 }

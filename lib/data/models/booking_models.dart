@@ -79,6 +79,8 @@ class Booking {
  final String? binanceId;
  final String? lastMessage;
  final DateTime? lastMessageTime;
+ final String? paymentSource;
+ final String? paymentReconcileState;
 
  // Emergency Cancellation & Rescheduling Fields
  final String rescheduleStatus; // 'none', 'pending', 'accepted', 'rejected'
@@ -178,6 +180,8 @@ class Booking {
  this.refundChannel,
  this.refundEta,
  this.displayRefundRef,
+ this.paymentSource,
+ this.paymentReconcileState,
  });
 
   /// Create Booking from Firestore/Supabase document
@@ -238,6 +242,10 @@ class Booking {
  instapay: draft.instapay,
  vodafoneCash: draft.vodafoneCash,
  binanceId: draft.binanceId,
+ paymentSource: draft.paymentMethod ?? 'cash',
+ paymentReconcileState: draft.isPaid
+     ? 'fully_paid'
+     : (draft.isDepositPaid ? 'partially_paid' : 'unpaid'),
  );
  }
 
@@ -284,6 +292,8 @@ class Booking {
  String? instapay,
  String? vodafoneCash,
  String? binanceId,
+ String? paymentSource,
+ String? paymentReconcileState,
  }) {
  return Booking(
  id: id ?? this.id,
@@ -328,6 +338,8 @@ class Booking {
  instapay: instapay ?? this.instapay,
  vodafoneCash: vodafoneCash ?? this.vodafoneCash,
  binanceId: binanceId ?? this.binanceId,
+ paymentSource: paymentSource ?? this.paymentSource,
+ paymentReconcileState: paymentReconcileState ?? this.paymentReconcileState,
  );
  }
 
@@ -363,13 +375,27 @@ class Booking {
   // Financial Domain Getters (Single Source of Truth)
   // =========================================================================
 
-  /// تصنيف وسيلة الدفع بشكل قطعي وموحد عبر كل شاشات التطبيق
-  PaymentSource get paymentSource {
+  /// الحالة المالية الموحدة للحجز (Single Source of Truth)
+  String get effectivePaymentState {
+    if (paymentReconcileState != null && paymentReconcileState!.isNotEmpty) {
+      return paymentReconcileState!;
+    }
+    if (paymentStatus == 'refunded') return 'refunded';
+    if (isPaid || paymentStatus == 'paid') return 'fully_paid';
+    if (depositPaid > 0 && depositPaid < totalPrice) return 'partially_paid';
+    return 'unpaid';
+  }
+
+  /// مصدر الدفع الموحد للحجز
+  String get effectivePaymentSource {
+    if (paymentSource != null && paymentSource!.isNotEmpty) {
+      return paymentSource!;
+    }
     final m = paymentMethod.toLowerCase().trim();
     final tx = (paymentTransactionId ?? '').toUpperCase();
-    if (m == 'cash' || tx.startsWith('MANUAL')) return PaymentSource.cash;
-    if (m.contains('instapay') || instapay != null) return PaymentSource.instapay;
-    if (m.contains('vodafone') || vodafoneCash != null) return PaymentSource.vodafoneCash;
+    if (m == 'cash' || tx.startsWith('MANUAL') || m.contains('كاش')) return 'cash';
+    if (m.contains('instapay') || instapay != null) return 'instapay';
+    if (m.contains('vodafone') || vodafoneCash != null) return 'vodafone_cash';
     if (m.contains('paymob') ||
         m.contains('card') ||
         m.contains('visa') ||
@@ -377,28 +403,41 @@ class Booking {
         m.contains('wallet') ||
         m.contains('online') ||
         tx.startsWith('PAYMOB')) {
-      return PaymentSource.paymob;
+      return 'paymob';
     }
-    return PaymentSource.cash;
+    return 'cash';
+  }
+
+  /// تصنيف وسيلة الدفع كـ Enum
+  PaymentSource get paymentSourceEnum {
+    final s = effectivePaymentSource;
+    if (s == 'cash') return PaymentSource.cash;
+    if (s == 'paymob') return PaymentSource.paymob;
+    if (s == 'instapay') return PaymentSource.instapay;
+    if (s == 'vodafone_cash') return PaymentSource.vodafoneCash;
+    return PaymentSource.unknown;
   }
 
   /// هل الحجز رقمي أونلاين أم نقدي بالملعب؟
-  bool get isDigital => paymentSource != PaymentSource.cash;
+  bool get isDigital => effectivePaymentSource != 'cash';
 
   /// المبلغ المسدد فعلياً إلكترونياً (يدخل في المحفظة الإلكترونية القابلة للسحب)
   double get digitalAmountPaid {
     if (!isDigital) return 0.0;
-    if (isPaid || paymentStatus == 'paid') {
+    if (effectivePaymentState == 'fully_paid') {
       return totalPrice > 0 ? totalPrice : depositPaid;
     }
-    return depositPaid > 0 ? depositPaid : 0.0;
+    if (effectivePaymentState == 'partially_paid') {
+      return depositPaid > 0 ? depositPaid : 0.0;
+    }
+    return 0.0;
   }
 
   /// الكاش المستلم فعلياً باليد في الملعب
   double get pitchCashCollected {
     if (isDigital) {
       // إذا كان الحجز أونلاين ولكن تم دفع عربون فقط، وتم تحصيل الباقي كاش بالملعب
-      if (isPaid || paymentStatus == 'paid') {
+      if (effectivePaymentState == 'fully_paid') {
         final total = totalPrice > 0 ? totalPrice : depositPaid;
         final onlinePart = depositPaid > 0 ? depositPaid : total;
         return (total - onlinePart).clamp(0.0, 999999.0);
@@ -406,10 +445,13 @@ class Booking {
       return 0.0;
     } else {
       // حجز كاش بالكامل
-      if (isPaid || paymentStatus == 'paid') {
+      if (effectivePaymentState == 'fully_paid') {
         return totalPrice > 0 ? totalPrice : depositPaid;
       }
-      return depositPaid > 0 ? depositPaid : 0.0;
+      if (effectivePaymentState == 'partially_paid') {
+        return depositPaid > 0 ? depositPaid : 0.0;
+      }
+      return 0.0;
     }
   }
 

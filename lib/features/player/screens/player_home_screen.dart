@@ -97,7 +97,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   void _checkPendingChallengeResultPopup(BuildContext context) {
     if (_hasShownPostMatchPopupThisSession) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final userId = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+    final userId = auth.currentUser?.id;
     if (userId == null) return;
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);

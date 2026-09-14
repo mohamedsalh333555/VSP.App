@@ -41,13 +41,35 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
 
+  String? _lastMetricsKey;
+  OwnerFinancialMetrics? _cachedMetrics;
+
   OwnerFinancialMetrics _getOrCalculateMetrics(List<Booking> allBookings) {
-    return OwnerFinancialCalculator.calculate(
+    final key = _generateMetricsCacheKey(allBookings);
+    if (_cachedMetrics != null && _lastMetricsKey == key) {
+      return _cachedMetrics!;
+    }
+    _lastMetricsKey = key;
+    _cachedMetrics = OwnerFinancialCalculator.calculate(
       allBookings: allBookings,
       ownerChampionships: _ownerChampionships,
       timePeriod: _selectedTimePeriod,
       stadiumFilter: _selectedStadiumFilter,
     );
+    return _cachedMetrics!;
+  }
+
+  String _generateMetricsCacheKey(List<Booking> bookings) {
+    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:');
+    for (final b in bookings.take(50)) {
+      buffer.write(
+        '${b.id}:'
+        '${b.effectivePaymentState}:'
+        '${b.totalPrice}:'
+        '${b.depositPaid}|',
+      );
+    }
+    return buffer.toString().hashCode.toString();
   }
 
 
@@ -56,7 +78,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+      final uid = auth.currentUser?.id;
       if (uid != null) {
         Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
@@ -128,7 +150,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
           color: VSPColors.accent,
           backgroundColor: VSPColors.surface,
           onRefresh: () async {
-            final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+            final uid = auth.currentUser?.id;
             if (uid == null) return;
             if (context.mounted) {
               Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);

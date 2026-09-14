@@ -32,7 +32,7 @@ class OwnerBookingSheetCoordinator {
       if (uid == null) {
         try {
           final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
-          uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid ?? booking.ownerId;
+          uid = authProvider.currentUser?.id ?? booking.ownerId;
         } catch (_) {
           uid = booking.ownerId;
         }
@@ -61,7 +61,7 @@ class OwnerBookingSheetCoordinator {
       if (parentContext.mounted) {
         try {
           final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = currentUserId ?? auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+          final currentUid = currentUserId ?? auth.currentUser?.id;
           if (currentUid != null) {
             await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
           }
@@ -114,7 +114,7 @@ class OwnerBookingSheetCoordinator {
       if (parentContext.mounted) {
         try {
           final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+          final currentUid = auth.currentUser?.id;
           if (currentUid != null) {
             await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
           }

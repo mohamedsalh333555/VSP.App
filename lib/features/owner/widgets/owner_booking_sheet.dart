@@ -129,7 +129,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
       final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
 
-      final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid;
+      final uid = authProvider.currentUser?.id;
       if (uid == null) {
         throw Exception(isArabic ? 'انتهت الجلسة، يرجى إعادة تسجيل الدخول' : 'Session expired');
       }

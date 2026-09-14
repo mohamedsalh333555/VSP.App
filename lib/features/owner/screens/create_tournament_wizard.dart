@@ -68,7 +68,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   String _getDraftPrefix() {
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.userModel?.uid ?? auth.currentUser?.uid ?? auth.firebaseUser?.id ?? '';
+      final uid = auth.userModel?.uid ?? auth.currentUser?.id ?? '';
       return TournamentWizardDraftService.getDraftPrefix(uid);
     } catch (_) {
       return 'temp_tournament_';
@@ -301,8 +301,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     setState(() => _isLoading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final currentUid = auth.currentUser?.uid ??
-          auth.firebaseUser?.uid ??
+      final currentUid = auth.currentUser?.id ??
           auth.userModel?.uid ??
           '';
       final currentGov = auth.governorate.trim().isNotEmpty

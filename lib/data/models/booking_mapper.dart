@@ -246,6 +246,10 @@ class BookingMapper {
       refundEta: (data['refund_eta'] ?? data['refundEta'])?.toString(),
       displayRefundRef: (data['display_refund_ref'] ?? data['displayRefundRef'])
           ?.toString(),
+      paymentSource: (data['payment_source'] ?? data['paymentSource'])?.toString() ??
+          _inferPaymentSourceFromMethod(data['payment_method'] ?? data['paymentMethod']),
+      paymentReconcileState:
+          (data['payment_reconcile_state'] ?? data['paymentReconcileState'])?.toString(),
     );
   }
 
@@ -346,6 +350,12 @@ class BookingMapper {
       'binanceId': booking.binanceId,
       'last_message': booking.lastMessage,
       'last_message_time': booking.lastMessageTime?.toUtc().toIso8601String(),
+      'payment_source': booking.paymentSource ?? booking.effectivePaymentSource,
+      'paymentSource': booking.paymentSource ?? booking.effectivePaymentSource,
+      'payment_reconcile_state':
+          booking.paymentReconcileState ?? booking.effectivePaymentState,
+      'paymentReconcileState':
+          booking.paymentReconcileState ?? booking.effectivePaymentState,
       if (booking.refundAmount != null) 'refund_amount': booking.refundAmount,
       if (booking.refundTransactionId != null)
         'refund_transaction_id': booking.refundTransactionId,
@@ -354,5 +364,15 @@ class BookingMapper {
       if (booking.refundPaymentMethod != null)
         'refund_payment_method': booking.refundPaymentMethod,
     };
+  }
+
+  static String? _inferPaymentSourceFromMethod(dynamic methodVal) {
+    if (methodVal == null) return null;
+    final method = methodVal.toString().toLowerCase().trim();
+    if (method.contains('cash') || method.contains('كاش')) return 'cash';
+    if (method.contains('paymob') || method.contains('card') || method.contains('online')) return 'paymob';
+    if (method.contains('instapay')) return 'instapay';
+    if (method.contains('vodafone')) return 'vodafone_cash';
+    return null;
   }
 }

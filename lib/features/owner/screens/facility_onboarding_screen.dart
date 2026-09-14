@@ -62,7 +62,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  @override
  Widget build(BuildContext context) {
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.uid ?? authProvider.firebaseUser?.id ?? '';
+ final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.id ?? '';
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
  return Scaffold(

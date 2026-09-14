@@ -56,7 +56,7 @@ class StadiumWizardSubmitService {
           .where((img) => img['url'] != null)
           .map((img) => img['url'] as String)
           .toList();
-      final user = auth.firebaseUser;
+      final user = auth.currentUser;
 
       if (user == null) {
         VSPFeedback.showError(context, "Authentication lost. Please login again.");

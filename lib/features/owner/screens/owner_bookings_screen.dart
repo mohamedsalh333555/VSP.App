@@ -46,7 +46,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+      final uid = auth.currentUser?.id;
       if (uid != null) {
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         bookingProvider.loadOwnerBookings(uid);
@@ -180,7 +180,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       baseDate: baseDate,
                       onQuickBookingDone: () async {
                         final auth = Provider.of<AuthProvider>(context, listen: false);
-                        final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+                        final uid = auth.currentUser?.id;
                         if (uid != null && mounted) {
                           await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
                         }

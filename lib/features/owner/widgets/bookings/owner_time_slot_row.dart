@@ -206,7 +206,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
       HapticFeedback.mediumImpact();
       final isAr = Localizations.localeOf(context).languageCode == 'ar';
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+      final uid = auth.currentUser?.id;
       if (uid == null) return;
 
       final selectedDate = baseDate.add(Duration(days: selectedDayIndex));

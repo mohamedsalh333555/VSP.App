@@ -59,7 +59,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   String? get _uid {
     try {
       final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-      return auth.userModel?.uid ?? auth.currentUser?.uid ?? auth.firebaseUser?.id;
+      return auth.userModel?.uid ?? auth.currentUser?.id;
     } catch (_) {
       return null;
     }

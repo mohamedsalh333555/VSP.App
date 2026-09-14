@@ -261,7 +261,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      if (authProvider.firebaseUser == null) {
+      if (authProvider.currentUser == null) {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
         setState(() => _isSaving = false);
         return;
