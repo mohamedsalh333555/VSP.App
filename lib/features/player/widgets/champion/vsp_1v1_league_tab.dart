@@ -46,6 +46,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
   bool get wantKeepAlive => true;
 
   bool _isProcessingPayment = false;
+  bool _hasPaid = false;
+  String? _paidOrderRef;
 
   @override
   Widget build(BuildContext context) {
@@ -231,6 +233,30 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     setState(() => _isProcessingPayment = true);
 
     try {
+      // 0. إذا كان اللاعب قد سدد بالفعل، تخطى بوابة الدفع ونفّذ التحقق مباشرة
+      if (_hasPaid) {
+        final isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
+        if (!mounted) return;
+
+        if (isRegistered) {
+          VSPFeedback.showSuccess(
+            context,
+            isArabic
+                ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!'
+                : 'Payment confirmed! You are registered in the tournament.',
+          );
+          setState(() {});
+        } else {
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'تم سداد الرسوم بنجاح (${_paidOrderRef ?? ""})، جاري معالجة تسجيلك عبر الخادم، يرجى التحديث خلال لحظات.'
+                : 'Payment succeeded (${_paidOrderRef ?? ""}), registration is processing, please refresh shortly.',
+          );
+        }
+        return;
+      }
+
       // 1. Create atomic payment order on database
       final orderRes = await LeagueRepository().create1v1PaymentOrder(tournamentId);
       if (orderRes['success'] != true) {
@@ -246,11 +272,23 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       final orderRef = orderRes['order_reference'] as String;
       final orderAmount = (orderRes['amount'] as num?)?.toDouble() ?? entryFee;
 
+      // 2. التحقق من مطابقة المبلغ للرسوم المعروضة (بفارق لا يتجاوز 1 جنيه)
+      if ((orderAmount - entryFee).abs() > 1.0) {
+        if (!mounted) return;
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'مبلغ الاشتراك تغير، يرجى إغلاق الشاشة وإعادة المحاولة.'
+              : 'Entry fee has changed, please close screen and try again.',
+        );
+        return;
+      }
+
       final userName = auth.userModel?.name ?? 'Player';
       final userPhone = auth.userModel?.phone ?? '';
       final userEmail = user.email ?? 'player@vsp.app';
 
-      // 2. Obtain secure Paymob checkout URL via Supabase Edge Function
+      // 3. Obtain secure Paymob checkout URL via Supabase Edge Function
       final checkoutUrl = await PaymobService.getCheckoutUrlFromServer(
         amountInEgp: orderAmount,
         bookingId: orderRef,
@@ -270,7 +308,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         return;
       }
 
-      // 3. Open Paymob WebView Screen
+      // 4. Open Paymob WebView Screen
       final isPaidSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -284,11 +322,18 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
       if (!mounted) return;
 
-      // 4. Verification Check
+      if (isPaidSuccess == true) {
+        _hasPaid = true;
+        _paidOrderRef = orderRef;
+      }
+
+      // 5. Verification Check
       final isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
       if (!mounted) return;
 
       if (isPaidSuccess == true || isRegistered) {
+        _hasPaid = true;
+        _paidOrderRef = orderRef;
         VSPFeedback.showSuccess(
           context,
           isArabic

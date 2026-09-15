@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -30,11 +34,51 @@ class OwnerTournamentDashboardScreen extends StatefulWidget {
 class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboardScreen> {
   late Championship _currentChampionship;
   bool _isLoading = false;
+  List<Team> _teams = [];
+  List<String> _lastJoinedTeams = [];
+  StreamSubscription? _champSubscription;
 
   @override
   void initState() {
     super.initState();
     _currentChampionship = widget.championship;
+    _lastJoinedTeams = List.from(widget.championship.joinedTeams);
+    _subscribeToChampionship();
+    _fetchTeams(widget.championship.joinedTeams);
+  }
+
+  void _subscribeToChampionship() {
+    _champSubscription = TournamentRepository()
+        .streamChampionshipRaw(_currentChampionship.id)
+        .listen((data) {
+      if (!mounted || data.isEmpty) return;
+      final updated = Championship.fromFirestore(data.first, _currentChampionship.id);
+      setState(() => _currentChampionship = updated);
+
+      if (!listEquals(updated.joinedTeams, _lastJoinedTeams)) {
+        _lastJoinedTeams = List.from(updated.joinedTeams);
+        _fetchTeams(updated.joinedTeams);
+      }
+    });
+  }
+
+  Future<void> _fetchTeams(List<String> ids) async {
+    if (ids.isEmpty) {
+      if (mounted) setState(() => _teams = []);
+      return;
+    }
+    try {
+      final teams = await TournamentRepository().getTeamsByIds(ids);
+      if (mounted) setState(() => _teams = teams);
+    } catch (e) {
+      debugPrint('Error fetching teams in dashboard: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _champSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _handleStartTournament() async {
@@ -131,9 +175,11 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         await TournamentRepository().generateFixtures(_currentChampionship.id);
       }
 
-      setState(() {
-        _currentChampionship = _currentChampionship.copyWith(status: 'ongoing');
-      });
+      await TournamentRepository().updateChampionshipStatus(
+        _currentChampionship.id,
+        'ongoing',
+      );
+
       if (mounted) {
         VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.drawGeneratedSuccess);
       }
@@ -147,6 +193,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   }
 
   Future<void> _togglePaymentStatus(String teamId) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.uid ?? auth.userModel?.uid;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (uid != _currentChampionship.ownerId && auth.userModel?.role != 'admin' && auth.userModel?.role != 'co_founder') {
+      VSPFeedback.showError(context, isAr ? 'ليس لديك صلاحية تعديل هذه البطولة' : 'Unauthorized to edit this tournament');
+      return;
+    }
+
     final isPaid = _currentChampionship.paidTeams.contains(teamId);
     try {
       await TournamentRepository().toggleTeamPayment(
@@ -214,126 +268,125 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ),
         ],
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: TournamentRepository().streamChampionshipRaw(_currentChampionship.id),
-        builder: (context, champSnapshot) {
-          if (champSnapshot.hasData && champSnapshot.data!.isNotEmpty) {
-            _currentChampionship = Championship.fromFirestore(champSnapshot.data!.first, _currentChampionship.id);
-          }
-          final currentChamp = _currentChampionship;
+      body: Column(
+        children: [
+          TournamentOverviewCard(
+            championship: _currentChampionship,
+            onRecordPrizeDelivery: () {
+              showTournamentPrizeDeliveryDialog(
+                context,
+                championship: _currentChampionship,
+                onDelivered: () => setState(() {}),
+              );
+            },
+          ),
 
-          return FutureBuilder<List<Team>>(
-            future: TournamentRepository().getTeamsByIds(currentChamp.joinedTeams),
-            builder: (context, snapshot) {
-              final teams = snapshot.data ?? [];
-
-              return Column(
-                children: [
-                  TournamentOverviewCard(
-                    championship: currentChamp,
-                    onRecordPrizeDelivery: () {
-                      showTournamentPrizeDeliveryDialog(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
+            child: Row(
+              children: [
+                const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(context)!.joinedTeamsLabel,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: VSPColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const Spacer(),
+                if (_currentChampionship.status == 'open' && _currentChampionship.joinedTeams.length < _currentChampionship.maxTeams)
+                  GestureDetector(
+                    onTap: () {
+                      showTournamentManualTeamSheet(
                         context,
-                        championship: currentChamp,
-                        onDelivered: () => setState(() {}),
+                        championship: _currentChampionship,
+                        onTeamAdded: (updated) {
+                          setState(() {
+                            _currentChampionship = updated;
+                            if (!listEquals(updated.joinedTeams, _lastJoinedTeams)) {
+                              _lastJoinedTeams = List.from(updated.joinedTeams);
+                              _fetchTeams(updated.joinedTeams);
+                            }
+                          });
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(VSPRadius.full),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            AppLocalizations.of(context)!.addTeam,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.accent,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: _teams.isEmpty
+                ? Center(
+                    child: Text(
+                      Localizations.localeOf(context).languageCode == 'ar'
+                          ? 'لا توجد فرق مشاركة حتى الآن'
+                          : 'No teams joined yet',
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    itemCount: _teams.length,
+                    itemBuilder: (context, index) {
+                      final team = _teams[index];
+                      final isPaid = _currentChampionship.paidTeams.contains(team.id);
+                      return TournamentTeamCard(
+                        team: team,
+                        isPaid: isPaid,
+                        onTogglePayment: () => _togglePaymentStatus(team.id),
+                        onDelete: () {
+                          showDeleteTeamConfirmationDialog(
+                            context,
+                            team: team,
+                            championship: _currentChampionship,
+                            onTeamRemoved: (updated) {
+                              setState(() {
+                                _currentChampionship = updated;
+                                if (!listEquals(updated.joinedTeams, _lastJoinedTeams)) {
+                                  _lastJoinedTeams = List.from(updated.joinedTeams);
+                                  _fetchTeams(updated.joinedTeams);
+                                }
+                              });
+                            },
+                          );
+                        },
                       );
                     },
                   ),
+          ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
-                    child: Row(
-                      children: [
-                        const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context)!.joinedTeamsLabel,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: VSPColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const Spacer(),
-                        if (currentChamp.status == 'open' && currentChamp.joinedTeams.length < currentChamp.maxTeams)
-                          GestureDetector(
-                            onTap: () {
-                              showTournamentManualTeamSheet(
-                                context,
-                                championship: currentChamp,
-                                onTeamAdded: (updated) => setState(() => _currentChampionship = updated),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: VSPColors.accent.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(VSPRadius.full),
-                                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    AppLocalizations.of(context)!.addTeam,
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                          color: VSPColors.accent,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 10,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  Expanded(
-                    child: teams.isEmpty
-                        ? Center(
-                            child: Text(
-                              Localizations.localeOf(context).languageCode == 'ar'
-                                  ? 'لا توجد فرق مشاركة حتى الآن'
-                                  : 'No teams joined yet',
-                              style: const TextStyle(color: VSPColors.textSecondary),
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            itemCount: teams.length,
-                            itemBuilder: (context, index) {
-                              final team = teams[index];
-                              final isPaid = currentChamp.paidTeams.contains(team.id);
-                              return TournamentTeamCard(
-                                team: team,
-                                isPaid: isPaid,
-                                onTogglePayment: () => _togglePaymentStatus(team.id),
-                                onDelete: () {
-                                  showDeleteTeamConfirmationDialog(
-                                    context,
-                                    team: team,
-                                    championship: currentChamp,
-                                    onTeamRemoved: (updated) => setState(() => _currentChampionship = updated),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                  ),
-
-                  TournamentDashboardBottomBar(
-                    championship: currentChamp,
-                    isLoading: _isLoading,
-                    onStartTournament: _handleStartTournament,
-                  ),
-                ],
-              );
-            },
-          );
-        },
+          TournamentDashboardBottomBar(
+            championship: _currentChampionship,
+            isLoading: _isLoading,
+            onStartTournament: _handleStartTournament,
+          ),
+        ],
       ),
     );
   }

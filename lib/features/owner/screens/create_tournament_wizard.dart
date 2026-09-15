@@ -194,7 +194,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   void _loadOwnerSports() {
-    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.uid ?? auth.userModel?.uid;
     if (uid != null) {
       _stadiumSubscription?.cancel();
       _stadiumSubscription = StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
@@ -262,7 +263,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   void _nextStep() {
     if (_currentStep == 0 && _nameController.text.trim().isEmpty) {
-      VSPFeedback.showError(context, 'Please enter tournament name');
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isAr ? 'يرجى إدخال اسم البطولة' : 'Please enter tournament name',
+      );
       return;
     }
     if (_currentStep < 2) {
@@ -344,17 +349,24 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           Navigator.pop(context);
 
           try {
-            final newChampList = await TournamentRepository()
-                .getChampionshipsStream(sportType: _selectedSport)
-                .first;
-            final newChamp =
-                newChampList.firstWhere((c) => c.id == result.createdId);
-            if (mounted) {
+            Championship? newChamp;
+
+            if (result.createdId != null && result.createdId!.isNotEmpty) {
+              newChamp = await TournamentRepository()
+                  .getChampionshipById(result.createdId!);
+            }
+
+            newChamp ??= Championship.fromFirestore(
+              {...champData, 'id': result.createdId ?? ''},
+              result.createdId ?? '',
+            );
+
+            if (mounted && newChamp.id.isNotEmpty) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => OwnerTournamentDashboardScreen(
-                    championship: newChamp,
+                    championship: newChamp!,
                   ),
                 ),
               );

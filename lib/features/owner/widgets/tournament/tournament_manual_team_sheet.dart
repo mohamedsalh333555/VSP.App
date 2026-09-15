@@ -201,39 +201,50 @@ void showTournamentManualTeamSheet(
                           color: canSubmit ? VSPColors.accent : VSPColors.surfaceAlt,
                           textColor: canSubmit ? Colors.black : VSPColors.textSecondary,
                           isLoading: isSubmitting,
-                          onPressed: () async {
-                            if (!isNameValid) {
-                              VSPFeedback.showError(
-                                sheetContext,
-                                isArabic
-                                    ? 'يرجى كتابة اسم الفريق أولاً'
-                                    : 'Please enter team name first',
-                              );
-                              return;
-                            }
-                            if (!isValidRoster) {
-                              VSPFeedback.showError(
-                                sheetContext,
-                                isArabic
-                                    ? 'يرجى إضافة 5 لاعبين على الأقل لكشف الفريق'
-                                    : 'Please add at least 5 players',
-                              );
-                              return;
-                            }
+                          onPressed: !canSubmit
+                              ? null
+                              : () async {
+                                  if (!isNameValid) {
+                                    VSPFeedback.showError(
+                                      sheetContext,
+                                      isArabic
+                                          ? 'يرجى كتابة اسم الفريق أولاً'
+                                          : 'Please enter team name first',
+                                    );
+                                    return;
+                                  }
+                                  if (!isValidRoster) {
+                                    VSPFeedback.showError(
+                                      sheetContext,
+                                      isArabic
+                                          ? 'يرجى إضافة 5 لاعبين على الأقل لكشف الفريق'
+                                          : 'Please add at least 5 players',
+                                    );
+                                    return;
+                                  }
 
-                            final teamNameVal = nameCtrl.text.trim();
-                            setDialogState(() => isSubmitting = true);
+                                  final teamNameVal = nameCtrl.text.trim();
+                                  setDialogState(() => isSubmitting = true);
 
-                            try {
-                              final auth = Provider.of<AuthProvider>(context, listen: false);
-                              final currentUserId =
-                                  auth.currentUser?.uid ?? auth.currentUser?.id ?? '';
+                                  try {
+                                    final auth = Provider.of<AuthProvider>(context, listen: false);
+                                    final currentUserId =
+                                        auth.currentUser?.uid ?? auth.currentUser?.id;
 
-                              final updatedChampionship =
-                                  await manualTeamService.registerManualTeam(
-                                championship: championship,
-                                teamName: teamNameVal,
-                                currentUserId: currentUserId,
+                                    if (currentUserId == null || currentUserId.isEmpty) {
+                                      VSPFeedback.showError(
+                                        sheetContext,
+                                        isArabic ? 'خطأ في التحقق من الهوية' : 'Authentication error',
+                                      );
+                                      setDialogState(() => isSubmitting = false);
+                                      return;
+                                    }
+
+                                    final updatedChampionship =
+                                        await manualTeamService.registerManualTeam(
+                                      championship: championship,
+                                      teamName: teamNameVal,
+                                      currentUserId: currentUserId,
                                 primaryColor: selectedPrimaryColor,
                                 isPaid: isPaidOnCreation,
                                 playerNames: offlinePlayerNames,

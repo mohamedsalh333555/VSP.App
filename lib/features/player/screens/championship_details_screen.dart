@@ -88,7 +88,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     try {
       final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
 
-      if (team != null && team.captainId != auth.currentUser!.uid) {
+      if (team != null &&
+          team.captainId.isNotEmpty &&
+          team.captainId != auth.currentUser!.uid) {
         if (mounted) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           _showErrorDialog(isArabic

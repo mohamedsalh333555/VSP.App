@@ -40,6 +40,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   List<Map<String, dynamic>> _teamMembers = [];
   bool _isLoadingMembers = true;
   bool _isSubmitting = false;
+  bool _hasPaid = false;
 
   @override
   void initState() {
@@ -65,7 +66,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       if (!_teamMembers.any((m) => m['id'] == uid)) {
         _teamMembers.add({
           'id': uid,
-          'name': uid == widget.team.captainName ? widget.team.captainName : 'لاعب ${_teamMembers.length + 1}',
+          'name': uid == widget.team.captainId ? widget.team.captainName : 'لاعب ${_teamMembers.length + 1}',
           'profile_image_url': '',
         });
       }
@@ -75,11 +76,13 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = auth.currentUser?.uid;
 
-    if (currentUserId != null && widget.team.memberUids.contains(currentUserId)) {
-      if (!_selectedPlayerIds.contains(currentUserId)) {
-        _selectedPlayerIds.add(currentUserId);
-      }
-    } else if (widget.team.memberUids.isNotEmpty) {
+    final effectiveCaptainId = widget.team.captainId.isNotEmpty
+        ? widget.team.captainId
+        : (currentUserId ?? '');
+
+    if (effectiveCaptainId.isNotEmpty && !_selectedPlayerIds.contains(effectiveCaptainId)) {
+      _selectedPlayerIds.add(effectiveCaptainId);
+    } else if (widget.team.memberUids.isNotEmpty && _selectedPlayerIds.isEmpty) {
       _selectedPlayerIds.add(widget.team.memberUids.first);
     }
 
@@ -180,6 +183,12 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
       final entryFee = widget.championship.entryFee;
 
+      // إذا كان قد سدد بالفعل لكن حدث خطأ شبكة أثناء الانضمام، لا تطلب الدفع مرة أخرى
+      if (_hasPaid) {
+        await _executeJoinChampionship();
+        return;
+      }
+
       if (entryFee > 0) {
         final draft = BookingDraft(
           stadiumId: '00000000-0000-0000-0000-000000000000',
@@ -215,6 +224,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           );
 
           if (paymentResult == true && mounted) {
+            _hasPaid = true;
             await _executeJoinChampionship();
           }
           return;
@@ -224,7 +234,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       await _executeJoinChampionship();
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, 'حدث خطأ أثناء الاشتراك: $e');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء الاشتراك: $e' : 'An error occurred while joining: $e',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -246,10 +260,20 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     );
 
     if (success && mounted) {
-      VSPFeedback.showSuccess(context, 'تم الاشتراك في البطولة بنجاح! ');
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم الاشتراك في البطولة بنجاح! ' : 'Joined tournament successfully! ',
+      );
       Navigator.pop(context, true);
     } else if (mounted) {
-      VSPFeedback.showError(context, 'فشل الانضمام للبطولة، يرجى المحاولة مرة أخرى.');
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'فشل الانضمام للبطولة، يرجى المحاولة مرة أخرى.'
+            : 'Failed to join tournament, please try again.',
+      );
     }
   }
 
@@ -257,7 +281,9 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final captainId = auth.currentUser?.uid ?? widget.team.captainName;
+    final captainId = widget.team.captainId.isNotEmpty
+        ? widget.team.captainId
+        : (auth.currentUser?.uid ?? '');
 
     final minPlayers = widget.championship.minPlayersPerTeam;
     final maxPlayers = widget.championship.maxPlayersPerTeam;
@@ -276,7 +302,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
-          'التسجيل في البطولة',
+          isArabic ? 'التسجيل في البطولة' : 'Tournament Registration',
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),

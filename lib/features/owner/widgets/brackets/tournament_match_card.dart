@@ -26,8 +26,11 @@ class TournamentMatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final hasSchedule = match.scheduledTime != null;
     final isTimePassed = hasSchedule && DateTime.now().isAfter(match.scheduledTime!);
+    final tbdText = isAr ? 'لم يحدد' : 'TBD';
+    final winnerName = match.winnerId == match.homeTeamId ? (match.homeTeamName ?? tbdText) : (match.awayTeamName ?? tbdText);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -58,12 +61,35 @@ class TournamentMatchCard extends StatelessWidget {
                 if (isOwner)
                   GestureDetector(
                     onTap: () async {
-                      final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
-                      if (time != null) {
-                        final dt = DateTime.now();
+                      final now = DateTime.now();
+                      final initialDate = (match.scheduledTime != null && match.scheduledTime!.isAfter(now))
+                          ? match.scheduledTime!
+                          : now;
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: initialDate,
+                        firstDate: DateTime(now.year, now.month, now.day),
+                        lastDate: now.add(const Duration(days: 365)),
+                      );
+                      if (date == null || !context.mounted) return;
+
+                      final initialTime = match.scheduledTime != null
+                          ? TimeOfDay.fromDateTime(match.scheduledTime!)
+                          : TimeOfDay.now();
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: initialTime,
+                      );
+                      if (time != null && context.mounted) {
                         await TournamentRepository().updateMatchScheduledTime(
                           matchId: match.id,
-                          scheduledTime: DateTime(dt.year, dt.month, dt.day, time.hour, time.minute),
+                          scheduledTime: DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          ),
                         );
                         onRefresh();
                       }
@@ -75,13 +101,15 @@ class TournamentMatchCard extends StatelessWidget {
           ),
           ListTile(
             title: Text(
-              '${match.homeTeamName ?? "TBD"} vs ${match.awayTeamName ?? "TBD"}',
+              '${match.homeTeamName ?? tbdText} vs ${match.awayTeamName ?? tbdText}',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               match.winnerId != null
-                  ? 'Winner: ${match.winnerId == match.homeTeamId ? match.homeTeamName : match.awayTeamName} (${match.homeScore} - ${match.awayScore})'
-                  : 'Pending',
+                  ? (isAr
+                      ? 'الفائز: $winnerName (${match.homeScore} - ${match.awayScore})'
+                      : 'Winner: $winnerName (${match.homeScore} - ${match.awayScore})')
+                  : (isAr ? 'قيد الانتظار' : 'Pending'),
               style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54),
             ),
             trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null
@@ -94,7 +122,6 @@ class TournamentMatchCard extends StatelessWidget {
                       size: 18,
                     ),
                     onPressed: () {
-                      final isAr = Localizations.localeOf(context).languageCode == 'ar';
                       if (!hasSchedule) {
                         VSPFeedback.showError(
                             context, isAr ? 'يجب تحديد موعد المباراة أولاً!' : 'Match must be scheduled first!');
@@ -104,7 +131,7 @@ class TournamentMatchCard extends StatelessWidget {
                         VSPFeedback.showError(
                           context,
                           isAr
-                              ? 'لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول! '
+                              ? 'لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول!'
                               : 'Cannot enter score before scheduled match time!',
                         );
                         return;

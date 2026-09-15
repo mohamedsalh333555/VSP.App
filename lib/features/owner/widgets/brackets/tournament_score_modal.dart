@@ -24,8 +24,26 @@ void showTournamentScoreModal(
   final Future<Map<String, List<String>>> rostersFuture =
       TournamentRepository().fetchRosters(championship.id, match.homeTeamId ?? '', match.awayTeamId ?? '');
 
-  int homeScore = match.homeScore ?? goalDetails.where((g) => g.teamId == match.homeTeamId).length;
-  int awayScore = match.awayScore ?? goalDetails.where((g) => g.teamId == match.awayTeamId).length;
+  int computeHomeScore() {
+    if (goalDetails.isNotEmpty) {
+      final normal = goalDetails.where((g) => g.teamId == match.homeTeamId && !g.isOwnGoal).length;
+      final opponentOwn = goalDetails.where((g) => g.teamId == match.awayTeamId && g.isOwnGoal).length;
+      return normal + opponentOwn;
+    }
+    return match.homeScore ?? 0;
+  }
+
+  int computeAwayScore() {
+    if (goalDetails.isNotEmpty) {
+      final normal = goalDetails.where((g) => g.teamId == match.awayTeamId && !g.isOwnGoal).length;
+      final opponentOwn = goalDetails.where((g) => g.teamId == match.homeTeamId && g.isOwnGoal).length;
+      return normal + opponentOwn;
+    }
+    return match.awayScore ?? 0;
+  }
+
+  int homeScore = computeHomeScore();
+  int awayScore = computeAwayScore();
   int homePenalties = match.homePenalties ?? 0;
   int awayPenalties = match.awayPenalties ?? 0;
   String? selectedWinnerId = match.winnerId;
@@ -60,18 +78,26 @@ void showTournamentScoreModal(
                     championship.type == 'Cup' || match.stage == 'knockout' || match.stage == 'preliminary';
                 final isCupAndTied = isKnockoutOrCup && homeScore == awayScore;
 
-                if (isCupAndTied && homePenalties != awayPenalties) {
-                  if (homePenalties > awayPenalties) {
-                    selectedWinnerId = match.homeTeamId;
-                  } else if (awayPenalties > homePenalties) {
-                    selectedWinnerId = match.awayTeamId;
+                if (isCupAndTied) {
+                  if (homePenalties != awayPenalties) {
+                    if (homePenalties > awayPenalties) {
+                      selectedWinnerId = match.homeTeamId;
+                    } else if (awayPenalties > homePenalties) {
+                      selectedWinnerId = match.awayTeamId;
+                    }
                   }
+                } else if (isKnockoutOrCup) {
+                  selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
                 }
 
                 final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
 
-                final homeGoals = goalDetails.where((g) => g.teamId == match.homeTeamId).toList();
-                final awayGoals = goalDetails.where((g) => g.teamId == match.awayTeamId).toList();
+                final homeGoals = goalDetails
+                    .where((g) => (g.teamId == match.homeTeamId && !g.isOwnGoal) || (g.teamId == match.awayTeamId && g.isOwnGoal))
+                    .toList();
+                final awayGoals = goalDetails
+                    .where((g) => (g.teamId == match.awayTeamId && !g.isOwnGoal) || (g.teamId == match.homeTeamId && g.isOwnGoal))
+                    .toList();
 
                 return Column(
                   children: [
@@ -121,19 +147,25 @@ void showTournamentScoreModal(
                                         onGoalAdded: (goal) {
                                           setModalState(() {
                                             goalDetails.add(goal);
-                                            homeScore++;
-                                            selectedWinnerId = null;
+                                            homeScore = computeHomeScore();
+                                            awayScore = computeAwayScore();
+                                            if (homeScore != awayScore) {
+                                              selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+                                            }
                                           });
                                         },
                                       );
                                     },
                                     onDecrement: () => setModalState(() {
-                                      if (homeScore > 0) {
+                                      if (homeGoals.isNotEmpty) {
+                                        goalDetails.remove(homeGoals.last);
+                                        homeScore = computeHomeScore();
+                                        awayScore = computeAwayScore();
+                                      } else if (homeScore > 0) {
                                         homeScore--;
-                                        if (homeGoals.isNotEmpty) {
-                                          goalDetails.remove(homeGoals.last);
-                                        }
-                                        selectedWinnerId = null;
+                                      }
+                                      if (homeScore != awayScore) {
+                                        selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
                                       }
                                     }),
                                   ),
@@ -155,19 +187,25 @@ void showTournamentScoreModal(
                                         onGoalAdded: (goal) {
                                           setModalState(() {
                                             goalDetails.add(goal);
-                                            awayScore++;
-                                            selectedWinnerId = null;
+                                            homeScore = computeHomeScore();
+                                            awayScore = computeAwayScore();
+                                            if (homeScore != awayScore) {
+                                              selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+                                            }
                                           });
                                         },
                                       );
                                     },
                                     onDecrement: () => setModalState(() {
-                                      if (awayScore > 0) {
+                                      if (awayGoals.isNotEmpty) {
+                                        goalDetails.remove(awayGoals.last);
+                                        homeScore = computeHomeScore();
+                                        awayScore = computeAwayScore();
+                                      } else if (awayScore > 0) {
                                         awayScore--;
-                                        if (awayGoals.isNotEmpty) {
-                                          goalDetails.remove(awayGoals.last);
-                                        }
-                                        selectedWinnerId = null;
+                                      }
+                                      if (homeScore != awayScore) {
+                                        selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
                                       }
                                     }),
                                   ),
@@ -187,7 +225,11 @@ void showTournamentScoreModal(
                                     onRemoveGoal: (goal) {
                                       setModalState(() {
                                         goalDetails.remove(goal);
-                                        if (homeScore > 0) homeScore--;
+                                        homeScore = computeHomeScore();
+                                        awayScore = computeAwayScore();
+                                        if (homeScore != awayScore) {
+                                          selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+                                        }
                                       });
                                     },
                                   ),
@@ -200,7 +242,11 @@ void showTournamentScoreModal(
                                     onRemoveGoal: (goal) {
                                       setModalState(() {
                                         goalDetails.remove(goal);
-                                        if (awayScore > 0) awayScore--;
+                                        homeScore = computeHomeScore();
+                                        awayScore = computeAwayScore();
+                                        if (homeScore != awayScore) {
+                                          selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+                                        }
                                       });
                                     },
                                   ),
