@@ -229,6 +229,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
 
+    final isFullPayment = widget.forceFullPayment ||
+        !widget.bookingDraft.needsDeposit ||
+        widget.bookingDraft.depositPaid <= 0;
+
     final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
       draft: widget.bookingDraft,
       selectedMethod: _selectedMethod,
@@ -237,7 +241,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
-      isFullPayment: widget.forceFullPayment,
+      isFullPayment: isFullPayment,
     );
 
     final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
