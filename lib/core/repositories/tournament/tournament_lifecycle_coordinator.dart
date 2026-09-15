@@ -64,7 +64,7 @@ class TournamentLifecycleCoordinator {
         return response['id']?.toString();
       } on PostgrestException catch (pe) {
         if (pe.message.contains('championships_type_check')) {
-          pgData['type'] = 'Cup';
+          pgData['type'] = 'cup';
           final response = await _supabase
               .from('championships')
               .insert(pgData)

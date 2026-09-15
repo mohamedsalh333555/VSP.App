@@ -34,8 +34,14 @@ void showQuickBookingReceiptSheet({
     context: context,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
+      final bottomPadding = MediaQuery.of(sheetCtx).padding.bottom;
       return Container(
-        padding: const EdgeInsets.all(VSPSpacing.lg),
+        padding: EdgeInsets.fromLTRB(
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          bottomPadding > 0 ? bottomPadding + 12 : 24,
+        ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
@@ -89,12 +95,12 @@ void showQuickBookingReceiptSheet({
               },
             ),
             const SizedBox(height: 10),
-            TextButton(
+            PrimaryButton(
+              text: isAr ? 'تم، إغلاق' : 'Done / Close',
+              height: 48,
+              color: VSPColors.surfaceAlt,
+              textColor: Colors.white,
               onPressed: () => Navigator.pop(sheetCtx),
-              child: Text(
-                isAr ? 'تم / إغلاق' : 'Done / Close',
-                style: const TextStyle(color: VSPColors.textSecondary),
-              ),
             ),
           ],
         ),

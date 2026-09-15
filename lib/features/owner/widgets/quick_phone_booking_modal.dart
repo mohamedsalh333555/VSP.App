@@ -149,7 +149,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
     if (customerName.isEmpty) {
       HapticFeedback.vibrate();
-      VSPFeedback.showError(context, isAr ? 'يرجى كتابة اسم العميل (مثال: كابتن زياد)' : 'Please enter customer name');
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال اسم العميل أو الكابتن' : 'Please enter customer or captain name');
       return;
     }
 
@@ -243,13 +243,20 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
     final startTimeStr = AppDateFormatter.formatTime(widget.startTime.toLocal(), isAr ? 'ar' : 'en');
     final endTimeStr = AppDateFormatter.formatTime(_effectiveEndTime.toLocal(), isAr ? 'ar' : 'en');
     final dynamicSlotWindow = '$startTimeStr - $endTimeStr';
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom: bottomInset,
       ),
       child: Container(
-        padding: const EdgeInsets.all(VSPSpacing.lg),
+        padding: EdgeInsets.fromLTRB(
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          bottomInset > 0 ? VSPSpacing.md : (bottomPadding > 0 ? bottomPadding + 16 : 24),
+        ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),

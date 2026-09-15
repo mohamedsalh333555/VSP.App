@@ -27,7 +27,7 @@ class QuickBookingCustomerFields extends StatelessWidget {
         const SizedBox(height: 6),
         CustomTextField(
           controller: customerNameController,
-          hintText: isAr ? 'مثال: كابتن زياد' : 'e.g. Captain Ziad',
+          hintText: isAr ? 'أدخل اسم العميل أو الكابتن' : 'Enter captain or customer name',
           prefixIcon: Iconsax.user_copy,
         ),
         const SizedBox(height: 14),

@@ -10,8 +10,8 @@ class TournamentWizardCoordinator {
     required String name,
     required String fee,
     required String prize,
-    required DateTime startDate,
-    required DateTime endDate,
+    required DateTime? startDate,
+    required DateTime? endDate,
     required String selectedTeams,
     required bool isAr,
   }) {
@@ -27,6 +27,16 @@ class TournamentWizardCoordinator {
       return isAr
           ? 'يرجى إدخال قيمة الجائزة الكبرى'
           : 'Please enter grand prize amount';
+    }
+    if (startDate == null) {
+      return isAr
+          ? 'يرجى تحديد تاريخ بدء البطولة'
+          : 'Please select tournament start date';
+    }
+    if (endDate == null) {
+      return isAr
+          ? 'يرجى تحديد تاريخ انتهاء البطولة'
+          : 'Please select tournament end date';
     }
     if (!endDate.isAfter(startDate)) {
       return isAr

@@ -61,8 +61,7 @@ void showOwnerCupFormatModal(BuildContext context) {
               subtitle: isArabic
                   ? 'مناسب للمنافسات السريعة (الخاسر يخرج فوراً)'
                   : 'Single elimination — Fast & highly competitive',
-              badgeText: isArabic ? 'الأسرع حاسميًا ' : 'Fastest ',
-              color: const Color(0xFFFFD700),
+              badgeText: isArabic ? 'الأسرع حاسمًا' : 'Fastest',
               isArabic: isArabic,
               onTap: () {
                 Navigator.pop(ctx);
@@ -77,8 +76,7 @@ void showOwnerCupFormatModal(BuildContext context) {
               subtitle: isArabic
                   ? 'مناسب لبطولات رمضان والشركات (مجموعات ثم أدوار إقصائية)'
                   : 'Group stage followed by knockout bracket',
-              badgeText: isArabic ? 'الأكثر شعبية ' : 'Most Popular ',
-              color: const Color(0xFFA78BFA),
+              badgeText: isArabic ? 'الأكثر شعبية' : 'Most Popular',
               isArabic: isArabic,
               onTap: () {
                 Navigator.pop(ctx);
@@ -93,7 +91,6 @@ void showOwnerCupFormatModal(BuildContext context) {
               subtitle: isArabic
                   ? 'مناسب للمواسم والبطولات الطويلة (كل الفرق تلعب والترتيب بالنقاط)'
                   : 'Round-robin season — ranked by points',
-              color: VSPColors.accent,
               isArabic: isArabic,
               onTap: () {
                 Navigator.pop(ctx);
@@ -112,7 +109,6 @@ Widget _buildTypeOption(
   required IconData icon,
   required String title,
   required String subtitle,
-  required Color color,
   required bool isArabic,
   required VoidCallback onTap,
   String? badgeText,
@@ -123,20 +119,21 @@ Widget _buildTypeOption(
     child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF27272A), width: 1.2),
+        border: Border.all(color: VSPColors.divider, width: 0.8),
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: VSPColors.surfaceAlt,
               shape: BoxShape.circle,
+              border: Border.all(color: VSPColors.borderLight, width: 0.5),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -156,14 +153,19 @@ Widget _buildTypeOption(
                     if (badgeText != null) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
                         ),
                         child: Text(
                           badgeText,
-                          style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -173,7 +175,7 @@ Widget _buildTypeOption(
                 Text(
                   subtitle,
                   style: const TextStyle(
-                    color: Color(0xFFA1A1AA),
+                    color: VSPColors.textSecondary,
                     fontSize: 11.5,
                     height: 1.3,
                   ),
@@ -183,7 +185,7 @@ Widget _buildTypeOption(
           ),
           Icon(
             isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
-            color: const Color(0xFFA1A1AA),
+            color: VSPColors.textMuted,
             size: 16,
           ),
         ],

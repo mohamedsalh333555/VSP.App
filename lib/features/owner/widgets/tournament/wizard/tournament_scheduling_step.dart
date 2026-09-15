@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
 
 class TournamentSchedulingStep extends StatelessWidget {
-  final DateTime startDate;
-  final DateTime endDate;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final VoidCallback onSelectStartDate;
   final VoidCallback onSelectEndDate;
   final TextEditingController durationController;
@@ -28,26 +29,34 @@ class TournamentSchedulingStep extends StatelessWidget {
     );
   }
 
-  Widget _buildDateChip(BuildContext context, DateTime date) {
+  Widget _buildDateChip(BuildContext context, DateTime? date, String placeholder) {
+    final isSelected = date != null;
     return Container(
       height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.input),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
+        border: Border.all(
+          color: isSelected ? VSPColors.divider : VSPColors.divider,
+          width: 0.8,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            '${date.day}/${date.month}/${date.year}',
+            isSelected ? '${date.day}/${date.month}/${date.year}' : placeholder,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : VSPColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
           ),
-          const Icon(Icons.calendar_today, color: VSPColors.accent, size: 18),
+          Icon(
+            Iconsax.calendar_1_copy,
+            color: isSelected ? Colors.white : VSPColors.textSecondary,
+            size: 18,
+          ),
         ],
       ),
     );
@@ -97,6 +106,7 @@ class TournamentSchedulingStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Column(
       key: const ValueKey('step3'),
@@ -105,14 +115,22 @@ class TournamentSchedulingStep extends StatelessWidget {
         _buildLabel(context, l10n.startDateLabel),
         GestureDetector(
           onTap: onSelectStartDate,
-          child: _buildDateChip(context, startDate),
+          child: _buildDateChip(
+            context,
+            startDate,
+            isAr ? 'اختر تاريخ بدء البطولة' : 'Select tournament start date',
+          ),
         ),
         const SizedBox(height: VSPSpacing.md),
 
         _buildLabel(context, l10n.endDateLabel),
         GestureDetector(
           onTap: onSelectEndDate,
-          child: _buildDateChip(context, endDate),
+          child: _buildDateChip(
+            context,
+            endDate,
+            isAr ? 'اختر تاريخ انتهاء البطولة' : 'Select tournament end date',
+          ),
         ),
         const SizedBox(height: VSPSpacing.md),
 
@@ -120,6 +138,7 @@ class TournamentSchedulingStep extends StatelessWidget {
         _buildTextField(
           context,
           durationController,
+          hint: isAr ? 'مدة المباراة بالدقائق (مثال: 30)' : 'Match duration (e.g. 30)',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         ),
@@ -129,6 +148,7 @@ class TournamentSchedulingStep extends StatelessWidget {
         _buildTextField(
           context,
           prizeController,
+          hint: isAr ? 'أدخل قيمة الجائزة الكبرى (مثال: 5000)' : 'Enter grand prize (e.g. 5000)',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         ),

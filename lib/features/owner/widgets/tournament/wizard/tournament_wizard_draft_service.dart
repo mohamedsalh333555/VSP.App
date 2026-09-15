@@ -16,8 +16,8 @@ class TournamentWizardDraftService {
     required int groups,
     required int qualifying,
     required bool twoLegs,
-    required DateTime startDate,
-    required DateTime endDate,
+    DateTime? startDate,
+    DateTime? endDate,
     required String duration,
     required int currentStep,
   }) async {
@@ -32,8 +32,16 @@ class TournamentWizardDraftService {
       await prefs.setInt('${prefix}groups', groups);
       await prefs.setInt('${prefix}qualifying', qualifying);
       await prefs.setBool('${prefix}two_legs', twoLegs);
-      await prefs.setString('${prefix}start_date', startDate.toIso8601String());
-      await prefs.setString('${prefix}end_date', endDate.toIso8601String());
+      if (startDate != null) {
+        await prefs.setString('${prefix}start_date', startDate.toIso8601String());
+      } else {
+        await prefs.remove('${prefix}start_date');
+      }
+      if (endDate != null) {
+        await prefs.setString('${prefix}end_date', endDate.toIso8601String());
+      } else {
+        await prefs.remove('${prefix}end_date');
+      }
       await prefs.setString('${prefix}duration', duration);
       await prefs.setInt('${prefix}current_step', currentStep);
     } catch (_) {}

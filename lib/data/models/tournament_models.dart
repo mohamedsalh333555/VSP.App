@@ -98,13 +98,25 @@ class Championship {
  factory Championship.fromMap(Map<String, dynamic> data, [String? id]) =>
  Championship.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
 
+ static String normalizeTypeFromDb(String raw) {
+ final lower = raw.trim().toLowerCase();
+ if (lower == 'groups' ||
+ lower == 'groupsandknockout' ||
+ lower == 'groups_and_knockout') {
+ return 'GroupsAndKnockout';
+ }
+ if (lower == 'league') return 'League';
+ if (lower == '1v1') return '1v1';
+ return 'Cup';
+ }
+
  factory Championship.fromFirestore(Map<String, dynamic> data, String id) {
  try {
  final settings = data['settings'] as Map<String, dynamic>? ?? {};
  return Championship(
  id: id,
  name: data['name']?.toString() ?? '',
- type: data['type']?.toString() ?? 'Cup',
+ type: normalizeTypeFromDb(data['type']?.toString() ?? 'Cup'),
  sportType: data['sport_type'] ?? data['sportType']?.toString() ?? 'Football',
  logoUrl: (data['logo_url'] ?? data['logoUrl'] ?? '')?.toString() ?? '',
  startDate: data['start_date'] != null 

@@ -57,10 +57,10 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   bool _isTwoLegs = false;
 
   // Step 3: Scheduling
-  DateTime _startDate = DateTime.now().add(const Duration(days: 7));
-  DateTime _endDate = DateTime.now().add(const Duration(days: 37));
-  final _durationController = TextEditingController(text: '30');
-  final _prizeController = TextEditingController(text: '5000');
+  DateTime? _startDate;
+  DateTime? _endDate;
+  final _durationController = TextEditingController();
+  final _prizeController = TextEditingController();
 
   List<String> _availableSports = ['Football'];
   StreamSubscription? _stadiumSubscription;
@@ -137,7 +137,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     final savedEnd = draft['end_date'] as String?;
     if (savedEnd != null) {
       final parsed = DateTime.tryParse(savedEnd);
-      if (parsed != null && parsed.isAfter(_startDate)) {
+      if (parsed != null && (_startDate == null || parsed.isAfter(_startDate!))) {
         _endDate = parsed;
       }
     }
@@ -229,11 +229,15 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   Future<void> _selectDate(bool isStart) async {
+    final now = DateTime.now();
+    final initialDate = isStart
+        ? (_startDate ?? now.add(const Duration(days: 1)))
+        : (_endDate ?? (_startDate?.add(const Duration(days: 14)) ?? now.add(const Duration(days: 15))));
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? _startDate : _endDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
       builder: (pickerCtx, child) => Theme(
         data: Theme.of(pickerCtx).copyWith(
           colorScheme: const ColorScheme.dark(
@@ -250,8 +254,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       setState(() {
         if (isStart) {
           _startDate = picked;
-          if (_endDate.isBefore(_startDate)) {
-            _endDate = _startDate.add(const Duration(days: 14));
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = _startDate!.add(const Duration(days: 14));
           }
         } else {
           _endDate = picked;
@@ -317,8 +321,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         name: _nameController.text,
         type: _selectedType,
         sportType: _selectedSport,
-        startDate: _startDate,
-        endDate: _endDate,
+        startDate: _startDate!,
+        endDate: _endDate!,
         governorate: currentGov,
         ownerId: currentUid,
         selectedTeams: _selectedTeams,

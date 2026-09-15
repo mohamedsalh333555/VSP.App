@@ -4,13 +4,20 @@
 class TournamentPayloadBuilder {
   const TournamentPayloadBuilder._();
 
-  /// Normalizes the championship type string to the DB-accepted value.
-  /// Maps 'GroupsAndKnockout' / 'groups_and_knockout' → 'Groups'.
+  /// Normalizes the championship type string to the DB-accepted lowercase value.
+  /// Maps all variations to 'groups', 'league', '1v1', or 'cup'.
   static String normalizeType(String rawType) {
-    if (rawType == 'GroupsAndKnockout' || rawType == 'groups_and_knockout') {
-      return 'Groups';
+    final lower = rawType.trim().toLowerCase();
+    if (lower == 'groupsandknockout' ||
+        lower == 'groups_and_knockout' ||
+        lower == 'groups') {
+      return 'groups';
     }
-    return rawType;
+    if (lower == 'league') return 'league';
+    if (lower == '1v1') return '1v1';
+    if (lower == 'knockout') return 'knockout';
+    if (lower == 'tournament') return 'tournament';
+    return 'cup';
   }
 
   /// Builds the Postgres INSERT payload for a new championship.
@@ -85,7 +92,9 @@ class TournamentPayloadBuilder {
     }
 
     pick('name', ['name']);
-    pick('type', ['type']);
+    if (data.containsKey('type')) {
+      pgData['type'] = normalizeType(data['type'].toString());
+    }
     pick('sport_type', ['sportType', 'sport_type']);
     pick('logo_url', ['logoUrl', 'logo_url']);
     pick('start_date', ['startDate', 'start_date']);
