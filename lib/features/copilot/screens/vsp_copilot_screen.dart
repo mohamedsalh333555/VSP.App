@@ -193,7 +193,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded, color: Colors.black, size: 20),
+              const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -203,9 +203,9 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF00E676),
+          backgroundColor: VSPColors.accent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
         ),
       );
       return;
@@ -329,7 +329,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         IconButton(
-          icon: const Icon(Icons.add_circle_outline_rounded, color: VSPColors.accent, size: 22),
+          icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 22),
           tooltip: isArabic ? 'محادثة جديدة' : 'New Chat',
           onPressed: _handleStartNewChat,
         ),
@@ -404,7 +404,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
               backgroundColor: VSPColors.accent,
               foregroundColor: Colors.black,
             ),
-            icon: const Icon(Icons.send_rounded, size: 18),
+            icon: const Icon(Iconsax.send_2_copy, size: 18),
           ),
         ],
       ),

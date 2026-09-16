@@ -425,6 +425,10 @@ class Booking {
   double get digitalAmountPaid {
     if (!isDigital) return 0.0;
     if (effectivePaymentState == 'fully_paid') {
+      // إذا كان الدفع الأونلاين مجرد عربون وتم استكمال الباقي كاش بالملعب
+      if (depositPaid > 0 && totalPrice > 0 && depositPaid < totalPrice) {
+        return depositPaid;
+      }
       return totalPrice > 0 ? totalPrice : depositPaid;
     }
     if (effectivePaymentState == 'partially_paid') {

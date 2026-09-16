@@ -22,22 +22,22 @@ class CopilotStarterPrompts extends StatelessWidget {
         {
           'title': 'فين ألعب النهارده؟',
           'subtitle': 'لاقيلي أقرب ملعب متاح دلوقتي',
-          'icon': Icons.near_me_rounded,
+          'icon': Iconsax.location_copy,
         },
         {
           'title': 'في ماتش ناقص لاعيب؟',
           'subtitle': 'انضم لتقسيمة خماسي ناقصاها حريف',
-          'icon': Icons.sports_soccer_rounded,
+          'icon': Iconsax.cup_copy,
         },
         {
           'title': 'أرخص ملعب قريب مني',
           'subtitle': 'أحسن سعر مقابل أحسن ملعب',
-          'icon': Icons.savings_rounded,
+          'icon': Iconsax.wallet_money_copy,
         },
         {
           'title': 'في بطولات أقدر أشترك فيها؟',
           'subtitle': 'بطولات وتحديات فردية متاحة دلوقتي',
-          'icon': Icons.emoji_events_rounded,
+          'icon': Iconsax.award_copy,
         },
       ];
     }
@@ -46,22 +46,22 @@ class CopilotStarterPrompts extends StatelessWidget {
       {
         'title': 'Where can I play today?',
         'subtitle': 'Find me the nearest available pitch now',
-        'icon': Icons.near_me_rounded,
+        'icon': Iconsax.location_copy,
       },
       {
         'title': 'Any open matches nearby?',
         'subtitle': 'Join a pick-up game looking for players',
-        'icon': Icons.sports_soccer_rounded,
+        'icon': Iconsax.cup_copy,
       },
       {
         'title': 'Cheapest pitch near me',
         'subtitle': 'Best value for money venues around you',
-        'icon': Icons.savings_rounded,
+        'icon': Iconsax.wallet_money_copy,
       },
       {
         'title': 'Any tournaments I can join?',
         'subtitle': 'Active leagues and 1v1 challenges available now',
-        'icon': Icons.emoji_events_rounded,
+        'icon': Iconsax.award_copy,
       },
     ];
   }
@@ -225,7 +225,7 @@ class CopilotStarterPrompts extends StatelessWidget {
 
                           // Trailing Arrow
                           Icon(
-                            isArabic ? Icons.arrow_back_ios_new_rounded : Icons.arrow_forward_ios_rounded,
+                            isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                             size: 13,
                             color: VSPColors.accent.withValues(alpha: 0.7),
                           ),

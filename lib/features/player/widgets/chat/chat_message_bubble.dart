@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/models/chat_model.dart';
 import '../../../../core/repositories/chat_repository.dart';
@@ -153,7 +154,7 @@ class ChatMessageBubble extends StatelessWidget {
                   if (isMe) ...[
                     const SizedBox(width: 4),
                     Icon(
-                      message.isRead ? Icons.done_all_rounded : Icons.check_rounded,
+                      message.isRead ? Iconsax.tick_circle_copy : Iconsax.tick_circle_copy,
                       size: 14,
                       color: message.isRead ? Colors.blueAccent : VSPColors.background.withValues(alpha: 0.65),
                     ),

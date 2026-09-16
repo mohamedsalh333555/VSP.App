@@ -26,21 +26,21 @@ class BookingSheetPastPanel extends StatelessWidget {
         if (!booking.isPaid && booking.depositPaid < booking.totalPrice) ...[
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: VSPSize.buttonHeight,
             child: ElevatedButton.icon(
               onPressed: () =>
                   BookingSheetWhatsAppUtils.launchWhatsAppSupport(booking, isArabic),
-              icon: const Icon(Iconsax.user_remove_copy, size: 16),
+              icon: const Icon(Iconsax.user_remove_copy, size: 18),
               label: Text(
                 isArabic
                     ? 'تسجيل عدم حضور اللاعب (No-Show) '
                     : 'Report Player No-Show ',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber.withValues(alpha: 0.15),
-                foregroundColor: Colors.amber,
-                side: const BorderSide(color: Colors.amber, width: 1),
+                backgroundColor: VSPColors.warning.withValues(alpha: 0.15),
+                foregroundColor: VSPColors.warning,
+                side: const BorderSide(color: VSPColors.warning, width: 1),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
@@ -52,20 +52,20 @@ class BookingSheetPastPanel extends StatelessWidget {
           children: [
             Expanded(
               child: SizedBox(
-                height: 52,
+                height: VSPSize.buttonHeight,
                 child: ElevatedButton.icon(
                   onPressed: () => BookingSheetWhatsAppUtils.sendWhatsAppReceipt(
                       context, booking, isArabic),
-                  icon: const Icon(Iconsax.document_text_copy, size: 16),
+                  icon: const Icon(Iconsax.document_text_copy, size: 18),
                   label: Text(
                     isArabic ? 'إرسال الوصل ' : 'Send Receipt ',
                     style:
-                        const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.withValues(alpha: 0.15),
-                    foregroundColor: Colors.green,
-                    side: const BorderSide(color: Colors.green, width: 1),
+                    backgroundColor: VSPColors.success.withValues(alpha: 0.15),
+                    foregroundColor: VSPColors.success,
+                    side: const BorderSide(color: VSPColors.success, width: 1),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.md)),
                   ),
@@ -75,7 +75,7 @@ class BookingSheetPastPanel extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: SizedBox(
-                height: 52,
+                height: VSPSize.buttonHeight,
                 child: PrimaryButton(
                   text: isArabic ? 'إغلاق ' : 'Close ',
                   onPressed: () => Navigator.pop(context),
@@ -115,7 +115,7 @@ class BookingSheetCashPanel extends StatelessWidget {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 50,
+          height: VSPSize.buttonHeight,
           child: ElevatedButton.icon(
             onPressed: isSaving ? null : onConfirmCashPayment,
             icon: const Icon(Iconsax.money_send_copy, size: 18),
@@ -126,7 +126,7 @@ class BookingSheetCashPanel extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: VSPColors.accent,
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md)),
@@ -139,7 +139,7 @@ class BookingSheetCashPanel extends StatelessWidget {
           children: [
             Expanded(
               child: SizedBox(
-                height: 48,
+                height: VSPSize.buttonHeight,
                 child: OutlinedButton.icon(
                   onPressed: () {
                     final phone = booking.playerPhone ?? '';
@@ -168,7 +168,7 @@ class BookingSheetCashPanel extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: SizedBox(
-                height: 48,
+                height: VSPSize.buttonHeight,
                 child: OutlinedButton.icon(
                   onPressed: isDeleting ? null : onCancelBooking,
                   icon: const Icon(Iconsax.close_circle_copy, size: 16),
@@ -221,21 +221,21 @@ class BookingSheetDefaultPanel extends StatelessWidget {
         if (isEdit && booking != null) ...[
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: VSPSize.buttonHeight,
             child: ElevatedButton.icon(
               onPressed: () => BookingSheetWhatsAppUtils.sendWhatsAppReceipt(
                   context, booking!, isArabic),
-              icon: const Icon(Iconsax.document_text_copy, size: 16),
+              icon: const Icon(Iconsax.document_text_copy, size: 18),
               label: Text(
                 isArabic
                     ? 'إرسال وصل الحجز الإلكتروني '
                     : 'Send WhatsApp Digital Receipt ',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.withValues(alpha: 0.15),
-                foregroundColor: Colors.green,
-                side: const BorderSide(color: Colors.green, width: 1),
+                backgroundColor: VSPColors.success.withValues(alpha: 0.15),
+                foregroundColor: VSPColors.success,
+                side: const BorderSide(color: VSPColors.success, width: 1),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
@@ -247,14 +247,14 @@ class BookingSheetDefaultPanel extends StatelessWidget {
           children: [
             Expanded(
               child: SizedBox(
-                height: 52,
+                height: VSPSize.buttonHeight,
                 child: PrimaryButton(
                   text: (isEdit && isUpcomingOnlinePaid)
                       ? (isArabic ? 'إبلاغ الدعم (واتساب)' : 'Report Issue')
                       : l10n.cancelBtn,
                   color: VSPColors.surfaceAlt,
                   textColor: (isEdit && isUpcomingOnlinePaid)
-                      ? Colors.amber
+                      ? VSPColors.warning
                       : VSPColors.textPrimary,
                   onPressed: isSaving
                       ? null
@@ -273,7 +273,7 @@ class BookingSheetDefaultPanel extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: SizedBox(
-                  height: 52,
+                  height: VSPSize.buttonHeight,
                   child: PrimaryButton(
                     text: isEdit ? l10n.update : l10n.confirmBtn,
                     isLoading: isSaving,

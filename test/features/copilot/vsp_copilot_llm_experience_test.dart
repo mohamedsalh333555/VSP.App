@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/models/copilot_message.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
@@ -364,7 +365,7 @@ void main() {
       );
 
       expect(find.text('تم تغيير مركزك إلى مهاجم بنجاح ✅'), findsOneWidget);
-      expect(find.byIcon(Icons.check_circle_rounded), findsOneWidget);
+      expect(find.byIcon(Iconsax.tick_circle_copy), findsOneWidget);
 
       await tester.tap(find.text('تم تغيير مركزك إلى مهاجم بنجاح ✅'));
       await tester.pumpAndSettle();

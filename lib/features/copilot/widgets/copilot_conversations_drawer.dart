@@ -97,7 +97,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: VSPColors.accent, size: 20),
+              Icon(Iconsax.add_copy, color: VSPColors.accent, size: 20),
               SizedBox(width: 8),
               Text(
                 'محادثة جديدة',
@@ -177,7 +177,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
                 ),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
+                icon: const Icon(Iconsax.trash_copy, size: 16, color: Colors.white38),
                 onPressed: () => onDeleteConversation(conv.id),
               ),
               onTap: () {

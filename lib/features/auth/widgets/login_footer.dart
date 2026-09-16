@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -92,7 +93,7 @@ class _RoleSelectionSheet extends StatelessWidget {
 
           // زر لاعب
           _RoleCard(
-            icon: Icons.sports_soccer_rounded,
+            icon: Iconsax.cup_copy,
             title: 'لاعب',
             subtitle: 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك',
             onTap: () {
@@ -104,7 +105,7 @@ class _RoleSelectionSheet extends StatelessWidget {
 
           // زر صاحب ملعب
           _RoleCard(
-            icon: Icons.stadium_rounded,
+            icon: Iconsax.building_3_copy,
             title: 'صاحب ملعب',
             subtitle: 'سجّل ملعبك وابدأ استقبال الحجوزات',
             onTap: () {
@@ -190,7 +191,7 @@ class _RoleCard extends StatelessWidget {
               ),
             ),
             const Icon(
-              Icons.arrow_forward_ios_rounded,
+              Iconsax.arrow_right_3_copy,
               color: VSPColors.textMuted,
               size: 16,
             ),

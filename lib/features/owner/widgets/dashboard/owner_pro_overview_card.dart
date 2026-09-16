@@ -26,7 +26,7 @@ class OwnerProOverviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
       ),
@@ -118,7 +118,7 @@ class OwnerProOverviewCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'رصيد أونلاين' : 'Online Balance',
+                        isArabic ? 'إيرادات أونلاين (الفترة)' : 'Period Online Revenue',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 4),

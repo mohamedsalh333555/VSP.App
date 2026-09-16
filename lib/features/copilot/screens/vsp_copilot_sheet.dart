@@ -186,7 +186,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           ),
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+            icon: const Icon(Iconsax.close_circle_copy, color: Colors.white70, size: 20),
           ),
         ],
       ),
@@ -285,11 +285,11 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           ),
                         ),
                         if (s.rating > 0) ...[
-                          const Icon(Icons.star, color: Colors.amber, size: 13),
+                          const Icon(Iconsax.star_copy, color: VSPColors.warning, size: 13),
                           const SizedBox(width: 2),
                           Text(
                             s.rating.toStringAsFixed(1),
-                            style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ],
@@ -305,7 +305,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white54),
+                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: Colors.white54),
                       ],
                     ),
                   ],
@@ -404,7 +404,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           const SizedBox(width: 8),
           IconButton(
             onPressed: _isLoading ? null : () => _handleSendMessage(),
-            icon: const Icon(Icons.send_rounded, color: VSPColors.accent),
+            icon: const Icon(Iconsax.send_2_copy, color: VSPColors.accent),
           ),
         ],
       ),

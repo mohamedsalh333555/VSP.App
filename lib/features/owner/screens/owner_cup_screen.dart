@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -81,7 +82,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 backgroundColor: VSPColors.accent,
                 shape: const CircleBorder(),
                 elevation: 6,
-                child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
+                child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
               ),
             ),
       floatingActionButtonLocation: isArabic

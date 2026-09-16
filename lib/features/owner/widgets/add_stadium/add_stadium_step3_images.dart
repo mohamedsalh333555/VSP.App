@@ -71,7 +71,7 @@ class AddStadiumStep3Images extends StatelessWidget {
                   onDelete: () => onDeleteImage(img),
                   thumbnail: img['url'] != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
                           child: CachedNetworkImage(
                             imageUrl: img['url']!,
                             width: 40,
@@ -85,7 +85,7 @@ class AddStadiumStep3Images extends StatelessWidget {
                         )
                       : (img['file'] != null
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(VSPRadius.sm),
                               child: Image.file(img['file']!, width: 40, height: 40, fit: BoxFit.cover),
                             )
                           : null),
@@ -139,7 +139,7 @@ class AddStadiumStep3Images extends StatelessWidget {
                       child: Container(
                         decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                         padding: const EdgeInsets.all(1),
-                        child: const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
+                        child: const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 14),
                       ),
                     ),
                 ],
@@ -147,7 +147,7 @@ class AddStadiumStep3Images extends StatelessWidget {
             else
               Icon(
                 fileUrl != null ? Iconsax.tick_circle_copy : Iconsax.export_3_copy,
-                color: fileUrl != null ? Colors.green : VSPColors.accent,
+                color: fileUrl != null ? VSPColors.success : VSPColors.accent,
                 size: 32,
               ),
             const SizedBox(width: 12),
@@ -169,22 +169,22 @@ class AddStadiumStep3Images extends StatelessWidget {
                             const SizedBox(
                               width: 12,
                               height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
+                              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               isArabic ? "جاري الرفع... $progress%" : "Uploading... $progress%",
-                              style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600),
+                              style: const TextStyle(color: VSPColors.warning, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
                         const SizedBox(height: 6),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(VSPRadius.xs),
                           child: LinearProgressIndicator(
                             value: (progress <= 0) ? null : progress / 100.0,
-                            backgroundColor: Colors.orange.withValues(alpha: 0.2),
-                            color: Colors.orange,
+                            backgroundColor: VSPColors.warning.withValues(alpha: 0.2),
+                            color: VSPColors.warning,
                             minHeight: 4,
                           ),
                         ),
@@ -194,11 +194,11 @@ class AddStadiumStep3Images extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
+                        const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 14),
                         const SizedBox(width: 4),
                         Text(
                           isArabic ? "تم الرفع بنجاح" : "Uploaded successfully",
-                          style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: VSPColors.success, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ],
                     )
@@ -211,11 +211,11 @@ class AddStadiumStep3Images extends StatelessWidget {
               ),
             ),
             if (fileUrl != null) ...[
-              const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 22),
+              const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 22),
               const SizedBox(width: 8),
             ],
             IconButton(
-              icon: const Icon(Iconsax.trash_copy, color: Colors.red),
+              icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
               onPressed: onDelete,
             ),
           ],

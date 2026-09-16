@@ -37,13 +37,13 @@ class ChallengeResultActions extends StatelessWidget {
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
       if (outcome == MatchOutcome.draw) {
-        return buildStatusBadge(l10n.draw, Colors.blue);
+        return buildStatusBadge(l10n.draw, VSPColors.info);
       } else if (outcome == MatchOutcome.homeWin) {
         final isWon = isHome;
-        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? Colors.amber : Colors.red);
+        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? VSPColors.warning : VSPColors.error);
       } else if (outcome == MatchOutcome.awayWin) {
         final isWon = isAway;
-        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? Colors.amber : Colors.red);
+        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? VSPColors.warning : VSPColors.error);
       }
       return buildStatusBadge(l10n.completed, VSPColors.textSecondary);
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
@@ -113,7 +113,7 @@ class ChallengeResultActions extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(provider.errorMessage ?? l10n.resultFailed),
-                    backgroundColor: Colors.red,
+                    backgroundColor: VSPColors.error,
                   ),
                 );
               }

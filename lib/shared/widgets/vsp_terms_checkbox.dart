@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../l10n/app_localizations.dart';
 import '../dialogs/vsp_terms_and_privacy_modal.dart';
@@ -26,14 +27,16 @@ class VSPTermsCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final l10n = AppLocalizations.of(context)!;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GestureDetector(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Semantics(
+          label: isAr ? 'الموافقة على الشروط والأحكام' : 'Agree to Terms and Conditions',
+          checked: value,
+          child: GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
               onChanged(!value);
@@ -44,7 +47,7 @@ class VSPTermsCheckbox extends StatelessWidget {
               height: 22,
               decoration: BoxDecoration(
                 color: value ? VSPColors.accent : VSPColors.surface,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
                 border: Border.all(
                   color: value ? VSPColors.accent : VSPColors.borderLight,
                   width: 1.5,
@@ -52,21 +55,22 @@ class VSPTermsCheckbox extends StatelessWidget {
               ),
               child: value
                   ? const Icon(
-                      Icons.check,
+                      Iconsax.tick_circle_copy,
                       size: 16,
                       color: Colors.black,
                     )
                   : null,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onChanged(!value);
-              },
-              child: RichText(
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onChanged(!value);
+            },
+            child: RichText(
                 text: TextSpan(
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: VSPColors.textSecondary,
@@ -114,7 +118,6 @@ class VSPTermsCheckbox extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
 }

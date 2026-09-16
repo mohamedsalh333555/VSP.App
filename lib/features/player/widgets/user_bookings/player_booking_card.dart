@@ -161,9 +161,9 @@ class PlayerBookingCard extends StatelessWidget {
                 ),
               ),
               if (booking.status == BookingStatus.cancelled) ...[
-                ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', Colors.red),
+                ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', VSPColors.error),
               ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
-                ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', Colors.amber),
+                ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
               ] else if (!isHistory) ...[
                 ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
               ] else ...[

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
@@ -76,7 +77,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                 ),
-                child: const Icon(Icons.add, size: 22),
+                child: const Icon(Iconsax.add_copy, size: 20),
               ),
             ),
           ],
@@ -101,7 +102,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
                     name,
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
-                  deleteIcon: const Icon(Icons.close, size: 14, color: Colors.redAccent),
+                  deleteIcon: const Icon(Iconsax.close_circle_copy, size: 14, color: VSPColors.error),
                   onDeleted: () => onRemovePlayer(name),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.sm),

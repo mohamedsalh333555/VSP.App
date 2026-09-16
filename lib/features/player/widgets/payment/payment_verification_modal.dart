@@ -277,14 +277,14 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
                 : (isActive ? VSPColors.accent.withValues(alpha: 0.15) : Colors.white.withValues(alpha: 0.04)),
             border: Border.all(
               color: isDone
-                  ? const Color(0xFF10B981)
+                  ? VSPColors.success
                   : (isActive ? VSPColors.accent : Colors.white.withValues(alpha: 0.12)),
               width: 1.2,
             ),
           ),
           child: Center(
             child: isDone
-                ? const Icon(Icons.check, size: 13, color: Color(0xFF10B981))
+                ? const Icon(Iconsax.tick_circle_copy, size: 13, color: VSPColors.success)
                 : (isActive
                     ? const SizedBox(
                         width: 10,

@@ -53,7 +53,7 @@ class PaymobWebFallbackView extends StatelessWidget {
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: onManualVerify,
-              icon: const Icon(Icons.refresh, size: 16, color: VSPColors.accent),
+              icon: const Icon(Iconsax.refresh_copy, size: 16, color: VSPColors.accent),
               label: Text(
                 isArabic ? 'التحقق من الدفع يدويًا' : 'Verify Payment Status',
                 style: const TextStyle(color: VSPColors.accent),

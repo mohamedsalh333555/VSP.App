@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
@@ -63,7 +64,7 @@ class VSPNetworkBanner extends StatelessWidget {
                             mainAxisSize: MainAxisSize.max,
                             children: [
                               const Icon(
-                                Icons.wifi_off_rounded,
+                                Iconsax.wifi_square_copy,
                                 color: Colors.white,
                                 size: 20,
                               ),

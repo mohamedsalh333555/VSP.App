@@ -113,5 +113,34 @@ void main() {
       expect(normalizedBooking.pitchCashCollected, equals(0.0));
       expect(normalizedBooking.pendingReceivable, equals(200.0)); // 300 total - 100 paid online = 200 pending at pitch
     });
+
+    test('Online deposit (100 EGP) with cash collected at pitch (200 EGP) yields exact split', () {
+      final hybridBooking = Booking(
+        id: 'b_hybrid',
+        stadiumId: 's1',
+        stadiumName: 'Stadium 1',
+        ownerId: 'owner1',
+        createdByUserId: 'u1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        isPrivate: true,
+        rentBall: false,
+        totalPrice: 300.0,
+        depositPaid: 100.0,
+        isPaid: true,
+        paymentStatus: 'paid',
+        paymentMethod: 'paymob',
+        paymentSource: 'paymob',
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.personal,
+        createdAt: now,
+      );
+
+      expect(hybridBooking.isDigital, isTrue);
+      expect(hybridBooking.effectivePaymentState, equals('fully_paid'));
+      expect(hybridBooking.digitalAmountPaid, equals(100.0)); // Strictly the online deposit!
+      expect(hybridBooking.pitchCashCollected, equals(200.0)); // The cash remainder!
+      expect(hybridBooking.pendingReceivable, equals(0.0));
+    });
   });
 }

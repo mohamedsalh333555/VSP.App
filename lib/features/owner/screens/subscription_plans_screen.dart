@@ -72,7 +72,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -167,8 +167,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(14),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
           color: isExpired ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.06),
           width: 1,
@@ -199,7 +199,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     isExpired
                         ? (isArabic ? 'يرجى التجديد لتفعيل الحجز' : 'Renew to enable bookings')
                         : (isArabic ? 'المتبقي: $days يوم و $hours ساعة' : 'Remaining: $days d $hours h'),
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                   ),
                 ],
               ),
@@ -242,8 +242,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(18),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
           color: isHighlighted ? VSPColors.accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06),
           width: isHighlighted ? 1.4 : 1.0,
@@ -268,7 +268,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
                   border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 0.6),
                 ),
                 child: Text(
@@ -302,13 +302,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               const SizedBox(width: 6),
               Text(
                 '/ $periodText',
-                style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12.5),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
               ),
             ],
           ),
 
           const SizedBox(height: 14),
-          const Divider(color: Color(0xFF262626), height: 1),
+          const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 14),
 
           // ── Features List (Clean Bullets) ──
@@ -326,7 +326,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       child: Text(
                         f,
                         style: const TextStyle(
-                          color: Color(0xFFE4E4E7),
+                          color: VSPColors.textPrimary,
                           fontSize: 12.5,
                           height: 1.35,
                         ),
@@ -347,7 +347,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                     ),
                     child: Row(
@@ -369,7 +369,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       foregroundColor: isHighlighted ? Colors.black : Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(VSPRadius.sm),
                         side: isHighlighted
                             ? BorderSide.none
                             : BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -51,7 +52,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.refresh, color: VSPColors.warning, size: 36),
+                  const Icon(Iconsax.refresh_copy, color: VSPColors.warning, size: 36),
                   const SizedBox(height: 12),
                   const Text(
                     'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
@@ -60,7 +61,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => setState(() => _refreshKey++),
-                    icon: const Icon(Icons.refresh, size: 18),
+                    icon: const Icon(Iconsax.refresh_copy, size: 18),
                     label: const Text('إعادة المحاولة'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.accent,

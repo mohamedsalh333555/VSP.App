@@ -161,7 +161,7 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
         actions: [
           IconButton(
             tooltip: 'إعادة ضبط Rate Limiter',
-            icon: const Icon(Icons.refresh_rounded, color: VSPColors.textSecondary),
+            icon: const Icon(Iconsax.refresh_copy, color: VSPColors.textSecondary),
             onPressed: () {
               _service.resetRateLimiter();
               setState(() {
@@ -219,7 +219,7 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                         )
-                      : const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 20),
+                      : const Icon(Iconsax.play_copy, color: Colors.black, size: 20),
                   label: Text(
                     _isRunningAll ? 'جاري الفحص...' : 'تشغيل الكل',
                     style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
@@ -379,22 +379,22 @@ class TestResultDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(VSPRadius.dialog),
         side: BorderSide(
-          color: isSuccess ? VSPColors.accent.withValues(alpha: 0.4) : Colors.redAccent.withValues(alpha: 0.4),
+          color: isSuccess ? VSPColors.accent.withValues(alpha: 0.4) : VSPColors.error.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
       title: Row(
         children: [
           Icon(
-            isSuccess ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-            color: isSuccess ? VSPColors.accent : Colors.redAccent,
+            isSuccess ? Iconsax.tick_circle_copy : Iconsax.info_circle_copy,
+            color: isSuccess ? VSPColors.accent : VSPColors.error,
             size: 26,
           ),
           const SizedBox(width: 8),
           Text(
             status,
             style: TextStyle(
-              color: isSuccess ? VSPColors.accent : Colors.redAccent,
+              color: isSuccess ? VSPColors.accent : VSPColors.error,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -447,7 +447,7 @@ class TestResultDialog extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     children: [
-                      const Icon(Icons.sports_soccer, size: 14, color: VSPColors.accent),
+                      const Icon(Iconsax.cup_copy, size: 14, color: VSPColors.accent),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(

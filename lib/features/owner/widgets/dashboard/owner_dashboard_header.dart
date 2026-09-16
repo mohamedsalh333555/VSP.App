@@ -86,7 +86,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                                 ],
                               )
                             : null,
-                        color: isProOwner ? null : const Color(0xFF1E1E24),
+                        color: isProOwner ? null : VSPColors.surfaceAlt,
                         border: isProOwner
                             ? null
                             : Border.all(
@@ -107,7 +107,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                       child: Container(
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Color(0xFF141417),
+                          color: VSPColors.surface,
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: (photoUrl != null && photoUrl.trim().isNotEmpty)
@@ -137,7 +137,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                         width: 19,
                         height: 19,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E24),
+                          color: VSPColors.surfaceAlt,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.2),
@@ -189,10 +189,10 @@ class OwnerDashboardHeader extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                              color: VSPColors.success.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(VSPRadius.full),
                               border: Border.all(
-                                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                color: VSPColors.success.withValues(alpha: 0.25),
                                 width: 0.8,
                               ),
                             ),
@@ -201,14 +201,14 @@ class OwnerDashboardHeader extends StatelessWidget {
                               children: [
                                 const Icon(
                                   Iconsax.verify_copy,
-                                  color: Color(0xFF34D399),
+                                  color: VSPColors.success,
                                   size: 11,
                                 ),
                                 const SizedBox(width: 3),
                                 Text(
                                   isArabic ? 'معتمد' : 'Verified',
                                   style: const TextStyle(
-                                    color: Color(0xFF34D399),
+                                    color: VSPColors.success,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),

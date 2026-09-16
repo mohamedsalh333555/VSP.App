@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:safe_device/safe_device.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../ui/tokens/vsp_tokens.dart';
 import '../../data/models.dart';
 import '../../main.dart';
 import '../repositories/notification_repository.dart';
@@ -161,11 +163,11 @@ class NoShowDisputeService {
           final useSelfie = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              backgroundColor: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              backgroundColor: VSPColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
               title: const Row(
                 children: [
-                  Icon(Icons.gps_off, color: Colors.orange),
+                  Icon(Iconsax.location_slash_copy, color: VSPColors.warning),
                   SizedBox(width: 8),
                   Text('دقة الـ GPS ضعيفة ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
@@ -177,7 +179,7 @@ class NoShowDisputeService {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('إلغاء', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                  child: const Text('إلغاء', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),

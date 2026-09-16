@@ -68,7 +68,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.check_circle,
+                        Iconsax.tick_circle_copy,
                         color: isPaidOnCreation ? Colors.black : VSPColors.accent,
                         size: 16,
                       ),
@@ -106,7 +106,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.access_time_filled,
+                        Iconsax.clock_copy,
                         color: !isPaidOnCreation ? VSPColors.warning : VSPColors.textSecondary,
                         size: 16,
                       ),

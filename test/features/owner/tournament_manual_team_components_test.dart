@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/features/owner/widgets/tournament/tournament_manual_team_options_section.dart';
 import 'package:vsp_application/features/owner/widgets/tournament/tournament_manual_team_roster_section.dart';
 import 'package:vsp_application/features/owner/widgets/tournament/tournament_manual_team_service.dart';
@@ -73,12 +74,12 @@ void main() {
       expect(find.textContaining('Add 3 more players'), findsOneWidget);
 
       // Tap add button
-      await tester.tap(find.byIcon(Icons.add));
+      await tester.tap(find.byIcon(Iconsax.add_copy));
       await tester.pump();
       expect(added, isTrue);
 
       // Tap remove chip icon
-      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.tap(find.byIcon(Iconsax.close_circle_copy).first);
       await tester.pump();
       expect(removed, equals('Player 1'));
     });

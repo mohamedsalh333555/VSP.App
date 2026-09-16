@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
@@ -86,7 +87,7 @@ class BookingSlotStreamSection extends StatelessWidget {
             child: Center(
               child: Column(
                 children: [
-                  const Icon(Icons.refresh, color: VSPColors.warning, size: 28),
+                  const Icon(Iconsax.refresh_copy, color: VSPColors.warning, size: 28),
                   const SizedBox(height: 8),
                   const Text(
                     'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
@@ -95,7 +96,7 @@ class BookingSlotStreamSection extends StatelessWidget {
                   const SizedBox(height: 10),
                   TextButton.icon(
                     onPressed: onRetry,
-                    icon: const Icon(Icons.refresh, color: VSPColors.accent, size: 16),
+                    icon: const Icon(Iconsax.refresh_copy, color: VSPColors.accent, size: 16),
                     label: const Text(
                       'إعادة المحاولة',
                       style: TextStyle(color: VSPColors.accent, fontSize: 13),

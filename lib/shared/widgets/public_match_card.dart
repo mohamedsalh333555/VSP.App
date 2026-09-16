@@ -175,7 +175,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  padding: const EdgeInsets.symmetric(horizontal: 16),
  decoration: BoxDecoration(
  color: isOutlined ? Colors.transparent : color,
- borderRadius: BorderRadius.circular(12),
+ borderRadius: BorderRadius.circular(VSPRadius.sm),
  border: isOutlined ? Border.all(color: color, width: 1.5) : null,
  boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
  ),
@@ -251,16 +251,16 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
- if (isHost)
- _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
- else if (hasJoined)
- _buildStatusBadge(AppLocalizations.of(context)!.joined, Colors.blue)
- else if (isPending)
- _buildStatusBadge(isArabic ? 'طلب معلق ' : 'Pending ', Colors.orange)
- else if (booking.currentPlayers >= totalFieldCapacity)
- _buildStatusBadge(AppLocalizations.of(context)!.full, VSPColors.textSecondary)
- else
- _buildStatusBadge(AppLocalizations.of(context)!.open, Colors.green),
+  if (isHost)
+  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
+  else if (hasJoined)
+  _buildStatusBadge(AppLocalizations.of(context)!.joined, VSPColors.info)
+  else if (isPending)
+  _buildStatusBadge(isArabic ? 'طلب معلق ' : 'Pending ', VSPColors.warning)
+  else if (booking.currentPlayers >= totalFieldCapacity)
+  _buildStatusBadge(AppLocalizations.of(context)!.full, VSPColors.textSecondary)
+  else
+  _buildStatusBadge(AppLocalizations.of(context)!.open, VSPColors.success),
  ],
  ),
  const SizedBox(height: 12),

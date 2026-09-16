@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import 'primary_button.dart';
@@ -35,7 +36,7 @@ class VSPErrorState extends StatelessWidget {
                 ? 'تعذر الوصول إلى الخادم في الوقت الحالي، يرجى المحاولة مرة أخرى.'
                 : 'Could not connect to the server at this time. Please try again.'));
 
-    final IconData icon = !isOnline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded;
+    final IconData icon = !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy;
 
     return Center(
       child: SingleChildScrollView(
@@ -46,10 +47,10 @@ class VSPErrorState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                color: VSPColors.error.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                  color: VSPColors.error.withValues(alpha: 0.35),
                   width: 2,
                 ),
               ),

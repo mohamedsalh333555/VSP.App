@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
@@ -310,7 +311,7 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.broken_image_rounded, color: VSPColors.textSecondary, size: 28),
+                        const Icon(Iconsax.gallery_slash_copy, color: VSPColors.textSecondary, size: 28),
                         if (banner.title.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text(

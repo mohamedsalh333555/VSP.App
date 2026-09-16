@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
 import 'package:vsp_application/core/services/vsp_copilot_service.dart';
@@ -46,7 +47,7 @@ void main() {
       await tester.pump();
 
       // اضغط إرسال
-      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.tap(find.byIcon(Iconsax.send_2_copy));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -79,7 +80,7 @@ void main() {
 
       // الرسالة الأولى: تحديد المحافظة
       await tester.enterText(find.byType(TextField), 'ملاعب في الجيزة');
-      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.tap(find.byIcon(Iconsax.send_2_copy));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -87,7 +88,7 @@ void main() {
 
       // الرسالة الثانية: فلترة السعر مع الحفاظ على الجيزة
       await tester.enterText(find.byType(TextField), 'بس اللي بتحت 350');
-      await tester.tap(find.byIcon(Icons.send_rounded));
+      await tester.tap(find.byIcon(Iconsax.send_2_copy));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 

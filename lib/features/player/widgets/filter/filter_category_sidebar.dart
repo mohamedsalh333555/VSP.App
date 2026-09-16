@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class FilterCategorySidebar extends StatelessWidget {
@@ -39,7 +40,7 @@ class FilterCategorySidebar extends StatelessWidget {
             final isSelected = selectedCategory == key;
             final badgeCount = getBadgeCount(key);
             final title = categoryTitles[key] ?? key;
-            final icon = categoryIcons[key] ?? Icons.category;
+            final icon = categoryIcons[key] ?? Iconsax.category_copy;
 
             return InkWell(
               onTap: () => onSelectCategory(key),

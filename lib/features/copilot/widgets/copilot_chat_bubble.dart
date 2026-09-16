@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -137,7 +138,7 @@ class CopilotChatBubble extends StatelessWidget {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.copy_rounded, size: 12, color: Colors.white54),
+                          Icon(Iconsax.copy_copy, size: 12, color: Colors.white54),
                           SizedBox(width: 4),
                           Text('نسخ', style: TextStyle(color: Colors.white54, fontSize: 10)),
                         ],
@@ -185,12 +186,12 @@ class CopilotChatBubble extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(VSPRadius.md),
             border: Border.all(
-              color: isProfileUpdated ? const Color(0xFF00E676) : VSPColors.accent,
+              color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isProfileUpdated ? const Color(0xFF00E676) : VSPColors.accent).withValues(alpha: 0.15),
+                color: (isProfileUpdated ? VSPColors.success : VSPColors.accent).withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -200,8 +201,8 @@ class CopilotChatBubble extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isProfileUpdated ? Icons.check_circle_rounded : Icons.rocket_launch_rounded,
-                color: isProfileUpdated ? const Color(0xFF00E676) : VSPColors.accent,
+                isProfileUpdated ? Iconsax.tick_circle_copy : Iconsax.flash_1_copy,
+                color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -215,8 +216,8 @@ class CopilotChatBubble extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: isProfileUpdated ? const Color(0xFF00E676) : VSPColors.accent,
+                Iconsax.arrow_right_3_copy,
+                color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
                 size: 12,
               ),
             ],
@@ -266,11 +267,11 @@ class CopilotChatBubble extends StatelessWidget {
                           ),
                         ),
                         if (s.rating > 0) ...[
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                          const Icon(Iconsax.star_copy, color: VSPColors.warning, size: 14),
                           const SizedBox(width: 2),
                           Text(
                             s.rating.toStringAsFixed(1),
-                            style: const TextStyle(color: Colors.amber, fontSize: 11.5, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.warning, fontSize: 11.5, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ],
@@ -303,7 +304,7 @@ class CopilotChatBubble extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               minimumSize: const Size(54, 26),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                             ),
                             child: Text(
                               isArabic ? 'احجز' : 'Book',
@@ -350,7 +351,7 @@ class CopilotChatBubble extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 16),
+                        const Icon(Iconsax.award_copy, color: VSPColors.warning, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -367,7 +368,7 @@ class CopilotChatBubble extends StatelessWidget {
                     ),
                     Text(
                       '${isArabic ? "جائزة:" : "Prize:"} ${t.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}',
-                      style: const TextStyle(color: Colors.amber, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.warning, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -389,7 +390,7 @@ class CopilotChatBubble extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               minimumSize: const Size(54, 26),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                             ),
                             child: Text(
                               isArabic ? 'عرض' : 'View',
@@ -436,7 +437,7 @@ class CopilotChatBubble extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.sports_soccer_rounded, color: VSPColors.accent, size: 16),
+                        const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 16),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -454,12 +455,12 @@ class CopilotChatBubble extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
+                        color: VSPColors.warning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(VSPRadius.xs),
                       ),
                       child: Text(
                         isArabic ? 'ناقص ${m.missingPlayers} لاعبين' : '${m.missingPlayers} spots left',
-                        style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Row(
@@ -482,7 +483,7 @@ class CopilotChatBubble extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               minimumSize: const Size(54, 26),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                             ),
                             child: Text(
                               isArabic ? 'انضم' : 'Join',

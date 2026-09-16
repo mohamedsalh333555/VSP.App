@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../l10n/app_localizations.dart';
 import '../models/refund_info.dart';
 
@@ -68,7 +69,7 @@ class RefundNoticeWidget extends StatelessWidget {
                 Row(
                   children: [
                     Icon(
-                      Icons.schedule_rounded,
+                      Iconsax.clock_copy,
                       size: 13,
                       color: subTextColor,
                     ),

@@ -25,8 +25,8 @@ class OwnerPayoutDialog {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF18181B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: VSPColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           title: Text(
             isAr ? 'وسيلة التحصيل غير مسجلة' : 'Payout Method Required',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
@@ -35,13 +35,13 @@ class OwnerPayoutDialog {
             isAr
                 ? 'يرجى تسجيل وسيلة تحصيل واحدة على الأقل (إنستاباي أو محفظة إلكترونية أو حساب بنكي) في إعدادات الحساب لتتمكن من استلام مستحقاتك.'
                 : 'Please add at least one payout method (InstaPay, Mobile Wallet, or Bank IBAN) in Account Settings to request settlements.',
-            style: const TextStyle(color: Color(0xFFA1A1AA), height: 1.5, fontSize: 13),
+            style: const TextStyle(color: VSPColors.textSecondary, height: 1.5, fontSize: 13),
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: Color(0xFFA1A1AA))),
+              child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -54,7 +54,7 @@ class OwnerPayoutDialog {
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
                 foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
               child: Text(
                 isAr ? 'إضافة وسيلة تحصيل' : 'Add Payout Method',
@@ -72,8 +72,8 @@ class OwnerPayoutDialog {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF18181B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
         title: Text(
           isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -84,7 +84,7 @@ class OwnerPayoutDialog {
           children: [
             Text(
               isAr ? 'الرصيد الإلكتروني المتاح للتسوية:' : 'Available Digital Balance:',
-              style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 4),
             Text(
@@ -95,8 +95,8 @@ class OwnerPayoutDialog {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF141417),
-                borderRadius: BorderRadius.circular(10),
+                color: VSPColors.inputFill,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
               child: Column(
@@ -104,7 +104,7 @@ class OwnerPayoutDialog {
                 children: [
                   Text(
                     isAr ? 'جهة التحويل المعتمدة:' : 'Transfer Destination:',
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   if (user?.p2pInstapay?.isNotEmpty ?? false)
@@ -121,7 +121,7 @@ class OwnerPayoutDialog {
               isAr
                   ? 'تتم مراجعة طلبات التسوية وإتمام التحويل من قِبل الإدارة خلال 24 ساعة.'
                   : 'Settlements are reviewed and disbursed by administration within 24 hours.',
-              style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11, height: 1.4),
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
             ),
           ],
         ),
@@ -146,7 +146,7 @@ class OwnerPayoutDialog {
                   Expanded(
                     child: TextButton(
                       onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
-                      child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: Color(0xFFA1A1AA))),
+                      child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -184,7 +184,7 @@ class OwnerPayoutDialog {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: VSPColors.accent,
                         foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                       ),
                       child: isSubmitting
                           ? const SizedBox(

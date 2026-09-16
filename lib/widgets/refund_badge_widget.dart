@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../l10n/app_localizations.dart';
 import '../models/refund_info.dart';
 
@@ -57,7 +58,7 @@ class RefundBadgeWidget extends StatelessWidget {
                 SnackBar(
                   content: Row(
                     children: [
-                      const Icon(Icons.check_circle_outline, color: Colors.white, size: 16),
+                      const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 16),
                       const SizedBox(width: 8),
                       Text(copyToastText),
                     ],
@@ -71,7 +72,7 @@ class RefundBadgeWidget extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.receipt_long_rounded,
+                  Iconsax.receipt_item_copy,
                   size: 13,
                   color: hintTextColor,
                 ),
@@ -88,7 +89,7 @@ class RefundBadgeWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Icon(
-                  Icons.copy_rounded,
+                  Iconsax.copy_copy,
                   size: 11,
                   color: hintTextColor.withValues(alpha: 0.8),
                 ),

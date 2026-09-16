@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -35,7 +36,7 @@ class SelectRoleScreen extends StatelessWidget {
                   border: Border.all(color: VSPColors.borderAccent, width: 1),
                 ),
                 child: const Icon(
-                  Icons.sports_soccer_rounded,
+                  Iconsax.cup_copy,
                   color: VSPColors.accent,
                   size: 24,
                 ),
@@ -63,7 +64,7 @@ class SelectRoleScreen extends StatelessWidget {
 
               // بطاقة لاعب
               _RoleCard(
-                icon: Icons.sports_soccer_rounded,
+                icon: Iconsax.cup_copy,
                 title: 'لاعب',
                 subtitle: 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك',
                 onTap: () => _selectRole(context, 'player'),
@@ -72,7 +73,7 @@ class SelectRoleScreen extends StatelessWidget {
 
               // بطاقة صاحب ملعب
               _RoleCard(
-                icon: Icons.stadium_rounded,
+                icon: Iconsax.building_3_copy,
                 title: 'صاحب ملعب',
                 subtitle: 'سجّل ملعبك وابدأ استقبال الحجوزات',
                 onTap: () => _selectRole(context, 'owner'),
@@ -183,7 +184,7 @@ class _RoleCard extends StatelessWidget {
 
             // سهم
             const Icon(
-              Icons.arrow_forward_ios_rounded,
+              Iconsax.arrow_right_3_copy,
               color: VSPColors.textMuted,
               size: 16,
             ),

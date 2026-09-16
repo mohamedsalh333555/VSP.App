@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Interactive selector allowing players to switch between Mobile Wallets and Debit/Credit Cards.
@@ -81,7 +82,7 @@ class PaymentMethodSelector extends StatelessWidget {
                   width: 2,
                 ),
               ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.black, size: 14) : null,
+              child: isSelected ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 14) : null,
             ),
             const SizedBox(width: 14),
             Expanded(

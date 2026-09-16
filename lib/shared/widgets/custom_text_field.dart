@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
 /// حقل إدخال نص مخصص بتصميم داكن مع دعم التحقق المباشر (Inline Live Validation)
@@ -74,8 +75,8 @@ class CustomTextField extends StatelessWidget {
           effectiveSuffix = const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Icon(
-              Icons.check_circle_rounded,
-              color: Color(0xFF10B981),
+              Iconsax.tick_circle_copy,
+              color: VSPColors.success,
               size: 20,
             ),
           );

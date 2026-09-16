@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:vsp_application/shared/widgets/vsp_animated_button.dart';
 import 'package:vsp_application/shared/widgets/vsp_empty_state.dart';
@@ -65,7 +66,7 @@ void main() {
  const MaterialApp(
  home: Scaffold(
  body: VSPEmptyState(
- icon: Icons.calendar_today,
+ icon: Iconsax.calendar_1_copy,
  title: 'No Active Bookings',
  subtitle: 'Explore available pitches to book your match.',
  ),

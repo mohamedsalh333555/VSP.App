@@ -129,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, color: VSPColors.textPrimary),
+            icon: const Icon(Iconsax.more_copy, color: VSPColors.textPrimary),
             color: VSPColors.surface,
             onSelected: (value) {
               if (value == 'report') {
@@ -151,7 +151,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 value: 'report',
                 child: Row(
                   children: [
-                    const Icon(Icons.flag_outlined, color: Colors.orangeAccent, size: 18),
+                    const Icon(Iconsax.flag_copy, color: VSPColors.warning, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       isArabic ? 'إبلاغ عن المحادثة' : 'Report Chat',
@@ -164,11 +164,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 value: 'delete',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                    const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
                     const SizedBox(width: 8),
                     Text(
                       isArabic ? 'حذف المحادثة' : 'Delete Conversation',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                      style: const TextStyle(color: VSPColors.error, fontSize: 13),
                     ),
                   ],
                 ),

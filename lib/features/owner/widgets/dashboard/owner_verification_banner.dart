@@ -118,7 +118,7 @@ class OwnerVerificationBanner extends StatelessWidget {
     }
 
     // 3. مطلوب التوثيق (غير موثق أو تم رفض بعض الوثائق)
-    final Color primaryColor = isRejected ? VSPColors.error : const Color(0xFFF59E0B);
+    final Color primaryColor = isRejected ? VSPColors.error : VSPColors.warning;
     final String title = isRejected
         ? (isArabic ? 'تم رفض بعض المستندات' : 'Documents Need Attention')
         : (isArabic ? 'منشأتك غير موثقة بعد' : 'Facility Verification Required');

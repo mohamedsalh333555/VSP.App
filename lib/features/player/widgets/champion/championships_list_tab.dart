@@ -103,7 +103,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.refresh, color: VSPColors.warning, size: 36),
+                  const Icon(Iconsax.refresh_copy, color: VSPColors.warning, size: 36),
                   const SizedBox(height: 12),
                   Text(
                     isArabic
@@ -115,7 +115,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                   const SizedBox(height: 14),
                   TextButton.icon(
                     onPressed: _handleRetry,
-                    icon: const Icon(Icons.refresh, color: VSPColors.accent, size: 16),
+                    icon: const Icon(Iconsax.refresh_copy, color: VSPColors.accent, size: 16),
                     label: Text(
                       isArabic ? 'إعادة المحاولة' : 'Retry',
                       style: const TextStyle(color: VSPColors.accent, fontSize: 13),

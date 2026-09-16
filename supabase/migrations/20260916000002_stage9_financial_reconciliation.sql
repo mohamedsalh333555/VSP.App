@@ -73,8 +73,16 @@ BEGIN
     END IF;
 
     -- 5. Calculate Net Online Earnings with strict deductions
+    -- Pure cash bookings are completely excluded.
+    -- For online deposit bookings where remainder was paid in cash, only the deposit_paid counts towards digital balance!
     SELECT 
-        COALESCE(SUM(total_price), 0.0),
+        COALESCE(SUM(
+            CASE 
+                WHEN LOWER(COALESCE(payment_method, '')) = 'cash' THEN 0.0
+                WHEN COALESCE(deposit_paid, 0.0) > 0.0 AND COALESCE(deposit_paid, 0.0) < total_price THEN deposit_paid
+                ELSE total_price
+            END
+        ), 0.0),
         COALESCE(SUM(COALESCE(gateway_fee, platform_fee, 0.0)), 0.0),
         COALESCE(SUM(COALESCE(vsp_commission, round(total_price * 0.02, 2))), 0.0)
     INTO 
@@ -83,7 +91,7 @@ BEGIN
         v_total_vsp_commission
     FROM public.bookings
     WHERE owner_id = p_owner_id
-      AND payment_method != 'cash'
+      AND LOWER(COALESCE(payment_method, '')) != 'cash'
       AND (payment_status = 'paid' OR is_paid = true)
       AND status != 'cancelled';
 
@@ -409,10 +417,22 @@ SELECT
     u.name AS owner_name,
     u.phone AS owner_phone,
     COUNT(b.id) FILTER (WHERE b.status != 'cancelled') AS active_bookings_count,
-    COALESCE(SUM(b.total_price) FILTER (WHERE b.payment_method != 'cash' AND (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_online_revenue,
-    COALESCE(SUM(COALESCE(b.gateway_fee, b.platform_fee, 0.0)) FILTER (WHERE b.payment_method != 'cash' AND (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_gateway_fees,
+    COALESCE(SUM(
+        CASE 
+            WHEN LOWER(COALESCE(b.payment_method, '')) = 'cash' THEN 0.0
+            WHEN COALESCE(b.deposit_paid, 0.0) > 0.0 AND COALESCE(b.deposit_paid, 0.0) < b.total_price THEN b.deposit_paid
+            ELSE b.total_price
+        END
+    ) FILTER (WHERE LOWER(COALESCE(b.payment_method, '')) != 'cash' AND (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_online_revenue,
+    COALESCE(SUM(COALESCE(b.gateway_fee, b.platform_fee, 0.0)) FILTER (WHERE LOWER(COALESCE(b.payment_method, '')) != 'cash' AND (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_gateway_fees,
     COALESCE(SUM(COALESCE(b.vsp_commission, round(b.total_price * 0.02, 2))) FILTER (WHERE (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_platform_commission,
-    COALESCE(SUM(b.total_price) FILTER (WHERE b.payment_method = 'cash' AND (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_pitch_cash_revenue,
+    COALESCE(SUM(
+        CASE 
+            WHEN LOWER(COALESCE(b.payment_method, '')) = 'cash' THEN b.total_price
+            WHEN COALESCE(b.deposit_paid, 0.0) > 0.0 AND COALESCE(b.deposit_paid, 0.0) < b.total_price THEN (b.total_price - b.deposit_paid)
+            ELSE 0.0
+        END
+    ) FILTER (WHERE (b.payment_status = 'paid' OR b.is_paid = true) AND b.status != 'cancelled'), 0.0) AS total_pitch_cash_revenue,
     COALESCE(u.accumulated_cash_debt, 0.0) AS accumulated_cash_debt,
     COALESCE(u.debt_limit, 500.0) AS debt_limit,
     COALESCE(u.is_debt_blocked, false) AS is_debt_blocked,
@@ -422,3 +442,161 @@ FROM public.users u
 LEFT JOIN public.bookings b ON b.owner_id = u.id
 WHERE u.role IN ('owner', 'admin', 'co_founder')
 GROUP BY u.id, u.name, u.phone, u.accumulated_cash_debt, u.debt_limit, u.is_debt_blocked;
+
+
+-- 4. HARDEN confirm_cash_booking_atomic
+-- Preserves the original digital deposit and prevents cash collections from leaking into digital withdrawable balance.
+CREATE OR REPLACE FUNCTION public.confirm_cash_booking_atomic(
+    p_booking_id UUID,
+    p_owner_id UUID,
+    p_total_price NUMERIC
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_booking RECORD;
+    v_caller_role TEXT;
+    v_cash_amount NUMERIC := 0.0;
+    v_new_deposit NUMERIC := 0.0;
+    v_now TIMESTAMPTZ := timezone('utc'::text, now());
+BEGIN
+    SELECT * INTO v_booking FROM public.bookings WHERE id = p_booking_id FOR UPDATE;
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('success', false, 'message', 'الحجز غير موجود.');
+    END IF;
+
+    IF (COALESCE(auth.role(), '') NOT IN ('service_role')) AND (current_user NOT IN ('postgres', 'service_role')) THEN
+        SELECT role INTO v_caller_role FROM public.users WHERE id = auth.uid();
+        IF (v_booking.owner_id IS DISTINCT FROM auth.uid()) AND (COALESCE(v_caller_role, '') NOT IN ('admin', 'co_founder')) THEN
+            RETURN jsonb_build_object('success', false, 'message', 'غير مصرح: تأكيد استلام الكاش متاح فقط لمالك هذا الملعب أو إدارة التطبيق.');
+        END IF;
+    END IF;
+
+    IF v_booking.is_paid IS TRUE AND v_booking.payment_status = 'paid' THEN
+        RETURN jsonb_build_object(
+            'success', true,
+            'message', 'الحجز مؤكد ومسدد بالفعل مسبقاً.',
+            'already_confirmed', true,
+            'booking_id', p_booking_id,
+            'amount', 0,
+            'total_price', v_booking.total_price
+        );
+    END IF;
+
+    -- حساب المبلغ المستلم كاش بالملعب بدقة دون محو العربون الإلكتروني الأصلي
+    IF COALESCE(v_booking.deposit_paid, 0.0) > 0.0 AND COALESCE(v_booking.deposit_paid, 0.0) < COALESCE(v_booking.total_price, p_total_price, 0.0) THEN
+        v_cash_amount := COALESCE(v_booking.total_price, p_total_price, 0.0) - v_booking.deposit_paid;
+        v_new_deposit := v_booking.deposit_paid; -- الحفاظ على قيمة العربون الأونلاين الأصلي دون محوه
+    ELSE
+        v_cash_amount := COALESCE(v_booking.total_price, p_total_price, 0.0);
+        v_new_deposit := v_cash_amount;
+    END IF;
+
+    -- تحديث حالة الحجز
+    UPDATE public.bookings
+    SET is_paid = true,
+        payment_status = 'paid',
+        deposit_paid = v_new_deposit,
+        updated_at = v_now
+    WHERE id = p_booking_id;
+
+    -- إدراج قيد الكاش في المعاملات المالية
+    INSERT INTO public.transactions (
+        user_id,
+        booking_id,
+        amount,
+        type,
+        status,
+        payment_method,
+        description,
+        created_at,
+        updated_at
+    ) VALUES (
+        v_booking.owner_id,
+        p_booking_id,
+        v_cash_amount,
+        'cash_settlement',
+        'completed',
+        'cash',
+        'تحصيل كاش مؤكد بالملعب لحجز #' || substring(p_booking_id::text, 1, 8),
+        v_now,
+        v_now
+    );
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'booking_id', p_booking_id,
+        'amount', v_cash_amount,
+        'total_price', COALESCE(v_booking.total_price, p_total_price)
+    );
+END;
+$$;
+
+
+-- 5. CREATE owner_record_no_show_atomic
+CREATE OR REPLACE FUNCTION public.owner_record_no_show_atomic(
+    p_booking_id UUID,
+    p_owner_id UUID,
+    p_notes TEXT DEFAULT ''
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+    v_booking RECORD;
+    v_caller_role TEXT;
+    v_now TIMESTAMPTZ := timezone('utc'::text, now());
+BEGIN
+    SELECT * INTO v_booking FROM public.bookings WHERE id = p_booking_id FOR UPDATE;
+    IF NOT FOUND THEN
+        RETURN jsonb_build_object('success', false, 'message', 'الحجز غير موجود.');
+    END IF;
+
+    IF (COALESCE(auth.role(), '') NOT IN ('service_role')) AND (current_user NOT IN ('postgres', 'service_role')) THEN
+        SELECT role INTO v_caller_role FROM public.users WHERE id = auth.uid();
+        IF (v_booking.owner_id IS DISTINCT FROM auth.uid()) AND (COALESCE(v_caller_role, '') NOT IN ('admin', 'co_founder')) THEN
+            RETURN jsonb_build_object('success', false, 'message', 'غير مصرح: تسجيل عدم الحضور متاح فقط لمالك الملعب أو الإدارة.');
+        END IF;
+    END IF;
+
+    IF v_booking.status = 'no_show' THEN
+        RETURN jsonb_build_object('success', true, 'message', 'تم تسجيل عدم الحضور مسبقاً.');
+    END IF;
+
+    UPDATE public.bookings
+    SET status = 'no_show',
+        cancellation_reason = 'غياب اللاعب وعدم الحضور بالموعد المحدد',
+        notes = CASE WHEN LENGTH(TRIM(COALESCE(p_notes, ''))) > 0 THEN COALESCE(notes, '') || ' | ' || p_notes ELSE notes END,
+        updated_at = v_now
+    WHERE id = p_booking_id;
+
+    -- خصم نقاط اللعب النظيف من اللاعب المخالف
+    IF v_booking.user_id IS NOT NULL OR v_booking.created_by_user_id IS NOT NULL THEN
+        UPDATE public.users
+        SET fair_play_score = GREATEST(0, COALESCE(fair_play_score, 100) - 10),
+            updated_at = v_now
+        WHERE id = COALESCE(v_booking.user_id, v_booking.created_by_user_id);
+    END IF;
+
+    INSERT INTO public.notifications (
+        user_id,
+        title,
+        body,
+        type,
+        created_at
+    ) VALUES (
+        COALESCE(v_booking.user_id, v_booking.created_by_user_id),
+        'تسجيل عدم حضور (No-Show)',
+        'تم تسجيل عدم حضورك للمباراة المقررة في ' || COALESCE(v_booking.stadium_name, 'الملعب') || ' وتأثير ذلك على نقاط الالتزام.',
+        'booking_no_show',
+        v_now
+    );
+
+    RETURN jsonb_build_object('success', true, 'message', 'تم تسجيل عدم حضور اللاعب بنجاح.');
+END;
+$$;
