@@ -172,6 +172,7 @@ class CopilotChatBubble extends StatelessWidget {
 
   Widget _buildActionCard(BuildContext context, CopilotAction action) {
     final isProfileUpdated = action.actionType == 'PROFILE_UPDATED';
+    final isOpenPayment = action.isOpenPayment;
 
     return Material(
       color: Colors.transparent,
@@ -201,7 +202,9 @@ class CopilotChatBubble extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                isProfileUpdated ? Iconsax.tick_circle_copy : Iconsax.flash_1_copy,
+                isProfileUpdated
+                    ? Iconsax.tick_circle_copy
+                    : (isOpenPayment ? Iconsax.card_pos_copy : Iconsax.flash_1_copy),
                 color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
                 size: 16,
               ),

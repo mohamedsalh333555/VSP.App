@@ -144,6 +144,100 @@ const getUserBookingsAndRefundsTool = {
   },
 };
 
+// 8. Tool: getOwnerStadiumsAndBookings
+const getOwnerStadiumsAndBookingsTool = {
+  name: "getOwnerStadiumsAndBookings",
+  description: "عرض واستعلام ملاعب مالك الملعب المسجلة باسمه في VSP، وحجوزات ملاعبه الحالية أو القادمة، والتحقق من مواعيد اللعب وتفاصيل اللاعبين. استدعِ هذه الأداة فوراً عندما يسأل مالك الملعب عن ملاعبه، أو حجوزات ملعبه، أو مواعيد الحجز، أو التحصيل.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      query_type: {
+        type: "STRING",
+        description: "نوع الاستعلام: 'stadiums' لملاعبه المسجلة، 'bookings' لحجوزات ملاعبه، 'today' لحجوزات اليوم فقط، 'all' للكل",
+      },
+      status: {
+        type: "STRING",
+        description: "حالة الحجز للفلترة: 'pending' للمعلقة، 'confirmed' للمؤكدة، 'all' للكل",
+      },
+    },
+  },
+};
+
+// 9. Tool: getOwnerFinancialInsights
+const getOwnerFinancialInsightsTool = {
+  name: "getOwnerFinancialInsights",
+  description: "استعلام السجل المالي لمالك الملعب، والرصيد الإلكتروني القابل للسحب، والإيرادات النقدية (كاش) المحصلة، ومديونية المنصة، وعدد الحجوزات المكتملة مباشرة من قاعدة البيانات. استدعِ هذه الأداة فوراً عندما يسأل مالك الملعب عن أرباحه، رصيده، إيراداته، فلوسه، أو مديونية الكاش.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      period: {
+        type: "STRING",
+        description: "الفترة: 'all' للإجمالي، أو 'current' للرصيد الحالي",
+      },
+    },
+  },
+};
+
+// 10. Tool: checkStadiumAvailability
+const checkStadiumAvailabilityTool = {
+  name: "checkStadiumAvailability",
+  description: "فحص مواعيد وتوافر الملعب والتحقق من الفترات والساعات المتاحة والشاغرة للحجز بتاريخ وتوقيت محدد، وتجنب الحجوزات المتضاربة من قاعدة البيانات الحقيقية. استدعِ هذه الأداة فوراً عندما يسأل المستخدم عن موعد شاغر، أو توفر ملعب، أو حجز في وقت أو يوم محدد (مثل: بكرة الساعة 8، الجمعة القادمة، العصر، بالليل).",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      stadium_id: {
+        type: "STRING",
+        description: "معرف الملعب (UUID) المطلوب فحص مواعيده",
+      },
+      stadium_name: {
+        type: "STRING",
+        description: "اسم الملعب المطلوب فحص مواعيده إذا لم يتوفر المعرف",
+      },
+      date: {
+        type: "STRING",
+        description: "التاريخ المطلوب (مثل: YYYY-MM-DD أو 'غداً' أو 'اليوم')",
+      },
+      time_preference: {
+        type: "STRING",
+        description: "التوقيت المفضل (مثل: 'صباحاً'، 'مساءً'، 'الساعة 8 مساءً')",
+      },
+    },
+    required: ["date"],
+  },
+};
+
+// 11. Tool: createBookingFromChat
+const createBookingFromChatTool = {
+  name: "createBookingFromChat",
+  description: "بدء إجراءات حجز الملعب مباشرة من داخل المحادثة بناءً على رغبة المستخدم. تفحص ما إذا كان الملعب يتطلب عربون إلكتروني مسبقاً أم يقبل الدفع كاش كاملاً، وتقفل الموعد ذرياً (Atomic Lock) وتوجه المستخدم لإتمام الدفع أو تأكيد الحجز. استدعِ هذه الأداة فوراً عندما يطلب المستخدم صراحة حجز الملعب أو تأكيد الحجز لموعد محدد.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      stadium_id: {
+        type: "STRING",
+        description: "معرف الملعب (UUID)",
+      },
+      stadium_name: {
+        type: "STRING",
+        description: "اسم الملعب",
+      },
+      start_time: {
+        type: "STRING",
+        description: "وقت بداية الحجز بصيغة ISO 8601 (UTC)",
+      },
+      end_time: {
+        type: "STRING",
+        description: "وقت نهاية الحجز بصيغة ISO 8601 (UTC)",
+      },
+      payment_method: {
+        type: "STRING",
+        description: "طريقة الدفع: 'online' أو 'cash' (إذا كان الملعب يقبل الكاش)",
+      },
+    },
+    required: ["stadium_id", "start_time", "end_time"],
+  },
+};
+
 const allCopilotTools = [
   searchStadiumsTool,
   searchTournamentsTool,
@@ -152,7 +246,69 @@ const allCopilotTools = [
   executeAppActionTool,
   updateUserProfileTool,
   getUserBookingsAndRefundsTool,
+  getOwnerStadiumsAndBookingsTool,
+  getOwnerFinancialInsightsTool,
+  checkStadiumAvailabilityTool,
+  createBookingFromChatTool,
 ];
+
+function parseTargetDate(dateStr?: string): { targetDateStr: string; dayStartIso: string; dayEndIso: string } {
+  const now = new Date();
+  const egyptOffsetMs = 2 * 60 * 60 * 1000;
+  const egyptNow = new Date(now.getTime() + egyptOffsetMs);
+  let target = new Date(egyptNow);
+
+  const clean = (dateStr || "").trim().toLowerCase();
+  if (clean.includes("بكره") || clean.includes("غدا") || clean.includes("غداً") || clean.includes("tomorrow")) {
+    target.setDate(target.getDate() + 1);
+  } else if (clean.includes("بعد بكره") || clean.includes("بعد غد")) {
+    target.setDate(target.getDate() + 2);
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    const parts = clean.split("-").map(Number);
+    target = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+  }
+
+  const yyyy = target.getFullYear();
+  const mm = String(target.getMonth() + 1).padStart(2, "0");
+  const dd = String(target.getDate()).padStart(2, "0");
+  const targetDateStr = `${yyyy}-${mm}-${dd}`;
+
+  const dayStartIso = new Date(Date.UTC(yyyy, target.getMonth(), target.getDate() - 1, 22, 0, 0)).toISOString();
+  const dayEndIso = new Date(Date.UTC(yyyy, target.getMonth(), target.getDate(), 22, 0, 0)).toISOString();
+
+  return { targetDateStr, dayStartIso, dayEndIso };
+}
+
+function generateStandardSlots(targetDateStr: string) {
+  const slots: { start_time: string; end_time: string; display_time: string; hour: number }[] = [];
+  const parts = targetDateStr.split("-").map(Number);
+  const [yyyy, month, day] = parts;
+
+  // Operating hours Cairo: 16:00 (4 PM) to 01:00 (1 AM next day)
+  const cairoHours = [16, 17, 18, 19, 20, 21, 22, 23, 0];
+
+  for (const h of cairoHours) {
+    const isNextDay = h === 0;
+    const utcStartHour = (h - 2 + 24) % 24;
+    const slotDay = isNextDay ? day + 1 : day;
+
+    const startIso = new Date(Date.UTC(yyyy, month - 1, slotDay, utcStartHour, 0, 0)).toISOString();
+    const endIso = new Date(Date.UTC(yyyy, month - 1, slotDay, (utcStartHour + 1) % 24, 0, 0)).toISOString();
+
+    const displayHourStart = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+    const endH = (h + 1) % 24;
+    const displayHourEnd = endH === 0 ? 12 : (endH > 12 ? endH - 12 : endH);
+    const period = h >= 12 || h === 0 ? "م" : "ص";
+
+    slots.push({
+      start_time: startIso,
+      end_time: endIso,
+      display_time: `${displayHourStart}:00 ${period} - ${displayHourEnd}:00 ${period}`,
+      hour: h,
+    });
+  }
+  return slots;
+}
 
 serve(async (req: Request) => {
   // 1. CORS Preflight
@@ -229,20 +385,31 @@ serve(async (req: Request) => {
       .eq("id", callerUser.id)
       .maybeSingle();
 
+    // Fetch caller user's last 3 bookings for personalization
+    const { data: recentUserBookings } = await supabase
+      .from("bookings")
+      .select("stadium_name, start_time, status, total_price")
+      .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
     const userGov = requestedGov || userProfile?.governorate || "أسوان";
     const userName = userProfile?.name || "يا كابتن";
     const userPosition = userProfile?.position || "مهاجم";
 
-    // 7. Conversation Session Management
+    // 7. Conversation Session Management & Context Snapshot
+    let contextSnapshot: Record<string, any> = {};
     if (conversationId) {
       const { data: existingConv } = await supabase
         .from("copilot_conversations")
-        .select("id")
+        .select("id, context_snapshot")
         .eq("id", conversationId)
         .eq("user_id", callerUser.id)
         .maybeSingle();
 
-      if (!existingConv) {
+      if (existingConv) {
+        contextSnapshot = existingConv.context_snapshot || {};
+      } else {
         conversationId = "";
       }
     }
@@ -257,14 +424,16 @@ serve(async (req: Request) => {
         .insert({
           user_id: callerUser.id,
           title: generatedTitle,
+          context_snapshot: {},
         })
-        .select("id")
+        .select("id, context_snapshot")
         .single();
 
       if (convErr || !newConv) {
         throw new Error("Failed to initialize conversation session: " + (convErr?.message || ""));
       }
       conversationId = newConv.id;
+      contextSnapshot = newConv.context_snapshot || {};
     }
 
     // 8. Build Multi-Turn History for Gemini
@@ -305,28 +474,52 @@ serve(async (req: Request) => {
 تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
 
 سياق المستخدم الحالي:
-- اسم اللاعب: ${userName}
+- اسم المستخدم: ${userName}
+- دور المستخدم: ${userProfile?.role || 'لاعب'}
 - المحافظة الحالية: ${userGov}
 - المركز المفضل: ${userPosition}
+- آخر 3 حجوزات للمستخدم: ${recentUserBookings && recentUserBookings.length > 0 ? recentUserBookings.map((b: any) => `${b.stadium_name} (${b.start_time})`).join("، ") : "لا توجد حجوزات سابقة بعد"}
 عندما يسأل المستخدم عن ملاعب قريبة، أو ملاعب للحجز، أو ماتشات، أو بطولات دون ذكر محافظة معينة، استخدم محافظته الحالية (${userGov}) كخيار افتراضي للبحث والتحقق!
+
+ذاكرة وسياق المحادثة المحفوظ (Conversation State & Context Snapshot):
+${JSON.stringify(contextSnapshot, null, 2)}
+إذا أشار المستخدم إلى "الملعب ده" أو "احجزلي" أو "بكره" أو موعد سبق استعراضه، ارجع إلى السياق المخزن أعلاه فوراً دون إعادة سؤاله!
+
+قواعد صارمة جداً لرفض الأسئلة الخارجة عن نطاق التطبيق (STRICT OUT-OF-SCOPE REFUSAL POLICY):
+1. أنت وكيل رياضي وتشغيلي حصري لتطبيق VSP فقط (حجز الملاعب، إدارة ملاعب المالكين، البطولات، دوري الحريفة 1v1، والعمليات المالية في التطبيق).
+2. ممنوع منعاً باتاً الإجابة عن أي أسئلة خارجة عن هذا النطاق إطلاقاً، مثل:
+   - الطبخ، الأكلات، الوصفات والمطاعم الخارجية.
+   - السياسة، الأحداث الجارية، والأخبار العامة.
+   - كتابة الأكواد والبرمجة العامة (إلا ما يتعلق بتطبيق VSP).
+   - المواد الدراسية، المسائل العلمية، الرياضيات، الفيزياء، الفلك، الفلسفة.
+   - الفن، الأفلام، المسلسلات، الأغاني، أو أي موضوع عام لا يخص تطبيق VSP.
+3. عند طرح أي سؤال خارج هذا النطاق، يجب أن ترفض فوراً بلباقة وبنص واضح:
+   "عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!"
 
 قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
 1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية وتعتمد عليها حصراً في كل معلومة.
-2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
-3. إذا عادت نتائج أداة searchStadiums فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً ملاعب مسجلة في محافظة [المحافظة] على تطبيق VSP". لا تخترع أي ملاعب أو مواعيد وهمية أبداً!
-4. إذا عادت نتائج أداة searchTournaments فارغة (0 نتائج)، يجب أن تصرح بذلك للمستخدم بأمانة تامة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات". لا تخترع أسماء بطولات أبداً مثل "ملك الـ 1v1" أو "تحدي الحريفة"!
-5. إذا عادت نتائج أداة getOpenMatches فارغة (0 نتائج)، يجب أن تصرح بأنه لا توجد مباريات خماسية مفتوحة تحتاج لاعبين حالياً.
-6. إذا بحث المستخدم في محافظة ولم يجد ملاعب، أخبره بالملعب المتاح في قاعدة البيانات الحالية بكل وضوح وشفافية.
+2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو مواعيد، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز، أو أرقام أرباح غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
+3. لفحص التوافر والمواعيد: استدعِ checkStadiumAvailability فوراً. اذكر الفترات الشاغرة بدقة كما وردت في نتائج الأداة.
+4. للحجز المباشر: استدعِ createBookingFromChat فوراً عند رغبة المستخدم في حجز موعد محدد.
+   - إذا كان الملعب يتطلب عربون إلكتروني مسبقاً، وضح للمستخدم أنه تم تجهيز الحجز وقفل الموعد لمدة 5 دقائق لإتمام دفع العربون، وقدم له زر الدفع.
+   - إذا كان الملعب يدعم الكاش كاملاً، وضح له أنه تم تأكيد الحجز بنجاح.
+5. إذا عادت نتائج أداة searchStadiums فارغة (0 نتائج)، صرح بذلك للمستخدم بأمانة: "عذراً يا كابتن، لا توجد حالياً ملاعب مسجلة في محافظة [المحافظة] على تطبيق VSP".
+6. إذا عادت نتائج أداة searchTournaments فارغة (0 نتائج)، صرح بأمانة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات".
+7. لمالك الملعب: عند سؤاله عن ملاعبه أو حجوزاته أو أرباحه، استدعِ أدوات المالك (getOwnerStadiumsAndBookings و getOwnerFinancialInsights) واذكر البيانات الحقيقية من قاعدة البيانات فقط.
 
 قاعدة إلزامية وصارمة لاستدعاء الأدوات:
-عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون تأليف ودون طرح أي أسئلة استفسارية أولاً:
+عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون تأليف:
 1. بطولات أو كؤوس أو جوائز أو بطولات فردية (1v1): استدعِ searchTournaments فوراً.
 2. ماتشات ناقصة لاعيبة أو تقسيمة: استدعِ getOpenMatches فوراً.
 3. الأول أو الترتيب أو دوري 1v1 أو النقاط: استدعِ get1v1Leaderboard فوراً.
-4. البحث عن ملاعب أو أسعار: استدعِ searchStadiums فوراً.
-5. تغيير المركز أو تعديل بيانات الملف الشخصي: استدعِ updateUserProfile فوراً.
-6. الاستفسار عن حجز، فلوس، استرداد أموال: استدعِ getUserBookingsAndRefunds فوراً.
-7. طلب الذهاب لشاشة معينة: استدعِ executeAppAction فوراً.
+4. البحث عن ملاعب أو أسعار كلاعب: استدعِ searchStadiums فوراً.
+5. فحص التوافر أو المواعيد الشاغرة أو وقت محدد لملعب: استدعِ checkStadiumAvailability فوراً.
+6. حجز ملعب أو تأكيد موعد من داخل الشات: استدعِ createBookingFromChat فوراً.
+7. تغيير المركز أو تعديل بيانات الملف الشخصي: استدعِ updateUserProfile فوراً.
+8. الاستفسار عن حجز، فلوس، استرداد أموال للاعب: استدعِ getUserBookingsAndRefunds فوراً.
+9. مالك ملعب يسأل عن ملاعبه أو حجوزات ملعبه: استدعِ getOwnerStadiumsAndBookings فوراً.
+10. مالك ملعب يسأل عن أرباحه، رصيده المتاح، فلوسه، دخله، الكاش، مديونيته: استدعِ getOwnerFinancialInsights فوراً.
+11. طلب الذهاب لشاشة معينة: استدعِ executeAppAction فوراً.
 
 فلسفة احتساب نقاط دوري 1 ضد 1 الفردي (الحريفة):
 - كل هدف = +1 نقطة.
@@ -377,6 +570,12 @@ serve(async (req: Request) => {
               const { data: stadiums } = await query;
               stadiumResults = stadiums || [];
               toolResponseData = { count: stadiumResults.length, governorate: governorate, stadiums: stadiumResults };
+
+              contextSnapshot.last_searched_governorate = governorate;
+              if (stadiumResults.length > 0) {
+                contextSnapshot.last_stadium_id = stadiumResults[0].id;
+                contextSnapshot.last_stadium_name = stadiumResults[0].name;
+              }
 
             } else if (funcName === "searchTournaments") {
               const tType = (args.tournament_type || "all").toString().toLowerCase();
@@ -484,6 +683,224 @@ serve(async (req: Request) => {
                 refund_related_bookings: refunds,
                 has_refunds: refunds.length > 0,
               };
+
+            } else if (funcName === "getOwnerStadiumsAndBookings") {
+              const { data: ownerStadiums } = await supabase
+                .from("stadiums")
+                .select("id, name, governorate, price_per_hour, is_verified, is_blocked")
+                .eq("owner_id", callerUser.id)
+                .eq("is_deleted_by_owner", false);
+
+              const stadiumIds = (ownerStadiums || []).map((s: any) => s.id);
+              let ownerBookings: any[] = [];
+              if (stadiumIds.length > 0) {
+                let bQuery = supabase
+                  .from("bookings")
+                  .select("id, stadium_name, start_time, end_time, status, total_price, deposit_paid, payment_method, payment_status, player_name, player_phone")
+                  .or(`owner_id.eq.${callerUser.id},stadium_id.in.(${stadiumIds.join(",")})`);
+
+                if (args.status && args.status !== "all") {
+                  bQuery = bQuery.eq("status", args.status);
+                }
+                const { data: bList } = await bQuery
+                  .order("start_time", { ascending: false })
+                  .limit(10);
+                ownerBookings = bList || [];
+              }
+
+              appAction = {
+                action_type: "NAVIGATE",
+                route: "/bookings",
+                label: "فتح جدول حجوزات الملاعب 📅",
+              };
+
+              toolResponseData = {
+                owner_stadiums_count: (ownerStadiums || []).length,
+                owner_stadiums: ownerStadiums || [],
+                bookings_count: ownerBookings.length,
+                recent_bookings: ownerBookings,
+              };
+
+            } else if (funcName === "getOwnerFinancialInsights") {
+              const { data: finSummary, error: finErr } = await supabase.rpc("get_owner_financial_summary", {
+                p_owner_id: callerUser.id,
+              });
+
+              appAction = {
+                action_type: "NAVIGATE",
+                route: "/ledger",
+                label: "فتح السجل المالي والمستحقات 💰",
+              };
+
+              toolResponseData = finSummary || { success: false, error: finErr?.message };
+            } else if (funcName === "checkStadiumAvailability") {
+              let stadiumId = (args.stadium_id || "").toString().trim();
+              const stadiumName = (args.stadium_name || "").toString().trim();
+              const dateInput = (args.date || "غداً").toString().trim();
+              const timePref = (args.time_preference || "").toString().trim();
+
+              let targetStadium: any = null;
+              if (stadiumId) {
+                const { data: s } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("id", stadiumId).maybeSingle();
+                targetStadium = s;
+              }
+              if (!targetStadium && stadiumName) {
+                const { data: sList } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").ilike("name", `%${stadiumName}%`).limit(1);
+                if (sList && sList.length > 0) targetStadium = sList[0];
+              }
+              if (!targetStadium && contextSnapshot.last_stadium_id) {
+                const { data: s } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("id", contextSnapshot.last_stadium_id).maybeSingle();
+                targetStadium = s;
+              }
+              if (!targetStadium) {
+                const { data: sList } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("is_verified", true).eq("is_blocked", false).limit(1);
+                if (sList && sList.length > 0) targetStadium = sList[0];
+              }
+
+              if (!targetStadium) {
+                toolResponseData = { success: false, message: "لم يتم العثور على الملعب المطلوب في قاعدة البيانات." };
+              } else {
+                const { targetDateStr, dayStartIso, dayEndIso } = parseTargetDate(dateInput);
+
+                const { data: existingBookings } = await supabase
+                  .from("bookings")
+                  .select("start_time, end_time, status, locked_until, created_at")
+                  .eq("stadium_id", targetStadium.id)
+                  .neq("status", "cancelled")
+                  .gte("start_time", dayStartIso)
+                  .lte("start_time", dayEndIso);
+
+                const activeBookings = (existingBookings || []).filter((b: any) => {
+                  if (b.status === "pending") {
+                    const lockExpire = b.locked_until ? new Date(b.locked_until).getTime() : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+                    return lockExpire > Date.now();
+                  }
+                  return true;
+                });
+
+                const allSlots = generateStandardSlots(targetDateStr);
+                const availableSlots = allSlots.filter((slot) => {
+                  const sStart = new Date(slot.start_time).getTime();
+                  const sEnd = new Date(slot.end_time).getTime();
+                  for (const b of activeBookings) {
+                    const bStart = new Date(b.start_time).getTime();
+                    const bEnd = new Date(b.end_time).getTime();
+                    if (sStart < bEnd && sEnd > bStart) return false;
+                  }
+                  return true;
+                });
+
+                contextSnapshot.last_stadium_id = targetStadium.id;
+                contextSnapshot.last_stadium_name = targetStadium.name;
+                contextSnapshot.last_date = targetDateStr;
+                contextSnapshot.last_available_slots = availableSlots;
+
+                toolResponseData = {
+                  stadium_id: targetStadium.id,
+                  stadium_name: targetStadium.name,
+                  date: targetDateStr,
+                  price_per_hour: targetStadium.price_per_hour,
+                  needs_deposit: targetStadium.needs_deposit || false,
+                  deposit_amount: targetStadium.deposit_amount || 0,
+                  total_slots_generated: allSlots.length,
+                  available_slots_count: availableSlots.length,
+                  available_slots: availableSlots,
+                  time_preference: timePref,
+                };
+              }
+
+            } else if (funcName === "createBookingFromChat") {
+              let stadiumId = (args.stadium_id || contextSnapshot.last_stadium_id || "").toString().trim();
+              const stadiumName = (args.stadium_name || contextSnapshot.last_stadium_name || "").toString().trim();
+              let startTime = (args.start_time || "").toString().trim();
+              let endTime = (args.end_time || "").toString().trim();
+
+              let targetStadium: any = null;
+              if (stadiumId) {
+                const { data: s } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("id", stadiumId).maybeSingle();
+                targetStadium = s;
+              }
+              if (!targetStadium && stadiumName) {
+                const { data: sList } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").ilike("name", `%${stadiumName}%`).limit(1);
+                if (sList && sList.length > 0) targetStadium = sList[0];
+              }
+
+              if ((!startTime || !endTime) && contextSnapshot.last_available_slots && contextSnapshot.last_available_slots.length > 0) {
+                const slot = contextSnapshot.last_available_slots[0];
+                startTime = slot.start_time;
+                endTime = slot.end_time;
+              }
+
+              if (!targetStadium || !startTime || !endTime) {
+                toolResponseData = {
+                  success: false,
+                  message: "عذراً يا كابتن، بيانات الحجز غير مكتملة. يرجى تحديد الملعب والموعد المطلوب أولاً.",
+                };
+              } else {
+                const needsDeposit = targetStadium.needs_deposit || false;
+                const paymentMethod = needsDeposit ? "paymob" : (args.payment_method || "cash");
+
+                const { data: bookingResult, error: bookingErr } = await supabase.rpc("create_booking_atomic", {
+                  p_stadium_id: targetStadium.id,
+                  p_user_id: callerUser.id,
+                  p_owner_id: targetStadium.owner_id,
+                  p_start_time: startTime,
+                  p_end_time: endTime,
+                  p_booking_type: "individual",
+                  p_total_price: targetStadium.price_per_hour,
+                  p_stadium_name: targetStadium.name,
+                  p_payment_method: paymentMethod,
+                });
+
+                if (bookingErr || (bookingResult && bookingResult.success === false)) {
+                  toolResponseData = {
+                    success: false,
+                    error: bookingErr?.message || bookingResult?.message || "تعذر إتمام الحجز، قد يكون الموعد محجوزاً بالفعل.",
+                  };
+                } else {
+                  const bookingId = bookingResult?.booking_id || bookingResult?.id;
+                  contextSnapshot.last_booking_id = bookingId;
+                  contextSnapshot.last_booked_stadium = targetStadium.name;
+
+                  if (needsDeposit || paymentMethod === "paymob") {
+                    appAction = {
+                      action_type: "OPEN_PAYMENT",
+                      route: "/checkout",
+                      label: `إتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز 💳`,
+                      params: {
+                        booking_id: bookingId,
+                        stadium_id: targetStadium.id,
+                        stadium_name: targetStadium.name,
+                        total_price: targetStadium.price_per_hour,
+                        deposit_amount: targetStadium.deposit_amount || 50,
+                        start_time: startTime,
+                        end_time: endTime,
+                      },
+                    };
+                  } else {
+                    appAction = {
+                      action_type: "NAVIGATE",
+                      route: "/bookings",
+                      label: "عرض تفاصيل الحجز المؤكد 📋",
+                      params: { booking_id: bookingId },
+                    };
+                  }
+
+                  toolResponseData = {
+                    success: true,
+                    booking_id: bookingId,
+                    stadium_name: targetStadium.name,
+                    start_time: startTime,
+                    end_time: endTime,
+                    total_price: targetStadium.price_per_hour,
+                    deposit_required: needsDeposit,
+                    deposit_amount: targetStadium.deposit_amount || 0,
+                    message: needsDeposit
+                      ? "تم قفل الموعد بنجاح لمدة 5 دقائق! اضغط على زر الدفع لإتمام العربون وتأكيد الحجز."
+                      : "تم تأكيد الحجز بنجاح! نراك في الملعب يا كابتن ⚽",
+                  };
+                }
+              }
             }
 
             // Second turn for natural conversational response
@@ -528,6 +945,21 @@ serve(async (req: Request) => {
               assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
             } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
               assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
+            } else if (funcName === "getOwnerStadiumsAndBookings") {
+              const oStadiums = toolResponseData.owner_stadiums || [];
+              const oBookings = toolResponseData.recent_bookings || [];
+              if (oStadiums.length === 0) {
+                assistantReply = "يا كابتن، راجعت قاعدة بيانات VSP ولم أجد أي ملاعب مسجلة باسمك حالياً. تقدر تضيف ملعبك الأول بكل سهولة من زر 'إضافة ملعب' في لوحة التحكم!";
+              } else if (oBookings.length === 0 && (args.query_type === "bookings" || args.query_type === "today")) {
+                assistantReply = `يا كابتن، ملاعبك مسجلة في قاعدة البيانات (${oStadiums.map((s: any) => s.name).join("، ")})، ولكن لا توجد أي حجوزات مسجلة لها حالياً. أول ما يتم أي حجز هيظهرلك فوراً في جدول الحجوزات!`;
+              }
+            } else if (funcName === "getOwnerFinancialInsights") {
+              const avail = toolResponseData?.available_balance ?? 0;
+              const cash = toolResponseData?.cash_revenue ?? 0;
+              const onlineRev = toolResponseData?.total_online_revenue ?? 0;
+              const debt = toolResponseData?.accumulated_cash_debt ?? 0;
+              const count = toolResponseData?.total_completed_bookings ?? 0;
+              assistantReply = `يا كابتن، دي بياناتك المالية الحقيقية المسجلة في قاعدة بيانات VSP:\n• الرصيد الإلكتروني المتاح للسحب: ${avail} ج.م\n• إجمالي الكاش المحصل بالملعب: ${cash} ج.م\n• إجمالي الإيرادات الأونلاين: ${onlineRev} ج.م\n• مديونية عمولة الكاش: ${debt} ج.م\n• عدد الحجوزات المكتملة: ${count}`;
             } else if (!assistantReply) {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
@@ -542,6 +974,25 @@ serve(async (req: Request) => {
                 assistantReply = "تم يا كابتن! عدلتلك بياناتك في البروفايل بنجاح ⚽";
               } else if (funcName === "getUserBookingsAndRefunds") {
                 assistantReply = "يا كابتن، راجعتلك سجل حجوزاتك ومستحقاتك وكل العمليات مسجلة ومضمونة في VSP:";
+              } else if (funcName === "getOwnerStadiumsAndBookings") {
+                assistantReply = "يا كابتن، دي تفاصيل ملاعبك وحجوزاتك المسجلة في قاعدة بيانات VSP:";
+              } else if (funcName === "checkStadiumAvailability") {
+                if (toolResponseData.available_slots_count === 0) {
+                  assistantReply = `عذراً يا كابتن، راجعت جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date} وجميع الفترات محجوزة بالكامل في هذا اليوم. تحب نفحص يوم تاني؟`;
+                } else {
+                  const slotsText = (toolResponseData.available_slots || []).slice(0, 5).map((s: any) => `• ${s.display_time}`).join("\n");
+                  assistantReply = `يا كابتن! بحثتلك في جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date}، ودي الفترات المتاحة للحجز:\n${slotsText}\nسعر الساعة: ${toolResponseData.price_per_hour} ج.م. تحب أحجزلك أي ميعاد منهم؟`;
+                }
+              } else if (funcName === "createBookingFromChat") {
+                if (toolResponseData.success) {
+                  if (toolResponseData.deposit_required) {
+                    assistantReply = `تم قفل موعدك بنجاح في ${toolResponseData.stadium_name} يا كابتن ⚽! تم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (${toolResponseData.deposit_amount} ج.م) وتأكيد الحجز فوراً.`;
+                  } else {
+                    assistantReply = `ألف مبروك يا كابتن! تم تأكيد حجزك في ${toolResponseData.stadium_name} بنجاح والدفع كاش في الملعب. حجزك مسجل في قائمة حجوزاتك 📋`;
+                  }
+                } else {
+                  assistantReply = `عذراً يا كابتن، لم نتمكن من إتمام الحجز: ${toolResponseData.error || toolResponseData.message}`;
+                }
               } else {
                 assistantReply = "تمام يا كابتن، طلبك جاهز!";
               }
@@ -549,15 +1000,27 @@ serve(async (req: Request) => {
             handledByGemini = true;
 
           } else {
-            // 🛡️ Anti-hallucination: If user asked about tournaments, stadiums, or leaderboard, but Gemini skipped tool call, fall back to live DB queries!
-            const needsTool = userMessage.includes("بطول") ||
-                              userMessage.includes("كأس") ||
-                              userMessage.includes("دوري") ||
-                              userMessage.includes("1v1") ||
-                              userMessage.includes("ملعب") ||
-                              userMessage.includes("ملاعب");
-            if (needsTool) {
-              handledByGemini = false;
+            // 🛡️ Strict Out-of-Scope Detection
+            const lowerMsg = userMessage.toLowerCase();
+            const isOutOfScope =
+              lowerMsg.includes("طبخ") || lowerMsg.includes("طبيخ") || lowerMsg.includes("أكل") || lowerMsg.includes("أكلة") ||
+              lowerMsg.includes("طريقة عمل") || lowerMsg.includes("وصفة") || lowerMsg.includes("مقادير") || lowerMsg.includes("كشري") ||
+              lowerMsg.includes("شاورما") || lowerMsg.includes("بيتزا") || lowerMsg.includes("برجر") || lowerMsg.includes("ملوخية") ||
+              lowerMsg.includes("كيكة") || lowerMsg.includes("سياسة") || lowerMsg.includes("سياسي") || lowerMsg.includes("رئيس") ||
+              lowerMsg.includes("انتخابات") || lowerMsg.includes("حكومة") || lowerMsg.includes("وزير") || lowerMsg.includes("برلمان") ||
+              lowerMsg.includes("حرب") || lowerMsg.includes("بايثون") || lowerMsg.includes("python") || lowerMsg.includes("كود") ||
+              lowerMsg.includes("برمجة") || lowerMsg.includes("مبرمج") || lowerMsg.includes("جافاسكريبت") || lowerMsg.includes("javascript") ||
+              lowerMsg.includes("فيزياء") || lowerMsg.includes("كيمياء") || lowerMsg.includes("فلسفة") || lowerMsg.includes("رياضيات") ||
+              lowerMsg.includes("معادلة") || lowerMsg.includes("تفاضل") || lowerMsg.includes("تكامل") || lowerMsg.includes("أينشتاين") ||
+              lowerMsg.includes("نيوتن") || lowerMsg.includes("فيلم") || lowerMsg.includes("مسلسل") || lowerMsg.includes("أغنية") ||
+              lowerMsg.includes("اغنية") || lowerMsg.includes("طقس") || lowerMsg.includes("درجة الحرارة") || lowerMsg.includes("نكتة") ||
+              lowerMsg.includes("فزورة") || lowerMsg.includes("مرسيدس") || lowerMsg.includes("سيارات") || lowerMsg.includes("عقارات") ||
+              lowerMsg.includes("بورصة") || lowerMsg.includes("بيتكوين") || lowerMsg.includes("crypto") || lowerMsg.includes("علاج") ||
+              lowerMsg.includes("دواء") || lowerMsg.includes("تاريخ فرنسا") || lowerMsg.includes("عاصمة");
+
+            if (isOutOfScope) {
+              assistantReply = 'عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!';
+              handledByGemini = true;
             } else {
               assistantReply = candidate1?.parts?.[0]?.text || "";
               if (assistantReply.trim().length > 0) {
@@ -567,83 +1030,16 @@ serve(async (req: Request) => {
           }
         }
       } catch (geminiErr) {
-        console.warn("Gemini API error, falling back to smart engine:", geminiErr);
+        console.warn("Gemini API error, falling back to safe message:", geminiErr);
       }
     }
 
-    // 🛡️ Intelligent Fallback Engine
+    // 🛡️ Safe Server Fallback (Phase 5: Clean Architecture - No brittle keyword guessing on Edge Function)
     if (!handledByGemini) {
-      if (userMessage.includes("بطول") || userMessage.includes("كأس") || (userMessage.includes("دوري") && !userMessage.includes("1v1"))) {
-        const { data: champs } = await supabase.from("championships").select("name, grand_prize, entry_fee").eq("status", "open").limit(3);
-        const { data: t1v1 } = await supabase.from("vsp_1v1_tournaments").select("name, prize_pool").eq("status", "registration_open").limit(2);
-        tournamentResults = [...(champs || []), ...(t1v1 || [])];
-        appAction = { action_type: "NAVIGATE", route: "/tournaments", label: "فتح صفحة البطولات 🏆" };
-        if (tournamentResults.length === 0) {
-          assistantReply = "يا كابتن، حالياً لا توجد بطولات مفتوحة للتسجيل في قاعدة بيانات VSP. تقدر تتابع صفحة البطولات أولاً بأول، أو تطلب مني البحث عن ملاعب أو ماتشات مفتوحة تنضم ليها!";
-        } else {
-          assistantReply = "يا كابتن! دي أحدث البطولات النشطة على VSP:\n" +
-            (champs || []).map((c: any) => `🏆 ${c.name} - جائزة: ${c.grand_prize} ج.م`).join("\n") + "\n" +
-            (t1v1 || []).map((t: any) => `⚡ ${t.name} - جائزة: ${t.prize_pool} ج.م`).join("\n");
-        }
-      } else if (userMessage.includes("الأول") || userMessage.includes("ترتيب") || userMessage.includes("1v1") || userMessage.includes("متصدر")) {
-        const { data: players } = await supabase.from("vsp_1vs1_players").select("name, total_points, goals, tackles, skill_points").order("total_points", { ascending: false }).limit(4);
-        leaderboardResults = players || [];
-        appAction = { action_type: "NAVIGATE", route: "/1v1", label: "عرض دوري الـ 1v1 بالكامل ⚡" };
-        assistantReply = "يا كابتن، جدول متصدري دوري الـ 1v1 (النقاط = أهداف + مهارات + قطع كرات):\n" +
-          (players || []).map((p: any, i: number) => `${i + 1}. ${p.name}: ${p.total_points} نقطة (${p.goals} هدف، ${p.skill_points} مهارة، ${p.tackles} قطع)`).join("\n");
-      } else if (userMessage.includes("ناقص") || userMessage.includes("ماتش") || userMessage.includes("تقسيمة") || userMessage.includes("انضم")) {
-        const { data: matches } = await supabase.from("bookings").select("id, stadium_name, current_players, max_players, notes, total_price, start_time").eq("booking_type", "open_join").limit(3);
-        openMatchResults = matches || [];
-        appAction = { action_type: "NAVIGATE", route: "/bookings", label: "استعراض كل الماتشات المفتوحة ⚽" };
-        if (openMatchResults.length === 0) {
-          assistantReply = "يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة ناقصها لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
-        } else {
-          assistantReply = "الماتشات المفتوحة اللي محتاجة لعيبة الآن يا كابتن:";
-        }
-      } else if (userMessage.includes("فريق") || userMessage.includes("فرقتي")) {
-        appAction = { action_type: "NAVIGATE", route: "/my-team", label: "الانتقال لصفحة فريقي 🛡️" };
-        assistantReply = "حاضر يا كابتن! هوديك لصفحة إدارة فريقك وقائمتك دلوقتي.";
-      } else if (userMessage.includes("مركزي") || userMessage.includes("بروفايل") || userMessage.includes("عدل") || userMessage.includes("غير")) {
-        let pos = "";
-        if (userMessage.includes("مهاجم")) pos = "مهاجم";
-        else if (userMessage.includes("مدافع")) pos = "مدافع";
-        else if (userMessage.includes("حارس")) pos = "حارس مرمى";
-        else if (userMessage.includes("وسط")) pos = "خط وسط";
-
-        if (pos) {
-          await supabase.from("users").update({ position: pos, updated_at: new Date().toISOString() }).eq("id", callerUser.id);
-          appAction = { action_type: "PROFILE_UPDATED", route: "/profile", label: `تم تغيير مركزك إلى ${pos} بنجاح ✅` };
-          assistantReply = `تمام يا كابتن! تم تغيير مركزك المفضل في بروفايلك إلى (${pos}) بنجاح في قاعدة البيانات.`;
-        } else {
-          appAction = { action_type: "NAVIGATE", route: "/profile", label: "فتح الملف الشخصي 👤" };
-          assistantReply = "تقدر تعدل بياناتك وبروفايلك بالكامل من هنا يا كابتن:";
-        }
-      } else if (userMessage.includes("فلوس") || userMessage.includes("استرداد") || userMessage.includes("حجزي") || userMessage.includes("ملغي") || userMessage.includes("ريفاوند")) {
-        const { data: bookings } = await supabase.from("bookings").select("stadium_name, status, total_price, refund_amount, refunded_at").or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`).limit(3);
-        appAction = { action_type: "NAVIGATE", route: "/bookings", label: "مراجعة سجل حجوزاتك ومستحقاتك 📋" };
-        assistantReply = "متقلقش خالص يا كابتن، كل عملياتك المالية وحجوزاتك مسجلة ومضمونة في VSP! تقدر تراجع تفاصيل الحجز والمستردات فوراً من شاشة حجوزاتي.";
-      } else {
-        let qStadiums = supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false);
-        if (userGov) {
-          qStadiums = qStadiums.ilike("governorate", `%${userGov}%`);
-        }
-        const { data: localStadiums } = await qStadiums.limit(5);
-        if (localStadiums && localStadiums.length > 0) {
-          stadiumResults = localStadiums;
-          assistantReply = `أهلاً بك يا ${userName}! دي أبرز الملاعب المتاحة على VSP في ${userGov} للحجز الفوري وتقييمها عالي:`;
-        } else {
-          const { data: allStadiums } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, image_url, rating").eq("is_verified", true).eq("is_blocked", false).limit(5);
-          stadiumResults = allStadiums || [];
-          if (stadiumResults.length > 0) {
-            assistantReply = `أهلاً بك يا ${userName}! بحثتلك في قاعدة البيانات، ولقيت الملعب النشط حالياً على VSP:`;
-          } else {
-            assistantReply = `أهلاً بك يا ${userName}! بحثت في قاعدة بيانات VSP ولا توجد ملاعب مسجلة حالياً.`;
-          }
-        }
-      }
+      assistantReply = "عذراً يا كابتن! حدث ضغط لحظي في خدمة الذكاء الاصطناعي، يرجى إعادة إرسال رسالتك أو تصفح الملاعب والبطولات مباشرة من القوائم.";
     }
 
-    // 10. Persist Messages & Update Conversation
+    // 10. Persist Messages & Update Conversation with Context Snapshot
     await supabase.from("copilot_messages").insert([
       {
         conversation_id: conversationId,
@@ -663,7 +1059,10 @@ serve(async (req: Request) => {
 
     await supabase
       .from("copilot_conversations")
-      .update({ updated_at: new Date().toISOString() })
+      .update({
+        updated_at: new Date().toISOString(),
+        context_snapshot: contextSnapshot,
+      })
       .eq("id", conversationId);
 
     // 11. Return enriched payload

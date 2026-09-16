@@ -211,6 +211,16 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       return;
     }
 
+    if (actionType == 'OPEN_PAYMENT') {
+      context.pop();
+      try {
+        context.push('/checkout', extra: action.params);
+      } catch (e) {
+        debugPrint('[VspCopilotScreen] Checkout navigate error: $e');
+      }
+      return;
+    }
+
     if (route.contains('team') || route.contains('my-team')) {
       context.pop();
       playerHomeScreenKey.currentState?.switchToTab(1);

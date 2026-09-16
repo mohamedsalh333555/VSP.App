@@ -83,6 +83,10 @@ class CopilotAction {
     this.params,
   });
 
+  bool get isOpenPayment => actionType == 'OPEN_PAYMENT';
+  bool get isNavigate => actionType == 'NAVIGATE';
+  bool get isProfileUpdated => actionType == 'PROFILE_UPDATED';
+
   factory CopilotAction.fromMap(Map<String, dynamic> map) {
     return CopilotAction(
       actionType: map['action_type']?.toString() ?? 'NAVIGATE',
