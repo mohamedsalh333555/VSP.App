@@ -38,37 +38,45 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
     return StreamBuilder<int>(
       stream: _unreadStream,
       builder: (context, snapshot) {
-        final unread = snapshot.data ?? 0;
+        final hasUnread = (snapshot.data ?? 0) > 0;
         return Stack(
-          clipBehavior: Clip.none,
+          alignment: Alignment.center,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: IconButton(
-                icon: const Icon(Iconsax.notification_copy, color: VSPColors.textPrimary, size: 20),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
-                  );
-                },
-              ),
+            IconButton(
+              icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                );
+              },
             ),
-            if (unread > 0)
+            if (hasUnread)
               Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: VSPColors.accent,
-                    shape: BoxShape.circle,
+                top: 8,
+                right: 8,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.elasticOut,
+                  builder: (ctx, val, _) => Transform.scale(
+                    scale: val,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: VSPColors.error,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: VSPColors.error.withValues(alpha: 0.6),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),

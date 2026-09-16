@@ -134,6 +134,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   ? (isArabic ? 'باقتك الحالية المفعلة' : 'Current Active Plan')
                   : (isArabic ? 'ترقية للباقة الاحترافية' : 'Upgrade to Pro Plan'),
               features: [
+                isArabic ? 'مساعد الذكاء الاصطناعي VSP Copilot لتحليل الأداء وتوقع الحجوزات' : 'VSP AI Copilot for smart pitch management & insights',
                 isArabic ? 'تشغيل وإدارة حتى 3 ملاعب كاملة' : 'Operate up to 3 stadiums at full capacity',
                 isArabic ? 'أولوية الظهور في نتائج البحث للاعبين بالمحافظة' : 'Priority search boost in governorate results',
                 isArabic ? 'إرسال وصل الحجز الرسمي للعملاء عبر واتساب تلقائياً' : 'Automated WhatsApp digital booking receipts',
