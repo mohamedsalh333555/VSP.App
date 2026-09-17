@@ -29,6 +29,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
 import 'core/services/secure_storage_service.dart';
+import 'core/services/remote_config_service.dart';
 import 'shared/widgets/vsp_network_banner.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -73,6 +74,10 @@ void main() async {
       }
     })(),
   ]);
+  
+  // Initialize Remote Config & App Feature Engine
+  final configService = RemoteConfigService();
+  await configService.initialize();
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -174,15 +179,16 @@ class VSPApplication extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
- return MultiProvider(
- providers: [
- ChangeNotifierProvider(create: (_) => LanguageProvider()),
- ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
- ChangeNotifierProvider(create: (_) => StadiumProvider()),
- ChangeNotifierProvider(create: (_) => BookingProvider()),
- ],
- child: const _MaterialAppWithRouter(),
- );
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => LanguageProvider()),
+      ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
+      ChangeNotifierProvider(create: (_) => StadiumProvider()),
+      ChangeNotifierProvider(create: (_) => BookingProvider()),
+      ChangeNotifierProvider.value(value: RemoteConfigService()),
+    ],
+    child: const _MaterialAppWithRouter(),
+  );
  }
 }
 

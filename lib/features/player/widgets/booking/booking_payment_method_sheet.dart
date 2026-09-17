@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -21,6 +23,9 @@ void showBookingPaymentMethodSheet({
   required NavigatorState nav,
 }) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+  final config = Provider.of<RemoteConfigService>(context, listen: false);
+  final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled');
 
   showModalBottomSheet(
     context: context,
@@ -57,10 +62,35 @@ void showBookingPaymentMethodSheet({
                   ),
                   const SizedBox(height: 16),
 
+                  if (!isOnlineEnabled)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'الدفع الإلكتروني قيد الصيانة المجدولة حالياً.'
+                                  : 'Online payment is currently under maintenance.',
+                              style: const TextStyle(color: VSPColors.warning, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // -------------------------------------------------------------
                   // حالة 1: الملعب يشترط عربوناً -> (دفع كامل أونلاين vs دفع العربون)
                   // -------------------------------------------------------------
-                  if (requiresDeposit) ...[
+                  if (requiresDeposit && isOnlineEnabled) ...[
                     // خيار 1: دفع كامل المبلغ أونلاين
                     ListTile(
                       leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
@@ -126,35 +156,37 @@ void showBookingPaymentMethodSheet({
                   ]
 
                   // -------------------------------------------------------------
-                  // حالة 2: الملعب لا يشترط عربوناً -> (دفع كامل أونلاين vs دفع كاش)
+                  // حالة 2: الدفع نقدياً (أو إذا كان الدفع الإلكتروني معطلاً)
                   // -------------------------------------------------------------
                   else ...[
-                    // خيار 1: دفع إلكتروني
-                    ListTile(
-                      leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
-                      title: Text(
-                        isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    if (isOnlineEnabled) ...[
+                      // خيار 1: دفع إلكتروني
+                      ListTile(
+                        leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                        title: Text(
+                          isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                        ),
+                        onTap: isNavigating
+                            ? null
+                            : () {
+                                setSheetState(() => isNavigating = true);
+                                HapticFeedback.lightImpact();
+                                Navigator.pop(ctx);
+                                nav.push(MaterialPageRoute(
+                                  builder: (_) => PaymentGatewayScreen(
+                                    bookingDraft: draft,
+                                    forceFullPayment: true,
+                                  ),
+                                ));
+                              },
                       ),
-                      subtitle: Text(
-                        isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                      ),
-                      onTap: isNavigating
-                          ? null
-                          : () {
-                              setSheetState(() => isNavigating = true);
-                              HapticFeedback.lightImpact();
-                              Navigator.pop(ctx);
-                              nav.push(MaterialPageRoute(
-                                builder: (_) => PaymentGatewayScreen(
-                                  bookingDraft: draft,
-                                  forceFullPayment: true,
-                                ),
-                              ));
-                            },
-                    ),
-                    const Divider(color: VSPColors.divider),
+                      const Divider(color: VSPColors.divider),
+                    ],
                     // خيار 2: دفع نقدي
                     ListTile(
                       leading: isNavigating

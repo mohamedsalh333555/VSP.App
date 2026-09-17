@@ -4,6 +4,8 @@ import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/league_repository.dart';
 import '../../../../core/services/paymob_service.dart';
+import '../../../../core/services/remote_config_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -133,13 +135,15 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     required String userGov,
     required bool isArabic,
   }) {
+    final config = Provider.of<RemoteConfigService>(context);
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = auth.currentUser?.uid;
     final tournamentId = tournament['id']?.toString() ?? '';
     final tourneyName = tournament['name'] as String? ?? 'بطولة VSP فردي 1vs1';
     final targetCount = (tournament['target_player_count'] as num?)?.toInt() ?? 16;
     final scheduledAt = tournament['scheduled_at'] as String?;
-    final status = tournament['status'] as String? ?? 'registration_open';
+    final is1v1Open = config.is1v1RegistrationOpen && config.isFeatureEnabled('1v1_enabled');
+    final status = is1v1Open ? (tournament['status'] as String? ?? 'registration_open') : 'registration_closed';
     final entryFee = (tournament['entry_fee'] as num?)?.toDouble() ?? 0.0;
     final prizePool = (tournament['prize_pool'] as num?)?.toDouble() ?? 0.0;
 
@@ -224,6 +228,23 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final config = Provider.of<RemoteConfigService>(context, listen: false);
+
+    if (!config.is1v1RegistrationOpen || !config.isFeatureEnabled('1v1_enabled')) {
+      if (config.vsp1v1Link.isNotEmpty) {
+        final uri = Uri.tryParse(config.vsp1v1Link);
+        if (uri != null && await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+      if (!mounted) return;
+      VSPFeedback.showWarning(
+        context,
+        isArabic ? 'باب التسجيل في دوري 1VS1 مغلق حالياً.' : '1VS1 League registration is currently closed.',
+      );
+      return;
+    }
 
     if (user == null) {
       VSPFeedback.showError(context, isArabic ? 'يجب تسجيل الدخول أولاً للمشاركة.' : 'Please log in to join.');

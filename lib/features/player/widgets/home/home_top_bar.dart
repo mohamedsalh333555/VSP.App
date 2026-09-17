@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
+import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -94,17 +95,19 @@ class HomeTopBar extends StatelessWidget {
                   ),
                 ),
                 HomeNotificationBadge(userId: auth.currentUser?.uid ?? ''),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
-                  tooltip: 'VSP Copilot',
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    context.push('/copilot');
-                  },
-                ),
+                if (Provider.of<RemoteConfigService>(context).copilotEnabled) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+                    tooltip: 'VSP Copilot',
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      context.push('/copilot');
+                    },
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),

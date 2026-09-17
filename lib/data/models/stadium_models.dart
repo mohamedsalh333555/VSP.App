@@ -1,3 +1,5 @@
+import '../../core/services/remote_config_service.dart';
+
 /// Stadium data model
 class Stadium {
  final String id;
@@ -219,11 +221,13 @@ class Stadium {
  }
  }
 
- final rawPPH = data['pricePerHour'] ?? data['price_per_hour'] ?? 0;
- final double parsedPricePerHour = (rawPPH is num) ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? 0.0);
+  final defaultStadiumPrice = RemoteConfigService().stadiumPriceDefault;
+  final rawPPH = data['pricePerHour'] ?? data['price_per_hour'] ?? defaultStadiumPrice;
+  final double parsedPricePerHour = (rawPPH is num) ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? defaultStadiumPrice);
 
- final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? 0;
- final double parsedBasePrice = (rawBasePrice is num) ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? parsedPricePerHour);
+  final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? defaultStadiumPrice;
+  double parsedBasePrice = (rawBasePrice is num) ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? parsedPricePerHour);
+  if (parsedBasePrice <= 0) parsedBasePrice = defaultStadiumPrice;
 
  final rawRating = data['rating'] ?? 0.0;
  final double parsedRating = (rawRating is num) ? rawRating.toDouble() : (double.tryParse(rawRating.toString()) ?? 0.0);

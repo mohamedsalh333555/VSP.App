@@ -133,6 +133,11 @@ class _RootScreenState extends State<RootScreen> {
  @override
  Widget build(BuildContext context) {
  final auth = context.watch<AuthProvider>();
+ final remoteConfig = context.watch<RemoteConfigService>();
+
+ if (remoteConfig.isMaintenanceMode) {
+ return const MaintenanceScreen();
+ }
 
  // Reactive Deep Link recovery safety net
  if (auth.isAuthenticated && auth.userModel != null && !_deepLinkChecked) {
