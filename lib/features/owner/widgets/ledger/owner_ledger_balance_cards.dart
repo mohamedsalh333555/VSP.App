@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Card displaying withdrawable digital balance and payout action.
@@ -69,7 +70,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.lock_clock_outlined, size: 14, color: VSPColors.accent),
+                      const Icon(Iconsax.clock_copy, size: 14, color: VSPColors.accent),
                       const SizedBox(width: 6),
                       Text(
                         isAr ? 'أرباح مباريات قادمة (قيد الضمان):' : 'Upcoming matches (Escrow):',

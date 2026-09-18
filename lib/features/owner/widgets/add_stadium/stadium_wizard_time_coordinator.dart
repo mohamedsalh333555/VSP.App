@@ -49,10 +49,21 @@ class StadiumWizardTimeCoordinator {
       initialTime: initial ?? const TimeOfDay(hour: 17, minute: 0),
     );
     if (picked != null) {
-      final hour = picked.hour;
-      final minute = (picked.minute < 30) ? 0 : 0;
+      int hour = picked.hour;
+      int minute;
+      if (picked.minute < 15) {
+        minute = 0;
+      } else if (picked.minute < 45) {
+        minute = 30;
+      } else {
+        minute = 0;
+        hour = (hour + 1) % 24;
+      }
       final roundedTime = TimeOfDay(hour: hour, minute: minute);
       if (stadiumId == null) {
+        if (index >= 0 && index < breakTimes.length) {
+          breakTimes[index][isStart ? 'start' : 'end'] = roundedTime;
+        }
         StadiumWizardDraftService.saveWorkingHours(
           uid,
           startTime: startTime,

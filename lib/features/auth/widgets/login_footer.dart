@@ -190,8 +190,10 @@ class _RoleCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Iconsax.arrow_right_3_copy,
+            Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Iconsax.arrow_left_2_copy
+                  : Iconsax.arrow_right_3_copy,
               color: VSPColors.textMuted,
               size: 16,
             ),

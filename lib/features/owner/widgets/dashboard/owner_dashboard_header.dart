@@ -9,6 +9,7 @@ import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../shared/widgets/gemini_ai_icon.dart';
 import '../owner_notification_button.dart';
 
 /// Sleek header for Owner Dashboard with glow avatar, profile edit badge,
@@ -189,35 +190,10 @@ class OwnerDashboardHeader extends StatelessWidget {
                         ),
                         if (user?.isIdentityVerified == true || user?.verificationStatus == 'approved') ...[
                           const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: VSPColors.success.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(VSPRadius.full),
-                              border: Border.all(
-                                color: VSPColors.success.withValues(alpha: 0.25),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Iconsax.verify_copy,
-                                  color: VSPColors.success,
-                                  size: 11,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  isArabic ? 'معتمد' : 'Verified',
-                                  style: const TextStyle(
-                                    color: VSPColors.success,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          const Icon(
+                            Iconsax.verify_copy,
+                            color: VSPColors.accent,
+                            size: 16,
                           ),
                         ],
                       ],
@@ -275,7 +251,7 @@ class OwnerDashboardHeader extends StatelessWidget {
 
           // VSP Copilot (AI) Button - Exclusive to Pro Plan (1000 EGP)
           IconButton(
-            icon: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
+            icon: const GeminiAIIcon(size: 22),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
             tooltip: 'VSP Copilot',
@@ -332,24 +308,27 @@ class OwnerDashboardHeader extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Glowing AI Flash Icon
+              // Glowing AI Icon
               Container(
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: VSPColors.accentSoft,
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1.5),
+                  color: VSPColors.surfaceAlt,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: VSPColors.accent.withValues(alpha: 0.2),
+                      color: Colors.black.withValues(alpha: 0.35),
                       blurRadius: 16,
-                      spreadRadius: 1,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: const Center(
-                  child: Icon(Iconsax.flash_1_copy, color: VSPColors.accent, size: 32),
+                  child: GeminiAIIcon(size: 32),
                 ),
               ),
               const SizedBox(height: 16),

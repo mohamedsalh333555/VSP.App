@@ -37,7 +37,9 @@ void showBookingCalendarModal({
                     children: [
                       IconButton(
                         icon: Icon(
-                          Iconsax.arrow_left_2_copy,
+                          Directionality.of(context) == TextDirection.rtl
+                              ? Iconsax.arrow_right_3_copy
+                              : Iconsax.arrow_left_2_copy,
                           color: currentMonth.isAfter(todayMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -56,7 +58,9 @@ void showBookingCalendarModal({
                       ),
                       IconButton(
                         icon: Icon(
-                          Iconsax.arrow_right_1_copy,
+                          Directionality.of(context) == TextDirection.rtl
+                              ? Iconsax.arrow_left_2_copy
+                              : Iconsax.arrow_right_1_copy,
                           color: currentMonth.isBefore(maxMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),

@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 
 /// Chat bubble rendering user and assistant messages, actions, and pitch recommendation cards.
 class CopilotChatBubble extends StatelessWidget {
@@ -38,12 +39,12 @@ class CopilotChatBubble extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
             decoration: BoxDecoration(
               color: isUser ? VSPColors.accent : VSPColors.surface,
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isUser ? 16 : 4),
-                bottomRight: Radius.circular(isUser ? 4 : 16),
-              ),
+              borderRadius: BorderRadiusDirectional.only(
+                topStart: const Radius.circular(16),
+                topEnd: const Radius.circular(16),
+                bottomStart: Radius.circular(isUser ? 16 : 4),
+                bottomEnd: Radius.circular(isUser ? 4 : 16),
+              ).resolve(Directionality.of(context)),
               border: Border.all(
                 color: isUser ? Colors.transparent : VSPColors.borderLight,
               ),
@@ -201,13 +202,12 @@ class CopilotChatBubble extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isProfileUpdated
-                    ? Iconsax.tick_circle_copy
-                    : (isOpenPayment ? Iconsax.card_pos_copy : Iconsax.flash_1_copy),
-                color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
-                size: 16,
-              ),
+              if (isProfileUpdated)
+                const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 16)
+              else if (isOpenPayment)
+                const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 16)
+              else
+                const GeminiAIIcon(size: 15),
               const SizedBox(width: 8),
               Text(
                 action.label,
@@ -219,7 +219,7 @@ class CopilotChatBubble extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Icon(
-                Iconsax.arrow_right_3_copy,
+                isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                 color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
                 size: 12,
               ),

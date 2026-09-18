@@ -53,9 +53,9 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
               },
             ),
             if (hasUnread)
-              Positioned(
+              PositionedDirectional(
                 top: 8,
-                right: 8,
+                end: 8,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 400),

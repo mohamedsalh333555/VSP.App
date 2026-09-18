@@ -169,7 +169,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(
           color: isExpired ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.06),
           width: 1,
@@ -226,7 +226,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
   }
 
-  /// كارد الباقة الموحد الهادئ والمبسط
+  /// كارد الباقة الموحد المتوافق 100% مع نظام تصميم VSP (Design System VSP Tokens)
   Widget _buildPlanCard({
     required String title,
     required String priceText,
@@ -240,153 +240,224 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     bool isHighlighted = false,
     bool isCurrentPlan = false,
   }) {
+    const tajawal = 'Tajawal';
+    const poppins = 'Poppins';
+    const fontFallback = ['Tajawal', 'Poppins', 'sans-serif'];
+
     return Container(
-      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        color: isHighlighted ? const Color(0xFF141912) : VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card), // 24.0px كروت VSP الرسمية
         border: Border.all(
-          color: isHighlighted ? VSPColors.accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06),
-          width: isHighlighted ? 1.4 : 1.0,
+          color: isHighlighted
+              ? VSPColors.accent.withValues(alpha: 0.65)
+              : Colors.white.withValues(alpha: 0.08),
+          width: isHighlighted ? 1.6 : 1.0,
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header: Title & Clean Top Badge ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: badgeColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(VSPRadius.xs),
-                  border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 0.6),
-                ),
-                child: Text(
-                  badgeText,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Price Row ──
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                priceText,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '/ $periodText',
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-          const Divider(color: VSPColors.divider, height: 1),
-          const SizedBox(height: 14),
-
-          // ── Features List (Clean Bullets) ──
-          ...features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 9),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 14),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        f,
-                        style: const TextStyle(
-                          color: VSPColors.textPrimary,
-                          fontSize: 12.5,
-                          height: 1.35,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-
-          const SizedBox(height: 16),
-
-          // ── Clean CTA Button ──
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: isCurrentPlan
-                ? Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 15),
-                        const SizedBox(width: 6),
-                        Text(
-                          buttonText,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
-                        ),
-                      ],
-                    ),
-                  )
-                : ElevatedButton(
-                    onPressed: onSelect,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isHighlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
-                      foregroundColor: isHighlighted ? Colors.black : Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(VSPRadius.sm),
-                        side: isHighlighted
-                            ? BorderSide.none
-                            : BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1),
-                      ),
-                    ),
-                    child: Text(
-                      buttonText,
-                      style: TextStyle(
-                        color: isHighlighted ? Colors.black : Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-          ),
+        boxShadow: [
+          if (isHighlighted)
+            BoxShadow(
+              color: VSPColors.accent.withValues(alpha: 0.14),
+              blurRadius: 24,
+              spreadRadius: 1,
+              offset: const Offset(0, 8),
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
         ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header: Title & High-End Badge ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                    fontFamily: tajawal,
+                    fontFamilyFallback: fontFallback,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isHighlighted ? VSPColors.accent : badgeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(VSPRadius.full), // كبسولة كاملة
+                    border: Border.all(
+                      color: isHighlighted
+                          ? VSPColors.accent
+                          : badgeColor.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      if (isHighlighted)
+                        BoxShadow(
+                          color: VSPColors.accent.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                    ],
+                  ),
+                  child: Text(
+                    badgeText,
+                    style: TextStyle(
+                      color: isHighlighted ? Colors.black : badgeColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: tajawal,
+                      fontFamilyFallback: fontFallback,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // ── Price Row with Refined Typography ──
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  priceText,
+                  style: TextStyle(
+                    color: isHighlighted ? Colors.white : VSPColors.textPrimary,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    fontFamily: poppins,
+                    fontFamilyFallback: fontFallback,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '/ $periodText',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: tajawal,
+                    fontFamilyFallback: fontFallback,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            Divider(
+              color: isHighlighted
+                  ? VSPColors.accent.withValues(alpha: 0.15)
+                  : VSPColors.divider,
+              height: 1,
+            ),
+            const SizedBox(height: 16),
+
+            // ── Features List (Glowing Icon Capsules) ──
+            ...features.map((f) => Padding(
+                  padding: const EdgeInsets.only(bottom: 11),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.14),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Iconsax.tick_circle_copy,
+                          color: VSPColors.accent,
+                          size: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          f,
+                          style: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 13,
+                            height: 1.4,
+                            fontFamily: tajawal,
+                            fontFamilyFallback: fontFallback,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+
+            const SizedBox(height: 18),
+
+            // ── CTA Button: Unified Stadium Radius (VSPRadius.button = Full) ──
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: isCurrentPlan
+                  ? Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(VSPRadius.button), // Stadium
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            buttonText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              fontFamily: tajawal,
+                              fontFamilyFallback: fontFallback,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: onSelect,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isHighlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+                        foregroundColor: isHighlighted ? Colors.black : Colors.white,
+                        elevation: isHighlighted ? 6 : 0,
+                        shadowColor: isHighlighted
+                            ? VSPColors.accent.withValues(alpha: 0.45)
+                            : Colors.transparent,
+                        shape: const StadiumBorder(), // زر بيضاوي موحد مع باقي أزرار التطبيق
+                      ),
+                      child: Text(
+                        buttonText,
+                        style: TextStyle(
+                          color: isHighlighted ? Colors.black : Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          fontFamily: tajawal,
+                          fontFamilyFallback: fontFallback,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

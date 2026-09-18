@@ -14,6 +14,7 @@ import '../../player/screens/booking_confirmation_screen.dart';
 import '../../player/screens/champion_screen.dart';
 import '../../player/screens/player_home_screen.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
 import '../widgets/copilot_starter_prompts.dart';
@@ -311,7 +312,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 18),
+          const GeminiAIIcon(size: 20),
           const SizedBox(width: 8),
           Text(
             isArabic ? 'كابتن VSP الذكي' : 'VSP Copilot',
@@ -334,12 +335,12 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Iconsax.messages_2_copy, color: VSPColors.accent, size: 20),
+          icon: const Icon(Iconsax.messages_2_copy, color: VSPColors.textPrimary, size: 20),
           tooltip: isArabic ? 'سجل المحادثات' : 'Chat History',
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         IconButton(
-          icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 22),
+          icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.textPrimary, size: 22),
           tooltip: isArabic ? 'محادثة جديدة' : 'New Chat',
           onPressed: _handleStartNewChat,
         ),

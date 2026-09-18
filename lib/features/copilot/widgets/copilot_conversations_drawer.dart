@@ -48,10 +48,11 @@ class CopilotConversationsDrawer extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.15),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            child: const Icon(Iconsax.messages_2_copy, color: VSPColors.accent, size: 20),
+            child: const Icon(Iconsax.messages_2_copy, color: VSPColors.textPrimary, size: 20),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -90,19 +91,19 @@ class CopilotConversationsDrawer extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: VSPColors.accent.withValues(alpha: 0.12),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.add_copy, color: VSPColors.accent, size: 20),
+              Icon(Iconsax.add_copy, color: VSPColors.textPrimary, size: 20),
               SizedBox(width: 8),
               Text(
                 'محادثة جديدة',
                 style: TextStyle(
-                  color: VSPColors.accent,
+                  color: VSPColors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),

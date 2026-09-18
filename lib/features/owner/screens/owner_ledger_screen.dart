@@ -126,8 +126,6 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           double availableDigital = (_summary?['available_balance'] as num?)?.toDouble() ?? 0.0;
           double escrowBalance = (_summary?['escrow_online_revenue'] as num?)?.toDouble() ?? 0.0;
           double totalPitchCash = (_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0;
-          final double cashDebt = (_summary?['accumulated_cash_debt'] as num?)?.toDouble() ?? 0.0;
-          final bool isDebtBlocked = _summary?['is_debt_blocked'] == true;
 
           if (_summary == null) {
             for (var doc in transactions) {
@@ -174,41 +172,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                 isAr: isAr,
               ),
 
-              // تنبيه المديونية النقدية للمنصة (إذا وجدت)
-              if (cashDebt > 0)
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isDebtBlocked ? Colors.red.withValues(alpha: 0.12) : Colors.amber.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDebtBlocked ? Colors.redAccent.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isDebtBlocked ? Iconsax.warning_2_copy : Iconsax.info_circle_copy,
-                        size: 18,
-                        color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          isAr
-                              ? 'مديونية عمولات الكاش: ${cashDebt.toStringAsFixed(1)} ج.م ${isDebtBlocked ? "(تم إيقاف الكاش لتجاوز الحد)" : "(الحد: 500 ج.م)"}'
-                              : 'Pitch Cash Debt: ${cashDebt.toStringAsFixed(1)} EGP ${isDebtBlocked ? "(Blocked)" : "(Limit: 500)"}',
-                          style: TextStyle(
-                            color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              const SizedBox(height: 8),
 
               // قائمة المعاملات
               Expanded(

@@ -179,5 +179,280 @@ class VSPFeedback {
  ),
  );
  }
- }
+  }
+
+  /// تتبع التنبيه النشط للتراجع لمنع التداخل
+  static OverlayEntry? _activeUndoEntry;
+
+  /// إظهار شريط التراجع التفاعلي (Undo Bar) مع مؤقت تنازلي مدته 5 ثوانٍ
+  /// مخصص للعمليات الحساسة (مثل إلغاء حجز، مغادرة فريق، حذف موعد)
+  static void showUndo(
+    BuildContext context, {
+    required String message,
+    required VoidCallback onUndo,
+    VoidCallback? onTimeout,
+    Duration duration = const Duration(seconds: 5),
+    String? undoLabel,
+    IconData? icon,
+    bool atBottom = true,
+  }) {
+    HapticFeedback.lightImpact();
+
+    // إغلاق أي تنبيه تراجع سابق ما زال معروضاً
+    if (_activeUndoEntry != null && _activeUndoEntry!.mounted) {
+      try {
+        _activeUndoEntry!.remove();
+      } catch (_) {}
+      _activeUndoEntry = null;
+    }
+
+    try {
+      final overlay = Overlay.of(context, rootOverlay: true);
+      late OverlayEntry entry;
+
+      void dismiss() {
+        if (entry.mounted) {
+          entry.remove();
+          if (_activeUndoEntry == entry) {
+            _activeUndoEntry = null;
+          }
+        }
+      }
+
+      entry = OverlayEntry(
+        builder: (ctx) {
+          final bottomPadding = MediaQuery.of(ctx).viewInsets.bottom > 0
+              ? MediaQuery.of(ctx).viewInsets.bottom + 16
+              : MediaQuery.of(ctx).padding.bottom + 20;
+
+          return Positioned(
+            bottom: atBottom ? bottomPadding : null,
+            top: atBottom ? null : (MediaQuery.of(ctx).padding.top + 12),
+            left: 16,
+            right: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: _VSPUndoToastWidget(
+                message: message,
+                undoLabel: undoLabel,
+                duration: duration,
+                icon: icon,
+                onUndo: onUndo,
+                onTimeout: onTimeout,
+                onDismiss: dismiss,
+              ),
+            ),
+          );
+        },
+      );
+
+      _activeUndoEntry = entry;
+      overlay.insert(entry);
+    } catch (e) {
+      // السقوط الخلفي للـ SnackBar الإعتيادي في حال عدم توفر Overlay
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: VSPColors.surfaceAlt,
+          duration: duration,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: undoLabel ?? (Localizations.localeOf(context).languageCode == 'ar' ? 'تراجع' : 'Undo'),
+            textColor: VSPColors.accent,
+            onPressed: onUndo,
+          ),
+        ),
+      );
+    }
+  }
+}
+
+/// ويدجت داخلي مخصص لشريط التراجع التفاعلي مع شريط مؤقت متناقص وزر متوهج
+class _VSPUndoToastWidget extends StatefulWidget {
+  final String message;
+  final String? undoLabel;
+  final Duration duration;
+  final IconData? icon;
+  final VoidCallback onUndo;
+  final VoidCallback? onTimeout;
+  final VoidCallback onDismiss;
+
+  const _VSPUndoToastWidget({
+    required this.message,
+    this.undoLabel,
+    required this.duration,
+    this.icon,
+    required this.onUndo,
+    this.onTimeout,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_VSPUndoToastWidget> createState() => _VSPUndoToastWidgetState();
+}
+
+class _VSPUndoToastWidgetState extends State<_VSPUndoToastWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _slideAnimation;
+  bool _isHandled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+
+    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.15, curve: Curves.easeOutBack),
+      ),
+    );
+
+    _controller.forward();
+
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && !_isHandled) {
+        _isHandled = true;
+        widget.onTimeout?.call();
+        widget.onDismiss();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleUndo() {
+    if (_isHandled) return;
+    _isHandled = true;
+    HapticFeedback.mediumImpact();
+    widget.onUndo();
+    widget.onDismiss();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final label = widget.undoLabel ?? (isAr ? 'تراجع' : 'Undo');
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (ctx, child) {
+        return Transform.translate(
+          offset: Offset(0, (1.0 - _slideAnimation.value) * 25),
+          child: Opacity(
+            opacity: _slideAnimation.value.clamp(0.0, 1.0),
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.borderLight),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.55),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.icon ?? Icons.undo_rounded,
+                    color: VSPColors.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.message,
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _handleUndo,
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent,
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VSPColors.accent.withValues(alpha: 0.35),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: AnimatedBuilder(
+                          animation: _controller,
+                          builder: (context, _) {
+                            final progress = (1.0 - _controller.value);
+                            final seconds = (widget.duration.inSeconds * progress).ceil().clamp(1, widget.duration.inSeconds);
+                            return Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '$label ($seconds)',
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // شريط المؤقت التنازلي المنساب في أسفل الكبسولة
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (ctx, _) {
+                return LinearProgressIndicator(
+                  value: 1.0 - _controller.value,
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                  minHeight: 2.5,
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

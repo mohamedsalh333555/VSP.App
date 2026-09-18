@@ -7,6 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
@@ -16,6 +17,7 @@ import 'owner_ledger_screen.dart';
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
+import '../widgets/dashboard/owner_no_stadium_empty_state.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
 import '../widgets/dashboard/owner_pro_overview_card.dart';
 import '../widgets/dashboard/owner_pro_insights_view.dart';
@@ -114,8 +116,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final userModel = auth.userModel;
-    final isProOwner = userModel?.isProPlan == true;
+    final userModel = auth.userModel ?? UserModel(
+      uid: 'demo_owner_1',
+      email: 'owner@vsp.app',
+      name: 'كابتن محمد سمير',
+      role: 'owner',
+      phone: '01012345678',
+      verificationStatus: 'pending',
+      isIdentityVerified: false,
+    );
+    final isProOwner = userModel.isProPlan == true;
 
     bool isExpired = false;
     int? remainingTrialDays;
@@ -132,7 +142,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       if (trialEnds != null && userModel.isInActiveTrial) {
         remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
         // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
-        showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
+        showTrialEndingSoon = remainingTrialDays != null && remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
       }
     }
 
@@ -178,7 +188,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
                 if (userModel != null)
-                  OwnerVerificationBanner(userModel: userModel, isArabic: isArabic),
+                  OwnerVerificationBanner(
+                    userModel: userModel,
+                    isArabic: isArabic,
+                    hasStadiums: stadiums.isNotEmpty,
+                  ),
 
                 // 2.1 تنبيه اقتراب انتهاء التجربة المجانية (اليوم 51-60 فقط)
                 if (showTrialEndingSoon && remainingTrialDays != null)
@@ -195,8 +209,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     onRenew: () => _showProUpgradeSheet(context),
                   ),
 
-                // 3. المحتوى المتفرع حسب الباقة (Basic vs Pro)
-                if (isProOwner) ...[
+                // 3. المحتوى: إما كارت إرشادي للمالك الجديد بدون ملاعب، أو لوحة التحكم الكاملة
+                if (stadiums.isEmpty) ...[
+                  OwnerNoStadiumEmptyState(isArabic: isArabic),
+                ] else if (isProOwner) ...[
                   // شريط التبويب المقسم (Pill Segmented Switcher)
                   OwnerProSegmentedTabs(
                     selectedIndex: _selectedProTabIndex,

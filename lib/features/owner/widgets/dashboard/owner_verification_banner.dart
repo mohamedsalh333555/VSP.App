@@ -4,16 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../screens/add_stadium_wizard.dart';
 
 /// كارت التوثيق التفاعلي بحالاته الثلاث (معتمد رسمي / قيد المراجعة / غير موثق أو مرفوض)
 class OwnerVerificationBanner extends StatelessWidget {
   final UserModel userModel;
   final bool isArabic;
+  final bool hasStadiums;
 
   const OwnerVerificationBanner({
     super.key,
     required this.userModel,
     required this.isArabic,
+    this.hasStadiums = false,
   });
 
   @override
@@ -33,31 +36,35 @@ class OwnerVerificationBanner extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 14),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF0284C7).withValues(alpha: 0.16),
-              const Color(0xFF0369A1).withValues(alpha: 0.08),
-            ],
-            begin: AlignmentDirectional.centerStart,
-            end: AlignmentDirectional.centerEnd,
-          ),
+          color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-            width: 0.9,
+            color: VSPColors.borderLight,
+            width: 1.0,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(7),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+                color: VSPColors.surfaceAlt,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: VSPColors.borderLight,
+                  width: 0.8,
+                ),
               ),
               child: const Icon(
                 Iconsax.timer_1_copy,
-                color: Color(0xFF38BDF8),
+                color: VSPColors.accent,
                 size: 20,
               ),
             ),
@@ -70,7 +77,7 @@ class OwnerVerificationBanner extends StatelessWidget {
                   Text(
                     isArabic ? 'المستندات قيد المراجعة' : 'Documents Under Review',
                     style: const TextStyle(
-                      color: Color(0xFFE0F2FE),
+                      color: VSPColors.textPrimary,
                       fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                     ),
@@ -78,10 +85,14 @@ class OwnerVerificationBanner extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     isArabic
-                        ? 'أوراقك قيد التدقيق حالياً من الإدارة. يمكنك ضبط ملاعبك وإعدادات الأسعار الآن.'
-                        : 'Your docs are being audited by administration. You can configure your pitches & prices.',
-                    style: TextStyle(
-                      color: const Color(0xFFBAE6FD).withValues(alpha: 0.85),
+                        ? (hasStadiums
+                            ? 'أوراقك قيد التدقيق حالياً من الإدارة. يمكنك ضبط ملاعبك وإعدادات الأسعار الآن.'
+                            : 'أوراقك قيد التدقيق حالياً. ابدأ بإضافة ملعبك الأول لتهيئة الأسعار ومواعيد الحجز.')
+                        : (hasStadiums
+                            ? 'Your docs are being audited by administration. You can configure your pitches & prices.'
+                            : 'Your docs are under review. Add your first pitch to configure prices and schedule.'),
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
                       fontSize: 11,
                       height: 1.35,
                     ),
@@ -92,23 +103,43 @@ class OwnerVerificationBanner extends StatelessWidget {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
-                context.push('/documentation');
+                HapticFeedback.mediumImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+                );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.28),
+                  color: VSPColors.accent,
                   borderRadius: BorderRadius.circular(VSPRadius.sm),
-                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: VSPColors.accent.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  isArabic ? 'عرض' : 'View',
-                  style: const TextStyle(
-                    color: Color(0xFFE0F2FE),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Iconsax.add_circle_copy,
+                      size: 14,
+                      color: Colors.black,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isArabic ? 'إضافة ملعب' : 'Add Pitch',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
