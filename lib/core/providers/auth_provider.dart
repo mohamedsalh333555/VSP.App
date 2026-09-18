@@ -390,9 +390,19 @@ class AuthProvider with ChangeNotifier {
   Future<bool> setOnboardingConfirmed(bool confirmed) async {
     final uid = _supabaseUser?.id ?? _userModel?.uid;
     if (uid == null) return false;
-    final success = await UserRepository().updateOnboardingConfirmed(uid, confirmed);
+
+    // استخدم الـ RPC الآمن بدل الـ direct update
+    final repo = UserRepository();
+    final success = confirmed
+        ? await repo.confirmOwnerOnboarding(uid)
+        : await repo.updateOnboardingConfirmed(uid, false);
+
     if (success && _userModel != null) {
-      _userModel = _userModel!.copyWith(isOnboardingConfirmed: confirmed);
+      _userModel = _userModel!.copyWith(
+        isOnboardingConfirmed: confirmed,
+        // تأكد إن الـ role مش بيتغير
+        role: _userModel!.role,
+      );
       notifyListeners();
     }
     return success;

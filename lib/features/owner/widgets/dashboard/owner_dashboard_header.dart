@@ -81,11 +81,11 @@ class OwnerDashboardHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: isProOwner
-                            ? const SweepGradient(
+                            ? SweepGradient(
                                 colors: [
                                   VSPColors.accent,
-                                  Color(0xFF84CC16),
-                                  Color(0xFF22C55E),
+                                  VSPColors.accent.withValues(alpha: 0.6),
+                                  VSPColors.accent.withValues(alpha: 0.85),
                                   VSPColors.accent,
                                 ],
                               )

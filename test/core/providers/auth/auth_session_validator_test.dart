@@ -68,11 +68,21 @@ void main() {
         );
       });
 
-      test('returns false if registration is already complete', () {
+      test('returns true for player to owner override even if registration is complete', () {
         expect(
           AuthSessionValidator.shouldOverrideOAuthRole(
             pendingRole: 'owner',
             userData: {'role': 'player', 'is_registration_complete': true},
+          ),
+          isTrue,
+        );
+      });
+
+      test('returns false for other role overrides if registration is already complete', () {
+        expect(
+          AuthSessionValidator.shouldOverrideOAuthRole(
+            pendingRole: 'player',
+            userData: {'role': 'owner', 'is_registration_complete': true},
           ),
           isFalse,
         );

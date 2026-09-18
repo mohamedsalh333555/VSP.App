@@ -135,6 +135,23 @@ class AuthUserDataFetcher {
 
         var userModel = UserModel.fromFirestore(userData);
 
+        // ✅ تحقق إضافي: لو userModel.role = player بس
+        // pendingRole أو userType = owner → صلح الـ role
+        if (userModel.role == 'player' && 
+            (pendingRole == 'owner' || userType == 'owner')) {
+          // الـ DB قد يكون خدع بسبب race condition — نتحقق من RPC
+          final verifiedRole = await _userRepository.verifyUserRole(user.id);
+          if (verifiedRole == 'owner') {
+            userModel = userModel.copyWith(role: 'owner');
+            VSPLogger.i('Role corrected via RPC: player → owner for ${user.id}');
+          } else if (verifiedRole == 'player') {
+            // الـ DB فيه player فعلاً → صلح في الـ DB
+            await _userRepository.setUserRole(user.id, 'owner');
+            userModel = userModel.copyWith(role: 'owner');
+            VSPLogger.i('Role force-set to owner in DB for ${user.id}');
+          }
+        }
+
         if (AuthSessionValidator.needsEmailVerificationSync(
           authUser: user,
           userModel: userModel,

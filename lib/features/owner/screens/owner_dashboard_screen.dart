@@ -277,6 +277,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     metrics: metrics,
                     selectedTimePeriod: _selectedTimePeriod,
                     onTimePeriodChanged: (period) => setState(() => _selectedTimePeriod = period),
+                    onSettleDues: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerLedgerScreen())),
                     isArabic: isArabic,
                   ),
                   const SizedBox(height: 16),

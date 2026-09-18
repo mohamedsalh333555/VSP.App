@@ -40,9 +40,20 @@ class AuthSessionValidator {
     required Map<String, dynamic> userData,
   }) {
     if (pendingRole == null) return false;
+    final dbRole = userData['role']?.toString();
+
+    // لو الـ DB role مختلف عن الـ pending role
+    if (dbRole == pendingRole) return false;
+
+    // اسمح بـ override من player لـ owner حتى بعد اكتمال التسجيل
+    // لأن ده بيحصل بسبب timing في الـ OAuth flow
+    if (pendingRole == 'owner' && dbRole == 'player') return true;
+
+    // للتحولات التانية، فقط قبل اكتمال التسجيل
     final isComplete = userData['is_registration_complete'] as bool? ?? false;
-    if (isComplete) return false; // Already registered — don't override
-    return userData['role'] != pendingRole;
+    if (isComplete) return false;
+
+    return true;
   }
 
   // ─── Registration Completeness ────────────────────────────────────────────

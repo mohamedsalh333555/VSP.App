@@ -398,6 +398,54 @@ class UserRepository {
     }
   }
 
+  /// تأكيد الـ onboarding عبر RPC آمن (SECURITY DEFINER)
+  Future<bool> confirmOwnerOnboarding(String uid) async {
+    try {
+      final result = await _supabase.rpc(
+        'confirm_owner_onboarding',
+        params: {'p_user_id': uid},
+      );
+      final success = result is Map && result['success'] == true;
+      if (!success) {
+        VSPLogger.w('confirm_owner_onboarding failed: $result');
+      }
+      return success;
+    } catch (e, stack) {
+      VSPLogger.e('Error in confirmOwnerOnboarding for $uid', e, stack);
+      // fallback
+      try {
+        await _supabase
+            .from('users')
+            .update({
+              'is_onboarding_confirmed': true,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', uid)
+            .eq('role', 'owner'); // حماية: فقط لو كان owner فعلاً
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+  }
+
+  /// تحقق من الـ role الحقيقي في الـ DB (للاستخدام عند إعادة فتح التطبيق)
+  Future<String?> verifyUserRole(String uid) async {
+    try {
+      final result = await _supabase.rpc(
+        'get_current_user_role',
+        params: {'p_user_id': uid},
+      );
+      if (result is Map && result['success'] == true) {
+        return result['role']?.toString();
+      }
+      return null;
+    } catch (e) {
+      VSPLogger.e('Error verifying user role for $uid', e);
+      return null;
+    }
+  }
+
   /// Search users for inbox or team invite
   Future<List<UserModel>> searchUsers({
     required String currentUserId,
