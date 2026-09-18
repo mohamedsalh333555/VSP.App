@@ -32,7 +32,7 @@ class AppRouter {
  static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
  return GoRouter(
  navigatorKey: navigatorKey,
- initialLocation: '/owner',
+ initialLocation: '/splash',
  refreshListenable: authProvider,
  errorBuilder: (context, state) => const RootScreen(),
  routes: [
@@ -193,7 +193,6 @@ class AppRouter {
  '/signup-player',
  '/signup-owner',
  '/verify-email',
- '/owner',
  ];
  if (!allowedAuthPaths.contains(path)) return '/welcome';
  return null;

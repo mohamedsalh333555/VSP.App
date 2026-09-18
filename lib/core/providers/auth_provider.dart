@@ -18,6 +18,7 @@ import 'auth/auth_registration_form_state.dart';
 import 'auth/auth_session_listener.dart';
 import 'auth/auth_session_sync_coordinator.dart';
 import 'auth/auth_sign_out_handler.dart';
+import '../repositories/user_repository.dart';
 
 export '../extensions/supabase_user_extension.dart';
 
@@ -384,6 +385,17 @@ class AuthProvider with ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  Future<bool> setOnboardingConfirmed(bool confirmed) async {
+    final uid = _supabaseUser?.id ?? _userModel?.uid;
+    if (uid == null) return false;
+    final success = await UserRepository().updateOnboardingConfirmed(uid, confirmed);
+    if (success && _userModel != null) {
+      _userModel = _userModel!.copyWith(isOnboardingConfirmed: confirmed);
+      notifyListeners();
+    }
+    return success;
   }
 
   Future<void> toggleFavoriteStadium(String stadiumId) async {

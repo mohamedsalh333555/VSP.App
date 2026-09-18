@@ -180,11 +180,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                     );
                     if (confirmed != true) return;
                     if (!context.mounted) return;
-                    final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
-                    if (uid != null) {
-                      await UserRepository().updateOnboardingConfirmed(uid, true);
-                    }
-                    await authProvider.updateProfile({'is_onboarding_confirmed': true});
+                    await authProvider.setOnboardingConfirmed(true);
                     if (context.mounted) context.go('/owner');
                   },
                   style: OutlinedButton.styleFrom(

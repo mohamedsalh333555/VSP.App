@@ -127,6 +127,7 @@ class AuthOAuthCoordinator {
       UserModel updatedModel;
       if (currentUserModel != null) {
         updatedModel = currentUserModel.copyWith(
+          role: effectiveRole,
           name: (name != null && name.isNotEmpty) ? name : currentUserModel.name,
           phone: normalizedPhone,
           governorate: governorate ?? fallbackGovernorate,
@@ -137,6 +138,7 @@ class AuthOAuthCoordinator {
           p2pInstapay: p2pInstapay ?? currentUserModel.p2pInstapay,
           p2pVodafone: p2pVodafone ?? currentUserModel.p2pVodafone,
           p2pBank: p2pBank ?? currentUserModel.p2pBank,
+          subscriptionPlan: effectiveRole == 'owner' ? 'free_trial' : currentUserModel.subscriptionPlan,
         );
       } else {
         updatedModel = UserModel(
@@ -189,6 +191,13 @@ class AuthOAuthCoordinator {
         if (currentUid != null) {
           await _userRepository.completeRegistrationFlags(currentUid, updateData);
         }
+      }
+
+      if (currentUid != null && effectiveRole.isNotEmpty) {
+        await _userRepository.setUserRole(currentUid, effectiveRole);
+        try {
+          await _supabase.auth.updateUser(UserAttributes(data: {'role': effectiveRole}));
+        } catch (_) {}
       }
 
       try {

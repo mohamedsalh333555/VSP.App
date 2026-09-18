@@ -124,8 +124,6 @@ class AuthUserDataFetcher {
           } catch (_) {}
           userData['role'] = effectiveRole;
           userType = effectiveRole;
-          await prefs.remove('pending_oauth_role');
-          await SecureStorageService.deleteSecure('pending_oauth_role');
         }
 
         final bool isExistingCompleteUser = AuthSessionValidator.isExistingCompleteUser(userData);
