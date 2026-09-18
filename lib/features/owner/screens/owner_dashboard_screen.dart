@@ -131,19 +131,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     int? remainingTrialDays;
     bool showTrialEndingSoon = false;
 
-    if (userModel != null) {
-      if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
-        isExpired = false;
-      } else {
-        isExpired = userModel.isPlanExpired;
-      }
+    if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
+      isExpired = false;
+    } else {
+      isExpired = userModel.isPlanExpired;
+    }
 
-      final trialEnds = userModel.effectiveTrialEndsAt;
-      if (trialEnds != null && userModel.isInActiveTrial) {
-        remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
-        // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
-        showTrialEndingSoon = remainingTrialDays != null && remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
-      }
+    final trialEnds = userModel.effectiveTrialEndsAt;
+    if (trialEnds != null && userModel.isInActiveTrial) {
+      remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
+      // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
+      showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
     }
 
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -187,12 +185,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 const SizedBox(height: 14),
 
                 // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
-                if (userModel != null)
-                  OwnerVerificationBanner(
-                    userModel: userModel,
-                    isArabic: isArabic,
-                    hasStadiums: stadiums.isNotEmpty,
-                  ),
+                OwnerVerificationBanner(
+                  userModel: userModel,
+                  isArabic: isArabic,
+                  hasStadiums: stadiums.isNotEmpty,
+                ),
 
                 // 2.1 تنبيه اقتراب انتهاء التجربة المجانية (اليوم 51-60 فقط)
                 if (showTrialEndingSoon && remainingTrialDays != null)
@@ -203,7 +200,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
 
                 // 2.2 تنبيه انتهاء الاشتراك إن وجد (بعد اليوم 60)
-                if (userModel != null && isExpired)
+                if (isExpired)
                   OwnerSubscriptionExpiredAlert(
                     isArabic: isArabic,
                     onRenew: () => _showProUpgradeSheet(context),
