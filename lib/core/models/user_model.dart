@@ -71,6 +71,11 @@ class UserModel {
   bool get isOwnerRole => role == 'owner';
   bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
+  /// هل اعتُمد المالك من الإدارة وجاهز للتشغيل الفعلي؟
+  /// مصدر الحقيقة الوحيد — يُستخدم في كل مكان بدلاً من تكرار الشرطين.
+  bool get isVerifiedForOperations =>
+      isIdentityVerified == true || verificationStatus == 'approved';
+
   DateTime? get effectiveTrialEndsAt =>
       trialEndsAt ?? createdAt?.add(const Duration(days: 60));
 
@@ -78,7 +83,9 @@ class UserModel {
       subscriptionPlan == 'free_trial' &&
       subscriptionExpiresAt == null &&
       effectiveTrialEndsAt != null &&
-      DateTime.now().isBefore(effectiveTrialEndsAt!);
+      DateTime.now().isBefore(effectiveTrialEndsAt!) &&
+      // لا تُحتسب أيام التجربة المجانية قبل اعتماد المنشأة رسمياً
+      isVerifiedForOperations;
 
   bool get hasActiveSubscription =>
       isInActiveTrial ||

@@ -391,20 +391,23 @@ class AuthProvider with ChangeNotifier {
     final uid = _supabaseUser?.id ?? _userModel?.uid;
     if (uid == null) return false;
 
-    // استخدم الـ RPC الآمن بدل الـ direct update
+    // تحديث تفاؤلي سريع للنموذج المحلي لضمان الانتقال الفوري بدون تعليق الراوتر
+    if (_userModel != null) {
+      final currentAdd = Map<String, dynamic>.from(_userModel!.additionalData ?? {});
+      currentAdd['isOnboardingConfirmed'] = confirmed;
+      _userModel = _userModel!.copyWith(
+        isOnboardingConfirmed: confirmed,
+        additionalData: currentAdd,
+        role: _userModel!.role,
+      );
+      notifyListeners();
+    }
+
     final repo = UserRepository();
     final success = confirmed
         ? await repo.confirmOwnerOnboarding(uid)
         : await repo.updateOnboardingConfirmed(uid, false);
 
-    if (success && _userModel != null) {
-      _userModel = _userModel!.copyWith(
-        isOnboardingConfirmed: confirmed,
-        // تأكد إن الـ role مش بيتغير
-        role: _userModel!.role,
-      );
-      notifyListeners();
-    }
     return success;
   }
 

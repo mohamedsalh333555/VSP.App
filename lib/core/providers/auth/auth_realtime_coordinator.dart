@@ -8,12 +8,16 @@ class AuthRealtimeCoordinator {
   final SupabaseClient? _client;
   RealtimeChannel? _userChannel;
   final StreamController<void> _celebrationController = StreamController<void>.broadcast();
+  final StreamController<void> _rejectionController = StreamController<void>.broadcast();
 
   AuthRealtimeCoordinator({SupabaseClient? client}) : _client = client;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
   Stream<void> get celebrationEvents => _celebrationController.stream;
+
+  /// يُطلق عند رفض الإدارة لمستندات المالك — لعرض إشعار فوري داخل التطبيق.
+  Stream<void> get rejectionEvents => _rejectionController.stream;
 
   /// Starts real-time Postgres change listener for user's row in public.users.
   void startRealtimeUserListener({
@@ -57,6 +61,11 @@ class AuthRealtimeCoordinator {
                 VSPLogger.i('Owner approved! Triggering celebration events.');
                 _celebrationController.add(null);
               }
+
+              if (oldStatus == 'pending' && newStatus == 'rejected') {
+                VSPLogger.i('Owner docs rejected! Triggering rejection notification.');
+                _rejectionController.add(null);
+              }
             }
           },
         );
@@ -79,5 +88,6 @@ class AuthRealtimeCoordinator {
   void dispose() {
     stopRealtimeUserListener();
     _celebrationController.close();
+    _rejectionController.close();
   }
 }

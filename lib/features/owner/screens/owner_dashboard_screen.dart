@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -13,6 +14,7 @@ import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
+import 'add_stadium_wizard.dart';
 
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
@@ -26,6 +28,7 @@ import '../widgets/dashboard/owner_glanceable_timeline.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
 import '../widgets/dashboard/owner_quick_cash_card.dart';
+import '../widgets/dashboard/owner_launch_readiness_card.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -126,6 +129,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       isIdentityVerified: false,
     );
     final isProOwner = userModel.isProPlan == true;
+
+    // ── Guard: مالك غير معتمد بعد ─────────────────────────────────────────
+    // إذا لم تُعتمد المنشأة، اعرض مركز الإعداد بدلاً من لوحة التشغيل اليومي.
+    // هذا يمنع: عرض إيرادات صفرية مضللة، وحرق أيام التجربة المجانية.
+    if (!userModel.isVerifiedForOperations) {
+      final stadiumProvider = Provider.of<StadiumProvider>(context);
+      return _buildPreLaunchHub(
+        context,
+        auth,
+        userModel,
+        isArabic,
+        stadiumProvider.stadiums,
+      );
+    }
+    // ── نهاية Guard ───────────────────────────────────────────────────────
 
     bool isExpired = false;
     int? remainingTrialDays;
@@ -309,4 +327,78 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     );
   }
 
+}
+
+// ── امتداد: مركز إعداد ما قبل الإطلاق ──────────────────────────────────────
+extension _PreLaunchHub on _OwnerDashboardScreenState {
+  /// يُعرض بدلاً من لوحة التشغيل اليومي عندما لا يكون المالك معتمداً بعد.
+  /// يحافظ على نفس الهيدر والبانر الموجودَين، ويضيف بطاقة مراحل الإطلاق.
+  Widget _buildPreLaunchHub(
+    BuildContext context,
+    AuthProvider auth,
+    UserModel userModel,
+    bool isArabic,
+    List<Stadium> stadiums,
+  ) {
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: VSPColors.accent,
+          backgroundColor: VSPColors.surface,
+          onRefresh: () async {
+            final uid = auth.currentUser?.id;
+            if (uid == null) return;
+            await auth.refreshProfile();
+            if (context.mounted) {
+              Provider.of<StadiumProvider>(context, listen: false)
+                  .listenToOwnerStadiums(uid);
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. الهيدر الموحد (نفسه تماماً)
+                OwnerDashboardHeader(
+                  auth: auth,
+                  isProOwner: false,
+                  isArabic: isArabic,
+                  onUpgrade: () => _showProUpgradeSheet(context),
+                ),
+                const SizedBox(height: 14),
+
+                // 2. بانر حالة التوثيق (الموجود — يعمل بدون تعديل)
+                OwnerVerificationBanner(
+                  userModel: userModel,
+                  isArabic: isArabic,
+                  hasStadiums: stadiums.isNotEmpty,
+                ),
+                const SizedBox(height: 8),
+
+                // 3. بطاقة مراحل الإطلاق الجديدة
+                OwnerLaunchReadinessCard(
+                  verificationStatus: userModel.verificationStatus,
+                  hasStadium: stadiums.isNotEmpty,
+                  isArabic: isArabic,
+                  onAddStadium: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const AddStadiumWizard(),
+                    ),
+                  ),
+                  onResubmitDocs: () => context.push('/documentation'),
+                ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

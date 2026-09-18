@@ -169,7 +169,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
                             child: Text(
-                              isAr ? 'تخطى الآن' : 'Skip for Now',
+                              isAr ? 'تخطي الآن' : 'Skip for Now',
                               style: const TextStyle(
                                 color: VSPColors.textSecondary,
                               ),

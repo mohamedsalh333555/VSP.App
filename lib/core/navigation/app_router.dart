@@ -270,7 +270,7 @@ class AppRouter {
 
   final bool isOnboardingConfirmed = userModel.isOnboardingConfirmed;
  
- if (!userModel.hasStadium || !isOnboardingConfirmed) {
+ if (!userModel.hasStadium && !isOnboardingConfirmed) {
  if (path != '/facility-onboarding') return '/facility-onboarding';
  return null;
  }

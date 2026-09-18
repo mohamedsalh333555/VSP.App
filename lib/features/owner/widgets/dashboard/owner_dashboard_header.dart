@@ -36,6 +36,8 @@ class OwnerDashboardHeader extends StatelessWidget {
         ? rawName
         : (isArabic ? 'كابتن الملعب' : 'Pitch Owner');
     final isTrial = user?.isInActiveTrial == true;
+    // هل اعتُمد المالك من الإدارة — يتحكم في عرض بادج الخطة
+    final isVerified = user?.isVerifiedForOperations == true;
     final photoUrl = user?.profileImageUrl;
 
     return Row(
@@ -222,7 +224,11 @@ class OwnerDashboardHeader extends StatelessWidget {
                             child: Text(
                               isProOwner
                                   ? 'PRO'
-                                  : (isTrial ? (isArabic ? 'فترة مجانية' : 'Free Trial') : 'Basic'),
+                                  : isVerified
+                                      ? (isTrial
+                                          ? (isArabic ? 'فترة مجانية' : 'Free Trial')
+                                          : 'Basic')
+                                      : (isArabic ? 'قيد التوثيق' : 'Pending Review'),
                               style: TextStyle(
                                 color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
                                 fontSize: 10.5,

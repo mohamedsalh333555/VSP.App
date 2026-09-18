@@ -87,10 +87,10 @@ class OwnerVerificationBanner extends StatelessWidget {
                     isArabic
                         ? (hasStadiums
                             ? 'أوراقك قيد التدقيق حالياً من الإدارة. يمكنك ضبط ملاعبك وإعدادات الأسعار الآن.'
-                            : 'أوراقك قيد التدقيق حالياً. ابدأ بإضافة ملعبك الأول لتهيئة الأسعار ومواعيد الحجز.')
+                            : 'مستنداتك تحت المراجعة الإدارية. استغل هذا الوقت وأضف بيانات ملعبك لتكون جاهزاً فور الاعتماد.')
                         : (hasStadiums
                             ? 'Your docs are being audited by administration. You can configure your pitches & prices.'
-                            : 'Your docs are under review. Add your first pitch to configure prices and schedule.'),
+                            : 'Docs under review. Use this time to add your pitch details and be ready at launch.'),
                     style: const TextStyle(
                       color: VSPColors.textSecondary,
                       fontSize: 11,
@@ -132,7 +132,9 @@ class OwnerVerificationBanner extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isArabic ? 'إضافة ملعب' : 'Add Pitch',
+                      isArabic
+                          ? (hasStadiums ? 'ضبط الأسعار' : 'إعداد ملعبي ⛙️')
+                          : (hasStadiums ? 'Set Prices' : 'Set Up Pitch ⛙️'),
                       style: const TextStyle(
                         color: Colors.black,
                         fontSize: 11.5,
@@ -234,7 +236,9 @@ class OwnerVerificationBanner extends StatelessWidget {
                 ],
               ),
               child: Text(
-                isArabic ? 'توثيق الآن' : 'Verify Now',
+                isArabic
+                    ? (isRejected ? 'إعادة رفع المستندات' : 'توثيق الآن')
+                    : (isRejected ? 'Re-upload Docs' : 'Verify Now'),
                 style: const TextStyle(
                   color: Colors.black,
                   fontSize: 11.5,
