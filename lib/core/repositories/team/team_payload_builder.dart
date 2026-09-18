@@ -62,18 +62,23 @@ class TeamPayloadBuilder {
 
     for (var row in rows) {
       if (row is! Map) continue;
-      final winnerId = row['winner_team_id']?.toString() ?? '';
       final outcome = row['final_outcome']?.toString() ?? '';
-      final pTeam = row['player_team_id']?.toString() ?? '';
+      final hostTeam = row['player_team_id']?.toString() ?? '';
+      final awayTeam = row['opponent_team_id']?.toString() ?? '';
 
-      if (winnerId == team1Id ||
-          (outcome == 'team_a_win' && pTeam == team1Id) ||
-          (outcome == 'team_b_win' && pTeam == team2Id)) {
-        team1Wins++;
-      } else if (winnerId == team2Id ||
-          (outcome == 'team_b_win' && pTeam == team1Id) ||
-          (outcome == 'team_a_win' && pTeam == team2Id)) {
-        team2Wins++;
+      String? winningTeamId;
+      if (outcome == 'homeWin' || outcome == 'team_a_win') {
+        winningTeamId = hostTeam;
+      } else if (outcome == 'awayWin' || outcome == 'team_b_win') {
+        winningTeamId = awayTeam;
+      }
+
+      if (winningTeamId != null && winningTeamId.isNotEmpty) {
+        if (winningTeamId == team1Id) {
+          team1Wins++;
+        } else if (winningTeamId == team2Id) {
+          team2Wins++;
+        }
       } else if (outcome == 'draw' || outcome == 'tie') {
         draws++;
       }

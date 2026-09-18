@@ -66,18 +66,12 @@ class BannerService {
     _recordedImpressions.add(bannerId);
 
     try {
-      // 1. Try atomic RPC if defined in Supabase
+      // 1. Atomic RPC call using canonical p_banner_id parameter
       try {
         await _supabase.rpc('increment_banner_views', params: {'p_banner_id': bannerId});
         return;
       } catch (_) {
-        // Fallback: Try with 'banner_id' param name
-        try {
-          await _supabase.rpc('increment_banner_views', params: {'banner_id': bannerId});
-          return;
-        } catch (_) {
-          // Fallback: Direct increment query
-        }
+        // Fallback to direct increment query if RPC is unavailable
       }
 
       // 2. Direct fallback increment
@@ -101,18 +95,12 @@ class BannerService {
     if (bannerId.isEmpty) return;
 
     try {
-      // 1. Try atomic RPC if defined in Supabase
+      // 1. Atomic RPC call using canonical p_banner_id parameter
       try {
         await _supabase.rpc('increment_banner_clicks', params: {'p_banner_id': bannerId});
         return;
       } catch (_) {
-        // Fallback: Try with 'banner_id' param name
-        try {
-          await _supabase.rpc('increment_banner_clicks', params: {'banner_id': bannerId});
-          return;
-        } catch (_) {
-          // Fallback: Direct increment query
-        }
+        // Fallback to direct increment query if RPC is unavailable
       }
 
       // 2. Direct fallback increment

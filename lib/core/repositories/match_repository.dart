@@ -53,7 +53,7 @@ class MatchRepository {
  .from('bookings')
  .select()
  .eq('is_private', false)
- .inFilter('status', ['confirmed', 'upcoming'])
+ .eq('status', 'confirmed')
  .gte('end_time', cutoffIso)
  .order('start_time', ascending: true)
  .limit(50);
@@ -318,7 +318,7 @@ class MatchRepository {
  .from('bookings')
  .select()
  .eq('is_private', false)
- .inFilter('status', ['confirmed', 'upcoming'])
+ .eq('status', 'confirmed')
  .gte('end_time', cutoffIso)
  .order('start_time', ascending: true)
  .range(offset, offset + limit - 1);

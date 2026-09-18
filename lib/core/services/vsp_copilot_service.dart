@@ -828,7 +828,7 @@ class VspCopilotService {
         try {
           final res = await client
               .from('bookings')
-              .select('id, stadium_name, start_time, end_time, status, total_price, player_name')
+              .select('id, stadium_name, start_time, end_time, status, total_price, host_name')
               .eq('owner_id', uid)
               .order('start_time', ascending: false)
               .limit(5);
@@ -844,7 +844,10 @@ class VspCopilotService {
               ),
             );
           } else {
-            final bItems = bookings.map((b) => '• ${b['stadium_name']} (${b['start_time']}) - الحالة: ${b['status']} - السعر: ${b['total_price']} ج.م').join('\n');
+            final bItems = bookings.map((b) {
+              final host = b['host_name'] != null ? ' - الحاجز: ${b['host_name']}' : '';
+              return '• ${b['stadium_name']} (${b['start_time']})$host - الحالة: ${b['status']} - السعر: ${b['total_price']} ج.م';
+            }).join('\n');
             return CopilotMessage.assistant(
               'يا كابتن، دي أحدث حجوزات ملاعبك المسجلة في قاعدة بيانات VSP:\n$bItems',
               conversationId: convId,

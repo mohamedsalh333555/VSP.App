@@ -47,19 +47,19 @@ void main() {
     test('calculateHeadToHead calculates wins, draws and total correctly', () {
       final rows = [
         {
-          'winner_team_id': 'team-1',
-          'final_outcome': 'team_a_win',
+          'final_outcome': 'homeWin',
           'player_team_id': 'team-1',
+          'opponent_team_id': 'team-2',
         },
         {
-          'winner_team_id': 'team-2',
-          'final_outcome': 'team_b_win',
+          'final_outcome': 'awayWin',
           'player_team_id': 'team-1',
+          'opponent_team_id': 'team-2',
         },
         {
-          'winner_team_id': null,
           'final_outcome': 'draw',
           'player_team_id': 'team-1',
+          'opponent_team_id': 'team-2',
         },
       ];
 

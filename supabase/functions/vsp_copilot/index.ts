@@ -696,7 +696,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               if (stadiumIds.length > 0) {
                 let bQuery = supabase
                   .from("bookings")
-                  .select("id, stadium_name, start_time, end_time, status, total_price, deposit_paid, payment_method, payment_status, player_name, player_phone")
+                  .select("id, stadium_name, start_time, end_time, status, total_price, deposit_paid, payment_method, payment_status, host_name, player_phone")
                   .or(`owner_id.eq.${callerUser.id},stadium_id.in.(${stadiumIds.join(",")})`);
 
                 if (args.status && args.status !== "all") {

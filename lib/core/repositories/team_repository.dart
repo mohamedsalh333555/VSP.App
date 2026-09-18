@@ -225,9 +225,9 @@ class TeamRepository {
 
  Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
  try {
- final response = await _supabase
- .from('bookings')
- .select('player_team_id, opponent_team_id, final_outcome, winner_team_id')
+  final response = await _supabase
+  .from('bookings')
+  .select('player_team_id, opponent_team_id, final_outcome')
  .eq('status', 'completed')
  .or('and(player_team_id.eq.$team1Id,opponent_team_id.eq.$team2Id),and(player_team_id.eq.$team2Id,opponent_team_id.eq.$team1Id)');
 

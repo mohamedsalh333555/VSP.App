@@ -219,20 +219,20 @@ class BookingReconciliationService {
 
             final teamDoc = await _supabase
                 .from('teams')
-                .select('fair_play_score')
+                .select('attendance_score')
                 .eq('id', nonRespondingTeamId)
                 .maybeSingle();
 
             if (teamDoc != null) {
-              final currentFairPlay = (teamDoc['fair_play_score'] as int?) ?? 100;
-              final newFairPlay = (currentFairPlay - 5).clamp(0, 100);
+              final currentAttendance = (teamDoc['attendance_score'] as num?)?.toInt() ?? 100;
+              final newAttendance = (currentAttendance - 5).clamp(0, 100);
 
               await _supabase
                   .from('teams')
-                  .update({'fair_play_score': newFairPlay})
+                  .update({'attendance_score': newAttendance})
                   .eq('id', nonRespondingTeamId);
 
-              VSPLogger.i('Fair Play Penalty Applied: Team $nonRespondingTeamId penalized to $newFairPlay%');
+              VSPLogger.i('Attendance Penalty Applied: Team $nonRespondingTeamId penalized to $newAttendance%');
             }
           }
 

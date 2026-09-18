@@ -124,6 +124,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           // Authoritative DB summary values if loaded, fallback to transaction summation
           double availableDigital = (_summary?['available_balance'] as num?)?.toDouble() ?? 0.0;
+          double escrowBalance = (_summary?['escrow_online_revenue'] as num?)?.toDouble() ?? 0.0;
           double totalPitchCash = (_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0;
           final double cashDebt = (_summary?['accumulated_cash_debt'] as num?)?.toDouble() ?? 0.0;
           final bool isDebtBlocked = _summary?['is_debt_blocked'] == true;
@@ -162,6 +163,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
               // كارت الرصيد الإلكتروني المتاح للسحب
               OwnerDigitalBalanceCard(
                 digitalBalance: availableDigital,
+                escrowBalance: escrowBalance,
                 isAr: isAr,
                 onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
               ),

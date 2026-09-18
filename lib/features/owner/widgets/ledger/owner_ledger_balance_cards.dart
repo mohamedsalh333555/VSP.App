@@ -4,12 +4,14 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 /// Card displaying withdrawable digital balance and payout action.
 class OwnerDigitalBalanceCard extends StatelessWidget {
   final double digitalBalance;
+  final double escrowBalance;
   final bool isAr;
   final VoidCallback onRequestPayout;
 
   const OwnerDigitalBalanceCard({
     super.key,
     required this.digitalBalance,
+    this.escrowBalance = 0.0,
     required this.isAr,
     required this.onRequestPayout,
   });
@@ -53,6 +55,36 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
               ),
             ],
           ),
+          if (escrowBalance > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.lock_clock_outlined, size: 14, color: VSPColors.accent),
+                      const SizedBox(width: 6),
+                      Text(
+                        isAr ? 'أرباح مباريات قادمة (قيد الضمان):' : 'Upcoming matches (Escrow):',
+                        style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${escrowBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (digitalBalance > 0) ...[
             const SizedBox(height: 12),
             GestureDetector(
