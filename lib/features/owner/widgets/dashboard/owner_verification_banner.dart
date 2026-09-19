@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/models/user_model.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/components/vsp_button.dart';
 import '../../screens/add_stadium_wizard.dart';
 
 /// كارت التوثيق التفاعلي بحالاته الثلاث (معتمد رسمي / قيد المراجعة / غير موثق أو مرفوض)
@@ -30,7 +31,7 @@ class OwnerVerificationBanner extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // 2. المستندات قيد المراجعة من الإدارة
+    // 2. المستندات قيد التدقيق من الإدارة
     if (isPending) {
       return Container(
         margin: const EdgeInsets.only(bottom: 14),
@@ -58,13 +59,13 @@ class OwnerVerificationBanner extends StatelessWidget {
                 color: VSPColors.surfaceAlt,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: VSPColors.borderLight,
+                  color: VSPColors.warning.withValues(alpha: 0.35),
                   width: 0.8,
                 ),
               ),
               child: const Icon(
                 Iconsax.timer_1_copy,
-                color: VSPColors.accent,
+                color: VSPColors.warning,
                 size: 20,
               ),
             ),
@@ -75,7 +76,7 @@ class OwnerVerificationBanner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isArabic ? 'المستندات قيد المراجعة' : 'Documents Under Review',
+                    isArabic ? 'أوراق منشأتك قيد التدقيق الإداري' : 'Documents Under Official Review',
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 13.5,
@@ -86,11 +87,11 @@ class OwnerVerificationBanner extends StatelessWidget {
                   Text(
                     isArabic
                         ? (hasStadiums
-                            ? 'أوراقك قيد التدقيق حالياً من الإدارة. يمكنك ضبط ملاعبك وإعدادات الأسعار الآن.'
-                            : 'مستنداتك تحت المراجعة الإدارية. استغل هذا الوقت وأضف بيانات ملعبك لتكون جاهزاً فور الاعتماد.')
+                            ? 'أوراقك قيد التدقيق حالياً من الإدارة. تم حفظ بيانات ملاعبك وأسعارها وستنطلق فور الاعتماد.'
+                            : 'مستنداتك قيد التدقيق الإداري. استغل هذا الوقت لإضافة ملاعبك وضبط الأسعار لتكون جاهزاً فور الاعتماد.')
                         : (hasStadiums
-                            ? 'Your docs are being audited by administration. You can configure your pitches & prices.'
-                            : 'Docs under review. Use this time to add your pitch details and be ready at launch.'),
+                            ? 'Your docs are being audited by administration. Pitches & prices are saved and ready to go live.'
+                            : 'Docs under review. Use this time to set up your pitches & prices to be ready at launch.'),
                     style: const TextStyle(
                       color: VSPColors.textSecondary,
                       fontSize: 11,
@@ -101,7 +102,13 @@ class OwnerVerificationBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
+            VSPActionChip(
+              label: isArabic
+                  ? (hasStadiums ? 'مراجعة الملاعب' : 'إعداد ملعبي')
+                  : (hasStadiums ? 'Review Pitches' : 'Set Up Pitch'),
+              icon: hasStadiums ? Iconsax.edit_2_copy : Iconsax.add_circle_copy,
+              isOutlined: hasStadiums,
+              color: hasStadiums ? VSPColors.textSecondary : VSPColors.accent,
               onTap: () {
                 HapticFeedback.mediumImpact();
                 Navigator.push(
@@ -109,41 +116,6 @@ class OwnerVerificationBanner extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent,
-                  borderRadius: BorderRadius.circular(VSPRadius.sm),
-                  boxShadow: [
-                    BoxShadow(
-                      color: VSPColors.accent.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Iconsax.add_circle_copy,
-                      size: 14,
-                      color: Colors.black,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isArabic
-                          ? (hasStadiums ? 'ضبط الأسعار' : 'إعداد ملعبي ⛙️')
-                          : (hasStadiums ? 'Set Prices' : 'Set Up Pitch ⛙️'),
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),

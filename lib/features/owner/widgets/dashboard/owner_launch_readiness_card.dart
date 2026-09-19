@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/components/vsp_button.dart';
 
 /// بطاقة مراحل إطلاق المنشأة للمالك غير المعتمد بعد.
 ///
@@ -98,7 +99,7 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
             icon: _isRejected
                 ? Iconsax.close_circle_copy
                 : Iconsax.timer_1_copy,
-            iconColor: _isRejected ? VSPColors.error : const Color(0xFFF59E0B),
+            iconColor: _isRejected ? VSPColors.error : VSPColors.warning,
             title: isArabic ? 'مراجعة المستندات' : 'Document Review',
             subtitle: _isRejected
                 ? (isArabic ? 'مطلوب إعادة الرفع' : 'Re-upload Required')
@@ -107,10 +108,10 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
                     : (isArabic ? 'لم يتم الرفع بعد' : 'Not Submitted Yet'),
             subtitleColor: _isRejected
                 ? VSPColors.error
-                : const Color(0xFFF59E0B),
+                : VSPColors.warning,
             isArabic: isArabic,
             trailingWidget: _isRejected
-                ? _ActionChip(
+                ? VSPActionChip(
                     label: isArabic ? 'إعادة الرفع' : 'Re-upload',
                     onTap: onResubmitDocs,
                     color: VSPColors.error,
@@ -129,18 +130,20 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
                 : VSPColors.textSecondary,
             title: isArabic ? 'إعداد الملاعب والأسعار' : 'Configure Pitches & Prices',
             subtitle: hasStadium
-                ? (isArabic ? 'تمت الإضافة، راجع الأسعار' : 'Added — review pricing')
-                : (isArabic ? 'أضف ملعبك الآن لتكون جاهزاً' : 'Add your pitch to be ready at launch'),
+                ? (isArabic ? 'تم إعداد الملاعب وتحديد الأسعار بنجاح' : 'Pitches & pricing configured')
+                : (isArabic ? 'أضف ملاعبك لتكون جاهزاً فور الاعتماد' : 'Add your pitch to be ready at launch'),
             subtitleColor: hasStadium
                 ? VSPColors.accent
                 : VSPColors.textSecondary,
             isArabic: isArabic,
-            trailingWidget: _ActionChip(
+            trailingWidget: VSPActionChip(
               label: hasStadium
-                  ? (isArabic ? 'ضبط الأسعار' : 'Set Prices')
+                  ? (isArabic ? 'تعديل' : 'Edit')
                   : (isArabic ? 'إضافة ملعب' : 'Add Pitch'),
+              icon: hasStadium ? Iconsax.edit_2_copy : Iconsax.add_circle_copy,
+              isOutlined: hasStadium,
+              color: hasStadium ? VSPColors.textSecondary : VSPColors.accent,
               onTap: onAddStadium,
-              color: VSPColors.accent,
             ),
           ),
           const _StepDivider(),
@@ -151,8 +154,8 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
             iconColor: Colors.white30,
             title: isArabic ? 'استقبال الحجوزات' : 'Go Live — Receive Bookings',
             subtitle: isArabic
-                ? 'يُفعَّل تلقائياً فور الاعتماد الإداري'
-                : 'Activates automatically upon admin approval',
+                ? 'يُفعّل بعد اكتمال التحقق وتأكيد جاهزية الملاعب'
+                : 'Activates after approval and pitch readiness check',
             subtitleColor: Colors.white38,
             isArabic: isArabic,
           ),
@@ -235,44 +238,6 @@ class _StepDivider extends StatelessWidget {
       color: Colors.white.withValues(alpha: 0.06),
       height: 1,
       thickness: 1,
-    );
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final Color color;
-
-  const _ActionChip({
-    required this.label,
-    required this.onTap,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(VSPRadius.sm),
-          border: Border.all(
-            color: color.withValues(alpha: 0.4),
-            width: 0.8,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
     );
   }
 }

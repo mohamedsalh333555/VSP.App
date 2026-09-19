@@ -166,9 +166,18 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       if (cursor == 0) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-                          child: Text(
-                            l10n.upcoming,
-                            style: Theme.of(context).textTheme.titleLarge,
+                          child: Row(
+                            children: [
+                              const Icon(Iconsax.calendar_tick_copy, size: 18, color: VSPColors.accent),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.upcoming,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
                           ),
                         );
                       }
@@ -195,12 +204,31 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
                     if (hasHistory) {
                       if (cursor == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-                          child: Text(
-                            l10n.history,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (hasUpcoming) ...[
+                              const SizedBox(height: VSPSpacing.sm),
+                              const Divider(color: VSPColors.divider, height: 1),
+                              const SizedBox(height: VSPSpacing.lg),
+                            ],
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                              child: Row(
+                                children: [
+                                  const Icon(Iconsax.clock_copy, size: 18, color: VSPColors.textSecondary),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l10n.history,
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          color: VSPColors.textSecondary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         );
                       }
                       cursor -= 1;

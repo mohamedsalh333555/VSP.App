@@ -9,6 +9,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import 'subscription_plans_screen.dart';
 
 import '../widgets/add_stadium/add_stadium_step_indicator.dart';
 import '../widgets/add_stadium/stadium_wizard_controllers.dart';
@@ -50,6 +51,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final bool _isUploading = false;
   bool _isLocationLoading = false;
   bool _isSaving = false;
+  bool _isLimitExceeded = false;
+  int _allowedStadiumsCount = 1;
+  int _currentStadiumsCount = 0;
   double? _latitude;
   double? _longitude;
   String? _governorate;
@@ -92,6 +96,22 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   Future<void> _loadPersistedForm() async {
     if (widget.stadiumId != null) return;
     try {
+      final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      final user = auth.userModel;
+      if (user != null) {
+        _allowedStadiumsCount = user.maxStadiums;
+        final stadiums = await _databaseService.getOwnerStadiums(user.uid).first;
+        _currentStadiumsCount = stadiums.length;
+        if (_currentStadiumsCount >= _allowedStadiumsCount && _allowedStadiumsCount > 0) {
+          if (mounted) {
+            setState(() {
+              _isLimitExceeded = true;
+            });
+          }
+          return;
+        }
+      }
+
       final draft = await StadiumWizardDraftService.loadDraft(_uid);
       if (!mounted) return;
 
@@ -372,6 +392,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLimitExceeded) {
+      return _buildLimitReachedView(context);
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -466,6 +490,111 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// واجهة توضيحية هادئة عند الوصول للحد الأقصى للملاعب مع زر ترقية مباشر
+  Widget _buildLimitReachedView(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      appBar: AppBar(
+        backgroundColor: VSPColors.background,
+        leading: const VSPBackButton(),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          isArabic ? 'سعة الملاعب' : 'Stadium Capacity',
+          style: Theme.of(context).textTheme.displaySmall,
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: VSPColors.accent.withValues(alpha: 0.35),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(
+                  Iconsax.crown_1_copy,
+                  color: VSPColors.accent,
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                isArabic ? 'وصلت للحد الأقصى للملاعب' : 'Stadium Limit Reached',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 21,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isArabic
+                    ? 'باقتك الحالية تسمح بإدارة ($_allowedStadiumsCount) ملاعب فقط. لقد سجلت بالفعل ($_currentStadiumsCount) ملاعب.\n\nللترقية وإدارة حتى 3 ملاعب كاملة والاستفادة من الذكاء الاصطناعي VSP Copilot، قم بالترقية للباقة الاحترافية (Pro).'
+                    : 'Your current plan allows up to $_allowedStadiumsCount stadiums. You already have $_currentStadiumsCount stadiums registered.\n\nTo manage up to 3 stadiums and unlock VSP Copilot AI, upgrade to the Pro Plan.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 13.5,
+                  height: 1.55,
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                    shape: const StadiumBorder(),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    isArabic ? 'ترقية للباقة الاحترافية' : 'Upgrade to Pro Plan',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  isArabic ? 'العودة' : 'Go Back',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

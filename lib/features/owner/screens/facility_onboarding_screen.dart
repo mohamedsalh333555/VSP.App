@@ -59,15 +59,23 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
   }
 
- @override
- Widget build(BuildContext context) {
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.id ?? '';
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.userModel;
+    final uid = user?.uid ?? authProvider.currentUser?.id ?? '';
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
- backgroundColor: VSPColors.background,
- body: SafeArea(
+    // إذا كان المالك قد أكد التهيئة بالفعل، ينتقل تلقائياً للوحة التحكم
+    if (user != null && user.isOnboardingConfirmed && (user.hasStadium || user.isOwner)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/owner');
+      });
+    }
+
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: SafeArea(
         child: StreamBuilder<List<Stadium>>(
           stream: _getStadiumsStream(uid),
           builder: (context, snapshot) {
@@ -420,6 +428,32 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: Text(
  isAr ? 'متابعة لرفع الوثائق' : 'Continue to Upload Docs',
  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+ ),
+ ),
+ ),
+ const SizedBox(height: 10),
+ TextButton(
+ onPressed: () async {
+ final uid = authProvider.currentUser?.uid;
+ final updatedAdditional =
+ FacilityOnboardingService.buildOnboardingConfirmedPayload(
+ authProvider.userModel?.additionalData,
+ );
+ if (uid != null) {
+ await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
+ }
+ await authProvider.updateProfile({
+ 'additionalData': updatedAdditional,
+ });
+ if (!context.mounted) return;
+ context.go('/owner');
+ },
+ child: Text(
+ isAr ? 'الانتقال إلى لوحة التحكم' : 'Go to Dashboard',
+ style: const TextStyle(
+ color: VSPColors.textSecondary,
+ fontWeight: FontWeight.w600,
+ fontSize: 14,
  ),
  ),
  ),

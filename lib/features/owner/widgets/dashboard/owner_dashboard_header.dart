@@ -202,22 +202,26 @@ class OwnerDashboardHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Badge Pill (Pro / Basic / Free Trial)
+                    // Badge Pill (Pro / Basic / Free Trial / Under Review)
                     Row(
                       children: [
                         GestureDetector(
-                          onTap: onUpgrade,
+                          onTap: isVerified ? onUpgrade : null,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                             decoration: BoxDecoration(
                               color: isProOwner
                                   ? VSPColors.accent.withValues(alpha: 0.14)
-                                  : Colors.white.withValues(alpha: 0.05),
+                                  : (isVerified
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : VSPColors.warning.withValues(alpha: 0.12)),
                               borderRadius: BorderRadius.circular(VSPRadius.full),
                               border: Border.all(
                                 color: isProOwner
                                     ? VSPColors.accent.withValues(alpha: 0.35)
-                                    : Colors.white.withValues(alpha: 0.08),
+                                    : (isVerified
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : VSPColors.warning.withValues(alpha: 0.35)),
                                 width: 0.8,
                               ),
                             ),
@@ -228,9 +232,11 @@ class OwnerDashboardHeader extends StatelessWidget {
                                       ? (isTrial
                                           ? (isArabic ? 'فترة مجانية' : 'Free Trial')
                                           : 'Basic')
-                                      : (isArabic ? 'قيد التوثيق' : 'Pending Review'),
+                                      : (isArabic ? 'قيد التدقيق الإداري' : 'Under Review'),
                               style: TextStyle(
-                                color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
+                                color: isProOwner
+                                    ? VSPColors.accent
+                                    : (isVerified ? VSPColors.textSecondary : VSPColors.warning),
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,
@@ -255,7 +261,7 @@ class OwnerDashboardHeader extends StatelessWidget {
         if (Provider.of<RemoteConfigService>(context).copilotEnabled) ...[
           const SizedBox(width: 4),
 
-          // VSP Copilot (AI) Button - Exclusive to Pro Plan (1000 EGP)
+          // VSP Copilot (AI) Button - Exclusive to Pro Plan
           IconButton(
             icon: const GeminiAIIcon(size: 22),
             padding: EdgeInsets.zero,
@@ -271,12 +277,145 @@ class OwnerDashboardHeader extends StatelessWidget {
   void _handleCopilotTap(BuildContext context) {
     HapticFeedback.lightImpact();
     final bool hasPro = isProOwner || (auth.userModel?.isProPlan == true);
+    final bool isVerified = auth.userModel?.isVerifiedForOperations == true;
 
     if (hasPro) {
       context.push('/copilot');
+    } else if (!isVerified) {
+      // Guard: حساب غير معتمد — منع بيع الخدمة قبل الأوان وعرض معاينة إرشادية
+      _showCopilotEducationalModal(context);
     } else {
+      // حساب معتمد رسمي — عرض الترقية الاحترافية مع تفاصيل واضحة
       _showCopilotUpgradeModal(context);
     }
+  }
+
+  /// نافذة تعريفية استكشافية للمالك غير المعتمد بعد (تمنع التحصيل المالي المسبق)
+  void _showCopilotEducationalModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 28,
+              spreadRadius: 4,
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // AI Glow Icon
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.surfaceAlt,
+                  border: Border.all(
+                    color: VSPColors.accent.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Center(
+                  child: GeminiAIIcon(size: 32),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Educational Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 0.8),
+                ),
+                child: Text(
+                  isArabic ? 'ميزة ذكية للمنشآت المعتمدة' : 'Exclusive Feature for Verified Venues',
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Text(
+                isArabic ? 'مساعد الذكاء الاصطناعي VSP Copilot' : 'VSP AI Copilot for Owners',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              Text(
+                isArabic
+                    ? 'كابتن VSP الذكي صُمم لتحليل حجوزات منشأتك، واقتراح التسعير الديناميكي لساعات الذروة، وإدارة المنشأة آلياً.\n\nسيتوفر فور اعتماد أوراق منشأتك وبدء استقبال الحجوزات لمساعدتك على مضاعفة أرباحك.'
+                    : 'VSP Copilot analyzes booking flows and suggests peak-hour dynamic pricing.\n\nWill unlock automatically once your venue is approved and live.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.surfaceAlt,
+                    foregroundColor: VSPColors.textPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                    ),
+                  ),
+                  child: Text(
+                    isArabic ? 'حسناً، متابعة إعداد المنشأة' : 'Got it, continue setup',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showCopilotUpgradeModal(BuildContext context) {
@@ -288,7 +427,7 @@ class OwnerDashboardHeader extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         decoration: BoxDecoration(
           color: VSPColors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.lg)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
           border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25), width: 1),
           boxShadow: [
             BoxShadow(
@@ -339,7 +478,7 @@ class OwnerDashboardHeader extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Pro Badge
+              // Pro Badge with transparent billing cycle
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -348,7 +487,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 0.8),
                 ),
                 child: Text(
-                  isArabic ? 'باقة 1000 ج.م الاحترافية (PRO)' : 'PRO Plan Exclusive (1000 EGP)',
+                  isArabic ? 'باقة 1000 ج.م الاحترافية (PRO) - شهرياً' : 'PRO Plan Exclusive (1000 EGP / mo)',
                   style: const TextStyle(
                     color: VSPColors.accent,
                     fontSize: 11,
@@ -409,7 +548,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                       const Icon(Iconsax.crown_1_copy, color: Colors.black, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        isArabic ? 'ترقية لباقة 1000 ج.م الآن' : 'Upgrade to Pro Plan (1000 EGP)',
+                        isArabic ? 'ترقية لباقة 1000 ج.م شهرياً' : 'Upgrade to Pro Plan (1000 EGP / mo)',
                         style: const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w900,

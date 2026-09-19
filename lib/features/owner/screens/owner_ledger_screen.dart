@@ -90,7 +90,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -140,22 +140,6 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             }
           }
 
-          if (transactions.isEmpty && _summary == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Iconsax.receipt_2_1_copy, size: 36, color: Color(0xFFA1A1AA)),
-                  const SizedBox(height: 12),
-                  Text(
-                    isAr ? 'لا توجد معاملات مالية مسجلة بعد' : 'No financial transactions yet',
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            );
-          }
-
           return Column(
             children: [
               // كارت الرصيد الإلكتروني المتاح للسحب
@@ -174,21 +158,65 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
               const SizedBox(height: 8),
 
-              // قائمة المعاملات
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 4),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: transactions.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    return OwnerLedgerTransactionItem(
-                      transaction: transactions[index],
-                      isAr: isAr,
-                    );
-                  },
+              // قائمة المعاملات أو الحالة التوضيحية للمالك الجديد
+              if (transactions.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Iconsax.receipt_2_1_copy, size: 26, color: VSPColors.accent),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            isAr ? 'لا توجد حركات مالية حتى الآن' : 'No Financial Transactions Yet',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isAr
+                                ? 'ستبدأ أرباحك وعمليات التحصيل بالظهور تلقائياً هنا فور إتمام أول حجز بالملعب أو استلام عربون إلكتروني.'
+                                : 'Your revenue and payouts will appear automatically here as soon as bookings or digital deposits are recorded.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 4),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: transactions.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      return OwnerLedgerTransactionItem(
+                        transaction: transactions[index],
+                        isAr: isAr,
+                      );
+                    },
+                  ),
                 ),
-              ),
             ],
           );
         },

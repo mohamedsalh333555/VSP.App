@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -70,6 +71,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final bool isPro = userModel?.isProPlan == true;
     final bool isTrialOrBasic = userModel?.isInActiveTrial == true ||
         (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true);
+    final bool isVerified = userModel?.isVerifiedForOperations == true;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -95,6 +97,12 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             // ── 1. شريط حالة الاشتراك الهادئ ──
             if (userModel != null) _buildCompactStatusHeader(userModel, isArabic),
 
+            // ── تنبيه الحساب غير المعتمد ──
+            if (userModel != null && !isVerified) ...[
+              const SizedBox(height: 12),
+              _buildVerificationLockedBanner(context, isArabic, userModel),
+            ],
+
             const SizedBox(height: 16),
 
             // ── 2. الباقة الأساسية (Basic Plan) ──
@@ -106,16 +114,26 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               badgeColor: VSPColors.accent,
               isHighlighted: false,
               isCurrentPlan: isTrialOrBasic,
-              buttonText: isTrialOrBasic
-                  ? (isArabic ? 'باقتك الحالية (فترة تجريبية)' : 'Current Plan (Free Trial)')
-                  : (isArabic ? 'ابدأ مجاناً (أول شهرين)' : 'Start Free (1st 2 Months)'),
+              isVerified: isVerified,
+              buttonText: !isVerified
+                  ? (isArabic ? 'يتطلب توثيق المنشأة' : 'Verification Required')
+                  : (isTrialOrBasic
+                      ? (isArabic ? 'باقتك الحالية (فترة تجريبية)' : 'Current Plan (Free Trial)')
+                      : (isArabic ? 'ابدأ مجاناً (أول شهرين)' : 'Start Free (1st 2 Months)')),
               features: [
                 isArabic ? 'تشغيل وإدارة ملعب واحد فقط (1)' : 'Full operation for 1 stadium only',
                 isArabic ? 'استقبال الحجوزات النقدية والأونلاين ومنع التضارب' : 'Accept Cash & Online bookings with conflict prevention',
                 isArabic ? 'فترة تجريبية مجانية شهرين بالكامل لتقييم المنظومة' : 'Full 2-month free evaluation period',
                 isArabic ? 'تنظيم وإدارة البطولات والكؤوس لجميع الفرق مجاناً' : 'Free Tournament creation & cup management',
               ],
-              onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
+              onSelect: !isVerified
+                  ? () => VSPFeedback.showWarning(
+                        context,
+                        isArabic
+                            ? 'لا يمكن تفعيل باقات الاشتراك قبل اعتماد أوراق المنشأة وتوثيق الحساب.'
+                            : 'Subscription activation requires verified facility documents.',
+                      )
+                  : () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
               isArabic: isArabic,
             ),
 
@@ -130,9 +148,12 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               badgeColor: VSPColors.accent,
               isHighlighted: true,
               isCurrentPlan: isPro,
-              buttonText: isPro
-                  ? (isArabic ? 'باقتك الحالية المفعلة' : 'Current Active Plan')
-                  : (isArabic ? 'ترقية للباقة الاحترافية' : 'Upgrade to Pro Plan'),
+              isVerified: isVerified,
+              buttonText: !isVerified
+                  ? (isArabic ? 'يتطلب توثيق المنشأة' : 'Verification Required')
+                  : (isPro
+                      ? (isArabic ? 'باقتك الحالية المفعلة' : 'Current Active Plan')
+                      : (isArabic ? 'ترقية للباقة الاحترافية' : 'Upgrade to Pro Plan')),
               features: [
                 isArabic ? 'مساعد الذكاء الاصطناعي VSP Copilot لتحليل الأداء وتوقع الحجوزات' : 'VSP AI Copilot for smart pitch management & insights',
                 isArabic ? 'تشغيل وإدارة حتى 3 ملاعب كاملة' : 'Operate up to 3 stadiums at full capacity',
@@ -141,7 +162,14 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 isArabic ? 'تصدير السجل المالي والتقارير المحاسبية بضغطة زر' : '1-Click financial ledger & reports export',
                 isArabic ? 'دعم فني وتثبيت تشغيلي ذو أولوية على مدار الساعة' : '24/7 Priority support & operational stability',
               ],
-              onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
+              onSelect: !isVerified
+                  ? () => VSPFeedback.showWarning(
+                        context,
+                        isArabic
+                            ? 'لا يمكن تفعيل باقات الاشتراك قبل اعتماد أوراق المنشأة وتوثيق الحساب.'
+                            : 'Subscription activation requires verified facility documents.',
+                      )
+                  : () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
               isArabic: isArabic,
             ),
 
@@ -226,6 +254,102 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
   }
 
+  /// تنبيه إيقاف الباقات للمالك غير المعتمد لتوجيهه لرفع وتوثيق الأوراق
+  Widget _buildVerificationLockedBanner(BuildContext context, bool isArabic, UserModel user) {
+    final bool isRejected = user.verificationStatus == 'rejected';
+    final bool isUnderReview = user.verificationStatus == 'under_review';
+
+    final String title = isArabic
+        ? (isRejected
+            ? 'تم رفض توثيق المنشأة'
+            : (isUnderReview ? 'أوراق المنشأة قيد المراجعة' : 'الحساب بانتظار توثيق المنشأة'))
+        : (isRejected
+            ? 'Verification Rejected'
+            : (isUnderReview ? 'Documents Under Review' : 'Facility Verification Required'));
+
+    final String desc = isArabic
+        ? (isRejected
+            ? 'يرجى مراجعة سبب الرفض وإعادة رفع المستندات لتتمكن من تفعيل الاشتراكات والتشغيل.'
+            : (isUnderReview
+                ? 'جارٍ مراجعة مستندات منشأتك من قِبل الإدارة. ستتم إتاحة تفعيل الباقات والترقية فور الاعتماد.'
+                : 'يجب رفع مستندات إثبات ملكية المنشأة واعتمادها أولاً لتفعيل باقات الاشتراك والتشغيل الرسمي.'))
+        : (isRejected
+            ? 'Please review the rejection reason and resubmit docs to enable subscriptions.'
+            : (isUnderReview
+                ? 'Your documents are under review. Subscriptions and upgrades unlock once approved.'
+                : 'Upload facility verification documents to unlock subscriptions and operations.'));
+
+    final Color statusColor = isRejected ? VSPColors.error : VSPColors.warning;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.3),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isRejected ? Iconsax.close_circle_copy : Iconsax.info_circle_copy,
+                color: statusColor,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            desc,
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
+            ),
+          ),
+          if (!isUnderReview) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 38,
+              child: ElevatedButton.icon(
+                onPressed: () => context.push('/documentation'),
+                icon: const Icon(Iconsax.document_upload_copy, size: 16),
+                label: Text(
+                  isArabic ? 'رفع مستندات المنشأة' : 'Upload Facility Documents',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: statusColor,
+                  foregroundColor: Colors.black,
+                  shape: const StadiumBorder(),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   /// كارد الباقة الموحد المتوافق 100% مع نظام تصميم VSP (Design System VSP Tokens)
   Widget _buildPlanCard({
     required String title,
@@ -239,6 +363,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     required bool isArabic,
     bool isHighlighted = false,
     bool isCurrentPlan = false,
+    bool isVerified = true,
   }) {
     const tajawal = 'Tajawal';
     const poppins = 'Poppins';
@@ -433,21 +558,30 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         ],
                       ),
                     )
-                  : ElevatedButton(
+                  : ElevatedButton.icon(
+                      icon: !isVerified
+                          ? const Icon(Iconsax.lock_copy, size: 16)
+                          : const SizedBox.shrink(),
                       onPressed: onSelect,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isHighlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
-                        foregroundColor: isHighlighted ? Colors.black : Colors.white,
-                        elevation: isHighlighted ? 6 : 0,
-                        shadowColor: isHighlighted
-                            ? VSPColors.accent.withValues(alpha: 0.45)
-                            : Colors.transparent,
+                        backgroundColor: !isVerified
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : (isHighlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08)),
+                        foregroundColor: !isVerified
+                            ? VSPColors.textSecondary
+                            : (isHighlighted ? Colors.black : Colors.white),
+                        elevation: (!isVerified || !isHighlighted) ? 0 : 6,
+                        shadowColor: (!isVerified || !isHighlighted)
+                            ? Colors.transparent
+                            : VSPColors.accent.withValues(alpha: 0.45),
                         shape: const StadiumBorder(), // زر بيضاوي موحد مع باقي أزرار التطبيق
                       ),
-                      child: Text(
+                      label: Text(
                         buttonText,
                         style: TextStyle(
-                          color: isHighlighted ? Colors.black : Colors.white,
+                          color: !isVerified
+                              ? VSPColors.textSecondary
+                              : (isHighlighted ? Colors.black : Colors.white),
                           fontWeight: FontWeight.w800,
                           fontSize: 13.5,
                           fontFamily: tajawal,
@@ -465,6 +599,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Future<void> _contactAdminForUpgrade(BuildContext context, String planName, bool isArabic) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.userModel;
+
+    // الحماية التشغيلية: لا يمكن تفعيل الاشتراكات للمالك غير المعتمد
+    if (user?.isVerifiedForOperations != true) {
+      VSPFeedback.showWarning(
+        context,
+        isArabic
+            ? 'حسابك بانتظار الاعتماد. تفعيل باقات الاشتراك متاح فور اعتماد أوراق المنشأة وتوثيق الحساب.'
+            : 'Your account is pending verification. Upgrades unlock once facility docs are approved.',
+      );
+      return;
+    }
+
     final ownerName = user?.name ?? (isArabic ? 'المالك' : 'Owner');
     final ownerPhone = user?.phone ?? '';
     final ownerId = user?.uid ?? '';

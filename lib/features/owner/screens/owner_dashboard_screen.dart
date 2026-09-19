@@ -29,6 +29,7 @@ import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
 import '../widgets/dashboard/owner_quick_cash_card.dart';
 import '../widgets/dashboard/owner_launch_readiness_card.dart';
+import '../widgets/dashboard/owner_pro_upgrade_teaser.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -317,6 +318,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       }
                     },
                   ),
+                  if (userModel.isVerifiedForOperations) ...[
+                    const SizedBox(height: 16),
+                    OwnerProUpgradeTeaser(
+                      onUpgrade: () => _showProUpgradeSheet(context),
+                      isArabic: isArabic,
+                      isVerified: userModel.isVerifiedForOperations,
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 80),
               ],

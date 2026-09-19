@@ -149,12 +149,19 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  _prefetchUsers(otherUserIds);
 
  if (conversations.isEmpty) {
+ final userModel = auth.userModel;
+ final isVerified = userModel?.isVerifiedForOperations == true;
+
  return VSPEmptyState(
  icon: Iconsax.messages_3_copy,
- title: isArabic ? 'لا توجد محادثات نشطة' : 'No active chats',
- subtitle: isArabic 
- ? 'ستظهر هنا المحادثات مع اللاعبين والدعم الفني.' 
- : 'Chats with players and support will appear here.',
+ title: isArabic ? 'صندوق الوارد فارغ' : 'Inbox is empty',
+ subtitle: !isVerified
+ ? (isArabic
+ ? 'مرحباً بك في VSP! سيبدأ اللاعبون بالتواصل معك والاستفسار عن الملاعب فور توثيق واعتماد منشأتك. يمكنك دائماً التواصل مع الدعم الفني لأي مساعدة.'
+ : 'Welcome to VSP! Players will contact you about bookings once your facility is approved. You can contact support anytime.')
+ : (isArabic
+ ? 'لا توجد محادثات نشطة حالياً. ستظهر هنا استفسارات اللاعبين حول الحجوزات، بالإضافة لمحادثات الدعم الفني.'
+ : 'No active conversations. Player inquiries about pitch bookings and support chats will appear here.'),
  buttonText: isArabic ? 'تواصل مع الدعم الفني' : 'Contact Support',
  onButtonPressed: () => _openSupportChat(context),
  );

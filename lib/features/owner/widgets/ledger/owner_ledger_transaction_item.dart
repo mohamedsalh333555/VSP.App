@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Single transaction item row in owner financial ledger.
 class OwnerLedgerTransactionItem extends StatelessWidget {
@@ -45,9 +46,9 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.borderLight),
       ),
       child: Row(
         children: [
@@ -57,12 +58,12 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   formattedDate,
-                  style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                 ),
               ],
             ),
@@ -70,7 +71,7 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
           Text(
             amountText,
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.textPrimary,
               fontWeight: FontWeight.w800,
               fontSize: 14,
             ),

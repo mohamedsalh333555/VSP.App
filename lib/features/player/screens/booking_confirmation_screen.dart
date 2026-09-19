@@ -5,6 +5,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/booking/booking_bottom_bar.dart';
@@ -124,6 +125,35 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _handleBookingConfirmation() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    if (widget.stadium.isBlocked) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'هذا الملعب متوقف مؤقتاً عن استقبال الحجوزات بأمر الإدارة.'
+            : 'This stadium is temporarily blocked from accepting bookings.',
+      );
+      return;
+    }
+    if (widget.stadium.isUnderMaintenance) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الملعب قيد الصيانة حالياً (${widget.stadium.maintenanceReason ?? "أعمال صيانة"}).'
+            : 'Stadium is currently under maintenance.',
+      );
+      return;
+    }
+    if (!widget.stadium.isVerified) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'عذراً، هذا الملعب غير معتمد تشغيلياً بعد ولا يمكن حجز فترات به حالياً.'
+            : 'Sorry, this stadium is not verified for operations yet.',
+      );
+      return;
+    }
+
     await BookingConfirmationHandler.run(
       context: context,
       stadium: widget.stadium,

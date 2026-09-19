@@ -9,6 +9,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../widgets/tournament/cups/cups_tab_selector.dart';
 import '../widgets/tournament/cups/cups_filter_dropdowns.dart';
 import '../widgets/tournament/cups/owner_cup_card.dart';
@@ -78,7 +79,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true, extra: 14.0),
               ),
               child: FloatingActionButton(
-                onPressed: () => showOwnerCupFormatModal(context),
+                onPressed: () => _handleCreateTournament(context, isArabic),
                 backgroundColor: VSPColors.accent,
                 shape: const CircleBorder(),
                 elevation: 6,
@@ -173,7 +174,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     selectedTab: _selectedTab,
                     hasAnyChampionships: championships.isNotEmpty,
                     createFirstText: l10n.createYourFirst,
-                    onOpenFormatSheet: () => showOwnerCupFormatModal(context),
+                    onOpenFormatSheet: () => _handleCreateTournament(context, isArabic),
                   );
                 }
 
@@ -199,5 +200,20 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         ],
       ),
     );
+  }
+
+  void _handleCreateTournament(BuildContext context, bool isArabic) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    if (user?.isVerifiedForOperations != true) {
+      VSPFeedback.showWarning(
+        context,
+        isArabic
+            ? 'تنظيم البطولات متاح للمنشآت المعتمدة رسمياً. يرجى توثيق أوراق المنشأة أولاً.'
+            : 'Tournament creation is enabled for verified facilities. Please complete verification first.',
+      );
+      return;
+    }
+    showOwnerCupFormatModal(context);
   }
 }

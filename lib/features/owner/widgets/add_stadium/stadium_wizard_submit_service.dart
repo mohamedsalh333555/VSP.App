@@ -63,6 +63,28 @@ class StadiumWizardSubmitService {
         return false;
       }
 
+      // التحقق من سعة باقة المالك قبل إنشاء ملعب جديد
+      if (stadiumId == null) {
+        final userModel = auth.userModel;
+        final maxAllowed = userModel?.maxStadiums ?? 1;
+        try {
+          final currentStadiums = await databaseService.getOwnerStadiums(user.uid).first;
+          if (currentStadiums.length >= maxAllowed) {
+            if (!context.mounted) return false;
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            VSPFeedback.showWarning(
+              context,
+              isArabic
+                  ? 'لقد بلغت الحد الأقصى للملاعب المسموح بها في باقتك ($maxAllowed ملعب). يرجى الترقية لإضافة المزيد.'
+                  : 'You have reached the stadium limit ($maxAllowed) for your plan. Please upgrade to add more.',
+            );
+            return false;
+          }
+        } catch (e) {
+          debugPrint('Error verifying stadium capacity limit: $e');
+        }
+      }
+
       final stadiumFeatures = StadiumWizardPayloadBuilder.buildFeatures(
         stadiumPhone: stadiumPhone,
         sportType: sportType,
