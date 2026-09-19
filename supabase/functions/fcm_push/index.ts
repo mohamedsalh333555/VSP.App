@@ -11,7 +11,6 @@ serve(async (req: Request) => {
   try {
     // 0. Security Guard: Verify Authorization Token (Strict Fail-Closed)
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
@@ -22,8 +21,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const isAuthorized = (serviceRoleKey && token === serviceRoleKey) ||
-                         (anonKey && token === anonKey);
+    const isAuthorized = Boolean(serviceRoleKey && token === serviceRoleKey);
 
     if (!isAuthorized) {
       console.error("🚨 Unauthorized access attempt to fcm_push endpoint");
