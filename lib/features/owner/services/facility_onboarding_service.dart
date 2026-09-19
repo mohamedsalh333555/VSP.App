@@ -27,7 +27,7 @@ class FacilityOnboardingService {
     required UserModel user,
     required bool isArabic,
   }) {
-    if (user.isInActiveTrial) {
+    if (user.isInActiveTrial || user.subscriptionPlan == 'free_trial') {
       return isArabic
           ? 'اشتراك مجاني — فترة تجريبية شهرين'
           : 'Free Trial — 2 Month Plan';
@@ -37,7 +37,7 @@ class FacilityOnboardingService {
 
   /// Calculates remaining trial days safely.
   static int getTrialDaysRemaining(UserModel user) {
-    if (!user.isInActiveTrial || user.effectiveTrialEndsAt == null) {
+    if ((!user.isInActiveTrial && user.subscriptionPlan != 'free_trial') || user.effectiveTrialEndsAt == null) {
       return 0;
     }
     final diff = user.effectiveTrialEndsAt!.difference(DateTime.now()).inDays;

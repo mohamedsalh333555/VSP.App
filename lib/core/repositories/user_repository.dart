@@ -392,7 +392,7 @@ class UserRepository {
           })
           .eq('id', uid);
       return true;
-    } catch (e, stack) {
+    } catch (e) {
       VSPLogger.w('Error updating is_onboarding_confirmed, trying additional_data fallback: $e');
       try {
         final current = await _supabase.from('users').select('additional_data').eq('id', uid).maybeSingle();

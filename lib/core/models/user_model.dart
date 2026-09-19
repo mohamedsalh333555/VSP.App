@@ -110,7 +110,7 @@ class UserModel {
 
   int get maxStadiums {
     if (isProPlan) return 3;
-    if (isBasicOrHigher || isInActiveTrial) return 1;
+    if (isBasicOrHigher || isInActiveTrial || subscriptionPlan == 'free_trial') return 1;
     return 0;
   }
 
