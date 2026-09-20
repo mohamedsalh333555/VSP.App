@@ -86,6 +86,7 @@ class AiNavigationRouter {
           return true;
 
         case 'OWNER_VIEW_UPCOMING_BOOKINGS':
+        case 'OWNER_CREATE_MANUAL_BOOKING':
           _safeGoPop();
           ownerMainScreenKey.currentState?.switchToTab(3);
           return true;
