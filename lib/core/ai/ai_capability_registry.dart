@@ -191,6 +191,17 @@ class AiCapabilityRegistry {
     descriptionAr: 'فتح شاشة تفاصيل الماتش لتأكيد المغادرة',
   );
 
+  static const playerDeleteAccount = AiCapability(
+    id: 'PLAYER_DELETE_ACCOUNT',
+    role: 'player',
+    canExecuteByAi: false,
+    actionType: AiActionType.navigate,
+    destinationRoute: '/player',
+    confirmationRequired: true,
+    riskLevel: AiRiskLevel.high,
+    descriptionAr: 'فتح إعدادات الحساب لحذف الحساب بعد تأكيد المستخدم',
+  );
+
   static const playerLeaveTournament = AiCapability(
     id: 'PLAYER_LEAVE_TOURNAMENT',
     role: 'player',
@@ -326,6 +337,7 @@ class AiCapabilityRegistry {
     playerViewNotifications,
     playerMyTeam,
     playerLeaveMatch,
+    playerDeleteAccount,
     playerLeaveTournament,
     // Owner
     ownerCreateManualBooking,
