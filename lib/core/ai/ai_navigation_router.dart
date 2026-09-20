@@ -41,10 +41,35 @@ class AiNavigationRouter {
     // ── 3. Capability-aware routing ───────────────────────────────────────────
     final cap = AiCapabilityRegistry.getById(action.capabilityId);
 
-    if (isOwner) {
-      return _routeOwner(action, cap);
+    // A capability-bearing action must resolve through the trusted registry.
+    // Do not fall back to a model-generated route for known capabilities.
+    if (action.hasCapability && cap == null) {
+      debugPrint('[AiNavigationRouter] rejected unknown capability: ${action.capabilityId}');
+      return false;
     }
-    return _routePlayer(action, cap);
+
+    if (cap != null) {
+      final normalizedRoleIsOwner = isOwner;
+      final roleMatches = cap.role == 'any' ||
+          (normalizedRoleIsOwner && (cap.role == 'owner' || cap.role == 'admin')) ||
+          (!normalizedRoleIsOwner && (cap.role == 'player' || cap.role == 'admin'));
+
+      if (!roleMatches) {
+        debugPrint('[AiNavigationRouter] rejected capability for current role: ${cap.id}');
+        return false;
+      }
+
+      if (isOwner) {
+        return _routeOwner(action, cap);
+      }
+      return _routePlayer(action, cap);
+    }
+
+    // Legacy actions without capability_id remain temporarily supported.
+    if (isOwner) {
+      return _routeOwner(action, null);
+    }
+    return _routePlayer(action, null);
   }
 
   // ---------------------------------------------------------------------------
