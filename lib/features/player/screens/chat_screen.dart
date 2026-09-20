@@ -137,8 +137,35 @@ class _ChatScreenState extends State<ChatScreen> {
                     ? widget.booking.ownerId
                     : widget.booking.userId;
                 if (otherUserId != null && otherUserId.isNotEmpty) {
-                  await ChatRepository().blockUser(otherUserId);
-                  if (mounted) Navigator.of(context).pop();
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      backgroundColor: VSPColors.surface,
+                      title: Text(isArabic ? 'حظر المستخدم؟' : 'Block User?'),
+                      content: Text(
+                        isArabic
+                            ? 'لن يتمكن هذا المستخدم من التواصل معك عبر المحادثات المدعومة بالحظر.'
+                            : 'This user will no longer be able to contact you through blocked chat interactions.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: Text(
+                            isArabic ? 'حظر' : 'Block',
+                            style: const TextStyle(color: VSPColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    await ChatRepository().blockUser(otherUserId);
+                    if (mounted) Navigator.of(context).pop();
+                  }
                 }
               } else if (value == 'report') {
                 ChatDialogs.showReportDialog(
