@@ -3351,6 +3351,40 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               };
 
               toolResponseData = finSummary || { success: false, error: finErr?.message };
+            } else if (funcName === "getOwnerStadiumComparison") {
+              if (effectiveUserRole !== "owner" || !ownerAiEnabled) {
+                toolResponseData = {
+                  success: false,
+                  message: "هذه الميزة متاحة لمالك الملعب المشترك في خدمة Owner AI فقط.",
+                };
+              } else {
+                const period = ["7d", "30d", "90d", "all"].includes(String(args.period || ""))
+                  ? String(args.period)
+                  : "30d";
+                const { data: comparison, error: comparisonErr } = await supabase.rpc(
+                  "get_owner_ai_stadium_comparison",
+                  { p_owner_id: callerUser.id, p_period: period },
+                );
+
+                if (comparisonErr || !comparison?.success) {
+                  toolResponseData = {
+                    success: false,
+                    message: "تعذر جلب مقارنة الملاعب من قاعدة البيانات حالياً.",
+                  };
+                } else {
+                  toolResponseData = comparison;
+                  const rows = Array.isArray(comparison.stadiums) ? comparison.stadiums : [];
+                  if (rows.length === 0) {
+                    assistantReply = "مفيش بيانات كافية عن ملاعبك في الفترة المطلوبة عشان أعمل مقارنة موثوقة.";
+                  } else {
+                    const lines = rows.map((s: any) =>
+                      `• ${s.stadium_name}: ${s.bookings_count ?? 0} حجز، إيراد محقق ${s.realized_revenue ?? 0} ج.م، ${s.booked_hours ?? 0} ساعة، إلغاءات ${s.cancellation_rate ?? 0}%`
+                    );
+                    assistantReply =
+                      `دي مقارنة ملاعبك بالأرقام المسجلة في النظام خلال ${period}:\n${lines.join("\n")}\n\nالأرقام دي وصف للبيانات فقط؛ لو محتاج تفسير سبب الفرق، لازم يكون مبني على معلومات إضافية.`;
+                  }
+                }
+              }
             } else if (funcName === "checkStadiumAvailability") {
               const stadiumId = (args.stadium_id || contextSnapshot.last_stadium_id || "").toString().trim();
               const stadiumName = (args.stadium_name || contextSnapshot.last_stadium_name || "").toString().trim();
