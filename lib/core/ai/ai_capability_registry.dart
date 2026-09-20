@@ -326,6 +326,15 @@ class AiCapabilityRegistry {
   // System Capabilities
   // -------------------------------------------------------------
 
+  static const userUpdateProfile = AiCapability(
+    id: 'USER_UPDATE_PROFILE',
+    role: 'any',
+    canExecuteByAi: true,
+    actionType: AiActionType.execute,
+    riskLevel: AiRiskLevel.low,
+    descriptionAr: 'تحديث بيانات الملف الشخصي المسموح بها من خلال المساعد',
+  );
+
   static const systemLogin = AiCapability(
     id: 'SYSTEM_LOGIN',
     role: 'any',
@@ -373,6 +382,7 @@ class AiCapabilityRegistry {
     ownerEditStadium,
     ownerRenewSubscription,
     // System
+    userUpdateProfile,
     systemLogin,
   ];
 
