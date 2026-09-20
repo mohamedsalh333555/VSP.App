@@ -242,6 +242,19 @@ class AiCapabilityRegistry {
     descriptionAr: 'استعلام الأرباح المكتملة، الرصيد المتاح للسحب، ومديونية الكاش',
   );
 
+  static const ownerViewOperationalInsights = AiCapability(
+    id: 'OWNER_VIEW_OPERATIONAL_INSIGHTS',
+    role: 'owner',
+    requiredEntitlement: 'owner_ai',
+    canExecuteByAi: true,
+    actionType: AiActionType.execute,
+    destinationRoute: '/owner',
+    requiredParams: ['period'],
+    confirmationRequired: false,
+    riskLevel: AiRiskLevel.low,
+    descriptionAr: 'قراءة مؤشرات التشغيل والإيرادات والإشغال والإلغاءات من بيانات النظام',
+  );
+
   static const ownerViewUpcomingBookings = AiCapability(
     id: 'OWNER_VIEW_UPCOMING_BOOKINGS',
     role: 'owner',
@@ -342,6 +355,7 @@ class AiCapabilityRegistry {
     // Owner
     ownerCreateManualBooking,
     ownerViewFinancials,
+    ownerViewOperationalInsights,
     ownerViewUpcomingBookings,
     ownerViewStadiums,
     ownerBlockSlot,
