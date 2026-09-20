@@ -80,7 +80,7 @@
  "underRequiredAge": "Players must be at least 16 years old and stadium owners must be at least 21 years old",
  "invalidPhone": "Please enter a valid phone number",
  "passwordMismatch": "Passwords do not match",
- "passwordTooShort": "Password must be at least 6 characters",
+ "passwordTooShort": "Password must be at least 8 characters",
  "verifyAccount": "VERIFY ACCOUNT",
  "otpSentTo": "A 6-digit code was sent to ",
  "enterOtpPlaceholder": "Enter the verification code sent to your device",
