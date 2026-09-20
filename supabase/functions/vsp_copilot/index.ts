@@ -261,6 +261,17 @@ const ownerCreateManualBookingTool = {
   },
 };
 
+const getOwnerStadiumComparisonTool = {
+  name: "getOwnerStadiumComparison",
+  description: "للمالك فقط: مقارنة أداء كل ملعب من ملاعبه بالأرقام الحقيقية. تشمل الحجوزات والإيراد المحقق وساعات الحجز والإلغاءات، ومع الفترة السابقة عندما تكون المقارنة متاحة. لا تستنتج سبباً غير موجود في البيانات.",
+  parameters: {
+    type: "object",
+    properties: {
+      period: { type: "string", enum: ["7d", "30d", "90d", "all"] }
+    }
+  }
+};
+
 const getOwnerOperationalInsightsTool = {
   name: "getOwnerOperationalInsights",
   description: "للمالك فقط: تحليل تشغيلي حقيقي من قاعدة البيانات للحجوزات والإيراد ونسبة الإشغال والإلغاءات وساعات الذروة وأداء الملاعب. لا تخمّن أي رقم.",
@@ -387,6 +398,7 @@ const AI_CAPABILITIES: Record<string, {
   USER_UPDATE_PROFILE: { role: "any", requiredEntitlement: "none" },
   OWNER_VIEW_FINANCIALS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_OPERATIONAL_INSIGHTS: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_VIEW_STADIUM_COMPARISON: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_UPCOMING_BOOKINGS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_STADIUMS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_BLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
