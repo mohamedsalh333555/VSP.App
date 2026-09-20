@@ -2197,17 +2197,20 @@ serve(async (req: Request) => {
           .maybeSingle();
 
         if (bRow && ["pending", "confirmed"].includes(bRow.status)) {
-          await supabase.from("bookings").update({
-            status: "cancelled",
-            cancellation_reason: cancelReason,
-            cancelled_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }).eq("id", p.booking_id).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
-
-          contextSnapshot.last_booking_id = null;
-          const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
-          assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nسيتم استرداد المبلغ المدفوع خلال 2-5 أيام عمل 💰" : ""}`;
-          appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          const { data: cancelResult, error: cancelErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
+            p_booking_id: p.booking_id,
+            p_reason: cancelReason,
+            p_user_id: callerUser.id,
+          });
+          if (!cancelErr && cancelResult?.success === true) {
+            contextSnapshot.last_booking_id = null;
+            const refundAmount = Number(cancelResult.refund_amount || 0);
+            const needsRefund = refundAmount > 0;
+            assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nمبلغ الاسترداد: " + refundAmount.toFixed(2) + " ج.م 💰" : ""}`;
+            appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          } else {
+            assistantReply = cancelResult?.message || cancelErr?.message || "تعذر إلغاء الحجز حالياً.";
+          }
           handledByGemini = true;
         } else {
           assistantReply = "الحجز ده غير متاح للإلغاء أو ملغي بالفعل يا كابتن.";
@@ -2326,11 +2329,20 @@ serve(async (req: Request) => {
       if (targetBookingId && !handledByGemini) {
         const { data: bRow } = await supabase.from("bookings").select("id, stadium_name, start_time, status, is_paid, deposit_amount").eq("id", targetBookingId).maybeSingle();
         if (bRow && ["pending", "confirmed"].includes(bRow.status)) {
-          await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", targetBookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
-          contextSnapshot.last_booking_id = null;
-          const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
-          assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nسيتم استرداد المبلغ المدفوع خلال 2-5 أيام عمل 💰" : ""}`;
-          appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          const { data: cancelResult, error: cancelErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
+            p_booking_id: targetBookingId,
+            p_reason: cancelReason,
+            p_user_id: callerUser.id,
+          });
+          if (!cancelErr && cancelResult?.success === true) {
+            contextSnapshot.last_booking_id = null;
+            const refundAmount = Number(cancelResult.refund_amount || 0);
+            const needsRefund = refundAmount > 0;
+            assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nمبلغ الاسترداد: " + refundAmount.toFixed(2) + " ج.م 💰" : ""}`;
+            appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          } else {
+            assistantReply = cancelResult?.message || cancelErr?.message || "تعذر إلغاء الحجز حالياً.";
+          }
           handledByGemini = true;
         } else {
           assistantReply = "ما لقيتش حجز نشط متاح للإلغاء يا كابتن.";
@@ -2944,10 +2956,18 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   toolResponseData = { success: false, message: "ما عندكش حجوزات نشطة قادمة يا كابتن." };
                 } else if (actList.length === 1) {
                   const b = actList[0];
-                  await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", b.id).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
-                  contextSnapshot.last_booking_id = null;
-                  appAction = { action_type: "NAVIGATE", route: "/bookings", label: "عرض سجل الحجوزات 📋" };
-                  toolResponseData = { success: true, cancelled_booking_id: b.id, stadium_name: b.stadium_name, start_time: b.start_time };
+                  const { data: cancelResult, error: cErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
+                    p_booking_id: b.id,
+                    p_reason: cancelReason,
+                    p_user_id: callerUser.id,
+                  });
+                  if (!cErr && cancelResult?.success === true) {
+                    contextSnapshot.last_booking_id = null;
+                    appAction = { action_type: "NAVIGATE", route: Number(cancelResult.refund_amount || 0) > 0 ? "/refunds" : "/bookings", label: Number(cancelResult.refund_amount || 0) > 0 ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+                    toolResponseData = { success: true, cancelled_booking_id: b.id, stadium_name: b.stadium_name, start_time: b.start_time, refund_amount: Number(cancelResult.refund_amount || 0) };
+                  } else {
+                    toolResponseData = { success: false, message: cancelResult?.message || cErr?.message || "تعذّر إلغاء الحجز حالياً." };
+                  }
                 } else {
                   const clar = { type: "cancel_selection", question: "أي حجز تريد إلغاؤه يا كابتن؟", options: actList.map((b: any) => ({ id: b.id, label: `${b.stadium_name} — ${new Date(b.start_time).toLocaleDateString("ar-EG")}` })) };
                   appClarification = clar;
@@ -2981,14 +3001,19 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 } else if (!["pending", "confirmed"].includes(bRow.status)) {
                   toolResponseData = { success: false, message: `الحجز ده ${bRow.status === "cancelled" ? "ملغي بالفعل" : "مكتمل"} يا كابتن.` };
                 } else {
-                  const { error: cErr } = await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", bookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
-                  if (cErr) {
-                    toolResponseData = { success: false, message: "تعذّر إلغاء الحجز. حاول مرة أخرى." };
+                  const { data: cancelResult, error: cErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
+                    p_booking_id: bookingId,
+                    p_reason: cancelReason,
+                    p_user_id: callerUser.id,
+                  });
+                  if (cErr || cancelResult?.success !== true) {
+                    toolResponseData = { success: false, message: cancelResult?.message || cErr?.message || "تعذّر إلغاء الحجز. حاول مرة أخرى." };
                   } else {
                     contextSnapshot.last_booking_id = null;
-                    const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
+                    const refundAmount = Number(cancelResult.refund_amount || 0);
+                    const needsRefund = refundAmount > 0;
                     appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
-                    toolResponseData = { success: true, cancelled_booking_id: bookingId, stadium_name: bRow.stadium_name, needs_refund: needsRefund };
+                    toolResponseData = { success: true, cancelled_booking_id: bookingId, stadium_name: bRow.stadium_name, needs_refund: needsRefund, refund_amount: refundAmount };
                   }
                 }
               }
