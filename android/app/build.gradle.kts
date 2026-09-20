@@ -1,11 +1,9 @@
-// 🛡️ FIX: import must precede all block declarations in Kotlin DSL.
-// Having it after plugins{} causes the 17 Java/Kotlin build warnings.
+// 🛡️ RELEASE/STORE READY: fail closed when a real signing key is absent.
 import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
@@ -18,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "app.vsp.sports"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "30.0.15729638"
 
     compileOptions {
@@ -41,10 +39,9 @@ android {
     }
 
     defaultConfig {
-        // ✅ Production Unique Application ID for Google Play Store
         applicationId = "app.vsp.sports"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -56,15 +53,12 @@ android {
             }
         }
         release {
-            // RELEASE SIGNING: Uses the credentials loaded from android/key.properties.
-            // If the file is missing, it falls back to debug signing to prevent build failure during dev.
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                signingConfig = signingConfigs.getByName("debug")
-                logger.warn("⚠️ RELEASE SIGNING WARNING: key.properties not found. Building with debug keys. This will be REJECTED by Play Store.")
+            // Never ship a debug-signed release artifact.
+            check(keystorePropertiesFile.exists()) {
+                "Release signing is not configured. Create android/key.properties and provide a valid release keystore before building a store artifact."
             }
-            isMinifyEnabled = false          // Disabled to prevent MethodChannel & reflection crashes
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
             isShrinkResources = false
         }
     }
@@ -73,9 +67,11 @@ android {
         outputs.forEach { output ->
             val abiFilter = output.filters.find { it.filterType == com.android.build.OutputFile.ABI }
             if (abiFilter != null) {
-                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "vsp_app_${abiFilter.identifier}.apk"
+                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                    "vsp_app_${abiFilter.identifier}.apk"
             } else {
-                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "vsp_app_release.apk"
+                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
+                    "vsp_app_release.apk"
             }
         }
     }
