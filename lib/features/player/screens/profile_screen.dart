@@ -427,11 +427,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ],
    ),
   );
-  if (confirmed != true || !mounted) return;
+  if (confirmed != true || !context.mounted) return;
 
   final auth = Provider.of<AuthProvider>(context, listen: false);
   final success = await auth.deleteAccount();
-  if (!mounted) return;
+  if (!context.mounted) return;
   if (!success) {
    VSPFeedback.showError(
     context,
