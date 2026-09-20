@@ -2016,6 +2016,16 @@ serve(async (req: Request) => {
       }
     }
 
+    // 🔐 Owner entitlement fast-path for requests that require the paid Owner AI.
+    if (effectiveUserRole === "owner" && !ownerAiEnabled && !handledByGemini && lexiconAnalysis.ownerQuery) {
+      assistantReply = "اشتراك إدارة الملاعب غير نشط حالياً. جدّد الباقة لاستعادة أدوات الذكاء الاصطناعي الخاصة بالمالك.";
+      appAction = buildAiAction("OWNER_RENEW_SUBSCRIPTION", {
+        action_type: "NAVIGATE",
+        route: "/facility-onboarding",
+        label: "تجديد الباقة وتفعيل VSP AI 🔓",
+      });
+      handledByGemini = true;
+    }
     // Progressive Clarification: "عايز كورة" alone without booking context
     if (lexiconAnalysis.ballClarification && !contextSnapshot.pending_intent) {
       appClarification = lexiconAnalysis.ballClarification;
@@ -2484,12 +2494,30 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 date: args.date || null,
               };
             } else if (funcName === "executeAppAction") {
-              appAction = {
-                action_type: args.action_type || "NAVIGATE",
-                route: args.route || "/tournaments",
-                label: args.label || "فتح الشاشة",
-              };
-              toolResponseData = { status: "ready_to_navigate", action: appAction };
+              const capabilityId = (args.capability_id || "").toString().trim().toUpperCase();
+              const cap = getAiCapability(capabilityId);
+
+              if (!capabilityId || !cap) {
+                toolResponseData = {
+                  success: false,
+                  error: "INVALID_CAPABILITY_ID",
+                  message: "يجب استخدام Capability ID معتمد من VSP AI Registry.",
+                };
+              } else if (!isCapabilityAllowed(capabilityId, userRoleForGuard, ownerAiEnabled)) {
+                toolResponseData = {
+                  success: false,
+                  error: "CAPABILITY_NOT_ALLOWED",
+                  capability_id: capabilityId,
+                };
+              } else {
+                appAction = buildAiAction(capabilityId, {
+                  action_type: args.action_type || (cap?.canExecuteByAi ? "EXECUTE" : "NAVIGATE"),
+                  route: (args.route || "").toString(),
+                  label: args.label || "فتح الشاشة",
+                  params: args.params || undefined,
+                });
+                toolResponseData = { status: "ready_to_navigate", action: appAction };
+              }
             } else if (funcName === "updateUserProfile") {
               const updates: any = { updated_at: new Date().toISOString() };
               if (args.position) updates.position = args.position;
