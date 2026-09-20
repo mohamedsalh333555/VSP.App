@@ -114,7 +114,7 @@ const executeAppActionTool = {
         description: "عنوان الإجراء بالعربية ليظهر كزر للمستخدم (مثال: 'الانتقال لصفحة فريقي')",
       },
     },
-    required: ["action_type", "route", "label"],
+    required: ["action_type", "capability_id", "label"],
   },
 };
 
