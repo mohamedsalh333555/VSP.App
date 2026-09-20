@@ -1244,19 +1244,49 @@ class EgyptianFootballLexicon {
     }
 
     // ── 7. ⚡ Phase 7: Owner Query Interceptor ────────────────────────────────
-    let ownerQuery: { type: "financial" | "bookings" } | null = null;
+    let ownerQuery: {
+      type: "financial" | "bookings" | "operational" | "analytics";
+      period?: "7d" | "30d" | "90d" | "all";
+    } | null = null;
     const ownerFinPhrases = [
       "أرباحي", "ارباحي", "فلوسي", "رصيدي", "مديونيتي", "حسابي كام",
       "عايز اسحب", "السجل المالي", "إيراداتي", "ايراداتي", "ارباح الملعب",
     ];
     const ownerSchedulePhrases = [
-      "حجوزات ملعبي", "حجوزات ملاعبي", "مين حجز", "مين حاجز",
+      "حجوزات ملعبي", "حجوزات ملاععي", "حجوزات ملاعبي", "مين حجز", "مين حاجز",
       "جدول الحجوزات", "حجوزات اليوم", "ملاعبي المسجلة", "ملاعبي",
     ];
+    const ownerAnalyticsPhrases = [
+      "الإشغال", "الاشغال", "نسبة الحجز", "نسبة الحجوزات", "أداء الملعب",
+      "أداء الملاعب", "اداء الملعب", "اداء الملاعب", "ساعة الذروة", "ساعات الذروة",
+      "تحليل التشغيل", "تحليل تشغيلي", "أداء التشغيل", "أداء الحجز",
+      "زاد", "زادت", "زادوا", "قل", "قلت", "نقص", "نقصت",
+      "مقارنة", "مقابل", "الشهر ده", "الشهر ده مقارنة", "الأسبوع ده", "الاسبوع ده",
+      "اللي فات", "السابق", "الشهر الماضي", "الأسبوع الماضي", "الاسبوع الماضي",
+      "growth", "trend", "analytics", "performance", "utilization",
+    ];
+    const hasComparisonPhrase = [
+      "مقارنة", "مقابل", "اللي فات", "السابق", "الماضي", "زاد", "زادت",
+      "قل", "قلت", "نقص", "نقصت", "growth", "trend",
+    ].some((p) => text.includes(p.toLowerCase()));
+
+    const analyticsMatch = ownerAnalyticsPhrases.some((p) => text.includes(p.toLowerCase()));
     if (ownerFinPhrases.some((p) => text.includes(p.toLowerCase()))) {
       ownerQuery = { type: "financial" };
     } else if (ownerSchedulePhrases.some((p) => text.includes(p.toLowerCase()))) {
       ownerQuery = { type: "bookings" };
+    } else if (analyticsMatch) {
+      let period: "7d" | "30d" | "90d" | "all" = "30d";
+      if (text.includes("أسبوع") || text.includes("اسبوع") || text.includes("7 يوم") || text.includes("7 أيام") || text.includes("7 ايام")) {
+        period = "7d";
+      } else if (text.includes("90 يوم") || text.includes("90 يوم") || text.includes("ربع سنة") || text.includes("3 شهور")) {
+        period = "90d";
+      } else if (text.includes("كل الوقت") || text.includes("كل البيانات") || text.includes("من البداية")) {
+        period = "all";
+      } else if (text.includes("شهر") || text.includes("30 يوم") || hasComparisonPhrase) {
+        period = "30d";
+      }
+      ownerQuery = { type: hasComparisonPhrase ? "analytics" : "operational", period };
     }
 
     return {
