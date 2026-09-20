@@ -2,6 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../services/signup_validation_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -33,7 +34,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  final p = _newPassController.text;
  if (p.isEmpty) return 0;
  double s = 0;
- if (p.length >= 8) s += 0.25;
+ if (p.length >= SignupValidationService.minimumPasswordLength) s += 0.25;
  if (p.length >= 12) s += 0.25;
  if (RegExp(r'[A-Z]').hasMatch(p)) s += 0.25;
  if (RegExp(r'[0-9!@#\$%^&*]').hasMatch(p)) s += 0.25;
@@ -153,7 +154,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  ),
  const SizedBox(height: VSPSpacing.sm),
  Text(
- isAr ? 'يجب أن لا تقل كلمة المرور الجديدة عن 8 أحرف أو أرقام.' : 'Your new password must be at least 8 characters long.',
+ isAr ? 'يجب أن لا تقل كلمة المرور الجديدة عن ${SignupValidationService.minimumPasswordLength} أحرف أو أرقام.' : 'Your new password must be at least ${SignupValidationService.minimumPasswordLength} characters long.',
  style: Theme.of(context).textTheme.bodySmall?.copyWith(
  color: VSPColors.textSecondary,
  height: 1.5,
