@@ -41,6 +41,21 @@ create index if not exists ai_copilot_audit_events_event_idx
 
 alter table public.ai_copilot_audit_events enable row level security;
 
+drop policy if exists "Admins can view AI Copilot audit" on public.ai_copilot_audit_events;
+
+create policy "Admins can view AI Copilot audit"
+on public.ai_copilot_audit_events
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.users u
+    where u.id = auth.uid()
+      and u.role in ('admin','co_founder')
+  )
+);
+
 revoke all on table public.ai_copilot_audit_events from public, anon, authenticated;
 
 create or replace function public.record_ai_copilot_audit_event(
