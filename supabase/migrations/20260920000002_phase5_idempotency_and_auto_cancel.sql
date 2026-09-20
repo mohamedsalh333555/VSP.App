@@ -51,7 +51,13 @@ BEGIN
 END;
 $$;
 
--- 4. Schedule cron job to run every minute via pg_cron (Job: vsp-cancel-expired-bookings)
+-- 4. Security Hardening: Revoke execute permissions on security definer function
+-- Prevents anon, authenticated, or service_role from calling this RPC directly.
+-- Only postgres (function owner / pg_cron) can execute this function.
+REVOKE EXECUTE ON FUNCTION public.cancel_expired_pending_bookings()
+FROM PUBLIC, anon, authenticated, service_role;
+
+-- 5. Schedule cron job to run every minute via pg_cron (Job: vsp-cancel-expired-bookings)
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
