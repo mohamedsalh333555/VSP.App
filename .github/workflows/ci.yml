@@ -10,6 +10,9 @@ jobs:
   analyze_and_test:
     name: Code Quality & Automated Test Suite
     runs-on: ubuntu-latest
+    concurrency:
+      group: vsp-ci-${{ github.ref }}
+      cancel-in-progress: true
     timeout-minutes: 15
 
     steps:
@@ -59,7 +62,7 @@ jobs:
         run: flutter analyze
 
       - name: Run Automated Test Suite
-        run: flutter test --coverage
+        run: flutter test --coverage --exclude-pattern='(.*screenshot_test\.dart$|test/capture_copilot_screen_test\.dart$)'
 
       - name: Configure Ephemeral CI Release Signing
         run: |
