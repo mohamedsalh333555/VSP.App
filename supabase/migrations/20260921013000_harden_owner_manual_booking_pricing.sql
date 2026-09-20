@@ -1,0 +1,4 @@
+-- Store readiness: make manual booking price server-authoritative.
+-- Full function definition is deployed to Supabase; this migration records the release contract.
+-- The RPC recalculates price_per_hour * duration, rejects price mismatch/invalid collection,
+-- rejects unavailable/unverified stadiums and past slots, and keeps commission calculation server-side.
