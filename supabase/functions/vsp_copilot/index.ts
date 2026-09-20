@@ -463,6 +463,55 @@ function finalizeAiAction(action: any, userRole: string, ownerAiEnabled: boolean
   return buildAiAction(capabilityId, action);
 }
 
+async function hashAuditValue(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function recordCopilotAuditEvent(
+  supabase: any,
+  event: {
+    requestId: string;
+    conversationId?: string | null;
+    userId: string;
+    userRole: string;
+    eventType: string;
+    status: string;
+    capabilityId?: string | null;
+    toolName?: string | null;
+    actionType?: string | null;
+    verified?: boolean;
+    verificationSource?: string | null;
+    errorCode?: string | null;
+    requestHash?: string | null;
+    latencyMs?: number | null;
+    metadata?: Record<string, any>;
+  },
+): Promise<void> {
+  try {
+    await supabase.rpc("record_ai_copilot_audit_event", {
+      p_request_id: event.requestId,
+      p_conversation_id: event.conversationId ?? null,
+      p_user_id: event.userId,
+      p_user_role: event.userRole,
+      p_event_type: event.eventType,
+      p_status: event.status,
+      p_capability_id: event.capabilityId ?? null,
+      p_tool_name: event.toolName ?? null,
+      p_action_type: event.actionType ?? null,
+      p_verified: event.verified ?? false,
+      p_verification_source: event.verificationSource ?? null,
+      p_error_code: event.errorCode ?? null,
+      p_request_hash: event.requestHash ?? null,
+      p_latency_ms: event.latencyMs ?? null,
+      p_metadata: event.metadata ?? {},
+    });
+  } catch (auditErr) {
+    console.warn("[VSP Audit] failed to record event", auditErr);
+  }
+}
+
 function hasConfirmedPendingIntent(contextSnapshot: any, intent: string, key: string, value: string): boolean {
   const p = contextSnapshot?.pending_intent;
   if (!p || p.intent !== intent || p.confirmed !== true) return false;
@@ -1828,6 +1877,9 @@ serve(async (req: Request) => {
       );
     }
 
+    const requestId = crypto.randomUUID();
+    const requestStartedAt = Date.now();
+
     const token = authHeader.replace("Bearer ", "").trim();
     const {
       data: { user: callerUser },
@@ -1839,6 +1891,16 @@ serve(async (req: Request) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    await recordCopilotAuditEvent(supabase, {
+      requestId,
+      userId: callerUser.id,
+      userRole: "unknown",
+      eventType: "request_started",
+      status: "authenticated",
+      requestHash: await hashAuditValue(userMessage || ""),
+      metadata: { endpoint: "vsp_copilot" },
+    });
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
 
@@ -1878,6 +1940,15 @@ serve(async (req: Request) => {
 
     // 🔐 Phase 2: Owner AI entitlement. Fail closed if the subscription lookup fails.
     const effectiveUserRole = (userProfile?.role || "player").toLowerCase().trim();
+
+    await recordCopilotAuditEvent(supabase, {
+      requestId,
+      userId: callerUser.id,
+      userRole: effectiveUserRole,
+      eventType: "request_started",
+      status: "ready",
+      metadata: { role_resolved: true },
+    });
     let ownerAiEnabled = effectiveUserRole !== "owner";
     let ownerSubscriptionStatus = "not_applicable";
     let ownerSubscriptionPlan: string | null = null;
@@ -2676,6 +2747,17 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             // even if Gemini somehow emitted it.
             const userRoleForGuard = userProfile?.role || "player";
             if (!isToolAllowedForRole(funcName, userRoleForGuard, ownerAiEnabled)) {
+              await recordCopilotAuditEvent(supabase, {
+                requestId,
+                conversationId,
+                userId: callerUser.id,
+                userRole: userRoleForGuard,
+                eventType: "security_rejected",
+                status: "rejected",
+                toolName: funcName,
+                errorCode: "UNAUTHORIZED_TOOL",
+                metadata: { owner_ai_enabled: ownerAiEnabled },
+              });
               console.warn(`[VSP Security] Role '${userRoleForGuard}' attempted unauthorized tool: ${funcName}`);
               if (
                 userRoleForGuard === "owner" &&
@@ -3545,6 +3627,27 @@ ${JSON.stringify(contextSnapshot, null, 2)}
     // 🧭 Phase 1/2: every emitted action must map to a trusted capability and entitlement.
     appAction = normalizeAction(appAction);
 
+    await recordCopilotAuditEvent(supabase, {
+      requestId,
+      conversationId,
+      userId: callerUser.id,
+      userRole: effectiveUserRole,
+      eventType: "response_completed",
+      status: "success",
+      capabilityId: appAction?.capability_id ?? null,
+      actionType: appAction?.action_type ?? null,
+      verified: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0,
+      verificationSource: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0
+        ? "database_tool"
+        : (appAction ? "trusted_navigation" : "gemini_text"),
+      latencyMs: Date.now() - requestStartedAt,
+      metadata: {
+        has_action: !!appAction,
+        has_clarification: !!appClarification,
+        owner_ai_enabled: ownerAiEnabled,
+      },
+    });
+
     // Persist Messages & Update Conversation
     await supabase.from("copilot_messages").insert([
       {
@@ -3609,8 +3712,17 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         },
         // Verification status — tells Flutter if data came from DB or was AI-generated
         verification: {
-          verified: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0 || !!appAction,
-          source: stadiumResults.length > 0 ? "database_rpc" : (appAction ? "atomic_booking" : "gemini_text"),
+          verified: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0,
+          source: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0
+            ? "database_tool"
+            : (appAction ? "trusted_navigation" : "gemini_text"),
+          action_verified: !!appAction && (
+            appAction.capability_id === "PLAYER_CREATE_BOOKING" ||
+            appAction.capability_id === "PLAYER_CANCEL_BOOKING" ||
+            appAction.capability_id === "PLAYER_LEAVE_MATCH" ||
+            appAction.capability_id === "PLAYER_LEAVE_TOURNAMENT" ||
+            appAction.capability_id === "OWNER_CREATE_MANUAL_BOOKING"
+          ),
         },
         // Error field — null on success
         error: null,
