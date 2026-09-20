@@ -2460,7 +2460,30 @@ serve(async (req: Request) => {
 
     // ⚡ Phase 7: Pre-Gemini Owner Fast-Path (Financial & Booking Schedule)
     if (effectiveUserRole === "owner" && ownerAiEnabled && !handledByGemini) {
-      if (lexiconAnalysis.ownerQuery?.type === "operational" || lexiconAnalysis.ownerQuery?.type === "analytics") {
+      if (lexiconAnalysis.ownerQuery?.type === "analytics" && lexiconAnalysis.ownerQuery?.stadiumComparison) {
+        const period = lexiconAnalysis.ownerQuery?.period || "30d";
+        const { data: comparison, error: comparisonErr } = await supabase.rpc("get_owner_ai_stadium_comparison", {
+          p_owner_id: callerUser.id,
+          p_period: ["7d", "30d", "90d", "all"].includes(period) ? period : "30d",
+        });
+        if (comparisonErr || !comparison?.success) {
+          assistantReply = "تعذر مقارنة أداء الملاعب من قاعدة البيانات حالياً. حاول مرة أخرى بعد قليل.";
+        } else {
+          const rows = Array.isArray(comparison.stadiums) ? comparison.stadiums : [];
+          const lines = rows.map((s: any, i: number) => {
+            const prev = s.previous_bookings_count == null ? "" : " | السابق: " + s.previous_bookings_count;
+            return (i + 1) + ". " + s.stadium_name +
+              " — حجوزات: " + s.bookings_count +
+              " | إيراد محقق: " + Number(s.realized_revenue || 0).toFixed(2) + " ج.م" +
+              " | ساعات: " + Number(s.booked_hours || 0).toFixed(1) +
+              " | إلغاء: " + Number(s.cancellation_rate_pct || 0).toFixed(2) + "%" + prev;
+          });
+          assistantReply = rows.length
+            ? "مقارنة ملاعبك — " + (period === "7d" ? "آخر 7 أيام" : period === "90d" ? "آخر 90 يوم" : period === "all" ? "كل البيانات" : "آخر 30 يوم") + ":\n" + lines.join("\n")
+            : "لا توجد ملاعب مسجلة يمكن مقارنتها حالياً.";
+          handledByGemini = true;
+        }
+      } else if (lexiconAnalysis.ownerQuery?.type === "operational" || lexiconAnalysis.ownerQuery?.type === "analytics") {
         const requestedPeriod = lexiconAnalysis.ownerQuery?.period || "30d";
         const period = ["7d", "30d", "90d", "all"].includes(requestedPeriod) ? requestedPeriod : "30d";
         const { data: opSummary, error: opErr } = await supabase.rpc("get_owner_ai_operational_insights", {
