@@ -207,6 +207,19 @@ class AiCapabilityRegistry {
   // Owner Capabilities (Requires owner_ai entitlement)
   // -------------------------------------------------------------
 
+  static const ownerCreateManualBooking = AiCapability(
+    id: 'OWNER_CREATE_MANUAL_BOOKING',
+    role: 'owner',
+    requiredEntitlement: 'owner_ai',
+    canExecuteByAi: true,
+    actionType: AiActionType.executeThenNavigate,
+    destinationRoute: '/owner',
+    requiredParams: ['stadium_id', 'start_time', 'end_time'],
+    confirmationRequired: true,
+    riskLevel: AiRiskLevel.high,
+    descriptionAr: 'تسجيل حجز يدوي للعميل من خلال بيانات الملعب والسعر الحقيقي',
+  );
+
   static const ownerViewFinancials = AiCapability(
     id: 'OWNER_VIEW_FINANCIALS',
     role: 'owner',
@@ -315,6 +328,7 @@ class AiCapabilityRegistry {
     playerLeaveMatch,
     playerLeaveTournament,
     // Owner
+    ownerCreateManualBooking,
     ownerViewFinancials,
     ownerViewUpcomingBookings,
     ownerViewStadiums,
