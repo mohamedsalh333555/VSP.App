@@ -165,12 +165,13 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     if (!mounted) return;
 
     if (targetStadium != null) {
+      // Stadium search cards do not carry a resolved booking slot. Never invent
+      // a date/time here (the previous implementation hard-coded today at 8 PM).
+      // Let the booking screen load real availability and let the user choose.
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => BookingConfirmationScreen(
             stadium: targetStadium!,
-            selectedDate: DateTime.now(),
-            initialSelectedSlots: const ['08:00 PM - 09:00 PM'],
           ),
         ),
       );
