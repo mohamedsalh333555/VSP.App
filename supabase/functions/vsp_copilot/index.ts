@@ -1538,6 +1538,9 @@ async function executeBookingFlow({
         booking_id: bookingId,
         stadium_id: targetStadium.id,
         stadium_name: targetStadium.name,
+        owner_id: targetStadium.owner_id,
+        start_time: bookedSlot.slot.start,
+        end_time: bookedSlot.slot.end,
         deposit_amount: targetStadium.deposit_amount || 50,
         total_price: targetStadium.price_per_hour,
         slot: bookedSlot.slot.display,
@@ -1550,6 +1553,15 @@ async function executeBookingFlow({
       action_type: "NAVIGATE",
       route: "/bookings",
       label: "عرض تفاصيل حجزي 📋",
+      params: {
+        booking_id: bookingId,
+        stadium_id: targetStadium.id,
+        stadium_name: targetStadium.name,
+        owner_id: targetStadium.owner_id,
+        start_time: bookedSlot.slot.start,
+        end_time: bookedSlot.slot.end,
+        total_price: targetStadium.price_per_hour,
+      },
     };
     reply = `تم تأكيد حجزك بنجاح (${bookedSlot.slot.display}${ballNote}) في ${targetStadium.name} يا كابتن ⚽!${fallbackNote}\nالحجز مسجل بنظام الدفع كاش عند الحضور للملعب.`;
   }

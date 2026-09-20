@@ -230,7 +230,7 @@ class VspCopilotService {
     }
     _requestTimestamps.add(now);
 
-    // 3. If Supabase client is available and logged in (and not testing with mockOwnerDb), try cloud Edge Function
+    // 3. If Supabase client is available and logged in, invoke cloud Edge Function
     final client = _supabase;
     if (_mockOwnerDb == null && client != null && client.auth.currentUser != null) {
       try {
@@ -255,14 +255,30 @@ class VspCopilotService {
         final data = response.data;
         if (data is Map<String, dynamic>) {
           return _parseCloudResponse(data, conversationId);
+        } else if (data is Map) {
+          return _parseCloudResponse(Map<String, dynamic>.from(data), conversationId);
+        } else {
+          return CopilotMessage.assistant(
+            'عذراً يا كابتن، حدث خطأ غير متوقع في استجابة الخادم. يرجى المحاولة مرة أخرى.',
+            conversationId: conversationId,
+            errorMessage: 'Invalid response format from edge function',
+            verification: const CopilotVerification(verified: false, source: 'server_error'),
+          );
         }
       } catch (e) {
         if (e is RateLimitException) rethrow;
-        debugPrint('[VspCopilotService] Cloud call failed, using intelligent engine: $e');
+        debugPrint('[VspCopilotService] Cloud call failed: $e');
+        // ⚡ Phase 0: Strict Truth Principle — NEVER fall back to fake local stadiums or bookings on cloud failure
+        return CopilotMessage.assistant(
+          'عذراً يا كابتن، تعذر الاتصال بـ VSP Copilot حالياً. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+          conversationId: conversationId,
+          errorMessage: e.toString(),
+          verification: const CopilotVerification(verified: false, source: 'cloud_error'),
+        );
       }
     }
 
-    // 4. Intelligent Local Zero-Hallucination Engine (for tests, offline, & instant fallback)
+    // 4. Intelligent Local Zero-Hallucination Engine ONLY for headless test suites (when client == null or mockOwnerDb is injected)
     return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
   }
 

@@ -172,8 +172,20 @@ class AppRouter {
  final depositAmount = (params['deposit_amount'] as num?)?.toDouble() ?? 0.0;
  final startTimeStr = params['start_time']?.toString();
  final endTimeStr = params['end_time']?.toString();
- final startTime = startTimeStr != null ? DateTime.tryParse(startTimeStr) ?? DateTime.now() : DateTime.now();
- final endTime = endTimeStr != null ? DateTime.tryParse(endTimeStr) ?? startTime.add(const Duration(hours: 1)) : startTime.add(const Duration(hours: 1));
+
+ DateTime startTime = DateTime.now();
+ if (startTimeStr != null && startTimeStr.isNotEmpty) {
+   startTime = DateTime.tryParse(startTimeStr) ?? DateTime.now();
+ } else if (params['date'] != null && params['time'] != null) {
+   final rawDate = params['date'].toString();
+   final rawTime = params['time'].toString();
+   startTime = DateTime.tryParse('$rawDate $rawTime') ?? DateTime.now();
+ }
+
+ DateTime endTime = startTime.add(const Duration(hours: 1));
+ if (endTimeStr != null && endTimeStr.isNotEmpty) {
+   endTime = DateTime.tryParse(endTimeStr) ?? endTime;
+ }
 
  final draft = BookingDraft(
  stadiumId: stadiumId,
@@ -183,7 +195,7 @@ class AppRouter {
  endTime: endTime,
  bookingType: BookingType.personal,
  isPrivate: false,
- rentBall: false,
+ rentBall: params['rent_ball'] == true,
  totalPrice: totalPrice,
  needsDeposit: depositAmount > 0,
  depositPaid: 0.0,
