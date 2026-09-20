@@ -249,7 +249,7 @@ class VspCopilotService {
 
     // 3. If Supabase client is available and logged in, invoke cloud Edge Function
     final client = _supabase;
-    if (_mockOwnerDb == null && client != null && client.auth.currentUser != null) {
+    if (!_enableLocalTestEngine && _mockOwnerDb == null && client != null && client.auth.currentUser != null) {
       try {
         final payload = <String, dynamic>{'message': cleanText};
         if (conversationId != null && conversationId.isNotEmpty) {
