@@ -1978,12 +1978,17 @@ serve(async (req: Request) => {
               p.confirmed = true;
               p.clarification_type = null;
             }
+          } else if (clar.type === "owner_manual_booking_confirmation" || p.clarification_type === "owner_manual_booking_confirmation") {
+            if (matchedOpt.id === "confirm_owner_manual_booking") {
+              p.confirmed = true;
+              p.clarification_type = null;
+            }
           }
         }
       }
 
       if (!optionMatched) {
-        if (["leave_match_confirmation", "leave_tournament_confirmation"].includes(p.clarification_type) &&
+        if (["leave_match_confirmation", "leave_tournament_confirmation", "owner_manual_booking_confirmation"].includes(p.clarification_type) &&
             /^(نعم|ايوه|أيوه|اه|أه|موافق|أكد|تأكيد|yes|confirm)$/i.test(userMessage.trim())) {
           p.confirmed = true;
           p.clarification_type = null;
@@ -2082,6 +2087,47 @@ serve(async (req: Request) => {
             });
           } else {
             assistantReply = "ماقدرتش أنفذ الانسحاب من البطولة. راجع حالة البطولة والفريق وحاول مرة أخرى.";
+          }
+        }
+        handledByGemini = true;
+      }
+
+      // ⚡ Confirmed owner manual booking -> server-authoritative price + atomic RPC.
+      if (p.intent === "owner_manual_booking" && p.stadium_id && p.start_time && p.end_time && p.confirmed === true && !p.clarification_type) {
+        contextSnapshot.pending_intent = null;
+        contextSnapshot.clarification = null;
+        const start = new Date(p.start_time);
+        const end = new Date(p.end_time);
+        const { data: stadium, error: stadiumErr } = await supabase
+          .from("stadiums")
+          .select("id, owner_id, price_per_hour")
+          .eq("id", p.stadium_id)
+          .eq("owner_id", callerUser.id)
+          .maybeSingle();
+        if (stadiumErr || !stadium || isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+          assistantReply = "ماقدرتش أتحقق من الملعب والموعد للحجز اليدوي.";
+        } else {
+          const hours = (end.getTime() - start.getTime()) / 3600000;
+          const totalPrice = Number(stadium.price_per_hour || 0) * hours;
+          const { data: result, error: rpcErr } = await supabase.rpc("owner_create_manual_booking_atomic", {
+            p_owner_id: callerUser.id,
+            p_stadium_id: p.stadium_id,
+            p_start_time: start.toISOString(),
+            p_end_time: end.toISOString(),
+            p_customer_name: p.customer_name || null,
+            p_customer_phone: p.customer_phone || null,
+            p_notes: p.notes || null,
+            p_total_price: totalPrice,
+            p_collected_amount: Number(p.collected_amount || 0),
+            p_current_players: Number(p.current_players || 0),
+          });
+          if (!rpcErr) {
+            assistantReply = "تم تسجيل الحجز اليدوي بنجاح ✅";
+            appAction = buildAiAction("OWNER_VIEW_UPCOMING_BOOKINGS", {
+              action_type: "NAVIGATE", route: "/owner", label: "عرض الحجوزات 📅",
+            });
+          } else {
+            assistantReply = "ماقدرتش أسجل الحجز اليدوي. ممكن الموعد اتاخد بالفعل أو البيانات غير صالحة.";
           }
         }
         handledByGemini = true;
@@ -2412,7 +2458,8 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 3. لحجز ملعب أو تحديد موعد: استدعِ createBookingFromChat فوراً وبلا استثناء، وممنوع منعاً باتاً الإجابة بنص تأكيدي أو سؤال المستخدم نصياً أو تخمين تواريخ قبل استدعاء الأداة! الأداة والـ Guard هما المسؤولان عن التحقق وسؤال المستخدم عبر Action Chips إن لزم.
 4. لفحص التوافر والمواعيد الشاغرة: استدعِ checkStadiumAvailability فوراً.
 5. للبحث عن ملاعب: استدعِ searchStadiums فوراً.
-6. لمغادرة مباراة أو بطولة: استخدم أداة المغادرة، ولا تمرر confirmed=true إلا بعد تأكيد صريح من المستخدم.`;
+6. لمغادرة مباراة أو بطولة: استخدم أداة المغادرة، ولا تمرر confirmed=true إلا بعد تأكيد صريح من المستخدم.
+7. مالك الملعب يمكنه تسجيل حجز يدوي فقط بعد تحديد الملعب والموعد وطلب تأكيد صريح قبل التنفيذ.`;
 
         // 🔒 Phase 2: Build role-filtered tool list — Gemini sees ONLY allowed tools
         const userRole = userProfile?.role || "player";
