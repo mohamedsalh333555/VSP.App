@@ -248,31 +248,4 @@ class AuthProfileService {
     }
   }
 
-  DateTime? _parseBookingDateTime(String dateStr, String timeStr) {
-    try {
-      final parsedIso = DateTime.tryParse(dateStr);
-      if (parsedIso != null) return parsedIso;
-
-      final dateParts = dateStr.split('-');
-      if (dateParts.length != 3) return null;
-      final year = int.parse(dateParts[0]);
-      final month = int.parse(dateParts[1]);
-      final day = int.parse(dateParts[2]);
-
-      int hour = 0;
-      int minute = 0;
-      if (timeStr.isNotEmpty) {
-        final timeParts = timeStr.split(':');
-        if (timeParts.length >= 2) {
-          hour = int.parse(timeParts[0]);
-          minute = int.parse(timeParts[1].split(' ')[0]);
-          if (timeStr.toLowerCase().contains('pm') && hour < 12) hour += 12;
-          if (timeStr.toLowerCase().contains('am') && hour == 12) hour = 0;
-        }
-      }
-      return DateTime(year, month, day, hour, minute);
-    } catch (_) {
-      return null;
-    }
-  }
 }
