@@ -355,7 +355,17 @@ class AiCapabilityRegistry {
     // Owner
     ownerCreateManualBooking,
     ownerViewFinancials,
-    ownerViewOperationalInsights,
+    static const ownerViewStadiumComparison = AiCapability(
+    id: 'OWNER_VIEW_STADIUM_COMPARISON',
+    role: 'owner',
+    requiredEntitlement: 'owner_ai',
+    canExecuteByAi: true,
+    actionType: AiActionType.execute,
+    riskLevel: AiRiskLevel.read,
+    descriptionAr: 'مقارنة أداء ملاعب المالك بالحجوزات والإيرادات والإلغاءات والفترات السابقة',
+  );
+
+  ownerViewOperationalInsights,
     ownerViewUpcomingBookings,
     ownerViewStadiums,
     ownerBlockSlot,
