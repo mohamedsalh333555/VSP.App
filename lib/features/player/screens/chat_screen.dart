@@ -131,8 +131,16 @@ class _ChatScreenState extends State<ChatScreen> {
           PopupMenuButton<String>(
             icon: const Icon(Iconsax.more_copy, color: VSPColors.textPrimary),
             color: VSPColors.surface,
-            onSelected: (value) {
-              if (value == 'report') {
+            onSelected: (value) async {
+              if (value == 'block') {
+                final otherUserId = widget.booking.userId == currentUserId
+                    ? widget.booking.ownerId
+                    : widget.booking.userId;
+                if (otherUserId != null && otherUserId.isNotEmpty) {
+                  await ChatRepository().blockUser(otherUserId);
+                  if (mounted) Navigator.of(context).pop();
+                }
+              } else if (value == 'report') {
                 ChatDialogs.showReportDialog(
                   context,
                   currentUserId: currentUserId,
@@ -147,6 +155,16 @@ class _ChatScreenState extends State<ChatScreen> {
               }
             },
             itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'block',
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Text(isArabic ? 'حظر المستخدم' : 'Block User', style: const TextStyle(color: VSPColors.error, fontSize: 13)),
+                  ],
+                ),
+              ),
               PopupMenuItem(
                 value: 'report',
                 child: Row(
