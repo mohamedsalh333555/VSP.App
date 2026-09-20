@@ -2218,7 +2218,6 @@ serve(async (req: Request) => {
           handledByGemini = true;
         }
       }
-    }
 
     // 🔐 Owner entitlement fast-path for requests that require the paid Owner AI.
     if (effectiveUserRole === "owner" && !ownerAiEnabled && !handledByGemini && lexiconAnalysis.ownerQuery) {
