@@ -261,17 +261,19 @@ class AuthService {
     }
   }
 
-  // Delete Account
+  // Delete Account — server-side atomic flow only.
   Future<Map<String, dynamic>> deleteAccount(String uid) async {
     try {
-      try {
-        await _supabase.rpc(
-          'delete_user_permanently',
-          params: {'p_user_id': uid},
-        );
-      } catch (rpcErr) {
-        _logSecurityEvent('RPC_DELETE_FALLBACK', rpcErr);
-        await _supabase.from('users').delete().eq('id', uid);
+      final response = await _supabase.rpc(
+        'delete_user_permanently',
+        params: {'p_user_id': uid},
+      );
+      final data = response is Map ? Map<String, dynamic>.from(response) : <String, dynamic>{};
+      if (data['success'] != true) {
+        return {
+          'success': false,
+          'message': data['message']?.toString() ?? 'فشل في حذف الحساب.',
+        };
       }
       await signOut();
       return {'success': true};
