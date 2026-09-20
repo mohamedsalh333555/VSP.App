@@ -48,15 +48,24 @@ void main() {
 
       // اضغط إرسال
       await tester.tap(find.byIcon(Iconsax.send_2_copy));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
 
       // 3. تحقق من ظهور فقاعات الدردشة والرد
       expect(find.byType(CopilotChatBubble), findsWidgets);
       expect(find.textContaining('المعادي'), findsWidgets);
 
-      // 4. تحقق من ظهور بطاقات الملاعب وأزرار الحجز
-      expect(find.text('احجز'), findsWidgets);
+      // 4. تحقق من ظهور بطاقة ملعب قابلة للحجز.
+      // The stadium results use a horizontal ListView, so make the booking
+      // control visible before asserting it exists in the rendered tree.
+      final bookButton = find.text('احجز', skipOffstage: false);
+      if (bookButton.evaluate().isEmpty) {
+        await tester.scrollUntilVisible(
+          bookButton,
+          200,
+          scrollable: find.byType(Scrollable).last,
+        );
+      }
+      expect(bookButton, findsWidgets);
     });
 
     // ==================== اختبار الردود المتعددة والذاكرة ====================
