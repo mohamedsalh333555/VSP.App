@@ -62,7 +62,7 @@ jobs:
         run: flutter analyze
 
       - name: Run Automated Test Suite
-        run: flutter test --coverage --exclude-pattern='(.*screenshot_test\.dart$|test/capture_copilot_screen_test\.dart$)'
+        run: flutter test --coverage --exclude-tags=visual
 
       - name: Configure Ephemeral CI Release Signing
         run: |
