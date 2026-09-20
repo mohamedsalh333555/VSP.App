@@ -2,7 +2,7 @@ name: VSP Quality & CI Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, feature/startup-optimization ]
   pull_request:
     branches: [ main, master ]
 
