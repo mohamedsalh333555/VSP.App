@@ -327,7 +327,7 @@ const checkStadiumAvailabilityTool = {
 // 11. Tool: createBookingFromChat
 const createBookingFromChatTool = {
   name: "createBookingFromChat",
-  description: "بدء إجراءات حجز الملعب مباشرة وقفل الموعد ذرياً (Atomic Lock) من داخل المحادثة بناءً على طلب المستخدم. استدعِ هذه الأداة فوراً ودون أي تردد كلما طلب المستخدم حجز ملعب أو حجز موعد (مثل: 'احجزلي الجمعة الجاية الساعة 9'، 'احجزلي 2 بليل'، 'احجزلي ميعاد الساعه 8'). إذا لم يذكر المستخدم تاريخاً صراحة، مرر date: 'اليوم'. إذا لم يذكر اسم الملعب، اتركه فارغاً. الأداة والـ Guard هما المسؤولان عن حسم التاريخ واكتشاف الغموض وسؤال المستخدم عبر Action Chips إن لزم.",
+  description: "بدء إجراءات حجز الملعب مباشرة وقفل الموعد ذرياً (Atomic Lock) من داخل المحادثة بناءً على طلب المستخدم. استدعِ هذه الأداة فوراً ودون أي تردد كلما طلب المستخدم حجز ملعب أو حجز موعد (مثل: 'احجزلي الجمعة الجاية الساعة 9'، 'احجزلي 2 بليل'، 'احجزلي ميعاد الساعه 8'). إذا لم يذكر المستخدم تاريخاً صراحة، لا تفترض تاريخاً جديداً؛ استخدم السياق فقط إذا كان المستخدم قد حدده، وإلا اطلب التاريخ. إذا لم يذكر اسم الملعب، اتركه فارغاً. الأداة والـ Guard هما المسؤولان عن حسم التاريخ واكتشاف الغموض وسؤال المستخدم عبر Action Chips إن لزم.",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -957,7 +957,7 @@ class TemporalResolver {
     const opDd = String(targetDayDate.getUTCDate()).padStart(2, "0");
     const operationalDateStr = `${opYyyy}-${opMm}-${opDd}`;
 
-    let targetCairoHour = 20; // Default 8 PM
+    let targetCairoHour: number | null = null; // Never invent a booking time
     let preferredSlots: string[] = [];
 
     // Fallback detection:
@@ -981,7 +981,7 @@ class TemporalResolver {
         if (h2 <= 11 && h2 >= 1) h2 += 12;
 
         const primaryMatch = text.match(/(?:الساعه|الساعة|ساعة)\s*(\d{1,2}|[١٢٣٤٥٦٧٨٩٠]{1,2})/);
-        let h1 = 20;
+        let h1: number | null = null;
         if (primaryMatch) {
           let h1Raw = primaryMatch[1];
           const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
@@ -1119,6 +1119,20 @@ class TemporalResolver {
           }
         }
       }
+    }
+
+    if (targetCairoHour === null) {
+      clarification = clarification ?? {
+        type: "time",
+        question: "تحب تحجز الساعة كام يا كابتن؟",
+        options: [
+          { id: "18:00", label: "6 مساءً" },
+          { id: "19:00", label: "7 مساءً" },
+          { id: "20:00", label: "8 مساءً" },
+          { id: "21:00", label: "9 مساءً" },
+        ],
+      };
+      targetCairoHour = 20;
     }
 
     const actualDate = new Date(targetDayDate);
