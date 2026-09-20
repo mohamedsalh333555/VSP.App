@@ -436,6 +436,13 @@ function finalizeAiAction(action: any, userRole: string, ownerAiEnabled: boolean
   if (!capabilityId || !isCapabilityAllowed(capabilityId, userRole, ownerAiEnabled)) return null;
   return buildAiAction(capabilityId, action);
 }
+
+function hasConfirmedPendingIntent(contextSnapshot: any, intent: string, key: string, value: string): boolean {
+  const p = contextSnapshot?.pending_intent;
+  if (!p || p.intent !== intent || p.confirmed !== true) return false;
+  return String(p[key] ?? "").trim() === String(value).trim();
+}
+
 // ==========================================
 // 🔒 Phase 2: Role-Based Tool Registry
 // Gemini sees ONLY the tools the user's role permits.
@@ -1967,8 +1974,14 @@ serve(async (req: Request) => {
             } catch (_) {}
           } else if (clar.type === "cancel_selection" || p.clarification_type === "cancel_selection") {
             p.booking_id = matchedOpt.id;
+            p.confirmed = true;
             p.clarification_type = null;
-          } else if (clar.type === "leave_match_confirmation" || p.clarification_type === "leave_match_confirmation") {
+          } else if (clar.type === "cancel_confirmation" || p.clarification_type === "cancel_confirmation") {
+            if (matchedOpt.id === "confirm_cancel_booking") {
+              p.confirmed = true;
+              p.clarification_type = null;
+            }
+          }          } else if (clar.type === "leave_match_confirmation" || p.clarification_type === "leave_match_confirmation") {
             if (matchedOpt.id === "confirm_leave_match") {
               p.confirmed = true;
               p.clarification_type = null;
@@ -1988,7 +2001,7 @@ serve(async (req: Request) => {
       }
 
       if (!optionMatched) {
-        if (["leave_match_confirmation", "leave_tournament_confirmation", "owner_manual_booking_confirmation"].includes(p.clarification_type) &&
+        if (["cancel_confirmation", "leave_match_confirmation", "leave_tournament_confirmation", "owner_manual_booking_confirmation"].includes(p.clarification_type) &&
             /^(نعم|ايوه|أيوه|اه|أه|موافق|أكد|تأكيد|yes|confirm)$/i.test(userMessage.trim())) {
           p.confirmed = true;
           p.clarification_type = null;
@@ -2006,6 +2019,7 @@ serve(async (req: Request) => {
         } else if (p.clarification_type === "cancel_selection") {
           if (/^[0-9a-fA-F-]{36}$/.test(userMessage.trim())) {
             p.booking_id = userMessage.trim();
+            p.confirmed = true;
             p.clarification_type = null;
           }
         } else if (p.clarification_type === "time") {
@@ -2039,7 +2053,9 @@ serve(async (req: Request) => {
       }
 
       // ⚡ Confirmed leave-match -> use the existing atomic domain RPC.
-      if (p.intent === "leave_match" && p.booking_id && p.confirmed === true && !p.clarification_type) {
+      if (p.intent === "leave_match" && p.booking_id && p.confirmed === true &&
+          hasConfirmedPendingIntent(contextSnapshot, "leave_match", "booking_id", p.booking_id) &&
+          !p.clarification_type) {
         contextSnapshot.pending_intent = null;
         contextSnapshot.clarification = null;
         const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_public_match_atomic", {
@@ -2061,7 +2077,9 @@ serve(async (req: Request) => {
       }
 
       // ⚡ Confirmed tournament withdrawal -> verify captain and use atomic RPC.
-      if (p.intent === "leave_tournament" && p.championship_id && p.confirmed === true && !p.clarification_type) {
+      if (p.intent === "leave_tournament" && p.championship_id && p.confirmed === true &&
+          hasConfirmedPendingIntent(contextSnapshot, "leave_tournament", "championship_id", p.championship_id) &&
+          !p.clarification_type) {
         contextSnapshot.pending_intent = null;
         contextSnapshot.clarification = null;
         const { data: team } = await supabase
@@ -2093,7 +2111,9 @@ serve(async (req: Request) => {
       }
 
       // ⚡ Confirmed owner manual booking -> server-authoritative price + atomic RPC.
-      if (p.intent === "owner_manual_booking" && p.stadium_id && p.start_time && p.end_time && p.confirmed === true && !p.clarification_type) {
+      if (p.intent === "owner_manual_booking" && p.stadium_id && p.start_time && p.end_time && p.confirmed === true &&
+          hasConfirmedPendingIntent(contextSnapshot, "owner_manual_booking", "stadium_id", p.stadium_id) &&
+          !p.clarification_type) {
         contextSnapshot.pending_intent = null;
         contextSnapshot.clarification = null;
         const start = new Date(p.start_time);
@@ -2162,7 +2182,9 @@ serve(async (req: Request) => {
       }
 
       // ⚡ If pending cancel_booking intent is now fully resolved -> Execute atomically without Gemini!
-      if (p.intent === "cancel_booking" && p.booking_id && !p.clarification_type) {
+      if (p.intent === "cancel_booking" && p.booking_id && p.confirmed === true &&
+          hasConfirmedPendingIntent(contextSnapshot, "cancel_booking", "booking_id", p.booking_id) &&
+          !p.clarification_type) {
         contextSnapshot.pending_intent = null;
         contextSnapshot.clarification = null;
 
@@ -2263,6 +2285,26 @@ serve(async (req: Request) => {
           handledByGemini = true;
         } else if (list.length === 1) {
           targetBookingId = list[0].id;
+          const b = list[0];
+          const clar = {
+            type: "cancel_confirmation",
+            question: `تأكد إنك عايز تلغي حجز ${b.stadium_name}؟`,
+            options: [
+              { id: "confirm_cancel_booking", label: "تأكيد الإلغاء" },
+              { id: "keep_booking", label: "لا، خليه" },
+            ],
+          };
+          appClarification = clar;
+          contextSnapshot.pending_intent = {
+            intent: "cancel_booking",
+            booking_id: b.id,
+            reason: cancelReason,
+            clarification_type: "cancel_confirmation",
+            confirmed: false,
+          };
+          contextSnapshot.clarification = clar;
+          assistantReply = "قبل ما ألغي الحجز، محتاج تأكيدك.";
+          handledByGemini = true;
         } else {
           // Multiple active bookings -> Progressive Clarification with Action Chips
           const clar = {
@@ -2274,7 +2316,7 @@ serve(async (req: Request) => {
             })),
           };
           appClarification = clar;
-          contextSnapshot.pending_intent = { intent: "cancel_booking", clarification_type: "cancel_selection", reason: cancelReason };
+          contextSnapshot.pending_intent = { intent: "cancel_booking", clarification_type: "cancel_selection", reason: cancelReason, confirmed: false };
           contextSnapshot.clarification = clar;
           assistantReply = "عندك أكتر من حجز قادم. اختر الحجز اللي عايز تلغيه:";
           handledByGemini = true;
@@ -2766,6 +2808,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             } else if (funcName === "leavePublicMatchFromChat") {
               const bookingId = (args.booking_id || contextSnapshot.last_booking_id || "").toString().trim();
               const confirmed = args.confirmed === true;
+              const confirmedFromPending = hasConfirmedPendingIntent(contextSnapshot, "leave_match", "booking_id", bookingId);
 
               if (!bookingId || !/^[0-9a-fA-F-]{36}$/.test(bookingId)) {
                 assistantReply = "محتاج أعرف أنهي مباراة تقصد.";
@@ -2786,6 +2829,16 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 };
                 contextSnapshot.clarification = appClarification;
                 assistantReply = "تمام، قبل ما أنفذ: تحب أخرجك من المباراة؟";
+                toolResponseData = { success: false, needs_confirmation: true };
+              } else if (!confirmedFromPending) {
+                appClarification = {
+                  type: "leave_match_confirmation",
+                  question: "تأكد إنك عايز تخرج من المباراة دي؟",
+                  options: [{ id: "confirm_leave_match", label: "تأكيد المغادرة" }, { id: "keep_leave_match", label: "لا، خليك" }],
+                };
+                contextSnapshot.pending_intent = { intent: "leave_match", booking_id: bookingId, clarification_type: "leave_match_confirmation", confirmed: false };
+                contextSnapshot.clarification = appClarification;
+                assistantReply = "تمام، قبل التنفيذ أكّد مغادرة المباراة.";
                 toolResponseData = { success: false, needs_confirmation: true };
               } else {
                 const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_public_match_atomic", {
@@ -2809,6 +2862,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             } else if (funcName === "leaveChampionshipFromChat") {
               const championshipId = (args.championship_id || "").toString().trim();
               const confirmed = args.confirmed === true;
+              const confirmedFromPending = hasConfirmedPendingIntent(contextSnapshot, "leave_tournament", "championship_id", championshipId);
 
               if (!championshipId || !/^[0-9a-fA-F-]{36}$/.test(championshipId)) {
                 assistantReply = "محتاج أعرف أنهي بطولة تقصد.";
@@ -2829,6 +2883,16 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 };
                 contextSnapshot.clarification = appClarification;
                 assistantReply = "تمام، قبل ما أنفذ: تحب أنسحب بفريقك من البطولة؟";
+                toolResponseData = { success: false, needs_confirmation: true };
+              } else if (!confirmedFromPending) {
+                appClarification = {
+                  type: "leave_tournament_confirmation",
+                  question: "تأكد إنك عايز تنسحب بفريقك من البطولة؟",
+                  options: [{ id: "confirm_leave_tournament", label: "تأكيد الانسحاب" }, { id: "keep_leave_tournament", label: "لا، خليك" }],
+                };
+                contextSnapshot.pending_intent = { intent: "leave_tournament", championship_id: championshipId, clarification_type: "leave_tournament_confirmation", confirmed: false };
+                contextSnapshot.clarification = appClarification;
+                assistantReply = "تمام، قبل التنفيذ أكّد الانسحاب من البطولة.";
                 toolResponseData = { success: false, needs_confirmation: true };
               } else {
                 const { data: team } = await supabase
@@ -2863,9 +2927,10 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               }
 
             } else if (funcName === "cancelBookingFromChat") {
-              // ⚡ Phase 6: Cancel Booking from Chat
+              // ⚡ Phase 6: Cancel Booking — server-side confirmation gate.
               const bookingId = (args.booking_id || contextSnapshot.last_booking_id || "").toString().trim();
               const cancelReason = (args.reason || "user_request_via_chat").toString().trim();
+              const confirmedFromPending = hasConfirmedPendingIntent(contextSnapshot, "cancel_booking", "booking_id", bookingId);
 
               if (!bookingId || !/^[0-9a-fA-F-]{36}$/.test(bookingId)) {
                 // No ID → fetch active bookings and offer chips
@@ -2890,6 +2955,25 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   contextSnapshot.clarification = clar;
                   toolResponseData = { success: false, needs_clarification: true };
                 }
+              } else if (!confirmedFromPending) {
+                appClarification = {
+                  type: "cancel_confirmation",
+                  question: "تأكد إنك عايز تلغي الحجز ده؟",
+                  options: [
+                    { id: "confirm_cancel_booking", label: "تأكيد الإلغاء" },
+                    { id: "keep_booking", label: "لا، خليه" },
+                  ],
+                };
+                contextSnapshot.pending_intent = {
+                  intent: "cancel_booking",
+                  booking_id: bookingId,
+                  reason: cancelReason,
+                  clarification_type: "cancel_confirmation",
+                  confirmed: false,
+                };
+                contextSnapshot.clarification = appClarification;
+                assistantReply = "تمام، قبل التنفيذ أكّد إلغاء الحجز.";
+                toolResponseData = { success: false, needs_confirmation: true };
               } else {
                 const { data: bRow } = await supabase.from("bookings").select("id, stadium_name, start_time, status, is_paid, deposit_amount, needs_deposit").eq("id", bookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).maybeSingle();
                 if (!bRow) {
@@ -2961,10 +3045,11 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 const stadiumId = String(args.stadium_id || "").trim();
                 const start = new Date(String(args.start_time || ""));
                 const end = new Date(String(args.end_time || ""));
+                const confirmedFromPending = hasConfirmedPendingIntent(contextSnapshot, "owner_manual_booking", "stadium_id", stadiumId);
                 if (!/^[0-9a-fA-F-]{36}$/.test(stadiumId) || isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
                   toolResponseData = { success: false, error: "INVALID_BOOKING_INPUT" };
                   assistantReply = "محتاج ملعب وموعد بداية ونهاية صحيحين للحجز اليدوي.";
-                } else if (args.confirmed !== true) {
+                } else if (args.confirmed !== true || !confirmedFromPending) {
                   appClarification = {
                     type: "owner_manual_booking_confirmation",
                     question: "تأكد إنك عايز أسجل الحجز اليدوي ده على الملعب؟",
@@ -2984,6 +3069,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                     collected_amount: Number(args.collected_amount || 0),
                     current_players: Number(args.current_players || 0),
                     clarification_type: "owner_manual_booking_confirmation",
+                    confirmed: false,
                   };
                   contextSnapshot.clarification = appClarification;
                   assistantReply = "تمام. قبل ما أسجل الحجز، أكّد العملية.";
