@@ -393,6 +393,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
  VSPFadeInItem(
  index: 9,
  child: VSPMenuItem(
+ icon: Iconsax.trash_copy,
+ title: isArabic ? 'حذف الحساب' : 'Delete Account',
+ subtitle: isArabic ? 'حذف حسابك وبياناتك نهائياً' : 'Permanently delete your account and data',
+ isLogout: true,
+ onTap: () async {
+  final confirmed = await showDialog<bool>(
+   context: context,
+   builder: (dialogContext) => AlertDialog(
+    backgroundColor: VSPColors.surface,
+    title: Text(
+     isArabic ? 'حذف الحساب نهائياً؟' : 'Delete Account Permanently?',
+     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    ),
+    content: Text(
+     isArabic
+      ? 'سيتم حذف حسابك نهائياً. لا يمكن التراجع عن هذا الإجراء، وقد يمنع الحذف وجود حجوزات نشطة أو قادمة.'
+      : 'Your account will be permanently deleted. This cannot be undone, and active or upcoming bookings may block deletion.',
+     style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+    ),
+    actions: [
+     TextButton(
+      onPressed: () => Navigator.pop(dialogContext, false),
+      child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+     ),
+     TextButton(
+      onPressed: () => Navigator.pop(dialogContext, true),
+      child: Text(
+       isArabic ? 'حذف الحساب' : 'Delete Account',
+       style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+      ),
+     ),
+    ],
+   ),
+  );
+  if (confirmed != true || !mounted) return;
+
+  final auth = Provider.of<AuthProvider>(context, listen: false);
+  final success = await auth.deleteAccount();
+  if (!mounted) return;
+  if (!success) {
+   VSPFeedback.showError(
+    context,
+    auth.errorMessage ??
+     (isArabic ? 'تعذر حذف الحساب حالياً. راجع حجوزاتك وحاول مرة أخرى.' : 'Unable to delete the account right now.'),
+   );
+  }
+ },
+ ),
+ ),
+
+ VSPFadeInItem(
+ index: 10,
+ child: VSPMenuItem(
  icon: Iconsax.logout_copy,
  title: l10n.logout,
  subtitle: l10n.signOutAccount,
