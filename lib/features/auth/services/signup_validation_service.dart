@@ -136,7 +136,7 @@ class SignupValidationService {
       case SignupValidationError.passwordTooShort:
         return l10n.passwordTooShort;
       case SignupValidationError.underRequiredAge:
-        return 'يجب أن يكون عمر المستخدم ضمن الحد الأدنى المسموح به لاستخدام VSP.';
+        return l10n.underRequiredAge;
     }
   }
 
