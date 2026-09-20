@@ -456,22 +456,48 @@ function parseArabicTimeAndDate(timeStr?: string, dateStr?: string, defaultUserM
   let targetCairoHour = 20; // Default 8 PM
   let displayPeriod = "م";
 
-  if (
+  // 12 noon vs 12 midnight disambiguation (Egyptian & Arabic culture)
+  // "12 بليل" / "12 بالليل" / "12 منتصف الليل" / "منتصف ليل" -> 00:00 (Midnight, 12:00 ص)
+  // "12 صبح" / "12 الصبح" / "12 ضهر" / "12 الظهر" / "12 ظهراً" -> 12:00 (Noon, 12:00 م)
+  const isTwelveMentioned =
     combined.includes("منتصف الليل") ||
+    combined.includes("منتصف ليل") ||
+    combined.includes("نص الليل") ||
+    combined.includes("نص ليل") ||
     combined.includes("12 بالليل") ||
-    combined.includes("12 في منتصف الليل") ||
+    combined.includes("12 بليل") ||
     combined.includes("١٢ بالليل") ||
+    combined.includes("١٢ بليل") ||
+    combined.includes("12 في منتصف الليل") ||
     combined.includes("١٢ في منتصف الليل") ||
     combined.includes("12 am") ||
     combined.includes("12am") ||
+    combined.includes("12 pm") ||
+    combined.includes("12pm") ||
     combined.includes("الساعة 12") ||
-    combined.includes("الساعه 12")
-  ) {
-    if (combined.includes("الظهر") || combined.includes("ظهرا")) {
-      targetCairoHour = 12;
+    combined.includes("الساعه 12") ||
+    combined.includes("الساعة ١٢") ||
+    combined.includes("الساعه ١٢");
+
+  if (isTwelveMentioned) {
+    const isNoon =
+      combined.includes("صبح") ||
+      combined.includes("الصبح") ||
+      combined.includes("صباحا") ||
+      combined.includes("صباحاً") ||
+      combined.includes("ضهر") ||
+      combined.includes("الظهر") ||
+      combined.includes("ظهرا") ||
+      combined.includes("ظهراً") ||
+      combined.includes("نهار") ||
+      combined.includes("النهار") ||
+      combined.includes("pm");
+
+    if (isNoon) {
+      targetCairoHour = 12; // Midday / Noon (الظهر 12:00 م)
       displayPeriod = "م";
     } else {
-      targetCairoHour = 0; // Midnight 00:00
+      targetCairoHour = 0; // Midnight (منتصف الليل 00:00)
       displayPeriod = "ص";
     }
   } else {
@@ -484,8 +510,21 @@ function parseArabicTimeAndDate(timeStr?: string, dateStr?: string, defaultUserM
       }
       const h = parseInt(hRaw, 10);
       if (h === 12) {
-        targetCairoHour = combined.includes("الظهر") || combined.includes("ظهرا") ? 12 : 0;
-        displayPeriod = targetCairoHour === 12 ? "م" : "ص";
+        const isNoon =
+          combined.includes("صبح") ||
+          combined.includes("الصبح") ||
+          combined.includes("صباحا") ||
+          combined.includes("صباحاً") ||
+          combined.includes("ضهر") ||
+          combined.includes("الظهر") ||
+          combined.includes("ظهرا") ||
+          combined.includes("ظهراً") ||
+          combined.includes("نهار") ||
+          combined.includes("النهار") ||
+          combined.includes("pm");
+
+        targetCairoHour = isNoon ? 12 : 0;
+        displayPeriod = isNoon ? "م" : "ص";
       } else if (h >= 1 && h <= 11) {
         if (combined.includes("صباحا") || combined.includes("صباحاً") || combined.includes("am")) {
           targetCairoHour = h;
@@ -830,6 +869,10 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 2. ممنوع منعاً باتاً الإجابة عن أي أسئلة خارج هذا النطاق إطلاقاً (طبخ، سياسة، برمجة عامة، دراسة، أفلام، طقس).
 3. عند طرح أي سؤال خارج النطاق، ارفض فوراً بلباقة:
    "عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!"
+
+⚡ فهم التوقيت بالعامية المصرية والعربية (Arabic/Egyptian Time Disambiguation):
+- "12 بليل" أو "12 بالليل" أو "12 في منتصف الليل" أو "منتصف الليل" أو "نص الليل" = منتصف الليل (00:00 - الساعة 12:00 ص).
+- "12 صبح" أو "12 الصبح" أو "12 ضهر" أو "12 الظهر" أو "12 ظهراً" = منتصف النهار / الظهر (12:00 - الساعة 12:00 م).
 
 قاعدة النزاهة والتحقق من قاعدة البيانات الحقيقية (ZERO-HALLUCINATION POLICY):
 1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية.

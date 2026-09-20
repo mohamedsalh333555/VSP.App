@@ -567,10 +567,31 @@ class VspCopilotService {
       }
 
       String selectedSlot = '12:00 ص - 01:00 ص';
+      final is12Noon = lower.contains('صبح') ||
+          lower.contains('الصبح') ||
+          lower.contains('صباحا') ||
+          lower.contains('صباحاً') ||
+          lower.contains('ضهر') ||
+          lower.contains('الظهر') ||
+          lower.contains('ظهرا') ||
+          lower.contains('ظهراً') ||
+          lower.contains('نهار') ||
+          lower.contains('النهار') ||
+          lower.contains('pm');
+
       if (lower.contains('8') || lower.contains('ثمانية')) {
         selectedSlot = '08:00 م - 09:00 م';
-      } else if (lower.contains('12') || lower.contains('منتصف الليل')) {
-        selectedSlot = '12:00 ص - 01:00 ص';
+      } else if (lower.contains('12') ||
+          lower.contains('١٢') ||
+          lower.contains('منتصف الليل') ||
+          lower.contains('منتصف ليل') ||
+          lower.contains('نص الليل') ||
+          lower.contains('نص ليل')) {
+        if (is12Noon) {
+          selectedSlot = '12:00 م - 01:00 م';
+        } else {
+          selectedSlot = '12:00 ص - 01:00 ص';
+        }
       } else if (context['selected_slot'] != null) {
         selectedSlot = context['selected_slot'] as String;
       }
