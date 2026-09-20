@@ -33,8 +33,48 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
   bool get _isPending =>
       verificationStatus == 'pending' || verificationStatus == 'under_review';
 
+  String _getTitle(bool isAr) {
+    if (_isRejected) {
+      return isAr ? 'مطلوب تحديث المستندات' : 'Documents Need Attention';
+    }
+    if (_isPending && hasStadium) {
+      return isAr ? 'منشأتك جاهزة وبانتظار الاعتماد' : 'Ready — Awaiting Admin Approval';
+    }
+    return isAr ? 'خطوات إطلاق منشأتك' : 'Your Launch Checklist';
+  }
+
+  String _getSubtitle(bool isAr) {
+    if (_isRejected) {
+      return isAr
+          ? 'تم رفض بعض المستندات المرفوعة. يرجى إعادة رفع الوثائق المطلوبة لاعتماد المنشأة.'
+          : 'Please update your uploaded documents for approval.';
+    }
+    if (_isPending && hasStadium) {
+      return isAr
+          ? 'أحسنت! أكملت خطوات الإعداد المطلوبة. أوراقك قيد الفحص الإداري وستنطلق فور الاعتماد.'
+          : 'Great job! Setup complete. Your documents are being audited and will go live upon approval.';
+    }
+    if (_isPending && !hasStadium) {
+      return isAr
+          ? 'مستنداتك قيد التدقيق الإداري. استغل هذا الوقت لإضافة ملاعبك وضبط الأسعار لتنطلق فور الاعتماد.'
+          : 'Docs under review. Use this time to set up your pitches & prices to be ready at launch.';
+    }
+    if (!_isPending && hasStadium) {
+      return isAr
+          ? 'ملاعبك جاهزة ومحفوظة. يرجى رفع مستنداتك الرسمية لاعتماد وتفعيل المنشأة للاعبين.'
+          : 'Pitches configured! Please upload official documents to activate your venue.';
+    }
+    return isAr
+        ? 'أكمل الخطوات التالية لبدء استقبال الحجوزات من اللاعبين.'
+        : 'Complete these steps to start receiving bookings from players.';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final title = _getTitle(isArabic);
+    final subtitle = _getSubtitle(isArabic);
+    final bool isAllTasksDone = _isPending && hasStadium;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
@@ -42,7 +82,10 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.07),
+          color: isAllTasksDone
+              ? VSPColors.accent.withValues(alpha: 0.25)
+              : Colors.white.withValues(alpha: 0.07),
+          width: isAllTasksDone ? 1.2 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
@@ -55,13 +98,17 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── العنوان ──
+          // ── العنوان الديناميكي ──
           Row(
             children: [
-              const Icon(Iconsax.direct_up_copy, color: VSPColors.accent, size: 18),
+              Icon(
+                isAllTasksDone ? Iconsax.verify_copy : Iconsax.direct_up_copy,
+                color: isAllTasksDone ? VSPColors.accent : VSPColors.accent,
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
-                isArabic ? 'خطوات إطلاق منشأتك' : 'Your Launch Checklist',
+                title,
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 14,
@@ -72,9 +119,7 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            isArabic
-                ? 'أكمل الخطوات التالية لبدء استقبال الحجوزات من اللاعبين.'
-                : 'Complete these steps to start receiving bookings from players.',
+            subtitle,
             style: const TextStyle(
               color: VSPColors.textSecondary,
               fontSize: 11.5,
@@ -99,16 +144,16 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
             icon: _isRejected
                 ? Iconsax.close_circle_copy
                 : Iconsax.timer_1_copy,
-            iconColor: _isRejected ? VSPColors.error : VSPColors.warning,
+            iconColor: _isRejected ? VSPColors.error : VSPColors.textSecondary,
             title: isArabic ? 'مراجعة المستندات' : 'Document Review',
             subtitle: _isRejected
-                ? (isArabic ? 'مطلوب إعادة الرفع' : 'Re-upload Required')
+                ? (isArabic ? 'تم رفض بعض المستندات - يرجى إعادة الرفع' : 'Documents rejected - please re-upload')
                 : _isPending
-                    ? (isArabic ? 'قيد التدقيق الإداري' : 'Under Admin Review')
+                    ? (isArabic ? 'قيد التدقيق الإداري (خلال 24 ساعة عادةً)' : 'Under Admin Review (usually within 24h)')
                     : (isArabic ? 'لم يتم الرفع بعد' : 'Not Submitted Yet'),
             subtitleColor: _isRejected
                 ? VSPColors.error
-                : VSPColors.warning,
+                : VSPColors.textSecondary,
             isArabic: isArabic,
             trailingWidget: _isRejected
                 ? VSPActionChip(
@@ -116,7 +161,13 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
                     onTap: onResubmitDocs,
                     color: VSPColors.error,
                   )
-                : null,
+                : (!_isPending
+                    ? VSPActionChip(
+                        label: isArabic ? 'رفع الوثائق' : 'Upload Docs',
+                        onTap: onResubmitDocs,
+                        color: VSPColors.accent,
+                      )
+                    : null),
           ),
           const _StepDivider(),
 
@@ -130,7 +181,7 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
                 : VSPColors.textSecondary,
             title: isArabic ? 'إعداد الملاعب والأسعار' : 'Configure Pitches & Prices',
             subtitle: hasStadium
-                ? (isArabic ? 'تم إعداد الملاعب وتحديد الأسعار بنجاح' : 'Pitches & pricing configured')
+                ? (isArabic ? 'تم حفظ بيانات الملاعب وتحديد الأسعار بنجاح' : 'Pitches & pricing configured successfully')
                 : (isArabic ? 'أضف ملاعبك لتكون جاهزاً فور الاعتماد' : 'Add your pitch to be ready at launch'),
             subtitleColor: hasStadium
                 ? VSPColors.accent
@@ -138,7 +189,7 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
             isArabic: isArabic,
             trailingWidget: VSPActionChip(
               label: hasStadium
-                  ? (isArabic ? 'تعديل' : 'Edit')
+                  ? (isArabic ? 'تعديل الملعب' : 'Edit Pitch')
                   : (isArabic ? 'إضافة ملعب' : 'Add Pitch'),
               icon: hasStadium ? Iconsax.edit_2_copy : Iconsax.add_circle_copy,
               isOutlined: hasStadium,
@@ -154,11 +205,49 @@ class OwnerLaunchReadinessCard extends StatelessWidget {
             iconColor: Colors.white30,
             title: isArabic ? 'استقبال الحجوزات' : 'Go Live — Receive Bookings',
             subtitle: isArabic
-                ? 'يُفعّل بعد اكتمال التحقق وتأكيد جاهزية الملاعب'
-                : 'Activates after approval and pitch readiness check',
+                ? 'تُفعّل تلقائياً وتظهر منشأتك للاعبين فور اكتمال الاعتماد'
+                : 'Activates automatically and goes live upon admin approval',
             subtitleColor: Colors.white38,
             isArabic: isArabic,
           ),
+
+          // ── تنبيه طمأنة وتوضيح أثناء التدقيق الإداري ──
+          if (_isPending) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  width: 0.8,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Iconsax.info_circle_copy,
+                    color: VSPColors.accent,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'يقوم فريق الإدارة بمراجعة أوراق منشأتك حالياً. ستتلقى إشعاراً فور تفعيل الحساب وبدء استقبال الحجوزات.'
+                          : 'Our admin team is reviewing your facility documents. You will be notified the moment your venue goes live.',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

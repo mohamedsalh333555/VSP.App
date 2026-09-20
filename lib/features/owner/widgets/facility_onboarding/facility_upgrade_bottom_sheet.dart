@@ -145,7 +145,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
           // ─── Subscribe Button ───
           PrimaryButton(
             text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
-            color: Colors.amber,
+            color: VSPColors.accent,
             textColor: Colors.black,
             onPressed: () async {
               // Capture navigator reference before pop to avoid deactivation issues
@@ -224,7 +224,7 @@ class _FeatureRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: Colors.amber, size: 16),
+        Icon(icon, color: VSPColors.accent, size: 16),
         const SizedBox(width: 10),
         Expanded(
           child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),

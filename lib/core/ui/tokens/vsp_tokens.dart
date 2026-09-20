@@ -16,7 +16,7 @@ class VSPColors {
  static const inputFill = Color(0xFF1E1E22);
  static const error = Color(0xFFEF4444);
  static const success = Color(0xFF22C55E);
- static const warning = Color(0xFFF59E0B);
+ static const warning = Color(0xFFA1A1AA);
  static const info = Color(0xFF3B82F6);
  static const cardGreen = Color(0xFF2D4B15);
  static const cardDarkGreen = Color(0xFF1E330E);

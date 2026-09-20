@@ -372,7 +372,7 @@ extension _PreLaunchHub on _OwnerDashboardScreenState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. الهيدر الموحد (نفسه تماماً)
+                // 1. الهيدر الموحد
                 OwnerDashboardHeader(
                   auth: auth,
                   isProOwner: false,
@@ -381,15 +381,7 @@ extension _PreLaunchHub on _OwnerDashboardScreenState {
                 ),
                 const SizedBox(height: 14),
 
-                // 2. بانر حالة التوثيق (الموجود — يعمل بدون تعديل)
-                OwnerVerificationBanner(
-                  userModel: userModel,
-                  isArabic: isArabic,
-                  hasStadiums: stadiums.isNotEmpty,
-                ),
-                const SizedBox(height: 8),
-
-                // 3. بطاقة مراحل الإطلاق الجديدة
+                // 2. مركز جاهزية وإطلاق المنشأة
                 OwnerLaunchReadinessCard(
                   verificationStatus: userModel.verificationStatus,
                   hasStadium: stadiums.isNotEmpty,
@@ -397,7 +389,9 @@ extension _PreLaunchHub on _OwnerDashboardScreenState {
                   onAddStadium: () => Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const AddStadiumWizard(),
+                      builder: (_) => stadiums.isNotEmpty
+                          ? AddStadiumWizard(stadiumId: stadiums.first.id)
+                          : const AddStadiumWizard(),
                     ),
                   ),
                   onResubmitDocs: () => context.push('/documentation'),

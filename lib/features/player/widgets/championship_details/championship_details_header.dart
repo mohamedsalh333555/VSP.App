@@ -181,19 +181,19 @@ class ChampionshipDetailsHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: championship.prizeDelivered
                     ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                    : const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                    : VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(
                   color: championship.prizeDelivered
                       ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                      : const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      : Colors.white.withValues(alpha: 0.12),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     championship.prizeDelivered ? Iconsax.verify_copy : Iconsax.clock_copy,
-                    color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                    color: championship.prizeDelivered ? const Color(0xFF10B981) : VSPColors.textSecondary,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -207,7 +207,7 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                               ? 'بانتظار تسليم الجائزة المالية للبطل'
                               : 'Pending prize delivery to champion'),
                       style: TextStyle(
-                        color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                        color: championship.prizeDelivered ? const Color(0xFF10B981) : VSPColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

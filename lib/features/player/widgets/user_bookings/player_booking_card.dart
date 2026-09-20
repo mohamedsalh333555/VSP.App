@@ -382,10 +382,10 @@ class PlayerBookingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+          color: VSPColors.accent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+            color: VSPColors.accent.withValues(alpha: 0.45),
           ),
         ),
         child: Row(
@@ -394,7 +394,7 @@ class PlayerBookingCard extends StatelessWidget {
             const Icon(
               Iconsax.message_question_copy,
               size: 13,
-              color: Color(0xFFF59E0B),
+              color: VSPColors.accent,
             ),
             const SizedBox(width: 5),
             Text(
@@ -402,7 +402,7 @@ class PlayerBookingCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFF59E0B),
+                color: VSPColors.accent,
               ),
             ),
           ],

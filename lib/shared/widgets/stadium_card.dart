@@ -151,25 +151,25 @@ class StadiumCard extends StatelessWidget {
  ),
  const Spacer(),
  if (!stadium.isVerified) ...[
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
- decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.2),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: Colors.amber, width: 1),
- ),
- child: Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.clock_copy, color: Colors.amber, size: 12),
- const SizedBox(width: 4),
- Text(
- Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة ' : 'Under Review ',
- style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
- ),
- ],
- ),
- ),
+  Container(
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  decoration: BoxDecoration(
+  color: VSPColors.surfaceAlt,
+  borderRadius: BorderRadius.circular(VSPRadius.md),
+  border: Border.all(color: Colors.white.withValues(alpha: 0.15), width: 0.8),
+  ),
+  child: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+  const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 12),
+  const SizedBox(width: 4),
+  Text(
+  Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة ' : 'Under Review ',
+  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+  ),
+  ],
+  ),
+  ),
  const SizedBox(width: 6),
  ],
  if (isOwnerView)

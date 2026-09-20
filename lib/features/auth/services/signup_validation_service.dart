@@ -142,7 +142,7 @@ class SignupValidationService {
     Color color = Colors.red;
     String label = 'Weak';
     if (strength > 0.4) {
-      color = Colors.orange;
+      color = VSPColors.textSecondary;
       label = 'Medium';
     }
     if (strength >= 0.8) {

@@ -115,14 +115,14 @@ void showTournamentManualTeamSheet(
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Iconsax.warning_2_copy, color: Colors.orange, size: 14),
+                              const Icon(Iconsax.info_circle_copy, color: VSPColors.textSecondary, size: 14),
                               const SizedBox(width: 6),
                               Text(
                                 isArabic
                                     ? ' يرجى كتابة اسم الفريق لتفعيل التنسيق'
                                     : ' Please enter team name',
                                 style: const TextStyle(
-                                  color: Colors.orange,
+                                  color: VSPColors.textSecondary,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),

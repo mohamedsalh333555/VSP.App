@@ -214,14 +214,14 @@ class OwnerDashboardHeader extends StatelessWidget {
                                   ? VSPColors.accent.withValues(alpha: 0.14)
                                   : (isVerified
                                       ? Colors.white.withValues(alpha: 0.05)
-                                      : VSPColors.warning.withValues(alpha: 0.12)),
+                                      : VSPColors.surfaceAlt),
                               borderRadius: BorderRadius.circular(VSPRadius.full),
                               border: Border.all(
                                 color: isProOwner
                                     ? VSPColors.accent.withValues(alpha: 0.35)
                                     : (isVerified
                                         ? Colors.white.withValues(alpha: 0.08)
-                                        : VSPColors.warning.withValues(alpha: 0.35)),
+                                        : Colors.white.withValues(alpha: 0.15)),
                                 width: 0.8,
                               ),
                             ),
@@ -236,7 +236,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                               style: TextStyle(
                                 color: isProOwner
                                     ? VSPColors.accent
-                                    : (isVerified ? VSPColors.textSecondary : VSPColors.warning),
+                                    : VSPColors.textSecondary,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.3,

@@ -146,7 +146,7 @@ class ChampionshipStandingsSection extends StatelessWidget {
                     )),
                     DataCell(Text('${r['played'] ?? 0}', style: const TextStyle(color: Colors.white70))),
                     DataCell(Text('${r['won'] ?? 0}', style: const TextStyle(color: Colors.green))),
-                    DataCell(Text('${r['drawn'] ?? 0}', style: const TextStyle(color: Colors.orange))),
+                    DataCell(Text('${r['drawn'] ?? 0}', style: const TextStyle(color: VSPColors.textSecondary))),
                     DataCell(Text('${r['lost'] ?? 0}', style: const TextStyle(color: Colors.red))),
                     DataCell(Text('${r['goals_for'] ?? 0}', style: const TextStyle(color: Colors.white70))),
                     DataCell(Text('${r['goals_against'] ?? 0}', style: const TextStyle(color: Colors.white70))),

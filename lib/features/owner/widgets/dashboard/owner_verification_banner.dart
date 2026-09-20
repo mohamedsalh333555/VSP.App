@@ -59,13 +59,13 @@ class OwnerVerificationBanner extends StatelessWidget {
                 color: VSPColors.surfaceAlt,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: VSPColors.warning.withValues(alpha: 0.35),
+                  color: Colors.white.withValues(alpha: 0.15),
                   width: 0.8,
                 ),
               ),
               child: const Icon(
                 Iconsax.timer_1_copy,
-                color: VSPColors.warning,
+                color: VSPColors.textSecondary,
                 size: 20,
               ),
             ),
@@ -123,7 +123,7 @@ class OwnerVerificationBanner extends StatelessWidget {
     }
 
     // 3. مطلوب التوثيق (غير موثق أو تم رفض بعض الوثائق)
-    final Color primaryColor = isRejected ? VSPColors.error : VSPColors.warning;
+    final Color primaryColor = isRejected ? VSPColors.error : VSPColors.accent;
     final String title = isRejected
         ? (isArabic ? 'تم رفض بعض المستندات' : 'Documents Need Attention')
         : (isArabic ? 'منشأتك غير موثقة بعد' : 'Facility Verification Required');
@@ -314,17 +314,17 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+          color: VSPColors.accent.withValues(alpha: 0.35),
         ),
       ),
       child: Row(
         children: [
           const Icon(
             Iconsax.timer_1_copy,
-            color: Color(0xFFF59E0B),
+            color: VSPColors.accent,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -338,7 +338,7 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
                       ? 'باقي $daysText على انتهاء التجربة المجانية'
                       : '$daysText left in your free trial',
                   style: const TextStyle(
-                    color: Color(0xFFFEF3C7),
+                    color: VSPColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -349,7 +349,7 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
                       ? 'قم بالترقية الآن لضمان استمرار استقبال الحجوزات دون انقطاع.'
                       : 'Upgrade now to ensure uninterrupted booking reception.',
                   style: const TextStyle(
-                    color: Color(0xFFFDE68A),
+                    color: VSPColors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -362,7 +362,7 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF59E0B),
+                color: VSPColors.accent,
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
               ),
               child: Text(

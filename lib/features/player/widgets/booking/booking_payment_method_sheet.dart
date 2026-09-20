@@ -125,7 +125,7 @@ void showBookingPaymentMethodSheet({
                     const Divider(color: VSPColors.divider),
                     // خيار 2: دفع العربون فقط أونلاين
                     ListTile(
-                      leading: const Icon(Iconsax.lock_copy, color: Colors.amber),
+                      leading: const Icon(Iconsax.lock_copy, color: VSPColors.accent),
                       title: Text(
                         isArabic ? 'دفع العربون فقط أونلاين' : 'Pay Deposit Only Online',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

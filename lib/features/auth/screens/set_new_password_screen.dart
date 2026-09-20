@@ -42,8 +42,8 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
  Color get _strengthColor {
  if (_strength <= 0.25) return Colors.redAccent;
- if (_strength <= 0.5) return Colors.orange;
- if (_strength <= 0.75) return Colors.yellow;
+ if (_strength <= 0.5) return VSPColors.textSecondary;
+ if (_strength <= 0.75) return VSPColors.accent.withValues(alpha: 0.7);
  return VSPColors.accent;
  }
 

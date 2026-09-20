@@ -133,7 +133,7 @@ class BookingSheetDurationSelector extends StatelessWidget {
                 ? ' الحد الأقصى المتاح حتى الموعد القادم/الإغلاق: ${formatDurationLabel(maxMins, isArabic)}'
                 : ' Max available until next booking/closing: ${formatDurationLabel(maxMins, isArabic)}',
             style: const TextStyle(
-                color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ],
       ],
