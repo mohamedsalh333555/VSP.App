@@ -13,6 +13,9 @@ import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
 import '../../player/screens/champion_screen.dart';
 import '../../player/screens/player_home_screen.dart';
+import '../../owner/screens/owner_main_screen.dart';
+import '../../../core/ai/ai_capability_registry.dart';
+import '../../../core/providers/auth_provider.dart' show AuthProvider;
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/gemini_ai_icon.dart';
 import '../widgets/copilot_chat_bubble.dart';
@@ -189,7 +192,10 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     HapticFeedback.mediumImpact();
     final actionType = action.actionType.toUpperCase();
     final route = action.route.toLowerCase();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isOwner = auth.isOwner;
 
+    // ── PROFILE_UPDATED: show confirmation snackbar only ──────────────────────
     if (actionType == 'PROFILE_UPDATED') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -213,6 +219,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       return;
     }
 
+    // ── OPEN_PAYMENT: atomic booking → checkout ───────────────────────────────
     if (actionType == 'OPEN_PAYMENT') {
       context.pop();
       try {
@@ -223,6 +230,96 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       return;
     }
 
+    // ── Capability-aware navigation using AiCapabilityRegistry ───────────────
+    // Prefer capability_id for deterministic routing; fall back to route matching
+    final capId = action.capabilityId ?? '';
+    final cap = AiCapabilityRegistry.getById(capId);
+
+    if (isOwner) {
+      // ---- Owner tab routing ---------------------------------------------------
+      // Owner tab layout: 0=Dashboard/Financials, 1=Cup, 2=Inbox, 3=Bookings, 4=Profile
+      bool ownerRouted = false;
+      if (cap != null) {
+        switch (cap.id) {
+          case 'OWNER_VIEW_FINANCIALS':
+            context.pop();
+            ownerMainScreenKey.currentState?.switchToTab(0);
+            ownerRouted = true;
+            break;
+          case 'OWNER_VIEW_UPCOMING_BOOKINGS':
+            context.pop();
+            ownerMainScreenKey.currentState?.switchToTab(3);
+            ownerRouted = true;
+            break;
+          case 'OWNER_VIEW_STADIUMS':
+            context.pop();
+            ownerMainScreenKey.currentState?.switchToTab(0);
+            ownerRouted = true;
+            break;
+          case 'OWNER_EDIT_STADIUM':
+            context.pop();
+            try { context.push('/documentation'); } catch (_) {}
+            ownerRouted = true;
+            break;
+          case 'OWNER_RENEW_SUBSCRIPTION':
+            context.pop();
+            try { context.push('/facility-onboarding'); } catch (_) {}
+            ownerRouted = true;
+            break;
+        }
+      }
+      if (!ownerRouted) {
+        // Fallback: route-based matching for owners
+        if (route.contains('ledger') || route.contains('financial') || route.contains('dashboard')) {
+          context.pop();
+          ownerMainScreenKey.currentState?.switchToTab(0);
+        } else if (route.contains('booking')) {
+          context.pop();
+          ownerMainScreenKey.currentState?.switchToTab(3);
+        } else if (route.contains('profile')) {
+          context.pop();
+          ownerMainScreenKey.currentState?.switchToTab(4);
+        } else {
+          try { context.push(action.route); } catch (e) {
+            debugPrint('[VspCopilotScreen] Owner navigate error: $e');
+          }
+        }
+      }
+      return;
+    }
+
+    // ---- Player tab routing --------------------------------------------------
+    // Player tab layout: 0=Home, 1=Team, 2=Tournaments, 3=Bookings, 4=Profile
+    if (cap != null) {
+      switch (cap.id) {
+        case 'PLAYER_MY_TEAM':
+          context.pop();
+          playerHomeScreenKey.currentState?.switchToTab(1);
+          return;
+        case 'PLAYER_SEARCH_TOURNAMENTS':
+        case 'PLAYER_SEARCH_OPEN_MATCHES':
+        case 'PLAYER_LEAVE_TOURNAMENT':
+          context.pop();
+          playerHomeScreenKey.currentState?.switchToTab(2);
+          return;
+        case 'PLAYER_VIEW_BOOKINGS':
+        case 'PLAYER_CANCEL_BOOKING':
+        case 'PLAYER_LEAVE_MATCH':
+          context.pop();
+          playerHomeScreenKey.currentState?.switchToTab(3);
+          return;
+        case 'PLAYER_EDIT_PROFILE':
+          context.pop();
+          playerHomeScreenKey.currentState?.switchToTab(4);
+          return;
+        case 'PLAYER_VIEW_NOTIFICATIONS':
+          context.pop();
+          try { context.push('/notifications'); } catch (_) {}
+          return;
+      }
+    }
+
+    // Fallback: route-based matching for players
     if (route.contains('team') || route.contains('my-team')) {
       context.pop();
       playerHomeScreenKey.currentState?.switchToTab(1);

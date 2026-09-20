@@ -75,17 +75,20 @@ class CopilotAction {
   final String route;
   final String label;
   final Map<String, dynamic>? params;
+  final String? capabilityId;
 
   const CopilotAction({
     required this.actionType,
     required this.route,
     required this.label,
     this.params,
+    this.capabilityId,
   });
 
   bool get isOpenPayment => actionType == 'OPEN_PAYMENT';
   bool get isNavigate => actionType == 'NAVIGATE';
   bool get isProfileUpdated => actionType == 'PROFILE_UPDATED';
+  bool get hasCapability => capabilityId != null && capabilityId!.isNotEmpty;
 
   factory CopilotAction.fromMap(Map<String, dynamic> map) {
     return CopilotAction(
@@ -93,8 +96,17 @@ class CopilotAction {
       route: map['route']?.toString() ?? '/player',
       label: map['label']?.toString() ?? 'الانتقال',
       params: map['params'] is Map<String, dynamic> ? map['params'] as Map<String, dynamic> : null,
+      capabilityId: map['capability_id']?.toString() ?? map['capabilityId']?.toString(),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+    'action_type': actionType,
+    'route': route,
+    'label': label,
+    'params': params,
+    'capability_id': capabilityId,
+  };
 }
 
 /// Represents a tournament summary returned by VSP Copilot

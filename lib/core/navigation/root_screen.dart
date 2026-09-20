@@ -155,7 +155,7 @@ class _RootScreenState extends State<RootScreen> {
  value: SystemUiOverlayStyle.light.copyWith(
  statusBarColor: Colors.transparent,
  ),
- child: auth.isOwner ? const OwnerMainScreen() : PlayerHomeScreen(key: playerHomeScreenKey),
+ child: auth.isOwner ? OwnerMainScreen(key: ownerMainScreenKey) : PlayerHomeScreen(key: playerHomeScreenKey),
  );
  }
 }
