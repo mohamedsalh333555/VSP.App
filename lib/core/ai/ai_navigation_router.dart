@@ -136,17 +136,31 @@ class AiNavigationRouter {
 
         case 'PLAYER_SEARCH_TOURNAMENTS':
         case 'PLAYER_SEARCH_OPEN_MATCHES':
-        case 'PLAYER_LEAVE_TOURNAMENT':
           _safeGoPop();
           playerHomeScreenKey.currentState?.switchToTab(2);
           return true;
 
+        case 'PLAYER_LEAVE_TOURNAMENT': {
+          final id = action.params?['championship_id']?.toString();
+          if (id == null || id.isEmpty) return false;
+          _safeGoPop();
+          _safePush('/championship/$id');
+          return true;
+        }
+
         case 'PLAYER_VIEW_BOOKINGS':
         case 'PLAYER_CANCEL_BOOKING':
-        case 'PLAYER_LEAVE_MATCH':
           _safeGoPop();
           playerHomeScreenKey.currentState?.switchToTab(3);
           return true;
+
+        case 'PLAYER_LEAVE_MATCH': {
+          final id = action.params?['booking_id']?.toString();
+          if (id == null || id.isEmpty) return false;
+          _safeGoPop();
+          _safePush('/match/$id');
+          return true;
+        }
 
         case 'PLAYER_EDIT_PROFILE':
           _safeGoPop();
