@@ -97,5 +97,5 @@ revoke execute on function public.record_ai_copilot_audit_event(
 ) from public, anon, authenticated;
 
 grant execute on function public.record_ai_copilot_audit_event(
-  uuid, uuid, uuid, text, text, text, text, text, text, boolean, text, text, text, text, jsonb
+  uuid, uuid, uuid, text, text, text, text, text, text, boolean, text, text, text, integer, jsonb
 ) to service_role;
