@@ -1260,6 +1260,7 @@ class EgyptianFootballLexicon {
     let ownerQuery: {
       type: "financial" | "bookings" | "operational" | "analytics";
       period?: "7d" | "30d" | "90d" | "all";
+      stadiumComparison?: boolean;
     } | null = null;
     const ownerFinPhrases = [
       "أرباحي", "ارباحي", "فلوسي", "رصيدي", "مديونيتي", "حسابي كام",
@@ -1275,6 +1276,7 @@ class EgyptianFootballLexicon {
       "تحليل التشغيل", "تحليل تشغيلي", "أداء التشغيل", "أداء الحجز",
       "زاد", "زادت", "زادوا", "قل", "قلت", "نقص", "نقصت",
       "مقارنة", "مقابل", "الشهر ده", "الشهر ده مقارنة", "الأسبوع ده", "الاسبوع ده",
+      "قارن الملاعب", "قارنلي الملاعب", "قارن بين الملاعب", "مقارنة الملاعب", "أنهي ملعب", "اي ملعب",
       "اللي فات", "السابق", "الشهر الماضي", "الأسبوع الماضي", "الاسبوع الماضي",
       "growth", "trend", "analytics", "performance", "utilization",
     ];
@@ -1299,7 +1301,11 @@ class EgyptianFootballLexicon {
       } else if (text.includes("شهر") || text.includes("30 يوم") || hasComparisonPhrase) {
         period = "30d";
       }
-      ownerQuery = { type: hasComparisonPhrase ? "analytics" : "operational", period };
+      const stadiumComparison = [
+        "قارن الملاعب", "قارنلي الملاعب", "قارن بين الملاعب", "مقارنة الملاعب",
+        "أنهي ملعب", "اي ملعب", "أي ملعب", "أفضل ملعب", "اكتر ملعب", "أكثر ملعب",
+      ].some((p) => text.includes(p.toLowerCase()));
+      ownerQuery = { type: hasComparisonPhrase ? "analytics" : "operational", period, stadiumComparison };
     }
 
     return {
