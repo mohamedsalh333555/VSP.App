@@ -2417,7 +2417,32 @@ serve(async (req: Request) => {
 
     // ⚡ Phase 7: Pre-Gemini Owner Fast-Path (Financial & Booking Schedule)
     if (effectiveUserRole === "owner" && ownerAiEnabled && !handledByGemini) {
-      if (lexiconAnalysis.ownerQuery?.type === "financial") {
+      if (lexiconAnalysis.ownerQuery?.type === "operational" || lexiconAnalysis.ownerQuery?.type === "analytics") {
+        const requestedPeriod = lexiconAnalysis.ownerQuery?.period || "30d";
+        const period = ["7d", "30d", "90d", "all"].includes(requestedPeriod) ? requestedPeriod : "30d";
+        const { data: opSummary, error: opErr } = await supabase.rpc("get_owner_ai_operational_insights", {
+          p_owner_id: callerUser.id,
+          p_period: period,
+        });
+
+        if (opErr || !opSummary?.success) {
+          assistantReply = "تعذر قراءة مؤشرات التشغيل من قاعدة البيانات حالياً. حاول مرة أخرى بعد قليل.";
+        } else {
+          const periodLabel = opSummary.period === "7d" ? "آخر 7 أيام" : opSummary.period === "90d" ? "آخر 90 يوم" : opSummary.period === "all" ? "كل البيانات المتاحة" : "آخر 30 يوم";
+          const alerts = Array.isArray(opSummary.alerts) ? opSummary.alerts : [];
+          const alertText = alerts.length ? "\n\nملاحظات مبنية على البيانات:\n" + alerts.map((a: any) => "• " + a.message_ar).join("\n") : "";
+          const peak = opSummary.peak_start_hour_cairo == null ? "غير متاح لعدم وجود حجوزات" : String(opSummary.peak_start_hour_cairo).padStart(2, "0") + ":00 (" + opSummary.peak_hour_bookings + " حجز)";
+          assistantReply = "تحليل تشغيل ملاعبك — " + periodLabel + ":\n" +
+            "🏟️ عدد الملاعب: " + opSummary.stadium_count + "\n" +
+            "📅 الحجوزات: " + opSummary.total_bookings + " (مكتملة: " + opSummary.completed_bookings + "، ملغاة: " + opSummary.cancelled_bookings + ")\n" +
+            "⏱️ الساعات المحجوزة: " + Number(opSummary.booked_hours || 0).toFixed(1) + " من " + Number(opSummary.available_hours_estimate || 0).toFixed(1) + " ساعة متاحة تقديرياً\n" +
+            "📊 نسبة الإشغال: " + Number(opSummary.utilization_pct || 0).toFixed(2) + "%\n" +
+            "❌ معدل الإلغاء: " + Number(opSummary.cancellation_rate_pct || 0).toFixed(2) + "%\n" +
+            "💰 الإيراد المحقق: " + Number(opSummary.realized_revenue || 0).toFixed(2) + " ج.م\n" +
+            "🔥 ساعة الذروة: " + peak + alertText;
+          handledByGemini = true;
+        }
+      } else if (lexiconAnalysis.ownerQuery?.type === "financial") {
         const { data: finSummary } = await supabase.rpc(
           "get_owner_financial_summary",
           { p_owner_id: callerUser.id }
