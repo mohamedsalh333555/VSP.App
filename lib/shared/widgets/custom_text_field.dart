@@ -77,7 +77,7 @@ class CustomTextField extends StatelessWidget {
             child: Icon(
               Iconsax.tick_circle_copy,
               color: VSPColors.success,
-              size: 20,
+              size: VSPIconSize.md,
             ),
           );
         }
@@ -117,7 +117,7 @@ class CustomTextField extends StatelessWidget {
                 ? Icon(
                     prefixIcon,
                     color: VSPColors.textSecondary,
-                    size: 20,
+                    size: VSPIconSize.md,
                   )
                 : null,
             suffixIcon: effectiveSuffix != null
@@ -134,21 +134,21 @@ class CustomTextField extends StatelessWidget {
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
                 color: VSPColors.divider,
-                width: 1,
+                width: VSPBorder.widthDefault,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
                 color: VSPColors.accent,
-                width: 1.5,
+                width: VSPBorder.widthMedium,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
                 color: VSPColors.error,
-                width: 1,
+                width: VSPBorder.widthDefault,
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(

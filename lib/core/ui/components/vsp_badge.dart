@@ -64,21 +64,21 @@ class VSPStatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(VSPRadius.full),
-        border: Border.all(color: border, width: 0.8),
+        border: Border.all(color: border, width: VSPBorder.widthThin),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 12, color: text),
+            Icon(icon, size: VSPIconSize.xs, color: text),
             const SizedBox(width: 4),
           ],
           Text(
             label,
             style: TextStyle(
               color: text,
-              fontSize: 10.5,
+              fontSize: VSPTypography.labelFontSize,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
             ),

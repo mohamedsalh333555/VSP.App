@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/components/vsp_button.dart';
 
-class PrimaryButton extends StatefulWidget {
+/// Backward-compatible Facade delegating to [VSPPrimaryButton].
+/// Single source of truth: handles tokens, debouncing, haptics, width, and padding centrally.
+class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
@@ -28,82 +28,18 @@ class PrimaryButton extends StatefulWidget {
   });
 
   @override
-  State<PrimaryButton> createState() => _PrimaryButtonState();
-}
-
-class _PrimaryButtonState extends State<PrimaryButton> {
-  bool _isDebouncing = false;
-  Timer? _debounceTimer;
-
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bool isButtonDisabled = widget.isLoading || _isDebouncing || widget.onPressed == null;
-    return AbsorbPointer(
-      absorbing: isButtonDisabled,
-      child: SizedBox(
-        width: widget.width ?? double.infinity,
-        height: widget.height ?? VSPSize.buttonHeight,
-        child: ElevatedButton(
-          onPressed: isButtonDisabled ? null : () {
-            HapticFeedback.mediumImpact();
-            setState(() => _isDebouncing = true);
-            widget.onPressed?.call();
-            _debounceTimer?.cancel();
-            _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-              if (mounted) {
-                setState(() => _isDebouncing = false);
-              }
-            });
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: widget.color ?? VSPColors.accent,
-            foregroundColor: widget.textColor ?? VSPColors.background,
-            shape: const StadiumBorder(),
-            elevation: 0,
-            disabledBackgroundColor: VSPColors.surface,
-            padding: widget.padding,
-          ),
-          child: widget.isLoading
-              ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      VSPColors.background,
-                    ),
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon, size: 20),
-                      const SizedBox(width: 8),
-                    ],
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          widget.text,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: widget.textColor ?? VSPColors.background,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
+    return VSPPrimaryButton(
+      text: text,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      color: color,
+      textColor: textColor,
+      width: width,
+      height: height,
+      padding: padding,
+      iconData: icon,
     );
   }
 }
+
