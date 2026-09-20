@@ -10,6 +10,7 @@ enum SignupValidationError {
   invalidPhone,
   passwordMismatch,
   passwordTooShort,
+  underRequiredAge,
 }
 
 class SignupValidationResult {
@@ -71,6 +72,7 @@ class SignupValidationService {
     required String password,
     required String confirmPassword,
     required DateTime? dateOfBirth,
+    required int minimumAge,
   }) {
     if (!agreedToTerms) {
       return SignupValidationResult.invalid(SignupValidationError.pleaseAgreeToTerms);
@@ -91,6 +93,12 @@ class SignupValidationService {
 
     if (dateOfBirth == null) {
       return SignupValidationResult.invalid(SignupValidationError.pleaseEnterDob);
+    }
+
+    final today = DateTime.now();
+    final cutoff = DateTime(today.year - minimumAge, today.month, today.day);
+    if (dateOfBirth.isAfter(cutoff)) {
+      return SignupValidationResult.invalid(SignupValidationError.underRequiredAge);
     }
 
     final normalizedPhone = PhoneUtils.normalize(trimmedPhone);
@@ -127,6 +135,8 @@ class SignupValidationService {
         return l10n.passwordMismatch;
       case SignupValidationError.passwordTooShort:
         return l10n.passwordTooShort;
+      case SignupValidationError.underRequiredAge:
+        return 'يجب أن يكون عمر المستخدم ضمن الحد الأدنى المسموح به لاستخدام VSP.';
     }
   }
 
