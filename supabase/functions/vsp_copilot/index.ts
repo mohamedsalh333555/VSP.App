@@ -3453,6 +3453,33 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               };
             }
 
+            const toolSucceeded = toolResponseData?.success !== false &&
+              !toolResponseData?.error &&
+              !toolResponseData?.needs_confirmation;
+            await recordCopilotAuditEvent(supabase, {
+              requestId,
+              conversationId,
+              userId: callerUser.id,
+              userRole: effectiveUserRole,
+              eventType: "tool_completed",
+              status: toolSucceeded ? "success" : (toolResponseData?.needs_confirmation ? "awaiting_confirmation" : "failed"),
+              toolName: funcName,
+              capabilityId: funcName === "createBookingFromChat" ? "PLAYER_CREATE_BOOKING"
+                : funcName === "cancelBookingFromChat" ? "PLAYER_CANCEL_BOOKING"
+                : funcName === "leavePublicMatchFromChat" ? "PLAYER_LEAVE_MATCH"
+                : funcName === "leaveChampionshipFromChat" ? "PLAYER_LEAVE_TOURNAMENT"
+                : funcName === "ownerCreateManualBooking" ? "OWNER_CREATE_MANUAL_BOOKING"
+                : funcName === "getOwnerFinancialInsights" ? "OWNER_VIEW_FINANCIALS"
+                : funcName === "getOwnerOperationalInsights" ? "OWNER_VIEW_OPERATIONAL_INSIGHTS"
+                : funcName === "getOwnerStadiumComparison" ? "OWNER_VIEW_STADIUM_COMPARISON"
+                : funcName === "getOwnerStadiumsAndBookings" ? "OWNER_VIEW_STADIUMS"
+                : null,
+              verified: toolSucceeded,
+              verificationSource: toolSucceeded ? "database_tool" : null,
+              errorCode: toolResponseData?.error || null,
+              metadata: { confirmation_required: toolResponseData?.needs_confirmation === true },
+            });
+
             if (funcName === "createBookingFromChat") {
               handledByGemini = true;
             } else {
@@ -3632,6 +3659,22 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 
     // 🧭 Phase 1/2: every emitted action must map to a trusted capability and entitlement.
     appAction = normalizeAction(appAction);
+
+    if (appAction) {
+      await recordCopilotAuditEvent(supabase, {
+        requestId,
+        conversationId,
+        userId: callerUser.id,
+        userRole: effectiveUserRole,
+        eventType: "action_emitted",
+        status: "emitted",
+        capabilityId: appAction.capability_id ?? null,
+        actionType: appAction.action_type ?? null,
+        verified: appAction.capability_id !== undefined,
+        verificationSource: "capability_registry",
+        metadata: { route_is_model_controlled: false },
+      });
+    }
 
     await recordCopilotAuditEvent(supabase, {
       requestId,
