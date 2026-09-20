@@ -164,6 +164,7 @@ class AiNavigationRouter {
         }
 
         case 'PLAYER_EDIT_PROFILE':
+        case 'PLAYER_DELETE_ACCOUNT':
           _safeGoPop();
           playerHomeScreenKey.currentState?.switchToTab(4);
           return true;
