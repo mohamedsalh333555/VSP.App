@@ -500,6 +500,7 @@ const OWNER_ONLY_TOOLS = [
   getOwnerStadiumsAndBookingsTool,
   getOwnerFinancialInsightsTool,
   getOwnerOperationalInsightsTool,
+  getOwnerStadiumComparisonTool,
   ownerCreateManualBookingTool,
 ];
 
