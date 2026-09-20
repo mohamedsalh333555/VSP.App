@@ -261,6 +261,17 @@ const ownerCreateManualBookingTool = {
   },
 };
 
+const getOwnerOperationalInsightsTool = {
+  name: "getOwnerOperationalInsights",
+  description: "للمالك فقط: تحليل تشغيلي حقيقي من قاعدة البيانات للحجوزات والإيراد ونسبة الإشغال والإلغاءات وساعات الذروة وأداء الملاعب. لا تخمّن أي رقم.",
+  parameters: {
+    type: "object",
+    properties: {
+      period: { type: "string", enum: ["7d", "30d", "90d", "all"] }
+    }
+  }
+};
+
 const getOwnerFinancialInsightsTool = {
   name: "getOwnerFinancialInsights",
   description: "استعلام السجل المالي لمالك الملعب، والرصيد الإلكتروني القابل للسحب، والإيرادات النقدية (كاش) المحصلة، ومديونية المنصة، وعدد الحجوزات المكتملة مباشرة من قاعدة البيانات. استدعِ هذه الأداة فوراً عندما يسأل مالك الملعب عن أرباحه، رصيده، إيراداته، فلوسه، أو مديونية الكاش.",
@@ -474,6 +485,7 @@ const PLAYER_ONLY_TOOLS = [
 const OWNER_ONLY_TOOLS = [
   getOwnerStadiumsAndBookingsTool,
   getOwnerFinancialInsightsTool,
+  getOwnerOperationalInsightsTool,
   ownerCreateManualBookingTool,
 ];
 
@@ -3319,7 +3331,22 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   assistantReply = toolResponseData.message || (toolResponseData.success ? `تمام يا كابتن، تم إلغاء حجزك في ${toolResponseData.stadium_name || 'الملعب'} بنجاح ✅` : "تعذر إلغاء الحجز حالياً يا كابتن.");
                 } else if (funcName === "getUserBookingsAndRefunds") {
                   assistantReply = `يا كابتن! عندك ${toolResponseData.active_bookings_count || 0} حجز نشط، وإجمالي ${toolResponseData.total_bookings || 0} حجز مسجل في حسابك.`;
-                } else if (funcName === "getOwnerFinancialInsights") {
+                } else if (funcName === "getOwnerOperationalInsights") {
+                if (effectiveUserRole !== "owner" || !ownerAiEnabled) {
+                  toolResponseData = { success: false, message: "هذه الميزة متاحة لمالك الملعب المشترك في خدمة Owner AI فقط." };
+                } else {
+                  const period = ["7d", "30d", "90d", "all"].includes(String(args.period || "")) ? String(args.period) : "30d";
+                  const { data: insights, error: insightErr } = await supabase.rpc("get_owner_ai_operational_insights", {
+                    p_owner_id: callerUser.id,
+                    p_period: period,
+                  });
+                  if (insightErr || !insights?.success) {
+                    toolResponseData = { success: false, message: "تعذر جلب مؤشرات التشغيل من قاعدة البيانات حالياً." };
+                  } else {
+                    toolResponseData = insights;
+                  }
+                }
+              } else if (funcName === "getOwnerFinancialInsights") {
                   assistantReply = `يا كابتن (المالك)! الرصيد المتاح للسحب في حسابك هو ${toolResponseData.available_balance ?? 0} ج.م، وإجمالي الأرباح الإلكترونية ${toolResponseData.net_online_earnings ?? 0} ج.م.`;
                 } else if (funcName === "getOwnerStadiumsAndBookings") {
                   assistantReply = `يا كابتن! لديك ${toolResponseData.owner_stadiums_count || 0} ملعب مسجل، و${toolResponseData.bookings_count || 0} حجز حالي في ملاعبك.`;
