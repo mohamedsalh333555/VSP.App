@@ -182,8 +182,8 @@ class AiCapabilityRegistry {
   static const playerLeaveMatch = AiCapability(
     id: 'PLAYER_LEAVE_MATCH',
     role: 'player',
-    canExecuteByAi: false,
-    actionType: AiActionType.navigate,
+    canExecuteByAi: true,
+    actionType: AiActionType.executeThenNavigate,
     destinationRoute: '/match/:bookingId',
     requiredParams: ['booking_id'],
     confirmationRequired: true,
@@ -194,8 +194,8 @@ class AiCapabilityRegistry {
   static const playerLeaveTournament = AiCapability(
     id: 'PLAYER_LEAVE_TOURNAMENT',
     role: 'player',
-    canExecuteByAi: false,
-    actionType: AiActionType.navigate,
+    canExecuteByAi: true,
+    actionType: AiActionType.executeThenNavigate,
     destinationRoute: '/championship/:championshipId',
     requiredParams: ['championship_id'],
     confirmationRequired: true,
