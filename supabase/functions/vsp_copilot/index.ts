@@ -180,6 +180,46 @@ const cancelBookingFromChatTool = {
   },
 };
 
+// 7c. Tool: leavePublicMatchFromChat — confirmation is mandatory.
+const leavePublicMatchFromChatTool = {
+  name: "leavePublicMatchFromChat",
+  description: "مغادرة مباراة حجز مفتوح للمستخدم الحالي. يجب طلب تأكيد صريح قبل التنفيذ، ولا تمرر confirmed=true إلا بعد التأكيد.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      booking_id: {
+        type: "STRING",
+        description: "معرف المباراة/الحجز UUID. استخدم last_booking_id من السياق إن كان يشير للمباراة المقصودة.",
+      },
+      confirmed: {
+        type: "BOOLEAN",
+        description: "true فقط بعد تأكيد المستخدم للمغادرة.",
+      },
+    },
+    required: ["booking_id", "confirmed"],
+  },
+};
+
+// 7d. Tool: leaveChampionshipFromChat — team captain only.
+const leaveChampionshipFromChatTool = {
+  name: "leaveChampionshipFromChat",
+  description: "انسحاب فريق اللاعب من بطولة. يجب أن يكون المستخدم قائد الفريق ويجب طلب تأكيد صريح قبل التنفيذ.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      championship_id: {
+        type: "STRING",
+        description: "معرف البطولة UUID. استخدم المعرف الموجود في سياق المحادثة أو نتيجة البحث.",
+      },
+      confirmed: {
+        type: "BOOLEAN",
+        description: "true فقط بعد تأكيد المستخدم للانسحاب.",
+      },
+    },
+    required: ["championship_id", "confirmed"],
+  },
+};
+
 
 // 8. Tool: getOwnerStadiumsAndBookings
 const getOwnerStadiumsAndBookingsTool = {
@@ -397,6 +437,8 @@ const PLAYER_ONLY_TOOLS = [
   getUserBookingsAndRefundsTool,
   cancelBookingFromChatTool,
   createBookingFromChatTool,
+  leavePublicMatchFromChatTool,
+  leaveChampionshipFromChatTool,
 ];
 
 /** Tools exclusive to Owner role */
@@ -1904,12 +1946,26 @@ serve(async (req: Request) => {
           } else if (clar.type === "cancel_selection" || p.clarification_type === "cancel_selection") {
             p.booking_id = matchedOpt.id;
             p.clarification_type = null;
+          } else if (clar.type === "leave_match_confirmation" || p.clarification_type === "leave_match_confirmation") {
+            if (matchedOpt.id === "confirm_leave_match") {
+              p.confirmed = true;
+              p.clarification_type = null;
+            }
+          } else if (clar.type === "leave_tournament_confirmation" || p.clarification_type === "leave_tournament_confirmation") {
+            if (matchedOpt.id === "confirm_leave_tournament") {
+              p.confirmed = true;
+              p.clarification_type = null;
+            }
           }
         }
       }
 
       if (!optionMatched) {
-        if (p.clarification_type === "date") {
+        if (["leave_match_confirmation", "leave_tournament_confirmation"].includes(p.clarification_type) &&
+            /^(نعم|ايوه|أيوه|اه|أه|موافق|أكد|تأكيد|yes|confirm)$/i.test(userMessage.trim())) {
+          p.confirmed = true;
+          p.clarification_type = null;
+        } else if (p.clarification_type === "date") {
           const dateMatch = userMessage.match(/\b\d{4}-\d{2}-\d{2}\b/);
           if (dateMatch) {
             p.date = dateMatch[0];
@@ -1953,6 +2009,60 @@ serve(async (req: Request) => {
             }
           }
         }
+      }
+
+      // ⚡ Confirmed leave-match -> use the existing atomic domain RPC.
+      if (p.intent === "leave_match" && p.booking_id && p.confirmed === true && !p.clarification_type) {
+        contextSnapshot.pending_intent = null;
+        contextSnapshot.clarification = null;
+        const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_public_match_atomic", {
+          p_booking_id: p.booking_id,
+          p_user_id: callerUser.id,
+        });
+        assistantReply = !leaveErr && leaveResult === true
+          ? "تمام يا كابتن، خرجتك من المباراة بنجاح ✅"
+          : "ماقدرتش أخرجك من المباراة. ممكن تكون خرجت منها بالفعل أو لم تعد مشاركاً فيها.";
+        if (!leaveErr && leaveResult === true) {
+          appAction = buildAiAction("PLAYER_LEAVE_MATCH", {
+            action_type: "NAVIGATE",
+            route: "/match/" + p.booking_id,
+            label: "فتح تفاصيل المباراة 📋",
+            params: { booking_id: p.booking_id },
+          });
+        }
+        handledByGemini = true;
+      }
+
+      // ⚡ Confirmed tournament withdrawal -> verify captain and use atomic RPC.
+      if (p.intent === "leave_tournament" && p.championship_id && p.confirmed === true && !p.clarification_type) {
+        contextSnapshot.pending_intent = null;
+        contextSnapshot.clarification = null;
+        const { data: team } = await supabase
+          .from("teams")
+          .select("id, name, captain_id")
+          .eq("captain_id", callerUser.id)
+          .limit(1)
+          .maybeSingle();
+        if (!team) {
+          assistantReply = "الانسحاب من البطولة متاح لقائد الفريق المسجل فقط.";
+        } else {
+          const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_championship_atomic", {
+            p_championship_id: p.championship_id,
+            p_team_id: team.id,
+          });
+          if (!leaveErr && leaveResult?.success !== false) {
+            assistantReply = "تم انسحاب فريقك من البطولة بنجاح ✅";
+            appAction = buildAiAction("PLAYER_LEAVE_TOURNAMENT", {
+              action_type: "NAVIGATE",
+              route: "/championship/" + p.championship_id,
+              label: "فتح تفاصيل البطولة 🏆",
+              params: { championship_id: p.championship_id },
+            });
+          } else {
+            assistantReply = "ماقدرتش أنفذ الانسحاب من البطولة. راجع حالة البطولة والفريق وحاول مرة أخرى.";
+          }
+        }
+        handledByGemini = true;
       }
 
       // ⚡ If pending create_booking intent is now fully resolved -> Execute atomically without Gemini!
@@ -2279,7 +2389,8 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 2. لا تخترع ملاعب أو بطولات أو أسعاراً أو تواريخ غير موجودة.
 3. لحجز ملعب أو تحديد موعد: استدعِ createBookingFromChat فوراً وبلا استثناء، وممنوع منعاً باتاً الإجابة بنص تأكيدي أو سؤال المستخدم نصياً أو تخمين تواريخ قبل استدعاء الأداة! الأداة والـ Guard هما المسؤولان عن التحقق وسؤال المستخدم عبر Action Chips إن لزم.
 4. لفحص التوافر والمواعيد الشاغرة: استدعِ checkStadiumAvailability فوراً.
-5. للبحث عن ملاعب: استدعِ searchStadiums فوراً.`;
+5. للبحث عن ملاعب: استدعِ searchStadiums فوراً.
+6. لمغادرة مباراة أو بطولة: استخدم أداة المغادرة، ولا تمرر confirmed=true إلا بعد تأكيد صريح من المستخدم.`;
 
         // 🔒 Phase 2: Build role-filtered tool list — Gemini sees ONLY allowed tools
         const userRole = userProfile?.role || "player";
@@ -2582,6 +2693,105 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 has_refunds: refunds.length > 0,
                 has_active: activeBookings.length > 0,
               };
+
+            } else if (funcName === "leavePublicMatchFromChat") {
+              const bookingId = (args.booking_id || contextSnapshot.last_booking_id || "").toString().trim();
+              const confirmed = args.confirmed === true;
+
+              if (!bookingId || !/^[0-9a-fA-F-]{36}$/.test(bookingId)) {
+                assistantReply = "محتاج أعرف أنهي مباراة تقصد.";
+                toolResponseData = { success: false, message: assistantReply };
+              } else if (!confirmed) {
+                appClarification = {
+                  type: "leave_match_confirmation",
+                  question: "تأكد إنك عايز تخرج من المباراة دي؟",
+                  options: [
+                    { id: "confirm_leave_match", label: "تأكيد المغادرة" },
+                    { id: "keep_leave_match", label: "لا، خليك" },
+                  ],
+                };
+                contextSnapshot.pending_intent = {
+                  intent: "leave_match",
+                  booking_id: bookingId,
+                  clarification_type: "leave_match_confirmation",
+                };
+                contextSnapshot.clarification = appClarification;
+                assistantReply = "تمام، قبل ما أنفذ: تحب أخرجك من المباراة؟";
+                toolResponseData = { success: false, needs_confirmation: true };
+              } else {
+                const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_public_match_atomic", {
+                  p_booking_id: bookingId,
+                  p_user_id: callerUser.id,
+                });
+                if (!leaveErr && leaveResult === true) {
+                  assistantReply = "تم خروجك من المباراة بنجاح ✅";
+                  appAction = buildAiAction("PLAYER_LEAVE_MATCH", {
+                    action_type: "NAVIGATE",
+                    route: "/match/" + bookingId,
+                    label: "فتح تفاصيل المباراة 📋",
+                    params: { booking_id: bookingId },
+                  });
+                } else {
+                  assistantReply = "تعذر الخروج من المباراة أو لم تعد مشاركاً فيها.";
+                }
+                toolResponseData = { success: !leaveErr && leaveResult === true, booking_id: bookingId };
+              }
+
+            } else if (funcName === "leaveChampionshipFromChat") {
+              const championshipId = (args.championship_id || "").toString().trim();
+              const confirmed = args.confirmed === true;
+
+              if (!championshipId || !/^[0-9a-fA-F-]{36}$/.test(championshipId)) {
+                assistantReply = "محتاج أعرف أنهي بطولة تقصد.";
+                toolResponseData = { success: false, message: assistantReply };
+              } else if (!confirmed) {
+                appClarification = {
+                  type: "leave_tournament_confirmation",
+                  question: "تأكد إنك عايز تنسحب بفريقك من البطولة؟",
+                  options: [
+                    { id: "confirm_leave_tournament", label: "تأكيد الانسحاب" },
+                    { id: "keep_leave_tournament", label: "لا، خليك" },
+                  ],
+                };
+                contextSnapshot.pending_intent = {
+                  intent: "leave_tournament",
+                  championship_id: championshipId,
+                  clarification_type: "leave_tournament_confirmation",
+                };
+                contextSnapshot.clarification = appClarification;
+                assistantReply = "تمام، قبل ما أنفذ: تحب أنسحب بفريقك من البطولة؟";
+                toolResponseData = { success: false, needs_confirmation: true };
+              } else {
+                const { data: team } = await supabase
+                  .from("teams")
+                  .select("id, name, captain_id")
+                  .eq("captain_id", callerUser.id)
+                  .limit(1)
+                  .maybeSingle();
+
+                if (!team) {
+                  assistantReply = "الانسحاب من البطولة متاح لقائد الفريق المسجل فقط.";
+                  toolResponseData = { success: false, message: assistantReply };
+                } else {
+                  const { data: leaveResult, error: leaveErr } = await supabase.rpc("leave_championship_atomic", {
+                    p_championship_id: championshipId,
+                    p_team_id: team.id,
+                  });
+                  if (!leaveErr && leaveResult?.success !== false) {
+                    assistantReply = "تم انسحاب فريقك من البطولة بنجاح ✅";
+                    appAction = buildAiAction("PLAYER_LEAVE_TOURNAMENT", {
+                      action_type: "NAVIGATE",
+                      route: "/championship/" + championshipId,
+                      label: "فتح تفاصيل البطولة 🏆",
+                      params: { championship_id: championshipId },
+                    });
+                    toolResponseData = { success: true, championship_id: championshipId, team_id: team.id };
+                  } else {
+                    assistantReply = "تعذر الانسحاب من البطولة. راجع حالة البطولة وحاول مرة أخرى.";
+                    toolResponseData = { success: false, message: assistantReply };
+                  }
+                }
+              }
 
             } else if (funcName === "cancelBookingFromChat") {
               // ⚡ Phase 6: Cancel Booking from Chat
