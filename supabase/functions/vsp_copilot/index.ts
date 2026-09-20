@@ -241,6 +241,26 @@ const getOwnerStadiumsAndBookingsTool = {
 };
 
 // 9. Tool: getOwnerFinancialInsights
+const ownerCreateManualBookingTool = {
+  name: "ownerCreateManualBooking",
+  description: "إنشاء حجز يدوي/هاتف لمالك الملعب. لا تستخدمها إلا لمالك لديه Owner AI entitlement وبعد تحديد الملعب والموعد. السعر النهائي يحسبه السيرفر من سعر الملعب.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      stadium_id: { type: "STRING", description: "معرف الملعب UUID" },
+      start_time: { type: "STRING", description: "وقت بداية الحجز بصيغة ISO 8601 مع المنطقة الزمنية إن أمكن" },
+      end_time: { type: "STRING", description: "وقت نهاية الحجز بصيغة ISO 8601 مع المنطقة الزمنية إن أمكن" },
+      customer_name: { type: "STRING", description: "اسم العميل إن توفر" },
+      customer_phone: { type: "STRING", description: "رقم هاتف العميل إن توفر" },
+      notes: { type: "STRING", description: "ملاحظات الحجز إن وجدت" },
+      collected_amount: { type: "NUMBER", description: "المبلغ المحصل نقداً من العميل. إن لم يذكره المالك استخدم 0 ولا تخمّن." },
+      current_players: { type: "NUMBER", description: "عدد اللاعبين الحالي إن ذكره المالك، وإلا 0." },
+      confirmed: { type: "BOOLEAN", description: "true فقط بعد تأكيد المالك إنشاء الحجز اليدوي." },
+    },
+    required: ["stadium_id", "start_time", "end_time", "confirmed"],
+  },
+};
+
 const getOwnerFinancialInsightsTool = {
   name: "getOwnerFinancialInsights",
   description: "استعلام السجل المالي لمالك الملعب، والرصيد الإلكتروني القابل للسحب، والإيرادات النقدية (كاش) المحصلة، ومديونية المنصة، وعدد الحجوزات المكتملة مباشرة من قاعدة البيانات. استدعِ هذه الأداة فوراً عندما يسأل مالك الملعب عن أرباحه، رصيده، إيراداته، فلوسه، أو مديونية الكاش.",
@@ -359,6 +379,7 @@ const AI_CAPABILITIES: Record<string, {
   OWNER_BLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_UNBLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_EDIT_STADIUM: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_CREATE_MANUAL_BOOKING: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_RENEW_SUBSCRIPTION: { role: "owner", requiredEntitlement: "none" },
   SYSTEM_LOGIN: { role: "any", requiredEntitlement: "none" },
 };
@@ -445,6 +466,7 @@ const PLAYER_ONLY_TOOLS = [
 const OWNER_ONLY_TOOLS = [
   getOwnerStadiumsAndBookingsTool,
   getOwnerFinancialInsightsTool,
+  ownerCreateManualBookingTool,
 ];
 
 /** A flat list of all tool names allowed per role — for server-side validation */
@@ -2877,6 +2899,88 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 bookings_count: ownerBookings.length,
                 recent_bookings: ownerBookings,
               };
+            } else if (funcName === "ownerCreateManualBooking") {
+              if (userRoleForGuard !== "owner" && userRoleForGuard !== "admin") {
+                toolResponseData = { success: false, error: "ROLE_NOT_ALLOWED" };
+              } else if (!ownerAiEnabled && userRoleForGuard !== "admin") {
+                toolResponseData = { success: false, error: "OWNER_AI_ENTITLEMENT_REQUIRED" };
+                assistantReply = "اشتراك إدارة الملاعب غير نشط. جدّد الباقة أولاً.";
+                appAction = buildAiAction("OWNER_RENEW_SUBSCRIPTION", {
+                  action_type: "NAVIGATE",
+                  route: "/facility-onboarding",
+                  label: "تجديد الباقة 🔓",
+                });
+              } else {
+                const stadiumId = String(args.stadium_id || "").trim();
+                const start = new Date(String(args.start_time || ""));
+                const end = new Date(String(args.end_time || ""));
+                if (!/^[0-9a-fA-F-]{36}$/.test(stadiumId) || isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+                  toolResponseData = { success: false, error: "INVALID_BOOKING_INPUT" };
+                  assistantReply = "محتاج ملعب وموعد بداية ونهاية صحيحين للحجز اليدوي.";
+                } else if (args.confirmed !== true) {
+                  appClarification = {
+                    type: "owner_manual_booking_confirmation",
+                    question: "تأكد إنك عايز أسجل الحجز اليدوي ده على الملعب؟",
+                    options: [
+                      { id: "confirm_owner_manual_booking", label: "تأكيد الحجز" },
+                      { id: "keep_owner_manual_booking", label: "إلغاء" },
+                    ],
+                  };
+                  contextSnapshot.pending_intent = {
+                    intent: "owner_manual_booking",
+                    stadium_id: stadiumId,
+                    start_time: start.toISOString(),
+                    end_time: end.toISOString(),
+                    customer_name: args.customer_name || null,
+                    customer_phone: args.customer_phone || null,
+                    notes: args.notes || null,
+                    collected_amount: Number(args.collected_amount || 0),
+                    current_players: Number(args.current_players || 0),
+                    clarification_type: "owner_manual_booking_confirmation",
+                  };
+                  contextSnapshot.clarification = appClarification;
+                  assistantReply = "تمام. قبل ما أسجل الحجز، أكّد العملية.";
+                  toolResponseData = { success: false, needs_confirmation: true };
+                } else {
+                  const { data: stadium, error: stadiumErr } = await supabase
+                    .from("stadiums")
+                    .select("id, owner_id, price_per_hour")
+                    .eq("id", stadiumId)
+                    .eq("owner_id", callerUser.id)
+                    .maybeSingle();
+                  if (stadiumErr || !stadium) {
+                    toolResponseData = { success: false, error: "STADIUM_NOT_OWNED" };
+                    assistantReply = "الملعب ده مش موجود ضمن ملاعبك المسجلة.";
+                  } else {
+                    const hours = (end.getTime() - start.getTime()) / 3600000;
+                    const totalPrice = Number(stadium.price_per_hour || 0) * hours;
+                    const { data: result, error: rpcErr } = await supabase.rpc("owner_create_manual_booking_atomic", {
+                      p_owner_id: callerUser.id,
+                      p_stadium_id: stadiumId,
+                      p_start_time: start.toISOString(),
+                      p_end_time: end.toISOString(),
+                      p_customer_name: args.customer_name?.toString() || null,
+                      p_customer_phone: args.customer_phone?.toString() || null,
+                      p_notes: args.notes?.toString() || null,
+                      p_total_price: totalPrice,
+                      p_collected_amount: Number(args.collected_amount || 0),
+                      p_current_players: Number(args.current_players || 0),
+                    });
+                    if (rpcErr) {
+                      toolResponseData = { success: false, error: "MANUAL_BOOKING_FAILED", details: rpcErr.message };
+                      assistantReply = "ماقدرتش أسجل الحجز اليدوي. ممكن الموعد اتاخد بالفعل أو البيانات غير صالحة.";
+                    } else {
+                      assistantReply = "تم تسجيل الحجز اليدوي بنجاح ✅";
+                      appAction = buildAiAction("OWNER_VIEW_UPCOMING_BOOKINGS", {
+                        action_type: "NAVIGATE",
+                        route: "/owner",
+                        label: "عرض الحجوزات 📅",
+                      });
+                      toolResponseData = { success: true, booking: result, server_total_price: totalPrice };
+                    }
+                  }
+                }
+              }
             } else if (funcName === "getOwnerFinancialInsights") {
               const { data: finSummary, error: finErr } = await supabase.rpc(
                 "get_owner_financial_summary",
