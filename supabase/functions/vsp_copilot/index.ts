@@ -386,6 +386,7 @@ const AI_CAPABILITIES: Record<string, {
   PLAYER_DELETE_ACCOUNT: { role: "player", requiredEntitlement: "none" },
   USER_UPDATE_PROFILE: { role: "any", requiredEntitlement: "none" },
   OWNER_VIEW_FINANCIALS: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_VIEW_OPERATIONAL_INSIGHTS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_UPCOMING_BOOKINGS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_STADIUMS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_BLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
@@ -428,6 +429,7 @@ function inferCapabilityIdFromAction(action: any, userRole: string): string | nu
   if (type === "PROFILE_UPDATED") return "USER_UPDATE_PROFILE";
   if (role === "owner") {
     if (route.includes("ledger") || route.includes("financial")) return "OWNER_VIEW_FINANCIALS";
+if (route.includes("insight") || route.includes("analytics") || route.includes("performance")) return "OWNER_VIEW_OPERATIONAL_INSIGHTS";
     if (route.includes("booking")) return "OWNER_VIEW_UPCOMING_BOOKINGS";
     if (route.includes("documentation")) return "OWNER_EDIT_STADIUM";
     if (route.includes("facility-onboarding") || route.includes("subscription")) return "OWNER_RENEW_SUBSCRIPTION";
