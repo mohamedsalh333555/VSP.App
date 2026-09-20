@@ -27,6 +27,7 @@ import '../../data/models.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/copilot/screens/vsp_copilot_screen.dart';
 import '../../features/copilot/screens/copilot_test_playground.dart';
+import '../../features/player/screens/payment_gateway_screen.dart';
 
 class AppRouter {
  static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
@@ -158,6 +159,41 @@ class AppRouter {
  GoRoute(
  path: '/notifications',
  builder: (context, state) => const NotificationsCenterScreen(),
+ ),
+ GoRoute(
+ path: '/checkout',
+ builder: (context, state) {
+ final params = (state.extra as Map<String, dynamic>?) ?? {};
+ final bookingId = params['booking_id']?.toString();
+ final stadiumId = params['stadium_id']?.toString() ?? '';
+ final stadiumName = params['stadium_name']?.toString() ?? '';
+ final ownerId = params['owner_id']?.toString() ?? '';
+ final totalPrice = (params['total_price'] as num?)?.toDouble() ?? 0.0;
+ final depositAmount = (params['deposit_amount'] as num?)?.toDouble() ?? 0.0;
+ final startTimeStr = params['start_time']?.toString();
+ final endTimeStr = params['end_time']?.toString();
+ final startTime = startTimeStr != null ? DateTime.tryParse(startTimeStr) ?? DateTime.now() : DateTime.now();
+ final endTime = endTimeStr != null ? DateTime.tryParse(endTimeStr) ?? startTime.add(const Duration(hours: 1)) : startTime.add(const Duration(hours: 1));
+
+ final draft = BookingDraft(
+ stadiumId: stadiumId,
+ stadiumName: stadiumName,
+ ownerId: ownerId,
+ startTime: startTime,
+ endTime: endTime,
+ bookingType: BookingType.personal,
+ isPrivate: false,
+ rentBall: false,
+ totalPrice: totalPrice,
+ needsDeposit: depositAmount > 0,
+ depositPaid: 0.0,
+ );
+
+ return PaymentGatewayScreen(
+ bookingDraft: draft,
+ existingBookingId: bookingId,
+ );
+ },
  ),
  ],
  redirect: (context, state) => redirectLogic(context, state, authProvider),

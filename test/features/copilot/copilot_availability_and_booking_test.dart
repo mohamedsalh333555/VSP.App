@@ -159,5 +159,28 @@ void main() {
       expect(action.params?['deposit_amount'], equals(50.0));
       expect(action.params?['total_price'], equals(250.0));
     });
+
+    // =========================================================================
+    // 5. سيناريو المستخدم الواقعي: حجز منتصف الليل بالاسم العامي (Midnight Slang Booking)
+    // =========================================================================
+    test('7. طلب "اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده" يطابق الملعب والميعاد ويصدر أمر الدفع فوراً', () async {
+      final response = await service.sendMessage(
+        message: 'اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده',
+        conversationId: 'real_user_midnight_booking',
+      );
+
+      expect(response.sender, equals('assistant'));
+      expect(response.text, contains('ملعب الصداقة الجديدة'));
+      expect(response.text, contains('12:00 ص - 01:00 ص'));
+      expect(response.text, contains('دفع العربون'));
+      expect(response.hasStadiums, isTrue);
+      expect(response.stadiums.first.name, contains('الصداقة الجديدة'));
+      expect(response.hasAction, isTrue);
+      expect(response.action?.isOpenPayment, isTrue);
+      expect(response.action?.route, equals('/checkout'));
+      expect(response.action?.label, contains('دفع العربون'));
+      expect(response.action?.params?['deposit_amount'], equals(50.0));
+      expect(response.action?.params?['stadium_name'], contains('الصداقة الجديدة'));
+    });
   });
 }

@@ -537,18 +537,43 @@ class VspCopilotService {
       );
     }
 
-    // ⚡ In-Chat Direct Booking Dispatch (e.g. "احجزلي الميعاد ده", "احجز الساعة 8", "أكد الحجز")
+    // ⚡ In-Chat Direct Booking Dispatch (e.g. "احجزلي الميعاد ده", "احجز الساعة 8", "اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده")
     final isBookingDispatch = lower.contains('احجزلي') ||
         lower.contains('احجز لي') ||
         lower.contains('أكد الحجز') ||
         lower.contains('اكد الحجز') ||
         lower.contains('احجز الميعاد') ||
         lower.contains('احجز الساعة') ||
-        (lower.contains('احجز') && (lower.contains('8') || lower.contains('ميعاد') || lower.contains('ده')));
+        ((lower.contains('احجز') || lower.contains('حجز')) &&
+            (lower.contains('12') ||
+                lower.contains('8') ||
+                lower.contains('ميعاد') ||
+                lower.contains('منتصف الليل') ||
+                lower.contains('صدقه') ||
+                lower.contains('صداقه') ||
+                lower.contains('ده') ||
+                lower.contains('ساعة') ||
+                lower.contains('الساعة')));
 
     if (isBookingDispatch) {
-      final CopilotStadiumSummary targetStadium = (context['last_stadium'] as CopilotStadiumSummary?) ?? _curatedStadiums.first;
-      final selectedSlot = (context['selected_slot'] as String?) ?? '08:00 م - 09:00 م';
+      CopilotStadiumSummary? targetStadium;
+      if (lower.contains('صدق') || lower.contains('صداق') || lower.contains('اسوان') || lower.contains('أسوان')) {
+        targetStadium = _curatedStadiums.firstWhere(
+          (s) => s.name.contains('الصداقة') || s.governorate.contains('أسوان'),
+          orElse: () => _curatedStadiums.first,
+        );
+      } else {
+        targetStadium = (context['last_stadium'] as CopilotStadiumSummary?) ?? _curatedStadiums.first;
+      }
+
+      String selectedSlot = '12:00 ص - 01:00 ص';
+      if (lower.contains('8') || lower.contains('ثمانية')) {
+        selectedSlot = '08:00 م - 09:00 م';
+      } else if (lower.contains('12') || lower.contains('منتصف الليل')) {
+        selectedSlot = '12:00 ص - 01:00 ص';
+      } else if (context['selected_slot'] != null) {
+        selectedSlot = context['selected_slot'] as String;
+      }
 
       return CopilotMessage.assistant(
         'تم قفل موعدك بنجاح ($selectedSlot) في ${targetStadium.name} يا كابتن ⚽!\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (50 ج.م) وتأكيد الحجز فوراً.',
