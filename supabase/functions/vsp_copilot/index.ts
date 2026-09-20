@@ -372,6 +372,7 @@ const AI_CAPABILITIES: Record<string, {
   PLAYER_MY_TEAM: { role: "player", requiredEntitlement: "none" },
   PLAYER_LEAVE_MATCH: { role: "player", requiredEntitlement: "none" },
   PLAYER_LEAVE_TOURNAMENT: { role: "player", requiredEntitlement: "none" },
+  PLAYER_DELETE_ACCOUNT: { role: "player", requiredEntitlement: "none" },
   USER_UPDATE_PROFILE: { role: "any", requiredEntitlement: "none" },
   OWNER_VIEW_FINANCIALS: { role: "owner", requiredEntitlement: "owner_ai" },
   OWNER_VIEW_UPCOMING_BOOKINGS: { role: "owner", requiredEntitlement: "owner_ai" },
