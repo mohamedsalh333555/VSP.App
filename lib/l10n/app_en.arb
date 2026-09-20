@@ -77,6 +77,7 @@
  "registerPlayerSubtitle": "Register as player and start your journey",
  "fillAllFields": "Please fill all fields",
  "pleaseEnterDob": "Please enter your date of birth",
+ "underRequiredAge": "Players must be at least 16 years old and stadium owners must be at least 21 years old",
  "invalidPhone": "Please enter a valid phone number",
  "passwordMismatch": "Passwords do not match",
  "passwordTooShort": "Password must be at least 6 characters",
