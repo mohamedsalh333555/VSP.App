@@ -101,9 +101,13 @@ const executeAppActionTool = {
         type: "STRING",
         description: "نوع الإجراء: دائماً 'NAVIGATE'",
       },
+      capability_id: {
+        type: "STRING",
+        description: "معرف Capability معتمد من VSP AI Registry. استخدمه بدلاً من اختراع مسار.",
+      },
       route: {
         type: "STRING",
-        description: "المسار داخل التطبيق: '/tournaments' للبطولات، '/1v1' لدوري 1v1، '/my-team' لإدارة فريقي، '/profile' للبروفايل، '/settings' للإعدادات",
+        description: "مسار legacy اختياري للتوافق فقط.",
       },
       label: {
         type: "STRING",
@@ -287,6 +291,91 @@ const createBookingFromChatTool = {
 };
 
 // ==========================================
+// 🧭 VSP AI Capability Contract (server-side)
+// Capability IDs are the only trusted identifiers for app actions.
+// Flutter owns concrete navigation; Edge owns role/entitlement policy.
+// ==========================================
+
+const AI_CAPABILITIES: Record<string, {
+  role: "player" | "owner" | "admin" | "any";
+  requiredEntitlement: "none" | "owner_ai";
+}> = {
+  PLAYER_SEARCH_STADIUMS: { role: "player", requiredEntitlement: "none" },
+  PLAYER_SEARCH_TOURNAMENTS: { role: "player", requiredEntitlement: "none" },
+  PLAYER_SEARCH_OPEN_MATCHES: { role: "player", requiredEntitlement: "none" },
+  PLAYER_CHECK_AVAILABILITY: { role: "player", requiredEntitlement: "none" },
+  PLAYER_CREATE_BOOKING: { role: "player", requiredEntitlement: "none" },
+  PLAYER_VIEW_BOOKINGS: { role: "player", requiredEntitlement: "none" },
+  PLAYER_CANCEL_BOOKING: { role: "player", requiredEntitlement: "none" },
+  PLAYER_EDIT_PROFILE: { role: "player", requiredEntitlement: "none" },
+  PLAYER_VIEW_NOTIFICATIONS: { role: "player", requiredEntitlement: "none" },
+  PLAYER_MY_TEAM: { role: "player", requiredEntitlement: "none" },
+  PLAYER_LEAVE_MATCH: { role: "player", requiredEntitlement: "none" },
+  PLAYER_LEAVE_TOURNAMENT: { role: "player", requiredEntitlement: "none" },
+  USER_UPDATE_PROFILE: { role: "any", requiredEntitlement: "none" },
+  OWNER_VIEW_FINANCIALS: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_VIEW_UPCOMING_BOOKINGS: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_VIEW_STADIUMS: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_BLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_UNBLOCK_SLOT: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_EDIT_STADIUM: { role: "owner", requiredEntitlement: "owner_ai" },
+  OWNER_RENEW_SUBSCRIPTION: { role: "owner", requiredEntitlement: "none" },
+  SYSTEM_LOGIN: { role: "any", requiredEntitlement: "none" },
+};
+
+function getAiCapability(capabilityId: string | undefined | null) {
+  if (!capabilityId) return null;
+  return AI_CAPABILITIES[capabilityId.trim().toUpperCase()] ?? null;
+}
+
+function isCapabilityAllowed(capabilityId: string | undefined | null, userRole: string, ownerAiEnabled: boolean): boolean {
+  const id = capabilityId?.trim().toUpperCase();
+  const cap = getAiCapability(id);
+  if (!cap) return false;
+  const role = (userRole || "player").toLowerCase().trim();
+  if (cap.role !== "any" && cap.role !== role && !(role === "admin" && cap.role !== "admin")) return false;
+  if (cap.requiredEntitlement === "owner_ai" && role !== "admin" && !ownerAiEnabled) return false;
+  return true;
+}
+
+function buildAiAction(capabilityId: string, action: Record<string, any>) {
+  const normalizedId = capabilityId.trim().toUpperCase();
+  if (!getAiCapability(normalizedId)) return null;
+  return { ...action, capability_id: normalizedId };
+}
+
+function inferCapabilityIdFromAction(action: any, userRole: string): string | null {
+  if (!action) return null;
+  const explicit = action.capability_id || action.capabilityId;
+  if (explicit && getAiCapability(String(explicit))) return String(explicit).trim().toUpperCase();
+  const role = (userRole || "player").toLowerCase().trim();
+  const type = String(action.action_type || "").toUpperCase();
+  const route = String(action.route || "").toLowerCase();
+  if (type === "OPEN_PAYMENT") return role === "player" ? "PLAYER_CREATE_BOOKING" : null;
+  if (type === "PROFILE_UPDATED") return "USER_UPDATE_PROFILE";
+  if (role === "owner") {
+    if (route.includes("ledger") || route.includes("financial")) return "OWNER_VIEW_FINANCIALS";
+    if (route.includes("booking")) return "OWNER_VIEW_UPCOMING_BOOKINGS";
+    if (route.includes("documentation")) return "OWNER_EDIT_STADIUM";
+    if (route.includes("facility-onboarding") || route.includes("subscription")) return "OWNER_RENEW_SUBSCRIPTION";
+  }
+  if (route.includes("notification")) return "PLAYER_VIEW_NOTIFICATIONS";
+  if (route.includes("my-team") || route.includes("/team")) return "PLAYER_MY_TEAM";
+  if (route.includes("championship") || route.includes("tournament")) return "PLAYER_LEAVE_TOURNAMENT";
+  if (route.includes("/match")) return "PLAYER_LEAVE_MATCH";
+  if (route.includes("refund") || route.includes("booking")) return "PLAYER_VIEW_BOOKINGS";
+  if (route.includes("profile") || route.includes("setting")) return "PLAYER_EDIT_PROFILE";
+  if (route.includes("stadium")) return "PLAYER_SEARCH_STADIUMS";
+  return null;
+}
+
+function finalizeAiAction(action: any, userRole: string, ownerAiEnabled: boolean) {
+  if (!action) return null;
+  const capabilityId = inferCapabilityIdFromAction(action, userRole);
+  if (!capabilityId || !isCapabilityAllowed(capabilityId, userRole, ownerAiEnabled)) return null;
+  return buildAiAction(capabilityId, action);
+}
+// ==========================================
 // 🔒 Phase 2: Role-Based Tool Registry
 // Gemini sees ONLY the tools the user's role permits.
 // This is a server-enforced security boundary, not a prompt hint.
@@ -337,15 +426,14 @@ const ROLE_ALLOWED_TOOL_NAMES: Record<string, Set<string>> = {
  * Returns the tool list that Gemini is allowed to see for a given role.
  * Owner tools are completely invisible to players — and vice versa.
  */
-function buildToolRegistryForRole(role: string): any[] {
+function buildToolRegistryForRole(role: string, ownerAiEnabled: boolean = true): any[] {
   const r = (role || "player").toLowerCase();
   if (r === "owner") {
-    return [...SHARED_TOOLS, ...OWNER_ONLY_TOOLS];
+    return ownerAiEnabled ? [...SHARED_TOOLS, ...OWNER_ONLY_TOOLS] : [...SHARED_TOOLS];
   }
   if (r === "admin" || r === "co_founder" || r === "co-founder") {
     return [...SHARED_TOOLS, ...PLAYER_ONLY_TOOLS, ...OWNER_ONLY_TOOLS];
   }
-  // Default: player
   return [...SHARED_TOOLS, ...PLAYER_ONLY_TOOLS];
 }
 
@@ -353,10 +441,12 @@ function buildToolRegistryForRole(role: string): any[] {
  * Server-side guard: reject tool calls that the user's role does not permit,
  * even if Gemini somehow emits them.
  */
-function isToolAllowedForRole(toolName: string, role: string): boolean {
+function isToolAllowedForRole(toolName: string, role: string, ownerAiEnabled: boolean = true): boolean {
   const r = (role || "player").toLowerCase();
   const allowed = ROLE_ALLOWED_TOOL_NAMES[r] ?? ROLE_ALLOWED_TOOL_NAMES["player"];
-  return allowed.has(toolName);
+  if (!allowed.has(toolName)) return false;
+  if (r === "owner" && OWNER_ONLY_TOOLS.some((t) => t.name === toolName) && !ownerAiEnabled) return false;
+  return true;
 }
 
 // ==========================================
@@ -1651,6 +1741,34 @@ serve(async (req: Request) => {
       .eq("id", callerUser.id)
       .maybeSingle();
 
+    // 🔐 Phase 2: Owner AI entitlement. Fail closed if the subscription lookup fails.
+    const effectiveUserRole = (userProfile?.role || "player").toLowerCase().trim();
+    let ownerAiEnabled = effectiveUserRole !== "owner";
+    let ownerSubscriptionStatus = "not_applicable";
+    let ownerSubscriptionPlan: string | null = null;
+    let ownerSubscriptionExpiresAt: string | null = null;
+
+    if (effectiveUserRole === "owner") {
+      const { data: ownerSub, error: ownerSubErr } = await supabase
+        .from("owner_subscription_status")
+        .select("subscription_plan, effective_status, subscription_expires_at, trial_ends_at")
+        .eq("id", callerUser.id)
+        .maybeSingle();
+
+      if (ownerSubErr) {
+        console.warn("[VSP AI] Owner subscription lookup failed; owner AI disabled.");
+        ownerAiEnabled = false;
+      } else {
+        ownerSubscriptionStatus = ownerSub?.effective_status || "expired";
+        ownerSubscriptionPlan = ownerSub?.subscription_plan || null;
+        ownerSubscriptionExpiresAt = ownerSub?.subscription_expires_at || ownerSub?.trial_ends_at || null;
+        ownerAiEnabled = ["active_paid", "active_trial"].includes(ownerSubscriptionStatus);
+      }
+    } else if (effectiveUserRole === "admin") {
+      ownerAiEnabled = true;
+      ownerSubscriptionStatus = "admin";
+    }
+
     const { data: recentUserBookings } = await supabase
       .from("bookings")
       .select("stadium_name, start_time, status, total_price")
@@ -1734,6 +1852,8 @@ serve(async (req: Request) => {
 
     // ⚽ Egyptian Football Lexicon Analysis
     const lexiconAnalysis = EgyptianFootballLexicon.analyze(userMessage, contextSnapshot);
+
+    const normalizeAction = (action: any) => finalizeAiAction(action, effectiveUserRole, ownerAiEnabled);
 
     // 🔄 Pending Intent Resumption (Conversation Transaction State)
     if (contextSnapshot.pending_intent) {
@@ -2040,7 +2160,7 @@ serve(async (req: Request) => {
     }
 
     // ⚡ Phase 7: Pre-Gemini Owner Fast-Path (Financial & Booking Schedule)
-    if (userProfile?.role === "owner" && !handledByGemini) {
+    if (effectiveUserRole === "owner" && ownerAiEnabled && !handledByGemini) {
       if (lexiconAnalysis.ownerQuery?.type === "financial") {
         const { data: finSummary } = await supabase.rpc(
           "get_owner_financial_summary",
@@ -2153,7 +2273,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 
         // 🔒 Phase 2: Build role-filtered tool list — Gemini sees ONLY allowed tools
         const userRole = userProfile?.role || "player";
-        const roleFilteredTools = buildToolRegistryForRole(userRole);
+        const roleFilteredTools = buildToolRegistryForRole(userRole, ownerAiEnabled);
 
         const firstPayload = {
           systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -2200,8 +2320,32 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             // Reject any tool call that is not permitted for this user's role,
             // even if Gemini somehow emitted it.
             const userRoleForGuard = userProfile?.role || "player";
-            if (!isToolAllowedForRole(funcName, userRoleForGuard)) {
+            if (!isToolAllowedForRole(funcName, userRoleForGuard, ownerAiEnabled)) {
               console.warn(`[VSP Security] Role '${userRoleForGuard}' attempted unauthorized tool: ${funcName}`);
+              if (
+                userRoleForGuard === "owner" &&
+                OWNER_ONLY_TOOLS.some((t) => t.name === funcName) &&
+                !ownerAiEnabled
+              ) {
+                const renewalAction = buildAiAction("OWNER_RENEW_SUBSCRIPTION", {
+                  action_type: "NAVIGATE",
+                  route: "/facility-onboarding",
+                  label: "تجديد باقة المالك وتفعيل VSP AI 🔓",
+                });
+                return new Response(
+                  JSON.stringify({
+                    conversation_id: conversationId,
+                    message: "انتهت صلاحية اشتراك إدارة الملاعب. جدّد الباقة لتفعيل الذكاء الاصطناعي التشغيلي للمالك.",
+                    error: { code: "OWNER_AI_SUBSCRIPTION_REQUIRED", subscription_status: ownerSubscriptionStatus, subscription_plan: ownerSubscriptionPlan },
+                    verification: { verified: false, source: "entitlement_guard" },
+                    data: { stadiums: [], tournaments: [], open_matches: [], leaderboard: [] },
+                    context_snapshot: contextSnapshot,
+                    clarification: null,
+                    action: renewalAction,
+                  }),
+                  { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+                );
+              }
               return new Response(
                 JSON.stringify({
                   conversation_id: conversationId,
@@ -2772,6 +2916,9 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         "عذراً يا كابتن! حدث ضغط لحظي في خدمة الذكاء الاصطناعي، يرجى إعادة إرسال رسالتك أو تصفح الملاعب والبطولات مباشرة من القوائم.";
     }
 
+    // 🧭 Phase 1/2: every emitted action must map to a trusted capability and entitlement.
+    appAction = normalizeAction(appAction);
+
     // Persist Messages & Update Conversation
     await supabase.from("copilot_messages").insert([
       {
@@ -2803,6 +2950,12 @@ ${JSON.stringify(contextSnapshot, null, 2)}
       JSON.stringify({
         // Core identity
         conversation_id: conversationId,
+        entitlement: {
+          owner_ai_enabled: ownerAiEnabled,
+          owner_subscription_status: ownerSubscriptionStatus,
+          owner_subscription_plan: ownerSubscriptionPlan,
+          owner_subscription_expires_at: ownerSubscriptionExpiresAt,
+        },
         // Natural language response
         message: assistantReply,
         // Interactive clarification (Action Chips)
@@ -2822,6 +2975,11 @@ ${JSON.stringify(contextSnapshot, null, 2)}
           last_stadium_id: contextSnapshot.last_stadium_id ?? null,
           last_stadium_name: contextSnapshot.last_stadium_name ?? null,
           last_date: contextSnapshot.last_date ?? null,
+          user_role: effectiveUserRole,
+          owner_ai_enabled: ownerAiEnabled,
+          owner_subscription_status: ownerSubscriptionStatus,
+          owner_subscription_plan: ownerSubscriptionPlan,
+          owner_subscription_expires_at: ownerSubscriptionExpiresAt,
         },
         // Verification status — tells Flutter if data came from DB or was AI-generated
         verification: {
