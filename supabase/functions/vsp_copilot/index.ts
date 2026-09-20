@@ -341,7 +341,7 @@ const createBookingFromChatTool = {
       },
       date: {
         type: "STRING",
-        description: "التاريخ المطلوب للحجز (مثل: 'اليوم'، 'غداً'، 'بكرة' أو YYYY-MM-DD - إذا لم يذكر مرر 'اليوم')",
+        description: "التاريخ المطلوب للحجز (مثل: 'اليوم'، 'غداً'، 'بكرة' أو YYYY-MM-DD). إذا لم يذكر المستخدم تاريخاً فلا تفترضه.",
       },
       time: {
         type: "STRING",
@@ -1075,14 +1075,29 @@ class TemporalResolver {
           if (h === 12) {
             targetCairoHour = isExplicitNoon ? 12 : 0;
           } else if (h >= 1 && h <= 11) {
-            if (text.includes("صباحا") || text.includes("صباحاً") || text.includes("الصبح") || text.includes("am")) {
+            const hasMorningContext = text.includes("صباحا") || text.includes("صباحاً") || text.includes("الصبح") || text.includes("am");
+            const hasNightContext = text.includes("بليل") || text.includes("بالليل") || text.includes("ليل") || text.includes("سهر") || text.includes("سهرة");
+            const hasAfternoonContext = text.includes("ضهر") || text.includes("بعد الظهر") || text.includes("عصر") || text.includes("بعد العصر") || text.includes("pm");
+
+            if (hasMorningContext) {
               targetCairoHour = h;
+            } else if (hasNightContext) {
+              targetCairoHour = h;
+            } else if (hasAfternoonContext) {
+              targetCairoHour = h + 12;
+            } else if (h <= 6) {
+              clarification = {
+                type: "time",
+                question: `يعني إيه "الساعة ${h}" يا كابتن؟`,
+                options: [
+                  { id: `${String(h).padStart(2, "0")}:00`, label: `${h} صباحاً` },
+                  { id: `${String(h + 12).padStart(2, "0")}:00`, label: `${h} مساءً / ${h} م` },
+                ],
+              };
+              targetCairoHour = h + 12;
             } else {
-              if (h <= 3 && (text.includes("بليل") || text.includes("بالليل"))) {
-                targetCairoHour = h;
-              } else {
-                targetCairoHour = h + 12;
-              }
+              // 7–11 are conventionally evening in this booking context.
+              targetCairoHour = h + 12;
             }
           } else if (h >= 12 && h <= 23) {
             targetCairoHour = h;
@@ -2688,7 +2703,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 ⚡⚡ قواعد المحرك اللغوي والكروي المصري (VSP Egyptian Linguistic & Football Engine):
 1. عند طلب حجز ملعب أو موعد (مثال: "احجزلي الجمعة الجاية الساعة 9 في ملعب الصداقة"، "احجزلي في ملعب الصداقة 2 بليل"، "احجزلي 2 بليل"، "احجزلي الجمعة الجاية الساعة 9"، "احجزلي الساعة 8"):
    - استدعِ createBookingFromChat فوراً وبدون تردد مع استخراج البيانات.
-   - إذا لم يذكر تاريخاً صراحة (مثل "احجزلي 2 بليل" أو "احجزلي الساعة 8")، مرر date: 'اليوم'.
+   - إذا لم يذكر تاريخاً صراحة، لا تفترض تاريخاً؛ مرر التاريخ فقط من السياق السابق الموثوق، وإلا اتركه فارغاً حتى يسأل المحرك المستخدم.
    - إذا لم يذكر اسم ملعب، اتركه فارغاً.
    - إذا ذكر "عايز كورة" أو "مع كورة": مرر rent_ball: true.
    - إذا ذكر شرط بديل "لو مفيش 8 خليه 9" أو "لو مفيش خليه 10": مرر fallback_slots.
