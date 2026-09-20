@@ -170,6 +170,66 @@ class CopilotOpenMatchSummary {
   }
 }
 
+/// Represents a single option/chip in an interactive clarification prompt
+@immutable
+class CopilotClarificationOption {
+  final String id;
+  final String label;
+
+  const CopilotClarificationOption({
+    required this.id,
+    required this.label,
+  });
+
+  factory CopilotClarificationOption.fromMap(Map<String, dynamic> map) {
+    return CopilotClarificationOption(
+      id: map['id']?.toString() ?? '',
+      label: map['label']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'label': label,
+  };
+}
+
+/// Represents an interactive clarification request from Copilot asking user to resolve ambiguity
+@immutable
+class CopilotClarification {
+  final String type; // 'date_disambiguation' | 'stadium_disambiguation' | 'time_disambiguation' | 'polysemy'
+  final String question;
+  final List<CopilotClarificationOption> options;
+
+  const CopilotClarification({
+    required this.type,
+    required this.question,
+    this.options = const [],
+  });
+
+  bool get isDateDisambiguation => type == 'date_disambiguation';
+  bool get isStadiumDisambiguation => type == 'stadium_disambiguation';
+  bool get isTimeDisambiguation => type == 'time_disambiguation';
+
+  factory CopilotClarification.fromMap(Map<String, dynamic> map) {
+    final rawOptions = map['options'] as List<dynamic>? ?? [];
+    return CopilotClarification(
+      type: map['type']?.toString() ?? 'clarification',
+      question: map['question']?.toString() ?? '',
+      options: rawOptions
+          .whereType<Map<String, dynamic>>()
+          .map((o) => CopilotClarificationOption.fromMap(o))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'type': type,
+    'question': question,
+    'options': options.map((o) => o.toMap()).toList(),
+  };
+}
+
 /// Represents a chat message between the user and VSP Copilot
 @immutable
 class CopilotMessage {
@@ -182,6 +242,7 @@ class CopilotMessage {
   final List<CopilotTournamentSummary> tournamentResults;
   final List<CopilotOpenMatchSummary> openMatchResults;
   final CopilotAction? action;
+  final CopilotClarification? clarification;
 
   const CopilotMessage({
     required this.id,
@@ -193,6 +254,7 @@ class CopilotMessage {
     this.tournamentResults = const [],
     this.openMatchResults = const [],
     this.action,
+    this.clarification,
   });
 
   bool get isUser => sender == 'user';
@@ -200,6 +262,7 @@ class CopilotMessage {
   bool get hasTournaments => tournamentResults.isNotEmpty;
   bool get hasOpenMatches => openMatchResults.isNotEmpty;
   bool get hasAction => action != null;
+  bool get hasClarification => clarification != null && clarification!.options.isNotEmpty;
 
   /// Compatibility alias getters for test suite and client callers
   String get message => text;
@@ -222,6 +285,7 @@ class CopilotMessage {
     List<CopilotTournamentSummary> tournaments = const [],
     List<CopilotOpenMatchSummary> openMatches = const [],
     CopilotAction? action,
+    CopilotClarification? clarification,
   }) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -233,6 +297,7 @@ class CopilotMessage {
       tournamentResults: tournaments,
       openMatchResults: openMatches,
       action: action,
+      clarification: clarification,
     );
   }
 
@@ -241,6 +306,7 @@ class CopilotMessage {
     final rawTournaments = map['tournament_results'] as List<dynamic>? ?? map['tournaments'] as List<dynamic>? ?? [];
     final rawMatches = map['open_matches'] as List<dynamic>? ?? [];
     final rawAction = map['action'] is Map<String, dynamic> ? map['action'] as Map<String, dynamic> : null;
+    final rawClarification = map['clarification'] is Map<String, dynamic> ? map['clarification'] as Map<String, dynamic> : null;
 
     return CopilotMessage(
       id: map['id']?.toString() ?? '',
@@ -261,6 +327,7 @@ class CopilotMessage {
           .map((m) => CopilotOpenMatchSummary.fromMap(m))
           .toList(),
       action: rawAction != null ? CopilotAction.fromMap(rawAction) : null,
+      clarification: rawClarification != null ? CopilotClarification.fromMap(rawClarification) : null,
     );
   }
 }

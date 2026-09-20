@@ -14,6 +14,7 @@ class CopilotChatBubble extends StatelessWidget {
   final ValueChanged<CopilotAction>? onExecuteAction;
   final ValueChanged<CopilotTournamentSummary>? onSelectTournament;
   final ValueChanged<CopilotOpenMatchSummary>? onJoinMatch;
+  final ValueChanged<CopilotClarificationOption>? onSelectClarificationOption;
 
   const CopilotChatBubble({
     super.key,
@@ -23,6 +24,7 @@ class CopilotChatBubble extends StatelessWidget {
     this.onExecuteAction,
     this.onSelectTournament,
     this.onJoinMatch,
+    this.onSelectClarificationOption,
   });
 
   @override
@@ -150,6 +152,9 @@ class CopilotChatBubble extends StatelessWidget {
               ],
             ),
           ),
+          if (message.hasClarification) ...[
+            _buildClarificationChips(context, message.clarification!),
+          ],
           if (message.hasAction) ...[
             const SizedBox(height: 8),
             _buildActionCard(context, message.action!),
@@ -166,6 +171,89 @@ class CopilotChatBubble extends StatelessWidget {
             const SizedBox(height: 12),
             _buildOpenMatchesCarousel(context, message.openMatchResults),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClarificationChips(BuildContext context, CopilotClarification clarification) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: VSPColors.accent.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  clarification.question,
+                  style: const TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: clarification.options.map((option) {
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onSelectClarificationOption != null
+                      ? () => onSelectClarificationOption!(option)
+                      : null,
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          VSPColors.accent.withValues(alpha: 0.2),
+                          VSPColors.surface,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
+                      border: Border.all(
+                        color: VSPColors.accent,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.arrow_circle_right_copy, color: VSPColors.accent, size: 13),
+                        const SizedBox(width: 6),
+                        Text(
+                          option.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );

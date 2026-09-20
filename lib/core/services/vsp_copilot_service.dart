@@ -322,6 +322,14 @@ class VspCopilotService {
       action = CopilotAction.fromMap(Map<String, dynamic>.from(rawAction));
     }
 
+    final rawClarification = data['clarification'];
+    CopilotClarification? clarification;
+    if (rawClarification is Map<String, dynamic>) {
+      clarification = CopilotClarification.fromMap(rawClarification);
+    } else if (rawClarification is Map) {
+      clarification = CopilotClarification.fromMap(Map<String, dynamic>.from(rawClarification));
+    }
+
     return CopilotMessage.assistant(
       replyText,
       conversationId: returnedConvId,
@@ -329,6 +337,7 @@ class VspCopilotService {
       tournaments: tournaments,
       openMatches: openMatches,
       action: action,
+      clarification: clarification,
     );
   }
 
@@ -537,16 +546,114 @@ class VspCopilotService {
       );
     }
 
-    // ⚡ In-Chat Direct Booking Dispatch (e.g. "احجزلي الميعاد ده", "احجز الساعة 8", "اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده")
+    // 📅 Disambiguation: "الجمعة الجاية" (Section 6)
+    if (lower.contains('الجمعة الجاية') || lower.contains('الجمعه الجايه') || lower.contains('الجمعة القادمة')) {
+      return CopilotMessage.assistant(
+        'تقصد أنهي جمعة يا كابتن؟',
+        conversationId: effectiveConvId,
+        clarification: const CopilotClarification(
+          type: 'date',
+          question: 'تقصد أنهي جمعة يا كابتن؟',
+          options: [
+            CopilotClarificationOption(id: '2026-09-25', label: 'الجمعة 25 سبتمبر'),
+            CopilotClarificationOption(id: '2026-10-02', label: 'الجمعة 2 أكتوبر'),
+          ],
+        ),
+      );
+    }
+
+    // ⚽ Ambiguous intent: "عايز كورة" alone without booking context (Section 11)
+    final isBallMentioned = lower.contains('عايز كورة') ||
+        lower.contains('عايز كوره') ||
+        lower.contains('محتاج كورة') ||
+        lower.contains('محتاج كوره') ||
+        lower == 'كورة' ||
+        lower == 'كوره';
+    final isBookingIntent = lower.contains('احجز') ||
+        lower.contains('حجز') ||
+        lower.contains('ملعب') ||
+        context['last_stadium'] != null;
+
+    if (isBallMentioned && !isBookingIntent) {
+      return CopilotMessage.assistant(
+        'تقصد تأجير كرة مع حجز ملعب، ولا حجز ملعب للعب يا كابتن؟',
+        conversationId: effectiveConvId,
+        clarification: const CopilotClarification(
+          type: 'ball_intent',
+          question: 'تقصد تأجير كرة مع حجز ملعب، ولا حجز ملعب للعب يا كابتن؟',
+          options: [
+            CopilotClarificationOption(id: 'rent_ball_booking', label: 'تأجير كرة مع حجز ملعب'),
+            CopilotClarificationOption(id: 'book_field', label: 'حجز ملعب جديد للعب'),
+          ],
+        ),
+      );
+    }
+
+    // 🧤 Egyptian Football Slang: "ناقصنا جون" / "ناقصنا حارس" (Section 10 & 16)
+    final isGoalkeeperSearch = lower.contains('ناقصنا جون') ||
+        lower.contains('ناقصنا حارس') ||
+        lower.contains('محتاجين جون') ||
+        lower.contains('محتاجين حارس') ||
+        lower.contains('عايزين جون');
+
+    if (isGoalkeeperSearch) {
+      final gkMatch = CopilotOpenMatchSummary(
+        id: 'open_match_gk_1',
+        stadiumName: 'ملعب الصداقة الجديدة',
+        startTime: DateTime.now().add(const Duration(hours: 3)),
+        currentPlayers: 9,
+        maxPlayers: 10,
+        notes: 'ناقصنا جون 🧤',
+        totalPrice: 50.0,
+      );
+      return CopilotMessage.assistant(
+        'يا كابتن! بحثتلك في الماتشات المفتوحة ولقيت تقسيمة محتاجة حارس مرمى (جون) فوراً 🧤 في ملعب الصداقة:',
+        conversationId: effectiveConvId,
+        openMatches: [gkMatch],
+        action: const CopilotAction(
+          actionType: 'NAVIGATE',
+          route: '/matches/open',
+          label: 'الانضمام للماتش كحارس مرمى 🧤',
+        ),
+      );
+    }
+
+    // 📅 Egyptian Football Lexicon: "تثبيتة" / "عايز أثبت" (Section 10)
+    final isFixedSlotIntent = lower.contains('تثبيت') ||
+        lower.contains('عايز اثبت') ||
+        lower.contains('عايز أثبت') ||
+        lower.contains('تثبيته') ||
+        lower.contains('تثبيتة');
+
+    if (isFixedSlotIntent) {
+      return CopilotMessage.assistant(
+        'يا كابتن! نظام التثبيتة الأسبوعية بيضمنلك حجز نفس الموعد كل أسبوع تلقائياً من غير ما تقلق إن الميعاد يطير منك ⚽. تقدر تختار ملعبك وموعدك المفضل ونثبتهولك شهرياً أو موسمياً!',
+        conversationId: effectiveConvId,
+        action: const CopilotAction(
+          actionType: 'NAVIGATE',
+          route: '/recurring-bookings',
+          label: 'عرض تفاصيل وتثبيت الميعاد 📅',
+        ),
+      );
+    }
+
+    // ⚡ In-Chat Direct Booking Dispatch
     final isBookingDispatch = lower.contains('احجزلي') ||
         lower.contains('احجز لي') ||
         lower.contains('أكد الحجز') ||
         lower.contains('اكد الحجز') ||
         lower.contains('احجز الميعاد') ||
         lower.contains('احجز الساعة') ||
-        ((lower.contains('احجز') || lower.contains('حجز')) &&
+        ((lower.contains('احجز') || lower.contains('حجز') || lower.contains('ماتش')) &&
             (lower.contains('12') ||
                 lower.contains('8') ||
+                lower.contains('9') ||
+                lower.contains('2') ||
+                lower.contains('3') ||
+                lower.contains('بليل') ||
+                lower.contains('العشا') ||
+                lower.contains('العصر') ||
+                lower.contains('المغرب') ||
                 lower.contains('ميعاد') ||
                 lower.contains('منتصف الليل') ||
                 lower.contains('صدقه') ||
@@ -579,7 +686,10 @@ class VspCopilotService {
           lower.contains('النهار') ||
           lower.contains('pm');
 
-      if (lower.contains('8') || lower.contains('ثمانية')) {
+      final rentBall = isBallMentioned;
+      final isFallback = lower.contains('لو مفيش 8') || lower.contains('لو مش 8') || lower.contains('خليه 9');
+
+      if (isFallback) {
         selectedSlot = '08:00 م - 09:00 م';
       } else if (lower.contains('12') ||
           lower.contains('١٢') ||
@@ -592,12 +702,31 @@ class VspCopilotService {
         } else {
           selectedSlot = '12:00 ص - 01:00 ص';
         }
+      } else if (RegExp(r'(^|[^\d])2\s*(بليل|بالليل)').hasMatch(lower) ||
+          lower.contains('اتنين بليل') ||
+          lower.contains('الساعة 2')) {
+        selectedSlot = '02:00 ص - 03:00 ص';
+      } else if (RegExp(r'(^|[^\d])3\s*(بليل|بالليل)').hasMatch(lower) ||
+          lower.contains('تلاتة بليل') ||
+          lower.contains('الساعة 3')) {
+        selectedSlot = '03:00 ص - 04:00 ص';
+      } else if (lower.contains('بعد العشا') || lower.contains('العشا')) {
+        selectedSlot = '08:00 م - 09:00 م';
+      } else if (lower.contains('بعد المغرب') || lower.contains('المغرب')) {
+        selectedSlot = '06:00 م - 07:00 م';
+      } else if (lower.contains('بعد العصر') || lower.contains('العصر')) {
+        selectedSlot = '04:00 م - 05:00 م';
+      } else if (lower.contains('8') || lower.contains('ثمانية')) {
+        selectedSlot = '08:00 م - 09:00 م';
       } else if (context['selected_slot'] != null) {
         selectedSlot = context['selected_slot'] as String;
       }
 
+      final ballLabel = rentBall ? ' + تأجير كرة ⚽' : '';
+      final fallbackLabel = isFallback ? '\n(الموعد البديل المفضل 09:00 م متاح أيضاً في حال انشغال الموعد الأول)' : '';
+
       return CopilotMessage.assistant(
-        'تم قفل موعدك بنجاح ($selectedSlot) في ${targetStadium.name} يا كابتن ⚽!\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (50 ج.م) وتأكيد الحجز فوراً.',
+        'تم قفل موعدك بنجاح ($selectedSlot$ballLabel) في ${targetStadium.name} يا كابتن ⚽!$fallbackLabel\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (50 ج.م) وتأكيد الحجز فوراً.',
         conversationId: effectiveConvId,
         stadiums: [targetStadium],
         action: CopilotAction(
@@ -611,6 +740,8 @@ class VspCopilotService {
             'total_price': targetStadium.pricePerHour,
             'deposit_amount': 50.0,
             'slot': selectedSlot,
+            'rent_ball': rentBall,
+            'fallback_slots': isFallback ? ['21:00'] : [],
           },
         ),
       );

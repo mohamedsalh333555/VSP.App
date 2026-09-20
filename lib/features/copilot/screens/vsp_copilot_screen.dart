@@ -366,6 +366,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           onExecuteAction: _handleExecuteAction,
           onSelectTournament: _handleSelectTournament,
           onJoinMatch: _handleJoinMatch,
+          onSelectClarificationOption: (option) => _handleSendMessage(option.label),
         );
       },
     );
