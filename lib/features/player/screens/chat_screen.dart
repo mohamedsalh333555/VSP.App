@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 final otherUserId = widget.booking.userId == currentUserId
                     ? widget.booking.ownerId
                     : widget.booking.userId;
-                if (otherUserId != null && otherUserId.isNotEmpty) {
+                if (otherUserId.isNotEmpty) {
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
@@ -164,7 +164,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   );
                   if (confirmed == true) {
                     await ChatRepository().blockUser(otherUserId);
-                    if (mounted) Navigator.of(context).pop();
+                    if (!context.mounted) return;
+                    Navigator.of(context).pop();
                   }
                 }
               } else if (value == 'report') {
