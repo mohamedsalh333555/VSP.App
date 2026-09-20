@@ -60,3 +60,25 @@ jobs:
 
       - name: Run Automated Test Suite
         run: flutter test --coverage
+
+      - name: Configure Ephemeral CI Release Signing
+        run: |
+          keytool -genkeypair -v -keystore android/ci-release.jks -storepass ci-password -keypass ci-password \
+            -alias vsp-ci -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=VSP CI,O=VSP,L=Aswan,C=EG"
+          cat > android/key.properties << 'EOF'
+          storePassword=ci-password
+          keyPassword=ci-password
+          keyAlias=vsp-ci
+          storeFile=ci-release.jks
+          EOF
+
+      - name: Build Release App Bundle (Store Gate)
+        run: flutter build appbundle --release
+
+      - name: Verify Release Artifact Exists
+        run: test -s build/app/outputs/bundle/release/app-release.aab
+
+      - name: Remove Ephemeral Signing Material
+        if: always()
+        run: rm -f android/ci-release.jks android/key.properties
