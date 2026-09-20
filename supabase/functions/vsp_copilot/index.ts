@@ -150,11 +150,32 @@ const getUserBookingsAndRefundsTool = {
     properties: {
       query_type: {
         type: "STRING",
-        description: "نوع الاستعلام: 'all' للكل، أو 'refunds' للمستردات والإلغاءات، أو 'active' للحجوزات القادمة",
+        description: "نوع الاستعلام: 'active' للحجوزات القادمة، 'past' للحجوزات المنتهية، 'refunds' للمستردات، 'all' للكل",
       },
     },
   },
 };
+
+// 7b. Tool: cancelBookingFromChat ⚡ Phase 6
+const cancelBookingFromChatTool = {
+  name: "cancelBookingFromChat",
+  description: "إلغاء حجز محدد للمستخدم بناءً على معرف الحجز (booking_id). استدعِ هذه الأداة فوراً عندما يطلب المستخدم إلغاء حجز، سواء قال 'الغي حجزي' أو 'مش هينفع أجي' أو 'احذف الحجز'.",
+  parameters: {
+    type: "OBJECT",
+    properties: {
+      booking_id: {
+        type: "STRING",
+        description: "معرف الحجز (UUID) المراد إلغاؤه — استخدم last_booking_id من السياق إن لم يذكره المستخدم",
+      },
+      reason: {
+        type: "STRING",
+        description: "سبب الإلغاء إن ذكره المستخدم (اختياري)",
+      },
+    },
+    required: ["booking_id"],
+  },
+};
+
 
 // 8. Tool: getOwnerStadiumsAndBookings
 const getOwnerStadiumsAndBookingsTool = {
@@ -220,7 +241,7 @@ const checkStadiumAvailabilityTool = {
 // 11. Tool: createBookingFromChat
 const createBookingFromChatTool = {
   name: "createBookingFromChat",
-  description: "بدء إجراءات حجز الملعب مباشرة وقفل الموعد ذرياً (Atomic Lock) من داخل المحادثة بناءً على طلب المستخدم. تفحص ما إذا كان الملعب يتطلب عربون إلكتروني مسبقاً (needs_deposit) أم يقبل الدفع كاش كاملاً، وتقفل الموعد ذرياً لمدة 5 دقائق وتنشئ زر الدفع المباشر أو تأكيد الحجز. استدعِ هذه الأداة فوراً عندما يطلب المستخدم حجز ملعب أو يحدد موعداً يريد حجزه (مثل: 'اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده' أو 'احجزلي ميعاد الساعه 8').",
+  description: "بدء إجراءات حجز الملعب مباشرة وقفل الموعد ذرياً (Atomic Lock) من داخل المحادثة بناءً على طلب المستخدم. استدعِ هذه الأداة فوراً ودون أي تردد كلما طلب المستخدم حجز ملعب أو حجز موعد (مثل: 'احجزلي الجمعة الجاية الساعة 9'، 'احجزلي 2 بليل'، 'احجزلي ميعاد الساعه 8'). إذا لم يذكر المستخدم تاريخاً صراحة، مرر date: 'اليوم'. إذا لم يذكر اسم الملعب، اتركه فارغاً. الأداة والـ Guard هما المسؤولان عن حسم التاريخ واكتشاف الغموض وسؤال المستخدم عبر Action Chips إن لزم.",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -230,11 +251,11 @@ const createBookingFromChatTool = {
       },
       stadium_name: {
         type: "STRING",
-        description: "اسم الملعب المطلوب حجزه (مثل: 'الصداقة الجديدة'، 'صدقة جديدة')",
+        description: "اسم الملعب المطلوب حجزه (مثل: 'الصداقة الجديدة'، 'صدقة جديدة' - أو اتركه فارغاً)",
       },
       date: {
         type: "STRING",
-        description: "التاريخ المطلوب للحجز (مثل: 'اليوم'، 'غداً'، 'بكرة' أو YYYY-MM-DD)",
+        description: "التاريخ المطلوب للحجز (مثل: 'اليوم'، 'غداً'، 'بكرة' أو YYYY-MM-DD - إذا لم يذكر مرر 'اليوم')",
       },
       time: {
         type: "STRING",
@@ -265,19 +286,78 @@ const createBookingFromChatTool = {
   },
 };
 
-const allCopilotTools = [
+// ==========================================
+// 🔒 Phase 2: Role-Based Tool Registry
+// Gemini sees ONLY the tools the user's role permits.
+// This is a server-enforced security boundary, not a prompt hint.
+// ==========================================
+
+/** Tools available to every authenticated role */
+const SHARED_TOOLS = [
   searchStadiumsTool,
   searchTournamentsTool,
   get1v1LeaderboardTool,
   getOpenMatchesTool,
   executeAppActionTool,
   updateUserProfileTool,
-  getUserBookingsAndRefundsTool,
-  getOwnerStadiumsAndBookingsTool,
-  getOwnerFinancialInsightsTool,
   checkStadiumAvailabilityTool,
+];
+
+/** Tools exclusive to Player role */
+const PLAYER_ONLY_TOOLS = [
+  getUserBookingsAndRefundsTool,
+  cancelBookingFromChatTool,
   createBookingFromChatTool,
 ];
+
+/** Tools exclusive to Owner role */
+const OWNER_ONLY_TOOLS = [
+  getOwnerStadiumsAndBookingsTool,
+  getOwnerFinancialInsightsTool,
+];
+
+/** A flat list of all tool names allowed per role — for server-side validation */
+const ROLE_ALLOWED_TOOL_NAMES: Record<string, Set<string>> = {
+  player: new Set([
+    ...SHARED_TOOLS.map((t) => t.name),
+    ...PLAYER_ONLY_TOOLS.map((t) => t.name),
+  ]),
+  owner: new Set([
+    ...SHARED_TOOLS.map((t) => t.name),
+    ...OWNER_ONLY_TOOLS.map((t) => t.name),
+  ]),
+  admin: new Set([
+    ...SHARED_TOOLS.map((t) => t.name),
+    ...PLAYER_ONLY_TOOLS.map((t) => t.name),
+    ...OWNER_ONLY_TOOLS.map((t) => t.name),
+  ]),
+};
+
+/**
+ * Returns the tool list that Gemini is allowed to see for a given role.
+ * Owner tools are completely invisible to players — and vice versa.
+ */
+function buildToolRegistryForRole(role: string): any[] {
+  const r = (role || "player").toLowerCase();
+  if (r === "owner") {
+    return [...SHARED_TOOLS, ...OWNER_ONLY_TOOLS];
+  }
+  if (r === "admin" || r === "co_founder" || r === "co-founder") {
+    return [...SHARED_TOOLS, ...PLAYER_ONLY_TOOLS, ...OWNER_ONLY_TOOLS];
+  }
+  // Default: player
+  return [...SHARED_TOOLS, ...PLAYER_ONLY_TOOLS];
+}
+
+/**
+ * Server-side guard: reject tool calls that the user's role does not permit,
+ * even if Gemini somehow emits them.
+ */
+function isToolAllowedForRole(toolName: string, role: string): boolean {
+  const r = (role || "player").toLowerCase();
+  const allowed = ROLE_ALLOWED_TOOL_NAMES[r] ?? ROLE_ALLOWED_TOOL_NAMES["player"];
+  return allowed.has(toolName);
+}
 
 // ==========================================
 // 🧠 Arabic Normalization & Fuzzy Search Engine
@@ -352,14 +432,21 @@ async function findMatchingStadium(
   stadiumId?: string,
   userGov?: string
 ): Promise<any> {
-  // 1. Explicit valid UUID provided
+  // 1. Explicit valid UUID — verify against DB (reject hallucinated UUIDs)
   if (stadiumId && /^[0-9a-fA-F-]{36}$/.test(stadiumId)) {
     const { data: s } = await supabase
       .from("stadiums")
       .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id, image_url, opening_time, closing_time, is_split_shift, break_start_time, break_end_time, rating")
       .eq("id", stadiumId)
+      .eq("is_verified", true)
+      .eq("is_blocked", false)
+      .eq("is_deleted_by_owner", false)
       .maybeSingle();
+    // If UUID is real and active → return directly
     if (s) return s;
+    // If UUID looks real but not found → it was hallucinated or deleted;
+    // fall through to fuzzy name search using queryName (if provided)
+    if (!queryName || queryName.trim().length === 0) return null;
   }
 
   // 2. Fetch all verified active stadiums to do fuzzy scoring
@@ -374,15 +461,8 @@ async function findMatchingStadium(
   if (stadiums.length === 1) return stadiums[0];
 
   if (!queryName || queryName.trim().length === 0) {
-    if (userGov) {
-      const inGov = stadiums.filter((s: any) => {
-        const normGov = normalizeArabic(s.governorate);
-        const normUserGov = normalizeArabic(userGov);
-        return normGov.includes(normUserGov) || normUserGov.includes(normGov);
-      });
-      if (inGov.length > 0) return inGov[0];
-    }
-    return stadiums[0];
+    // No name and no UUID → cannot guess; return null to force clarification
+    return null;
   }
 
   const queryTokens = tokenizeArabic(queryName);
@@ -428,8 +508,9 @@ async function findMatchingStadium(
   const top1 = scoredStadiums[0];
   const top2 = scoredStadiums.length > 1 ? scoredStadiums[1] : null;
 
-  // Rule from section 15: No auto-booking when top 2 stadiums are ambiguous
-  if (top1 && top2 && (top1.score - top2.score <= 15) && top1.score >= 35 && top2.score >= 35) {
+  // ⚡ Phase 4 — Truth Guard
+  // 1. Ambiguity: top 2 stadiums are too close in score → ask user which one
+  if (top1 && top2 && (top1.score - top2.score <= 20) && top1.score >= 40 && top2.score >= 40) {
     const resultStadium = { ...top1.stadium };
     resultStadium.is_ambiguous = true;
     resultStadium.candidates = [
@@ -439,7 +520,12 @@ async function findMatchingStadium(
     return resultStadium;
   }
 
-  return top1 && top1.score > 10 ? top1.stadium : stadiums[0];
+  // 2. Confident single match (score >= 40)
+  if (top1 && top1.score >= 40) return top1.stadium;
+
+  // 3. Score too low — do NOT fallback to a random stadium.
+  //    Return null so executeBookingFlow returns a proper clarification/error.
+  return null;
 }
 
 // ==========================================
@@ -519,8 +605,14 @@ class TemporalResolver {
     let targetDayDate: Date | null = null;
     let clarification: Clarification | null = null;
 
-    // 1. Relative Dates (Check longest expressions first!)
-    if (
+    // 0. Explicit ISO Date (Highest Priority - e.g. YYYY-MM-DD from Action Chip or direct API)
+    const dateMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+    if (dateMatch) {
+      const y = Number(dateMatch[1]);
+      const m = Number(dateMatch[2]);
+      const d = Number(dateMatch[3]);
+      targetDayDate = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
+    } else if (
       text.includes("بعد بعد بكره") ||
       text.includes("بعد ٣ ايام") ||
       text.includes("بعد 3 ايام") ||
@@ -562,6 +654,8 @@ class TemporalResolver {
         const isNextMentioned =
           text.includes("الجاي") ||
           text.includes("القادم") ||
+          text.includes("المقبل") ||
+          text.includes("المقبلة") ||
           text.includes("اللي جاي") ||
           text.includes("اللي بعده");
 
@@ -569,10 +663,16 @@ class TemporalResolver {
         let diff = (targetDay - cairo.dayOfWeek + 7) % 7;
         if (diff === 0) diff = 7;
 
-        // Ambiguity Rule (Section 6):
-        // If the day is close (diff <= 2) and user said "الجمعة الجاية" or similar:
-        // Do NOT guess! Generate clarification chips for this week vs next week!
-        if (isNextMentioned && diff <= 2) {
+        // Ambiguity Rule:
+        // Check if query contains an explicit day of month or ISO date (e.g., 25 سبتمبر or YYYY-MM-DD or يوم 25)
+        const hasExplicitDate =
+          /\d{1,2}\s*(?:يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر)/.test(text) ||
+          /\d{4}-\d{2}-\d{2}/.test(text) ||
+          /(?:يوم\s*|بتاريخ\s*)\d{1,2}/.test(text) ||
+          /\d{1,2}\/\d{1,2}/.test(text);
+
+        // If user says "الجمعة الجاية" without an explicit date -> Ambiguous Temporal Expression!
+        if (isNextMentioned && !hasExplicitDate) {
           const dateOption1 = new Date(Date.UTC(cairo.year, cairo.month - 1, cairo.day + diff, 12, 0, 0));
           const dateOption2 = new Date(Date.UTC(cairo.year, cairo.month - 1, cairo.day + diff + 7, 12, 0, 0));
 
@@ -600,14 +700,6 @@ class TemporalResolver {
         } else {
           dayOffset = isNextMentioned && diff === 0 ? 7 : diff;
         }
-      } else {
-        const dateMatch = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-        if (dateMatch) {
-          const y = Number(dateMatch[1]);
-          const m = Number(dateMatch[2]);
-          const d = Number(dateMatch[3]);
-          targetDayDate = new Date(Date.UTC(y, m - 1, d, 12, 0, 0));
-        }
       }
     }
 
@@ -623,7 +715,8 @@ class TemporalResolver {
     let targetCairoHour = 20; // Default 8 PM
     let preferredSlots: string[] = [];
 
-    // Fallback detection: "لو مفيش 8 خليه 9"
+    // Fallback detection:
+    // Case 1: "لو مفيش 8 خليه 9"
     const fallbackMatch = text.match(/لو\s+(?:مش|مفيش)\s+(\d{1,2})\s+(?:خليه|خلّيه|يبقى|خليه ميعاد)\s+(\d{1,2})/);
     if (fallbackMatch) {
       let h1 = parseInt(fallbackMatch[1], 10);
@@ -635,6 +728,30 @@ class TemporalResolver {
         `${String(h2).padStart(2, "0")}:00`,
       ];
       targetCairoHour = h1;
+    } else {
+      // Case 2: "الساعة 9 ... لو مفيش خليه 10"
+      const fallbackSingleMatch = text.match(/لو\s+(?:مش|مفيش)\s*(?:متاح|فاضي|محجوز)?\s*(?:خليه|خلّيه|يبقى)?\s*(\d{1,2})/);
+      if (fallbackSingleMatch) {
+        let h2 = parseInt(fallbackSingleMatch[1], 10);
+        if (h2 <= 11 && h2 >= 1) h2 += 12;
+
+        const primaryMatch = text.match(/(?:الساعه|الساعة|ساعة)\s*(\d{1,2}|[١٢٣٤٥٦٧٨٩٠]{1,2})/);
+        let h1 = 20;
+        if (primaryMatch) {
+          let h1Raw = primaryMatch[1];
+          const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+          for (let i = 0; i < 10; i++) {
+            h1Raw = h1Raw.replace(new RegExp(arabicDigits[i], "g"), i.toString());
+          }
+          h1 = parseInt(h1Raw, 10);
+          if (h1 <= 11 && h1 >= 1) h1 += 12;
+        }
+        preferredSlots = [
+          `${String(h1).padStart(2, "0")}:00`,
+          `${String(h2).padStart(2, "0")}:00`,
+        ];
+        targetCairoHour = h1;
+      }
     }
 
     const isTwelveMentioned =
@@ -698,28 +815,63 @@ class TemporalResolver {
     } else if (text.includes("بعد العشا") || text.includes("بعد العشاء") || text.includes("العشا") || text.includes("العشاء")) {
       targetCairoHour = 20;
     } else {
-      const hourMatch = text.match(/(?:الساعه|الساعة|ساعة|الساعة|ساعه)?\s*(\d{1,2}|[١٢٣٤٥٦٧٨٩٠]{1,2})/);
-      if (hourMatch && !fallbackMatch) {
-        let hRaw = hourMatch[1];
-        const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-        for (let i = 0; i < 10; i++) {
-          hRaw = hRaw.replace(new RegExp(arabicDigits[i], "g"), i.toString());
-        }
-        const h = parseInt(hRaw, 10);
-        if (h === 12) {
-          targetCairoHour = isExplicitNoon ? 12 : 0;
-        } else if (h >= 1 && h <= 11) {
-          if (text.includes("صباحا") || text.includes("صباحاً") || text.includes("الصبح") || text.includes("am")) {
-            targetCairoHour = h;
-          } else {
-            if (h <= 3 && (text.includes("بليل") || text.includes("بالليل"))) {
+      const directTimeMatch = text.match(/\b(\d{1,2}):00\b/) || text.match(/\b(\d{1,2}):\d{2}\b/);
+      if (directTimeMatch) {
+        targetCairoHour = parseInt(directTimeMatch[1], 10);
+      } else {
+        const hourMatch = text.match(/(?:الساعه|الساعة|ساعة)\s*(\d{1,2}|[١٢٣٤٥٦٧٨٩٠]{1,2})/);
+        if (hourMatch && !fallbackMatch) {
+          let hRaw = hourMatch[1];
+          const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+          for (let i = 0; i < 10; i++) {
+            hRaw = hRaw.replace(new RegExp(arabicDigits[i], "g"), i.toString());
+          }
+          const h = parseInt(hRaw, 10);
+          if (h === 12) {
+            targetCairoHour = isExplicitNoon ? 12 : 0;
+          } else if (h >= 1 && h <= 11) {
+            if (text.includes("صباحا") || text.includes("صباحاً") || text.includes("الصبح") || text.includes("am")) {
               targetCairoHour = h;
             } else {
-              targetCairoHour = h + 12;
+              if (h <= 3 && (text.includes("بليل") || text.includes("بالليل"))) {
+                targetCairoHour = h;
+              } else {
+                targetCairoHour = h + 12;
+              }
+            }
+          } else if (h >= 12 && h <= 23) {
+            targetCairoHour = h;
+          } else if (h >= 1 && h <= 6) {
+            // ⚡ Phase 3: Time Disambiguation — hours 1-6 may be AM or PM
+            const hasNightContext = text.includes("بليل") || text.includes("بالليل") ||
+              text.includes("ليل") || text.includes("سهر") || text.includes("سهرة");
+            const hasMorningContext = text.includes("صبح") || text.includes("الصبح") ||
+              text.includes("صباح") || text.includes("am");
+            const hasAfternoonContext = text.includes("ضهر") || text.includes("بعد الظهر") ||
+              text.includes("عصر") || text.includes("بعد العصر") || text.includes("pm");
+
+            if (hasNightContext) {
+              targetCairoHour = h; // Late night: 1-6 AM
+            } else if (hasMorningContext) {
+              targetCairoHour = h; // Explicit morning
+            } else if (hasAfternoonContext) {
+              targetCairoHour = h + 12; // Explicit afternoon
+            } else if (h <= 3) {
+              // 1,2,3 → default night (most common in Egyptian sports booking culture)
+              targetCairoHour = h;
+            } else {
+              // 4,5,6 → genuinely ambiguous → trigger time_disambiguation chip
+              clarification = {
+                type: "time",
+                question: `يعني إيه "الساعة ${h}" يا كابتن؟ صبح ولا مساء؟`,
+                options: [
+                  { id: `${String(h).padStart(2, "0")}:00`, label: `${h} صباحاً` },
+                  { id: `${String(h + 12).padStart(2, "0")}:00`, label: `${h} مساءً / ${h} م` },
+                ],
+              };
+              targetCairoHour = h + 12; // default to afternoon until clarified
             }
           }
-        } else if (h >= 12 && h <= 23) {
-          targetCairoHour = h;
         }
       }
     }
@@ -768,7 +920,7 @@ class EgyptianFootballLexicon {
   static analyze(userMessage: string, contextSnapshot?: any) {
     const text = userMessage.toLowerCase();
 
-    // 1. "عايز كورة" alone vs with booking
+    // ── 1. Ball Detection ────────────────────────────────────────────────────
     const isBallMentioned =
       text.includes("عايز كورة") ||
       text.includes("عايز كوره") ||
@@ -801,30 +953,149 @@ class EgyptianFootballLexicon {
     }
 
     // 2. "ناقصنا جون" / "ناقصنا حارس"
+    // ── 3. Recurring Booking ─────────────────────────────────────────────────
     const isGoalkeeperSearch =
-      text.includes("ناقصنا جون") ||
-      text.includes("محتاجين جون") ||
-      text.includes("عايزين جون") ||
-      text.includes("ناقصنا حارس") ||
+      text.includes("ناقصنا جون") || text.includes("محتاجين جون") ||
+      text.includes("عايزين جون") || text.includes("ناقصنا حارس") ||
       text.includes("محتاجين حارس");
 
-    // 3. "تثبيتة" / "ثبتلي" / "عايز أثبت"
     const isRecurringBooking =
-      text.includes("تثبيتة") ||
-      text.includes("تثبيته") ||
-      text.includes("ثبتلي") ||
-      text.includes("ثبت لي") ||
-      text.includes("عايز اثبت") ||
-      text.includes("عايز أثبت");
+      text.includes("تثبيتة") || text.includes("تثبيته") ||
+      text.includes("ثبتلي") || text.includes("ثبت لي") ||
+      text.includes("عايز اثبت") || text.includes("عايز أثبت");
+
+    // ── 4. ⚡ Phase 3: Pre-Gemini Booking Interceptor ────────────────────────
+    // Extract booking intent directly from text — no Gemini needed.
+    // Activated when احجزلي or احجز + context triggers are detected.
+    let bookingRequest: {
+      stadiumName?: string;
+      time?: string;
+      date?: string;
+      rentBall: boolean;
+      fallbackSlots: string[];
+    } | null = null;
+
+    const isExplicitBookingTrigger =
+      text.includes("احجزلي") || text.includes("احجزلى") ||
+      text.includes("احجز لي") || text.includes("احجز لى") ||
+      (text.includes("احجز") && (text.includes("ملعب") || text.includes("الساعة") || text.includes("الساعه")));
+
+    if (isExplicitBookingTrigger) {
+      // Stadium name: "في ملعب X" or "ملعب X" from original message
+      let stadiumName: string | undefined;
+      const sMatch = userMessage.match(/(?:في|فى)\s+ملعب\s+([^،,\n]+)/i) ||
+                     userMessage.match(/ملعب\s+([^،,\n]+)/i);
+      if (sMatch) {
+        stadiumName = sMatch[1].trim()
+          .replace(/\s*(ولو|لو|بس|اللى|اللي|يبقا|يبقى).*/i, "").trim();
+      } else if (text.includes("نفس الملعب") || text.includes("الملعب ده") || text.includes("الملعب الاخير") || text.includes("الملعب الأخير")) {
+        stadiumName = contextSnapshot?.last_stadium_name || contextSnapshot?.last_booked_stadium;
+      } else if (contextSnapshot?.last_stadium_name) {
+        stadiumName = contextSnapshot.last_stadium_name;
+      } else if (contextSnapshot?.last_booked_stadium) {
+        stadiumName = contextSnapshot.last_booked_stadium;
+      }
+
+      // Raw time string for TemporalResolver
+      const tMatch = userMessage.match(/(?:الساعه|الساعة|ساعة)\s*[١٢٣٤٥٦٧٨٩٠\d]{1,2}/i);
+      const rawTime = tMatch ? tMatch[0] : undefined;
+
+      // Date keyword
+      const dateKeywords = [
+        "الجمعة الجاية", "الجمعة القادمة", "الجمعه الجايه",
+        "السبت الجاي", "السبت القادم", "الأحد الجاي", "الاحد الجاي",
+        "الأحد القادم", "الاثنين الجاي", "الثلاثاء الجاي",
+        "الأربعاء الجاي", "الأربع الجاي", "الخميس الجاي",
+        "بكرة", "بكره", "النهارده", "اليوم",
+      ];
+      let rawDate: string | undefined;
+      for (const dk of dateKeywords) {
+        if (text.includes(dk.toLowerCase())) { rawDate = dk; break; }
+      }
+
+      // Fallback slots: "لو مفيش خليه 10"
+      const fallbackSlots: string[] = [];
+      const fbMatches = userMessage.matchAll(/(?:لو\s+(?:مش|مفيش)(?:\s+متاح|\s+فاضي)?\s*(?:خليه|خلّيه|يبقى|يبقا)?\s*)(\d{1,2})/gi);
+      for (const fm of fbMatches) {
+        let h = parseInt(fm[1], 10);
+        if (h >= 1 && h <= 12) h += 12;
+        fallbackSlots.push(`${String(h).padStart(2, "0")}:00`);
+      }
+
+      bookingRequest = {
+        stadiumName,
+        time: rawTime,
+        date: rawDate,
+        rentBall: isBallMentioned,
+        fallbackSlots,
+      };
+    }
+
+    // ── 5. ⚡ Phase 6: Cancel Request Interceptor ─────────────────────────────
+    let cancelRequest: { explicit: boolean; reason?: string } | null = null;
+    const cancelPhrases = [
+      "الغي حجزي", "الغي حجزى", "الغي الحجز", "الغى حجزي",
+      "مش هينفع أجي", "مش هينفع اجي", "مش جاي", "مش قادر اجي",
+      "احذف الحجز", "امسح الحجز", "لغي الحجز",
+      "عايز الغي", "عايز ألغي", "ابغي الغي",
+      "cancel booking", "cancel my booking",
+    ];
+    const isCancelTrigger = cancelPhrases.some((p) => text.includes(p.toLowerCase()));
+    if (isCancelTrigger) {
+      let cancelReason: string | undefined;
+      if (text.includes("ظروف") || text.includes("شغل") || text.includes("سفر")) cancelReason = "user_circumstances";
+      else if (text.includes("غلط") || text.includes("خطأ")) cancelReason = "user_error";
+      else cancelReason = "user_request_via_chat";
+      cancelRequest = { explicit: true, reason: cancelReason };
+    }
+
+    // ── 6. ⚡ Phase 6: My Bookings Query Interceptor ──────────────────────────
+    let bookingsQuery: { explicit: boolean; queryType?: string } | null = null;
+    const bookingsPhrases = [
+      "حجوزاتي", "حجوزاتى", "حجوزاتي القادمة", "حجوزاتي النشطة",
+      "عندي حجز امتى", "عندى حجز امتى", "عندي حجز", "عندى حجز",
+      "شوفلي حجوزاتي", "شوفلي حجزي", "شوفلي الحجز",
+      "مواعيد لعبي", "سجل الحجوزات", "مستحقات الاسترداد", "فلوس الاسترداد",
+      "my bookings", "my booking",
+    ];
+    const isBookingsQueryTrigger = bookingsPhrases.some((p) => text.includes(p.toLowerCase()));
+    if (isBookingsQueryTrigger && !isCancelTrigger && !isExplicitBookingTrigger) {
+      let qType = "all";
+      if (text.includes("قادمة") || text.includes("نشطة") || text.includes("امتى") || text.includes("الجاية")) qType = "active";
+      else if (text.includes("سابقة") || text.includes("قديمة") || text.includes("منتهية")) qType = "past";
+      else if (text.includes("استرداد") || text.includes("مستحقات") || text.includes("فلوس")) qType = "refunds";
+      bookingsQuery = { explicit: true, queryType: qType };
+    }
+
+    // ── 7. ⚡ Phase 7: Owner Query Interceptor ────────────────────────────────
+    let ownerQuery: { type: "financial" | "bookings" } | null = null;
+    const ownerFinPhrases = [
+      "أرباحي", "ارباحي", "فلوسي", "رصيدي", "مديونيتي", "حسابي كام",
+      "عايز اسحب", "السجل المالي", "إيراداتي", "ايراداتي", "ارباح الملعب",
+    ];
+    const ownerSchedulePhrases = [
+      "حجوزات ملعبي", "حجوزات ملاعبي", "مين حجز", "مين حاجز",
+      "جدول الحجوزات", "حجوزات اليوم", "ملاعبي المسجلة", "ملاعبي",
+    ];
+    if (ownerFinPhrases.some((p) => text.includes(p.toLowerCase()))) {
+      ownerQuery = { type: "financial" };
+    } else if (ownerSchedulePhrases.some((p) => text.includes(p.toLowerCase()))) {
+      ownerQuery = { type: "bookings" };
+    }
 
     return {
       rentBall,
       ballClarification,
       isGoalkeeperSearch,
       isRecurringBooking,
+      bookingRequest,
+      cancelRequest,
+      bookingsQuery,
+      ownerQuery,
     };
   }
 }
+
 
 // Backward-compatible wrappers
 function parseArabicTimeAndDate(timeStr?: string, dateStr?: string, defaultUserMessage?: string): {
@@ -908,6 +1179,386 @@ function generateStandardSlots(targetDateStr: string, stadium?: any) {
     });
   }
   return slots;
+}
+
+// ==========================================
+// ⚽ Unified Atomic Booking Executor
+// ==========================================
+
+async function executeBookingFlow({
+  supabase,
+  callerUser,
+  userGov,
+  stadiumId,
+  stadiumName,
+  date,
+  time,
+  rentBall,
+  fallbackSlots,
+  contextSnapshot,
+  userMessage,
+}: {
+  supabase: any;
+  callerUser: any;
+  userGov: string;
+  stadiumId?: string;
+  stadiumName?: string;
+  date?: string;
+  time?: string;
+  rentBall?: boolean;
+  fallbackSlots?: string[];
+  contextSnapshot: any;
+  userMessage?: string;
+}): Promise<{
+  reply: string;
+  action: any;
+  stadiumResults: any[];
+  clarification?: any;
+}> {
+  const targetStadium = await findMatchingStadium(supabase, stadiumName, stadiumId, userGov);
+  if (!targetStadium) {
+    // ⚡ Phase 4 — Truth Guard: Distinguish "not found" from "not specified"
+    if (stadiumName && stadiumName.trim().length > 0) {
+      // Name was given but not matched → it might be hallucinated or misspelled
+      return {
+        reply: `عذراً يا كابتن! ما لقيتش ملعب بإسم "${stadiumName}" في قاعدة بيانات VSP. ابحث عن الملعب من خلال البحث في القائمة أو أرسل اسمه مرة تانية.`,
+        action: null,
+        stadiumResults: [],
+        clarification: null,
+      };
+    }
+
+    // No stadium name at all → offer top stadiums in userGov as chips
+    const { data: topStadiums } = await supabase
+      .from("stadiums")
+      .select("id, name, governorate")
+      .eq("is_verified", true)
+      .eq("is_blocked", false)
+      .eq("is_deleted_by_owner", false)
+      .limit(4);
+
+    const govStadiums = (topStadiums || []).filter((s: any) => {
+      if (!userGov) return true;
+      const normGov = normalizeArabic(s.governorate);
+      const normUserGov = normalizeArabic(userGov);
+      return normGov.includes(normUserGov) || normUserGov.includes(normGov);
+    }).slice(0, 3);
+
+    if (govStadiums.length > 0) {
+      const clar = {
+        type: "stadium",
+        question: "أي ملعب تحب تحجز فيه يا كابتن؟",
+        options: govStadiums.map((s: any) => ({ id: s.id, label: s.name })),
+      };
+      contextSnapshot.pending_intent = {
+        intent: "create_booking",
+        stadium_id: null,
+        time,
+        date,
+        rent_ball: rentBall === true,
+        fallback_slots: fallbackSlots,
+        clarification_type: "stadium",
+      };
+      contextSnapshot.clarification = clar;
+      return {
+        reply: clar.question,
+        action: null,
+        stadiumResults: govStadiums,
+        clarification: clar,
+      };
+    }
+
+    return {
+      reply: "عذراً يا كابتن، لم يتم العثور على ملاعب متاحة حالياً في منطقتك.",
+      action: null,
+      stadiumResults: [],
+    };
+  }
+
+
+  // 1. Stadium Disambiguation Guard
+  if (targetStadium.is_ambiguous) {
+    const appClar = {
+      type: "stadium",
+      question: "أي ملعب تقصد يا كابتن؟",
+      options: targetStadium.candidates,
+    };
+    contextSnapshot.pending_intent = {
+      intent: "create_booking",
+      stadium_id: null,
+      time: time,
+      date: date,
+      rent_ball: rentBall === true,
+      fallback_slots: fallbackSlots,
+      clarification_type: "stadium",
+    };
+    contextSnapshot.clarification = appClar;
+    return {
+      reply: "وجدت أكثر من ملعب مطابق يا كابتن، أي ملعب تقصد؟",
+      action: null,
+      stadiumResults: [],
+      clarification: appClar,
+    };
+  }
+
+  // 2. Parse Date & Time
+  const parsedTime = parseArabicTimeAndDate(time, date, userMessage || "");
+
+  // 3. Date Disambiguation Guard (Ambiguous Temporal Expression)
+  if (parsedTime?.clarification) {
+    contextSnapshot.pending_intent = {
+      intent: "create_booking",
+      stadium_id: targetStadium.id,
+      stadium_name: targetStadium.name,
+      time: parsedTime?.cairoHour !== undefined ? `${String(parsedTime.cairoHour).padStart(2, "0")}:00` : time,
+      date: null,
+      rent_ball: rentBall === true,
+      fallback_slots: fallbackSlots && fallbackSlots.length > 0
+        ? fallbackSlots
+        : parsedTime?.preferredSlots && parsedTime.preferredSlots.length > 1
+          ? parsedTime.preferredSlots.slice(1)
+          : [],
+      clarification_type: "date",
+    };
+    contextSnapshot.clarification = parsedTime.clarification;
+    return {
+      reply: parsedTime.clarification.question,
+      action: null,
+      stadiumResults: [targetStadium],
+      clarification: parsedTime.clarification,
+    };
+  }
+
+  const startTime = parsedTime.startTimeIso;
+  const endTime = parsedTime.endTimeIso;
+  const displaySlot = parsedTime.displayTime;
+
+  const needsDeposit = targetStadium.needs_deposit === true;
+  const paymentMethod = needsDeposit ? "paymob" : "cash";
+
+  // 4. Build try slots (preferred + fallback slots)
+  const trySlots: { start: string; end: string; display: string }[] = [
+    { start: startTime, end: endTime, display: displaySlot },
+  ];
+
+  const preferred = fallbackSlots && fallbackSlots.length > 0
+    ? fallbackSlots
+    : parsedTime?.preferredSlots && parsedTime.preferredSlots.length > 1
+      ? parsedTime.preferredSlots.slice(1)
+      : [];
+
+  if (preferred.length > 0) {
+    for (const fSlot of preferred) {
+      const h2 = parseInt(fSlot.split(":")[0], 10);
+      if (!isNaN(h2)) {
+        const targetDatePart = parsedTime?.targetDateStr || startTime.split("T")[0];
+        const testDate = new Date();
+        const cairoLocal = new Date(testDate.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+        const utcLocal = new Date(testDate.toLocaleString("en-US", { timeZone: "UTC" }));
+        const offsetHours = Math.round((cairoLocal.getTime() - utcLocal.getTime()) / (3600 * 1000));
+        const offsetSign = offsetHours >= 0 ? "+" : "-";
+        const offsetStr = `${offsetSign}${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
+
+        const s2Start = new Date(`${targetDatePart}T${String(h2).padStart(2, "0")}:00:00${offsetStr}`).toISOString();
+        const s2End = new Date(new Date(s2Start).getTime() + 60 * 60 * 1000).toISOString();
+        const dispH = h2 > 12 ? h2 - 12 : h2 === 0 ? 12 : h2;
+        const nextH = (h2 + 1) % 24;
+        const dispNextH = nextH > 12 ? nextH - 12 : nextH === 0 ? 12 : nextH;
+        const period = h2 >= 12 ? "م" : "ص";
+        const nextPeriod = nextH >= 12 ? "م" : "ص";
+        const disp2 = `${dispH}:00 ${period} - ${dispNextH}:00 ${nextPeriod}`;
+        if (s2Start !== startTime) {
+          trySlots.push({ start: s2Start, end: s2End, display: disp2 });
+        }
+      }
+    }
+  }
+
+  let bookedSlot: any = null;
+  let lastErrorMsg = "";
+
+  for (let idx = 0; idx < trySlots.length; idx++) {
+    const slotToTry = trySlots[idx];
+
+    // Conflict check against other active bookings
+    const { data: conflictBookings } = await supabase
+      .from("bookings")
+      .select("id, status, locked_until, created_at")
+      .eq("stadium_id", targetStadium.id)
+      .neq("status", "cancelled")
+      .filter("start_time", "lt", slotToTry.end)
+      .filter("end_time", "gt", slotToTry.start);
+
+    const hasConflict = (conflictBookings || []).some((b: any) => {
+      if (b.status === "pending") {
+        const lockExpire = b.locked_until
+          ? new Date(b.locked_until).getTime()
+          : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+        return lockExpire > Date.now();
+      }
+      return true;
+    });
+
+    if (hasConflict) {
+      lastErrorMsg = "عذراً يا كابتن، هذا الموعد محجوز أو قيد الدفع حالياً من قِبل لاعب آخر.";
+      continue;
+    }
+
+    // ⚡ Phase 5: Idempotency Key — deterministic per (user + stadium + slot)
+    // Prevents double-tap / network retry from creating duplicate bookings
+    const idemRaw = `${callerUser.id}:${targetStadium.id}:${slotToTry.start}`;
+    const idemEncoder = new TextEncoder();
+    const idemHash = await crypto.subtle.digest("SHA-256", idemEncoder.encode(idemRaw));
+    const idemKey = Array.from(new Uint8Array(idemHash)).map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+
+    // Call atomic RPC
+    const { data: bookingResult, error: bookingErr } = await supabase.rpc(
+      "create_booking_atomic",
+      {
+        p_stadium_id: targetStadium.id,
+        p_user_id: callerUser.id,
+        p_owner_id: targetStadium.owner_id,
+        p_start_time: slotToTry.start,
+        p_end_time: slotToTry.end,
+        p_booking_type: "personal",
+        p_total_price: targetStadium.price_per_hour,
+        p_stadium_name: targetStadium.name,
+        p_payment_method: paymentMethod,
+        p_rent_ball: rentBall === true,
+        p_idempotency_key: idemKey,
+      }
+    );
+
+    if (bookingErr || (bookingResult && bookingResult.success === false)) {
+      lastErrorMsg = bookingErr?.message || bookingResult?.message || "تعذر إتمام الحجز في هذا الموعد.";
+      continue;
+    }
+
+    bookedSlot = {
+      bookingResult,
+      slot: slotToTry,
+      isFallback: idx > 0,
+      originalSlot: trySlots[0].display,
+    };
+    break;
+  }
+
+  if (!bookedSlot) {
+    // ⚡ Phase 3: Instead of dead-end error, fetch real available slots and offer them as Action Chips
+    if (targetStadium) {
+      try {
+        const checkDate = parsedTime?.targetDateStr || new Date().toISOString().split("T")[0];
+        const { dayStartIso, dayEndIso } = parseTargetDate(checkDate);
+        const { data: existingBookings } = await supabase
+          .from("bookings")
+          .select("start_time, end_time, status, locked_until, created_at")
+          .eq("stadium_id", targetStadium.id)
+          .neq("status", "cancelled")
+          .gte("start_time", dayStartIso)
+          .lte("start_time", dayEndIso);
+
+        const activeBookings = (existingBookings || []).filter((b: any) => {
+          if (b.status === "pending") {
+            const lockExpire = b.locked_until
+              ? new Date(b.locked_until).getTime()
+              : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+            return lockExpire > Date.now();
+          }
+          return true;
+        });
+
+        const allSlots = generateStandardSlots(checkDate, targetStadium);
+        const availableSlots = allSlots.filter((slot: any) => {
+          const sStart = new Date(slot.start_time).getTime();
+          const sEnd = new Date(slot.end_time).getTime();
+          for (const b of activeBookings) {
+            const bStart = new Date(b.start_time).getTime();
+            const bEnd = new Date(b.end_time).getTime();
+            if (sStart < bEnd && sEnd > bStart) return false;
+          }
+          return true;
+        });
+
+        if (availableSlots.length > 0) {
+          const chipSlots = availableSlots.slice(0, 3);
+          const slotsChipClar = {
+            type: "slot_selection",
+            question: `عذراً يا كابتن! الموعد المطلوب محجوز في ${targetStadium.name}. إليك المواعيد الشاغرة القادمة، اختار:`,
+            options: chipSlots.map((s: any) => ({
+              id: JSON.stringify({ stadium_id: targetStadium.id, date: checkDate, time: `${String(s.hour).padStart(2, "0")}:00` }),
+              label: s.display_time,
+            })),
+          };
+          contextSnapshot.pending_intent = {
+            intent: "create_booking",
+            stadium_id: targetStadium.id,
+            stadium_name: targetStadium.name,
+            rent_ball: rentBall === true,
+            fallback_slots: [],
+            clarification_type: "slot_selection",
+          };
+          contextSnapshot.clarification = slotsChipClar;
+          return {
+            reply: slotsChipClar.question,
+            action: null,
+            stadiumResults: [targetStadium],
+            clarification: slotsChipClar,
+          };
+        }
+      } catch (_) {}
+    }
+
+    return {
+      reply: `عذراً يا كابتن! ${lastErrorMsg || "المواعيد المطلوبة غير متاحة حالياً ولا توجد مواعيد شاغرة في هذا اليوم."}`,
+      action: null,
+      stadiumResults: targetStadium ? [targetStadium] : [],
+    };
+
+  }
+
+  const bookingId = bookedSlot.bookingResult?.booking_id || bookedSlot.bookingResult?.id;
+  contextSnapshot.last_booking_id = bookingId;
+  contextSnapshot.last_booked_stadium = targetStadium.name;
+  contextSnapshot.last_slot = bookedSlot.slot.display;
+
+  const ballNote = rentBall ? " + تأجير كرة ⚽" : "";
+  const fallbackNote = bookedSlot.isFallback
+    ? `\n(تنبيه: الموعد الأول ${bookedSlot.originalSlot} كان غير متاح، فتم قفل موعدك البديل المفضل ${bookedSlot.slot.display})`
+    : "";
+
+  let action: any = null;
+  let reply = "";
+
+  if (needsDeposit || paymentMethod === "paymob") {
+    action = {
+      action_type: "OPEN_PAYMENT",
+      route: "/checkout",
+      label: `إتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز 💳`,
+      params: {
+        booking_id: bookingId,
+        stadium_id: targetStadium.id,
+        stadium_name: targetStadium.name,
+        deposit_amount: targetStadium.deposit_amount || 50,
+        total_price: targetStadium.price_per_hour,
+        slot: bookedSlot.slot.display,
+        rent_ball: rentBall === true,
+      },
+    };
+    reply = `تم قفل موعدك بنجاح (${bookedSlot.slot.display}${ballNote}) في ${targetStadium.name} يا كابتن ⚽!${fallbackNote}\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز فوراً.`;
+  } else {
+    action = {
+      action_type: "NAVIGATE",
+      route: "/bookings",
+      label: "عرض تفاصيل حجزي 📋",
+    };
+    reply = `تم تأكيد حجزك بنجاح (${bookedSlot.slot.display}${ballNote}) في ${targetStadium.name} يا كابتن ⚽!${fallbackNote}\nالحجز مسجل بنظام الدفع كاش عند الحضور للملعب.`;
+  }
+
+  return {
+    reply,
+    action,
+    stadiumResults: [targetStadium],
+  };
 }
 
 // ==========================================
@@ -1065,47 +1716,170 @@ serve(async (req: Request) => {
     let openMatchResults: any[] = [];
     let appAction: any = null;
     let appClarification: any = null;
+    let debugInfo: any = null;
     let assistantReply = "";
     let handledByGemini = false;
 
     // ⚽ Egyptian Football Lexicon Analysis
     const lexiconAnalysis = EgyptianFootballLexicon.analyze(userMessage, contextSnapshot);
 
-    // 🔄 Pending Intent Resumption
+    // 🔄 Pending Intent Resumption (Conversation Transaction State)
     if (contextSnapshot.pending_intent) {
       const p = contextSnapshot.pending_intent;
-      if (p.clarification_type === "date") {
-        const dateMatch = userMessage.match(/\b\d{4}-\d{2}-\d{2}\b/);
-        if (dateMatch) {
-          p.date = dateMatch[0];
-          p.clarification_type = null;
-        } else if (userMessage.includes("الاولى") || userMessage.includes("الأولى") || userMessage.includes("الاول") || userMessage.includes("أول")) {
-          if (p.candidate_options && p.candidate_options[0]) {
-            p.date = p.candidate_options[0].id;
+      const clar = contextSnapshot.clarification;
+
+      let optionMatched = false;
+
+      // Match against Action Chips options by id or label
+      if (clar && clar.options) {
+        const matchedOpt = clar.options.find(
+          (opt: any) =>
+            userMessage.includes(opt.id) ||
+            userMessage.trim() === opt.label.trim() ||
+            userMessage.includes(opt.label) ||
+            (userMessage.trim().length >= 3 && opt.label.includes(userMessage.trim())) ||
+            ((userMessage.includes("الاولى") || userMessage.includes("الأولى") || userMessage.includes("الاول") || userMessage.includes("أول")) && opt === clar.options[0]) ||
+            ((userMessage.includes("التانية") || userMessage.includes("الثانية") || userMessage.includes("التاني") || userMessage.includes("تاني")) && opt === clar.options[1])
+        );
+
+        if (matchedOpt) {
+          optionMatched = true;
+          if (clar.type === "date" || p.clarification_type === "date") {
+            p.date = matchedOpt.id;
             p.clarification_type = null;
-          }
-        } else if (userMessage.includes("التانية") || userMessage.includes("الثانية") || userMessage.includes("التاني") || userMessage.includes("تاني")) {
-          if (p.candidate_options && p.candidate_options[1]) {
-            p.date = p.candidate_options[1].id;
+          } else if (clar.type === "stadium" || p.clarification_type === "stadium") {
+            p.stadium_id = matchedOpt.id;
+            p.stadium_name = matchedOpt.label;
+            p.clarification_type = null;
+          } else if (clar.type === "ball_intent" || p.clarification_type === "ball_intent") {
+            p.rent_ball = matchedOpt.id === "rent_ball_booking";
+            p.clarification_type = null;
+          } else if (clar.type === "time" || p.clarification_type === "time") {
+            // matchedOpt.id is HH:00 format (e.g. "06:00" or "18:00")
+            p.time = matchedOpt.id;
+            p.clarification_type = null;
+          } else if (clar.type === "slot_selection" || p.clarification_type === "slot_selection") {
+            // matchedOpt.id is JSON: {stadium_id, date, time}
+            try {
+              const slotData = JSON.parse(matchedOpt.id);
+              if (slotData.stadium_id && slotData.date && slotData.time) {
+                p.stadium_id = slotData.stadium_id;
+                p.date = slotData.date;
+                p.time = slotData.time;
+                p.clarification_type = null;
+              }
+            } catch (_) {}
+          } else if (clar.type === "cancel_selection" || p.clarification_type === "cancel_selection") {
+            p.booking_id = matchedOpt.id;
             p.clarification_type = null;
           }
         }
-      } else if (p.clarification_type === "stadium") {
-        if (/^[0-9a-fA-F-]{36}$/.test(userMessage.trim())) {
-          p.stadium_id = userMessage.trim();
-          p.clarification_type = null;
+      }
+
+      if (!optionMatched) {
+        if (p.clarification_type === "date") {
+          const dateMatch = userMessage.match(/\b\d{4}-\d{2}-\d{2}\b/);
+          if (dateMatch) {
+            p.date = dateMatch[0];
+            p.clarification_type = null;
+          }
+        } else if (p.clarification_type === "stadium") {
+          if (/^[0-9a-fA-F-]{36}$/.test(userMessage.trim())) {
+            p.stadium_id = userMessage.trim();
+            p.clarification_type = null;
+          }
+        } else if (p.clarification_type === "cancel_selection") {
+          if (/^[0-9a-fA-F-]{36}$/.test(userMessage.trim())) {
+            p.booking_id = userMessage.trim();
+            p.clarification_type = null;
+          }
+        } else if (p.clarification_type === "time") {
+          // User typed HH:00 or just a number — resolve manually
+          const timeMatch = userMessage.match(/\b(\d{2}):(\d{2})\b/);
+          if (timeMatch) {
+            p.time = `${timeMatch[1]}:${timeMatch[2]}`;
+            p.clarification_type = null;
+          } else {
+            const hourMatch = userMessage.match(/\b(\d{1,2})\b/);
+            if (hourMatch) {
+              const h = parseInt(hourMatch[1], 10);
+              if (h >= 0 && h <= 23) {
+                p.time = `${String(h).padStart(2, "0")}:00`;
+                p.clarification_type = null;
+              }
+            }
+          }
+        } else if (p.clarification_type === "slot_selection") {
+          // User typed a time manually instead of tapping a chip
+          const hourMatch = userMessage.match(/\b(\d{1,2})\b/);
+          if (hourMatch) {
+            const h = parseInt(hourMatch[1], 10);
+            if (h >= 0 && h <= 23) {
+              const resolvedH = h <= 6 || h >= 13 ? h : h + 12; // default to PM for 7-12
+              p.time = `${String(resolvedH).padStart(2, "00")}:00`;
+              p.clarification_type = null;
+            }
+          }
+        }
+      }
+
+      // ⚡ If pending create_booking intent is now fully resolved -> Execute atomically without Gemini!
+      if (p.intent === "create_booking" && p.stadium_id && p.date && !p.clarification_type) {
+        contextSnapshot.pending_intent = null;
+        contextSnapshot.clarification = null;
+
+        const bookingRes = await executeBookingFlow({
+          supabase,
+          callerUser,
+          userGov,
+          stadiumId: p.stadium_id,
+          stadiumName: p.stadium_name,
+          date: p.date,
+          time: p.time,
+          rentBall: p.rent_ball,
+          fallbackSlots: p.fallback_slots,
+          contextSnapshot,
+          userMessage,
+        });
+
+        assistantReply = bookingRes.reply;
+        appAction = bookingRes.action;
+        stadiumResults = bookingRes.stadiumResults;
+        if (bookingRes.clarification) {
+          appClarification = bookingRes.clarification;
+        }
+        handledByGemini = true;
+      }
+
+      // ⚡ If pending cancel_booking intent is now fully resolved -> Execute atomically without Gemini!
+      if (p.intent === "cancel_booking" && p.booking_id && !p.clarification_type) {
+        contextSnapshot.pending_intent = null;
+        contextSnapshot.clarification = null;
+
+        const cancelReason = p.reason || "user_request_via_chat";
+        const { data: bRow } = await supabase
+          .from("bookings")
+          .select("id, stadium_name, start_time, status, is_paid, deposit_amount")
+          .eq("id", p.booking_id)
+          .or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`)
+          .maybeSingle();
+
+        if (bRow && ["pending", "confirmed"].includes(bRow.status)) {
+          await supabase.from("bookings").update({
+            status: "cancelled",
+            cancellation_reason: cancelReason,
+            cancelled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }).eq("id", p.booking_id).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
+
+          contextSnapshot.last_booking_id = null;
+          const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
+          assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nسيتم استرداد المبلغ المدفوع خلال 2-5 أيام عمل 💰" : ""}`;
+          appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          handledByGemini = true;
         } else {
-          const matched = await findMatchingStadium(supabase, userMessage, undefined, userGov);
-          if (matched && !matched.is_ambiguous) {
-            p.stadium_id = matched.id;
-            p.stadium_name = matched.name;
-            p.clarification_type = null;
-          }
-        }
-      } else if (p.clarification_type === "ball_intent") {
-        if (userMessage.includes("rent_ball") || userMessage.includes("تأجير كرة") || userMessage.includes("مع كرة") || userMessage.includes("مع كورة")) {
-          p.rent_ball = true;
-          p.clarification_type = null;
+          assistantReply = "الحجز ده غير متاح للإلغاء أو ملغي بالفعل يا كابتن.";
+          handledByGemini = true;
         }
       }
     }
@@ -1122,10 +1896,204 @@ serve(async (req: Request) => {
       handledByGemini = true;
     }
 
+    // ⚡ Phase 3: Pre-Gemini Booking Guard
+    // If lexicon detected an explicit booking request, execute immediately without Gemini.
+    if (lexiconAnalysis.bookingRequest && !handledByGemini && !contextSnapshot.pending_intent) {
+      const br = lexiconAnalysis.bookingRequest;
+      const bookingRes = await executeBookingFlow({
+        supabase,
+        callerUser,
+        userGov,
+        stadiumName: br.stadiumName,
+        date: br.date,
+        time: br.time,
+        rentBall: br.rentBall,
+        fallbackSlots: br.fallbackSlots,
+        contextSnapshot,
+        userMessage,
+      });
+      assistantReply = bookingRes.reply;
+      appAction = bookingRes.action;
+      stadiumResults = bookingRes.stadiumResults;
+      if (bookingRes.clarification) {
+        appClarification = bookingRes.clarification;
+      }
+      handledByGemini = true;
+    }
+
+    // ⚡ Phase 6: Pre-Cancel Guard
+    // If lexicon detected "الغي حجزي", cancel directly without Gemini
+    if (lexiconAnalysis.cancelRequest?.explicit && !handledByGemini && userProfile?.role !== "owner") {
+      const cancelReason = lexiconAnalysis.cancelRequest.reason || "user_request_via_chat";
+      let targetBookingId = contextSnapshot.last_booking_id || null;
+
+      if (!targetBookingId) {
+        const { data: activeList } = await supabase
+          .from("bookings")
+          .select("id, stadium_name, start_time, status, is_paid, deposit_amount")
+          .or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`)
+          .in("status", ["pending", "confirmed"])
+          .gte("start_time", new Date().toISOString())
+          .order("start_time", { ascending: true })
+          .limit(3);
+
+        const list = activeList || [];
+        if (list.length === 0) {
+          assistantReply = "ما لقيتش عندك حجوزات نشطة قادمة تقدر تلغيها يا كابتن 🤷‍♂️";
+          handledByGemini = true;
+        } else if (list.length === 1) {
+          targetBookingId = list[0].id;
+        } else {
+          // Multiple active bookings -> Progressive Clarification with Action Chips
+          const clar = {
+            type: "cancel_selection",
+            question: "عندك أكتر من حجز نشط يا كابتن. تحب تلغي أنهي حجز؟",
+            options: list.map((b: any) => ({
+              id: b.id,
+              label: `${b.stadium_name} (${new Date(b.start_time).toLocaleDateString("ar-EG", { weekday: "short", day: "numeric", month: "numeric" })})`,
+            })),
+          };
+          appClarification = clar;
+          contextSnapshot.pending_intent = { intent: "cancel_booking", clarification_type: "cancel_selection", reason: cancelReason };
+          contextSnapshot.clarification = clar;
+          assistantReply = "عندك أكتر من حجز قادم. اختر الحجز اللي عايز تلغيه:";
+          handledByGemini = true;
+        }
+      }
+
+      if (targetBookingId && !handledByGemini) {
+        const { data: bRow } = await supabase.from("bookings").select("id, stadium_name, start_time, status, is_paid, deposit_amount").eq("id", targetBookingId).maybeSingle();
+        if (bRow && ["pending", "confirmed"].includes(bRow.status)) {
+          await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", targetBookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
+          contextSnapshot.last_booking_id = null;
+          const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
+          assistantReply = `تمام يا كابتن، تم إلغاء حجزك في ${bRow.stadium_name} بنجاح ✅${needsRefund ? "\nسيتم استرداد المبلغ المدفوع خلال 2-5 أيام عمل 💰" : ""}`;
+          appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+          handledByGemini = true;
+        } else {
+          assistantReply = "ما لقيتش حجز نشط متاح للإلغاء يا كابتن.";
+          handledByGemini = true;
+        }
+      }
+    }
+
+    // ⚡ Phase 6: Pre-Gemini My Bookings Query Fast-Path
+    if (lexiconAnalysis.bookingsQuery?.explicit && !handledByGemini && userProfile?.role !== "owner") {
+      const qType = lexiconAnalysis.bookingsQuery.queryType || "active";
+      const nowIso = new Date().toISOString();
+      let bQuery = supabase
+        .from("bookings")
+        .select("id, stadium_name, start_time, end_time, status, payment_status, total_price, deposit_amount, refund_amount")
+        .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+        .order("start_time", { ascending: false })
+        .limit(5);
+
+      if (qType === "active") {
+        bQuery = bQuery.in("status", ["pending", "confirmed"]).gte("start_time", nowIso);
+      } else if (qType === "past") {
+        bQuery = bQuery.lt("start_time", nowIso);
+      } else if (qType === "refunds") {
+        bQuery = bQuery.or("status.eq.cancelled,refund_amount.gt.0");
+      }
+
+      const { data: bList } = await bQuery;
+      const list = bList || [];
+
+      if (qType === "refunds") {
+        if (list.length === 0) {
+          assistantReply = "ما عندكش أي مستحقات استرداد معلقة حالياً يا كابتن ✅";
+        } else {
+          assistantReply = `عندك ${list.length} حجز مرتبط بالاسترداد. تقدر تتابع حالة الاسترداد مباشرة من شاشة المستحقات 💰`;
+          appAction = { action_type: "NAVIGATE", route: "/refunds", label: "تتبع المستحقات 💰" };
+        }
+      } else if (list.length === 0) {
+        assistantReply = "ما لقيتش عندك حجوزات قادمة يا كابتن. تحب أحجزلك ملعب قريب تلعب فيه؟ ⚽";
+        appAction = { action_type: "NAVIGATE", route: "/stadiums", label: "استعراض الملاعب 🏟️" };
+      } else {
+        const nextB = list[0];
+        contextSnapshot.last_booking_id = nextB.id;
+        contextSnapshot.last_booked_stadium = nextB.stadium_name;
+        const d = new Date(nextB.start_time);
+        const dateStr = d.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+        const timeStr = d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+
+        let msg = `عندك حجز قادم في **${nextB.stadium_name}** ⚽\n📅 ${dateStr}\n⏰ الساعة ${timeStr}\nالحالة: ${nextB.status === "confirmed" ? "مؤكد ✅" : "معلق الدفع ⏳"}`;
+        if (list.length > 1) {
+          msg += `\n(وعندك ${list.length - 1} حجز تاني مسجل)`;
+        }
+        assistantReply = msg;
+        appAction = { action_type: "NAVIGATE", route: "/bookings", label: "عرض كل الحجوزات 📋" };
+      }
+      handledByGemini = true;
+    }
+
+    // ⚡ Phase 7: Pre-Gemini Owner Fast-Path (Financial & Booking Schedule)
+    if (userProfile?.role === "owner" && !handledByGemini) {
+      if (lexiconAnalysis.ownerQuery?.type === "financial") {
+        const { data: finSummary } = await supabase.rpc(
+          "get_owner_financial_summary",
+          { p_owner_id: callerUser.id }
+        );
+
+        if (finSummary && finSummary.success !== false) {
+          const avail = Number(finSummary.available_balance || 0).toFixed(2);
+          const totalOnline = Number(finSummary.total_online_revenue || 0).toFixed(2);
+          const cashRev = Number(finSummary.cash_revenue || 0).toFixed(2);
+          const debt = Number(finSummary.accumulated_cash_debt || 0).toFixed(2);
+          const completedCount = finSummary.completed_bookings_count || 0;
+
+          assistantReply = `أهلاً بك يا كابتن (مالك الملعب) ⚽\nإليك الملخص المالي لحسابك:\n💰 **الرصيد المتاح للسحب:** ${avail} ج.م\n📈 **إجمالي الدخل الإلكتروني:** ${totalOnline} ج.م\n💵 **إيرادات الكاش المحصلة:** ${cashRev} ج.م\n⚠️ **مديونية الكاش للمنصة:** ${debt} ج.م\n✅ **الحجوزات المكتملة:** ${completedCount} حجز\n\nتقدر تطلب سحب أرباحك مباشرة من شاشة السجل المالي!`;
+          appAction = {
+            action_type: "NAVIGATE",
+            route: "/ledger",
+            label: "فتح السجل المالي والمستحقات 💰",
+          };
+          handledByGemini = true;
+        }
+      } else if (lexiconAnalysis.ownerQuery?.type === "bookings") {
+        const { data: ownerStadiums } = await supabase
+          .from("stadiums")
+          .select("id, name")
+          .eq("owner_id", callerUser.id)
+          .eq("is_deleted_by_owner", false);
+
+        const stadiumIds = (ownerStadiums || []).map((s: any) => s.id);
+        if (stadiumIds.length > 0) {
+          const { data: bList } = await supabase
+            .from("bookings")
+            .select("id, stadium_name, start_time, end_time, status, host_name, total_price")
+            .in("stadium_id", stadiumIds)
+            .gte("start_time", new Date().toISOString())
+            .order("start_time", { ascending: true })
+            .limit(5);
+
+          const upBookings = bList || [];
+          if (upBookings.length === 0) {
+            assistantReply = `أهلاً يا كابتن، ملاعبك المسجلة (${ownerStadiums?.length || 0} ملعب) جاهزة، ومافيش حجوزات قادمة مسجلة حالياً 🏟️`;
+          } else {
+            const listStr = upBookings.map((b: any) => {
+              const d = new Date(b.start_time);
+              const dateS = d.toLocaleDateString("ar-EG", { weekday: "short", day: "numeric", month: "numeric" });
+              const timeS = d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+              return `• **${b.stadium_name}**: ${dateS} الساعة ${timeS} (${b.status === "confirmed" ? "مؤكد ✅" : "معلق ⏳"})`;
+            }).join("\n");
+
+            assistantReply = `يا كابتن! دي الحجوزات القادمة في ملاعبك (${upBookings.length} حجز):\n${listStr}`;
+          }
+          appAction = {
+            action_type: "NAVIGATE",
+            route: "/bookings",
+            label: "فتح جدول الحجوزات 📅",
+          };
+          handledByGemini = true;
+        }
+      }
+    }
+
     // Gemini 2.5 Flash Interaction
     if (!handledByGemini && geminiApiKey) {
+
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
         const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
 تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
 
@@ -1142,10 +2110,13 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 إذا أشار المستخدم إلى "الملعب ده" أو "احجزلي" أو "بكره" أو موعد سبق استعراضه، ارجع إلى السياق المخزن فوراً دون إعادة سؤاله!
 
 ⚡⚡ قواعد المحرك اللغوي والكروي المصري (VSP Egyptian Linguistic & Football Engine):
-1. عند طلب حجز ملعب (مثال: "اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده" أو "احجزلي الساعة 8 بالليل"):
-   - استدعِ createBookingFromChat فوراً مع تمرير اسم الملعب والتوقيت والتاريخ.
+1. عند طلب حجز ملعب أو موعد (مثال: "احجزلي الجمعة الجاية الساعة 9 في ملعب الصداقة"، "احجزلي في ملعب الصداقة 2 بليل"، "احجزلي 2 بليل"، "احجزلي الجمعة الجاية الساعة 9"، "احجزلي الساعة 8"):
+   - استدعِ createBookingFromChat فوراً وبدون تردد مع استخراج البيانات.
+   - إذا لم يذكر تاريخاً صراحة (مثل "احجزلي 2 بليل" أو "احجزلي الساعة 8")، مرر date: 'اليوم'.
+   - إذا لم يذكر اسم ملعب، اتركه فارغاً.
    - إذا ذكر "عايز كورة" أو "مع كورة": مرر rent_ball: true.
-   - إذا ذكر شرط بديل "لو مفيش 8 خليه 9": مرر fallback_slots: ['21:00'].
+   - إذا ذكر شرط بديل "لو مفيش 8 خليه 9" أو "لو مفيش خليه 10": مرر fallback_slots.
+   - ممنوع سؤال المستخدم نصياً قبل استدعاء الأداة؛ فالأداة والـ Guard هما المسؤولان عن التحقق وتوليد Action Chips في حال وجود غموض!
 2. عند قول "ناقصنا جون" أو "ناقصنا حارس":
    - استدعِ getOpenMatches فوراً مع required_position: 'goalkeeper' (للبحث عن ماتشات ناقصها حارس مرمى).
 3. فهم التوقيت بالعامية المصرية:
@@ -1163,22 +2134,45 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 
 قاعدة النزاهة والتحقق من قاعدة البيانات الحقيقية (ZERO-HALLUCINATION POLICY):
 1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية.
-2. لا تخترع ملاعب أو بطولات أو أسعاراً غير موجودة.
-3. لحجز ملعب أو تحديد موعد: استدعِ createBookingFromChat فوراً.
+2. لا تخترع ملاعب أو بطولات أو أسعاراً أو تواريخ غير موجودة.
+3. لحجز ملعب أو تحديد موعد: استدعِ createBookingFromChat فوراً وبلا استثناء، وممنوع منعاً باتاً الإجابة بنص تأكيدي أو سؤال المستخدم نصياً أو تخمين تواريخ قبل استدعاء الأداة! الأداة والـ Guard هما المسؤولان عن التحقق وسؤال المستخدم عبر Action Chips إن لزم.
 4. لفحص التوافر والمواعيد الشاغرة: استدعِ checkStadiumAvailability فوراً.
 5. للبحث عن ملاعب: استدعِ searchStadiums فوراً.`;
+
+        // 🔒 Phase 2: Build role-filtered tool list — Gemini sees ONLY allowed tools
+        const userRole = userProfile?.role || "player";
+        const roleFilteredTools = buildToolRegistryForRole(userRole);
 
         const firstPayload = {
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: contents,
-          tools: [{ functionDeclarations: allCopilotTools }],
+          tools: [{ functionDeclarations: roleFilteredTools }],
+          toolConfig: {
+            functionCallingConfig: {
+              mode: "AUTO",
+            },
+          },
         };
 
-        const geminiRes1 = await fetch(geminiUrl, {
+        let geminiModel = "gemini-2.5-flash";
+        let geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+
+        let geminiRes1 = await fetch(geminiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(firstPayload),
         });
+
+        // 🛡️ High-Availability Model Fallback on 429 Quota
+        if (geminiRes1.status === 429) {
+          geminiModel = "gemini-flash-latest";
+          geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
+          geminiRes1 = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(firstPayload),
+          });
+        }
 
         if (geminiRes1.ok) {
           const geminiData1 = await geminiRes1.json();
@@ -1189,6 +2183,27 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             const funcName = functionCallPart.functionCall.name;
             const args = functionCallPart.functionCall.args || {};
             let toolResponseData: any = {};
+
+            // 🔒 Phase 2: Server-side tool authorization guard
+            // Reject any tool call that is not permitted for this user's role,
+            // even if Gemini somehow emitted it.
+            const userRoleForGuard = userProfile?.role || "player";
+            if (!isToolAllowedForRole(funcName, userRoleForGuard)) {
+              console.warn(`[VSP Security] Role '${userRoleForGuard}' attempted unauthorized tool: ${funcName}`);
+              return new Response(
+                JSON.stringify({
+                  conversation_id: conversationId,
+                  message: "عذراً يا كابتن! هذه العملية غير متاحة لدورك الحالي في التطبيق.",
+                  error: { code: "UNAUTHORIZED_TOOL", tool: funcName, role: userRoleForGuard },
+                  verification: { verified: false, source: "security_guard" },
+                  data: { stadiums: [], tournaments: [], open_matches: [], leaderboard: [] },
+                  context_snapshot: contextSnapshot,
+                  clarification: null,
+                  action: null,
+                }),
+                { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
+            }
 
             if (funcName === "searchStadiums") {
               const querySearch = (args.query || "").toString().trim();
@@ -1347,34 +2362,92 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 };
               }
             } else if (funcName === "getUserBookingsAndRefunds") {
-              const { data: userBookings } = await supabase
+              // ⚡ Phase 6: Enhanced — active/past/refunds/all filtering
+              const queryType = (args.query_type || "all").toLowerCase();
+              const nowIso = new Date().toISOString();
+
+              let bQuery = supabase
                 .from("bookings")
-                .select("id, stadium_name, start_time, status, payment_status, total_price, refund_amount, refunded_at, cancellation_reason")
+                .select("id, stadium_name, start_time, end_time, status, payment_status, payment_method, total_price, deposit_amount, refund_amount, refunded_at, cancellation_reason, needs_deposit, is_paid, locked_until")
                 .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
-                .order("created_at", { ascending: false })
-                .limit(5);
+                .order("start_time", { ascending: false })
+                .limit(10);
 
+              if (queryType === "active") bQuery = bQuery.in("status", ["pending", "confirmed"]).gte("start_time", nowIso);
+              else if (queryType === "past") bQuery = bQuery.lt("start_time", nowIso);
+              else if (queryType === "refunds") bQuery = bQuery.or("status.eq.cancelled,refund_amount.gt.0");
+
+              const { data: userBookings } = await bQuery;
               const bookingsList = userBookings || [];
-              const refunds = bookingsList.filter(
-                (b: any) =>
-                  (b.refund_amount && Number(b.refund_amount) > 0) ||
-                  b.refunded_at ||
-                  b.status === "cancelled"
-              );
 
-              appAction = {
-                action_type: "NAVIGATE",
-                route: "/bookings",
-                label: "عرض سجل الحجوزات والمستحقات 📋",
-              };
+              const activeBookings = bookingsList.filter((b: any) => ["pending", "confirmed"].includes(b.status) && new Date(b.start_time) > new Date());
+              const refunds = bookingsList.filter((b: any) => (b.refund_amount && Number(b.refund_amount) > 0) || b.refunded_at || b.status === "cancelled");
 
+              if (activeBookings.length > 0) {
+                contextSnapshot.last_booking_id = activeBookings[0].id;
+                contextSnapshot.last_booked_stadium = activeBookings[0].stadium_name;
+              }
+
+              appAction = { action_type: "NAVIGATE", route: "/bookings", label: "عرض سجل الحجوزات والمستحقات 📋" };
               toolResponseData = {
                 total_bookings: bookingsList.length,
-                recent_bookings: bookingsList,
+                active_bookings_count: activeBookings.length,
+                active_bookings: activeBookings.slice(0, 3),
+                recent_bookings: bookingsList.slice(0, 5),
                 refund_related_bookings: refunds,
                 has_refunds: refunds.length > 0,
+                has_active: activeBookings.length > 0,
               };
+
+            } else if (funcName === "cancelBookingFromChat") {
+              // ⚡ Phase 6: Cancel Booking from Chat
+              const bookingId = (args.booking_id || contextSnapshot.last_booking_id || "").toString().trim();
+              const cancelReason = (args.reason || "user_request_via_chat").toString().trim();
+
+              if (!bookingId || !/^[0-9a-fA-F-]{36}$/.test(bookingId)) {
+                // No ID → fetch active bookings and offer chips
+                const { data: activeB } = await supabase
+                  .from("bookings").select("id, stadium_name, start_time, status")
+                  .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+                  .in("status", ["pending", "confirmed"]).gte("start_time", new Date().toISOString())
+                  .order("start_time", { ascending: true }).limit(3);
+                const actList = activeB || [];
+                if (actList.length === 0) {
+                  toolResponseData = { success: false, message: "ما عندكش حجوزات نشطة قادمة يا كابتن." };
+                } else if (actList.length === 1) {
+                  const b = actList[0];
+                  await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", b.id).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
+                  contextSnapshot.last_booking_id = null;
+                  appAction = { action_type: "NAVIGATE", route: "/bookings", label: "عرض سجل الحجوزات 📋" };
+                  toolResponseData = { success: true, cancelled_booking_id: b.id, stadium_name: b.stadium_name, start_time: b.start_time };
+                } else {
+                  const clar = { type: "cancel_selection", question: "أي حجز تريد إلغاؤه يا كابتن؟", options: actList.map((b: any) => ({ id: b.id, label: `${b.stadium_name} — ${new Date(b.start_time).toLocaleDateString("ar-EG")}` })) };
+                  appClarification = clar;
+                  contextSnapshot.pending_intent = { intent: "cancel_booking", clarification_type: "cancel_selection" };
+                  contextSnapshot.clarification = clar;
+                  toolResponseData = { success: false, needs_clarification: true };
+                }
+              } else {
+                const { data: bRow } = await supabase.from("bookings").select("id, stadium_name, start_time, status, is_paid, deposit_amount, needs_deposit").eq("id", bookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).maybeSingle();
+                if (!bRow) {
+                  toolResponseData = { success: false, message: "الحجز غير موجود أو لا تملك صلاحية إلغائه." };
+                } else if (!["pending", "confirmed"].includes(bRow.status)) {
+                  toolResponseData = { success: false, message: `الحجز ده ${bRow.status === "cancelled" ? "ملغي بالفعل" : "مكتمل"} يا كابتن.` };
+                } else {
+                  const { error: cErr } = await supabase.from("bookings").update({ status: "cancelled", cancellation_reason: cancelReason, cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", bookingId).or(`user_id.eq.${callerUser.id},created_by_user_id.eq.${callerUser.id}`).in("status", ["pending", "confirmed"]);
+                  if (cErr) {
+                    toolResponseData = { success: false, message: "تعذّر إلغاء الحجز. حاول مرة أخرى." };
+                  } else {
+                    contextSnapshot.last_booking_id = null;
+                    const needsRefund = bRow.is_paid && Number(bRow.deposit_amount) > 0;
+                    appAction = { action_type: "NAVIGATE", route: needsRefund ? "/refunds" : "/bookings", label: needsRefund ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+                    toolResponseData = { success: true, cancelled_booking_id: bookingId, stadium_name: bRow.stadium_name, needs_refund: needsRefund };
+                  }
+                }
+              }
+
             } else if (funcName === "getOwnerStadiumsAndBookings") {
+
               const { data: ownerStadiums } = await supabase
                 .from("stadiums")
                 .select("id, name, governorate, price_per_hour, is_verified, is_blocked")
@@ -1491,300 +2564,115 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             } else if (funcName === "createBookingFromChat") {
               const stadiumId = (args.stadium_id || contextSnapshot.last_stadium_id || "").toString().trim();
               const stadiumName = (args.stadium_name || contextSnapshot.last_stadium_name || "").toString().trim();
-              let startTime = (args.start_time || "").toString().trim();
-              let endTime = (args.end_time || "").toString().trim();
+              const rentBallParam = args.rent_ball === true || lexiconAnalysis.rentBall;
+              const preferred = args.fallback_slots || [];
 
-              const targetStadium = await findMatchingStadium(supabase, stadiumName || userMessage, stadiumId, userGov);
+              const res = await executeBookingFlow({
+                supabase,
+                callerUser,
+                userGov,
+                stadiumId,
+                stadiumName,
+                date: args.date,
+                time: args.time,
+                rentBall: rentBallParam,
+                fallbackSlots: preferred,
+                contextSnapshot,
+                userMessage,
+              });
 
-              // 🏟️ Stadium Disambiguation Check (Section 15: No auto-booking from ambiguous stadium match!)
-              if (targetStadium && targetStadium.is_ambiguous) {
-                appClarification = {
-                  type: "stadium",
-                  question: "أي ملعب تقصد يا كابتن؟",
-                  options: targetStadium.candidates,
-                };
-                assistantReply = "وجدت أكثر من ملعب مطابق يا كابتن، أي ملعب تقصد؟";
-                contextSnapshot.pending_intent = {
-                  intent: "create_booking",
-                  stadium_id: null,
-                  time: args.time,
-                  date: args.date,
-                  rent_ball: args.rent_ball === true || lexiconAnalysis.rentBall,
-                  fallback_slots: args.fallback_slots,
-                  candidate_options: targetStadium.candidates,
-                  clarification_type: "stadium",
-                };
-                toolResponseData = {
-                  clarification_needed: true,
-                  clarification: appClarification,
-                };
+              if (res.clarification) {
+                appClarification = res.clarification;
+                assistantReply = res.reply;
               } else {
-                // Parse Arabic time & temporal expression
-                let displaySlot = "";
-                let parsedTime: any = null;
-                if (!startTime || !startTime.includes("T")) {
-                  parsedTime = parseArabicTimeAndDate(args.time, args.date, userMessage);
-                  startTime = parsedTime.startTimeIso;
-                  endTime = parsedTime.endTimeIso;
-                  displaySlot = parsedTime.displayTime;
-                } else if (!endTime) {
-                  const sDate = new Date(startTime);
-                  endTime = new Date(sDate.getTime() + 60 * 60 * 1000).toISOString();
-                  displaySlot = "موعد محدد";
-                }
-
-                // 📅 Date Disambiguation Check (Section 6: E.g., "الجمعة الجاية" with multiple dates)
-                if (parsedTime?.clarification) {
-                  appClarification = parsedTime.clarification;
-                  assistantReply = parsedTime.clarification.question;
-                  contextSnapshot.pending_intent = {
-                    intent: "create_booking",
-                    stadium_id: targetStadium ? targetStadium.id : null,
-                    stadium_name: targetStadium ? targetStadium.name : null,
-                    time: args.time,
-                    date: null,
-                    rent_ball: args.rent_ball === true || lexiconAnalysis.rentBall,
-                    fallback_slots: args.fallback_slots || parsedTime.preferredSlots,
-                    candidate_options: parsedTime.clarification.options,
-                    clarification_type: "date",
-                  };
-                  toolResponseData = {
-                    clarification_needed: true,
-                    clarification: parsedTime.clarification,
-                  };
-                } else if (!targetStadium || !startTime || !endTime) {
-                  toolResponseData = {
-                    success: false,
-                    message: "عذراً يا كابتن، بيانات الحجز غير مكتملة. يرجى توضيح الملعب والموعد المطلوب.",
-                  };
-                } else {
-                  const needsDeposit = targetStadium.needs_deposit === true;
-                  const paymentMethod = needsDeposit ? "paymob" : args.payment_method || "cash";
-                  const rentBallParam = args.rent_ball === true || lexiconAnalysis.rentBall;
-
-                  // 🔄 Conditional Fallback Engine (Section 12: Try preferred slots atomically)
-                  const preferred = args.fallback_slots || parsedTime?.preferredSlots || [];
-                  const trySlots: { start: string; end: string; display: string }[] = [
-                    { start: startTime, end: endTime, display: displaySlot },
-                  ];
-
-                  if (preferred.length > 1) {
-                    const h2 = parseInt(preferred[1].split(":")[0], 10);
-                    const targetDatePart = parsedTime?.targetDateStr || startTime.split("T")[0];
-                    const testDate = new Date();
-                    const cairoLocal = new Date(testDate.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
-                    const utcLocal = new Date(testDate.toLocaleString("en-US", { timeZone: "UTC" }));
-                    const offsetHours = Math.round((cairoLocal.getTime() - utcLocal.getTime()) / (3600 * 1000));
-                    const offsetSign = offsetHours >= 0 ? "+" : "-";
-                    const offsetStr = `${offsetSign}${String(Math.abs(offsetHours)).padStart(2, "0")}:00`;
-                    const s2Start = new Date(`${targetDatePart}T${String(h2).padStart(2, "0")}:00:00${offsetStr}`).toISOString();
-                    const s2End = new Date(new Date(s2Start).getTime() + 60 * 60 * 1000).toISOString();
-                    const displayH2 = h2 > 12 ? h2 - 12 : h2;
-                    const nextH2 = (h2 + 1) % 24;
-                    const nextDH2 = nextH2 > 12 ? nextH2 - 12 : nextH2;
-                    const disp2 = `${displayH2}:00 م - ${nextDH2}:00 م`;
-                    trySlots.push({ start: s2Start, end: s2End, display: disp2 });
-                  }
-
-                  let bookedSlot: any = null;
-                  let lastErrorMsg = "";
-
-                  for (let idx = 0; idx < trySlots.length; idx++) {
-                    const slotToTry = trySlots[idx];
-
-                    // Check conflict
-                    const { data: conflictBookings } = await supabase
-                      .from("bookings")
-                      .select("id, status, locked_until, created_at")
-                      .eq("stadium_id", targetStadium.id)
-                      .neq("status", "cancelled")
-                      .filter("start_time", "lt", slotToTry.end)
-                      .filter("end_time", "gt", slotToTry.start);
-
-                    const hasConflict = (conflictBookings || []).some((b: any) => {
-                      if (b.status === "pending") {
-                        const lockExpire = b.locked_until
-                          ? new Date(b.locked_until).getTime()
-                          : new Date(b.created_at).getTime() + 5 * 60 * 1000;
-                        return lockExpire > Date.now();
-                      }
-                      return true;
-                    });
-
-                    if (hasConflict) {
-                      lastErrorMsg = "عذراً يا كابتن، هذا الموعد محجوز أو قيد الدفع حالياً من قِبل لاعب آخر.";
-                      continue; // Try next fallback slot
-                    }
-
-                    // Atomic booking RPC with p_rent_ball
-                    const { data: bookingResult, error: bookingErr } = await supabase.rpc(
-                      "create_booking_atomic",
-                      {
-                        p_stadium_id: targetStadium.id,
-                        p_user_id: callerUser.id,
-                        p_owner_id: targetStadium.owner_id,
-                        p_start_time: slotToTry.start,
-                        p_end_time: slotToTry.end,
-                        p_booking_type: "individual",
-                        p_total_price: targetStadium.price_per_hour,
-                        p_stadium_name: targetStadium.name,
-                        p_payment_method: paymentMethod,
-                        p_rent_ball: rentBallParam,
-                      }
-                    );
-
-                    if (bookingErr || (bookingResult && bookingResult.success === false)) {
-                      lastErrorMsg = bookingErr?.message || bookingResult?.message || "تعذر إتمام الحجز، قد يكون الموعد محجوزاً بالفعل.";
-                      continue;
-                    }
-
-                    bookedSlot = {
-                      bookingResult,
-                      slot: slotToTry,
-                      isFallback: idx > 0,
-                      originalSlot: trySlots[0].display,
-                    };
-                    break;
-                  }
-
-                  if (!bookedSlot) {
-                    toolResponseData = {
-                      success: false,
-                      error: lastErrorMsg || "عذراً يا كابتن، لم نتمكن من إتمام الحجز في المواعيد المطلوبة.",
-                    };
-                  } else {
-                    const bookingId = bookedSlot.bookingResult?.booking_id || bookedSlot.bookingResult?.id;
-                    contextSnapshot.last_booking_id = bookingId;
-                    contextSnapshot.last_booked_stadium = targetStadium.name;
-                    contextSnapshot.last_slot = bookedSlot.slot.display;
-                    stadiumResults = [targetStadium];
-
-                    const ballNote = rentBallParam ? " + تأجير كرة ⚽" : "";
-                    const fallbackNote = bookedSlot.isFallback
-                      ? ` (الموعد الأول ${bookedSlot.originalSlot} كان غير متاح، فتم حجز موعدك البديل ${bookedSlot.slot.display})`
-                      : "";
-
-                    if (needsDeposit || paymentMethod === "paymob") {
-                      appAction = {
-                        action_type: "OPEN_PAYMENT",
-                        route: "/checkout",
-                        label: `إتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز 💳`,
-                        params: {
-                          booking_id: bookingId,
-                          stadium_id: targetStadium.id,
-                          stadium_name: targetStadium.name,
-                          owner_id: targetStadium.owner_id,
-                          total_price: targetStadium.price_per_hour,
-                          deposit_amount: targetStadium.deposit_amount || 50,
-                          start_time: bookedSlot.slot.start,
-                          end_time: bookedSlot.slot.end,
-                          slot: bookedSlot.slot.display,
-                          rent_ball: rentBallParam,
-                        },
-                      };
-                    } else {
-                      appAction = {
-                        action_type: "NAVIGATE",
-                        route: "/bookings",
-                        label: "عرض تفاصيل الحجز المؤكد 📋",
-                        params: { booking_id: bookingId },
-                      };
-                    }
-
-                    toolResponseData = {
-                      success: true,
-                      booking_id: bookingId,
-                      stadium_name: targetStadium.name,
-                      start_time: bookedSlot.slot.start,
-                      end_time: bookedSlot.slot.end,
-                      slot: bookedSlot.slot.display,
-                      total_price: targetStadium.price_per_hour,
-                      deposit_required: needsDeposit,
-                      deposit_amount: targetStadium.deposit_amount || 50,
-                      rent_ball: rentBallParam,
-                      is_fallback: bookedSlot.isFallback,
-                      message: needsDeposit
-                        ? `تم قفل الموعد (${bookedSlot.slot.display}${ballNote})${fallbackNote} بنجاح في ${targetStadium.name} لمدة 5 دقائق! اضغط على زر الدفع لإتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز فوراً.`
-                        : `تم تأكيد حجزك في ${targetStadium.name} (${bookedSlot.slot.display}${ballNote})${fallbackNote} بنجاح والدفع كاش في الملعب ⚽!`,
-                    };
-                  }
-                }
+                assistantReply = res.reply;
+                appAction = res.action;
+                stadiumResults = res.stadiumResults;
               }
+
+              toolResponseData = {
+                success: !res.clarification && !!res.action,
+                clarification: res.clarification,
+                action: res.action,
+                message: res.reply,
+              };
             }
 
-            // Second turn for Gemini natural response
-            const secondContents = [
-              ...contents,
-              candidate1,
-              {
-                role: "function",
-                parts: [
+            if (funcName === "createBookingFromChat") {
+              handledByGemini = true;
+            } else {
+              // Second turn for Gemini natural response (for read-only tools)
+              try {
+                const secondContents = [
+                  ...contents,
+                  candidate1,
                   {
-                    functionResponse: {
-                      name: funcName,
-                      response: toolResponseData,
-                    },
+                    role: "function",
+                    parts: [
+                      {
+                        functionResponse: {
+                          name: funcName,
+                          response: toolResponseData,
+                        },
+                      },
+                    ],
                   },
-                ],
-              },
-            ];
+                ];
 
-            const secondPayload = {
-              systemInstruction: { parts: [{ text: systemPrompt }] },
-              contents: secondContents,
-            };
+                const secondPayload = {
+                  systemInstruction: { parts: [{ text: systemPrompt }] },
+                  contents: secondContents,
+                };
 
-            const geminiRes2 = await fetch(geminiUrl, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(secondPayload),
-            });
+                const geminiRes2 = await fetch(geminiUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(secondPayload),
+                });
 
-            if (geminiRes2.ok) {
-              const geminiData2 = await geminiRes2.json();
-              assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            }
-
-            // 🛡️ Zero-Hallucination & Fallback Guard
-            if (funcName === "searchTournaments" && tournamentResults.length === 0) {
-              const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
-            } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
-              const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
-            } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
-              assistantReply =
-                "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
-            } else if (funcName === "createBookingFromChat") {
-              if (toolResponseData.clarification_needed) {
-                assistantReply = appClarification?.question || "يرجى توضيح المطلوب يا كابتن.";
-              } else if (toolResponseData.success) {
-                if (toolResponseData.deposit_required) {
-                  assistantReply = `تم قفل موعدك بنجاح (${toolResponseData.slot || 'الساعة 12:00 ص'}${toolResponseData.rent_ball ? ' + تأجير كرة' : ''}) في ملعب ${toolResponseData.stadium_name} يا كابتن ⚽!${toolResponseData.is_fallback ? '\n(الموعد البديل المفضل بعد تعذر الموعد الأول)' : ''}\nتم حفظ وحجز الموعد لمدة 5 دقائق، اضغط على زر الدفع بالأسفل لإتمام دفع العربون (${toolResponseData.deposit_amount} ج.م) وتأكيد الحجز فوراً 💳.`;
-                } else {
-                  assistantReply = `ألف مبروك يا كابتن! تم تأكيد حجزك في ملعب ${toolResponseData.stadium_name} (${toolResponseData.slot || 'الساعة 12:00 ص'}${toolResponseData.rent_ball ? ' + تأجير كرة' : ''}) بنجاح والدفع كاش في الملعب (${toolResponseData.total_price} ج.م).${toolResponseData.is_fallback ? ' (الموعد البديل المفضل)' : ''} حجزك مسجل في قائمة حجوزاتك 📋`;
+                if (geminiRes2.ok) {
+                  const geminiData2 = await geminiRes2.json();
+                  assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
                 }
-              } else {
-                assistantReply = `عذراً يا كابتن، لم نتمكن من إتمام الحجز: ${toolResponseData.error || toolResponseData.message}`;
-              }
-            } else if (!assistantReply) {
-              if (funcName === "checkStadiumAvailability") {
-                if (toolResponseData.available_slots_count === 0) {
-                  assistantReply = `عذراً يا كابتن، راجعت جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date} وجميع الفترات محجوزة بالكامل في هذا اليوم. تحب نفحص يوم تاني؟`;
+              } catch (_) {}
+
+              // 🛡️ Zero-Hallucination & Fallback Guard
+              if (funcName === "searchTournaments" && tournamentResults.length === 0) {
+                const targetGov = (args.governorate || userGov).toString().trim();
+                assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
+              } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
+                const targetGov = (args.governorate || userGov).toString().trim();
+                assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
+              } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
+                assistantReply =
+                  "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
+              } else if (!assistantReply) {
+                if (funcName === "checkStadiumAvailability") {
+                  if (toolResponseData.available_slots_count === 0) {
+                    assistantReply = `عذراً يا كابتن، راجعت جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date} وجميع الفترات محجوزة بالكامل في هذا اليوم. تحب نفحص يوم تاني؟`;
+                  } else {
+                    const slotsText = (toolResponseData.available_slots || [])
+                      .slice(0, 5)
+                      .map((s: any) => `• ${s.display_time}`)
+                      .join("\n");
+                    assistantReply = `يا كابتن! بحثتلك في جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date}، ودي الفترات المتاحة للحجز:\n${slotsText}\nسعر الساعة: ${toolResponseData.price_per_hour} ج.م. تحب أحجزلك أي ميعاد منهم؟`;
+                  }
+                } else if (funcName === "searchStadiums") {
+                  assistantReply = `يا كابتن! دي الملاعب المتاحة على VSP للحجز الفوري:`;
+                } else if (funcName === "cancelBookingFromChat") {
+                  assistantReply = toolResponseData.message || (toolResponseData.success ? `تمام يا كابتن، تم إلغاء حجزك في ${toolResponseData.stadium_name || 'الملعب'} بنجاح ✅` : "تعذر إلغاء الحجز حالياً يا كابتن.");
+                } else if (funcName === "getUserBookingsAndRefunds") {
+                  assistantReply = `يا كابتن! عندك ${toolResponseData.active_bookings_count || 0} حجز نشط، وإجمالي ${toolResponseData.total_bookings || 0} حجز مسجل في حسابك.`;
+                } else if (funcName === "getOwnerFinancialInsights") {
+                  assistantReply = `يا كابتن (المالك)! الرصيد المتاح للسحب في حسابك هو ${toolResponseData.available_balance ?? 0} ج.م، وإجمالي الأرباح الإلكترونية ${toolResponseData.net_online_earnings ?? 0} ج.م.`;
+                } else if (funcName === "getOwnerStadiumsAndBookings") {
+                  assistantReply = `يا كابتن! لديك ${toolResponseData.owner_stadiums_count || 0} ملعب مسجل، و${toolResponseData.bookings_count || 0} حجز حالي في ملاعبك.`;
                 } else {
-                  const slotsText = (toolResponseData.available_slots || [])
-                    .slice(0, 5)
-                    .map((s: any) => `• ${s.display_time}`)
-                    .join("\n");
-                  assistantReply = `يا كابتن! بحثتلك في جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date}، ودي الفترات المتاحة للحجز:\n${slotsText}\nسعر الساعة: ${toolResponseData.price_per_hour} ج.م. تحب أحجزلك أي ميعاد منهم؟`;
+                  assistantReply = "تمام يا كابتن، طلبك جاهز!";
                 }
-              } else if (funcName === "searchStadiums") {
-                assistantReply = `يا كابتن! دي الملاعب المتاحة على VSP للحجز الفوري:`;
-              } else {
-                assistantReply = "تمام يا كابتن، طلبك جاهز!";
               }
+              handledByGemini = true;
             }
-            handledByGemini = true;
           } else {
             // Out-of-scope check
             const lowerMsg = userMessage.toLowerCase();
@@ -1856,8 +2744,13 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               }
             }
           }
+        } else {
+          const errText = await geminiRes1.text();
+          debugInfo = { source: "gemini_res1", status: geminiRes1.status, body: errText };
+          console.warn("Gemini call failed:", geminiRes1.status, errText);
         }
-      } catch (geminiErr) {
+      } catch (geminiErr: any) {
+        debugInfo = { source: "catch_gemini", message: geminiErr?.message || String(geminiErr) };
         console.warn("Gemini API error:", geminiErr);
       }
     }
@@ -1893,17 +2786,44 @@ ${JSON.stringify(contextSnapshot, null, 2)}
       })
       .eq("id", conversationId);
 
-    // Return enriched payload
+    // Phase 1: Return structured contract — full Response Contract
     return new Response(
       JSON.stringify({
+        // Core identity
         conversation_id: conversationId,
+        // Natural language response
         message: assistantReply,
+        // Interactive clarification (Action Chips)
+        clarification: appClarification ?? null,
+        // In-app action (navigate, open payment, etc.)
+        action: appAction ?? null,
+        // Structured data payloads
+        data: {
+          stadiums: stadiumResults,
+          tournaments: tournamentResults,
+          open_matches: openMatchResults,
+          leaderboard: leaderboardResults,
+        },
+        // Conversation memory snapshot (for Flutter to re-attach on next turn)
+        context_snapshot: {
+          pending_intent: contextSnapshot.pending_intent ?? null,
+          last_stadium_id: contextSnapshot.last_stadium_id ?? null,
+          last_stadium_name: contextSnapshot.last_stadium_name ?? null,
+          last_date: contextSnapshot.last_date ?? null,
+        },
+        // Verification status — tells Flutter if data came from DB or was AI-generated
+        verification: {
+          verified: stadiumResults.length > 0 || tournamentResults.length > 0 || openMatchResults.length > 0 || !!appAction,
+          source: stadiumResults.length > 0 ? "database_rpc" : (appAction ? "atomic_booking" : "gemini_text"),
+        },
+        // Error field — null on success
+        error: null,
+        // Legacy flat fields for backward compatibility with older Flutter clients
         stadiums: stadiumResults,
         tournaments: tournamentResults,
         leaderboard: leaderboardResults,
         open_matches: openMatchResults,
-        action: appAction,
-        clarification: appClarification,
+        debug: debugInfo,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -275,10 +275,18 @@ class VspCopilotService {
       _parseCloudResponse(data, originalConvId);
 
   /// Parse response from Supabase Edge Function
+  /// Supports both Phase 1 structured contract (data.stadiums, verification, context_snapshot)
+  /// and legacy flat fields (stadiums, tournaments, open_matches) for backward compatibility.
   CopilotMessage _parseCloudResponse(Map<String, dynamic> data, String? originalConvId) {
     final replyText = data['message']?.toString() ?? 'تم استلام طلبك بنجاح.';
     final returnedConvId = data['conversation_id']?.toString() ?? originalConvId;
-    final rawStadiums = data['stadiums'];
+
+    // Phase 1: Prefer nested `data.*` fields; fall back to legacy flat fields
+    final nestedData = data['data'] is Map<String, dynamic> ? data['data'] as Map<String, dynamic> : null;
+    final rawStadiums = nestedData?['stadiums'] ?? data['stadiums'];
+    final rawTournaments = nestedData?['tournaments'] ?? data['tournaments'];
+    final rawMatches = nestedData?['open_matches'] ?? data['open_matches'];
+
     final List<CopilotStadiumSummary> stadiums = [];
     if (rawStadiums is List) {
       for (final item in rawStadiums) {
@@ -290,7 +298,6 @@ class VspCopilotService {
       }
     }
 
-    final rawTournaments = data['tournaments'];
     final List<CopilotTournamentSummary> tournaments = [];
     if (rawTournaments is List) {
       for (final item in rawTournaments) {
@@ -302,7 +309,6 @@ class VspCopilotService {
       }
     }
 
-    final rawMatches = data['open_matches'];
     final List<CopilotOpenMatchSummary> openMatches = [];
     if (rawMatches is List) {
       for (final item in rawMatches) {
@@ -330,6 +336,36 @@ class VspCopilotService {
       clarification = CopilotClarification.fromMap(Map<String, dynamic>.from(rawClarification));
     }
 
+    // Phase 1: Parse verification
+    final rawVerification = data['verification'];
+    CopilotVerification verification = CopilotVerification.unverified;
+    if (rawVerification is Map<String, dynamic>) {
+      verification = CopilotVerification.fromMap(rawVerification);
+    } else if (rawVerification is Map) {
+      verification = CopilotVerification.fromMap(Map<String, dynamic>.from(rawVerification));
+    }
+
+    // Phase 1: Parse context_snapshot
+    final rawContextSnapshot = data['context_snapshot'];
+    CopilotContextSnapshot? contextSnapshot;
+    if (rawContextSnapshot is Map<String, dynamic>) {
+      contextSnapshot = CopilotContextSnapshot.fromMap(rawContextSnapshot);
+    } else if (rawContextSnapshot is Map) {
+      contextSnapshot = CopilotContextSnapshot.fromMap(Map<String, dynamic>.from(rawContextSnapshot));
+    }
+
+    // Phase 1: Parse error
+    String? errorMessage;
+    final rawError = data['error'];
+    if (rawError is String) {
+      errorMessage = rawError;
+    } else if (rawError is Map<String, dynamic>) {
+      errorMessage = rawError['message']?.toString() ?? rawError['code']?.toString();
+    } else if (rawError is Map) {
+      final errMap = Map<String, dynamic>.from(rawError);
+      errorMessage = errMap['message']?.toString() ?? errMap['code']?.toString();
+    }
+
     return CopilotMessage.assistant(
       replyText,
       conversationId: returnedConvId,
@@ -338,6 +374,9 @@ class VspCopilotService {
       openMatches: openMatches,
       action: action,
       clarification: clarification,
+      verification: verification,
+      contextSnapshot: contextSnapshot,
+      errorMessage: errorMessage,
     );
   }
 

@@ -230,6 +230,57 @@ class CopilotClarification {
   };
 }
 
+/// Verification status from the edge function — tells the UI if data
+/// came from the real database or was AI-generated text.
+@immutable
+class CopilotVerification {
+  final bool verified;
+  final String source; // 'database_rpc' | 'atomic_booking' | 'gemini_text' | 'security_guard'
+
+  const CopilotVerification({required this.verified, required this.source});
+
+  bool get isFromDatabase => source == 'database_rpc' || source == 'atomic_booking';
+
+  factory CopilotVerification.fromMap(Map<String, dynamic> map) {
+    return CopilotVerification(
+      verified: map['verified'] == true,
+      source: map['source']?.toString() ?? 'gemini_text',
+    );
+  }
+
+  /// Default instance when the field is absent (older contract or local fallback)
+  static const unverified = CopilotVerification(verified: false, source: 'gemini_text');
+}
+
+/// Partial context snapshot returned by the edge function for multi-turn continuity.
+@immutable
+class CopilotContextSnapshot {
+  final Map<String, dynamic>? pendingIntent;
+  final String? lastStadiumId;
+  final String? lastStadiumName;
+  final String? lastDate;
+
+  const CopilotContextSnapshot({
+    this.pendingIntent,
+    this.lastStadiumId,
+    this.lastStadiumName,
+    this.lastDate,
+  });
+
+  bool get hasPendingIntent => pendingIntent != null;
+
+  factory CopilotContextSnapshot.fromMap(Map<String, dynamic> map) {
+    return CopilotContextSnapshot(
+      pendingIntent: map['pending_intent'] is Map<String, dynamic>
+          ? map['pending_intent'] as Map<String, dynamic>
+          : null,
+      lastStadiumId: map['last_stadium_id']?.toString(),
+      lastStadiumName: map['last_stadium_name']?.toString(),
+      lastDate: map['last_date']?.toString(),
+    );
+  }
+}
+
 /// Represents a chat message between the user and VSP Copilot
 @immutable
 class CopilotMessage {
@@ -244,6 +295,14 @@ class CopilotMessage {
   final CopilotAction? action;
   final CopilotClarification? clarification;
 
+  // Phase 1 Contract fields
+  /// Verification status — whether this response came from a real DB query
+  final CopilotVerification verification;
+  /// Partial context snapshot for multi-turn memory continuity
+  final CopilotContextSnapshot? contextSnapshot;
+  /// Error message from the edge function (null on success)
+  final String? errorMessage;
+
   const CopilotMessage({
     required this.id,
     this.conversationId,
@@ -255,6 +314,9 @@ class CopilotMessage {
     this.openMatchResults = const [],
     this.action,
     this.clarification,
+    this.verification = CopilotVerification.unverified,
+    this.contextSnapshot,
+    this.errorMessage,
   });
 
   bool get isUser => sender == 'user';
@@ -286,6 +348,9 @@ class CopilotMessage {
     List<CopilotOpenMatchSummary> openMatches = const [],
     CopilotAction? action,
     CopilotClarification? clarification,
+    CopilotVerification verification = CopilotVerification.unverified,
+    CopilotContextSnapshot? contextSnapshot,
+    String? errorMessage,
   }) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -298,6 +363,9 @@ class CopilotMessage {
       openMatchResults: openMatches,
       action: action,
       clarification: clarification,
+      verification: verification,
+      contextSnapshot: contextSnapshot,
+      errorMessage: errorMessage,
     );
   }
 
@@ -307,6 +375,17 @@ class CopilotMessage {
     final rawMatches = map['open_matches'] as List<dynamic>? ?? [];
     final rawAction = map['action'] is Map<String, dynamic> ? map['action'] as Map<String, dynamic> : null;
     final rawClarification = map['clarification'] is Map<String, dynamic> ? map['clarification'] as Map<String, dynamic> : null;
+    final rawVerification = map['verification'] is Map<String, dynamic> ? map['verification'] as Map<String, dynamic> : null;
+    final rawContextSnapshot = map['context_snapshot'] is Map<String, dynamic> ? map['context_snapshot'] as Map<String, dynamic> : null;
+
+    // Parse error from either a string or an error object
+    String? errorMsg;
+    final rawError = map['error'];
+    if (rawError is String) {
+      errorMsg = rawError;
+    } else if (rawError is Map<String, dynamic>) {
+      errorMsg = rawError['message']?.toString() ?? rawError['code']?.toString();
+    }
 
     return CopilotMessage(
       id: map['id']?.toString() ?? '',
@@ -328,6 +407,13 @@ class CopilotMessage {
           .toList(),
       action: rawAction != null ? CopilotAction.fromMap(rawAction) : null,
       clarification: rawClarification != null ? CopilotClarification.fromMap(rawClarification) : null,
+      verification: rawVerification != null
+          ? CopilotVerification.fromMap(rawVerification)
+          : CopilotVerification.unverified,
+      contextSnapshot: rawContextSnapshot != null
+          ? CopilotContextSnapshot.fromMap(rawContextSnapshot)
+          : null,
+      errorMessage: errorMsg,
     );
   }
 }
