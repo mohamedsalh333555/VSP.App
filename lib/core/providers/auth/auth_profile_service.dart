@@ -220,91 +220,31 @@ class AuthProfileService {
     }
   }
 
-  /// Deletes user account permanently, checking for active/upcoming bookings first.
+  /// Deletes the authenticated account through the server-side atomic deletion RPC.
+  /// No client-side Auth fallback is allowed because it can leave partial data behind.
   Future<({bool success, String? error})> deleteAccount(UserModel userModel) async {
-    final uid = userModel.uid;
-    final isOwner = userModel.role == 'owner';
-    final now = DateTime.now();
-
     try {
-      if (isOwner) {
-        final stadiumRes = await _supabase
-            .from('stadiums')
-            .select('id')
-            .eq('owner_id', uid);
+      final response = await _supabase.rpc(
+        'delete_user_permanently',
+        params: {'p_user_id': userModel.uid},
+      );
 
-        final stadiumIds = (stadiumRes as List).map((s) => s['id'].toString()).toList();
-
-        if (stadiumIds.isNotEmpty) {
-          final bookingsRes = await _supabase
-              .from('bookings')
-              .select('id, start_time, end_time, status')
-              .inFilter('stadium_id', stadiumIds)
-              .inFilter('status', ['confirmed', 'pending']);
-
-          for (final b in bookingsRes as List) {
-            final startStr = b['start_time']?.toString() ?? '';
-            final bookingDt = DateTime.tryParse(startStr)?.toLocal() ?? _parseBookingDateTime('', startStr);
-            if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
-              final diffMinutes = bookingDt.difference(now).inMinutes;
-              if (diffMinutes <= 120 && diffMinutes >= -120) {
-                return (
-                  success: false,
-                  error: 'لا يمكن حذف الحساب! يوجد حجز نشط في ملاعبك متبقي عليه أقل من ساعتين (أو جارٍ حالياً).'
-                );
-              } else {
-                return (
-                  success: false,
-                  error: 'لا يمكن حذف الحساب! يوجد حجوزات قادمة مؤكدة في ملاعبك لم تكتمل بعد.'
-                );
-              }
-            }
-          }
-        }
-      } else {
-        final bookingsRes = await _supabase
-            .from('bookings')
-            .select('id, start_time, end_time, status, joined_user_ids, created_by_user_id')
-            .inFilter('status', ['confirmed', 'pending']);
-
-        for (final b in bookingsRes as List) {
-          final createdBy = b['created_by_user_id']?.toString() ?? '';
-          final joinedUsers = List<String>.from(b['joined_user_ids'] ?? []);
-
-          if (createdBy == uid || joinedUsers.contains(uid)) {
-            final startStr = b['start_time']?.toString() ?? '';
-            final bookingDt = DateTime.tryParse(startStr)?.toLocal() ?? _parseBookingDateTime('', startStr);
-
-            if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
-              final diffMinutes = bookingDt.difference(now).inMinutes;
-              if (diffMinutes <= 120 && diffMinutes >= -120) {
-                return (
-                  success: false,
-                  error: 'لا يمكن حذف الحساب! لديك حجز مؤكد متبقي عليه أقل من ساعتين (أو جارٍ حالياً).'
-                );
-              } else {
-                return (
-                  success: false,
-                  error: 'لا يمكن حذف الحساب! لديك حجز قادم لم يكتمل بعد.'
-                );
-              }
-            }
-          }
-        }
+      final data = response is Map ? Map<String, dynamic>.from(response) : <String, dynamic>{};
+      final success = data['success'] == true;
+      if (!success) {
+        return (
+          success: false,
+          error: data['message']?.toString() ?? 'تعذر حذف الحساب بالكامل.',
+        );
       }
 
-      try {
-        await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
-      } catch (rpcErr) {
-        final fallbackRes = await _auth.deleteAccount(uid);
-        if (fallbackRes['success'] != true) {
-          return (success: false, error: fallbackRes['message']?.toString() ?? 'فشل حذف الحساب');
-        }
-      }
-
+      await _auth.signOut();
       return (success: true, error: null);
     } catch (e) {
-      return (success: false, error: 'حدث خطأ أثناء محاولة حذف الحساب: $e');
+      return (
+        success: false,
+        error: 'حدث خطأ أثناء محاولة حذف الحساب. لم يتم اعتماد الحذف.',
+      );
     }
   }
 
