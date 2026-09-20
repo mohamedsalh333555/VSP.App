@@ -3155,17 +3155,39 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   toolResponseData = { success: false, message: "ما عندكش حجوزات نشطة قادمة يا كابتن." };
                 } else if (actList.length === 1) {
                   const b = actList[0];
-                  const { data: cancelResult, error: cErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
-                    p_booking_id: b.id,
-                    p_reason: cancelReason,
-                    p_user_id: callerUser.id,
-                  });
-                  if (!cErr && cancelResult?.success === true) {
-                    contextSnapshot.last_booking_id = null;
-                    appAction = { action_type: "NAVIGATE", route: Number(cancelResult.refund_amount || 0) > 0 ? "/refunds" : "/bookings", label: Number(cancelResult.refund_amount || 0) > 0 ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
-                    toolResponseData = { success: true, cancelled_booking_id: b.id, stadium_name: b.stadium_name, start_time: b.start_time, refund_amount: Number(cancelResult.refund_amount || 0) };
+                  const confirmedSingle = hasConfirmedPendingIntent(contextSnapshot, "cancel_booking", "booking_id", b.id);
+                  if (!confirmedSingle) {
+                    appClarification = {
+                      type: "cancel_confirmation",
+                      question: "عندك حجز واحد قادم. تأكد إنك عايز تلغيه؟",
+                      options: [
+                        { id: "confirm_cancel_booking", label: "تأكيد الإلغاء" },
+                        { id: "keep_booking", label: "لا، خليه" },
+                      ],
+                    };
+                    contextSnapshot.pending_intent = {
+                      intent: "cancel_booking",
+                      booking_id: b.id,
+                      reason: cancelReason,
+                      clarification_type: "cancel_confirmation",
+                      confirmed: false,
+                    };
+                    contextSnapshot.clarification = appClarification;
+                    assistantReply = "تمام، قبل التنفيذ أكّد إلغاء الحجز.";
+                    toolResponseData = { success: false, needs_confirmation: true };
                   } else {
-                    toolResponseData = { success: false, message: cancelResult?.message || cErr?.message || "تعذّر إلغاء الحجز حالياً." };
+                    const { data: cancelResult, error: cErr } = await supabase.rpc("cancel_booking_with_refund_atomic", {
+                      p_booking_id: b.id,
+                      p_reason: cancelReason,
+                      p_user_id: callerUser.id,
+                    });
+                    if (!cErr && cancelResult?.success === true) {
+                      contextSnapshot.last_booking_id = null;
+                      appAction = { action_type: "NAVIGATE", route: Number(cancelResult.refund_amount || 0) > 0 ? "/refunds" : "/bookings", label: Number(cancelResult.refund_amount || 0) > 0 ? "تتبع الاسترداد 💰" : "عرض سجل الحجوزات 📋" };
+                      toolResponseData = { success: true, cancelled_booking_id: b.id, stadium_name: b.stadium_name, start_time: b.start_time, refund_amount: Number(cancelResult.refund_amount || 0) };
+                    } else {
+                      toolResponseData = { success: false, message: cancelResult?.message || cErr?.message || "تعذّر إلغاء الحجز حالياً." };
+                    }
                   }
                 } else {
                   const clar = { type: "cancel_selection", question: "أي حجز تريد إلغاؤه يا كابتن؟", options: actList.map((b: any) => ({ id: b.id, label: `${b.stadium_name} — ${new Date(b.start_time).toLocaleDateString("ar-EG")}` })) };
