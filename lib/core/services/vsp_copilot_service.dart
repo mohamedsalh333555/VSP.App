@@ -35,6 +35,7 @@ class OwnerDatabaseMockData {
 class VspCopilotService {
   final SupabaseClient? _client;
   final OwnerDatabaseMockData? _mockOwnerDb;
+  final bool _enableLocalTestEngine;
 
   // Rate Limiting Tracking: Sliding Window (10 requests max per 60 seconds)
   static final List<DateTime> _requestTimestamps = [];
@@ -42,7 +43,7 @@ class VspCopilotService {
   // Multi-Turn Memory Cache for local test runs
   static final Map<String, Map<String, dynamic>> _conversationContexts = {};
 
-  // Curated stadium database for tests & offline verification (Zero-hallucination real mock catalog)
+  // Test fixture only. This catalog MUST NOT be exposed by default production paths.
   static const List<CopilotStadiumSummary> _curatedStadiums = [
     CopilotStadiumSummary(
       id: 'a24d1690-247a-4f9f-99da-03c092943811',
@@ -122,17 +123,28 @@ class VspCopilotService {
   const VspCopilotService({
     SupabaseClient? client,
     OwnerDatabaseMockData? mockOwnerDb,
+    bool enableLocalTestEngine = false,
   })  : _client = client,
-        _mockOwnerDb = mockOwnerDb;
+        _mockOwnerDb = mockOwnerDb,
+        // Local synthetic data is opt-in only. Injecting mockOwnerDb is an explicit
+        // test-only signal and therefore also enables the local test engine.
+        _enableLocalTestEngine = enableLocalTestEngine || mockOwnerDb != null;
 
   /// Resets the rate limiter timestamps (used by test suites)
   void resetRateLimiter() {
     _requestTimestamps.clear();
   }
 
-  /// Returns total count of verified available stadiums (used for safety checks)
+  /// Returns the count of verified available stadiums from the real backend.
+  /// Synthetic catalog data is never used unless the service was explicitly
+  /// constructed in local test mode.
   Future<int> getStadiumCount() async {
     final client = _supabase;
+
+    if (_enableLocalTestEngine && _mockOwnerDb?.stadiums != null) {
+      return _mockOwnerDb!.stadiums!.length;
+    }
+
     if (client != null) {
       try {
         final res = await client
@@ -141,10 +153,15 @@ class VspCopilotService {
             .eq('is_verified', true)
             .eq('is_blocked', false);
         final list = res as List<dynamic>?;
-        if (list != null && list.isNotEmpty) return list.length;
-      } catch (_) {}
+        return list?.length ?? 0;
+      } catch (e) {
+        debugPrint('[VspCopilotService] getStadiumCount error: $e');
+      }
     }
-    return _curatedStadiums.length;
+
+    // Strict Truth Principle: no database result means zero verified data here;
+    // never substitute a synthetic stadium count in production.
+    return _enableLocalTestEngine ? _curatedStadiums.length : 0;
   }
 
   /// Fetches all conversation sessions belonging to the authenticated user.
@@ -278,8 +295,22 @@ class VspCopilotService {
       }
     }
 
-    // 4. Intelligent Local Zero-Hallucination Engine ONLY for headless test suites (when client == null or mockOwnerDb is injected)
-    return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
+    // 4. Local synthetic engine is an explicit test fixture only.
+    // Production/default instances fail closed instead of inventing stadiums,
+    // bookings, owners, prices, or transaction outcomes.
+    if (_enableLocalTestEngine) {
+      return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
+    }
+
+    return CopilotMessage.assistant(
+      'عذراً يا كابتن، خدمة VSP Copilot غير متاحة حالياً. يرجى التحقق من الاتصال بالمخدم والمحاولة مرة أخرى.',
+      conversationId: conversationId,
+      errorMessage: 'copilot_cloud_unavailable',
+      verification: const CopilotVerification(
+        verified: false,
+        source: 'cloud_unavailable',
+      ),
+    );
   }
 
   /// Convenience helper allowing positional string call
