@@ -41,6 +41,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="vspapp.online" />
+                <data android:scheme="https" android:host="www.vspapp.online" />
             </intent-filter>
 
             <intent-filter>
