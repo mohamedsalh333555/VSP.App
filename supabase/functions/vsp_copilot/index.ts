@@ -409,6 +409,13 @@ const AI_CAPABILITIES: Record<string, {
   SYSTEM_LOGIN: { role: "any", requiredEntitlement: "none" },
 };
 
+function normalizeAiRole(role: string | null | undefined): "player" | "owner" | "admin" {
+  const normalized = String(role || "player").toLowerCase().trim();
+  if (normalized === "co_founder" || normalized === "co-founder" || normalized === "admin") return "admin";
+  if (normalized === "owner") return "owner";
+  return "player";
+}
+
 function getAiCapability(capabilityId: string | undefined | null) {
   if (!capabilityId) return null;
   return AI_CAPABILITIES[capabilityId.trim().toUpperCase()] ?? null;
@@ -418,8 +425,8 @@ function isCapabilityAllowed(capabilityId: string | undefined | null, userRole: 
   const id = capabilityId?.trim().toUpperCase();
   const cap = getAiCapability(id);
   if (!cap) return false;
-  const role = (userRole || "player").toLowerCase().trim();
-  if (cap.role !== "any" && cap.role !== role && !(role === "admin" && cap.role !== "admin")) return false;
+  const role = normalizeAiRole(userRole);
+  if (cap.role !== "any" && cap.role !== role && !(role === "admin" && (cap.role === "player" || cap.role === "owner"))) return false;
   if (cap.requiredEntitlement === "owner_ai" && role !== "admin" && !ownerAiEnabled) return false;
   return true;
 }
@@ -434,7 +441,7 @@ function inferCapabilityIdFromAction(action: any, userRole: string): string | nu
   if (!action) return null;
   const explicit = action.capability_id || action.capabilityId;
   if (explicit && getAiCapability(String(explicit))) return String(explicit).trim().toUpperCase();
-  const role = (userRole || "player").toLowerCase().trim();
+  const role = normalizeAiRole(userRole);
   const type = String(action.action_type || "").toUpperCase();
   const route = String(action.route || "").toLowerCase();
   if (type === "OPEN_PAYMENT") return role === "player" ? "PLAYER_CREATE_BOOKING" : null;
@@ -590,7 +597,7 @@ function buildToolRegistryForRole(role: string, ownerAiEnabled: boolean = true):
  * even if Gemini somehow emits them.
  */
 function isToolAllowedForRole(toolName: string, role: string, ownerAiEnabled: boolean = true): boolean {
-  const r = (role || "player").toLowerCase();
+  const r = normalizeAiRole(role);
   const allowed = ROLE_ALLOWED_TOOL_NAMES[r] ?? ROLE_ALLOWED_TOOL_NAMES["player"];
   if (!allowed.has(toolName)) return false;
   if (r === "owner" && OWNER_ONLY_TOOLS.some((t) => t.name === toolName) && !ownerAiEnabled) return false;
@@ -1898,7 +1905,6 @@ serve(async (req: Request) => {
       userRole: "unknown",
       eventType: "request_started",
       status: "authenticated",
-      requestHash: await hashAuditValue(userMessage || ""),
       metadata: { endpoint: "vsp_copilot" },
     });
 
@@ -1939,7 +1945,7 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     // 🔐 Phase 2: Owner AI entitlement. Fail closed if the subscription lookup fails.
-    const effectiveUserRole = (userProfile?.role || "player").toLowerCase().trim();
+    const effectiveUserRole = normalizeAiRole(userProfile?.role);
 
     await recordCopilotAuditEvent(supabase, {
       requestId,
