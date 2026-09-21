@@ -218,6 +218,14 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     final actionType = action.actionType.toUpperCase();
     final route = action.route.toLowerCase();
 
+    if (actionType == 'QUICK_REPLY' || actionType == 'CONFIRM_BOOKING') {
+      final message = action.params?['message']?.toString() ?? action.label;
+      if (message.isNotEmpty) {
+        _handleSendMessage(message);
+      }
+      return;
+    }
+
     if (actionType == 'PROFILE_UPDATED') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
