@@ -12,6 +12,7 @@ void main() {
         email: 'ahmed@test.com',
         password: 'Password123!',
         confirmPassword: 'Password123!',
+        minimumAge: 16,
         dateOfBirth: DateTime(2000, 1, 1),
       );
 
@@ -28,6 +29,7 @@ void main() {
         email: 'ahmed@test.com',
         password: 'Password123!',
         confirmPassword: 'Password123!',
+        minimumAge: 16,
         dateOfBirth: DateTime(2000, 1, 1),
       );
 
@@ -44,6 +46,7 @@ void main() {
         email: 'ahmed@test.com',
         password: 'Password123!',
         confirmPassword: 'Password123!',
+        minimumAge: 16,
         dateOfBirth: null,
       );
 
@@ -60,6 +63,7 @@ void main() {
         email: 'ahmed@test.com',
         password: 'Password123!',
         confirmPassword: 'Password123!',
+        minimumAge: 16,
         dateOfBirth: DateTime(2000, 1, 1),
       );
 
@@ -76,6 +80,7 @@ void main() {
         email: 'ahmed@test.com',
         password: 'Password123!',
         confirmPassword: 'Password999!',
+        minimumAge: 16,
         dateOfBirth: DateTime(2000, 1, 1),
       );
       expect(mismatch.error, equals(SignupValidationError.passwordMismatch));
@@ -88,6 +93,7 @@ void main() {
         email: 'ahmed@test.com',
         password: '123',
         confirmPassword: '123',
+        minimumAge: 16,
         dateOfBirth: DateTime(2000, 1, 1),
       );
       expect(tooShort.error, equals(SignupValidationError.passwordTooShort));
@@ -102,6 +108,7 @@ void main() {
         email: 'salah@vsp.com',
         password: 'StrongPassword123!',
         confirmPassword: 'StrongPassword123!',
+        minimumAge: 16,
         dateOfBirth: DateTime(1995, 5, 20),
       );
 

@@ -102,6 +102,28 @@ class ChatRepository {
     }
   }
 
+  Future<bool> isUserBlocked(String otherUserId) async {
+    if (otherUserId.isEmpty || _supabase.auth.currentUser?.id == null) return false;
+    try {
+      final result = await _supabase.rpc('are_users_blocked', params: {
+        'p_user_a': _supabase.auth.currentUser!.id,
+        'p_user_b': otherUserId,
+      });
+      return result == true;
+    } catch (e) {
+      VSPLogger.e('Error checking user block status', e);
+      return false;
+    }
+  }
+
+  Future<void> blockUser(String otherUserId) async {
+    await _supabase.rpc('block_user_atomic', params: {'p_blocked_user_id': otherUserId});
+  }
+
+  Future<void> unblockUser(String otherUserId) async {
+    await _supabase.rpc('unblock_user_atomic', params: {'p_blocked_user_id': otherUserId});
+  }
+
   Future<void> editMessage(String messageId, String newText) async {
     try {
       await _supabase.from('chat_messages').update({

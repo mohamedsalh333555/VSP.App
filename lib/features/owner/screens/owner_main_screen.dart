@@ -13,17 +13,28 @@ import 'owner_cup_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_inbox_screen.dart';
 
+/// Global key for Copilot / AI Navigation to switch owner tabs programmatically.
+/// Tab layout: 0=Dashboard, 1=Cup, 2=Inbox, 3=Bookings, 4=Profile
+final GlobalKey<OwnerMainScreenState> ownerMainScreenKey = GlobalKey<OwnerMainScreenState>();
+
 class OwnerMainScreen extends StatefulWidget {
  const OwnerMainScreen({super.key});
 
  @override
- State<OwnerMainScreen> createState() => _OwnerMainScreenState();
+ State<OwnerMainScreen> createState() => OwnerMainScreenState();
 }
 
-class _OwnerMainScreenState extends State<OwnerMainScreen> {
+class OwnerMainScreenState extends State<OwnerMainScreen> {
  int _currentIndex = 0;
  late final ConfettiController _confettiController;
  StreamSubscription? _celebrationSubscription;
+
+ /// Switch to a specific tab programmatically (e.g. from Copilot navigation).
+ void switchToTab(int index) {
+  if (mounted && _currentIndex != index) {
+   setState(() => _currentIndex = index);
+  }
+ }
 
  @override
  void initState() {

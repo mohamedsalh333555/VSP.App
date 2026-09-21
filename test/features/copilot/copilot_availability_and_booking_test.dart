@@ -6,7 +6,7 @@ void main() {
     late VspCopilotService service;
 
     setUp(() {
-      service = const VspCopilotService();
+      service = const VspCopilotService(enableLocalTestEngine: true);
       service.resetRateLimiter();
     });
 
@@ -158,6 +158,63 @@ void main() {
       expect(action.params?['booking_id'], equals('book_9999'));
       expect(action.params?['deposit_amount'], equals(50.0));
       expect(action.params?['total_price'], equals(250.0));
+    });
+
+    // =========================================================================
+    // 5. سيناريو المستخدم الواقعي: حجز منتصف الليل بالاسم العامي (Midnight Slang Booking)
+    // =========================================================================
+    test('7. طلب "اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده" يطابق الملعب والميعاد ويصدر أمر الدفع فوراً', () async {
+      final response = await service.sendMessage(
+        message: 'اريد ان احجز في الساعه 12 في منتصف الليل في الملعب صدقه جديده',
+        conversationId: 'real_user_midnight_booking',
+      );
+
+      expect(response.sender, equals('assistant'));
+      expect(response.text, contains('ملعب الصداقة الجديدة'));
+      expect(response.text, contains('12:00 ص - 01:00 ص'));
+      expect(response.text, contains('دفع العربون'));
+      expect(response.hasStadiums, isTrue);
+      expect(response.stadiums.first.name, contains('الصداقة الجديدة'));
+      expect(response.hasAction, isTrue);
+      expect(response.action?.isOpenPayment, isTrue);
+      expect(response.action?.route, equals('/checkout'));
+      expect(response.action?.label, contains('دفع العربون'));
+      expect(response.action?.params?['deposit_amount'], equals(50.0));
+      expect(response.action?.params?['stadium_name'], contains('الصداقة الجديدة'));
+    });
+
+    test('8. التمييز الدقيق للعامية العربية: "12 بليل" تعني منتصف الليل 00:00 (12:00 ص)', () async {
+      final response = await service.sendMessage(
+        message: 'احجزلي الساعة 12 بليل في ملعب الصداقة',
+        conversationId: 'slang_12_night_test',
+      );
+
+      expect(response.sender, equals('assistant'));
+      expect(response.text, contains('12:00 ص - 01:00 ص'));
+      expect(response.hasAction, isTrue);
+      expect(response.action?.isOpenPayment, isTrue);
+    });
+
+    test('9. التمييز الدقيق للعامية العربية: "12 ضهر" أو "12 صبح" تعني 12:00 ظهراً (12:00 م)', () async {
+      final responseNoon = await service.sendMessage(
+        message: 'احجزلي الساعة 12 ضهر في ملعب الصداقة',
+        conversationId: 'slang_12_noon_test',
+      );
+
+      expect(responseNoon.sender, equals('assistant'));
+      expect(responseNoon.text, contains('12:00 م - 01:00 م'));
+      expect(responseNoon.hasAction, isTrue);
+      expect(responseNoon.action?.isOpenPayment, isTrue);
+
+      final responseMorning = await service.sendMessage(
+        message: 'احجزلي 12 صبح في ملعب الصداقة',
+        conversationId: 'slang_12_morning_test',
+      );
+
+      expect(responseMorning.sender, equals('assistant'));
+      expect(responseMorning.text, contains('12:00 م - 01:00 م'));
+      expect(responseMorning.hasAction, isTrue);
+      expect(responseMorning.action?.isOpenPayment, isTrue);
     });
   });
 }

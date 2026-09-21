@@ -236,7 +236,11 @@ class OwnerSlotCard extends StatelessWidget {
               ),
             );
           }),
-          const Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 14),
+          Icon(
+            isAr ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
+            color: VSPColors.textSecondary,
+            size: 14,
+          ),
         ],
       ),
     );

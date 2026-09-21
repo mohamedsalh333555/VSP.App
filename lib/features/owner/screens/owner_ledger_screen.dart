@@ -90,7 +90,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -124,9 +124,8 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           // Authoritative DB summary values if loaded, fallback to transaction summation
           double availableDigital = (_summary?['available_balance'] as num?)?.toDouble() ?? 0.0;
+          double escrowBalance = (_summary?['escrow_online_revenue'] as num?)?.toDouble() ?? 0.0;
           double totalPitchCash = (_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0;
-          final double cashDebt = (_summary?['accumulated_cash_debt'] as num?)?.toDouble() ?? 0.0;
-          final bool isDebtBlocked = _summary?['is_debt_blocked'] == true;
 
           if (_summary == null) {
             for (var doc in transactions) {
@@ -141,27 +140,12 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             }
           }
 
-          if (transactions.isEmpty && _summary == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Iconsax.receipt_2_1_copy, size: 36, color: Color(0xFFA1A1AA)),
-                  const SizedBox(height: 12),
-                  Text(
-                    isAr ? 'لا توجد معاملات مالية مسجلة بعد' : 'No financial transactions yet',
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
-            );
-          }
-
           return Column(
             children: [
               // كارت الرصيد الإلكتروني المتاح للسحب
               OwnerDigitalBalanceCard(
                 digitalBalance: availableDigital,
+                escrowBalance: escrowBalance,
                 isAr: isAr,
                 onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
               ),
@@ -172,57 +156,67 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                 isAr: isAr,
               ),
 
-              // تنبيه المديونية النقدية للمنصة (إذا وجدت)
-              if (cashDebt > 0)
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isDebtBlocked ? Colors.red.withValues(alpha: 0.12) : Colors.amber.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDebtBlocked ? Colors.redAccent.withValues(alpha: 0.4) : Colors.amber.withValues(alpha: 0.3),
+              const SizedBox(height: 8),
+
+              // قائمة المعاملات أو الحالة التوضيحية للمالك الجديد
+              if (transactions.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Iconsax.receipt_2_1_copy, size: 26, color: VSPColors.accent),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            isAr ? 'لا توجد حركات مالية حتى الآن' : 'No Financial Transactions Yet',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isAr
+                                ? 'ستبدأ أرباحك وعمليات التحصيل بالظهور تلقائياً هنا فور إتمام أول حجز بالملعب أو استلام عربون إلكتروني.'
+                                : 'Your revenue and payouts will appear automatically here as soon as bookings or digital deposits are recorded.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 13,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isDebtBlocked ? Iconsax.warning_2_copy : Iconsax.info_circle_copy,
-                        size: 18,
-                        color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          isAr
-                              ? 'مديونية عمولات الكاش: ${cashDebt.toStringAsFixed(1)} ج.م ${isDebtBlocked ? "(تم إيقاف الكاش لتجاوز الحد)" : "(الحد: 500 ج.م)"}'
-                              : 'Pitch Cash Debt: ${cashDebt.toStringAsFixed(1)} EGP ${isDebtBlocked ? "(Blocked)" : "(Limit: 500)"}',
-                          style: TextStyle(
-                            color: isDebtBlocked ? Colors.redAccent : Colors.amberAccent,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 4),
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: transactions.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      return OwnerLedgerTransactionItem(
+                        transaction: transactions[index],
+                        isAr: isAr,
+                      );
+                    },
                   ),
                 ),
-
-              // قائمة المعاملات
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 4),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: transactions.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    return OwnerLedgerTransactionItem(
-                      transaction: transactions[index],
-                      isAr: isAr,
-                    );
-                  },
-                ),
-              ),
             ],
           );
         },

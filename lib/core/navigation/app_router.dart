@@ -27,6 +27,7 @@ import '../../data/models.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/copilot/screens/vsp_copilot_screen.dart';
 import '../../features/copilot/screens/copilot_test_playground.dart';
+import '../../features/player/screens/payment_gateway_screen.dart';
 
 class AppRouter {
  static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
@@ -159,6 +160,53 @@ class AppRouter {
  path: '/notifications',
  builder: (context, state) => const NotificationsCenterScreen(),
  ),
+ GoRoute(
+ path: '/checkout',
+ builder: (context, state) {
+ final params = (state.extra as Map<String, dynamic>?) ?? {};
+ final bookingId = params['booking_id']?.toString();
+ final stadiumId = params['stadium_id']?.toString() ?? '';
+ final stadiumName = params['stadium_name']?.toString() ?? '';
+ final ownerId = params['owner_id']?.toString() ?? '';
+ final totalPrice = (params['total_price'] as num?)?.toDouble() ?? 0.0;
+ final depositAmount = (params['deposit_amount'] as num?)?.toDouble() ?? 0.0;
+ final startTimeStr = params['start_time']?.toString();
+ final endTimeStr = params['end_time']?.toString();
+
+ DateTime startTime = DateTime.now();
+ if (startTimeStr != null && startTimeStr.isNotEmpty) {
+   startTime = DateTime.tryParse(startTimeStr) ?? DateTime.now();
+ } else if (params['date'] != null && params['time'] != null) {
+   final rawDate = params['date'].toString();
+   final rawTime = params['time'].toString();
+   startTime = DateTime.tryParse('$rawDate $rawTime') ?? DateTime.now();
+ }
+
+ DateTime endTime = startTime.add(const Duration(hours: 1));
+ if (endTimeStr != null && endTimeStr.isNotEmpty) {
+   endTime = DateTime.tryParse(endTimeStr) ?? endTime;
+ }
+
+ final draft = BookingDraft(
+ stadiumId: stadiumId,
+ stadiumName: stadiumName,
+ ownerId: ownerId,
+ startTime: startTime,
+ endTime: endTime,
+ bookingType: BookingType.personal,
+ isPrivate: false,
+ rentBall: params['rent_ball'] == true,
+ totalPrice: totalPrice,
+ needsDeposit: depositAmount > 0,
+ depositPaid: 0.0,
+ );
+
+ return PaymentGatewayScreen(
+ bookingDraft: draft,
+ existingBookingId: bookingId,
+ );
+ },
+ ),
  ],
  redirect: (context, state) => redirectLogic(context, state, authProvider),
  );
@@ -270,7 +318,7 @@ class AppRouter {
 
   final bool isOnboardingConfirmed = userModel.isOnboardingConfirmed;
  
- if (!userModel.hasStadium || !isOnboardingConfirmed) {
+ if (!userModel.hasStadium && !isOnboardingConfirmed) {
  if (path != '/facility-onboarding') return '/facility-onboarding';
  return null;
  }

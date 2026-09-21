@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/owner_financial_calculator.dart';
 import 'owner_time_period_dropdown.dart';
@@ -8,6 +9,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
   final OwnerFinancialMetrics metrics;
   final String selectedTimePeriod;
   final ValueChanged<String> onTimePeriodChanged;
+  final VoidCallback? onSettleDues;
   final bool isArabic;
 
   const OwnerBasicFinancialGlance({
@@ -15,6 +17,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
     required this.metrics,
     required this.selectedTimePeriod,
     required this.onTimePeriodChanged,
+    this.onSettleDues,
     required this.isArabic,
   });
 
@@ -118,6 +121,31 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
               ),
             ],
           ),
+          if (onSettleDues != null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onSettleDues,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: VSPColors.accent,
+                  side: const BorderSide(color: VSPColors.accent, width: 1.2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Iconsax.wallet_3_copy, size: 18),
+                label: Text(
+                  isArabic ? 'كشف الحساب وسحب الرصيد' : 'View Ledger & Request Payout',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

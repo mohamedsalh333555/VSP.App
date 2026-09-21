@@ -35,6 +35,7 @@ class OwnerDatabaseMockData {
 class VspCopilotService {
   final SupabaseClient? _client;
   final OwnerDatabaseMockData? _mockOwnerDb;
+  final bool _enableLocalTestEngine;
 
   // Rate Limiting Tracking: Sliding Window (10 requests max per 60 seconds)
   static final List<DateTime> _requestTimestamps = [];
@@ -42,7 +43,7 @@ class VspCopilotService {
   // Multi-Turn Memory Cache for local test runs
   static final Map<String, Map<String, dynamic>> _conversationContexts = {};
 
-  // Curated stadium database for tests & offline verification (Zero-hallucination real mock catalog)
+  // Test fixture only. This catalog MUST NOT be exposed by default production paths.
   static const List<CopilotStadiumSummary> _curatedStadiums = [
     CopilotStadiumSummary(
       id: 'a24d1690-247a-4f9f-99da-03c092943811',
@@ -122,17 +123,28 @@ class VspCopilotService {
   const VspCopilotService({
     SupabaseClient? client,
     OwnerDatabaseMockData? mockOwnerDb,
+    bool enableLocalTestEngine = false,
   })  : _client = client,
-        _mockOwnerDb = mockOwnerDb;
+        _mockOwnerDb = mockOwnerDb,
+        // Local synthetic data is opt-in only. Injecting mockOwnerDb is an explicit
+        // test-only signal and therefore also enables the local test engine.
+        _enableLocalTestEngine = enableLocalTestEngine || mockOwnerDb != null;
 
   /// Resets the rate limiter timestamps (used by test suites)
   void resetRateLimiter() {
     _requestTimestamps.clear();
   }
 
-  /// Returns total count of verified available stadiums (used for safety checks)
+  /// Returns the count of verified available stadiums from the real backend.
+  /// Synthetic catalog data is never used unless the service was explicitly
+  /// constructed in local test mode.
   Future<int> getStadiumCount() async {
     final client = _supabase;
+
+    if (_enableLocalTestEngine && _mockOwnerDb?.stadiums != null) {
+      return _mockOwnerDb!.stadiums!.length;
+    }
+
     if (client != null) {
       try {
         final res = await client
@@ -141,10 +153,15 @@ class VspCopilotService {
             .eq('is_verified', true)
             .eq('is_blocked', false);
         final list = res as List<dynamic>?;
-        if (list != null && list.isNotEmpty) return list.length;
-      } catch (_) {}
+        return list?.length ?? 0;
+      } catch (e) {
+        debugPrint('[VspCopilotService] getStadiumCount error: $e');
+      }
     }
-    return _curatedStadiums.length;
+
+    // Strict Truth Principle: no database result means zero verified data here;
+    // never substitute a synthetic stadium count in production.
+    return _enableLocalTestEngine ? _curatedStadiums.length : 0;
   }
 
   /// Fetches all conversation sessions belonging to the authenticated user.
@@ -230,9 +247,9 @@ class VspCopilotService {
     }
     _requestTimestamps.add(now);
 
-    // 3. If Supabase client is available and logged in (and not testing with mockOwnerDb), try cloud Edge Function
+    // 3. If Supabase client is available and logged in, invoke cloud Edge Function
     final client = _supabase;
-    if (_mockOwnerDb == null && client != null && client.auth.currentUser != null) {
+    if (!_enableLocalTestEngine && _mockOwnerDb == null && client != null && client.auth.currentUser != null) {
       try {
         final payload = <String, dynamic>{'message': cleanText};
         if (conversationId != null && conversationId.isNotEmpty) {
@@ -255,15 +272,45 @@ class VspCopilotService {
         final data = response.data;
         if (data is Map<String, dynamic>) {
           return _parseCloudResponse(data, conversationId);
+        } else if (data is Map) {
+          return _parseCloudResponse(Map<String, dynamic>.from(data), conversationId);
+        } else {
+          return CopilotMessage.assistant(
+            'عذراً يا كابتن، حدث خطأ غير متوقع في استجابة الخادم. يرجى المحاولة مرة أخرى.',
+            conversationId: conversationId,
+            errorMessage: 'Invalid response format from edge function',
+            verification: const CopilotVerification(verified: false, source: 'server_error'),
+          );
         }
       } catch (e) {
         if (e is RateLimitException) rethrow;
-        debugPrint('[VspCopilotService] Cloud call failed, using intelligent engine: $e');
+        debugPrint('[VspCopilotService] Cloud call failed: $e');
+        // ⚡ Phase 0: Strict Truth Principle — NEVER fall back to fake local stadiums or bookings on cloud failure
+        return CopilotMessage.assistant(
+          'عذراً يا كابتن، تعذر الاتصال بـ VSP Copilot حالياً. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+          conversationId: conversationId,
+          errorMessage: e.toString(),
+          verification: const CopilotVerification(verified: false, source: 'cloud_error'),
+        );
       }
     }
 
-    // 4. Intelligent Local Zero-Hallucination Engine (for tests, offline, & instant fallback)
-    return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
+    // 4. Local synthetic engine is an explicit test fixture only.
+    // Production/default instances fail closed instead of inventing stadiums,
+    // bookings, owners, prices, or transaction outcomes.
+    if (_enableLocalTestEngine) {
+      return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
+    }
+
+    return CopilotMessage.assistant(
+      'عذراً يا كابتن، خدمة VSP Copilot غير متاحة حالياً. يرجى التحقق من الاتصال بالمخدم والمحاولة مرة أخرى.',
+      conversationId: conversationId,
+      errorMessage: 'copilot_cloud_unavailable',
+      verification: const CopilotVerification(
+        verified: false,
+        source: 'cloud_unavailable',
+      ),
+    );
   }
 
   /// Convenience helper allowing positional string call
@@ -275,10 +322,18 @@ class VspCopilotService {
       _parseCloudResponse(data, originalConvId);
 
   /// Parse response from Supabase Edge Function
+  /// Supports both Phase 1 structured contract (data.stadiums, verification, context_snapshot)
+  /// and legacy flat fields (stadiums, tournaments, open_matches) for backward compatibility.
   CopilotMessage _parseCloudResponse(Map<String, dynamic> data, String? originalConvId) {
     final replyText = data['message']?.toString() ?? 'تم استلام طلبك بنجاح.';
     final returnedConvId = data['conversation_id']?.toString() ?? originalConvId;
-    final rawStadiums = data['stadiums'];
+
+    // Phase 1: Prefer nested `data.*` fields; fall back to legacy flat fields
+    final nestedData = data['data'] is Map<String, dynamic> ? data['data'] as Map<String, dynamic> : null;
+    final rawStadiums = nestedData?['stadiums'] ?? data['stadiums'];
+    final rawTournaments = nestedData?['tournaments'] ?? data['tournaments'];
+    final rawMatches = nestedData?['open_matches'] ?? data['open_matches'];
+
     final List<CopilotStadiumSummary> stadiums = [];
     if (rawStadiums is List) {
       for (final item in rawStadiums) {
@@ -290,7 +345,6 @@ class VspCopilotService {
       }
     }
 
-    final rawTournaments = data['tournaments'];
     final List<CopilotTournamentSummary> tournaments = [];
     if (rawTournaments is List) {
       for (final item in rawTournaments) {
@@ -302,7 +356,6 @@ class VspCopilotService {
       }
     }
 
-    final rawMatches = data['open_matches'];
     final List<CopilotOpenMatchSummary> openMatches = [];
     if (rawMatches is List) {
       for (final item in rawMatches) {
@@ -322,6 +375,44 @@ class VspCopilotService {
       action = CopilotAction.fromMap(Map<String, dynamic>.from(rawAction));
     }
 
+    final rawClarification = data['clarification'];
+    CopilotClarification? clarification;
+    if (rawClarification is Map<String, dynamic>) {
+      clarification = CopilotClarification.fromMap(rawClarification);
+    } else if (rawClarification is Map) {
+      clarification = CopilotClarification.fromMap(Map<String, dynamic>.from(rawClarification));
+    }
+
+    // Phase 1: Parse verification
+    final rawVerification = data['verification'];
+    CopilotVerification verification = CopilotVerification.unverified;
+    if (rawVerification is Map<String, dynamic>) {
+      verification = CopilotVerification.fromMap(rawVerification);
+    } else if (rawVerification is Map) {
+      verification = CopilotVerification.fromMap(Map<String, dynamic>.from(rawVerification));
+    }
+
+    // Phase 1: Parse context_snapshot
+    final rawContextSnapshot = data['context_snapshot'];
+    CopilotContextSnapshot? contextSnapshot;
+    if (rawContextSnapshot is Map<String, dynamic>) {
+      contextSnapshot = CopilotContextSnapshot.fromMap(rawContextSnapshot);
+    } else if (rawContextSnapshot is Map) {
+      contextSnapshot = CopilotContextSnapshot.fromMap(Map<String, dynamic>.from(rawContextSnapshot));
+    }
+
+    // Phase 1: Parse error
+    String? errorMessage;
+    final rawError = data['error'];
+    if (rawError is String) {
+      errorMessage = rawError;
+    } else if (rawError is Map<String, dynamic>) {
+      errorMessage = rawError['message']?.toString() ?? rawError['code']?.toString();
+    } else if (rawError is Map) {
+      final errMap = Map<String, dynamic>.from(rawError);
+      errorMessage = errMap['message']?.toString() ?? errMap['code']?.toString();
+    }
+
     return CopilotMessage.assistant(
       replyText,
       conversationId: returnedConvId,
@@ -329,6 +420,10 @@ class VspCopilotService {
       tournaments: tournaments,
       openMatches: openMatches,
       action: action,
+      clarification: clarification,
+      verification: verification,
+      contextSnapshot: contextSnapshot,
+      errorMessage: errorMessage,
     );
   }
 
@@ -537,21 +632,187 @@ class VspCopilotService {
       );
     }
 
-    // ⚡ In-Chat Direct Booking Dispatch (e.g. "احجزلي الميعاد ده", "احجز الساعة 8", "أكد الحجز")
+    // 📅 Disambiguation: "الجمعة الجاية" (Section 6)
+    if (lower.contains('الجمعة الجاية') || lower.contains('الجمعه الجايه') || lower.contains('الجمعة القادمة')) {
+      return CopilotMessage.assistant(
+        'تقصد أنهي جمعة يا كابتن؟',
+        conversationId: effectiveConvId,
+        clarification: const CopilotClarification(
+          type: 'date',
+          question: 'تقصد أنهي جمعة يا كابتن؟',
+          options: [
+            CopilotClarificationOption(id: '2026-09-25', label: 'الجمعة 25 سبتمبر'),
+            CopilotClarificationOption(id: '2026-10-02', label: 'الجمعة 2 أكتوبر'),
+          ],
+        ),
+      );
+    }
+
+    // ⚽ Ambiguous intent: "عايز كورة" alone without booking context (Section 11)
+    final isBallMentioned = lower.contains('عايز كورة') ||
+        lower.contains('عايز كوره') ||
+        lower.contains('محتاج كورة') ||
+        lower.contains('محتاج كوره') ||
+        lower == 'كورة' ||
+        lower == 'كوره';
+    final isBookingIntent = lower.contains('احجز') ||
+        lower.contains('حجز') ||
+        lower.contains('ملعب') ||
+        context['last_stadium'] != null;
+
+    if (isBallMentioned && !isBookingIntent) {
+      return CopilotMessage.assistant(
+        'تقصد تأجير كرة مع حجز ملعب، ولا حجز ملعب للعب يا كابتن؟',
+        conversationId: effectiveConvId,
+        clarification: const CopilotClarification(
+          type: 'ball_intent',
+          question: 'تقصد تأجير كرة مع حجز ملعب، ولا حجز ملعب للعب يا كابتن؟',
+          options: [
+            CopilotClarificationOption(id: 'rent_ball_booking', label: 'تأجير كرة مع حجز ملعب'),
+            CopilotClarificationOption(id: 'book_field', label: 'حجز ملعب جديد للعب'),
+          ],
+        ),
+      );
+    }
+
+    // 🧤 Egyptian Football Slang: "ناقصنا جون" / "ناقصنا حارس" (Section 10 & 16)
+    final isGoalkeeperSearch = lower.contains('ناقصنا جون') ||
+        lower.contains('ناقصنا حارس') ||
+        lower.contains('محتاجين جون') ||
+        lower.contains('محتاجين حارس') ||
+        lower.contains('عايزين جون');
+
+    if (isGoalkeeperSearch) {
+      final gkMatch = CopilotOpenMatchSummary(
+        id: 'open_match_gk_1',
+        stadiumName: 'ملعب الصداقة الجديدة',
+        startTime: DateTime.now().add(const Duration(hours: 3)),
+        currentPlayers: 9,
+        maxPlayers: 10,
+        notes: 'ناقصنا جون 🧤',
+        totalPrice: 50.0,
+      );
+      return CopilotMessage.assistant(
+        'يا كابتن! بحثتلك في الماتشات المفتوحة ولقيت تقسيمة محتاجة حارس مرمى (جون) فوراً 🧤 في ملعب الصداقة:',
+        conversationId: effectiveConvId,
+        openMatches: [gkMatch],
+        action: const CopilotAction(
+          actionType: 'NAVIGATE',
+          route: '/matches/open',
+          label: 'الانضمام للماتش كحارس مرمى 🧤',
+        ),
+      );
+    }
+
+    // 📅 Egyptian Football Lexicon: "تثبيتة" / "عايز أثبت" (Section 10)
+    final isFixedSlotIntent = lower.contains('تثبيت') ||
+        lower.contains('عايز اثبت') ||
+        lower.contains('عايز أثبت') ||
+        lower.contains('تثبيته') ||
+        lower.contains('تثبيتة');
+
+    if (isFixedSlotIntent) {
+      return CopilotMessage.assistant(
+        'يا كابتن! نظام التثبيتة الأسبوعية بيضمنلك حجز نفس الموعد كل أسبوع تلقائياً من غير ما تقلق إن الميعاد يطير منك ⚽. تقدر تختار ملعبك وموعدك المفضل ونثبتهولك شهرياً أو موسمياً!',
+        conversationId: effectiveConvId,
+        action: const CopilotAction(
+          actionType: 'NAVIGATE',
+          route: '/recurring-bookings',
+          label: 'عرض تفاصيل وتثبيت الميعاد 📅',
+        ),
+      );
+    }
+
+    // ⚡ In-Chat Direct Booking Dispatch
     final isBookingDispatch = lower.contains('احجزلي') ||
         lower.contains('احجز لي') ||
         lower.contains('أكد الحجز') ||
         lower.contains('اكد الحجز') ||
         lower.contains('احجز الميعاد') ||
         lower.contains('احجز الساعة') ||
-        (lower.contains('احجز') && (lower.contains('8') || lower.contains('ميعاد') || lower.contains('ده')));
+        ((lower.contains('احجز') || lower.contains('حجز') || lower.contains('ماتش')) &&
+            (lower.contains('12') ||
+                lower.contains('8') ||
+                lower.contains('9') ||
+                lower.contains('2') ||
+                lower.contains('3') ||
+                lower.contains('بليل') ||
+                lower.contains('العشا') ||
+                lower.contains('العصر') ||
+                lower.contains('المغرب') ||
+                lower.contains('ميعاد') ||
+                lower.contains('منتصف الليل') ||
+                lower.contains('صدقه') ||
+                lower.contains('صداقه') ||
+                lower.contains('ده') ||
+                lower.contains('ساعة') ||
+                lower.contains('الساعة')));
 
     if (isBookingDispatch) {
-      final CopilotStadiumSummary targetStadium = (context['last_stadium'] as CopilotStadiumSummary?) ?? _curatedStadiums.first;
-      final selectedSlot = (context['selected_slot'] as String?) ?? '08:00 م - 09:00 م';
+      CopilotStadiumSummary? targetStadium;
+      if (lower.contains('صدق') || lower.contains('صداق') || lower.contains('اسوان') || lower.contains('أسوان')) {
+        targetStadium = _curatedStadiums.firstWhere(
+          (s) => s.name.contains('الصداقة') || s.governorate.contains('أسوان'),
+          orElse: () => _curatedStadiums.first,
+        );
+      } else {
+        targetStadium = (context['last_stadium'] as CopilotStadiumSummary?) ?? _curatedStadiums.first;
+      }
+
+      String selectedSlot = '12:00 ص - 01:00 ص';
+      final is12Noon = lower.contains('صبح') ||
+          lower.contains('الصبح') ||
+          lower.contains('صباحا') ||
+          lower.contains('صباحاً') ||
+          lower.contains('ضهر') ||
+          lower.contains('الظهر') ||
+          lower.contains('ظهرا') ||
+          lower.contains('ظهراً') ||
+          lower.contains('نهار') ||
+          lower.contains('النهار') ||
+          lower.contains('pm');
+
+      final rentBall = isBallMentioned;
+      final isFallback = lower.contains('لو مفيش 8') || lower.contains('لو مش 8') || lower.contains('خليه 9');
+
+      if (isFallback) {
+        selectedSlot = '08:00 م - 09:00 م';
+      } else if (lower.contains('12') ||
+          lower.contains('١٢') ||
+          lower.contains('منتصف الليل') ||
+          lower.contains('منتصف ليل') ||
+          lower.contains('نص الليل') ||
+          lower.contains('نص ليل')) {
+        if (is12Noon) {
+          selectedSlot = '12:00 م - 01:00 م';
+        } else {
+          selectedSlot = '12:00 ص - 01:00 ص';
+        }
+      } else if (RegExp(r'(^|[^\d])2\s*(بليل|بالليل)').hasMatch(lower) ||
+          lower.contains('اتنين بليل') ||
+          lower.contains('الساعة 2')) {
+        selectedSlot = '02:00 ص - 03:00 ص';
+      } else if (RegExp(r'(^|[^\d])3\s*(بليل|بالليل)').hasMatch(lower) ||
+          lower.contains('تلاتة بليل') ||
+          lower.contains('الساعة 3')) {
+        selectedSlot = '03:00 ص - 04:00 ص';
+      } else if (lower.contains('بعد العشا') || lower.contains('العشا')) {
+        selectedSlot = '08:00 م - 09:00 م';
+      } else if (lower.contains('بعد المغرب') || lower.contains('المغرب')) {
+        selectedSlot = '06:00 م - 07:00 م';
+      } else if (lower.contains('بعد العصر') || lower.contains('العصر')) {
+        selectedSlot = '04:00 م - 05:00 م';
+      } else if (lower.contains('8') || lower.contains('ثمانية')) {
+        selectedSlot = '08:00 م - 09:00 م';
+      } else if (context['selected_slot'] != null) {
+        selectedSlot = context['selected_slot'] as String;
+      }
+
+      final ballLabel = rentBall ? ' + تأجير كرة ⚽' : '';
+      final fallbackLabel = isFallback ? '\n(الموعد البديل المفضل 09:00 م متاح أيضاً في حال انشغال الموعد الأول)' : '';
 
       return CopilotMessage.assistant(
-        'تم قفل موعدك بنجاح ($selectedSlot) في ${targetStadium.name} يا كابتن ⚽!\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (50 ج.م) وتأكيد الحجز فوراً.',
+        'تم قفل موعدك بنجاح ($selectedSlot$ballLabel) في ${targetStadium.name} يا كابتن ⚽!$fallbackLabel\nتم حفظ الحجز لمدة 5 دقائق، اضغط على الزر بالأسفل لإتمام دفع العربون (50 ج.م) وتأكيد الحجز فوراً.',
         conversationId: effectiveConvId,
         stadiums: [targetStadium],
         action: CopilotAction(
@@ -565,6 +826,8 @@ class VspCopilotService {
             'total_price': targetStadium.pricePerHour,
             'deposit_amount': 50.0,
             'slot': selectedSlot,
+            'rent_ball': rentBall,
+            'fallback_slots': isFallback ? ['21:00'] : [],
           },
         ),
       );
@@ -828,7 +1091,7 @@ class VspCopilotService {
         try {
           final res = await client
               .from('bookings')
-              .select('id, stadium_name, start_time, end_time, status, total_price, player_name')
+              .select('id, stadium_name, start_time, end_time, status, total_price, host_name')
               .eq('owner_id', uid)
               .order('start_time', ascending: false)
               .limit(5);
@@ -844,7 +1107,10 @@ class VspCopilotService {
               ),
             );
           } else {
-            final bItems = bookings.map((b) => '• ${b['stadium_name']} (${b['start_time']}) - الحالة: ${b['status']} - السعر: ${b['total_price']} ج.م').join('\n');
+            final bItems = bookings.map((b) {
+              final host = b['host_name'] != null ? ' - الحاجز: ${b['host_name']}' : '';
+              return '• ${b['stadium_name']} (${b['start_time']})$host - الحالة: ${b['status']} - السعر: ${b['total_price']} ج.م';
+            }).join('\n');
             return CopilotMessage.assistant(
               'يا كابتن، دي أحدث حجوزات ملاعبك المسجلة في قاعدة بيانات VSP:\n$bItems',
               conversationId: convId,

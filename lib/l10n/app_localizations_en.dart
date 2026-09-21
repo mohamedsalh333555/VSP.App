@@ -244,13 +244,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseEnterDob => 'Please enter your date of birth';
 
   @override
+  String get underRequiredAge =>
+      'Players must be at least 16 years old and stadium owners must be at least 21 years old';
+
+  @override
   String get invalidPhone => 'Please enter a valid phone number';
 
   @override
   String get passwordMismatch => 'Passwords do not match';
 
   @override
-  String get passwordTooShort => 'Password must be at least 6 characters';
+  String get passwordTooShort => 'Password must be at least 8 characters';
 
   @override
   String get verifyAccount => 'VERIFY ACCOUNT';

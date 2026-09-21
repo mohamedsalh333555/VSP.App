@@ -38,7 +38,7 @@ class StadiumCard extends StatelessWidget {
  height: isOwnerView ? 260 : 210,
  decoration: BoxDecoration(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.8),
+ border: VSPBorder.subtle(),
  boxShadow: [
  BoxShadow(
  color: Colors.black.withValues(alpha: 0.35),
@@ -120,12 +120,12 @@ class StadiumCard extends StatelessWidget {
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+ border: VSPBorder.accent(),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
- const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.location_copy, color: VSPColors.accent, size: VSPIconSize.sm),
  const SizedBox(width: 4),
  Flexible(
  child: Text(
@@ -151,25 +151,25 @@ class StadiumCard extends StatelessWidget {
  ),
  const Spacer(),
  if (!stadium.isVerified) ...[
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
- decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.2),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: Colors.amber, width: 1),
- ),
- child: Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.clock_copy, color: Colors.amber, size: 12),
- const SizedBox(width: 4),
- Text(
- Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة ' : 'Under Review ',
- style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
- ),
- ],
- ),
- ),
+  Container(
+  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  decoration: BoxDecoration(
+  color: VSPColors.surfaceAlt,
+  borderRadius: BorderRadius.circular(VSPRadius.md),
+  border: VSPBorder.light(),
+  ),
+  child: Row(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+  const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: VSPIconSize.xs),
+  const SizedBox(width: 4),
+  Text(
+  Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة ' : 'Under Review ',
+  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+  ),
+  ],
+  ),
+  ),
  const SizedBox(width: 6),
  ],
  if (isOwnerView)
@@ -181,12 +181,12 @@ class StadiumCard extends StatelessWidget {
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+ border: VSPBorder.accent(),
  ),
  child: const Icon(
  Iconsax.edit_copy,
  color: VSPColors.accent,
- size: 18,
+ size: VSPIconSize.sm,
  ),
  ),
  )
@@ -207,12 +207,12 @@ class StadiumCard extends StatelessWidget {
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  shape: BoxShape.circle,
- border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
+ border: VSPBorder.subtle(),
  ),
  child: Icon(
  isFav ? Iconsax.heart : Iconsax.heart_copy,
  color: VSPColors.accent,
- size: 20,
+ size: VSPIconSize.md,
  ),
  ),
  );
@@ -270,17 +270,17 @@ class StadiumCard extends StatelessWidget {
  return Row(
  children: [
  if (hasBaths) ...[
- const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.drop, color: VSPColors.accent, size: VSPIconSize.sm),
  const SizedBox(width: 4),
  Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
  ],
  if (hasCafe) ...[
- const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: VSPIconSize.sm),
  const SizedBox(width: 4),
  Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
  ],
  if (hasGarage) ...[
- const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
+ const Icon(Iconsax.car_copy, color: VSPColors.accent, size: VSPIconSize.sm),
  const SizedBox(width: 4),
  Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
  ],

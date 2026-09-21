@@ -392,9 +392,57 @@ class UserRepository {
           })
           .eq('id', uid);
       return true;
-    } catch (e, stack) {
-      VSPLogger.e('Error updating is_onboarding_confirmed', e, stack);
-      return false;
+    } catch (e) {
+      VSPLogger.w('Error updating is_onboarding_confirmed, trying additional_data fallback: $e');
+      try {
+        final current = await _supabase.from('users').select('additional_data').eq('id', uid).maybeSingle();
+        final addData = Map<String, dynamic>.from(current?['additional_data'] ?? {});
+        addData['isOnboardingConfirmed'] = confirmed;
+        await _supabase.from('users').update({
+          'additional_data': addData,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', uid);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+  }
+
+  /// تأكيد الـ onboarding عبر RPC آمن (SECURITY DEFINER)
+  Future<bool> confirmOwnerOnboarding(String uid) async {
+    try {
+      final result = await _supabase.rpc(
+        'confirm_owner_onboarding',
+        params: {'p_user_id': uid},
+      );
+      final success = result is Map && result['success'] == true;
+      if (success) return true;
+      if (!success) {
+        VSPLogger.w('confirm_owner_onboarding returned: $result');
+      }
+    } catch (e) {
+      VSPLogger.w('RPC confirm_owner_onboarding unavailable, falling back to direct update: $e');
+    }
+
+    // fallback: update is_onboarding_confirmed + additional_data
+    return updateOnboardingConfirmed(uid, true);
+  }
+
+  /// تحقق من الـ role الحقيقي في الـ DB (للاستخدام عند إعادة فتح التطبيق)
+  Future<String?> verifyUserRole(String uid) async {
+    try {
+      final result = await _supabase.rpc(
+        'get_current_user_role',
+        params: {'p_user_id': uid},
+      );
+      if (result is Map && result['success'] == true) {
+        return result['role']?.toString();
+      }
+      return null;
+    } catch (e) {
+      VSPLogger.e('Error verifying user role for $uid', e);
+      return null;
     }
   }
 

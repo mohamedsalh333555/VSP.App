@@ -280,6 +280,9 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
 
+      // تحديث فوري لبيانات المستخدم في الذاكرة لتعكس حالة التوثيق الجديدة في كل الشاشات والبانرات
+      await authProvider.refreshProfile();
+
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
 

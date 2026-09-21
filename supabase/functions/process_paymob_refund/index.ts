@@ -83,8 +83,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // Security Check: Caller must be the booking owner, stadium owner, or admin
-    const isCallerPlayer = booking.created_by_user_id === callerUser.id || booking.player_id === callerUser.id;
+    // Security Check: Caller must be the booking creator/user, stadium owner, or admin
+    const isCallerPlayer = booking.created_by_user_id === callerUser.id || booking.user_id === callerUser.id;
     const isCallerOwner = booking.owner_id === callerUser.id;
     
     // Check if caller is admin
@@ -123,12 +123,12 @@ serve(async (req: Request) => {
       );
     }
 
-    // Check if already cancelled
-    if (booking.status === "cancelled") {
+    // 🔒 Idempotency Guard: Prevent double refund if already cancelled, refunded, or txn exists
+    if (booking.status === "cancelled" || booking.payment_status === "refunded" || Boolean(booking.refund_transaction_id)) {
       return new Response(
         JSON.stringify({
           success: true,
-          message: "الحجز ملغى بالفعل مسبقاً.",
+          message: "الحجز ملغى أو تم استرداد مبلغه بالفعل مسبقاً.",
           refund_amount: booking.refund_amount || 0,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -275,6 +275,7 @@ serve(async (req: Request) => {
     let refundSuccess = false;
     let refundTxnId: string | null = null;
     let paymobErrorMessage = "";
+    let refundData: any = null;
 
     try {
       // Step A: Authenticate with Paymob to get Auth Token
@@ -308,7 +309,7 @@ serve(async (req: Request) => {
         }),
       });
 
-      const refundData = await refundRes.json();
+      refundData = await refundRes.json();
       console.log("Paymob Refund API Response:", JSON.stringify(refundData));
 
       if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
@@ -347,7 +348,6 @@ serve(async (req: Request) => {
           refunded_at: now.toISOString(),
           refund_payment_method: detectedRefundMethod,
           refund_amount: verifiedRefundAmount,
-          refund_txn_id: refundTxnId,
           cancellation_reason: reason,
           cancelled_at: now.toISOString(),
           updated_at: now.toISOString(),
@@ -356,7 +356,7 @@ serve(async (req: Request) => {
 
       // Immutable Ledger entry for completed refund
       await supabase.from("transactions").insert({
-        user_id: booking.created_by_user_id || booking.player_id,
+        user_id: booking.created_by_user_id || booking.user_id,
         booking_id: bookingId,
         amount: verifiedRefundAmount,
         type: "refund",
@@ -369,7 +369,7 @@ serve(async (req: Request) => {
       });
 
       // Send In-App Notification to User
-      const playerUserId = booking.created_by_user_id || booking.player_id;
+      const playerUserId = booking.created_by_user_id || booking.user_id;
       if (playerUserId) {
         await supabase.from("notifications").insert({
           user_id: playerUserId,
@@ -416,7 +416,7 @@ serve(async (req: Request) => {
 
       // Ledger entry for failed refund
       await supabase.from("transactions").insert({
-        user_id: booking.created_by_user_id || booking.player_id,
+        user_id: booking.created_by_user_id || booking.user_id,
         booking_id: bookingId,
         amount: verifiedRefundAmount,
         type: "refund",

@@ -50,7 +50,7 @@ class _SignupScreenState extends State<SignupScreen> {
  @override
  void initState() {
  super.initState();
- Future.microtask(() => _fetchAutoLocation());
+ // Location is requested only when the user explicitly taps the GPS action.
  }
 
  Future<void> _fetchAutoLocation() async {
@@ -71,7 +71,7 @@ class _SignupScreenState extends State<SignupScreen> {
  context,
  initialDate: _dateOfBirth ?? DateTime(2000),
  minYear: 1940,
- maxYear: DateTime.now().year - 10,
+ maxYear: DateTime.now().year - (widget.isOwner ? 21 : 16),
  );
  if (!mounted) return;
  if (picked != null) setState(() => _dateOfBirth = picked);
@@ -99,6 +99,7 @@ class _SignupScreenState extends State<SignupScreen> {
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
       dateOfBirth: _dateOfBirth,
+      minimumAge: widget.isOwner ? 21 : 16,
     );
 
     if (!validation.isValid) {

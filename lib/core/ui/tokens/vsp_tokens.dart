@@ -179,3 +179,40 @@ class VSPScrollPadding {
     return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom(context, hasFloatingNavBar: hasFloatingNavBar, extra: extra));
   }
 }
+
+class VSPIconSize {
+  static const double xs = 12.0; // Badges, tiny status indicators
+  static const double sm = 16.0; // In-line chips, card subtitles
+  static const double md = 20.0; // Input fields, button prefixes
+  static const double lg = 24.0; // App bars, menu icons
+  static const double xl = 32.0; // Large feature indicators
+}
+
+class VSPTypography {
+  static const double buttonFontSize = 15.0; // Unified button font size
+  static const double labelFontSize = 11.0;  // Badge & chip label font size
+  static const double bodyFontSize = 14.0;
+  static const double titleFontSize = 18.0;
+}
+
+class VSPBorder {
+  static const double widthThin = 0.8;
+  static const double widthDefault = 1.0;
+  static const double widthMedium = 1.5;
+
+  static Border subtle({double width = widthThin}) => Border.all(
+    color: Colors.white.withValues(alpha: 0.08),
+    width: width,
+  );
+
+  static Border accent({double width = widthDefault}) => Border.all(
+    color: VSPColors.accent.withValues(alpha: 0.3),
+    width: width,
+  );
+
+  static Border light({double width = widthThin}) => Border.all(
+    color: Colors.white.withValues(alpha: 0.15),
+    width: width,
+  );
+}
+

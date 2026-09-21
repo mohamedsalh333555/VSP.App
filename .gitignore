@@ -65,3 +65,5 @@ bin/
 .firebase/
 supabase/.temp/
 vsp_website/
+vsp_admin_panel/
+test/failures/

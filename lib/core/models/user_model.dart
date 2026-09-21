@@ -71,6 +71,11 @@ class UserModel {
   bool get isOwnerRole => role == 'owner';
   bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
+  /// هل اعتُمد المالك من الإدارة وجاهز للتشغيل الفعلي؟
+  /// مصدر الحقيقة الوحيد — يُستخدم في كل مكان بدلاً من تكرار الشرطين.
+  bool get isVerifiedForOperations =>
+      isIdentityVerified == true || verificationStatus == 'approved';
+
   DateTime? get effectiveTrialEndsAt =>
       trialEndsAt ?? createdAt?.add(const Duration(days: 60));
 
@@ -78,7 +83,9 @@ class UserModel {
       subscriptionPlan == 'free_trial' &&
       subscriptionExpiresAt == null &&
       effectiveTrialEndsAt != null &&
-      DateTime.now().isBefore(effectiveTrialEndsAt!);
+      DateTime.now().isBefore(effectiveTrialEndsAt!) &&
+      // لا تُحتسب أيام التجربة المجانية قبل اعتماد المنشأة رسمياً
+      isVerifiedForOperations;
 
   bool get hasActiveSubscription =>
       isInActiveTrial ||
@@ -103,7 +110,7 @@ class UserModel {
 
   int get maxStadiums {
     if (isProPlan) return 3;
-    if (isBasicOrHigher || isInActiveTrial) return 1;
+    if (isBasicOrHigher || isInActiveTrial || subscriptionPlan == 'free_trial') return 1;
     return 0;
   }
 
@@ -130,14 +137,15 @@ class UserModel {
       addData['rejection_reason'] = data['rejection_reason'];
     }
 
-    final rawRole = (data['role'] ?? addData['role'] ?? 'player').toString();
-    final bool hasOwnerIndicator = data['has_stadium'] == true ||
+    final rawRole = (data['role'] ?? addData['role'] ?? '').toString().trim();
+    final bool hasOwnerIndicator = rawRole == 'owner' ||
+        data['has_stadium'] == true ||
         data['hasStadium'] == true ||
         addData['role'] == 'owner' ||
         addData['is_owner'] == true;
-    final effectiveRole = (rawRole != 'admin' && rawRole != 'co_founder' && hasOwnerIndicator)
-        ? 'owner'
-        : rawRole;
+    final effectiveRole = (rawRole == 'admin' || rawRole == 'co_founder' || rawRole == 'super_admin')
+        ? rawRole
+        : (hasOwnerIndicator ? 'owner' : (rawRole.isNotEmpty ? rawRole : 'player'));
 
     return UserModel(
       uid: data['id'] ?? data['uid'] ?? '',

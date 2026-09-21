@@ -413,6 +413,7 @@ class StadiumRepository {
       final List<dynamic> list = response as List? ?? [];
       return list
           .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .where((s) => s.isVerified && !s.isBlocked)
           .toList();
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);

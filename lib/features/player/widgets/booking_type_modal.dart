@@ -257,8 +257,10 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
-                    Iconsax.arrow_left_2_copy,
+                  Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Iconsax.arrow_left_2_copy
+                        : Iconsax.arrow_right_1_copy,
                     color: VSPColors.textSecondary,
                     size: 18,
                   ),

@@ -14,8 +14,8 @@ void showOwnerCupFormatModal(BuildContext context) {
       return Container(
         decoration: const BoxDecoration(
           color: VSPColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: Color(0xFF3F3F46), width: 2)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.lg)),
+          border: Border(top: BorderSide(color: VSPColors.divider, width: 2)),
         ),
         padding: EdgeInsets.fromLTRB(
           20,
@@ -41,7 +41,7 @@ void showOwnerCupFormatModal(BuildContext context) {
             Text(
               isArabic ? 'اختر نظام البطولة' : 'Choose Tournament Format',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.textPrimary,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
@@ -115,12 +115,12 @@ Widget _buildTypeOption(
 }) {
   return InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(VSPRadius.md),
     child: Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: VSPColors.divider, width: 0.8),
       ),
       child: Row(
@@ -133,7 +133,7 @@ Widget _buildTypeOption(
               shape: BoxShape.circle,
               border: Border.all(color: VSPColors.borderLight, width: 0.5),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: VSPColors.textPrimary, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -145,7 +145,7 @@ Widget _buildTypeOption(
                     Text(
                       title,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),

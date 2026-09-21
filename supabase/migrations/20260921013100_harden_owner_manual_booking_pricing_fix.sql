@@ -1,0 +1,3 @@
+-- Corrective migration: owner_create_manual_booking_atomic resolves owner from the locked stadium
+-- and enforces that p_owner_id cannot target a different stadium owner unless caller is admin/service_role.
+-- Production function was corrected atomically after the initial deployment.

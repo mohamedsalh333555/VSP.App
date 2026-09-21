@@ -3,11 +3,23 @@ import 'package:vsp_application/features/copilot/services/vsp_copilot_service.da
 import 'package:vsp_application/data/models/copilot_models.dart';
 
 void main() {
+  group('Production truth guard', () {
+    test('default service never falls back to synthetic stadium count without a backend', () async {
+      const service = VspCopilotService();
+      service.resetRateLimiter();
+
+      final count = await service.getStadiumCount();
+
+      // The default service must fail closed when no real Supabase client/data is available.
+      expect(count, equals(0));
+    });
+  });
+
   group('VspCopilotService - Intelligent Response Generation', () {
     late VspCopilotService service;
 
     setUp(() {
-      service = const VspCopilotService();
+      service = const VspCopilotService(enableLocalTestEngine: true);
       service.resetRateLimiter();
     });
 

@@ -6,6 +6,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
 
 /// Simple chat sheet for VSP Copilot POC with single read-only search tool.
@@ -159,10 +160,11 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.15),
+              color: Colors.white.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            child: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
+            child: const GeminiAIIcon(size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -305,7 +307,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: Colors.white54),
+                        Icon(widget.isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy, size: 10, color: Colors.white54),
                       ],
                     ),
                   ],
@@ -320,7 +322,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   Widget _buildLoadingBubble() {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(

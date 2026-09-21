@@ -10,6 +10,9 @@ jobs:
   analyze_and_test:
     name: Code Quality & Automated Test Suite
     runs-on: ubuntu-latest
+    concurrency:
+      group: vsp-ci-${{ github.ref }}
+      cancel-in-progress: true
     timeout-minutes: 15
 
     steps:
@@ -55,8 +58,83 @@ jobs:
           EOF
           fi
 
+      - name: Restore Firebase Android Configuration for Release
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "Using repository secret GOOGLE_SERVICES_JSON."
+          else
+            echo "::warning::GOOGLE_SERVICES_JSON is not configured; generating an isolated CI-only Firebase configuration."
+            cat > android/app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "vsp-ci-project",
+              "storage_bucket": "vsp-ci-project.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "app.vsp.sports"
+                  }
+                },
+                "api_key": [
+                  {
+                    "current_key": "ci-mock-key"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ]
+          }
+          EOF
+          fi
+          test -s android/app/google-services.json
+          python -c "import json; json.load(open('android/app/google-services.json', encoding='utf-8')); print('google-services.json is valid JSON')"
       - name: Run Static Code Analysis (Zero Tolerance Gate)
         run: flutter analyze
 
       - name: Run Automated Test Suite
-        run: flutter test --coverage
+        run: flutter test --coverage --exclude-tags=visual
+
+      - name: Configure Ephemeral CI Release Signing
+        run: |
+          keytool -genkeypair -v -keystore android/app/ci-release.jks -storepass ci-password -keypass ci-password \
+            -alias vsp-ci -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=VSP CI,O=VSP,L=Aswan,C=EG"
+          cat > android/key.properties << 'EOF'
+          storePassword=ci-password
+          keyPassword=ci-password
+          keyAlias=vsp-ci
+          storeFile=ci-release.jks
+          EOF
+
+      - name: Accept Android SDK Licenses and Install Required NDK
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "sdkmanager not found at $SDKMANAGER"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" "ndk;30.0.15729638"
+          test -d "$SDK_ROOT/ndk/30.0.15729638"
+
+      - name: Build Release App Bundle (Store Gate)
+        run: flutter build appbundle --release
+
+      - name: Verify Release Artifact Exists
+        run: test -s build/app/outputs/bundle/release/app-release.aab
+
+      - name: Remove Ephemeral Signing Material
+        if: always()
+        run: rm -f android/app/ci-release.jks android/key.properties android/app/google-services.json

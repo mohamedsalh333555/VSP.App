@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 
 /// Starter Prompt Cards displayed when a conversation is empty.
 /// Built strictly with the VSP Design System (Zinc surface, Electric Lime accent, 24px card radius).
@@ -74,22 +75,28 @@ class CopilotStarterPrompts extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         children: [
-          // VSP Glowing Hero Badge
+          // VSP AI Hero Badge
           Container(
-            padding: const EdgeInsets.all(18),
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: VSPColors.accent.withValues(alpha: 0.12),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 1.5),
+              color: VSPColors.surfaceAlt,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 1.5,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: VSPColors.accent.withValues(alpha: 0.15),
-                  blurRadius: 24,
-                  spreadRadius: 2,
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 38),
+            child: const Center(
+              child: GeminiAIIcon(size: 40),
+            ),
           ),
           const SizedBox(height: 18),
           Text(
@@ -173,27 +180,30 @@ class CopilotStarterPrompts extends StatelessWidget {
                   child: InkWell(
                     onTap: () => onSelectPrompt(p['title'] as String),
                     borderRadius: BorderRadius.circular(VSPRadius.card),
-                    splashColor: VSPColors.accentSoft,
-                    highlightColor: VSPColors.accent.withValues(alpha: 0.05),
+                    splashColor: Colors.white.withValues(alpha: 0.05),
+                    highlightColor: Colors.white.withValues(alpha: 0.02),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
                         children: [
                           // Leading rounded icon container
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            width: 42,
+                            height: 42,
                             decoration: BoxDecoration(
-                              color: VSPColors.accent.withValues(alpha: 0.12),
+                              color: Colors.white.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: VSPColors.accent.withValues(alpha: 0.25),
+                                color: Colors.white.withValues(alpha: 0.08),
                                 width: 1,
                               ),
                             ),
-                            child: Icon(
-                              p['icon'] as IconData,
-                              color: VSPColors.accent,
-                              size: 20,
+                            child: Center(
+                              child: Icon(
+                                p['icon'] as IconData,
+                                color: VSPColors.textPrimary,
+                                size: 20,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -226,8 +236,8 @@ class CopilotStarterPrompts extends StatelessWidget {
                           // Trailing Arrow
                           Icon(
                             isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
-                            size: 13,
-                            color: VSPColors.accent.withValues(alpha: 0.7),
+                            size: 14,
+                            color: VSPColors.textSecondary.withValues(alpha: 0.6),
                           ),
                         ],
                       ),

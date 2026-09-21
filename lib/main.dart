@@ -32,18 +32,22 @@ import 'core/services/secure_storage_service.dart';
 import 'core/services/remote_config_service.dart';
 import 'shared/widgets/vsp_network_banner.dart';
 
+import 'package:flutter/foundation.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
- await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
- VSPLogger.i('Handling a background FCM message: ${message.messageId}');
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  VSPLogger.i('Handling a background FCM message: ${message.messageId}');
 }
 
 void main() async {
- WidgetsFlutterBinding.ensureInitialized();
- usePathUrlStrategy();
- 
+  WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
+
+  bool supabaseInitialized = false;
+
   // CONCURRENT INITIALIZATION (Supabase & Firebase)
   await Future.wait([
     (() async {
@@ -53,9 +57,11 @@ void main() async {
           publishableKey: AppEnv.supabaseAnonKey,
         ).timeout(const Duration(seconds: 8));
         VSPLogger.i("Supabase initialized securely");
+        supabaseInitialized = true;
         unawaited(VSPTimeService.syncWithServer());
       } catch (e) {
         VSPLogger.e("Supabase initialization error: $e");
+        supabaseInitialized = false;
       }
     })(),
     (() async {
@@ -74,19 +80,19 @@ void main() async {
       }
     })(),
   ]);
-  
+
   // Initialize Remote Config & App Feature Engine
   final configService = RemoteConfigService();
   await configService.initialize();
- 
- // System UI Style
- SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
- SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
- statusBarColor: Colors.transparent,
- statusBarIconBrightness: Brightness.light,
- systemNavigationBarColor: Colors.transparent,
- systemNavigationBarDividerColor: Colors.transparent,
- ));
+
+  // System UI Style
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarDividerColor: Colors.transparent,
+  ));
 
   // Global Crash Boundary & Logging Handlers
   FlutterError.onError = (FlutterErrorDetails details) {
@@ -114,64 +120,245 @@ void main() async {
     return true;
   };
 
- // Custom Error Boundary Widget
- ErrorWidget.builder = (FlutterErrorDetails details) {
- return Scaffold(
- backgroundColor: VSPColors.background,
- body: Center(
- child: Padding(
- padding: const EdgeInsets.all(VSPSpacing.xl),
- child: Column(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- const Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
- const SizedBox(height: VSPSpacing.xl),
- const Text(
- 'Something went wrong! ',
- style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
- textAlign: TextAlign.center,
- ),
- Text(
- details.exceptionAsString(),
- textAlign: TextAlign.center,
- style: const TextStyle(color: VSPColors.error, fontSize: 13, fontFamily: 'monospace'),
- ),
- const SizedBox(height: VSPSpacing.md),
- const Text(
- 'We encountered an unexpected error. Our team has been notified and we are working on it.',
- textAlign: TextAlign.center,
- style: TextStyle(color: VSPColors.textSecondary),
- ),
- const SizedBox(height: VSPSpacing.xl),
- ElevatedButton(
- onPressed: () {
- final ctx = navigatorKey.currentContext;
- if (ctx != null) {
- ctx.go('/');
- }
- },
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
- ),
- child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
- ),
- ],
- ),
- ),
- ),
- );
- };
+  // Custom Error Boundary Widget
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    final isArabic = (PlatformDispatcher.instance.locale.languageCode == 'ar');
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(VSPSpacing.xl),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(VSPSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: VSPColors.error.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Iconsax.warning_2_copy, size: 56, color: VSPColors.error),
+                ),
+                const SizedBox(height: VSPSpacing.xl),
+                Text(
+                  isArabic ? 'حدث خطأ غير متوقع' : 'Something went wrong',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: VSPSpacing.sm),
+                Text(
+                  isArabic
+                      ? 'تم تسجيل المشكلة وسيعمل فريقنا على معالجتها. يمكنك محاولة العودة للرئيسية.'
+                      : 'An unexpected error occurred. Our team has been notified.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                ),
+                if (kDebugMode) ...[
+                  const SizedBox(height: VSPSpacing.md),
+                  Container(
+                    padding: const EdgeInsets.all(VSPSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    constraints: const BoxConstraints(maxHeight: 120),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        details.exceptionAsString(),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: VSPColors.error,
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: VSPSpacing.xl),
+                ElevatedButton(
+                  onPressed: () {
+                    final ctx = navigatorKey.currentContext;
+                    if (ctx != null) {
+                      try {
+                        ctx.go('/');
+                      } catch (_) {}
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    isArabic ? 'العودة للرئيسية' : 'Return Home',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
 
- runApp(const VSPApplication());
+  if (!supabaseInitialized) {
+    runApp(const VSPBootstrapFailureApp());
+    return;
+  }
 
- // Background non-critical services (Notifications & Crashlytics)
- unawaited(
- NotificationService().initialize(navigatorKey).catchError((e) {
- VSPLogger.w(" Warning: Notification service failed to initialize: $e");
- }),
- );
+  runApp(const VSPApplication());
+
+  // Background non-critical services (Notifications & Crashlytics)
+  unawaited(
+    NotificationService().initialize(navigatorKey).catchError((e) {
+      VSPLogger.w("⚠️ Warning: Notification service failed to initialize: $e");
+    }),
+  );
+}
+
+/// Fallback application when Supabase fails to initialize on cold start
+class VSPBootstrapFailureApp extends StatefulWidget {
+  final Object? error;
+  const VSPBootstrapFailureApp({super.key, this.error});
+
+  @override
+  State<VSPBootstrapFailureApp> createState() => _VSPBootstrapFailureAppState();
+}
+
+class _VSPBootstrapFailureAppState extends State<VSPBootstrapFailureApp> {
+  bool _isRetrying = false;
+
+  Future<void> _retry() async {
+    setState(() {
+      _isRetrying = true;
+    });
+
+    try {
+      await Supabase.initialize(
+        url: AppEnv.supabaseUrl,
+        publishableKey: AppEnv.supabaseAnonKey,
+      ).timeout(const Duration(seconds: 10));
+
+      VSPLogger.i("Supabase re-initialized successfully on retry");
+      unawaited(VSPTimeService.syncWithServer());
+
+      if (mounted) {
+        runApp(const VSPApplication());
+      }
+    } catch (e) {
+      VSPLogger.e("Supabase retry failed: $e");
+      if (mounted) {
+        setState(() {
+          _isRetrying = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = (PlatformDispatcher.instance.locale.languageCode == 'ar');
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: Scaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: VSPColors.surface,
+                      border: Border.all(
+                        color: VSPColors.accent.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Iconsax.wifi_square_copy,
+                        size: 40,
+                        color: VSPColors.accent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    isArabic ? 'تعذر الاتصال بالخادم' : 'Server Connection Failed',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isArabic
+                        ? 'يرجى التأكد من اتصال الإنترنت ثم المحاولة مرة أخرى'
+                        : 'Please check your internet connection and try again',
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isRetrying ? null : _retry,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isRetrying
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.black,
+                              ),
+                            )
+                          : Text(
+                              isArabic ? 'إعادة المحاولة' : 'Try Again',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class VSPApplication extends StatelessWidget {

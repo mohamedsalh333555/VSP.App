@@ -1,9 +1,11 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
+import '../../../core/models/user_model.dart';
 import '../../player/screens/profile_subscreens/notifications_screen.dart';
 import '../../player/screens/terms_and_privacy_screen.dart';
 import '../../player/screens/faq_and_support_screen.dart';
@@ -20,7 +22,9 @@ class OwnerProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    
+    final auth = Provider.of<AuthProvider>(context);
+    final user = auth.userModel;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -41,6 +45,10 @@ class OwnerProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── بطاقة حالة توثيق المنشأة ──
+            if (user != null)
+              _buildVerificationBadgeCard(context, user, isArabic),
+
             // ── Account Section ──
             VSPSectionTitle(l10n.profileAccountLabel),
             const SizedBox(height: VSPSpacing.md),
@@ -151,6 +159,91 @@ class OwnerProfileScreen extends StatelessWidget {
             ),
 
             SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerificationBadgeCard(BuildContext context, UserModel user, bool isArabic) {
+    final status = user.verificationStatus;
+    final isApproved = user.isVerifiedForOperations;
+    final isUnderReview = status == 'under_review';
+    final isRejected = status == 'rejected';
+
+    final Color badgeColor = isApproved
+        ? VSPColors.accent
+        : (isRejected ? VSPColors.error : VSPColors.warning);
+
+    final IconData icon = isApproved
+        ? Iconsax.verify_copy
+        : (isRejected ? Iconsax.close_circle_copy : Iconsax.timer_1_copy);
+
+    final String statusText = isArabic
+        ? (isApproved
+            ? 'حساب منشأة معتمد رسمياً'
+            : (isRejected
+                ? 'تم رفض توثيق المنشأة'
+                : (isUnderReview ? 'الوثائق قيد المراجعة والتدقيق' : 'بانتظار توثيق المنشأة')))
+        : (isApproved
+            ? 'Officially Verified Facility'
+            : (isRejected
+                ? 'Verification Rejected'
+                : (isUnderReview ? 'Documents Under Review' : 'Facility Verification Required')));
+
+    return GestureDetector(
+      onTap: isApproved ? null : () => context.push('/documentation'),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: badgeColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(VSPRadius.card),
+          border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: badgeColor.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: badgeColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      color: badgeColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic
+                        ? (isApproved
+                            ? 'جميع عمليات التشغيل واستقبال الحجوزات مفعلة بالكامل'
+                            : 'اضغط هنا لمتابعة حالة وثائق ومستندات المنشأة')
+                        : (isApproved
+                            ? 'All operations and bookings are fully active'
+                            : 'Tap to view or update facility documents'),
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isApproved)
+              const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 14),
           ],
         ),
       ),

@@ -75,7 +75,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
                   Text(
                     slot['nightLabel'] as String,
                     style: const TextStyle(
-                      color: Colors.amber,
+                      color: VSPColors.accent,
                       fontWeight: FontWeight.bold,
                       fontSize: 9,
                     ),

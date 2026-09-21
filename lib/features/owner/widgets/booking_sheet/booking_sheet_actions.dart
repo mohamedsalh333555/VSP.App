@@ -94,8 +94,8 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.amber,
-                side: const BorderSide(color: Colors.amber),
+                foregroundColor: VSPColors.accent,
+                side: const BorderSide(color: VSPColors.accent),
                 padding: const EdgeInsets.symmetric(vertical: 8),
               ),
               icon: const Icon(Iconsax.clock_copy, size: 16),

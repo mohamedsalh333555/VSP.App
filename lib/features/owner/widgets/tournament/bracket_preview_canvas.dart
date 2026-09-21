@@ -80,16 +80,18 @@ class BracketPreviewCanvas extends StatelessWidget {
               ),
             );
 
+            final isRtl = Directionality.of(context) == TextDirection.rtl;
+
             return Row(
               children: [
                 roundColumn,
                 SizedBox(
                   height: totalBracketHeight + 32,
-                  child: const Center(
+                  child: Center(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
                       child: Icon(
-                        Iconsax.arrow_right_1_copy,
+                        isRtl ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                         color: VSPColors.accent,
                         size: 16,
                       ),

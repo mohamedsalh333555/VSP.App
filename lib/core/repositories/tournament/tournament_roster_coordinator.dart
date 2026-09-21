@@ -293,7 +293,7 @@ class TournamentRosterCoordinator {
     try {
       final rosters = await _supabase
           .from('championship_rosters')
-          .select('id, team_id, guest_names, player_ids')
+          .select('id, team_id, guest_names')
           .eq('championship_id', championshipId)
           .neq('team_id', currentTeamId);
 
@@ -305,12 +305,6 @@ class TournamentRosterCoordinator {
       for (var r in otherRosters) {
         final rosterId = r['id'].toString();
         otherRosterIds.add(rosterId);
-        final pIds = r['player_ids'] as List? ?? [];
-        for (var p in pIds) {
-          if (p != null && p.toString().isNotEmpty) {
-            registeredPlayerIds.add(p.toString());
-          }
-        }
         final gNames = r['guest_names'] as List? ?? [];
         for (var g in gNames) {
           if (g != null && g.toString().trim().isNotEmpty) {

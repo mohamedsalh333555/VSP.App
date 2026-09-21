@@ -41,7 +41,7 @@ class VSPMenuItem extends StatelessWidget {
               child: Icon(
                 icon,
                 color: isLogout ? VSPColors.error : VSPColors.accent,
-                size: 24,
+                size: VSPIconSize.lg,
               ),
             ),
             const SizedBox(width: VSPSpacing.md),
@@ -77,7 +77,7 @@ class VSPMenuItem extends StatelessWidget {
               Icon(
                 Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                 color: VSPColors.textSecondary,
-                size: 22,
+                size: VSPIconSize.md,
               ),
           ],
         ),

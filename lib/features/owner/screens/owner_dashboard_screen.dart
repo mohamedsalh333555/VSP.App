@@ -1,21 +1,25 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
+import 'add_stadium_wizard.dart';
 
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
+import '../widgets/dashboard/owner_no_stadium_empty_state.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
 import '../widgets/dashboard/owner_pro_overview_card.dart';
 import '../widgets/dashboard/owner_pro_insights_view.dart';
@@ -24,6 +28,8 @@ import '../widgets/dashboard/owner_glanceable_timeline.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
 import '../widgets/dashboard/owner_quick_cash_card.dart';
+import '../widgets/dashboard/owner_launch_readiness_card.dart';
+import '../widgets/dashboard/owner_pro_upgrade_teaser.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -114,26 +120,47 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final userModel = auth.userModel;
-    final isProOwner = userModel?.isProPlan == true;
+    final userModel = auth.userModel ?? UserModel(
+      uid: 'demo_owner_1',
+      email: 'owner@vsp.app',
+      name: 'كابتن محمد سمير',
+      role: 'owner',
+      phone: '01012345678',
+      verificationStatus: 'pending',
+      isIdentityVerified: false,
+    );
+    final isProOwner = userModel.isProPlan == true;
+
+    // ── Guard: مالك غير معتمد بعد ─────────────────────────────────────────
+    // إذا لم تُعتمد المنشأة، اعرض مركز الإعداد بدلاً من لوحة التشغيل اليومي.
+    // هذا يمنع: عرض إيرادات صفرية مضللة، وحرق أيام التجربة المجانية.
+    if (!userModel.isVerifiedForOperations) {
+      final stadiumProvider = Provider.of<StadiumProvider>(context);
+      return _buildPreLaunchHub(
+        context,
+        auth,
+        userModel,
+        isArabic,
+        stadiumProvider.stadiums,
+      );
+    }
+    // ── نهاية Guard ───────────────────────────────────────────────────────
 
     bool isExpired = false;
     int? remainingTrialDays;
     bool showTrialEndingSoon = false;
 
-    if (userModel != null) {
-      if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
-        isExpired = false;
-      } else {
-        isExpired = userModel.isPlanExpired;
-      }
+    if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
+      isExpired = false;
+    } else {
+      isExpired = userModel.isPlanExpired;
+    }
 
-      final trialEnds = userModel.effectiveTrialEndsAt;
-      if (trialEnds != null && userModel.isInActiveTrial) {
-        remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
-        // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
-        showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
-      }
+    final trialEnds = userModel.effectiveTrialEndsAt;
+    if (trialEnds != null && userModel.isInActiveTrial) {
+      remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
+      // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
+      showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
     }
 
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -177,8 +204,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 const SizedBox(height: 14),
 
                 // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
-                if (userModel != null)
-                  OwnerVerificationBanner(userModel: userModel, isArabic: isArabic),
+                OwnerVerificationBanner(
+                  userModel: userModel,
+                  isArabic: isArabic,
+                  hasStadiums: stadiums.isNotEmpty,
+                ),
 
                 // 2.1 تنبيه اقتراب انتهاء التجربة المجانية (اليوم 51-60 فقط)
                 if (showTrialEndingSoon && remainingTrialDays != null)
@@ -189,14 +219,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
 
                 // 2.2 تنبيه انتهاء الاشتراك إن وجد (بعد اليوم 60)
-                if (userModel != null && isExpired)
+                if (isExpired)
                   OwnerSubscriptionExpiredAlert(
                     isArabic: isArabic,
                     onRenew: () => _showProUpgradeSheet(context),
                   ),
 
-                // 3. المحتوى المتفرع حسب الباقة (Basic vs Pro)
-                if (isProOwner) ...[
+                // 3. المحتوى: إما كارت إرشادي للمالك الجديد بدون ملاعب، أو لوحة التحكم الكاملة
+                if (stadiums.isEmpty) ...[
+                  OwnerNoStadiumEmptyState(isArabic: isArabic),
+                ] else if (isProOwner) ...[
                   // شريط التبويب المقسم (Pill Segmented Switcher)
                   OwnerProSegmentedTabs(
                     selectedIndex: _selectedProTabIndex,
@@ -264,6 +296,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     metrics: metrics,
                     selectedTimePeriod: _selectedTimePeriod,
                     onTimePeriodChanged: (period) => setState(() => _selectedTimePeriod = period),
+                    onSettleDues: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerLedgerScreen())),
                     isArabic: isArabic,
                   ),
                   const SizedBox(height: 16),
@@ -285,6 +318,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       }
                     },
                   ),
+                  if (userModel.isVerifiedForOperations) ...[
+                    const SizedBox(height: 16),
+                    OwnerProUpgradeTeaser(
+                      onUpgrade: () => _showProUpgradeSheet(context),
+                      isArabic: isArabic,
+                      isVerified: userModel.isVerifiedForOperations,
+                    ),
+                  ],
                 ],
                 const SizedBox(height: 80),
               ],
@@ -295,4 +336,72 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     );
   }
 
+}
+
+// ── امتداد: مركز إعداد ما قبل الإطلاق ──────────────────────────────────────
+extension _PreLaunchHub on _OwnerDashboardScreenState {
+  /// يُعرض بدلاً من لوحة التشغيل اليومي عندما لا يكون المالك معتمداً بعد.
+  /// يحافظ على نفس الهيدر والبانر الموجودَين، ويضيف بطاقة مراحل الإطلاق.
+  Widget _buildPreLaunchHub(
+    BuildContext context,
+    AuthProvider auth,
+    UserModel userModel,
+    bool isArabic,
+    List<Stadium> stadiums,
+  ) {
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: VSPColors.accent,
+          backgroundColor: VSPColors.surface,
+          onRefresh: () async {
+            final uid = auth.currentUser?.id;
+            if (uid == null) return;
+            await auth.refreshProfile();
+            if (context.mounted) {
+              Provider.of<StadiumProvider>(context, listen: false)
+                  .listenToOwnerStadiums(uid);
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. الهيدر الموحد
+                OwnerDashboardHeader(
+                  auth: auth,
+                  isProOwner: false,
+                  isArabic: isArabic,
+                  onUpgrade: () => _showProUpgradeSheet(context),
+                ),
+                const SizedBox(height: 14),
+
+                // 2. مركز جاهزية وإطلاق المنشأة
+                OwnerLaunchReadinessCard(
+                  verificationStatus: userModel.verificationStatus,
+                  hasStadium: stadiums.isNotEmpty,
+                  isArabic: isArabic,
+                  onAddStadium: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => stadiums.isNotEmpty
+                          ? AddStadiumWizard(stadiumId: stadiums.first.id)
+                          : const AddStadiumWizard(),
+                    ),
+                  ),
+                  onResubmitDocs: () => context.push('/documentation'),
+                ),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

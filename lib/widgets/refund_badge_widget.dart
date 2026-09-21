@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../core/ui/tokens/vsp_tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../models/refund_info.dart';
 
@@ -117,6 +118,6 @@ class RefundBadgeWidget extends StatelessWidget {
   Color _channelColor(RefundChannel channel) => switch (channel) {
     RefundChannel.wallet => const Color(0xFF10B981), // Green
     RefundChannel.card   => const Color(0xFF3B82F6), // Blue
-    RefundChannel.cash   => const Color(0xFFF59E0B), // Orange
+    RefundChannel.cash   => VSPColors.accent, // Primary Green
   };
 }

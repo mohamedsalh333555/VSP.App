@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import 'add_stadium_wizard.dart';
 import '../widgets/bookings/owner_bookings_filter_bar.dart';
 import '../widgets/bookings/owner_schedule_slots_builder.dart';
 import '../widgets/bookings/owner_time_slot_row.dart';
@@ -73,6 +76,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final userModel = Provider.of<AuthProvider>(context).userModel;
+    final bool isVerified = userModel?.isVerifiedForOperations == true;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -92,10 +97,60 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           final selectedStadium = _getEffectiveStadium(stadiums);
 
           if (selectedStadium == null) {
-            return VSPEmptyState(
-              icon: Iconsax.building_copy,
-              title: l10n.stadiumsEmptyTitle,
-              subtitle: l10n.stadiumsEmptySubtitle,
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: const Icon(Iconsax.building_copy, color: VSPColors.accent, size: 32),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      isArabic ? 'لم تقم بإضافة ملعب بعد' : 'No Stadium Added Yet',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isArabic
+                          ? 'أضف بيانات ملعبك الأول لبدء إعداد جدول التشغيل واستقبال الحجوزات بعد اعتماد المنشأة.'
+                          : 'Add your first pitch to configure schedules and accept bookings once verified.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+                        ),
+                        icon: const Icon(Iconsax.add_circle_copy, size: 18),
+                        label: Text(
+                          isArabic ? 'إضافة ملعب جديد' : 'Add New Stadium',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: Colors.black,
+                          shape: const StadiumBorder(),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
 
@@ -125,6 +180,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           if (rawSlots.isEmpty) {
             return Column(
               children: [
+                if (!isVerified) _buildUnverifiedBookingsBanner(context, isArabic, userModel),
                 OwnerBookingsFilterBar(
                   stadiums: stadiums,
                   selectedStadium: selectedStadium,
@@ -149,6 +205,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
           return Column(
             children: [
+              if (!isVerified) _buildUnverifiedBookingsBanner(context, isArabic, userModel),
               OwnerBookingsFilterBar(
                 stadiums: stadiums,
                 selectedStadium: selectedStadium,
@@ -225,6 +282,61 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     }
   }
 
+  Widget _buildUnverifiedBookingsBanner(BuildContext context, bool isArabic, UserModel? user) {
+    final status = user?.verificationStatus;
+    final isRejected = status == 'rejected';
+    final isUnderReview = status == 'under_review';
+
+    final text = isArabic
+        ? (isRejected
+            ? 'تم رفض توثيق المنشأة. يرجى إعادة رفع المستندات لتفعيل ظهور الملاعب للاعبين.'
+            : (isUnderReview
+                ? 'مستندات منشأتك قيد المراجعة. سيبدأ استقبال حجوزات اللاعبين أونلاين فور الاعتماد.'
+                : 'منشأتك غير معتمدة تشغيلياً بعد. لن تظهر ملاعبك للاعبين حتى يتم اعتماد وثائق المنشأة.'))
+        : (isRejected
+            ? 'Verification rejected. Please re-upload docs so players can book.'
+            : (isUnderReview
+                ? 'Documents under review. Online player bookings will activate upon approval.'
+                : 'Facility is pending verification. Stadiums are hidden from players until approved.'));
+
+    final Color color = isRejected ? VSPColors.error : VSPColors.warning;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(isRejected ? Iconsax.close_circle_copy : Iconsax.info_circle_copy, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: color, fontSize: 12, height: 1.4, fontWeight: FontWeight.w600),
+            ),
+          ),
+          if (!isUnderReview)
+            TextButton(
+              onPressed: () => context.push('/documentation'),
+              style: TextButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              child: Text(
+                isArabic ? 'توثيق' : 'Verify',
+                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   void _showBookingModal({
     required bool isEdit,
     required Map<String, dynamic> slot,
@@ -232,16 +344,14 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   }) {
     if (!isEdit) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final status = auth.userModel?.verificationStatus;
-      final isUnderReview = status == 'pending' || status == 'under_review';
-      final isRejected = status == 'rejected';
+      final isVerified = auth.userModel?.isVerifiedForOperations == true;
 
-      if (isUnderReview || isRejected) {
+      if (!isVerified) {
         VSPFeedback.showError(
           context,
           Localizations.localeOf(context).languageCode == 'ar'
-              ? 'عذراً، حسابك قيد المراجعة والتوثيق من قِبل إدارة التطبيق. لا يمكن إضافة حجز جديد حتى يتم الاعتماد والتفعيل!'
-              : 'Sorry, your account is under review. Bookings are disabled until admin approval!',
+              ? 'عذراً، حسابك بانتظار التوثيق والاعتماد من قِبل إدارة التطبيق. لا يمكن إضافة حجز جديد حتى يتم الاعتماد والتفعيل!'
+              : 'Sorry, your account is awaiting verification. Bookings are disabled until admin approval!',
         );
         return;
       }

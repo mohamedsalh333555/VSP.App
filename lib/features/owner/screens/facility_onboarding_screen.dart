@@ -59,15 +59,23 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
   }
 
- @override
- Widget build(BuildContext context) {
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.id ?? '';
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.userModel;
+    final uid = user?.uid ?? authProvider.currentUser?.id ?? '';
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
- backgroundColor: VSPColors.background,
- body: SafeArea(
+    // إذا كان المالك قد أكد التهيئة بالفعل، ينتقل تلقائياً للوحة التحكم
+    if (user != null && user.isOnboardingConfirmed && (user.hasStadium || user.isOwner)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/owner');
+      });
+    }
+
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: SafeArea(
         child: StreamBuilder<List<Stadium>>(
           stream: _getStadiumsStream(uid),
           builder: (context, snapshot) {
@@ -123,27 +131,106 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
  ),
               const SizedBox(height: 12),
-              TextButton(
-                onPressed: () async {
-                  final uid = authProvider.currentUser?.uid ?? authProvider.userModel?.uid;
-                  if (uid != null) {
-                    await UserRepository().updateOnboardingConfirmed(uid, true);
-                  }
-                  await authProvider.updateProfile({
-                    'is_onboarding_confirmed': true,
-                  });
-                  if (context.mounted) {
-                    context.go('/owner');
-                  }
-                },
-                child: Text(
-                  isAr ? 'هضيف الملعب بعدين' : "I'll add stadium later",
-                  style: const TextStyle(
-                    color: VSPColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+              // ── زر التأجيل: outlined واضح بدلاً من نص شبح لا يُلاحَظ ──
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    // تأكيد من المالك قبل تخطي إضافة الملعب
+                    final bool? confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        backgroundColor: VSPColors.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(VSPRadius.dialog),
+                        ),
+                        title: Text(
+                          isAr ? 'تأجيل إضافة الملعب؟' : 'Skip Adding Stadium?',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
+                        content: Text(
+                          isAr
+                              ? 'لن تتمكن من استقبال أي حجوزات أو ظهور في نتائج البحث حتى تضيف ملعبك وتُوثّق حسابك.\n\nيمكنك إضافة الملعب في أي وقت من لوحة التحكم.'
+                              : "You won't be able to receive bookings or appear in search results until you add your stadium and verify your account.\n\nYou can add it anytime from your dashboard.",
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 13.5,
+                            height: 1.55,
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(
+                              isAr ? 'إضافة الملعب الآن' : 'Add Stadium Now',
+                              style: const TextStyle(
+                                color: VSPColors.accent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: Text(
+                              isAr ? 'تخطي الآن' : 'Skip for Now',
+                              style: const TextStyle(
+                                color: VSPColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true) return;
+                    if (!context.mounted) return;
+                    await authProvider.setOnboardingConfirmed(true);
+                    if (context.mounted) context.go('/owner');
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: VSPColors.textSecondary,
+                    side: BorderSide(
+                      color: VSPColors.textSecondary.withValues(alpha: 0.35),
+                      width: 1.2,
+                    ),
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(Iconsax.timer_1_copy, size: 18, color: VSPColors.textSecondary),
+                  label: Text(
+                    isAr ? 'هضيف الملعب بعدين' : "I'll add the stadium later",
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 8),
+              // ── تحذير صغير يُعلم المالك بمحدودية حسابه ──
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Iconsax.warning_2_copy, size: 12, color: VSPColors.warning),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      isAr
+                          ? 'لن تظهر في البحث أو تستقبل حجوزات دون إضافة ملعب'
+                          : "You won't appear in search or receive bookings without a stadium",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: VSPColors.warning,
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
               ),
  const SizedBox(height: 16),
  ],
@@ -341,6 +428,32 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: Text(
  isAr ? 'متابعة لرفع الوثائق' : 'Continue to Upload Docs',
  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+ ),
+ ),
+ ),
+ const SizedBox(height: 10),
+ TextButton(
+ onPressed: () async {
+ final uid = authProvider.currentUser?.uid;
+ final updatedAdditional =
+ FacilityOnboardingService.buildOnboardingConfirmedPayload(
+ authProvider.userModel?.additionalData,
+ );
+ if (uid != null) {
+ await UserRepository().updateOnboardingStatus(uid, updatedAdditional);
+ }
+ await authProvider.updateProfile({
+ 'additionalData': updatedAdditional,
+ });
+ if (!context.mounted) return;
+ context.go('/owner');
+ },
+ child: Text(
+ isAr ? 'الانتقال إلى لوحة التحكم' : 'Go to Dashboard',
+ style: const TextStyle(
+ color: VSPColors.textSecondary,
+ fontWeight: FontWeight.w600,
+ fontSize: 14,
  ),
  ),
  ),

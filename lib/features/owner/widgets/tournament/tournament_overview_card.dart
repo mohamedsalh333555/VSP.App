@@ -77,7 +77,7 @@ class TournamentOverviewCard extends StatelessWidget {
                   championship.prizeDelivered
                       ? (isArabic ? 'تم التسليم' : 'Delivered')
                       : (isArabic ? 'بانتظار التسليم' : 'Pending'),
-                  color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                  color: championship.prizeDelivered ? VSPColors.success : VSPColors.warning,
                 ),
             ],
           ),
@@ -87,9 +87,9 @@ class TournamentOverviewCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  foregroundColor: const Color(0xFF10B981),
-                  side: const BorderSide(color: Color(0xFF10B981)),
+                  backgroundColor: VSPColors.success.withValues(alpha: 0.15),
+                  foregroundColor: VSPColors.success,
+                  side: const BorderSide(color: VSPColors.success),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
                 icon: const Icon(Iconsax.award_copy, size: 16),

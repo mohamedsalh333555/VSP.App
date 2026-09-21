@@ -177,7 +177,7 @@ class BookingScheduleCoordinator {
           .from('bookings')
           .update({
             'status': 'cancelled',
-            'payment_status': 'expired',
+            'payment_status': 'failed',
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('created_by_user_id', userId)
@@ -218,7 +218,7 @@ class BookingScheduleCoordinator {
           .from('bookings')
           .update({
             'status': 'cancelled',
-            'payment_status': 'expired',
+            'payment_status': 'failed',
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', bookingId)

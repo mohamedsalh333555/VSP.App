@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../screens/profile_subscreens/edit_profile_screen.dart';
 import '../champion_podium_components.dart';
 
 /// Displayed when a user does not have a home governorate set in their profile.
@@ -47,7 +48,10 @@ class League1v1NoGovernorateState extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.pushNamed(context, '/edit-profile');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,

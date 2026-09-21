@@ -23,17 +23,38 @@ class FeatureFlagService {
   /// Fetch remote feature flags from Supabase `app_settings` table
   Future<void> fetchRemoteFlags() async {
     try {
-      final response = await Supabase.instance.client
+      final settings = await Supabase.instance.client
           .from('app_settings')
-          .select('key, value')
+          .select('online_payment_enabled, cash_booking_enabled')
+          .limit(1)
+          .maybeSingle()
           .timeout(const Duration(seconds: 4));
 
-      for (final row in response) {
-        if (row['key'] != null && row['value'] != null) {
-          final key = row['key'].toString();
-          _flags[key] = row['value'];
+      if (settings != null) {
+        if (settings['online_payment_enabled'] != null) {
+          _flags['is_online_payment_enabled'] = settings['online_payment_enabled'];
+        }
+        if (settings['cash_booking_enabled'] != null) {
+          _flags['is_cash_booking_enabled'] = settings['cash_booking_enabled'];
         }
       }
+
+      final config = await Supabase.instance.client
+          .from('app_config')
+          .select('is_maintenance, min_version')
+          .limit(1)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 4));
+
+      if (config != null) {
+        if (config['is_maintenance'] != null) {
+          _flags['is_maintenance_mode'] = config['is_maintenance'];
+        }
+        if (config['min_version'] != null) {
+          _flags['min_app_version'] = config['min_version'].toString();
+        }
+      }
+
       _isFetched = true;
       debugPrint('[FeatureFlagService] Remote flags synchronized: ${_flags.keys.length} flags loaded.');
     } catch (e) {

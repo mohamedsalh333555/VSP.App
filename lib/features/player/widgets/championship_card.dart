@@ -98,7 +98,7 @@ class ChampionshipCard extends StatelessWidget {
                     badgeColor = VSPColors.accent;
                   } else if (isFull) {
                     badgeText = AppLocalizations.of(context)!.full.toUpperCase();
-                    badgeColor = Colors.orange;
+                    badgeColor = VSPColors.textSecondary;
                   } else {
                     badgeText = AppLocalizations.of(context)!.open.toUpperCase();
                     badgeColor = Colors.green;
@@ -216,7 +216,7 @@ class ChampionshipCard extends StatelessWidget {
                     } else if (isFull) {
                       return Text(
                         isArabic ? 'البطولة مكتملة العدد ' : 'Tournament Full ',
-                        style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12),
                       );
                     } else {
                       return Column(

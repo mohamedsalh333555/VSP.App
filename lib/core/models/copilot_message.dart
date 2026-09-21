@@ -75,17 +75,20 @@ class CopilotAction {
   final String route;
   final String label;
   final Map<String, dynamic>? params;
+  final String? capabilityId;
 
   const CopilotAction({
     required this.actionType,
     required this.route,
     required this.label,
     this.params,
+    this.capabilityId,
   });
 
   bool get isOpenPayment => actionType == 'OPEN_PAYMENT';
   bool get isNavigate => actionType == 'NAVIGATE';
   bool get isProfileUpdated => actionType == 'PROFILE_UPDATED';
+  bool get hasCapability => capabilityId != null && capabilityId!.isNotEmpty;
 
   factory CopilotAction.fromMap(Map<String, dynamic> map) {
     return CopilotAction(
@@ -93,8 +96,17 @@ class CopilotAction {
       route: map['route']?.toString() ?? '/player',
       label: map['label']?.toString() ?? 'الانتقال',
       params: map['params'] is Map<String, dynamic> ? map['params'] as Map<String, dynamic> : null,
+      capabilityId: map['capability_id']?.toString() ?? map['capabilityId']?.toString(),
     );
   }
+
+  Map<String, dynamic> toMap() => {
+    'action_type': actionType,
+    'route': route,
+    'label': label,
+    'params': params,
+    'capability_id': capabilityId,
+  };
 }
 
 /// Represents a tournament summary returned by VSP Copilot
@@ -170,6 +182,117 @@ class CopilotOpenMatchSummary {
   }
 }
 
+/// Represents a single option/chip in an interactive clarification prompt
+@immutable
+class CopilotClarificationOption {
+  final String id;
+  final String label;
+
+  const CopilotClarificationOption({
+    required this.id,
+    required this.label,
+  });
+
+  factory CopilotClarificationOption.fromMap(Map<String, dynamic> map) {
+    return CopilotClarificationOption(
+      id: map['id']?.toString() ?? '',
+      label: map['label']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'label': label,
+  };
+}
+
+/// Represents an interactive clarification request from Copilot asking user to resolve ambiguity
+@immutable
+class CopilotClarification {
+  final String type; // 'date_disambiguation' | 'stadium_disambiguation' | 'time_disambiguation' | 'polysemy'
+  final String question;
+  final List<CopilotClarificationOption> options;
+
+  const CopilotClarification({
+    required this.type,
+    required this.question,
+    this.options = const [],
+  });
+
+  bool get isDateDisambiguation => type == 'date_disambiguation';
+  bool get isStadiumDisambiguation => type == 'stadium_disambiguation';
+  bool get isTimeDisambiguation => type == 'time_disambiguation';
+
+  factory CopilotClarification.fromMap(Map<String, dynamic> map) {
+    final rawOptions = map['options'] as List<dynamic>? ?? [];
+    return CopilotClarification(
+      type: map['type']?.toString() ?? 'clarification',
+      question: map['question']?.toString() ?? '',
+      options: rawOptions
+          .whereType<Map<String, dynamic>>()
+          .map((o) => CopilotClarificationOption.fromMap(o))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+    'type': type,
+    'question': question,
+    'options': options.map((o) => o.toMap()).toList(),
+  };
+}
+
+/// Verification status from the edge function — tells the UI if data
+/// came from the real database or was AI-generated text.
+@immutable
+class CopilotVerification {
+  final bool verified;
+  final String source; // 'database_rpc' | 'atomic_booking' | 'gemini_text' | 'security_guard'
+
+  const CopilotVerification({required this.verified, required this.source});
+
+  bool get isFromDatabase => source == 'database_rpc' || source == 'atomic_booking';
+
+  factory CopilotVerification.fromMap(Map<String, dynamic> map) {
+    return CopilotVerification(
+      verified: map['verified'] == true,
+      source: map['source']?.toString() ?? 'gemini_text',
+    );
+  }
+
+  /// Default instance when the field is absent (older contract or local fallback)
+  static const unverified = CopilotVerification(verified: false, source: 'gemini_text');
+}
+
+/// Partial context snapshot returned by the edge function for multi-turn continuity.
+@immutable
+class CopilotContextSnapshot {
+  final Map<String, dynamic>? pendingIntent;
+  final String? lastStadiumId;
+  final String? lastStadiumName;
+  final String? lastDate;
+
+  const CopilotContextSnapshot({
+    this.pendingIntent,
+    this.lastStadiumId,
+    this.lastStadiumName,
+    this.lastDate,
+  });
+
+  bool get hasPendingIntent => pendingIntent != null;
+
+  factory CopilotContextSnapshot.fromMap(Map<String, dynamic> map) {
+    return CopilotContextSnapshot(
+      pendingIntent: map['pending_intent'] is Map<String, dynamic>
+          ? map['pending_intent'] as Map<String, dynamic>
+          : null,
+      lastStadiumId: map['last_stadium_id']?.toString(),
+      lastStadiumName: map['last_stadium_name']?.toString(),
+      lastDate: map['last_date']?.toString(),
+    );
+  }
+}
+
 /// Represents a chat message between the user and VSP Copilot
 @immutable
 class CopilotMessage {
@@ -182,6 +305,15 @@ class CopilotMessage {
   final List<CopilotTournamentSummary> tournamentResults;
   final List<CopilotOpenMatchSummary> openMatchResults;
   final CopilotAction? action;
+  final CopilotClarification? clarification;
+
+  // Phase 1 Contract fields
+  /// Verification status — whether this response came from a real DB query
+  final CopilotVerification verification;
+  /// Partial context snapshot for multi-turn memory continuity
+  final CopilotContextSnapshot? contextSnapshot;
+  /// Error message from the edge function (null on success)
+  final String? errorMessage;
 
   const CopilotMessage({
     required this.id,
@@ -193,6 +325,10 @@ class CopilotMessage {
     this.tournamentResults = const [],
     this.openMatchResults = const [],
     this.action,
+    this.clarification,
+    this.verification = CopilotVerification.unverified,
+    this.contextSnapshot,
+    this.errorMessage,
   });
 
   bool get isUser => sender == 'user';
@@ -200,6 +336,7 @@ class CopilotMessage {
   bool get hasTournaments => tournamentResults.isNotEmpty;
   bool get hasOpenMatches => openMatchResults.isNotEmpty;
   bool get hasAction => action != null;
+  bool get hasClarification => clarification != null && clarification!.options.isNotEmpty;
 
   /// Compatibility alias getters for test suite and client callers
   String get message => text;
@@ -222,6 +359,10 @@ class CopilotMessage {
     List<CopilotTournamentSummary> tournaments = const [],
     List<CopilotOpenMatchSummary> openMatches = const [],
     CopilotAction? action,
+    CopilotClarification? clarification,
+    CopilotVerification verification = CopilotVerification.unverified,
+    CopilotContextSnapshot? contextSnapshot,
+    String? errorMessage,
   }) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -233,6 +374,10 @@ class CopilotMessage {
       tournamentResults: tournaments,
       openMatchResults: openMatches,
       action: action,
+      clarification: clarification,
+      verification: verification,
+      contextSnapshot: contextSnapshot,
+      errorMessage: errorMessage,
     );
   }
 
@@ -241,6 +386,18 @@ class CopilotMessage {
     final rawTournaments = map['tournament_results'] as List<dynamic>? ?? map['tournaments'] as List<dynamic>? ?? [];
     final rawMatches = map['open_matches'] as List<dynamic>? ?? [];
     final rawAction = map['action'] is Map<String, dynamic> ? map['action'] as Map<String, dynamic> : null;
+    final rawClarification = map['clarification'] is Map<String, dynamic> ? map['clarification'] as Map<String, dynamic> : null;
+    final rawVerification = map['verification'] is Map<String, dynamic> ? map['verification'] as Map<String, dynamic> : null;
+    final rawContextSnapshot = map['context_snapshot'] is Map<String, dynamic> ? map['context_snapshot'] as Map<String, dynamic> : null;
+
+    // Parse error from either a string or an error object
+    String? errorMsg;
+    final rawError = map['error'];
+    if (rawError is String) {
+      errorMsg = rawError;
+    } else if (rawError is Map<String, dynamic>) {
+      errorMsg = rawError['message']?.toString() ?? rawError['code']?.toString();
+    }
 
     return CopilotMessage(
       id: map['id']?.toString() ?? '',
@@ -261,6 +418,14 @@ class CopilotMessage {
           .map((m) => CopilotOpenMatchSummary.fromMap(m))
           .toList(),
       action: rawAction != null ? CopilotAction.fromMap(rawAction) : null,
+      clarification: rawClarification != null ? CopilotClarification.fromMap(rawClarification) : null,
+      verification: rawVerification != null
+          ? CopilotVerification.fromMap(rawVerification)
+          : CopilotVerification.unverified,
+      contextSnapshot: rawContextSnapshot != null
+          ? CopilotContextSnapshot.fromMap(rawContextSnapshot)
+          : null,
+      errorMessage: errorMsg,
     );
   }
 }

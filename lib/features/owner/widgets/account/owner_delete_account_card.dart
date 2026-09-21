@@ -12,24 +12,73 @@ class OwnerDeleteAccountCard extends StatelessWidget {
 
   void _showDeleteAccountDialog(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final confirmationWord = isArabic ? 'حذف' : 'DELETE';
+    final TextEditingController confirmController = TextEditingController();
     bool isDeleting = false;
 
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final isMatched = confirmController.text.trim() == confirmationWord;
+
           return AlertDialog(
             backgroundColor: VSPColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            title: Text(
-              isArabic ? 'حذف حساب المالك نهائياً؟ ' : 'Delete Account?',
-              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
+            title: Row(
+              children: [
+                const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isArabic ? 'حذف حساب المالك نهائياً؟' : 'Delete Account Permanently?',
+                    style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 17),
+                  ),
+                ),
+              ],
             ),
-            content: Text(
-              isArabic
-                  ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وملاعبك وتاريخ حجوزاتك نهائياً.'
-                  : 'Are you sure? This action cannot be undone. You will lose all your data, stadiums, and match history permanently.',
-              style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isArabic
+                        ? 'تحذير: هذا الإجراء نهائي ولا يمكن التراجع عنه مطلقاً.\nسيتم حذف حسابك وجميع ملاعبك المسجلة وسجل الحجوزات والبيانات المالية فوراً.'
+                        : 'Warning: This action is permanent and cannot be undone.\nYour account, all registered stadiums, bookings, and ledger records will be deleted immediately.',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.55),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isArabic
+                        ? 'لتأكيد الحذف، يرجى كتابة كلمة "$confirmationWord" أدناه:'
+                        : 'To confirm deletion, please type "$confirmationWord" below:',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: confirmController,
+                    onChanged: (_) => setDialogState(() {}),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    decoration: InputDecoration(
+                      hintText: confirmationWord,
+                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                      filled: true,
+                      fillColor: Colors.black.withValues(alpha: 0.3),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.input),
+                        borderSide: BorderSide(color: VSPColors.error.withValues(alpha: 0.4)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.input),
+                        borderSide: const BorderSide(color: VSPColors.error, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
@@ -47,12 +96,12 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                   const SizedBox(width: VSPSpacing.md),
                   Expanded(
                     child: PrimaryButton(
-                      text: isArabic ? 'حذف' : 'Delete',
+                      text: isArabic ? 'تأكيد الحذف' : 'Confirm Delete',
                       height: 48,
-                      color: VSPColors.error,
-                      textColor: VSPColors.background,
+                      color: isMatched ? VSPColors.error : VSPColors.surfaceAlt,
+                      textColor: isMatched ? Colors.white : VSPColors.textSecondary,
                       isLoading: isDeleting,
-                      onPressed: isDeleting
+                      onPressed: (!isMatched || isDeleting)
                           ? null
                           : () async {
                               setDialogState(() => isDeleting = true);

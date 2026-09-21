@@ -65,7 +65,7 @@ Future<void> showIncompleteSquadBridgeSheet({
               ),
               child: Row(
                 children: [
-                  const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 20),
+                  const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(

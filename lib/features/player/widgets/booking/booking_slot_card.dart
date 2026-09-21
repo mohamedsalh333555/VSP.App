@@ -134,13 +134,13 @@ class BookingSlotCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.2),
+                  color: VSPColors.accent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.amber),
+                  border: Border.all(color: VSPColors.accent),
                 ),
                 child: Text(
                   isArabic ? ' الآن' : ' NOW',
-                  style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ] else if (isNextAvailable) ...[

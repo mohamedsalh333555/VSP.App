@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 
 /// Interactive Testing Playground for VSP Copilot.
 /// Enables comprehensive testing of intelligent queries, security payloads,
@@ -146,7 +147,7 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
         elevation: 0,
         title: const Row(
           children: [
-            Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 22),
+            GeminiAIIcon(size: 22),
             SizedBox(width: 8),
             Text(
               'Copilot Test Playground',

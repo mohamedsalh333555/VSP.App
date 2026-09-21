@@ -10,6 +10,7 @@ enum SignupValidationError {
   invalidPhone,
   passwordMismatch,
   passwordTooShort,
+  underRequiredAge,
 }
 
 class SignupValidationResult {
@@ -59,6 +60,8 @@ class PasswordStrength {
 /// Pure domain helper for validating signup inputs, checking password strength,
 /// building user payloads, and formatting registration errors.
 class SignupValidationService {
+  static const int minimumPasswordLength = 8;
+
   const SignupValidationService._();
 
   /// Validates all fields for the signup form.
@@ -71,6 +74,7 @@ class SignupValidationService {
     required String password,
     required String confirmPassword,
     required DateTime? dateOfBirth,
+    required int minimumAge,
   }) {
     if (!agreedToTerms) {
       return SignupValidationResult.invalid(SignupValidationError.pleaseAgreeToTerms);
@@ -93,6 +97,12 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.pleaseEnterDob);
     }
 
+    final today = DateTime.now();
+    final cutoff = DateTime(today.year - minimumAge, today.month, today.day);
+    if (dateOfBirth.isAfter(cutoff)) {
+      return SignupValidationResult.invalid(SignupValidationError.underRequiredAge);
+    }
+
     final normalizedPhone = PhoneUtils.normalize(trimmedPhone);
     if (normalizedPhone == null || normalizedPhone.length != 11 || !normalizedPhone.startsWith("01")) {
       return SignupValidationResult.invalid(SignupValidationError.invalidPhone);
@@ -102,7 +112,7 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.passwordMismatch);
     }
 
-    if (password.length < 6) {
+    if (password.length < minimumPasswordLength) {
       return SignupValidationResult.invalid(SignupValidationError.passwordTooShort);
     }
 
@@ -127,13 +137,15 @@ class SignupValidationService {
         return l10n.passwordMismatch;
       case SignupValidationError.passwordTooShort:
         return l10n.passwordTooShort;
+      case SignupValidationError.underRequiredAge:
+        return l10n.underRequiredAge;
     }
   }
 
   /// Computes password strength, percentage and visual color indicator.
   static PasswordStrength calculatePasswordStrength(String password) {
     double strength = 0.0;
-    if (password.length >= 6) strength += 0.2;
+    if (password.length >= minimumPasswordLength) strength += 0.2;
     if (password.length >= 8) strength += 0.2;
     if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
     if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
@@ -142,7 +154,7 @@ class SignupValidationService {
     Color color = Colors.red;
     String label = 'Weak';
     if (strength > 0.4) {
-      color = Colors.orange;
+      color = VSPColors.textSecondary;
       label = 'Medium';
     }
     if (strength >= 0.8) {

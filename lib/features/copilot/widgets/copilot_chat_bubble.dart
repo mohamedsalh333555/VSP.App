@@ -4,6 +4,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/gemini_ai_icon.dart';
 
 /// Chat bubble rendering user and assistant messages, actions, and pitch recommendation cards.
 class CopilotChatBubble extends StatelessWidget {
@@ -13,6 +14,7 @@ class CopilotChatBubble extends StatelessWidget {
   final ValueChanged<CopilotAction>? onExecuteAction;
   final ValueChanged<CopilotTournamentSummary>? onSelectTournament;
   final ValueChanged<CopilotOpenMatchSummary>? onJoinMatch;
+  final ValueChanged<CopilotClarificationOption>? onSelectClarificationOption;
 
   const CopilotChatBubble({
     super.key,
@@ -22,6 +24,7 @@ class CopilotChatBubble extends StatelessWidget {
     this.onExecuteAction,
     this.onSelectTournament,
     this.onJoinMatch,
+    this.onSelectClarificationOption,
   });
 
   @override
@@ -38,12 +41,12 @@ class CopilotChatBubble extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.82),
             decoration: BoxDecoration(
               color: isUser ? VSPColors.accent : VSPColors.surface,
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isUser ? 16 : 4),
-                bottomRight: Radius.circular(isUser ? 4 : 16),
-              ),
+              borderRadius: BorderRadiusDirectional.only(
+                topStart: const Radius.circular(16),
+                topEnd: const Radius.circular(16),
+                bottomStart: Radius.circular(isUser ? 16 : 4),
+                bottomEnd: Radius.circular(isUser ? 4 : 16),
+              ).resolve(Directionality.of(context)),
               border: Border.all(
                 color: isUser ? Colors.transparent : VSPColors.borderLight,
               ),
@@ -149,6 +152,9 @@ class CopilotChatBubble extends StatelessWidget {
               ],
             ),
           ),
+          if (message.hasClarification) ...[
+            _buildClarificationChips(context, message.clarification!),
+          ],
           if (message.hasAction) ...[
             const SizedBox(height: 8),
             _buildActionCard(context, message.action!),
@@ -165,6 +171,89 @@ class CopilotChatBubble extends StatelessWidget {
             const SizedBox(height: 12),
             _buildOpenMatchesCarousel(context, message.openMatchResults),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClarificationChips(BuildContext context, CopilotClarification clarification) {
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: VSPColors.accent.withValues(alpha: 0.4),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  clarification.question,
+                  style: const TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: clarification.options.map((option) {
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onSelectClarificationOption != null
+                      ? () => onSelectClarificationOption!(option)
+                      : null,
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          VSPColors.accent.withValues(alpha: 0.2),
+                          VSPColors.surface,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
+                      border: Border.all(
+                        color: VSPColors.accent,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.arrow_circle_right_copy, color: VSPColors.accent, size: 13),
+                        const SizedBox(width: 6),
+                        Text(
+                          option.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ],
       ),
     );
@@ -201,13 +290,12 @@ class CopilotChatBubble extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                isProfileUpdated
-                    ? Iconsax.tick_circle_copy
-                    : (isOpenPayment ? Iconsax.card_pos_copy : Iconsax.flash_1_copy),
-                color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
-                size: 16,
-              ),
+              if (isProfileUpdated)
+                const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 16)
+              else if (isOpenPayment)
+                const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 16)
+              else
+                const GeminiAIIcon(size: 15),
               const SizedBox(width: 8),
               Text(
                 action.label,
@@ -219,7 +307,7 @@ class CopilotChatBubble extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Icon(
-                Iconsax.arrow_right_3_copy,
+                isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                 color: isProfileUpdated ? VSPColors.success : VSPColors.accent,
                 size: 12,
               ),

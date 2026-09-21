@@ -26,14 +26,14 @@ class PendingBookingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF18181B),
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: Colors.amber, width: 1.2),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.timer_1_copy, color: Colors.amber, size: 20),
+              const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -88,7 +88,7 @@ class PendingBookingCard extends StatelessWidget {
                             content: Text(isArabic
                                 ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.'
                                 : 'Payment pending. Complete checkout.'),
-                            backgroundColor: Colors.amber,
+                            backgroundColor: VSPColors.surfaceAlt,
                           ),
                         );
                       }
