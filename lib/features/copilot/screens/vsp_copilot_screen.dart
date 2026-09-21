@@ -13,6 +13,7 @@ import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
 import '../../player/screens/champion_screen.dart';
 import '../../player/screens/player_home_screen.dart';
+import '../../owner/screens/owner_main_screen.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
@@ -266,6 +267,42 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
         debugPrint('[VspCopilotScreen] Checkout navigate error: $e');
       }
       return;
+    }
+
+    final isOwner = Provider.of<AuthProvider?>(context, listen: false)?.isOwner == true;
+
+    if (isOwner) {
+      // Owner Copilot actions must land on the real owner workspace tabs.
+      if (route == '/owner' || route == '/owner/dashboard' || route.contains('dashboard')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openDashboard();
+        return;
+      }
+      if (route.contains('ledger') || route.contains('financial')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openLedger();
+        return;
+      }
+      if (route.contains('subscription') || route.contains('plan')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openSubscriptionPlans();
+        return;
+      }
+      if (route.contains('booking')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openBookings();
+        return;
+      }
+      if (route.contains('inbox') || route.contains('chat')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openInbox();
+        return;
+      }
+      if (route.contains('profile') || route.contains('setting')) {
+        context.pop();
+        ownerMainScreenKey.currentState?.openProfile();
+        return;
+      }
     }
 
     if (route.contains('team') || route.contains('my-team')) {
