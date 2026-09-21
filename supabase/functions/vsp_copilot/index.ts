@@ -518,10 +518,13 @@ serve(async (req: Request) => {
         let historyText = msg.content;
         if (msg.role === "assistant") {
           const ui = msg.ui_metadata || {};
+          const storedStadiums = Array.isArray(msg.stadium_results) && msg.stadium_results.length > 0
+            ? msg.stadium_results
+            : (Array.isArray(ui.stadiums) ? ui.stadiums : []);
           const visible = {
-            stadiums: msg.stadium_results || ui.stadiums || [],
-            tournaments: ui.tournaments || [],
-            open_matches: ui.open_matches || [],
+            stadiums: storedStadiums,
+            tournaments: Array.isArray(ui.tournaments) ? ui.tournaments : [],
+            open_matches: Array.isArray(ui.open_matches) ? ui.open_matches : [],
             action: ui.action || null,
           };
           if ((visible.stadiums && visible.stadiums.length > 0) || (visible.tournaments && visible.tournaments.length > 0) || (visible.open_matches && visible.open_matches.length > 0) || visible.action) {
