@@ -131,8 +131,8 @@ function hourWordPattern() {
 function parseTimeValue(hour, minute = 0, period = "") {
   let h = Number(hour), m = Number(minute) || 0;
   if (!Number.isFinite(h) || h < 0 || h > 23 || m < 0 || m > 59) return null;
-  if (/مساء|مسا|بالليل|ليل|(?:^|\\s)م(?:\\s|$)/i.test(period) && h < 12) h += 12;
-  if (/صباح|صبح|(?:^|\\s)ص(?:\\s|$)/i.test(period) && h === 12) h = 0;
+  if (/مساء|مسا|بالليل|ليل|(?:^|\s)م(?:\s|$)/i.test(period) && h < 12) h += 12;
+  if (/صباح|صبح|(?:^|\s)ص(?:\s|$)/i.test(period) && h === 12) h = 0;
   return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
 }
 
@@ -143,8 +143,8 @@ function extractPreferredTimes(input) {
 
   const results = [];
   const push = t => { if (t && !results.includes(t)) results.push(t); };
-  const globalPm = /مساء|مسا|بالليل|ليل|(?:^|\\s)م(?=\\s|$)/i.test(effective);
-  const globalAm = /صباح|صبح|(?:^|\\s)ص(?=\\s|$)/i.test(effective);
+  const globalPm = /مساء|مسا|بالليل|ليل|(?:^|\s)م(?=\s|$)/i.test(effective);
+  const globalAm = /صباح|صبح|(?:^|\s)ص(?=\s|$)/i.test(effective);
 
   const numericRe = /\b(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?\b/g;
   let m;
