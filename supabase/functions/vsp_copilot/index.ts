@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { analyzeCopilotTurn, mergeConversationState, buildDialogueDecision, buildResponseContract } from "./conversation_engine.js";
 
 declare const Deno: any;
 
@@ -467,21 +468,7 @@ function normalizeEgyptianText(input: string): string {
 }
 
 function classifyCopilotTurn(input: string): string | null {
-  const normalized = normalizeEgyptianText(input);
-
-  if (isBookingHowToQuestion(normalized)) return "booking_howto";
-
-  const executionSignal =
-    /(?:عايز|عايزة|عاوز|عاوزة|حابب|حابة|محتاج|محتاجة|نفسي|ممكن|عايزك|عايزة احجز|عايز احجز|عاوز احجز|عاوزة احجز)/.test(normalized) &&
-    /(?:احجز|حجز|احجزلي|حجزلي|ثبت الحجز|اكد الحجز|أكد الحجز|احجزه|احجزها|احجزلي)/.test(normalized);
-
-  if (executionSignal) return "book_stadium";
-
-  if (/(?:احجزلي|حجزلي|احجز لي|احجزهولي|ممكن تحجزلي|ممكن تحجزه)/.test(normalized)) {
-    return "book_stadium";
-  }
-
-  return null;
+  return analyzeCopilotTurn(input, {}).intent;
 }
 
 function hasNearbyStadiumScope(input: string): boolean {
@@ -607,120 +594,16 @@ function resolveVisibleStadiumReference(contextSnapshot: Record<string, any>, in
   return null;
 }
 
-function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string, detectedTurnIntent: string | null = null) {
-  const current = contextSnapshot.task_state && typeof contextSnapshot.task_state === "object"
-    ? contextSnapshot.task_state
-    : {};
-  const next = { ...current };
-
-  if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
-  if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
-  if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
-
-  const normalizedMessage = normalizeEgyptianText(userMessage);
-  const correctionMatches = [...normalizedMessage.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
-  const effectiveMessage = correctionMatches.length > 0
-    ? normalizedMessage.slice(Math.max(...correctionMatches))
-    : normalizedMessage;
-
-  const explicitConfirmation = isExplicitConfirmation(userMessage);
-  const bookingHowTo = isBookingHowToQuestion(userMessage);
-  const detectedIntent = detectedTurnIntent || classifyCopilotTurn(userMessage);
-  const groupSize = extractGroupSize(userMessage);
-  const nearbyScope = hasNearbyStadiumScope(userMessage);
-
-  // The current user turn has precedence over stale task-state interpretations.
-  // A how-to question must never inherit an old "book_stadium" execution intent.
-  if (detectedIntent === "booking_howto") {
-    next.intent = "booking_howto";
-    delete next.confirmation_pending;
-    // Do not infer schedule slots merely because the word "حجز" appears.
-    // Explicit date/time can still be preserved below when genuinely present.
+function mergeTaskState(
+  contextSnapshot: Record<string, any>,
+  userMessage: string,
+  detectedTurnIntent: string | null = null,
+) {
+  const analysis = analyzeCopilotTurn(userMessage, contextSnapshot);
+  if (detectedTurnIntent && detectedTurnIntent !== analysis.intent) {
+    analysis.intent = detectedTurnIntent;
   }
-
-  if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
-
-  const preferredTimes = extractPreferredTimes(userMessage);
-  const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
-  const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
-  const timeWindow = extractTimeWindow(effectiveMessage);
-  const visibleReference = resolveVisibleStadiumReference(contextSnapshot, effectiveMessage);
-
-  if (visibleReference) {
-    next.stadium_id = visibleReference.id;
-    next.stadium_name = visibleReference.name;
-  }
-
-  const stateChangedBySchedule =
-    hasDateCue(effectiveMessage) ||
-    preferredTimes.length > 0 ||
-    !!timeWindow ||
-    (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/));
-
-  const stateChangedByStadium = !!visibleReference;
-
-  // A pending confirmation is valid only for the exact state it was created from.
-  // Any later date/time/stadium change invalidates it before another confirmation can execute.
-  if (!explicitConfirmation && (stateChangedBySchedule || stateChangedByStadium)) {
-    delete next.confirmation_pending;
-  }
-
-  if (preferredTimes.length > 0) {
-    next.preferred_times = preferredTimes;
-    delete next.time_window;
-  } else if (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/)) {
-    next.preferred_times = next.preferred_times.map((t: string) => {
-      let hour = Number(t.substring(0, 2));
-      if (hasPm && hour < 12) hour += 12;
-      if (hasAm && hour === 12) hour = 0;
-      return String(hour).padStart(2, "0") + ":00";
-    });
-    delete next.time_window;
-  } else if (timeWindow) {
-    next.time_window = timeWindow;
-    next.preferred_times = [];
-    next.requires_time_clarification = false;
-  }
-
-  if (detectedIntent === "book_stadium") {
-    next.intent = "book_stadium";
-  }
-
-  if (groupSize != null) next.group_size = groupSize;
-  if (nearbyScope) next.stadium_scope = "nearby";
-
-  next.missing_slots = [];
-  if (!next.stadium_id && next.stadium_scope !== "nearby") next.missing_slots.push("stadium");
-  if (!next.date) next.missing_slots.push("date");
-
-  const hasExactTime = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
-  const hasTimeWindow = !!next.time_window;
-
-  if (bookingHowTo && groupSize != null && !/الساعة|ساعه|ساعة|وقت|ميعاد|موعد/.test(effectiveMessage)) {
-    delete next.preferred_times;
-    delete next.time_window;
-    delete next.time_period_confirmed;
-    delete next.requires_time_clarification;
-  }
-  if (!hasExactTime && !hasTimeWindow) next.missing_slots.push("time");
-
-  const hasExplicitPeriod = hasPm || hasAm;
-  if (hasExactTime && !hasExplicitPeriod && !hasTimeWindow) {
-    next.time_period_confirmed = false;
-    next.requires_time_clarification = true;
-  } else {
-    next.time_period_confirmed = true;
-    next.requires_time_clarification = false;
-  }
-
-  next.ready_for_execution =
-    next.missing_slots.length === 0 &&
-    next.time_period_confirmed === true &&
-    hasExactTime;
-
-  next.updated_at = new Date().toISOString();
-  contextSnapshot.task_state = next;
-  return next;
+  return mergeConversationState(contextSnapshot, analysis);
 }
 
 function buildBookingMissingDateReply(taskState: Record<string, any>, userMessage: string): { message: string; quick_replies: string[] } | null {
@@ -1152,10 +1035,20 @@ serve(async (req: Request) => {
       contextSnapshot = newConv.context_snapshot || {};
     }
 
-    // 8. Classify the current turn once, deterministically, before Gemini.
-    // Gemini may phrase the answer, but it does not own the primary booking intent.
-    const detectedTurnIntent = classifyCopilotTurn(userMessage);
-    const taskState = mergeTaskState(contextSnapshot, userMessage, detectedTurnIntent);
+    // 8. Conversation Engine: analyze the current turn, merge deterministic state,
+    // then decide the next operational step before Gemini is allowed to speak.
+    const turnAnalysis = analyzeCopilotTurn(userMessage, contextSnapshot);
+    const detectedTurnIntent = turnAnalysis.intent;
+    const taskState = mergeConversationState(contextSnapshot, turnAnalysis);
+    const dialogueDecision = buildDialogueDecision(taskState, turnAnalysis);
+    const responseContract = buildResponseContract(taskState, dialogueDecision, turnAnalysis);
+
+    contextSnapshot.copilot_engine = {
+      last_intent: turnAnalysis.intent,
+      last_decision: dialogueDecision,
+      last_next_slot: dialogueDecision.next_slot,
+      ambiguity_flags: turnAnalysis.ambiguities || [],
+    };
 
     const { data: priorMessages } = await supabase
       .from("copilot_messages")
@@ -1202,58 +1095,59 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
-    // Deterministic booking-slot guard: the current turn's intent/state decides
-    // the next question; Gemini is not allowed to re-ask known slots.
-    if (taskState?.intent === "book_stadium" &&
-        !taskState?.confirmation_pending &&
-        !taskState?.ready_for_execution) {
-      const task = taskState || {};
-      const missing = Array.isArray(task.missing_slots) ? task.missing_slots : [];
-      const groupSize = Number(task.group_size || 0);
-      const groupText = groupSize > 0 ? " عددكم " + groupSize + " لاعب." : "";
+    // 8.5 Conversation Engine decision gate.
+    // Simple clarification and how-to turns are resolved deterministically.
+    // Domain/tool execution remains downstream when the state is complete.
+    if (!handledByGemini && dialogueDecision.type === "EXPLAIN_HOW_TO") {
+      assistantReply =
+        "الحجز في VSP بيتم باختيار الملعب، ثم اليوم والساعة، وبعدها تراجع تفاصيل الحجز وتأكد قبل التنفيذ. " +
+        (taskState.group_size
+          ? "وبما إن عددكم " + taskState.group_size + " لاعب، هنستخدم العدد لاختيار ملعب سعته مناسبة."
+          : "") +
+        " ولو عايزني أنفذ الحجز معاك، قولّي اليوم والساعة.";
+      quickReplies = ["عايز أحجز", "شوفلي ملاعب قريبة"];
+      appAction = {
+        action_type: "NAVIGATE",
+        route: "/player",
+        label: "الذهاب لشاشة اللاعب ⚽",
+      };
+      handledByGemini = true;
+    }
 
-      if (missing.includes("date")) {
-        const hasTime = Array.isArray(task.preferred_times) && task.preferred_times.length > 0;
-        const timeText = hasTime
-          ? " والساعة " + task.preferred_times.map((t: string) => {
+    if (!handledByGemini && dialogueDecision.type === "ASK_SLOT") {
+      const missing = dialogueDecision.next_slot;
+      const groupText = Number(taskState.group_size || 0) > 0
+        ? " وعددكم " + Number(taskState.group_size) + " لاعب."
+        : "";
+
+      if (missing === "date") {
+        const preferred = Array.isArray(taskState.preferred_times) ? taskState.preferred_times : [];
+        const timeText = preferred.length
+          ? " الساعة " + preferred.map((t: string) => {
               const h = Number(t.substring(0, 2));
               const m = Number(t.substring(3, 5) || 0);
               const display = h === 0 ? 12 : (h > 12 ? h - 12 : h);
-              return display + ":" + String(m).padStart(2, "0") + (h >= 12 ? " بالليل" : " الصبح");
+              const period = h >= 12 ? "بالليل" : "الصبح";
+              return display + ":" + String(m).padStart(2, "0") + " " + period;
             }).join(" أو ")
           : "";
-        assistantReply =
-          "تمام، فهمت إنك عايز تحجز ملعب قريب منك" + timeText + "." +
-          groupText + " تحب الحجز النهارده ولا يوم تاني؟";
-        quickReplies = ["النهارده", "بكرة"];
+        assistantReply = "تمام، فهمت طلب الحجز" + timeText + groupText + ". تحب الحجز النهارده ولا يوم تاني؟";
+        quickReplies = responseContract.quick_replies || ["النهارده", "بكرة"];
         handledByGemini = true;
-      } else if (missing.includes("time")) {
-        assistantReply =
-          "تمام، اليوم اتحدد." + groupText + " الساعة كام تحب تحجز؟";
-        quickReplies = ["8 بالليل", "9 بالليل", "10 بالليل"];
+      } else if (missing === "time") {
+        assistantReply = "تمام، اليوم اتحدد." + groupText + " تحبها الساعة كام؟";
+        quickReplies = responseContract.quick_replies || ["8 بالليل", "9 بالليل", "10 بالليل"];
+        handledByGemini = true;
+      } else if (missing === "time_period") {
+        const preferred = Array.isArray(taskState.preferred_times) ? taskState.preferred_times : [];
+        const label = preferred.length === 1 ? preferred[0] : preferred.join(" أو ");
+        assistantReply = "تمام، الساعة " + label + " اتفهمت. تقصد الصبح ولا بالليل؟";
+        quickReplies = responseContract.quick_replies || ["10 الصبح", "10 بالليل"];
+        handledByGemini = true;
+      } else if (missing === "stadium") {
+        assistantReply = "تمام. أنهي ملعب تحب تحجز فيه؟";
         handledByGemini = true;
       }
-    }
-
-    // Deterministic booking how-to guard: explain the user flow instead of treating
-    // "how do I book?" as an execution request.
-    const taskIsBookingHowTo = contextSnapshot.task_state?.intent === "booking_howto";
-    if (taskIsBookingHowTo) {
-      const howToGroupSize = contextSnapshot.task_state?.group_size;
-      const groupText = howToGroupSize ? " ولو عددكم " + howToGroupSize + " لاعب، خليه في تفاصيل الحجز عشان نختار الملعب المناسب." : "";
-      const knownDate = contextSnapshot.task_state?.date;
-      const knownTimes = Array.isArray(contextSnapshot.task_state?.preferred_times)
-        ? contextSnapshot.task_state.preferred_times
-        : [];
-      const knownSchedule = knownDate && knownTimes.length > 0
-        ? " وإنت محدد " + knownTimes.join(" أو ") + " ليوم " + knownDate
-        : "";
-      assistantReply =
-        "تقدر تحجز من VSP باختيار الملعب، ثم اليوم والساعة، وبعدها تراجع ملخص الحجز وتأكد قبل التنفيذ." +
-        knownSchedule + groupText +
-        " ولو تقصد إني أنفذ الحجز معاك، قولّي اليوم والساعة والوقت لو لسه مش محددين.";
-      quickReplies = ["عايز أحجزهولك", "شوفلي ملاعب قريبة"];
-      handledByGemini = true;
     }
 
     // 9. Deterministic owner factual-query guard.
@@ -1293,6 +1187,17 @@ serve(async (req: Request) => {
 ${JSON.stringify(contextSnapshot, null, 2)}
 حالة المهمة الحالية (Task State):
 ${JSON.stringify(taskState, null, 2)}
+
+قرارات محرك الحوار الحالية:
+${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, null, 2)}
+
+قواعد محرك الحوار:
+- محرك الحوار هو مصدر قرار النية والـ slots والخطوة التالية؛ أنت تصيغ فقط.
+- لا تسأل عن حقل غير موجود في missing_slots أو next_slot.
+- لا تعيد سؤال معلومة موجودة في task_state.
+- لا تخترع ملعباً أو سعرًا أو توافرًا أو رقماً؛ الأدوات وبيانات VSP هي مصدر الحقيقة.
+- عند وجود ambiguity، اتبع القرار المحدد ولا تخمّن.
+- بعد نتيجة أي أداة، صِغ الرد من الحقائق التي أعادتها الأداة فقط.
 
 قاعدة صلاحيات الدور (ROLE CAPABILITY POLICY):
 - صلاحيات الأدوات التشغيلية يحددها السيرفر حسب دور الحساب، وليست اجتهاداً منك.
@@ -2525,15 +2430,20 @@ ${JSON.stringify(taskState, null, 2)}
       open_matches: openMatchResults,
       action: appAction,
       task_state: contextSnapshot.task_state || {},
+      copilot_engine: {
+        turn_intent: turnAnalysis.intent,
+        dialogue_decision: dialogueDecision,
+        response_contract: responseContract,
+      },
     };
 
     // Deterministic clarification guard:
     // If booking intent has an exact time but no date, preserve the understood time
     // and ask only for the missing date. Never let Gemini erase known slots.
-    const bookingMissingDateReply = buildBookingMissingDateReply(
-      contextSnapshot.task_state || {},
-      userMessage,
-    );
+    const bookingMissingDateReply =
+      dialogueDecision.type === "ASK_SLOT" && dialogueDecision.next_slot === "date"
+        ? buildBookingMissingDateReply(contextSnapshot.task_state || {}, userMessage)
+        : null;
     if (bookingMissingDateReply) {
       assistantReply = bookingMissingDateReply.message;
       quickReplies = bookingMissingDateReply.quick_replies;
