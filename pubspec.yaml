@@ -124,6 +124,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/fonts/
+    - shorebird.yaml
 
   fonts:
     - family: Tajawal

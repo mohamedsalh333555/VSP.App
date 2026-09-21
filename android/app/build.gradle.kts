@@ -18,8 +18,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "app.vsp.sports"
-    compileSdk = 35
-    ndkVersion = "30.0.15729638"
+    compileSdk = 36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -43,7 +43,7 @@ android {
     defaultConfig {
         // ✅ Production Unique Application ID for Google Play Store
         applicationId = "app.vsp.sports"
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
