@@ -131,8 +131,8 @@ function hourWordPattern() {
 function parseTimeValue(hour, minute = 0, period = "") {
   let h = Number(hour), m = Number(minute) || 0;
   if (!Number.isFinite(h) || h < 0 || h > 23 || m < 0 || m > 59) return null;
-  if (/مساء|مسا|بالليل|ليل/i.test(period) && h < 12) h += 12;
-  if (/صباح|صبح/i.test(period) && h === 12) h = 0;
+  if (/مساء|مسا|بالليل|ليل|(?:^|\\s)م(?:\\s|$)/i.test(period) && h < 12) h += 12;
+  if (/صباح|صبح|(?:^|\\s)ص(?:\\s|$)/i.test(period) && h === 12) h = 0;
   return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
 }
 
@@ -154,7 +154,7 @@ function extractPreferredTimes(input) {
     const after = effective.slice(m.index, Math.min(effective.length, m.index + 22));
     const directTime =
       /الساعة\s*$/i.test(before) ||
-      /(?:بالليل|ليل|مساء|المساء|الصبح|صباح|مسا)/i.test(after) ||
+      /(?:بالليل|ليل|مساء|المساء|الصبح|صباح|مسا)|(?:^|\\s)[مص](?=\\s|$)/i.test(after) ||
       /[:٫.]\d{1,2}/.test(m[0]);
     if (!directTime) continue;
     const t = parseTimeValue(m[1], m[2] || 0, globalPm ? "مساء" : globalAm ? "صباح" : after);
@@ -206,7 +206,14 @@ function extractDateToken(input) {
 }
 
 function resolveRelativeDate(token, now = new Date()) {
-  const base = new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),12,0,0));
+  const cairo = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Cairo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = type => Number(cairo.find(p => p.type === type)?.value || 0);
+  const base = new Date(Date.UTC(get("year"), get("month") - 1, get("day"), 12, 0, 0));
   if (token === "tomorrow") base.setUTCDate(base.getUTCDate()+1);
   if (token === "after_tomorrow") base.setUTCDate(base.getUTCDate()+2);
   if (/^20\d{2}-\d{2}-\d{2}$/.test(token || "")) return token;
@@ -269,7 +276,7 @@ function analyzeCopilotTurn(input, contextSnapshot = {}) {
   const intent = classifyIntent(effective);
   const ambiguities = [];
 
-  if (times.length > 0 && !/(مساء|مسا|بالليل|ليل|صباح|صبح)/i.test(effective))
+  if (times.length > 0 && !/(مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\\s)م(?:\\s|$)|(?:^|\\s)ص(?:\\s|$))/i.test(effective))
     ambiguities.push("time_period");
   if (/\b\d{1,2}\b/.test(effective) && times.length===0 && groupSize===null && /حجز|ملعب/i.test(effective))
     ambiguities.push("numeric_entity");
@@ -293,7 +300,7 @@ function analyzeCopilotTurn(input, contextSnapshot = {}) {
     signals: {
       how_to: isBookingHowTo(original),
       explicit_execution: intent === "book_stadium",
-      explicit_period: /مساء|مسا|بالليل|ليل|صباح|صبح/i.test(effective),
+      explicit_period: /مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\\s)م(?:\\s|$)|(?:^|\\s)ص(?:\\s|$)/i.test(effective),
     },
   };
 }
