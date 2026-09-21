@@ -77,6 +77,7 @@ serve(async (req: Request) => {
     const body = await req.json();
     const userMessage = (body.message ?? "").toString().trim();
     let conversationId = (body.conversation_id ?? "").toString().trim();
+    const requestId = (body.request_id ?? "").toString().trim();
     const requestedGov = (body.governorate ?? "").toString().trim();
     const structuredAction = body.structured_action ?? null;
 
@@ -112,6 +113,15 @@ serve(async (req: Request) => {
       } else {
         conversationId = "";
       }
+    }
+
+    // 6b. Request-Level Idempotency Guard (Instant Replay)
+    if (requestId && contextSnapshot.idempotency_records && contextSnapshot.idempotency_records[requestId]) {
+      const cached = contextSnapshot.idempotency_records[requestId];
+      return new Response(
+        JSON.stringify(cached),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", "X-Idempotent-Replay": "true" } }
+      );
     }
 
     if (!conversationId) {
@@ -276,6 +286,7 @@ serve(async (req: Request) => {
     const tournamentResults = toolResult?.tournaments || [];
     const leaderboardResults = toolResult?.leaderboard || [];
     const openMatchResults = toolResult?.open_matches || [];
+    const bookingResults = toolResult?.bookings || [];
     const appAction = toolResult?.app_action || null;
 
     // Synchronize snapshot for persistent state
@@ -298,8 +309,31 @@ serve(async (req: Request) => {
     contextSnapshot.last_visible_stadiums = stadiumResults.length > 0 ? stadiumResults : (contextSnapshot.last_visible_stadiums || []);
     contextSnapshot.conversation_state = nextState;
 
+    // Enriched Internal Telemetry
+    const internalTelemetry = {
+      ...aiTelemetry,
+      request_id: requestId || null,
+      idempotency_hit: false,
+      semantic_action: {
+        domain: semanticOutput.domain,
+        object: semanticOutput.object,
+        action: semanticOutput.action,
+        sub_action: semanticOutput.sub_action,
+        relation: semanticOutput.relation,
+        scope: semanticOutput.scope,
+      },
+      active_task: nextState.active_task,
+      parked_task_ids: (nextState.task_manager?.parked_tasks || []).map(t => t.id),
+      tool_execution: toolPlan.action === "EXECUTE_TOOL" ? toolPlan.toolName : null,
+      tool_result_type: toolResult?.status || null,
+      fact_validation_result: true,
+      degraded_mode: isDegraded,
+      failure_reason: aiTelemetry.fallback_reason,
+    };
+
     const persistedUiMetadata = {
       stadiums: stadiumResults,
+      bookings: bookingResults,
       tournaments: tournamentResults,
       leaderboard: leaderboardResults,
       open_matches: openMatchResults,
@@ -308,7 +342,34 @@ serve(async (req: Request) => {
       plan: toolPlan,
       semantic_intent: semanticOutput.intent,
       semantic_speech_act: semanticOutput.speech_act,
+      telemetry: internalTelemetry,
     };
+
+    // Prepare Response Payload
+    const responsePayload = {
+      conversation_id: conversationId,
+      message: assistantReply,
+      stadiums: stadiumResults,
+      bookings: bookingResults,
+      tournaments: tournamentResults,
+      leaderboard: leaderboardResults,
+      open_matches: openMatchResults,
+      action: appAction,
+      ui_metadata: persistedUiMetadata,
+      task_state: contextSnapshot.task_state,
+      quick_replies: quickReplies,
+      ai_telemetry: internalTelemetry,
+    };
+
+    // Cache Idempotent Record (max 10 items)
+    if (requestId) {
+      if (!contextSnapshot.idempotency_records) contextSnapshot.idempotency_records = {};
+      contextSnapshot.idempotency_records[requestId] = responsePayload;
+      const recKeys = Object.keys(contextSnapshot.idempotency_records);
+      if (recKeys.length > 10) {
+        delete contextSnapshot.idempotency_records[recKeys[0]];
+      }
+    }
 
     // 16. Atomic Persistence via single database transaction
     const { data: persistedTurn, error: persistTurnErr } = await supabase.rpc("persist_copilot_turn", {
@@ -331,19 +392,7 @@ serve(async (req: Request) => {
 
     // 17. Return Enriched Response Payload
     return new Response(
-      JSON.stringify({
-        conversation_id: conversationId,
-        message: assistantReply,
-        stadiums: stadiumResults,
-        tournaments: tournamentResults,
-        leaderboard: leaderboardResults,
-        open_matches: openMatchResults,
-        action: appAction,
-        ui_metadata: persistedUiMetadata,
-        task_state: contextSnapshot.task_state,
-        quick_replies: quickReplies,
-        ai_telemetry: aiTelemetry,
-      }),
+      JSON.stringify(responsePayload),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {

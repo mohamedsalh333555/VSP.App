@@ -5,6 +5,7 @@ import type { ConversationState } from "./conversation_state.ts";
 import type { SemanticParseOutput, TimeEntity } from "./semantic_schema.ts";
 import type { ResolvedReferences } from "./reference_resolver.ts";
 import { resolveCairoDate } from "./business_rules.ts";
+import { createTaskRecord, parkActiveTask, resumeParkedTask } from "./task_manager.ts";
 
 export function mergeState(
   currentState: ConversationState,
@@ -19,6 +20,13 @@ export function mergeState(
     date: { ...currentState.date },
     times: [...currentState.times],
     candidate_stadiums: [...currentState.candidate_stadiums],
+    candidate_bookings: [...(currentState.candidate_bookings || [])],
+    task_manager: {
+      active_task: currentState.task_manager?.active_task ? { ...currentState.task_manager.active_task } : null,
+      parked_tasks: Array.isArray(currentState.task_manager?.parked_tasks)
+        ? currentState.task_manager.parked_tasks.map(t => ({ ...t }))
+        : [],
+    },
     unresolved_ambiguities: [...currentState.unresolved_ambiguities],
     updated_at: new Date().toISOString(),
   };
@@ -27,8 +35,77 @@ export function mergeState(
   let dateChanged = false;
   let timeChanged = false;
 
-  // 1. Task Lifecycle & Task Switching
-  if (semanticOutput.speech_act === "switch_task" || (semanticOutput.intent !== "unknown" && semanticOutput.intent !== currentState.active_task)) {
+  // 1. Task Lifecycle & Task Switching with Task Stack Support
+  const isGeneralOrSideQuestion =
+    semanticOutput.domain === "general" ||
+    semanticOutput.intent === "general_question" ||
+    semanticOutput.object === "bot" ||
+    semanticOutput.object === "bot_identity";
+
+  const isResumeRequest =
+    semanticOutput.action === "resume" ||
+    (semanticOutput.speech_act === "request" && (semanticOutput.raw_user_language || "").includes("نرجع"));
+
+  const isSelfServiceOrPayment =
+    semanticOutput.domain === "self_service" ||
+    semanticOutput.domain === "payment" ||
+    semanticOutput.action === "reconcile" ||
+    (semanticOutput.action === "inspect" && semanticOutput.object === "booking");
+
+  if (isResumeRequest) {
+    const resumed = resumeParkedTask(next.task_manager, "booking_create");
+    if (resumed && resumed.state_snapshot) {
+      if (resumed.state_snapshot.stadium) next.stadium = { ...resumed.state_snapshot.stadium };
+      if (resumed.state_snapshot.date) next.date = { ...resumed.state_snapshot.date };
+      if (resumed.state_snapshot.times) next.times = [...resumed.state_snapshot.times];
+      if (resumed.state_snapshot.duration_hours) next.duration_hours = resumed.state_snapshot.duration_hours;
+      if (resumed.state_snapshot.group_size) next.group_size = resumed.state_snapshot.group_size;
+      next.active_task = "booking";
+      next.task_lifecycle = "in_progress";
+    } else {
+      next.active_task = "booking";
+      next.task_lifecycle = "in_progress";
+    }
+  } else if (isGeneralOrSideQuestion) {
+    // If currently in booking, PARK it safely so the side question doesn't destroy the booking task!
+    if (next.active_task === "booking") {
+      const snapshot = {
+        stadium: { ...next.stadium },
+        date: { ...next.date },
+        times: [...next.times],
+        duration_hours: next.duration_hours,
+        group_size: next.group_size,
+      };
+      if (!next.task_manager.active_task) {
+        next.task_manager.active_task = createTaskRecord("booking_create", snapshot, "حجز ملعب قيد الإعداد");
+      }
+      parkActiveTask(next.task_manager);
+    }
+    next.active_task = "general";
+    next.task_lifecycle = "in_progress";
+  } else if (isSelfServiceOrPayment) {
+    if (next.active_task === "booking" && (next.stadium.name || next.date.value)) {
+      const snapshot = {
+        stadium: { ...next.stadium },
+        date: { ...next.date },
+        times: [...next.times],
+        duration_hours: next.duration_hours,
+      };
+      if (!next.task_manager.active_task) {
+        next.task_manager.active_task = createTaskRecord("booking_create", snapshot, "حجز ملعب قيد الإعداد");
+      }
+      parkActiveTask(next.task_manager);
+    }
+    next.active_task = semanticOutput.domain === "payment" ? "payment" : "self_service";
+    next.task_lifecycle = "in_progress";
+  } else if (semanticOutput.speech_act === "switch_task" || (semanticOutput.intent !== "unknown" && semanticOutput.intent !== currentState.active_task)) {
+    if (next.active_task === "booking" && (next.stadium.name || next.date.value)) {
+      const snapshot = { stadium: { ...next.stadium }, date: { ...next.date }, times: [...next.times] };
+      if (!next.task_manager.active_task) {
+        next.task_manager.active_task = createTaskRecord("booking_create", snapshot);
+      }
+      parkActiveTask(next.task_manager);
+    }
     if (semanticOutput.intent === "booking") {
       next.active_task = "booking";
       next.task_lifecycle = "in_progress";

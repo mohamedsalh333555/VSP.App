@@ -12,6 +12,8 @@ const PLAYER_ALLOWED_TOOLS = new Set([
   "get1v1Leaderboard",
   "getOpenMatches",
   "getUserBookingsAndRefunds",
+  "reconcileBookingPayment",
+  "cancelUserBooking",
   "updateUserProfile",
   "executeAppAction",
 ]);

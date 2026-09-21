@@ -69,6 +69,13 @@ export interface SemanticExecutionRequest {
 export interface SemanticParseOutput {
   schema_version: number;
   speech_act: "request" | "question" | "inform" | "clarify" | "confirm" | "reject" | "correct" | "cancel" | "select" | "acknowledge" | "switch_task";
+  domain?: "booking" | "self_service" | "payment" | "stadium" | "tournament" | "challenge" | "owner_operations" | "general" | "unknown";
+  object?: "booking" | "payment" | "stadium" | "slot" | "tournament" | "bot" | "bot_identity" | "match" | "unknown";
+  action?: "create" | "search" | "inspect" | "modify" | "cancel" | "reconcile" | "resume" | "confirm" | "answer" | "none";
+  sub_action?: "upcoming" | "recent" | "details" | "reconcile_missing" | "explain_status" | "identity" | "parked_task" | "none";
+  relation?: "payment_for_booking" | "contextual_booking" | "none";
+  scope?: "user_owned" | "public" | "stadium_owned" | "none";
+  semantic_status?: "explicit" | "resolved" | "inferred" | "ambiguous" | "unresolved";
   intent: "booking" | "stadium_search" | "availability" | "tournament" | "challenge" | "profile" | "owner_operations" | "financial_question" | "navigation" | "general_question" | "unknown";
   operation: "create" | "search" | "inspect" | "modify" | "confirm" | "cancel" | "select" | "navigate" | "answer" | "none";
   entities: SemanticEntities;
@@ -91,6 +98,43 @@ export const GEMINI_SEMANTIC_RESPONSE_SCHEMA = {
         "request", "question", "inform", "clarify", "confirm", "reject",
         "correct", "cancel", "select", "acknowledge", "switch_task"
       ],
+    },
+    domain: {
+      type: "STRING",
+      enum: [
+        "booking", "self_service", "payment", "stadium", "tournament", "challenge",
+        "owner_operations", "general", "unknown"
+      ],
+    },
+    object: {
+      type: "STRING",
+      enum: [
+        "booking", "payment", "stadium", "slot", "tournament", "bot", "bot_identity", "match", "unknown"
+      ],
+    },
+    action: {
+      type: "STRING",
+      enum: [
+        "create", "search", "inspect", "modify", "cancel", "reconcile", "resume", "confirm", "answer", "none"
+      ],
+    },
+    sub_action: {
+      type: "STRING",
+      enum: [
+        "upcoming", "recent", "details", "reconcile_missing", "explain_status", "identity", "parked_task", "none"
+      ],
+    },
+    relation: {
+      type: "STRING",
+      enum: ["payment_for_booking", "contextual_booking", "none"],
+    },
+    scope: {
+      type: "STRING",
+      enum: ["user_owned", "public", "stadium_owned", "none"],
+    },
+    semantic_status: {
+      type: "STRING",
+      enum: ["explicit", "resolved", "inferred", "ambiguous", "unresolved"],
     },
     intent: {
       type: "STRING",
@@ -271,6 +315,74 @@ export function validateAndNormalizeSemanticOutput(raw: any, rawInputText: strin
   const intent = intentList.includes(raw.intent) ? raw.intent : "unknown";
   const operation = opList.includes(raw.operation) ? raw.operation : "none";
 
+  const domainList = [
+    "booking", "self_service", "payment", "stadium", "tournament", "challenge",
+    "owner_operations", "general", "unknown"
+  ];
+  const objectList = [
+    "booking", "payment", "stadium", "slot", "tournament", "bot", "bot_identity", "match", "unknown"
+  ];
+  const actionList = [
+    "create", "search", "inspect", "modify", "cancel", "reconcile", "resume", "confirm", "answer", "none"
+  ];
+  const subActionList = [
+    "upcoming", "recent", "details", "reconcile_missing", "explain_status", "identity", "parked_task", "none"
+  ];
+  const relationList = ["payment_for_booking", "contextual_booking", "none"];
+  const scopeList = ["user_owned", "public", "stadium_owned", "none"];
+  const statusList = ["explicit", "resolved", "inferred", "ambiguous", "unresolved"];
+
+  let domain = domainList.includes(raw.domain) ? raw.domain : undefined;
+  let object = objectList.includes(raw.object) ? raw.object : undefined;
+  let action = actionList.includes(raw.action) ? raw.action : undefined;
+  let sub_action = subActionList.includes(raw.sub_action) ? raw.sub_action : undefined;
+  let relation = relationList.includes(raw.relation) ? raw.relation : undefined;
+  let scope = scopeList.includes(raw.scope) ? raw.scope : undefined;
+  let semantic_status = statusList.includes(raw.semantic_status) ? raw.semantic_status : undefined;
+
+  // Derive sensible defaults if not explicitly provided by parser
+  if (!action) {
+    action = opList.includes(operation) ? (operation as any) : "none";
+  }
+  if (!domain) {
+    if (intent === "booking") {
+      domain = (action === "inspect") ? "self_service" : "booking";
+    } else if (intent === "tournament") {
+      domain = "tournament";
+    } else if (intent === "challenge") {
+      domain = "challenge";
+    } else if (intent === "owner_operations" || intent === "financial_question") {
+      domain = "owner_operations";
+    } else if (intent === "general_question") {
+      domain = "general";
+    } else {
+      domain = "booking";
+    }
+  }
+  if (!object) {
+    if (domain === "payment") {
+      object = "booking";
+    } else if (domain === "self_service") {
+      object = "booking";
+    } else if (domain === "general") {
+      object = "bot";
+    } else if (domain === "booking") {
+      object = action === "create" ? "stadium" : "booking";
+    } else if (domain === "tournament") {
+      object = "tournament";
+    } else if (domain === "challenge") {
+      object = "slot";
+    } else {
+      object = "booking";
+    }
+  }
+  if (!scope) {
+    scope = (domain === "self_service" || domain === "payment") ? "user_owned" : "public";
+  }
+  if (!semantic_status) {
+    semantic_status = raw.ambiguities && raw.ambiguities.length > 0 ? "ambiguous" : "resolved";
+  }
+
   const entities: SemanticEntities = {};
   if (raw.entities && typeof raw.entities === "object") {
     const re = raw.entities;
@@ -382,6 +494,13 @@ export function validateAndNormalizeSemanticOutput(raw: any, rawInputText: strin
   return {
     schema_version: 1,
     speech_act,
+    domain: domain as any,
+    object: object as any,
+    action: action as any,
+    sub_action: sub_action as any,
+    relation: relation as any,
+    scope: scope as any,
+    semantic_status: semantic_status as any,
     intent,
     operation,
     entities,
@@ -398,6 +517,13 @@ export function createSafeFallbackOutput(rawInputText: string): SemanticParseOut
   return {
     schema_version: 1,
     speech_act: "inform",
+    domain: "unknown",
+    object: "unknown",
+    action: "none",
+    sub_action: "none",
+    relation: "none",
+    scope: "none",
+    semantic_status: "unresolved",
     intent: "unknown",
     operation: "none",
     entities: {},

@@ -107,7 +107,27 @@ CORE RULES:
        date: state.date.value,
        times: state.times.map(t => t.time),
        pending_confirmation: state.pending_confirmation ? true : false,
-     })}`;
+     })}
+
+9. SEMANTIC ACTION MODEL RULES (CRITICAL):
+   - Asking about existing bookings ("اين حجزي", "فين حجزي", "في حجز انا عملته مؤخراً", "حجوزاتي"):
+     => domain: "self_service", object: "booking", action: "inspect", sub_action: "recent", scope: "user_owned", intent: "booking", operation: "inspect"
+   - Asking about next/upcoming booking ("امتى حجزي الجاي", "ميعاد الحجز القادم", "الحجز اللي جاي امتى"):
+     => domain: "self_service", object: "booking", action: "inspect", sub_action: "upcoming", scope: "user_owned", intent: "booking", operation: "inspect"
+   - Paid money but booking didn't appear / payment issue ("دفعت ومظهرش الحجز", "الفلوس اتخصمت", "دفعت والفلوس اتخصمت"):
+     => domain: "payment", object: "booking", action: "reconcile", sub_action: "reconcile_missing", relation: "payment_for_booking", scope: "user_owned", intent: "booking", operation: "inspect"
+   - Cancel booking ("الغى الحجز ده", "عايز الغي حجزي"):
+     => domain: "booking", object: "booking", action: "cancel", scope: "user_owned", intent: "booking", operation: "cancel"
+   - Modify booking ("غير ميعاد حجزي", "عايز اغير وقت الحجز"):
+     => domain: "booking", object: "booking", action: "modify", scope: "user_owned", intent: "booking", operation: "modify"
+   - Bot identity or general question ("انت اسمك ايه", "مين انت", "بتعمل ايه"):
+     => speech_act: "question", domain: "general", object: "bot_identity", action: "answer", sub_action: "identity", intent: "general_question", operation: "answer"
+   - Resuming previous task ("تمام نرجع للحجز", "نكمل الحجز", "نرجع لموضوعنا"):
+     => speech_act: "request", domain: "booking", object: "booking", action: "resume", sub_action: "parked_task", intent: "booking", operation: "create"
+   - Explicitly switching task ("سيب الحجز وعايز البطولات", "سيبك من ده وخلينا في التقسيمة"):
+     => speech_act: "switch_task", domain: "tournament", object: "tournament", action: "search", intent: "tournament", operation: "search"
+   - Booking creation ("احجزلي", "عايز احجز ملعب"):
+     => domain: "booking", object: "stadium", action: "create", intent: "booking", operation: "create"`;
 
   const promptContents: any[] = [];
   // Include last 3 turns of context

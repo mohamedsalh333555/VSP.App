@@ -2,6 +2,7 @@
 // Maintains verified operational facts independently of LLM generation.
 
 import type { TimeEntity, SemanticAmbiguity } from "./semantic_schema.ts";
+import { type TaskManagerState, initializeTaskManager } from "./task_manager.ts";
 
 export type FieldStatus = "unknown" | "known" | "inferred" | "ambiguous" | "confirmed" | "stale" | "cleared";
 
@@ -20,12 +21,19 @@ export interface DateState {
 }
 
 export interface VisibleEntity {
-  reference_key: string; // e.g. "stadium_1", "tournament_1"
-  entity_type: "stadium" | "tournament" | "match";
+  reference_key: string; // e.g. "stadium_1", "tournament_1", "booking_1"
+  entity_type: "stadium" | "tournament" | "match" | "booking" | "transaction";
   id: string;
   name: string;
   price_per_hour?: number;
   governorate?: string;
+  booking_id?: string;
+  stadium_name?: string;
+  start_time?: string;
+  end_time?: string;
+  status?: string;
+  payment_status?: string;
+  price?: number;
   extra?: Record<string, any>;
 }
 
@@ -41,10 +49,12 @@ export interface PendingConfirmation {
 
 export interface ConversationState {
   version: number;
-  active_task: "booking" | "stadium_search" | "availability" | "tournament" | "challenge" | "owner_financial" | "owner_stadiums" | "profile" | "general" | null;
+  active_task: "booking" | "stadium_search" | "availability" | "tournament" | "challenge" | "owner_financial" | "owner_stadiums" | "profile" | "general" | "self_service" | "payment" | null;
   task_lifecycle: "idle" | "in_progress" | "pending_confirmation" | "awaiting_clarification" | "completed" | "cancelled";
   stadium: StadiumState;
   candidate_stadiums: VisibleEntity[];
+  candidate_bookings: VisibleEntity[];
+  task_manager: TaskManagerState;
   date: DateState;
   times: TimeEntity[];
   time_period_confirmed: boolean;
@@ -79,6 +89,8 @@ export function createInitialConversationState(userRole: "player" | "owner" | "a
       status: "unknown",
     },
     candidate_stadiums: [],
+    candidate_bookings: [],
+    task_manager: initializeTaskManager(),
     date: {
       value: null,
       label: null,
@@ -112,6 +124,8 @@ export function hydrateConversationState(rawSnapshot: any, userRole: "player" | 
     return {
       ...createInitialConversationState(userRole),
       ...source,
+      task_manager: initializeTaskManager(source.task_manager),
+      candidate_bookings: Array.isArray(source.candidate_bookings) ? source.candidate_bookings : [],
       version: (source.version || 1) + 1,
       updated_at: new Date().toISOString(),
     };

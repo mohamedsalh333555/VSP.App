@@ -57,12 +57,11 @@ android {
         }
         release {
             // RELEASE SIGNING: Uses the credentials loaded from android/key.properties.
-            // If the file is missing, it falls back to debug signing to prevent build failure during dev.
+            // Strict Invariant: Must fail immediately if key.properties is missing (no silent fallback to debug).
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                signingConfig = signingConfigs.getByName("debug")
-                logger.warn("⚠️ RELEASE SIGNING WARNING: key.properties not found. Building with debug keys. This will be REJECTED by Play Store.")
+                throw org.gradle.api.GradleException("FATAL: android/key.properties not found! Release builds MUST be signed with the production keystore.")
             }
             isMinifyEnabled = false          // Disabled to prevent MethodChannel & reflection crashes
             isShrinkResources = false

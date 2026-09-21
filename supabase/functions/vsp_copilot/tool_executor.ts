@@ -3,6 +3,12 @@
 
 import type { ConversationState, VisibleEntity } from "./conversation_state.ts";
 import { isToolAllowedForRole } from "./business_rules.ts";
+import {
+  executeViewUserBookingsWorkflow,
+  executeViewUpcomingBookingWorkflow,
+  executeCancelBookingWorkflow,
+} from "./booking_workflows.ts";
+import { executePaymentReconciliationWorkflow } from "./payment_reconciliation.ts";
 
 export type ToolResultStatus =
   | "SUCCESS"
@@ -23,6 +29,8 @@ export interface ToolResultContract {
   tournaments?: any[];
   leaderboard?: any[];
   open_matches?: any[];
+  bookings?: any[];
+  reconciliation?: any;
   app_action?: any;
   quick_replies?: string[];
   updated_state?: Partial<ConversationState>;
@@ -556,6 +564,95 @@ export async function executeGuardedTool(
           route: "/bookings",
           label: "فتح جدول الحجوزات 📅",
         },
+      };
+    }
+
+    // 10. Player Self-Service: getUserBookingsAndRefunds
+    if (toolName === "getUserBookingsAndRefunds") {
+      const isUpcoming = args.filter === "upcoming";
+      if (isUpcoming) {
+        const wfRes = await executeViewUpcomingBookingWorkflow(supabase, callerUser);
+        if (!wfRes.success) {
+          return {
+            status: "DATA_ERROR",
+            tool_name: toolName,
+            data: wfRes.data,
+            error_message: wfRes.error || "تعذر استرجاع الحجز القادم حالياً.",
+          };
+        }
+
+        const booking = wfRes.data.booking;
+        return {
+          status: "SUCCESS",
+          tool_name: toolName,
+          data: wfRes.data,
+          bookings: wfRes.data.all_upcoming || (booking ? [booking] : []),
+          app_action: wfRes.app_action,
+          updated_state: {
+            candidate_bookings: wfRes.visible_entities || [],
+            last_visible_entities: wfRes.visible_entities || [],
+          },
+        };
+      }
+
+      // Recent Bookings
+      const wfRes = await executeViewUserBookingsWorkflow(supabase, callerUser, Number(args.limit) || 10);
+      if (!wfRes.success) {
+        return {
+          status: "DATA_ERROR",
+          tool_name: toolName,
+          data: wfRes.data,
+          error_message: wfRes.error || "تعذر استرجاع حجوزات المستخدم حالياً.",
+        };
+      }
+
+      return {
+        status: "SUCCESS",
+        tool_name: toolName,
+        data: wfRes.data,
+        bookings: wfRes.data.bookings || [],
+        app_action: wfRes.app_action,
+        updated_state: {
+          candidate_bookings: wfRes.visible_entities || [],
+          last_visible_entities: wfRes.visible_entities || [],
+        },
+      };
+    }
+
+    // 11. Payment / Booking Reconciliation: reconcileBookingPayment
+    if (toolName === "reconcileBookingPayment") {
+      const recReport = await executePaymentReconciliationWorkflow(supabase, callerUser, {
+        transaction_id: args.transaction_id,
+        booking_id: args.booking_id,
+      });
+
+      return {
+        status: "SUCCESS",
+        tool_name: toolName,
+        data: recReport,
+        reconciliation: recReport,
+        app_action: recReport.recommended_action,
+      };
+    }
+
+    // 12. Booking Cancellation: cancelUserBooking
+    if (toolName === "cancelUserBooking") {
+      const bookingId = args.booking_id;
+      const wfRes = await executeCancelBookingWorkflow(supabase, callerUser, bookingId, args.reason);
+      if (!wfRes.success) {
+        return {
+          status: "BUSINESS_RULE_VIOLATION",
+          tool_name: toolName,
+          data: wfRes.data,
+          error_message: wfRes.error || "تعذر إلغاء الحجز وفقاً للائحة الإلغاء.",
+        };
+      }
+
+      return {
+        status: "SUCCESS",
+        tool_name: toolName,
+        data: wfRes.data,
+        app_action: wfRes.app_action,
       };
     }
 

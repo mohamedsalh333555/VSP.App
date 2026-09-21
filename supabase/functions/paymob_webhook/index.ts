@@ -521,6 +521,18 @@ serve(async (req: Request) => {
       const updatedDepositPaid = isDepositOnly ? Number(existingBooking.deposit_amount) : paidAmountEgp;
       const remainingAmount = isDepositOnly ? Math.max(0, Number(existingBooking.total_price) - updatedDepositPaid) : 0;
 
+      // 🛡️ Normalize payment method to match database constraint (card, wallet, paymob)
+      const resolvedPaymentMethod = (() => {
+        const combined = `${obj.source_data?.type || ""} ${obj.source_data?.sub_type || ""}`.toLowerCase();
+        if (combined.includes("wallet") || combined.includes("vodafone") || combined.includes("orange") || combined.includes("etisalat") || combined.includes("we") || combined.includes("smartwallet")) {
+          return "wallet";
+        }
+        if (combined.includes("card") || combined.includes("visa") || combined.includes("master") || combined.includes("meeza") || combined.includes("online")) {
+          return "card";
+        }
+        return "card";
+      })();
+
       const { data: booking, error: updateError } = await supabase
         .from("bookings")
         .update({
@@ -532,7 +544,7 @@ serve(async (req: Request) => {
           payment_transaction_id: `PAYMOB_${transactionId}`,
           paymob_txn_id: transactionId,
           paymob_transaction_id: transactionId,
-          payment_method: obj.source_data?.sub_type || "paymob",
+          payment_method: resolvedPaymentMethod,
           webhook_verified: true,
           webhook_processed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -555,7 +567,7 @@ serve(async (req: Request) => {
             amount: updatedDepositPaid,
             type: isDepositOnly ? "deposit" : "payment",
             status: "completed",
-            payment_method: obj.source_data?.sub_type || "paymob",
+            payment_method: resolvedPaymentMethod,
             reference_number: transactionId,
             paymob_transaction_id: transactionId,
             description: `دفع ${isDepositOnly ? 'عربون' : 'كامل'} حجز ملعب: ${booking.stadium_name || existingBooking.stadium_name || 'الملعب'}`,
@@ -563,7 +575,9 @@ serve(async (req: Request) => {
               paymob_order_id: String(obj.order?.id ?? obj.order ?? ""),
               paymob_transaction_id: transactionId,
               is_deposit: isDepositOnly,
-              payment_method: obj.source_data?.sub_type || "paymob",
+              payment_method: resolvedPaymentMethod,
+              raw_sub_type: obj.source_data?.sub_type ?? null,
+              raw_pan: obj.source_data?.pan ?? null,
             },
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
