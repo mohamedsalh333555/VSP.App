@@ -814,20 +814,43 @@ ${JSON.stringify(taskState, null, 2)}
           const functionCallPart = candidate1?.parts?.find((p: any) => p.functionCall);
 
           if (functionCallPart) {
+            const taskNow = contextSnapshot.task_state || {};
             const forcedConfirmation =
               isExplicitConfirmation(userMessage) &&
-              !!contextSnapshot.task_state?.confirmation_pending;
+              !!taskNow.confirmation_pending;
+
+            // Deterministic orchestration:
+            // booking intent with complete exact-time slots must always check live
+            // availability before any booking tool can be executed.
+            const forcedAvailability =
+              !forcedConfirmation &&
+              taskNow.intent === "book_stadium" &&
+              taskNow.ready_for_execution === true &&
+              !taskNow.confirmation_pending;
+
             const funcName = forcedConfirmation
               ? "createBookingFromChat"
-              : functionCallPart.functionCall.name;
+              : (forcedAvailability
+                  ? "checkStadiumAvailability"
+                  : functionCallPart.functionCall.name);
+
             const args = forcedConfirmation
               ? {
-                  stadium_id: contextSnapshot.task_state.confirmation_pending.stadium_id,
-                  start_time: contextSnapshot.task_state.confirmation_pending.start_time,
-                  end_time: contextSnapshot.task_state.confirmation_pending.end_time,
+                  stadium_id: taskNow.confirmation_pending.stadium_id,
+                  start_time: taskNow.confirmation_pending.start_time,
+                  end_time: taskNow.confirmation_pending.end_time,
                   confirm: true,
                 }
-              : (functionCallPart.functionCall.args || {});
+              : (forcedAvailability
+                  ? {
+                      stadium_id: taskNow.stadium_id,
+                      stadium_name: taskNow.stadium_name,
+                      date: taskNow.date,
+                      time_preference: Array.isArray(taskNow.preferred_times)
+                        ? taskNow.preferred_times.join(" أو ")
+                        : "",
+                    }
+                  : (functionCallPart.functionCall.args || {}));
             let toolResponseData: any = {};
 
             if (funcName === "searchStadiums") {
