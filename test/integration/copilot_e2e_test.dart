@@ -12,7 +12,7 @@ void main() {
     late VspCopilotService copilotService;
 
     setUp(() {
-      copilotService = const VspCopilotService();
+      copilotService = const VspCopilotService(enableLocalTestEngine: true);
       copilotService.resetRateLimiter();
     });
 
