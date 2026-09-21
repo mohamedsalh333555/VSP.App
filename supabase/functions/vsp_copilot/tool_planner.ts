@@ -166,7 +166,7 @@ export function planToolExecution(
 
   // 6. Owner Inquiries
   if (state.active_task === "owner_financial" || semanticOutput.intent === "financial_question") {
-    if (role !== "owner" && role !== "pitch_owner") {
+    if (role !== "owner") {
       return {
         action: "RESPOND_DIRECTLY",
         reason: "البيانات المالية لملاك الملاعب متاحة فقط لحسابات المالكين.",
@@ -185,7 +185,7 @@ export function planToolExecution(
   }
 
   if (state.active_task === "owner_stadiums" || semanticOutput.intent === "owner_operations") {
-    if (role !== "owner" && role !== "pitch_owner") {
+    if (role !== "owner") {
       return {
         action: "RESPOND_DIRECTLY",
         reason: "إدارة الملاعب والحجوزات مخصصة لحسابات ملاك الملاعب.",

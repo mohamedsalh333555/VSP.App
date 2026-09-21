@@ -14,7 +14,7 @@ import {
 } from "./conversation_state.ts";
 import { resolveReferences } from "./reference_resolver.ts";
 import { mergeState } from "./state_merger.ts";
-import { planToolExecution } from "./tool_planner.ts";
+import { planToolExecution, type ToolPlan } from "./tool_planner.ts";
 import {
   isToolAllowedForRole,
   resolveCairoDate,
@@ -309,7 +309,7 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
 // Must interpret it as confirmation of the immediately pending clarification.
 {
   const lastInteraction = { type: "PROMPT_TIME_PERIOD_CONFIRMATION", prompt_target: "time_period" };
-  const confirmation = { meaning: "accepted", target: "time_period" as const };
+  const confirmation = { meaning: "accepted" as const, target: "time_period" as const };
   const evalResult = evaluateContextualConfirmation(lastInteraction, confirmation, "confirm");
 
   assert.equal(evalResult.isConfirmed, true, "Scenario D: Must confirm time period");
@@ -435,7 +435,7 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
     execution_request: { requested: false },
   }, "خلاص سيب الحجز، عايز أعرف البطولات");
 
-  const next = mergeState(state, delta, { resolved_stadium: null, resolved_time: null, resolved_date: null, ambiguities: [] });
+  const next = mergeState(state, delta, { resolved_stadium: null, fallback_stadium: null, resolved_time: null, resolved_date: null, ambiguities: [] });
 
   assert.equal(next.active_task, "tournament", "Scenario J: Must switch active task to tournament");
 }
@@ -496,7 +496,7 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
   };
   state.duration_hours = 1;
 
-  const plan = { action: "ASK_CONFIRMATION", toolName: "createBookingFromChat" };
+  const plan: ToolPlan = { action: "CONFIRM_PROPOSAL", toolName: "createBookingFromChat" };
 
   // Test 5.1: Fact Validator rejects hallucinated price (claims 250 instead of verified 200)
   const falsePriceReply = "تمام يا كابتن، الحجز بـ 250 جنيه في ملعب النجوم الساعة 8 بالليل.";
@@ -564,7 +564,7 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
     execution_request: { requested: false },
   }, "لا خلي الأول بكرة");
 
-  const next = mergeState(state, delta, { resolved_stadium: null, resolved_time: null, resolved_date: resolveCairoDate("tomorrow"), ambiguities: [] });
+  const next = mergeState(state, delta, { resolved_stadium: null, fallback_stadium: null, resolved_time: null, resolved_date: resolveCairoDate("tomorrow"), ambiguities: [] });
 
   assert.equal(next.date.value, resolveCairoDate("tomorrow"), "Must update date to tomorrow");
   assert.equal(next.times.length, 2, "Must preserve both candidate alternatives");
