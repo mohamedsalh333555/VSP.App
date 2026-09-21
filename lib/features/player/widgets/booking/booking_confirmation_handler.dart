@@ -5,6 +5,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/booking_repository.dart';
 import '../../../../core/services/logger_service.dart';
+import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import 'booking_payment_method_sheet.dart';
@@ -215,6 +216,56 @@ class BookingConfirmationHandler {
     }
 
     if (!context.mounted) return;
+
+    // Business rule: while the player has an active unpaid cash booking,
+    // any additional booking must be paid in full online. This is mirrored
+    // by the database trigger as the final authority.
+    final directRepo = SupabaseBookingRepository();
+    final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
+    final hasActiveCashBooking = existingUserBookings.any((b) =>
+        b.paymentMethod.toLowerCase() == 'cash' &&
+        !b.isPaid &&
+        (b.status == BookingStatus.pending || b.status == BookingStatus.confirmed) &&
+        b.endTime.isAfter(DateTime.now()));
+
+    if (hasActiveCashBooking) {
+      final remoteConfig = Provider.of<RemoteConfigService>(context, listen: false);
+      final onlineEnabled = remoteConfig.isFeatureEnabled('online_payment_enabled');
+      if (!onlineEnabled) {
+        HapticFeedback.vibrate();
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isAr
+              ? 'عندك حجز كاش قائم، والحجز الجديد لازم يتدفع بالكامل أونلاين. الدفع الإلكتروني غير متاح حالياً.'
+              : 'You have an active cash booking. The new booking must be paid in full online, but online payment is currently unavailable.',
+        );
+        onLoadingChanged(false);
+        return;
+      }
+
+      HapticFeedback.lightImpact();
+      VSPFeedback.showInfo(
+        context,
+        'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.',
+      );
+
+      final forcedFullDraft = draft.copyWith(
+        paymentMethod: 'paymob',
+        needsDeposit: false,
+        depositPaid: 0.0,
+        isDepositPaid: false,
+      );
+
+      nav.push(MaterialPageRoute(
+        builder: (_) => PaymentGatewayScreen(
+          bookingDraft: forcedFullDraft,
+          forceFullPayment: true,
+        ),
+      ));
+      return;
+    }
+
     showBookingPaymentMethodSheet(
       context: context,
       draft: draft,
