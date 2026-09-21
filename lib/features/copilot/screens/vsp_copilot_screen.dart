@@ -7,10 +7,12 @@ import '../../../core/models/copilot_message.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/repositories/booking_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../player/screens/booking_confirmation_screen.dart';
+import '../../player/screens/payment_gateway_screen.dart';
 import '../../player/screens/champion_screen.dart';
 import '../../player/screens/player_home_screen.dart';
 import '../../owner/screens/owner_main_screen.dart';
@@ -223,6 +225,82 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     }
   }
 
+  Future<void> _handleOpenPayment(CopilotAction action) async {
+    final bookingId = action.params?['booking_id']?.toString() ?? '';
+    if (bookingId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تجهيز الدفع حالياً.')),
+      );
+      return;
+    }
+
+    final navigator = Navigator.of(context);
+    context.pop();
+
+    try {
+      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
+      if (booking == null) {
+        if (navigator.mounted) {
+          ScaffoldMessenger.of(navigator.context).showSnackBar(
+            const SnackBar(content: Text('تعذر تحميل الحجز لإتمام الدفع.')),
+          );
+        }
+        return;
+      }
+
+      final forceFullPayment =
+          action.params?['force_full_payment'] == true ||
+          (action.params?['force_full_payment']?.toString().toLowerCase() == 'true');
+
+      final draft = BookingDraft(
+        stadiumId: booking.stadiumId,
+        stadiumName: booking.stadiumName,
+        stadiumImageUrl: booking.stadiumImageUrl,
+        ownerId: booking.ownerId,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        bookingType: booking.bookingType,
+        playerTeamId: booking.playerTeamId,
+        playerTeamName: booking.playerTeamName,
+        opponentTeamId: booking.opponentTeamId,
+        opponentTeamName: booking.opponentTeamName,
+        isPrivate: booking.isPrivate,
+        rentBall: booking.rentBall,
+        totalPrice: booking.totalPrice,
+        paymentMethod: forceFullPayment ? 'paymob' : booking.paymentMethod,
+        currentPlayers: booking.currentPlayers,
+        playersPerTeam: booking.playersPerTeam,
+        totalFieldCapacity: booking.totalFieldCapacity,
+        playerPhone: booking.playerPhone,
+        notes: booking.notes,
+        isPaid: booking.isPaid,
+        depositPaid: forceFullPayment ? 0.0 : booking.depositPaid,
+        isDepositPaid: forceFullPayment ? false : booking.isDepositPaid,
+        paymentStatus: booking.paymentStatus,
+        needsDeposit: forceFullPayment ? false : booking.depositPaid > 0,
+      );
+
+      if (!navigator.mounted) return;
+      navigator.push(
+        MaterialPageRoute(
+          builder: (_) => PaymentGatewayScreen(
+            bookingDraft: draft,
+            forceFullPayment: forceFullPayment,
+            existingBookingId: booking.id,
+            existingBooking: booking,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[VspCopilotScreen] Payment action error: $e');
+      if (navigator.mounted) {
+        ScaffoldMessenger.of(navigator.context).showSnackBar(
+          const SnackBar(content: Text('تعذر فتح الدفع حالياً. حاول مرة أخرى.')),
+        );
+      }
+    }
+  }
+
   void _handleExecuteAction(CopilotAction action) {
     HapticFeedback.mediumImpact();
     final actionType = action.actionType.toUpperCase();
@@ -260,12 +338,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     }
 
     if (actionType == 'OPEN_PAYMENT') {
-      context.pop();
-      try {
-        context.push('/checkout', extra: action.params);
-      } catch (e) {
-        debugPrint('[VspCopilotScreen] Checkout navigate error: $e');
-      }
+      _handleOpenPayment(action);
       return;
     }
 
