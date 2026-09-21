@@ -810,6 +810,14 @@ ${JSON.stringify(contextSnapshot, null, 2)}
 حالة المهمة الحالية (Task State):
 ${JSON.stringify(taskState, null, 2)}
 
+قاعدة صلاحيات الدور (ROLE CAPABILITY POLICY):
+- صلاحيات الأدوات التشغيلية يحددها السيرفر حسب دور الحساب، وليست اجتهاداً منك.
+- لا تقل أبداً إن المستخدم يستطيع تنفيذ ميزة أو فتح شاشة لا يسمح بها دوره.
+- إذا كان السؤال عاماً عن ميزة تخص دوراً آخر، يمكنك شرحها كمعلومة عامة، لكن لا تعرض بيانات خاصة ولا تنفذ إجراءً خارج صلاحيات الحساب.
+- اللاعب: الملاعب والحجز، البطولات، 1v1، المباريات المفتوحة، ملفه وحجوزاته.
+- مالك الملعب: إدارة ملاعبه، حجوزاته، الحسابات المالية والبروفايل.
+- إذا طلب المستخدم عملية ليست متاحة لدوره، وضّح ذلك ووجّهه إلى ما يستطيع فعله بدلاً من اختراع مسار بديل.
+
 قواعد استمرارية السياق:
 - إذا كان هناك ملعب واحد فقط في آخر النتائج أو UI_CONTEXT_INTERNAL، وعبارة المستخدم تشير إليه مثل "الملعب ده" أو "احجزه" أو "احجزلي"، اعتبره المقصود تلقائياً.
 - إذا كانت هناك عدة ملاعب، لا تخمّن؛ اطلب تحديد الملعب.
@@ -1600,6 +1608,22 @@ ${JSON.stringify(taskState, null, 2)}
             if (geminiRes2.ok) {
               const geminiData2 = await geminiRes2.json();
               assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            }
+
+            // Never let the model override a server-side capability decision.
+            if (toolResponseData?.code === "CAPABILITY_DENIED") {
+              const role = normalizeCopilotRole(userProfile?.role);
+              if (role === "owner") {
+                assistantReply =
+                  "الميزة دي مش متاحة لحساب مالك الملعب. أقدر أساعدك في إدارة ملاعبك وحجوزاتها وحساباتك.";
+              } else if (role === "player") {
+                assistantReply =
+                  "الميزة دي مش متاحة لحساب اللاعب. أقدر أساعدك في الملاعب والحجوزات والبطولات وخدمات اللاعب.";
+              } else {
+                assistantReply = "الميزة دي مش متاحة لهذا النوع من الحسابات.";
+              }
+              appAction = null;
+              quickReplies = [];
             }
 
             // Smart Confirmation: once availability is known, show a concise booking summary instead of booking or asking from scratch.
