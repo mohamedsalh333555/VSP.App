@@ -353,6 +353,36 @@ function hasDateCue(input: string): boolean {
   return /النهارده|النهاردة|اليوم|دلوقتي|حالا|حالاً|بكره|بكرة|غدا|غداً|بعد بكره|بعد بكرة|today|tomorrow/.test(normalized);
 }
 
+function isExplicitConfirmation(input: string): boolean {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase()).trim().replace(/\s+/g, " ");
+  return /^(?:ايوه|أيوه|اه|آه|تمام|ماشي|موافق|موافقة|أكد الحجز|اكد الحجز|أكدلي الحجز|اكدلي الحجز|ثبّت الحجز|ثبت الحجز|احجزه|احجزهولي|احجزه لي|نفذ الحجز|نفذه|اتفقنا)$/.test(normalized);
+}
+
+function extractTimeWindow(input: string): { type: string; label: string; from_hour: number; to_hour: number } | null {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  if (/بعد\s+العصر|بعد\s+الضهر|بعد\s+الظهر|من\s+بعد\s+العصر/.test(normalized)) {
+    return { type: "after_afternoon", label: "بعد العصر", from_hour: 16, to_hour: 23 };
+  }
+  if (/بالليل|ليل|مساء|المساء/.test(normalized)) {
+    return { type: "evening", label: "بالليل", from_hour: 20, to_hour: 23 };
+  }
+  return null;
+}
+
+function selectPreferredAvailableSlot(
+  availableSlots: Array<{ start_time: string; end_time: string }>,
+  preferredTimes: string[],
+): { start_time: string; end_time: string } | null {
+  if (!availableSlots.length) return null;
+  if (!preferredTimes.length) return availableSlots[0];
+  for (const preferred of preferredTimes) {
+    const preferredHour = preferred.substring(0, 2);
+    const match = availableSlots.find((slot: any) => String(slotHourFromIso(slot.start_time)).padStart(2, "0") === preferredHour);
+    if (match) return match;
+  }
+  return null;
+}
+
 function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string) {
   const current = contextSnapshot.task_state && typeof contextSnapshot.task_state === "object"
     ? contextSnapshot.task_state
@@ -362,7 +392,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
 
-  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase();
+  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase().trim();
   const correctionMatches = [...normalizedMessage.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
   const effectiveMessage = correctionMatches.length > 0
     ? normalizedMessage.slice(Math.max(...correctionMatches))
@@ -373,8 +403,11 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   const preferredTimes = extractPreferredTimes(userMessage);
   const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
   const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
+  const timeWindow = extractTimeWindow(effectiveMessage);
+
   if (preferredTimes.length > 0) {
     next.preferred_times = preferredTimes;
+    delete next.time_window;
   } else if (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/)) {
     next.preferred_times = next.preferred_times.map((t: string) => {
       let hour = Number(t.substring(0, 2));
@@ -382,15 +415,24 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
       if (hasAm && hour === 12) hour = 0;
       return String(hour).padStart(2, "0") + ":00";
     });
+    delete next.time_window;
+  } else if (timeWindow) {
+    next.time_window = timeWindow;
+    next.preferred_times = [];
+    next.requires_time_clarification = false;
   }
+
   if (/احجز|حجز|احجزلي|احجزه|حجزلي/.test(normalizedMessage)) next.intent = "book_stadium";
+
   next.missing_slots = [];
   if (!next.stadium_id) next.missing_slots.push("stadium");
   if (!next.date) next.missing_slots.push("date");
-  if (!Array.isArray(next.preferred_times) || next.preferred_times.length === 0) next.missing_slots.push("time");
+  const hasExactTime = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
+  const hasTimeWindow = !!next.time_window;
+  if (!hasExactTime && !hasTimeWindow) next.missing_slots.push("time");
 
   const hasExplicitPeriod = hasPm || hasAm;
-  if (Array.isArray(next.preferred_times) && next.preferred_times.length > 0 && !hasExplicitPeriod) {
+  if (hasExactTime && !hasExplicitPeriod && !hasTimeWindow) {
     next.time_period_confirmed = false;
     next.requires_time_clarification = true;
   } else {
@@ -401,8 +443,8 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   next.ready_for_execution =
     next.missing_slots.length === 0 &&
     next.time_period_confirmed === true &&
-    Array.isArray(next.preferred_times) &&
-    next.preferred_times.length > 0;
+    hasExactTime;
+
   next.updated_at = new Date().toISOString();
   contextSnapshot.task_state = next;
   return next;
@@ -1003,8 +1045,15 @@ ${JSON.stringify(taskState, null, 2)}
                   return true;
                 });
 
+                const taskForAvailability = contextSnapshot.task_state || {};
+                const timeWindow = taskForAvailability.time_window;
                 if (preferredTimes.length > 0) {
                   availableSlots = availableSlots.filter((slot) => slotMatchesPreferredTime(slot, preferredTimes));
+                } else if (timeWindow && typeof timeWindow.from_hour === "number") {
+                  availableSlots = availableSlots.filter((slot) => {
+                    const hour = slotHourFromIso(slot.start_time);
+                    return hour >= timeWindow.from_hour && hour <= (timeWindow.to_hour ?? 23);
+                  });
                 }
 
                 contextSnapshot.last_stadium_id = targetStadium.id;
@@ -1017,12 +1066,14 @@ ${JSON.stringify(taskState, null, 2)}
                   stadium_name: targetStadium.name,
                   date: targetDateStr,
                   preferred_times: preferredTimes,
+                  time_window: taskForAvailability.time_window || null,
                   available_times: availableSlots.map((s: any) => s.start_time),
                 };
 
                 if (contextSnapshot.task_state.intent === "book_stadium" && availableSlots.length > 0) {
-                  const proposedSlot = availableSlots[0];
-                  contextSnapshot.task_state.confirmation_pending = {
+                  const proposedSlot = selectPreferredAvailableSlot(availableSlots, preferredTimes);
+                  if (proposedSlot) {
+                    contextSnapshot.task_state.confirmation_pending = {
                     stadium_id: targetStadium.id,
                     stadium_name: targetStadium.name,
                     date: targetDateStr,
@@ -1035,8 +1086,8 @@ ${JSON.stringify(taskState, null, 2)}
                     route: "/bookings",
                     label: "تأكيد الحجز",
                     params: { message: "أيوه، أكد الحجز" },
-                  };
-                }
+                    };
+                  }
 
                 toolResponseData = {
                   stadium_id: targetStadium.id,
