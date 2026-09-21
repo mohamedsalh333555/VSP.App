@@ -1409,10 +1409,23 @@ ${JSON.stringify(taskState, null, 2)}
             }
 
 
-            // Second turn for natural conversational response
+            // Second turn for natural conversational response.
+            // Reconstruct the model's tool-call part using the deterministic function
+            // name/args so the following functionResponse always matches the call.
+            const normalizedToolCallContent = {
+              role: "model",
+              parts: [
+                {
+                  functionCall: {
+                    name: funcName,
+                    args: args,
+                  },
+                },
+              ],
+            };
             const secondContents = [
               ...contents,
-              candidate1,
+              normalizedToolCallContent,
               {
                 role: "function",
                 parts: [
