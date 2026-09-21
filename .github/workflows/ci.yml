@@ -58,6 +58,18 @@ jobs:
           EOF
           fi
 
+      - name: Restore Firebase Android Configuration for Release
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "::error::Missing GitHub Actions secret GOOGLE_SERVICES_JSON required for Android release builds."
+            exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          test -s android/app/google-services.json
+          python -c "import json; json.load(open('android/app/google-services.json', encoding='utf-8')); print('google-services.json is valid JSON')"
+
       - name: Run Static Code Analysis (Zero Tolerance Gate)
         run: flutter analyze
 
