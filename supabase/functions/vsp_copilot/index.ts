@@ -450,24 +450,58 @@ function isBookingExecutionIntent(input: string): boolean {
     /(?:حجز|احجز|ملعب|ماتش|موعد|ميعاد)/.test(normalized);
 }
 
+function normalizeEgyptianText(input: string): string {
+  return normalizeArabicDigits((input || "").toString().toLowerCase())
+    .replace(/إزاي|ازاى|إزاى/g, "ازاي")
+    .replace(/عايزه/g, "عايزة")
+    .replace(/عاوزه/g, "عاوزة")
+    .replace(/محتاجه/g, "محتاجة")
+    .replace(/حجزلى|احجزلى/g, "احجزلي")
+    .replace(/احجز لى/g, "احجزلي")
+    .replace(/نهارده|النهاردة/g, "النهارده")
+    .replace(/اشخاص|أشخاص/g, "اشخاص")
+    .replace(/لاعيبة/g, "لاعبين")
+    .replace(/تنفار|نفار/g, "نفر")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function classifyCopilotTurn(input: string): string | null {
+  const normalized = normalizeEgyptianText(input);
+
+  if (isBookingHowToQuestion(normalized)) return "booking_howto";
+
+  const executionSignal =
+    /(?:عايز|عايزة|عاوز|عاوزة|حابب|حابة|محتاج|محتاجة|نفسي|ممكن|عايزك|عايزة احجز|عايز احجز|عاوز احجز|عاوزة احجز)/.test(normalized) &&
+    /(?:احجز|حجز|احجزلي|حجزلي|ثبت الحجز|اكد الحجز|أكد الحجز|احجزه|احجزها|احجزلي)/.test(normalized);
+
+  if (executionSignal) return "book_stadium";
+
+  if (/(?:احجزلي|حجزلي|احجز لي|احجزهولي|ممكن تحجزلي|ممكن تحجزه)/.test(normalized)) {
+    return "book_stadium";
+  }
+
+  return null;
+}
+
 function hasNearbyStadiumScope(input: string): boolean {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
   return /قريب مني|قريب عني|قريب|جنبى|جنبي|حواليا|عندي|هنا|في منطقتي|بالقرب مني/.test(normalized);
 }
 
 function extractGroupSize(input: string): number | null {
-  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  const normalized = normalizeEgyptianText(input);
 
   const selfPlus = /(?:انا|أنا)\s*(?:و|معايا|معاي|ومعايا|ومعاي)\s*([^،.\n]+)/.exec(normalized);
   if (selfPlus) {
     const tail = selfPlus[1];
-    if (/(?:نفر|نفار|تنفار|شخص|شخصا|اشخاص|أشخاص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.test(tail)) {
+    if (/(?:نفر|شخص|اشخاص|افراد|لاعب|لاعبين|فرد)/.test(tail)) {
       const others = parseParticipantNumberToken(tail);
       if (others != null && others >= 1 && others <= 30) return others + 1;
     }
   }
 
-  const direct = /([^،.\n]*?)\s*(?:نفر|نفار|تنفار|شخص|شخصا|اشخاص|أشخاص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
+  const direct = /([^،.\n]*?)\s*(?:نفر|شخص|اشخاص|افراد|لاعب|لاعبين|فرد)/.exec(normalized);
   if (direct) {
     const count = parseParticipantNumberToken(direct[1]);
     if (count != null && count >= 1 && count <= 30) return count;
@@ -573,7 +607,7 @@ function resolveVisibleStadiumReference(contextSnapshot: Record<string, any>, in
   return null;
 }
 
-function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string) {
+function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string, detectedTurnIntent: string | null = null) {
   const current = contextSnapshot.task_state && typeof contextSnapshot.task_state === "object"
     ? contextSnapshot.task_state
     : {};
@@ -583,7 +617,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
 
-  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase().trim();
+  const normalizedMessage = normalizeEgyptianText(userMessage);
   const correctionMatches = [...normalizedMessage.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
   const effectiveMessage = correctionMatches.length > 0
     ? normalizedMessage.slice(Math.max(...correctionMatches))
@@ -591,12 +625,13 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
 
   const explicitConfirmation = isExplicitConfirmation(userMessage);
   const bookingHowTo = isBookingHowToQuestion(userMessage);
+  const detectedIntent = detectedTurnIntent || classifyCopilotTurn(userMessage);
   const groupSize = extractGroupSize(userMessage);
   const nearbyScope = hasNearbyStadiumScope(userMessage);
 
   // The current user turn has precedence over stale task-state interpretations.
   // A how-to question must never inherit an old "book_stadium" execution intent.
-  if (bookingHowTo) {
+  if (detectedIntent === "booking_howto") {
     next.intent = "booking_howto";
     delete next.confirmation_pending;
     // Do not infer schedule slots merely because the word "حجز" appears.
@@ -605,9 +640,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
 
   if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
 
-  const preferredTimes = bookingHowTo
-    ? extractPreferredTimes(userMessage)
-    : extractPreferredTimes(userMessage);
+  const preferredTimes = extractPreferredTimes(userMessage);
   const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
   const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
   const timeWindow = extractTimeWindow(effectiveMessage);
@@ -649,7 +682,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     next.requires_time_clarification = false;
   }
 
-  if (!bookingHowTo && isBookingExecutionIntent(userMessage)) {
+  if (detectedIntent === "book_stadium") {
     next.intent = "book_stadium";
   }
 
@@ -1119,8 +1152,10 @@ serve(async (req: Request) => {
       contextSnapshot = newConv.context_snapshot || {};
     }
 
-    // 8. Build Multi-Turn History for Gemini
-    const taskState = mergeTaskState(contextSnapshot, userMessage);
+    // 8. Classify the current turn once, deterministically, before Gemini.
+    // Gemini may phrase the answer, but it does not own the primary booking intent.
+    const detectedTurnIntent = classifyCopilotTurn(userMessage);
+    const taskState = mergeTaskState(contextSnapshot, userMessage, detectedTurnIntent);
 
     const { data: priorMessages } = await supabase
       .from("copilot_messages")
@@ -1167,31 +1202,34 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
-    // Deterministic booking-slot guard: ask for ONE next actionable slot.
-    // The assistant chooses nearby stadiums; the customer should not be asked to name one.
-    if (contextSnapshot.task_state?.intent === "book_stadium" &&
-        !contextSnapshot.task_state?.confirmation_pending &&
-        !contextSnapshot.task_state?.ready_for_execution) {
-      const task = contextSnapshot.task_state || {};
+    // Deterministic booking-slot guard: the current turn's intent/state decides
+    // the next question; Gemini is not allowed to re-ask known slots.
+    if (taskState?.intent === "book_stadium" &&
+        !taskState?.confirmation_pending &&
+        !taskState?.ready_for_execution) {
+      const task = taskState || {};
       const missing = Array.isArray(task.missing_slots) ? task.missing_slots : [];
       const groupSize = Number(task.group_size || 0);
-      const groupText = groupSize > 0 ? " وعددكم " + groupSize + " لاعب." : "";
+      const groupText = groupSize > 0 ? " عددكم " + groupSize + " لاعب." : "";
 
       if (missing.includes("date")) {
         const hasTime = Array.isArray(task.preferred_times) && task.preferred_times.length > 0;
         const timeText = hasTime
-          ? " الساعة " + task.preferred_times.map((t: string) => formatSlotTimeForUser(cairoLocalToUtcIso(
-              2026, 1, 1, Number(t.substring(0, 2)), Number(t.substring(3, 5) || 0)
-            ))).join(" أو ")
+          ? " والساعة " + task.preferred_times.map((t: string) => {
+              const h = Number(t.substring(0, 2));
+              const m = Number(t.substring(3, 5) || 0);
+              const display = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+              return display + ":" + String(m).padStart(2, "0") + (h >= 12 ? " بالليل" : " الصبح");
+            }).join(" أو ")
           : "";
         assistantReply =
-          "تمام، فهمت إنك عايز تحجز ملعب قريب منك" + timeText + "." + groupText +
-          " نبدأ باليوم: تحب النهارده ولا يوم تاني؟";
+          "تمام، فهمت إنك عايز تحجز ملعب قريب منك" + timeText + "." +
+          groupText + " تحب الحجز النهارده ولا يوم تاني؟";
         quickReplies = ["النهارده", "بكرة"];
         handledByGemini = true;
       } else if (missing.includes("time")) {
         assistantReply =
-          "تمام، اليوم اتحدد." + groupText + " الساعة كام تحب نبدأ ندورلك عليها؟";
+          "تمام، اليوم اتحدد." + groupText + " الساعة كام تحب تحجز؟";
         quickReplies = ["8 بالليل", "9 بالليل", "10 بالليل"];
         handledByGemini = true;
       }
