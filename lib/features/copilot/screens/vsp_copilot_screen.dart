@@ -422,9 +422,6 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     final isArabic = widget.isArabic ?? (Localizations.maybeLocaleOf(context)?.languageCode != 'en');
     final hasMessages = _messages.isNotEmpty;
 
-    final auth = Provider.of<AuthProvider?>(context, listen: false);
-    final userGov = auth?.userModel?.governorate;
-
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: VSPColors.background,
