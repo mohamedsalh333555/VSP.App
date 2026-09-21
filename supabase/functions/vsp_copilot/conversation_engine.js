@@ -37,7 +37,7 @@ function normalizeEgyptianText(value = "") {
     .replace(/(^|\s)عاوزه(?=\s|$)/g, "$1عاوزة")
     .replace(/(^|\s)محتاجه(?=\s|$)/g, "$1محتاجة")
     .replace(/احجزلى|حجزلى/g, "احجزلي")
-    .replace(/احجز لى/g, "احجزلي")
+    .replace(/احجز\s*لي|احجز\s*لى|تحجز\s*لي|تحجز\s*لى/g, "احجزلي")
     .replace(/(^|\s)(?:نهارده|النهاردة)(?=\s|$)/g, "$1النهارده")
     .replace(/تنفار|نفار/g, "نفر")
     .replace(/لاعيبة/g, "لاعبين")
@@ -131,8 +131,18 @@ function hourWordPattern() {
 function parseTimeValue(hour, minute = 0, period = "") {
   let h = Number(hour), m = Number(minute) || 0;
   if (!Number.isFinite(h) || h < 0 || h > 23 || m < 0 || m > 59) return null;
-  if (/مساء|مسا|بالليل|ليل|(?:^|\s)م(?:\s|$)/i.test(period) && h < 12) h += 12;
-  if (/صباح|صبح|(?:^|\s)ص(?:\s|$)/i.test(period) && h === 12) h = 0;
+
+  const explicitPm = /مساء|مسا|بالليل|ليل|(?:^|\s)م(?:\s|$)/i.test(period);
+  const explicitAm = /صباح|صبح|(?:^|\s)ص(?:\s|$)/i.test(period);
+
+  if (explicitPm && h < 12) h += 12;
+  else if (explicitAm && h === 12) h = 0;
+  else if (!explicitPm && !explicitAm && h >= 5 && h <= 11) {
+    // Bare 5..11 is treated as an evening candidate in football-stadium context.
+    // The dialogue state still requires a period confirmation before execution.
+    h += 12;
+  }
+
   return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
 }
 
@@ -170,6 +180,15 @@ function extractPreferredTimes(input) {
       push(parseTimeValue(c[1],0,globalPm ? "مساء" : "صباح"));
       push(parseTimeValue(c[2],0,globalPm ? "مساء" : "صباح"));
     }
+  }
+
+  // Support "الساعة 10:00 11:00" or "الساعة 10 و11" with one shared time cue.
+  const anchoredNumericRe = /(?:الساعة|ساعة|ساعه)\s*(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?(?:\s*(?:و|او|أو|ولا|,|،)\s*|\s+)(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?/gi;
+  while ((m = anchoredNumericRe.exec(effective)) !== null) {
+    if (participantContext(effective, m.index, m[0].length)) continue;
+    const sharedPeriod = globalPm ? "مساء" : globalAm ? "صباح" : m[0];
+    push(parseTimeValue(m[1], m[2] || 0, sharedPeriod));
+    push(parseTimeValue(m[3], m[4] || 0, sharedPeriod));
   }
 
   const wordRe = new RegExp(
@@ -226,7 +245,7 @@ function isBookingHowTo(input) {
 }
 
 function isExplicitConfirmation(input) {
-  return /^(?:ايوه|أيوه|اه|آه|تمام|ماشي|موافق|موافقة|أكد الحجز|اكد الحجز|أكدلي الحجز|اكدلي الحجز|ثبت الحجز|ثبّت الحجز|احجزه|احجزهولي|احجزه لي|نفذ الحجز|نفذه|اتفقنا)$/i.test(normalizeEgyptianText(input));
+  return /^(?:ايوه|أيوه|اه|آه|تمام|ماشي|موافق|موافقة|صح|مظبوط|ايوه صح|أيوه صح|اه صح|آه صح|اه مظبوط|آه مظبوط|أكد الحجز|اكد الحجز|أكدلي الحجز|اكدلي الحجز|ثبت الحجز|ثبّت الحجز|احجزه|احجزهولي|احجزه لي|نفذ الحجز|نفذه|اتفقنا)$/i.test(normalizeEgyptianText(input));
 }
 
 function hasNearby(input) {
@@ -244,8 +263,12 @@ function resolveVisibleReference(context, input) {
     /(?:^|\s)(?:رابع|الرابع|الرابعة)(?=\s|$)/i,
   ];
   for (let i=0;i<ord.length;i++) if (ord[i].test(t) && visible[i]) return visible[i];
-  if (visible.length===1 && /الملعب ده|الملعب دي|اللي فوق|ده الملعب|هو ده|دي هي|احجزه|احجزلي/i.test(t))
+  if (visible.length===1 && (
+    /الملعب ده|الملعب دي|اللي فوق|ده الملعب|هو ده|دي هي|احجزه|احجزلي|احجز|حجز|النهارده|بكره|بكرة|الساعة/i.test(t) ||
+    STRONG_BOOKING.test(t)
+  )) {
     return visible[0];
+  }
   return null;
 }
 
@@ -271,15 +294,26 @@ function analyzeCopilotTurn(input, contextSnapshot = {}) {
   const timeWindow = extractTimeWindow(effective);
   const groupSize = extractGroupSize(effective);
   const nearby = hasNearby(effective);
-  const stadiumReference = resolveVisibleReference(contextSnapshot,effective);
+  const stadiumReference = resolveVisibleReference(contextSnapshot, effective);
   const explicitConfirmation = isExplicitConfirmation(original);
   const intent = classifyIntent(effective);
   const ambiguities = [];
 
-  if (times.length > 0 && !/(مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\\s)م(?:\\s|$)|(?:^|\\s)ص(?:\\s|$))/i.test(effective))
+  const hasExplicitPeriod = /مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\s)م(?:\s|$)|(?:^|\s)ص(?:\s|$)/i.test(effective);
+  const inferredEveningPeriod =
+    times.length > 0 &&
+    !hasExplicitPeriod &&
+    times.some((t) => {
+      const hour = Number(String(t).substring(0, 2));
+      return hour >= 17 && hour <= 23;
+    });
+
+  if (times.length > 0 && !hasExplicitPeriod) {
     ambiguities.push("time_period");
-  if (/\b\d{1,2}\b/.test(effective) && times.length===0 && groupSize===null && /حجز|ملعب/i.test(effective))
+  }
+  if (/\b\d{1,2}\b/.test(effective) && times.length===0 && groupSize===null && /حجز|ملعب/i.test(effective)) {
     ambiguities.push("numeric_entity");
+  }
 
   return {
     normalized,
@@ -293,20 +327,25 @@ function analyzeCopilotTurn(input, contextSnapshot = {}) {
       time_window: timeWindow,
       group_size: groupSize,
       location_scope: nearby ? "nearby" : null,
-      stadium_reference: stadiumReference ? {id:stadiumReference.id,name:stadiumReference.name} : null,
+      stadium_reference: stadiumReference ? {id: stadiumReference.id, name: stadiumReference.name} : null,
       confirmation: explicitConfirmation,
+      inferred_time_period: inferredEveningPeriod ? "evening" : null,
     },
     ambiguities,
     signals: {
       how_to: isBookingHowTo(original),
       explicit_execution: intent === "book_stadium",
-      explicit_period: /مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\s)م(?:\s|$)|(?:^|\s)ص(?:\s|$)/i.test(effective),
+      explicit_period: hasExplicitPeriod,
+      inferred_period: inferredEveningPeriod ? "evening" : null,
     },
   };
 }
 
 function mergeConversationState(contextSnapshot, analysis) {
-  const current = contextSnapshot?.task_state && typeof contextSnapshot.task_state === "object" ? contextSnapshot.task_state : {};
+  const current = contextSnapshot?.task_state && typeof contextSnapshot.task_state === "object"
+    ? contextSnapshot.task_state
+    : {};
+  const previousMissing = Array.isArray(current.missing_slots) ? current.missing_slots : [];
   const next = {...current};
   const e = analysis.entities || {};
 
@@ -320,35 +359,84 @@ function mergeConversationState(contextSnapshot, analysis) {
   }
 
   if (e.date) next.date = e.date;
+
+  // A new exact time replaces previous exact times. A vague period must not erase
+  // exact times while the user is only clarifying their AM/PM meaning.
+  const waitingForPeriod = previousMissing.includes("time_period") || current.time_period_confirmed === false;
   if (Array.isArray(e.preferred_times) && e.preferred_times.length) {
     next.preferred_times = e.preferred_times;
     delete next.time_window;
-  } else if (e.time_window) {
+  } else if (e.time_window && !(waitingForPeriod && Array.isArray(next.preferred_times) && next.preferred_times.length)) {
     next.time_window = e.time_window;
     next.preferred_times = [];
   }
+
   if (e.group_size != null) next.group_size = e.group_size;
   if (e.location_scope) next.stadium_scope = e.location_scope;
+
   if (e.stadium_reference) {
     next.stadium_id = e.stadium_reference.id;
     next.stadium_name = e.stadium_reference.name;
+  }
+
+  if (e.inferred_time_period) {
+    next.time_period_candidate = e.inferred_time_period;
+  }
+
+  // Confirming an inferred period (e.g. "صح" after "تقصد بالليل؟") completes the
+  // clarification without asking for the hour again. An explicit "بالليل"/"الصبح"
+  // does the same thing. Exact times are preserved.
+  const periodReply =
+    waitingForPeriod &&
+    (
+      e.confirmation === true ||
+      /بالليل|ليل|مساء|الصبح|صباح/i.test(analysis.normalized || "")
+    );
+
+  if (periodReply) {
+    if (e.time_window?.type === "morning" && Array.isArray(next.preferred_times)) {
+      next.preferred_times = next.preferred_times.map((t) => {
+        const parts = String(t).split(":");
+        let h = Number(parts[0]);
+        if (h >= 12) h -= 12;
+        return String(h).padStart(2, "0") + ":" + String(parts[1] || "00");
+      });
+    } else if (e.time_window?.type === "evening" && Array.isArray(next.preferred_times)) {
+      next.preferred_times = next.preferred_times.map((t) => {
+        const parts = String(t).split(":");
+        let h = Number(parts[0]);
+        if (h > 0 && h < 12) h += 12;
+        return String(h).padStart(2, "0") + ":" + String(parts[1] || "00");
+      });
+    }
+
+    next.time_period_confirmed = true;
+    delete next.time_period_candidate;
   }
 
   if (next.intent === "book_stadium") {
     const hasExact = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
     const hasWindow = !!next.time_window;
     const needs = [];
+
     if (!next.stadium_id && next.stadium_scope !== "nearby") needs.push("stadium");
     if (!next.date) needs.push("date");
     if (!hasExact && !hasWindow) needs.push("time");
-    const explicitPeriod = !!analysis.signals?.explicit_period || hasWindow;
-    if (hasExact && !explicitPeriod) needs.push("time_period");
 
-    if (analysis.corrected || e.date || hasExact || hasWindow || e.stadium_reference)
-      delete next.confirmation_pending;
+    const periodConfirmed =
+      next.time_period_confirmed === true ||
+      !!analysis.signals?.explicit_period ||
+      hasWindow;
+
+    if (hasExact && !periodConfirmed) needs.push("time_period");
+
+    if (analysis.corrected || e.date || hasExact || hasWindow || e.stadium_reference) {
+      if (!periodReply) delete next.confirmation_pending;
+    }
 
     next.missing_slots = needs;
     next.time_period_confirmed = !needs.includes("time_period");
+
     next.ready_for_execution =
       needs.length === 0 &&
       next.time_period_confirmed === true &&
@@ -408,12 +496,12 @@ function buildResponseContract(taskState, decision, analysis) {
   if (Array.isArray(taskState?.preferred_times) && taskState.preferred_times.length)
     contract.facts.preferred_times = taskState.preferred_times;
   if (taskState?.time_window) contract.facts.time_window = taskState.time_window;
+  if (taskState?.time_period_candidate) contract.facts.time_period_candidate = taskState.time_period_candidate;
   if (taskState?.stadium_id)
     contract.facts.stadium = {id:taskState.stadium_id,name:taskState.stadium_name};
 
-  if (decision.next_slot === "date") contract.quick_replies = ["النهارده","بكرة"];
-  if (decision.next_slot === "time") contract.quick_replies = ["8 بالليل","9 بالليل","10 بالليل"];
-  if (decision.next_slot === "time_period") contract.quick_replies = ["10 الصبح","10 بالليل"];
+  // Quick replies exist only for the actual AM/PM clarification; there is no generic starter bank.
+  if (decision.next_slot === "time_period") contract.quick_replies = ["بالليل","الصبح"];
 
   return contract;
 }
