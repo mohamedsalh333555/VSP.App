@@ -154,7 +154,7 @@ function extractPreferredTimes(input) {
     const after = effective.slice(m.index, Math.min(effective.length, m.index + 22));
     const directTime =
       /الساعة\s*$/i.test(before) ||
-      /(?:بالليل|ليل|مساء|المساء|الصبح|صباح|مسا)|(?:^|\\s)[مص](?=\\s|$)/i.test(after) ||
+      /(?:بالليل|ليل|مساء|المساء|الصبح|صباح|مسا)|(?:^|\s)[مص](?=\s|$)/i.test(after) ||
       /[:٫.]\d{1,2}/.test(m[0]);
     if (!directTime) continue;
     const t = parseTimeValue(m[1], m[2] || 0, globalPm ? "مساء" : globalAm ? "صباح" : after);
