@@ -257,9 +257,18 @@ class CopilotMessage {
     final rawUi = map['ui_metadata'] is Map
         ? Map<String, dynamic>.from(map['ui_metadata'] as Map)
         : <String, dynamic>{};
-    final rawStadiums = map['stadium_results'] as List<dynamic>? ?? (rawUi['stadiums'] as List<dynamic>?) ?? [];
-    final rawTournaments = map['tournament_results'] as List<dynamic>? ?? map['tournaments'] as List<dynamic>? ?? (rawUi['tournaments'] as List<dynamic>?) ?? [];
-    final rawMatches = map['open_matches'] as List<dynamic>? ?? (rawUi['open_matches'] as List<dynamic>?) ?? [];
+    final storedStadiums = map['stadium_results'] as List<dynamic>?;
+    final rawStadiums = (storedStadiums != null && storedStadiums.isNotEmpty)
+        ? storedStadiums
+        : ((rawUi['stadiums'] as List<dynamic>?) ?? []);
+    final storedTournaments = (map['tournament_results'] ?? map['tournaments']) as List<dynamic>?;
+    final rawTournaments = (storedTournaments != null && storedTournaments.isNotEmpty)
+        ? storedTournaments
+        : ((rawUi['tournaments'] as List<dynamic>?) ?? []);
+    final storedMatches = map['open_matches'] as List<dynamic>?;
+    final rawMatches = (storedMatches != null && storedMatches.isNotEmpty)
+        ? storedMatches
+        : ((rawUi['open_matches'] as List<dynamic>?) ?? []);
     final rawActionValue = map['action'] ?? rawUi['action'];
     final rawAction = rawActionValue is Map ? Map<String, dynamic>.from(rawActionValue) : null;
 
