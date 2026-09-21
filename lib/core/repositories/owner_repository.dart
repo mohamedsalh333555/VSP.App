@@ -62,18 +62,22 @@ class OwnerRepository {
     }
   }
 
-  /// حساب صافي أرباح المالك من الحجوزات الإلكترونية بعد خصم رسوم المنصة
+  /// دخل المالك من الحجوزات الإلكترونية — كامل قيمة الحجز بدون خصم عمولة أو رسوم على المالك
   Future<double> calculateOwnerRevenue(String ownerId) async {
     try {
       final summary = await getOwnerFinancialSummary(ownerId);
+      if (summary['success'] == true && summary['owner_online_earnings'] != null) {
+        return (summary['owner_online_earnings'] as num).toDouble();
+      }
       if (summary['success'] == true && summary['net_online_earnings'] != null) {
+        // Backward compatibility: server now returns this field at gross owner value.
         return (summary['net_online_earnings'] as num).toDouble();
       }
 
-      // Fallback: حساب احتياطي مؤمّن ومخصوم منه الرسوم للحجوزات الإلكترونية
+      // Fallback: كامل قيمة الحجوزات الإلكترونية المدفوعة، بدون خصم platform_fee.
       final response = await _supabase
           .from('bookings')
-          .select('total_price, platform_fee')
+          .select('total_price')
           .eq('owner_id', ownerId)
           .neq('payment_source', 'cash')
           .or('payment_reconcile_state.eq.fully_paid,payment_status.eq.paid,is_paid.eq.true')
@@ -81,9 +85,7 @@ class OwnerRepository {
 
       double total = 0;
       for (var row in (response as List)) {
-        final price = (row['total_price'] ?? 0).toDouble();
-        final fee = (row['platform_fee'] ?? 0).toDouble();
-        total += (price - fee);
+        total += (row['total_price'] ?? 0).toDouble();
       }
       return total;
     } catch (e, stack) {
