@@ -19,7 +19,6 @@ import '../../owner/screens/owner_main_screen.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/copilot_chat_bubble.dart';
 import '../widgets/copilot_conversations_drawer.dart';
-import '../widgets/copilot_starter_prompts.dart';
 
 /// Full-screen LLM Chatbot experience for VSP Copilot (matching ChatGPT/Gemini apps).
 class VspCopilotScreen extends StatefulWidget {
@@ -444,11 +443,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
             Expanded(
               child: hasMessages
                   ? _buildMessagesList(isArabic)
-                  : CopilotStarterPrompts(
-                      onSelectPrompt: _handleSendMessage,
-                      isArabic: isArabic,
-                      userGovernorate: userGov,
-                    ),
+                  : const SizedBox.expand(),
             ),
             _buildInputBar(isArabic),
           ],
