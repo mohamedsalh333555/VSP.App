@@ -915,6 +915,25 @@ ${JSON.stringify(taskState, null, 2)}
 
               if (!targetStadium) {
                 toolResponseData = { success: false, message: "لم يتم تحديد ملعب بشكل كافٍ لفحص التوافر. حدّد الملعب المطلوب أولاً." };
+              } else if (contextSnapshot.task_state?.requires_time_clarification) {
+                const ambiguousTimes = Array.isArray(contextSnapshot.task_state?.preferred_times)
+                  ? contextSnapshot.task_state.preferred_times
+                  : [];
+                quickReplies = ambiguousTimes.length === 1
+                  ? [
+                      String(Number(ambiguousTimes[0].substring(0, 2))) + ":00 ص",
+                      String(Number(ambiguousTimes[0].substring(0, 2))) + ":00 م",
+                    ]
+                  : ["10 و11 ص", "10 و11 م"];
+                toolResponseData = {
+                  success: false,
+                  needs_clarification: true,
+                  missing_slot: "time_period",
+                  stadium_id: targetStadium.id,
+                  stadium_name: targetStadium.name,
+                  quick_replies: quickReplies,
+                  message: ambiguousTimes.length === 1 ? "تقصد الساعة الصبح ولا بالليل؟" : "تقصد 10 و11 الصبح ولا بالليل؟",
+                };
               } else {
                 const { targetDateStr, dayStartIso, dayEndIso } = parseTargetDate(dateInput);
                 const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
@@ -964,6 +983,25 @@ ${JSON.stringify(taskState, null, 2)}
                   available_times: availableSlots.map((s: any) => s.start_time),
                 };
 
+                if (contextSnapshot.task_state.intent === "book_stadium" && availableSlots.length > 0) {
+                  const proposedSlot = availableSlots[0];
+                  contextSnapshot.task_state.confirmation_pending = {
+                    stadium_id: targetStadium.id,
+                    stadium_name: targetStadium.name,
+                    date: targetDateStr,
+                    start_time: proposedSlot.start_time,
+                    end_time: proposedSlot.end_time,
+                    price_per_hour: targetStadium.price_per_hour,
+                  };
+                  appAction = {
+                    action_type: "CONFIRM_BOOKING",
+                    route: "/bookings",
+                    label: "تأكيد الحجز",
+                    params: { message: "أيوه، أكد الحجز" },
+                  };
+                  quickReplies = ["تأكيد الحجز"];
+                }
+
                 toolResponseData = {
                   stadium_id: targetStadium.id,
                   stadium_name: targetStadium.name,
@@ -975,115 +1013,202 @@ ${JSON.stringify(taskState, null, 2)}
                   available_slots_count: availableSlots.length,
                   available_slots: availableSlots,
                   time_preference: timePref,
+                  proposed_slot: contextSnapshot.task_state?.confirmation_pending || null,
+                  quick_replies: quickReplies,
                 };
               }
 
             } else if (funcName === "createBookingFromChat") {
-              let stadiumId = (args.stadium_id || contextSnapshot.last_stadium_id || "").toString().trim();
-              const stadiumName = (args.stadium_name || contextSnapshot.last_stadium_name || "").toString().trim();
+              const explicitConfirm = isExplicitConfirmation(userMessage);
+              const confirmRequested = args.confirm === true || explicitConfirm;
+              let stadiumId = (args.stadium_id || contextSnapshot.last_stadium_id || contextSnapshot.task_state?.stadium_id || "").toString().trim();
+              const stadiumName = (args.stadium_name || contextSnapshot.last_stadium_name || contextSnapshot.task_state?.stadium_name || "").toString().trim();
               let startTime = (args.start_time || "").toString().trim();
               let endTime = (args.end_time || "").toString().trim();
-
               let targetStadium: any = null;
+
               if (stadiumId) {
-                const { data: s } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("id", stadiumId).maybeSingle();
+                const { data: s } = await supabase.from("stadiums")
+                  .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
+                  .eq("id", stadiumId)
+                  .maybeSingle();
                 targetStadium = s;
               }
               if (!targetStadium && stadiumName) {
-                const { data: sList } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").ilike("name", `%${stadiumName}%`).limit(1);
+                const { data: sList } = await supabase.from("stadiums")
+                  .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
+                  .ilike("name", "%" + stadiumName + "%")
+                  .limit(1);
                 if (sList && sList.length > 0) targetStadium = sList[0];
               }
 
-              const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
-              if (!startTime || !endTime) {
-                const candidateSlots = (contextSnapshot.last_available_slots || []).filter((slot: any) =>
-                  preferredTimes.length === 0 || preferredTimes.includes(String(slotHourFromIso(slot.start_time)).padStart(2, "0") + ":00")
-                );
-                if (candidateSlots.length === 1) {
-                  startTime = candidateSlots[0].start_time;
-                  endTime = candidateSlots[0].end_time;
-                } else if (candidateSlots.length > 1) {
-                  toolResponseData = {
-                    success: false,
-                    needs_clarification: true,
-                    missing_slot: "time",
-                    preferred_times: preferredTimes,
-                    available_slots: candidateSlots,
-                    message: "يوجد أكثر من وقت متاح. اختر وقتاً واحداً أولاً.",
-                  };
-                }
-              }
-
-              if (!targetStadium || !startTime || !endTime) {
-                if (!toolResponseData.needs_clarification) {
-                  toolResponseData = {
-                    success: false,
-                    message: "عذراً يا كابتن، بيانات الحجز غير مكتملة. يرجى تحديد الملعب والموعد المطلوب أولاً.",
-                  };
-                }
+              const task = contextSnapshot.task_state || {};
+              if (task.requires_time_clarification) {
+                const ambiguousTimes = Array.isArray(task.preferred_times) ? task.preferred_times : [];
+                quickReplies = ambiguousTimes.length === 1
+                  ? [
+                      String(Number(ambiguousTimes[0].substring(0, 2))) + ":00 ص",
+                      String(Number(ambiguousTimes[0].substring(0, 2))) + ":00 م",
+                    ]
+                  : ["10 و11 ص", "10 و11 م"];
+                toolResponseData = {
+                  success: false,
+                  needs_clarification: true,
+                  missing_slot: "time_period",
+                  quick_replies: quickReplies,
+                  message: "تقصد الساعة الصبح ولا بالليل؟",
+                };
               } else {
-                const needsDeposit = targetStadium.needs_deposit || false;
-                const paymentMethod = needsDeposit ? "paymob" : (args.payment_method || "cash");
-
-                const { data: bookingResult, error: bookingErr } = await supabase.rpc("create_booking_atomic", {
-                  p_stadium_id: targetStadium.id,
-                  p_user_id: callerUser.id,
-                  p_owner_id: targetStadium.owner_id,
-                  p_start_time: startTime,
-                  p_end_time: endTime,
-                  p_booking_type: "individual",
-                  p_total_price: targetStadium.price_per_hour,
-                  p_stadium_name: targetStadium.name,
-                  p_payment_method: paymentMethod,
-                });
-
-                if (bookingErr || (bookingResult && bookingResult.success === false)) {
-                  toolResponseData = {
-                    success: false,
-                    error: bookingErr?.message || bookingResult?.message || "تعذر إتمام الحجز، قد يكون الموعد محجوزاً بالفعل.",
-                  };
-                } else {
-                  const bookingId = bookingResult?.booking_id || bookingResult?.id;
-                  contextSnapshot.last_booking_id = bookingId;
-                  contextSnapshot.last_booked_stadium = targetStadium.name;
-
-                  if (needsDeposit || paymentMethod === "paymob") {
-                    appAction = {
-                      action_type: "OPEN_PAYMENT",
-                      route: "/checkout",
-                      label: `إتمام دفع العربون (${targetStadium.deposit_amount || 50} ج.م) وتأكيد الحجز 💳`,
-                      params: {
-                        booking_id: bookingId,
-                        stadium_id: targetStadium.id,
-                        stadium_name: targetStadium.name,
-                        total_price: targetStadium.price_per_hour,
-                        deposit_amount: targetStadium.deposit_amount || 50,
-                        start_time: startTime,
-                        end_time: endTime,
-                      },
+                const pending = task.confirmation_pending;
+                if (confirmRequested) {
+                  if (!pending || !explicitConfirm) {
+                    toolResponseData = {
+                      success: false,
+                      needs_confirmation: true,
+                      message: "لازم أعرض لك ملخص الحجز الأول قبل التنفيذ.",
                     };
                   } else {
-                    appAction = {
-                      action_type: "NAVIGATE",
-                      route: "/bookings",
-                      label: "عرض تفاصيل الحجز المؤكد 📋",
-                      params: { booking_id: bookingId },
-                    };
-                  }
+                    stadiumId = pending.stadium_id;
+                    startTime = pending.start_time;
+                    endTime = pending.end_time;
+                    const { data: pendingStadium } = await supabase.from("stadiums")
+                      .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
+                      .eq("id", pending.stadium_id)
+                      .maybeSingle();
+                    targetStadium = pendingStadium || targetStadium;
 
-                  toolResponseData = {
-                    success: true,
-                    booking_id: bookingId,
-                    stadium_name: targetStadium.name,
-                    start_time: startTime,
-                    end_time: endTime,
-                    total_price: targetStadium.price_per_hour,
-                    deposit_required: needsDeposit,
-                    deposit_amount: targetStadium.deposit_amount || 0,
-                    message: needsDeposit
-                      ? "تم قفل الموعد بنجاح لمدة 5 دقائق! اضغط على زر الدفع لإتمام العربون وتأكيد الحجز."
-                      : "تم تأكيد الحجز بنجاح! نراك في الملعب يا كابتن ⚽",
-                  };
+                    if (!targetStadium) {
+                      toolResponseData = { success: false, error: "تعذر استرجاع بيانات الملعب للحجز." };
+                    } else {
+                      const needsDeposit = targetStadium.needs_deposit || false;
+                      const paymentMethod = needsDeposit ? "paymob" : "cash";
+                      const { data: bookingResult, error: bookingErr } = await supabase.rpc("create_booking_atomic", {
+                        p_stadium_id: targetStadium.id,
+                        p_user_id: callerUser.id,
+                        p_owner_id: targetStadium.owner_id,
+                        p_start_time: startTime,
+                        p_end_time: endTime,
+                        p_booking_type: "individual",
+                        p_total_price: targetStadium.price_per_hour,
+                        p_stadium_name: targetStadium.name,
+                        p_payment_method: paymentMethod,
+                      });
+
+                      if (bookingErr || (bookingResult && bookingResult.success === false)) {
+                        toolResponseData = {
+                          success: false,
+                          error: bookingErr?.message || bookingResult?.message || "تعذر إتمام الحجز، قد يكون الموعد محجوزاً بالفعل.",
+                        };
+                      } else {
+                        const bookingId = bookingResult?.booking_id || bookingResult?.id;
+                        delete task.confirmation_pending;
+                        contextSnapshot.last_booking_id = bookingId;
+                        contextSnapshot.last_booked_stadium = targetStadium.name;
+                        if (needsDeposit) {
+                          appAction = {
+                            action_type: "OPEN_PAYMENT",
+                            route: "/checkout",
+                            label: "إتمام دفع العربون (" + (targetStadium.deposit_amount || 50) + " ج.م) وتأكيد الحجز 💳",
+                            params: {
+                              booking_id: bookingId,
+                              stadium_id: targetStadium.id,
+                              stadium_name: targetStadium.name,
+                              total_price: targetStadium.price_per_hour,
+                              deposit_amount: targetStadium.deposit_amount || 50,
+                              start_time: startTime,
+                              end_time: endTime,
+                            },
+                          };
+                        } else {
+                          appAction = {
+                            action_type: "NAVIGATE",
+                            route: "/bookings",
+                            label: "عرض تفاصيل الحجز المؤكد 📋",
+                            params: { booking_id: bookingId },
+                          };
+                        }
+                        toolResponseData = {
+                          success: true,
+                          booking_id: bookingId,
+                          stadium_name: targetStadium.name,
+                          start_time: startTime,
+                          end_time: endTime,
+                          total_price: targetStadium.price_per_hour,
+                          deposit_required: needsDeposit,
+                          deposit_amount: targetStadium.deposit_amount || 0,
+                          message: needsDeposit ? "تم تجهيز الحجز. أكمل دفع العربون لتأكيده." : "تم تأكيد الحجز بنجاح.",
+                        };
+                      }
+                    }
+                  }
+                } else {
+                  if (!targetStadium) {
+                    toolResponseData = { success: false, message: "حدّد الملعب المطلوب أولاً." };
+                  } else {
+                    let proposedStart = startTime;
+                    let proposedEnd = endTime;
+                    if (!proposedStart || !proposedEnd) {
+                      const candidates = (contextSnapshot.last_available_slots || []).filter((slot: any) =>
+                        !Array.isArray(task.preferred_times) || task.preferred_times.length === 0 ||
+                        task.preferred_times.includes(String(slotHourFromIso(slot.start_time)).padStart(2, "0") + ":00")
+                      );
+                      if (candidates.length > 0) {
+                        proposedStart = candidates[0].start_time;
+                        proposedEnd = candidates[0].end_time;
+                      }
+                    }
+                    if (!proposedStart || !proposedEnd) {
+                      toolResponseData = { success: false, message: "حدّد الموعد المطلوب أولاً." };
+                    } else {
+                      const dateForConfirmation = task.date || contextSnapshot.last_date || parseTargetDate("اليوم").targetDateStr;
+                      const slotDate = parseTargetDate(dateForConfirmation);
+                      const { data: existingBookings } = await supabase.from("bookings")
+                        .select("start_time, end_time, status, locked_until, created_at")
+                        .eq("stadium_id", targetStadium.id)
+                        .neq("status", "cancelled")
+                        .gte("start_time", slotDate.dayStartIso)
+                        .lte("start_time", slotDate.dayEndIso);
+                      const conflicts = (existingBookings || []).some((b: any) => {
+                        if (b.status === "pending") {
+                          const expires = b.locked_until ? new Date(b.locked_until).getTime() : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+                          if (expires <= Date.now()) return false;
+                        }
+                        return new Date(proposedStart).getTime() < new Date(b.end_time).getTime() &&
+                          new Date(proposedEnd).getTime() > new Date(b.start_time).getTime();
+                      });
+                      if (conflicts) {
+                        toolResponseData = { success: false, message: "الميعاد ده اتاخد دلوقتي. اختار ميعاد تاني." };
+                      } else {
+                        task.confirmation_pending = {
+                          stadium_id: targetStadium.id,
+                          stadium_name: targetStadium.name,
+                          date: dateForConfirmation,
+                          start_time: proposedStart,
+                          end_time: proposedEnd,
+                          price_per_hour: targetStadium.price_per_hour,
+                        };
+                        appAction = {
+                          action_type: "CONFIRM_BOOKING",
+                          route: "/bookings",
+                          label: "تأكيد الحجز",
+                          params: { message: "أيوه، أكد الحجز" },
+                        };
+                        quickReplies = ["تأكيد الحجز"];
+                        toolResponseData = {
+                          success: false,
+                          needs_confirmation: true,
+                          stadium_id: targetStadium.id,
+                          stadium_name: targetStadium.name,
+                          date: dateForConfirmation,
+                          start_time: proposedStart,
+                          end_time: proposedEnd,
+                          price_per_hour: targetStadium.price_per_hour,
+                          confirmation_pending: true,
+                          message: "تم تجهيز ملخص الحجز وينتظر تأكيد المستخدم.",
+                        };
+                      }
+                    }
+                  }
                 }
               }
             }
