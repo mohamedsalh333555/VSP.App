@@ -597,6 +597,33 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   return next;
 }
 
+function buildBookingMissingDateReply(taskState: Record<string, any>, userMessage: string): { message: string; quick_replies: string[] } | null {
+  if (taskState?.intent !== "book_stadium") return null;
+  const missing = Array.isArray(taskState?.missing_slots) ? taskState.missing_slots : [];
+  if (!missing.includes("date")) return null;
+  if (taskState?.confirmation_pending) return null;
+
+  const preferred = Array.isArray(taskState?.preferred_times) ? taskState.preferred_times : [];
+  if (preferred.length === 0 || taskState?.time_period_confirmed !== true) return null;
+
+  const timeLabels = preferred.map((t: string) => {
+    const hour = Number(String(t).substring(0, 2));
+    const minute = Number(String(t).substring(3, 5) || 0);
+    const displayHour = hour === 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    const period = hour >= 12 ? "بالليل" : "الصبح";
+    return displayHour + ":" + String(minute).padStart(2, "0") + " " + period;
+  });
+
+  const timeText = timeLabels.length === 1
+    ? "الساعة " + timeLabels[0]
+    : "الساعة " + timeLabels.join(" أو ");
+
+  return {
+    message: "تمام، فهمت طلبك: حجز " + timeText + ". اليوم بس ناقص — تقصد النهارده ولا يوم تاني؟",
+    quick_replies: ["النهارده", "بكرة"],
+  };
+}
+
 function slotHourFromIso(iso: string): number {
   return getCairoParts(new Date(iso)).hour;
 }
@@ -2028,7 +2055,7 @@ ${JSON.stringify(taskState, null, 2)}
       assistantReply = "عذراً يا كابتن! حدث ضغط لحظي في خدمة الذكاء الاصطناعي، يرجى إعادة إرسال رسالتك أو تصفح الملاعب والبطولات مباشرة من القوائم.";
     }
 
-    // 10. Persist Messages + UI metadata + Context Snapshot
+    // 10. Build the exact turn payload before atomic persistence.
     const persistedUiMetadata = {
       stadiums: stadiumResults,
       tournaments: tournamentResults,
@@ -2038,32 +2065,40 @@ ${JSON.stringify(taskState, null, 2)}
       task_state: contextSnapshot.task_state || {},
     };
 
-    await supabase.from("copilot_messages").insert([
-      {
-        conversation_id: conversationId,
-        user_id: callerUser.id,
-        role: "user",
-        content: userMessage,
-        stadium_results: [],
-        ui_metadata: { task_state: contextSnapshot.task_state || {} },
-      },
-      {
-        conversation_id: conversationId,
-        user_id: callerUser.id,
-        role: "assistant",
-        content: assistantReply,
-        stadium_results: stadiumResults,
-        ui_metadata: persistedUiMetadata,
-      },
-    ]);
+    // Deterministic clarification guard:
+    // If booking intent has an exact time but no date, preserve the understood time
+    // and ask only for the missing date. Never let Gemini erase known slots.
+    const bookingMissingDateReply = buildBookingMissingDateReply(
+      contextSnapshot.task_state || {},
+      userMessage,
+    );
+    if (bookingMissingDateReply) {
+      assistantReply = bookingMissingDateReply.message;
+      quickReplies = bookingMissingDateReply.quick_replies;
+      persistedUiMetadata.task_state = contextSnapshot.task_state || {};
+      persistedUiMetadata.action = null;
+      appAction = null;
+    }
 
-    await supabase
-      .from("copilot_conversations")
-      .update({
-        updated_at: new Date().toISOString(),
-        context_snapshot: contextSnapshot,
-      })
-      .eq("id", conversationId);
+    // Persist the user+assistant turn and conversation state in ONE database transaction.
+    // The database trigger assigns a deterministic per-conversation message_sequence.
+    const { data: persistedTurn, error: persistTurnErr } = await supabase.rpc("persist_copilot_turn", {
+      p_conversation_id: conversationId,
+      p_user_id: callerUser.id,
+      p_user_content: userMessage,
+      p_assistant_content: assistantReply,
+      p_stadium_results: stadiumResults,
+      p_ui_metadata: persistedUiMetadata,
+      p_context_snapshot: contextSnapshot,
+    });
+
+    if (persistTurnErr || persistedTurn !== true) {
+      console.error("VSP Copilot turn persistence failed:", persistTurnErr?.message || "unknown error");
+      return new Response(
+        JSON.stringify({ error: "Failed to persist Copilot conversation turn" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // 11. Return enriched payload
     return new Response(
