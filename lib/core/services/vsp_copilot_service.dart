@@ -398,80 +398,8 @@ class VspCopilotService {
       );
     }
 
-    // ❌ Strict Out-of-scope refusal (Cooking, Politics, Coding, Academic, Movies, General Knowledge)
-    final isOutOfScope = lower.contains('قصة') ||
-        lower.contains('كم عمرك') ||
-        lower.contains('طبخ') ||
-        lower.contains('طبيخ') ||
-        lower.contains('أكل') ||
-        lower.contains('اكل') ||
-        lower.contains('أكلة') ||
-        lower.contains('اكلة') ||
-        lower.contains('وصفة') ||
-        lower.contains('طريقة عمل') ||
-        lower.contains('مقادير') ||
-        lower.contains('كشري') ||
-        lower.contains('شاورما') ||
-        lower.contains('بيتزا') ||
-        lower.contains('برجر') ||
-        lower.contains('ملوخية') ||
-        lower.contains('كيكة') ||
-        lower.contains('طاجن') ||
-        lower.contains('حلويات') ||
-        lower.contains('حاشي') ||
-        lower.contains('سياسة') ||
-        lower.contains('سياسي') ||
-        lower.contains('رئيس') ||
-        lower.contains('انتخابات') ||
-        lower.contains('حكومة') ||
-        lower.contains('وزير') ||
-        lower.contains('برلمان') ||
-        lower.contains('حرب') ||
-        lower.contains('بايثون') ||
-        lower.contains('python') ||
-        lower.contains('كود') ||
-        lower.contains('برمجة') ||
-        lower.contains('مبرمج') ||
-        lower.contains('javascript') ||
-        lower.contains('جافاسكريبت') ||
-        lower.contains('رياضيات') ||
-        lower.contains('الفيزياء') ||
-        lower.contains('فيزياء') ||
-        lower.contains('كيمياء') ||
-        lower.contains('فلسفة') ||
-        lower.contains('معادلة') ||
-        lower.contains('تفاضل') ||
-        lower.contains('تكامل') ||
-        lower.contains('أينشتاين') ||
-        lower.contains('نيوتن') ||
-        lower.contains('فيلم') ||
-        lower.contains('افلام') ||
-        lower.contains('مسلسل') ||
-        lower.contains('مسلسلات') ||
-        lower.contains('أغنية') ||
-        lower.contains('اغنية') ||
-        lower.contains('طقس') ||
-        lower.contains('درجة الحرارة') ||
-        lower.contains('نكتة') ||
-        lower.contains('فزورة') ||
-        lower.contains('مرسيدس') ||
-        lower.contains('سيارات') ||
-        lower.contains('عقارات') ||
-        lower.contains('بورصة') ||
-        lower.contains('بيتكوين') ||
-        lower.contains('crypto') ||
-        lower.contains('علاج') ||
-        lower.contains('دواء') ||
-        lower.contains('عاصمة') ||
-        lower.contains('فرنسا');
-
-    if (isOutOfScope) {
-      return CopilotMessage.assistant(
-        'عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!',
-        conversationId: effectiveConvId,
-      );
-    }
-
+    // Domain handling belongs to the cloud Copilot. The local test/offline
+    // engine must never issue a canned out-of-scope refusal based on keywords.
     // 🏟️ Pitch Owner Inquiries (Real Database & Zero-Hallucination)
     final isOwnerInquiry = lower.contains('ملاعبي') ||
         lower.contains('ملعبي') ||
