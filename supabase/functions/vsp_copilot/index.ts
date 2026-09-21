@@ -1181,6 +1181,9 @@ serve(async (req: Request) => {
 - دور المستخدم: ${userProfile?.role || 'لاعب'}
 - المحافظة الحالية: ${userGov}
 - المركز المفضل: ${userPosition}
+- intent الذي حدده محرك الحوار لهذه الرسالة: ${detectedTurnIntent || "غير محدد"}
+- قرار محرك الحوار: ${dialogueDecision.type}
+- عندما يكون intent غير محدد، فهذا يعني فقط أن النية لم تتضح بعد؛ لا تعتبر الرسالة خارج نطاق VSP لمجرد ذلك.
 - آخر 3 حجوزات للمستخدم: ${recentUserBookings && recentUserBookings.length > 0 ? recentUserBookings.map((b: any) => `${b.stadium_name} (${b.start_time})`).join("، ") : "لا توجد حجوزات سابقة بعد"}
 عندما يسأل المستخدم عن ملاعب قريبة، أو ملاعب للحجز، أو ماتشات، أو بطولات دون ذكر محافظة معينة، استخدم محافظته الحالية (${userGov}) كخيار افتراضي للبحث والتحقق!
 
@@ -1243,16 +1246,13 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
 9. إذا كان المصدر فاشلاً أو المعنى غامضاً، لا تختلق رقماً أو تفسيراً بديلاً.
 10. إذا حُدد ملعب، يجب أن تكون البيانات محصورة في ملعب تابع لهذا المالك.
 
-قواعد صارمة جداً لرفض الأسئلة الخارجة عن نطاق التطبيق (STRICT OUT-OF-SCOPE REFUSAL POLICY):
-1. أنت وكيل رياضي وتشغيلي حصري لتطبيق VSP فقط (حجز الملاعب، إدارة ملاعب المالكين، البطولات، دوري الحريفة 1v1، والعمليات المالية في التطبيق).
-2. ممنوع منعاً باتاً الإجابة عن أي أسئلة خارجة عن هذا النطاق إطلاقاً، مثل:
-   - الطبخ، الأكلات، الوصفات والمطاعم الخارجية.
-   - السياسة، الأحداث الجارية، والأخبار العامة.
-   - كتابة الأكواد والبرمجة العامة (إلا ما يتعلق بتطبيق VSP).
-   - المواد الدراسية، المسائل العلمية، الرياضيات، الفيزياء، الفلك، الفلسفة.
-   - الفن، الأفلام، المسلسلات، الأغاني، أو أي موضوع عام لا يخص تطبيق VSP.
-3. عند طرح أي سؤال خارج هذا النطاق، يجب أن ترفض فوراً بلباقة وبنص واضح:
-   "عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!"
+حدود المجال (DOMAIN POLICY):
+1. نطاقك التشغيلي هو تطبيق VSP: الملاعب، الحجوزات، المواعيد والتوافر، البطولات، مباريات الانضمام، دوري 1v1، بيانات اللاعب، وإدارة وبيانات مالك الملعب المسموح بها لدوره.
+2. لا تستخدم أي رسالة رفض محفوظة أو صيغة ثابتة للخروج عن المجال.
+3. إذا كان الطلب واضحاً أنه خارج VSP، اشرح بشكل طبيعي ومختصر أنك مخصص لـ VSP ووجّه المستخدم لما يمكنك تنفيذه داخل التطبيق.
+4. إذا كانت الرسالة قصيرة أو غامضة أو لا تحدد النية بعد، فلا تعتبرها خارج المجال. استخدم سياق المحادثة وحالة المهمة، أو اسأل سؤالاً توضيحياً طبيعياً.
+5. وجود intent غير محدد من محرك الحوار لا يعني أن الرسالة خارج المجال.
+6. إذا أعطى محرك الحوار intent أو task_state مرتبطاً بـ VSP، فاعتبر الرسالة داخل المجال ولا ترفضها بسبب تفسير بديل من النموذج.
 
 قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
 1. استخدم فقط البيانات التي تعيدها الأدوات والسياق المرفق لك.
@@ -2378,32 +2378,12 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
             handledByGemini = true;
 
           } else {
-            // 🛡️ Strict Out-of-Scope Detection
-            const lowerMsg = userMessage.toLowerCase();
-            const isOutOfScope =
-              lowerMsg.includes("طبخ") || lowerMsg.includes("طبيخ") || lowerMsg.includes("أكل") || lowerMsg.includes("أكلة") ||
-              lowerMsg.includes("طريقة عمل") || lowerMsg.includes("وصفة") || lowerMsg.includes("مقادير") || lowerMsg.includes("كشري") ||
-              lowerMsg.includes("شاورما") || lowerMsg.includes("بيتزا") || lowerMsg.includes("برجر") || lowerMsg.includes("ملوخية") ||
-              lowerMsg.includes("كيكة") || lowerMsg.includes("سياسة") || lowerMsg.includes("سياسي") || lowerMsg.includes("رئيس") ||
-              lowerMsg.includes("انتخابات") || lowerMsg.includes("حكومة") || lowerMsg.includes("وزير") || lowerMsg.includes("برلمان") ||
-              lowerMsg.includes("حرب") || lowerMsg.includes("بايثون") || lowerMsg.includes("python") || lowerMsg.includes("كود") ||
-              lowerMsg.includes("برمجة") || lowerMsg.includes("مبرمج") || lowerMsg.includes("جافاسكريبت") || lowerMsg.includes("javascript") ||
-              lowerMsg.includes("فيزياء") || lowerMsg.includes("كيمياء") || lowerMsg.includes("فلسفة") || lowerMsg.includes("رياضيات") ||
-              lowerMsg.includes("معادلة") || lowerMsg.includes("تفاضل") || lowerMsg.includes("تكامل") || lowerMsg.includes("أينشتاين") ||
-              lowerMsg.includes("نيوتن") || lowerMsg.includes("فيلم") || lowerMsg.includes("مسلسل") || lowerMsg.includes("أغنية") ||
-              lowerMsg.includes("اغنية") || lowerMsg.includes("طقس") || lowerMsg.includes("درجة الحرارة") || lowerMsg.includes("نكتة") ||
-              lowerMsg.includes("فزورة") || lowerMsg.includes("مرسيدس") || lowerMsg.includes("سيارات") || lowerMsg.includes("عقارات") ||
-              lowerMsg.includes("بورصة") || lowerMsg.includes("بيتكوين") || lowerMsg.includes("crypto") || lowerMsg.includes("علاج") ||
-              lowerMsg.includes("دواء") || lowerMsg.includes("تاريخ فرنسا") || lowerMsg.includes("عاصمة");
-
-            if (isOutOfScope) {
-              assistantReply = 'خلّينا في اللي أقدر أساعدك فيه داخل VSP ⚽: حجز الملاعب، مواعيدها، البطولات، المباريات المفتوحة، وحسابات مالك الملعب.';
+            // Gemini's text response is accepted as-is. Domain boundaries are defined
+            // by the system prompt and deterministic engine state; do not run a
+            // brittle keyword-based rejection layer here.
+            assistantReply = candidate1?.parts?.[0]?.text || "";
+            if (assistantReply.trim().length > 0) {
               handledByGemini = true;
-            } else {
-              assistantReply = candidate1?.parts?.[0]?.text || "";
-              if (assistantReply.trim().length > 0) {
-                handledByGemini = true;
-              }
             }
           }
         }
