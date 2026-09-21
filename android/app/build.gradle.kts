@@ -58,8 +58,13 @@ android {
                 "Release signing is not configured. Create android/key.properties and provide a valid release keystore before building a store artifact."
             }
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            // Enable R8 code shrinking, obfuscation, and optimization for release builds.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
