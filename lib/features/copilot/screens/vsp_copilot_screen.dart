@@ -166,10 +166,18 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       if (!mounted) return;
       setState(() {
         _isSending = false;
-        _messages.add(CopilotMessage.assistant(
-          'كابتن VSP غير متاح مؤقتًا. حاول تبعت رسالتك تاني بعد لحظات.',
-          conversationId: _activeConversationId,
-        ));
+        _messages.add(
+          CopilotMessage.assistant(
+            'كابتن VSP غير متاح مؤقتًا. جرّب تاني، ومش هتحتاج تعيد كتابة طلبك.',
+            conversationId: _activeConversationId,
+            action: CopilotAction(
+              actionType: 'QUICK_REPLY',
+              route: '',
+              label: 'إعادة المحاولة',
+              params: {'message': text},
+            ),
+          ),
+        );
       });
       _scrollToBottom();
     }
