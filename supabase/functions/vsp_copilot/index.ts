@@ -2214,9 +2214,13 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
                   count === 1 ? "ملعب واحد" :
                   count === 2 ? "ملعبين" :
                   count.toLocaleString("ar-EG") + " ملاعب";
+                const availabilityWord =
+                  count === 1 ? "متاح" :
+                  count === 2 ? "متاحين" :
+                  "متاحة";
                 assistantReply =
-                  "لقيتلك " + countText +
-                  " متاح/ة في الوقت اللي طلبته. اختار اللي يناسبك:";
+                  "لقيتلك " + countText + " " + availabilityWord +
+                  " في الوقت اللي طلبته. اختار اللي يناسبك:";
                 quickReplies = names;
               }
             }
