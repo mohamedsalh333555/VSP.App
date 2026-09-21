@@ -43,6 +43,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
   String? _activeConversationId;
   bool _isLoadingConversations = false;
   bool _isSending = false;
+  int _conversationLoadToken = 0;
 
   @override
   void initState() {
@@ -69,24 +70,30 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
   }
 
   Future<void> _handleSelectConversation(CopilotConversation conv) async {
+    final requestToken = ++_conversationLoadToken;
     setState(() {
       _activeConversationId = conv.id;
       _isSending = true;
     });
+
     final msgs = await widget.copilotService.fetchMessages(conv.id);
-    if (mounted) {
-      setState(() {
-        _messages = msgs;
-        _isSending = false;
-      });
-      _scrollToBottom();
-    }
+
+    if (!mounted || requestToken != _conversationLoadToken) return;
+
+    setState(() {
+      _messages = msgs;
+      _isSending = false;
+    });
+
+    _scrollToBottom();
   }
 
   void _handleStartNewChat() {
+    _conversationLoadToken++;
     setState(() {
       _activeConversationId = null;
       _messages = [];
+      _isSending = false;
     });
   }
 
@@ -128,13 +135,15 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     final auth = Provider.of<AuthProvider?>(context, listen: false);
     final userGov = auth?.userModel?.governorate ?? 'أسوان';
 
-    final response = await widget.copilotService.sendMessage(
-      message: text,
-      conversationId: _activeConversationId,
-      governorate: userGov,
-    );
+    try {
+      final response = await widget.copilotService.sendMessage(
+        message: text,
+        conversationId: _activeConversationId,
+        governorate: userGov,
+      );
 
-    if (mounted) {
+      if (!mounted) return;
+
       setState(() {
         _activeConversationId = response.conversationId ?? _activeConversationId;
         _messages.add(response);
@@ -142,6 +151,27 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       });
       _scrollToBottom();
       _loadConversations();
+    } on RateLimitException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _messages.add(CopilotMessage.assistant(
+          e.message,
+          conversationId: _activeConversationId,
+        ));
+      });
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('[VspCopilotScreen] sendMessage error: $e');
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _messages.add(CopilotMessage.assistant(
+          'كابتن VSP غير متاح مؤقتًا. حاول تبعت رسالتك تاني بعد لحظات.',
+          conversationId: _activeConversationId,
+        ));
+      });
+      _scrollToBottom();
     }
   }
 
@@ -314,7 +344,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 18),
           const SizedBox(width: 8),
           Text(
-            isArabic ? 'كابتن VSP الذكي' : 'VSP Copilot',
+            isArabic ? 'كابتن VSP الذكي' : 'Captain VSP',
             style: const TextStyle(
               color: VSPColors.textPrimary,
               fontSize: 16,
@@ -386,7 +416,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
               minLines: 1,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: isArabic ? 'اسأل كابتن VSP عن الملاعب والبطولات...' : 'Ask VSP Copilot...',
+                hintText: isArabic ? 'اسأل كابتن VSP عن الملاعب والبطولات...' : 'Ask Captain VSP...',
                 hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 filled: true,
                 fillColor: VSPColors.inputFill,
