@@ -81,7 +81,7 @@ const getOpenMatchesTool = {
 // 5. Tool: executeAppAction
 const executeAppActionTool = {
   name: "executeAppAction",
-  description: "توجيه المستخدم لشاشة داخل التطبيق وتنفيذ أمر التنقل، مثل: وديني لفريقي، افتح البطولات، وريني دوري 1v1، إعداداتي، البروفايل، حجوزاتي. استدعِ هذه الأداة فوراً عندما يطلب المستخدم الذهاب لشاشة معينة.",
+  description: "توجيه المستخدم لشاشة داخل التطبيق. للاعب: فريقي، البطولات، دوري 1v1، حجوزاتي، البروفايل والإعدادات. لمالك الملعب: لوحة التحكم، الحجوزات، السجل المالي، الباقة، المحادثات والبروفايل. استدعِ هذه الأداة فوراً عندما يطلب المستخدم الذهاب لشاشة معينة، ولا تخترع مساراً غير موجود.",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -1022,8 +1022,17 @@ ${JSON.stringify(taskState, null, 2)}
                 if (args.status && args.status !== "all") {
                   bQuery = bQuery.eq("status", args.status);
                 }
+
+                const ownerQueryType = (args.query_type || "all").toString().toLowerCase();
+                if (ownerQueryType === "today") {
+                  const todayWindow = parseTargetDate("اليوم");
+                  bQuery = bQuery
+                    .gte("start_time", todayWindow.dayStartIso)
+                    .lt("start_time", todayWindow.dayEndIso);
+                }
+
                 const { data: bList } = await bQuery
-                  .order("start_time", { ascending: false })
+                  .order("start_time", { ascending: ownerQueryType === "today" })
                   .limit(10);
                 ownerBookings = bList || [];
               }
