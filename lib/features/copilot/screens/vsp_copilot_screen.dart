@@ -198,8 +198,9 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
         MaterialPageRoute(
           builder: (_) => BookingConfirmationScreen(
             stadium: targetStadium!,
+            // Never invent a booking time from a stadium-card tap.
+            // The booking screen will load the real slots and let the user choose.
             selectedDate: DateTime.now(),
-            initialSelectedSlots: const ['08:00 PM - 09:00 PM'],
           ),
         ),
       );
