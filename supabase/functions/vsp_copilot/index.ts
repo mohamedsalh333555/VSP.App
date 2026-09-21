@@ -320,9 +320,16 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   const next = { ...current };
   if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
+  if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
   if (hasDateCue(userMessage)) next.date = parseTargetDate(normalizeArabicDigits(userMessage)).targetDateStr;
   const preferredTimes = extractPreferredTimes(userMessage);
   if (preferredTimes.length > 0) next.preferred_times = preferredTimes;
+  if (/احجز|حجز|احجزلي|احجزه/.test(normalizeArabicDigits(userMessage))) next.intent = "book_stadium";
+  next.missing_slots = [];
+  if (!next.stadium_id) next.missing_slots.push("stadium");
+  if (!next.date) next.missing_slots.push("date");
+  if (!Array.isArray(next.preferred_times) || next.preferred_times.length === 0) next.missing_slots.push("time");
+  next.ready_for_execution = next.missing_slots.length === 0 && (!Array.isArray(next.preferred_times) || next.preferred_times.length === 1);
   next.updated_at = new Date().toISOString();
   contextSnapshot.task_state = next;
   return next;
@@ -579,16 +586,12 @@ ${JSON.stringify(taskState, null, 2)}
 
 قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
 1. استخدم فقط البيانات التي تعيدها الأدوات والسياق المرفق لك.
-2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو مواعيد، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز، أو أرقام أرباح غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
-3. لفحص التوافر والمواعيد: استدعِ checkStadiumAvailability فوراً. اذكر الفترات الشاغرة بدقة كما وردت في نتائج الأداة.
-4. للحجز المباشر: استدعِ createBookingFromChat عندما يكون وقت الحجز محدداً بشكل كافٍ. إذا أعطى المستخدم أكثر من وقت بديل مثل "10 أو 11"، افحص التوافر أولاً ولا تختَر ساعة من نفسك.
-5. ممنوع ذكر مصدر البيانات أو البنية الداخلية للمستخدم، بما في ذلك "من بيانات VSP" أو "من قاعدة البيانات" أو "من السيستم" أو "من الـAPI".
-   - إذا كان الملعب يتطلب عربون إلكتروني مسبقاً، وضح للمستخدم أنه تم تجهيز الحجز وقفل الموعد لمدة 5 دقائق لإتمام دفع العربون، وقدم له زر الدفع.
-   - إذا كان الملعب يدعم الكاش كاملاً، وضح له أنه تم تأكيد الحجز بنجاح.
-5. إذا عادت نتائج أداة searchStadiums فارغة (0 نتائج)، صرح بذلك للمستخدم بأمانة: "عذراً يا كابتن، لا توجد حالياً ملاعب مسجلة في محافظة [المحافظة] على تطبيق VSP".
-6. إذا عادت نتائج أداة searchTournaments فارغة (0 نتائج)، صرح بأمانة: "عذراً يا كابتن، لا توجد حالياً بطولات مفتوحة للتسجيل في قاعدة البيانات".
-7. لمالك الملعب: عند سؤاله عن ملاعبه أو حجوزاته أو أرباحه، استدعِ أدوات المالك (getOwnerStadiumsAndBookings و getOwnerFinancialInsights) واذكر البيانات الحقيقية من قاعدة البيانات فقط.
-
+2. ممنوع اختلاق أو افتراض أي ملعب أو بطولة أو مباراة أو موعد أو سعر أو اسم لاعب أو رقم مالي غير موجود في نتائج الأدوات أو السياق.
+3. عند فحص التوافر، استخدم checkStadiumAvailability واذكر فقط الفترات التي تعيدها الأداة.
+4. عند طلب حجز بوقت واحد واضح، استخدم createBookingFromChat بعد التحقق من البيانات المطلوبة. إذا ذكر المستخدم أكثر من وقت بديل مثل "10 أو 11"، افحص التوافر أولاً ثم اطلب اختيار وقت واحد، ولا تختَر ساعة من نفسك.
+5. لا تذكر للمستخدم مصدر البيانات أو البنية الداخلية: ممنوع "من بيانات VSP" أو "من قاعدة البيانات" أو "من السيستم" أو "من الـAPI" أو أي وصف تقني مشابه.
+6. إذا لم توجد نتائج، قل ذلك مباشرة وبأسلوب طبيعي، بدون الإيحاء بوجود نتائج غير موجودة.
+7. لمالك الملعب، استخدم أدوات المالك للبيانات الفعلية، لكن اعرض النتيجة بشكل طبيعي دون الإشارة إلى قاعدة البيانات أو آلية الاستعلام.
 قاعدة إلزامية وصارمة لاستدعاء الأدوات:
 عندما يسأل أو يطلب المستخدم أي شيء يتعلق بالوظائف التالية، استدعِ الأداة المناسبة فوراً دون تأليف:
 1. بطولات أو كؤوس أو جوائز أو بطولات فردية (1v1): استدعِ searchTournaments فوراً.
@@ -754,7 +757,7 @@ ${JSON.stringify(taskState, null, 2)}
                 toolResponseData = {
                   success: true,
                   updated_fields: updates,
-                  message: "تم تحديث بيانات البروفايل بنجاح في قاعدة البيانات",
+                  message: "تم تحديث بيانات البروفايل بنجاح",
                 };
               }
 
@@ -1034,15 +1037,6 @@ ${JSON.stringify(taskState, null, 2)}
               }
             }
 
-            const uiMetadata = {
-              tool_name: funcName,
-              stadiums: stadiumResults,
-              tournaments: tournamentResults,
-              leaderboard: leaderboardResults,
-              open_matches: openMatchResults,
-              action: appAction,
-              task_state: contextSnapshot.task_state || {},
-            };
 
             // Second turn for natural conversational response
             const secondContents = [
@@ -1083,9 +1077,9 @@ ${JSON.stringify(taskState, null, 2)}
               assistantReply = `عذراً يا كابتن، راجعتلك المتاح ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
             } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، راجعتلك المتاح ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
+              assistantReply = `عذراً يا كابتن، مفيش حالياً ملاعب متاحة في ${targetGov}. نقدر نجرب محافظة أو منطقة تانية.`;
             } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
-              assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
+              assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات مفتوحة محتاجة لاعيبة. تقدر تبدأ مباراة جديدة من التطبيق.";
             } else if (funcName === "getOwnerStadiumsAndBookings") {
               const oStadiums = toolResponseData.owner_stadiums || [];
               const oBookings = toolResponseData.recent_bookings || [];
@@ -1131,6 +1125,9 @@ ${JSON.stringify(taskState, null, 2)}
                   } else {
                     assistantReply = `ألف مبروك يا كابتن! تم تأكيد حجزك في ${toolResponseData.stadium_name} بنجاح والدفع كاش في الملعب. حجزك مسجل في قائمة حجوزاتك 📋`;
                   }
+                } else if (toolResponseData.needs_clarification) {
+                  const options = (toolResponseData.preferred_times || []).join(" أو ");
+                  assistantReply = `الوقت لسه محتاج اختيار واحد. المتاح من اختياراتك: ${options || "أكثر من موعد"}. اختار الساعة اللي تناسبك.`;
                 } else {
                   assistantReply = `عذراً يا كابتن، لم نتمكن من إتمام الحجز: ${toolResponseData.error || toolResponseData.message}`;
                 }
