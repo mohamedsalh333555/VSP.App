@@ -1092,6 +1092,7 @@ serve(async (req: Request) => {
     let leaderboardResults: any[] = [];
     let openMatchResults: any[] = [];
     let appAction: any = null;
+    let quickReplies: string[] = [];
     let assistantReply = "";
     let handledByGemini = false;
 
