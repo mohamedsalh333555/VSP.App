@@ -1251,6 +1251,22 @@ ${JSON.stringify(taskState, null, 2)}
                 if (args.status && args.status !== "all") {
                   bQuery = bQuery.eq("status", args.status);
                 }
+                if (args.payment_status && args.payment_status !== "all") {
+                  bQuery = bQuery.eq("payment_status", args.payment_status);
+                }
+
+                const requestedOwnerStadiumId = (args.stadium_id || "").toString().trim();
+                const requestedOwnerStadiumName = (args.stadium_name || "").toString().trim();
+                if (requestedOwnerStadiumId) {
+                  const ownStadium = (ownerStadiums || []).find((s: any) => s.id === requestedOwnerStadiumId);
+                  if (ownStadium) bQuery = bQuery.eq("stadium_id", ownStadium.id);
+                  else toolResponseData = { success: false, code: "STADIUM_NOT_FOUND", needs_clarification: true, message: "الملعب ده مش تابع لحسابك، فمش هفترضه." };
+                } else if (requestedOwnerStadiumName) {
+                  const matches = (ownerStadiums || []).filter((s: any) => ownerFactNorm(s.name).includes(ownerFactNorm(requestedOwnerStadiumName)));
+                  if (matches.length === 1) bQuery = bQuery.eq("stadium_id", matches[0].id);
+                  else if (matches.length === 0) toolResponseData = { success: false, code: "STADIUM_NOT_FOUND", needs_clarification: true, message: "الملعب المطلوب مش مسجل باسمك." };
+                  else toolResponseData = { success: false, code: "STADIUM_AMBIGUOUS", needs_clarification: true, message: "في أكتر من ملعب مطابق للاسم، فمش هفترض واحد منهم." };
+                }
 
                 const detectedOwnerBookingPeriod = detectOwnerFinancialPeriod(userMessage);
                 const ownerQueryType = (detectedOwnerBookingPeriod || (args.query_type || "all")).toString().toLowerCase();
@@ -1264,12 +1280,17 @@ ${JSON.stringify(taskState, null, 2)}
                   if (bookingRange) bQuery = bQuery.gte("operational_date", bookingRange.start).lte("operational_date", bookingRange.end);
                 }
 
-                const { data: bList, count: bCount, error: bErr } = await bQuery
-                  .order("start_time", { ascending: true })
-                  .limit(50);
-                ownerBookings = bList || [];
-                ownerBookingsTotal = bCount ?? ownerBookings.length;
-                if (bErr) toolResponseData = { success: false, code: "OWNER_BOOKINGS_QUERY_ERROR", message: "تعذر قراءة الحجوزات بدقة حالياً." };
+                if (!toolResponseData?.needs_clarification) {
+                  const { data: bList, count: bCount, error: bErr } = await bQuery
+                    .order("start_time", { ascending: true })
+                    .limit(50);
+                  if (bErr) {
+                    toolResponseData = { success: false, code: "OWNER_BOOKINGS_QUERY_ERROR", needs_clarification: false, message: "تعذر قراءة الحجوزات بدقة حالياً." };
+                  } else {
+                    ownerBookings = bList || [];
+                    ownerBookingsTotal = bCount ?? ownerBookings.length;
+                  }
+                }
               }
 
               appAction = {
@@ -1278,14 +1299,19 @@ ${JSON.stringify(taskState, null, 2)}
                 label: "فتح جدول حجوزات الملاعب 📅",
               };
 
-              toolResponseData = {
-                owner_stadiums_count: (ownerStadiums || []).length,
-                owner_stadiums: ownerStadiums || [],
-                bookings_count: ownerBookingsTotal,
-                details_truncated: ownerBookingsTotal > ownerBookings.length,
-                count_definition: "العدد إجمالي ومطابق للفلاتر المطلوبة، وليس عدد الصفوف المعروضة فقط.",
-                recent_bookings: ownerBookings,
-              };
+              if (!toolResponseData?.success && toolResponseData?.code) {
+                // Preserve a deterministic query/scope failure; never replace it with a fake zero.
+              } else {
+                toolResponseData = {
+                  success: true,
+                  owner_stadiums_count: (ownerStadiums || []).length,
+                  owner_stadiums: ownerStadiums || [],
+                  bookings_count: ownerBookingsTotal,
+                  details_truncated: ownerBookingsTotal > ownerBookings.length,
+                  count_definition: "العدد إجمالي ومطابق للفلاتر المطلوبة، وليس عدد الصفوف المعروضة فقط.",
+                  recent_bookings: ownerBookings,
+                };
+              }
 
             } else if (funcName === "getOwnerFinancialInsights") {
               const ownerMetric = detectOwnerFinancialMetric(userMessage) || (args.metric || "").toString().trim().toLowerCase();
