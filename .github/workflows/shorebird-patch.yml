@@ -10,11 +10,11 @@ on:
       track:
         description: "Deployment track"
         required: true
-        default: "staging"
+        default: "stable"
         type: choice
         options:
-          - staging
           - stable
+          - staging
 
 env:
   SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
@@ -23,36 +23,47 @@ jobs:
   patch-android:
     name: Android OTA Patch
     runs-on: ubuntu-latest
-
     defaults:
       run:
         shell: bash
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-
       - name: Setup Shorebird
         uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
-
       - name: Validate Shorebird configuration
         run: |
           test -f shorebird.yaml
           test -n "${SHOREBIRD_TOKEN}"
           shorebird doctor
-
+      - name: Decode Android keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+        run: |
+          test -n "$KEYSTORE_B64"
+          echo "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/keystore.jks"
+      - name: Create Android key.properties
+        run: |
+          cat > "$GITHUB_WORKSPACE/android/key.properties" <<EOF
+          keyAlias=${{ secrets.KEYSTORE_ALIAS }}
+          keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
+          storeFile=$GITHUB_WORKSPACE/keystore.jks
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          EOF
       - name: Shorebird Patch
         uses: shorebirdtech/shorebird-patch@v1
+        id: shorebird-patch
         with:
           platform: android
           release-version: ${{ inputs.release_version }}
           args: "--track=${{ inputs.track }} --verbose"
+      - name: Print patch number
+        run: echo "Shorebird patch: ${{ steps.shorebird-patch.outputs.patch-number }}"
