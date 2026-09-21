@@ -952,5 +952,5 @@ BEGIN
 END;
 $function$;
 
--- Subscription-only owner revenue model: legacy debt is no longer used.
+-- Subscription-only owner revenue model: owner keeps 100% of booking value.
 update public.users set accumulated_cash_debt=0, is_debt_blocked=false, updated_at=now() where role='owner';
