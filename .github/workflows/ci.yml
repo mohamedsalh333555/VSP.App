@@ -76,6 +76,18 @@ jobs:
           storeFile=ci-release.jks
           EOF
 
+      - name: Accept Android SDK Licenses and Install Required NDK
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "sdkmanager not found at $SDKMANAGER"
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" "ndk;30.0.15729638"
+          test -d "$SDK_ROOT/ndk/30.0.15729638"
+
       - name: Build Release App Bundle (Store Gate)
         run: flutter build appbundle --release
 
