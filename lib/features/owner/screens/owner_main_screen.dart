@@ -15,17 +15,17 @@ import 'owner_inbox_screen.dart';
 import 'owner_ledger_screen.dart';
 import 'subscription_plans_screen.dart';
 
-final GlobalKey<_OwnerMainScreenState> ownerMainScreenKey =
-    GlobalKey<_OwnerMainScreenState>();
+final GlobalKey<OwnerMainScreenState> ownerMainScreenKey =
+    GlobalKey<OwnerMainScreenState>();
 
 class OwnerMainScreen extends StatefulWidget {
  const OwnerMainScreen({super.key});
 
  @override
- State<OwnerMainScreen> createState() => _OwnerMainScreenState();
+ State<OwnerMainScreen> createState() => OwnerMainScreenState();
 }
 
-class _OwnerMainScreenState extends State<OwnerMainScreen> {
+class OwnerMainScreenState extends State<OwnerMainScreen> {
  int _currentIndex = 0;
  late final ConfettiController _confettiController;
  StreamSubscription? _celebrationSubscription;

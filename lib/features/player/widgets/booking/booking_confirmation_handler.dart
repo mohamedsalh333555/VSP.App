@@ -222,6 +222,8 @@ class BookingConfirmationHandler {
     // by the database trigger as the final authority.
     final directRepo = SupabaseBookingRepository();
     final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
+    if (!context.mounted) return;
+
     final hasActiveCashBooking = existingUserBookings.any((b) =>
         b.paymentMethod.toLowerCase() == 'cash' &&
         !b.isPaid &&
