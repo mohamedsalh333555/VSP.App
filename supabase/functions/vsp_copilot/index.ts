@@ -233,6 +233,10 @@ const createBookingFromChatTool = {
         type: "STRING",
         description: "طريقة الدفع: 'online' أو 'cash' (إذا كان الملعب يقبل الكاش)",
       },
+      confirm: {
+        type: "BOOLEAN",
+        description: "لا تستخدم true إلا بعد أن يكون النظام قد عرض ملخص الحجز وطلب تأكيد المستخدم، ثم قال المستخدم موافق/أيوه/تمام/أكد الحجز.",
+      },
     },
     required: ["stadium_id", "start_time", "end_time"],
   },
@@ -288,21 +292,28 @@ function extractPreferredTimes(input: string): string[] {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
   const hasTimeCue = /الساعة|ساعه|ساعة|وقت|ميعاد|موعد|احجز|الحجز|احجزلي|احجزه/.test(normalized);
   if (!hasTimeCue) return [];
-  const globalPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(normalized);
-  const globalAm = /صباح|صبح|\bص\b/.test(normalized);
+  const correctionMarkers = [...normalized.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
+  const correctionIndex = correctionMarkers.length > 0 ? Math.max(...correctionMarkers) : -1;
+  const effective = correctionIndex >= 0 ? normalized.slice(correctionIndex) : normalized;
+  const globalPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effective);
+  const globalAm = /صباح|صبح|\bص\b/.test(effective);
   const matches = new Set<string>();
   const re = /\b(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?\b/g;
   let match: RegExpExecArray | null;
-  while ((match = re.exec(normalized)) !== null) {
+  while ((match = re.exec(effective)) !== null) {
     let hour = Number(match[1]);
     const minute = Number(match[2] || 0);
     if (hour > 23 || minute > 59) continue;
-    const after = normalized.slice(match.index, Math.min(normalized.length, match.index + 18));
+    const after = effective.slice(match.index, Math.min(effective.length, match.index + 18));
     const explicitPm = globalPm || /مساء|مسا|\bم\b|بالليل|ليل/.test(after);
     const explicitAm = globalAm || /صباح|صبح|\bص\b/.test(after);
     if (explicitPm && hour < 12) hour += 12;
     else if (explicitAm && hour === 12) hour = 0;
-    else if (!explicitAm && !explicitPm && hour >= 4 && hour <= 11) hour += 12;
+    else if (!explicitAm && !explicitPm && hour >= 0 && hour <= 23) {
+      // Keep the hour unresolved when AM/PM is not explicitly stated.
+      matches.add(String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0"));
+      continue;
+    }
     matches.add(String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0"));
   }
   return Array.from(matches).slice(0, 4);
@@ -322,14 +333,40 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
   if (hasDateCue(userMessage)) next.date = parseTargetDate(normalizeArabicDigits(userMessage)).targetDateStr;
+  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase();
   const preferredTimes = extractPreferredTimes(userMessage);
-  if (preferredTimes.length > 0) next.preferred_times = preferredTimes;
-  if (/احجز|حجز|احجزلي|احجزه/.test(normalizeArabicDigits(userMessage))) next.intent = "book_stadium";
+  const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(normalizedMessage);
+  const hasAm = /صباح|صبح|\bص\b/.test(normalizedMessage);
+  if (preferredTimes.length > 0) {
+    next.preferred_times = preferredTimes;
+  } else if (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/)) {
+    next.preferred_times = next.preferred_times.map((t: string) => {
+      let hour = Number(t.substring(0, 2));
+      if (hasPm && hour < 12) hour += 12;
+      if (hasAm && hour === 12) hour = 0;
+      return String(hour).padStart(2, "0") + ":00";
+    });
+  }
+  if (/احجز|حجز|احجزلي|احجزه|حجزلي/.test(normalizedMessage)) next.intent = "book_stadium";
   next.missing_slots = [];
   if (!next.stadium_id) next.missing_slots.push("stadium");
   if (!next.date) next.missing_slots.push("date");
   if (!Array.isArray(next.preferred_times) || next.preferred_times.length === 0) next.missing_slots.push("time");
-  next.ready_for_execution = next.missing_slots.length === 0 && (!Array.isArray(next.preferred_times) || next.preferred_times.length === 1);
+
+  const hasExplicitPeriod = hasPm || hasAm;
+  if (Array.isArray(next.preferred_times) && next.preferred_times.length > 0 && !hasExplicitPeriod) {
+    next.time_period_confirmed = false;
+    next.requires_time_clarification = true;
+  } else {
+    next.time_period_confirmed = true;
+    next.requires_time_clarification = false;
+  }
+
+  next.ready_for_execution =
+    next.missing_slots.length === 0 &&
+    next.time_period_confirmed === true &&
+    Array.isArray(next.preferred_times) &&
+    next.preferred_times.length > 0;
   next.updated_at = new Date().toISOString();
   contextSnapshot.task_state = next;
   return next;
@@ -575,6 +612,17 @@ ${JSON.stringify(taskState, null, 2)}
 - إذا كانت هناك عدة ملاعب، لا تخمّن؛ اطلب تحديد الملعب.
 - لا تعيد سؤال slot موجود بالفعل في Task State إلا إذا غيّره المستخدم أو أصبح غير صالح.
 - إذا قال المستخدم "10 أو 11"، فهذه تفضيلات لوقتين وليست اختياراً نهائياً. افحص الاثنين أولاً ثم اطلب منه اختيار المتاح قبل حجز ساعة واحدة.
+- إذا قال المستخدم "10 أو 11 بالليل"، اعتبرهما تفضيلين مرتبّين: افحص 10 أولاً، وإذا لم يتوفر افحص 11. لا تنفذ الحجز قبل عرض الموعد المقترح وطلب التأكيد النهائي.
+- إذا قال المستخدم "10" فقط دون صباح/مساء، لا تفترض الفترة. اطلب: "تقصد 10 الصبح ولا 10 بالليل؟"
+- إذا قال "قصدي..." أو "لأ..." أو صحح نفسه، اعتبر الجزء الأخير هو المعتمد وتجاهل القيمة المصححة السابقة لنفس الحقل.
+- بعد الوصول إلى موعد قابل للحجز، استخدم تأكيداً ذكياً بصيغة طبيعية: اذكر الملعب + اليوم + الساعة + المدة، ثم اطلب تأكيداً واحداً قبل التنفيذ.
+- أمثلة واقعية:
+  المستخدم: "عايز أحجز دلوقتي قصدي النهاردة الساعة 10 11 بالليل لو لقيت"
+  الاستنتاج: اليوم؛ 22:00 كخيار أول و23:00 كبديل؛ افحص التوفر؛ اقترح أول خيار متاح؛ اطلب التأكيد.
+  المستخدم: "طب ما انت عرضت عليا الملعب فوق"
+  الاستنتاج: الملعب الوحيد الظاهر في السياق السابق هو المقصود.
+  المستخدم: "خلاص خليها بكرة بعد العصر كده"
+  الاستنتاج: غداً؛ نطاق زمني تقريبي، ولا تحوله إلى ساعة دقيقة إلا بعد التحقق أو طلب تضييق النطاق.
 
 قواعد صارمة جداً لرفض الأسئلة الخارجة عن نطاق التطبيق (STRICT OUT-OF-SCOPE REFUSAL POLICY):
 1. أنت وكيل رياضي وتشغيلي حصري لتطبيق VSP فقط (حجز الملاعب، إدارة ملاعب المالكين، البطولات، دوري الحريفة 1v1، والعمليات المالية في التطبيق).
