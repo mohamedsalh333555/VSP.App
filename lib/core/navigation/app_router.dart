@@ -14,6 +14,7 @@ import '../../features/auth/screens/select_role_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
+
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/screens/team_profile_screen.dart';
@@ -101,7 +102,7 @@ class AppRouter {
  ),
  GoRoute(
  path: '/owner',
- builder: (context, state) => const OwnerMainScreen(),
+ builder: (context, state) => OwnerMainScreen(key: ownerMainScreenKey),
  ),
  GoRoute(
  path: '/player',
