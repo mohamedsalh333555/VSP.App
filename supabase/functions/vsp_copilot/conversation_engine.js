@@ -143,8 +143,8 @@ function extractPreferredTimes(input) {
 
   const results = [];
   const push = t => { if (t && !results.includes(t)) results.push(t); };
-  const globalPm = /مساء|مسا|بالليل|ليل/i.test(effective);
-  const globalAm = /صباح|صبح/i.test(effective);
+  const globalPm = /مساء|مسا|بالليل|ليل|(?:^|\\s)م(?=\\s|$)/i.test(effective);
+  const globalAm = /صباح|صبح|(?:^|\\s)ص(?=\\s|$)/i.test(effective);
 
   const numericRe = /\b(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?\b/g;
   let m;
