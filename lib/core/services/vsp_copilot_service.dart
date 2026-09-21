@@ -17,6 +17,20 @@ class RateLimitException implements Exception {
   String toString() => 'RateLimitException: $message ($statusCode)';
 }
 
+/// Raised when the authenticated cloud Copilot is unavailable.
+/// Real users must never silently fall back to the local mock/catalog engine,
+/// because that could surface data that does not exist in the live VSP backend.
+class CopilotUnavailableException implements Exception {
+  final String message;
+
+  const CopilotUnavailableException([
+    this.message = 'كابتن VSP غير متاح مؤقتًا. جرّب مرة تانية بعد لحظات.',
+  ]);
+
+  @override
+  String toString() => 'CopilotUnavailableException: $message';
+}
+
 /// Mock database dataset for testing pitch owner database grounding and zero-hallucination
 class OwnerDatabaseMockData {
   final List<Map<String, dynamic>>? stadiums;
@@ -259,11 +273,13 @@ class VspCopilotService {
         }
       } catch (e) {
         if (e is RateLimitException) rethrow;
-        debugPrint('[VspCopilotService] Cloud call failed, using intelligent engine: $e');
+        debugPrint('[VspCopilotService] Cloud call failed: $e');
+        throw const CopilotUnavailableException();
       }
     }
 
-    // 4. Intelligent Local Zero-Hallucination Engine (for tests, offline, & instant fallback)
+    // 4. Intelligent Local Zero-Hallucination Engine is reserved for tests/offline
+    // modes only. Authenticated live users must not see mock catalog data.
     return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
   }
 
