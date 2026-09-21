@@ -239,6 +239,7 @@ class CopilotMessage {
     List<CopilotTournamentSummary> tournaments = const [],
     List<CopilotOpenMatchSummary> openMatches = const [],
     CopilotAction? action,
+    Map<String, dynamic> uiMetadata = const {},
   }) {
     return CopilotMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -250,6 +251,7 @@ class CopilotMessage {
       tournamentResults: tournaments,
       openMatchResults: openMatches,
       action: action,
+      uiMetadata: uiMetadata,
     );
   }
 
