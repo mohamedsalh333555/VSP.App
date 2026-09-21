@@ -1291,8 +1291,12 @@ ${JSON.stringify(taskState, null, 2)}
               } else if (!currentMetric && !ownerPeriodRange) {
                 toolResponseData = { success: false, code: "FINANCIAL_PERIOD_MISSING", needs_clarification: true, message: "حدد الفترة عشان أطلع لك الرقم الدقيق: النهارده، آخر 7 أيام، من أول الشهر، ولا إجمالي السجل؟", quick_replies: ["النهارده","آخر 7 أيام","من أول الشهر","إجمالي السجل"] };
               } else if (currentMetric) {
-                const currentValue = ownerMetric === "available_balance" ? finSummary?.available_balance : finSummary?.accumulated_cash_debt;
-                toolResponseData = { success: true, fact_type: ownerMetric, value: Number(currentValue || 0), metric_definition: ownerMetric === "available_balance" ? "الرصيد المتاح للسحب حالياً بعد التسويات والمدفوعات المعلقة والمديونية القائمة." : "مديونية عمولة الكاش الحالية المسجلة على حساب المالك.", period_label: "الوضع الحالي", as_of_cairo_date: cairoDateKey(), stadium_id: null, stadium_name: null };
+                if (finErr || !finSummary?.success) {
+                  toolResponseData = { success: false, code: "FINANCIAL_SOURCE_ERROR", error: finErr?.message || finSummary?.error || "تعذر قراءة الرقم المالي حالياً." };
+                } else {
+                  const currentValue = ownerMetric === "available_balance" ? finSummary?.available_balance : finSummary?.accumulated_cash_debt;
+                  toolResponseData = { success: true, fact_type: ownerMetric, value: Number(currentValue || 0), metric_definition: ownerMetric === "available_balance" ? "الرصيد المتاح للسحب حالياً بعد التسويات والمدفوعات المعلقة والمديونية القائمة." : "مديونية عمولة الكاش الحالية المسجلة على حساب المالك.", period_label: "الوضع الحالي", as_of_cairo_date: cairoDateKey(), stadium_id: null, stadium_name: null };
+                }
               } else if (ownerNeedsHistoricalFacts) {
                 const { data: facts, error: factsErr } = await supabase.rpc("get_owner_copilot_financial_facts", { p_owner_id: callerUser.id, p_period_start: ownerPeriodRange.start, p_period_end: ownerPeriodRange.end, p_stadium_id: null });
                 if (factsErr || !facts?.success) {
