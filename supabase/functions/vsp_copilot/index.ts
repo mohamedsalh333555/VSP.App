@@ -1280,6 +1280,19 @@ ${JSON.stringify(taskState, null, 2)}
                   if (bookingRange) bQuery = bQuery.gte("operational_date", bookingRange.start).lte("operational_date", bookingRange.end);
                 }
 
+                const ownerRequestedTimes = extractPreferredTimes(userMessage);
+                const ownerHasExplicitPeriod = /مساء|مسا|بالليل|ليل|صباح|صبح/.test(ownerMessageText);
+                if (bookingDateInput && ownerRequestedTimes.length === 1 && ownerHasExplicitPeriod) {
+                  const bookingTarget = parseTargetDate(bookingDateInput);
+                  const dateParts = bookingTarget.targetDateStr.split("-").map(Number);
+                  const timeParts = ownerRequestedTimes[0].split(":").map(Number);
+                  const requestedStart = cairoLocalToUtcIso(dateParts[0], dateParts[1], dateParts[2], timeParts[0], timeParts[1] || 0);
+                  const endHour = (timeParts[0] + 1) % 24;
+                  const endDay = dateParts[2] + (timeParts[0] === 23 ? 1 : 0);
+                  const requestedEnd = cairoLocalToUtcIso(dateParts[0], dateParts[1], endDay, endHour, timeParts[1] || 0);
+                  bQuery = bQuery.gte("start_time", requestedStart).lt("start_time", requestedEnd);
+                }
+
                 if (!toolResponseData?.needs_clarification) {
                   const { data: bList, count: bCount, error: bErr } = await bQuery
                     .order("start_time", { ascending: true })
