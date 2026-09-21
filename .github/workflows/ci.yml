@@ -107,7 +107,7 @@ jobs:
 
       - name: Configure Ephemeral CI Release Signing
         run: |
-          keytool -genkeypair -v -keystore android/ci-release.jks -storepass ci-password -keypass ci-password \
+          keytool -genkeypair -v -keystore android/app/ci-release.jks -storepass ci-password -keypass ci-password \
             -alias vsp-ci -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=VSP CI,O=VSP,L=Aswan,C=EG"
           cat > android/key.properties << 'EOF'
@@ -137,4 +137,4 @@ jobs:
 
       - name: Remove Ephemeral Signing Material
         if: always()
-        run: rm -f android/ci-release.jks android/key.properties android/app/google-services.json
+        run: rm -f android/app/ci-release.jks android/key.properties android/app/google-services.json
