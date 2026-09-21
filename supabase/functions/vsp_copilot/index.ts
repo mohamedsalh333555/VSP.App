@@ -11,6 +11,7 @@ import { executeGuardedTool } from "./tool_executor.ts";
 import {
   buildResponseGeneratorPrompt,
   generateDeterministicResponse,
+  validateAssistantResponseFacts,
 } from "./response_generator.ts";
 
 declare const Deno: any;
@@ -216,7 +217,13 @@ serve(async (req: Request) => {
           const genData = await genRes.json();
           const candidateText = genData.candidates?.[0]?.content?.parts?.[0]?.text;
           if (candidateText && candidateText.trim().length > 0) {
-            assistantReply = candidateText.trim();
+            const candidate = candidateText.trim();
+            const factCheck = validateAssistantResponseFacts(candidate, nextState, toolPlan, toolResult);
+            if (factCheck.isValid) {
+              assistantReply = candidate;
+            } else {
+              console.warn("[ResponseGenerator] FactValidator rejected model response:", factCheck.reason);
+            }
           }
         }
       } catch (genErr) {

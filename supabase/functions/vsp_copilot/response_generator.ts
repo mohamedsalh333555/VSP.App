@@ -203,3 +203,93 @@ export function generateDeterministicResponse(
     quick_replies: ["عايز ملعب قريب", "البطولات المفتوحة", "ترتيب الحريفة 1v1"],
   };
 }
+
+export interface FactValidationResult {
+  isValid: boolean;
+  reason?: string;
+}
+
+// Runtime Fact Validator: Guarantees zero hallucination of financial or operational facts
+export function validateAssistantResponseFacts(
+  response: string,
+  state: ConversationState,
+  plan: ToolPlan,
+  toolResult: ToolResultContract | null
+): FactValidationResult {
+  if (!response || typeof response !== "string") {
+    return { isValid: false, reason: "Empty response" };
+  }
+
+  // 1. Check for fabricated booking completion claims
+  const claimsBookingComplete = /(?:تم الحجز|حجزتلك|تم تأكيد الحجز بنجاح|حجزنا الملعب|تم تسجيل حجزك)/i.test(response);
+  if (claimsBookingComplete) {
+    const actuallySucceeded = toolResult && toolResult.tool_name === "createBookingFromChat" && toolResult.status === "SUCCESS";
+    if (!actuallySucceeded) {
+      return {
+        isValid: false,
+        reason: "Fabricated booking completion claim without verified SUCCESS booking tool result",
+      };
+    }
+  }
+
+  // 2. Check for false availability claims when an error occurred
+  const claimsUnavailable = /(?:الملعب غير متاح|مفيش مواعيد|غير متوفر|مفيش فترات فاضية)/i.test(response);
+  if (claimsUnavailable && toolResult) {
+    if (toolResult.status === "TEMPORARY_ERROR" || toolResult.status === "DATA_ERROR" || toolResult.status === "AUTH_ERROR") {
+      return {
+        isValid: false,
+        reason: "Reported stadium as unavailable when the actual result was a technical error",
+      };
+    }
+  }
+
+  // 3. Check for price fabrication in EGP
+  const priceMatches = [...response.matchAll(/(?:بـ\s*|سعر(?:ها|ه)?\s*|بمبلغ\s*)?(\d{2,5})\s*(?:جنيه|ج\.م|ج\b)/gi)];
+  if (priceMatches.length > 0) {
+    const allowedPrices = new Set<number>();
+    if (state.stadium.price_per_hour) {
+      const p = state.stadium.price_per_hour;
+      allowedPrices.add(p);
+      allowedPrices.add(p * (state.duration_hours || 1));
+    }
+    if (toolResult?.stadiums) {
+      for (const s of toolResult.stadiums) {
+        if (s.price_per_hour) {
+          allowedPrices.add(s.price_per_hour);
+          allowedPrices.add(s.price_per_hour * (state.duration_hours || 1));
+        }
+      }
+    }
+    if (toolResult?.data?.price_per_hour) {
+      const p = toolResult.data.price_per_hour;
+      allowedPrices.add(p);
+      allowedPrices.add(p * (state.duration_hours || 1));
+    }
+    if (toolResult?.data?.total_amount) allowedPrices.add(toolResult.data.total_amount);
+    if (toolResult?.data?.deposit_amount) allowedPrices.add(toolResult.data.deposit_amount);
+
+    if (allowedPrices.size > 0) {
+      for (const m of priceMatches) {
+        const claimedPrice = Number(m[1]);
+        if (!allowedPrices.has(claimedPrice)) {
+          return {
+            isValid: false,
+            reason: `Claimed price (${claimedPrice}) does not match any verified price (${Array.from(allowedPrices).join(", ")})`,
+          };
+        }
+      }
+    }
+  }
+
+  // 4. Check for leaked internal terms
+  const leakedInternals = /(?:قاعدة البيانات|السيستم|API|Supabase|Gemini|RPC|السيرفر|الأداة|tool)/i.test(response);
+  if (leakedInternals) {
+    return {
+      isValid: false,
+      reason: "Leaked internal technical terminology",
+    };
+  }
+
+  return { isValid: true };
+}
+

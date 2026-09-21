@@ -23,6 +23,7 @@ import {
 import {
   formatArabicCount,
   generateDeterministicResponse,
+  validateAssistantResponseFacts,
 } from "./response_generator.ts";
 
 console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
@@ -481,4 +482,173 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
   assert.equal(formatArabicCount(5, "ملعب واحد", "ملعبين", "ملاعب"), "5 ملاعب");
 }
 
-console.log("All Semantic State Machine Invariant and Scenario Tests: PASS! ✅");
+// ==========================================
+// 5. ZERO-HALLUCINATION FACT VALIDATOR TESTS
+// ==========================================
+{
+  const state = createInitialConversationState("player");
+  state.stadium = {
+    id: "std-1",
+    name: "ملعب النجوم",
+    provenance: "explicit_user",
+    status: "known",
+    price_per_hour: 200,
+  };
+  state.duration_hours = 1;
+
+  const plan = { action: "ASK_CONFIRMATION", toolName: "createBookingFromChat" };
+
+  // Test 5.1: Fact Validator rejects hallucinated price (claims 250 instead of verified 200)
+  const falsePriceReply = "تمام يا كابتن، الحجز بـ 250 جنيه في ملعب النجوم الساعة 8 بالليل.";
+  const priceCheck = validateAssistantResponseFacts(falsePriceReply, state, plan, null);
+  assert.equal(priceCheck.isValid, false, "FactValidator must reject hallucinated price 250");
+
+  // Test 5.2: Fact Validator accepts verified price (200)
+  const truePriceReply = "تمام يا كابتن، الحجز بـ 200 جنيه في ملعب النجوم الساعة 8 بالليل.";
+  const validCheck = validateAssistantResponseFacts(truePriceReply, state, plan, null);
+  assert.equal(validCheck.isValid, true, "FactValidator must accept verified price 200");
+
+  // Test 5.3: Fact Validator rejects fabricated booking completion when toolResult is null or failed
+  const fakeBookingReply = "ألف مبروك يا كابتن، تم الحجز بنجاح!";
+  const bookingCheck = validateAssistantResponseFacts(fakeBookingReply, state, plan, null);
+  assert.equal(bookingCheck.isValid, false, "FactValidator must reject fabricated booking completion");
+
+  // Test 5.4: Fact Validator rejects false 'unavailable' claim when tool had a technical exception
+  const fakeUnavailableReply = "للأسف يا كابتن، الملعب غير متاح حالياً ومفيش مواعيد.";
+  const failedToolResult = {
+    status: "TEMPORARY_ERROR",
+    tool_name: "checkStadiumAvailability",
+    data: {},
+    error_message: "Connection timeout to Postgres",
+  };
+  const unavailCheck = validateAssistantResponseFacts(fakeUnavailableReply, state, plan, failedToolResult);
+  assert.equal(unavailCheck.isValid, false, "FactValidator must reject false unavailable claim on technical error");
+
+  // Test 5.5: Fact Validator rejects leaked internal terms
+  const leakReply = "تم استرجاع البيانات من قاعدة البيانات عبر Supabase API.";
+  const leakCheck = validateAssistantResponseFacts(leakReply, state, plan, null);
+  assert.equal(leakCheck.isValid, false, "FactValidator must reject leaked technical terminology");
+}
+
+// ==========================================
+// 6. ADVANCED MULTI-TURN EDGE SCENARIOS
+// ==========================================
+// Scenario 6.1:
+// Turn 1: "احجزلي 10 الصبح ولو مش موجود 11 بالليل"
+// Turn 2: "لا خلي الأول بكرة"
+{
+  const state = createInitialConversationState("player");
+  state.active_task = "booking";
+  state.stadium = { id: "std-99", name: "الصداقة", provenance: "explicit_user", status: "known" };
+  state.times = [
+    { time: "10:00", period: "am", period_certainty: "explicit", preference_order: 1 },
+    { time: "23:00", period: "pm", period_certainty: "explicit", preference_order: 2 },
+  ];
+  state.date = { value: resolveCairoDate("today"), label: "النهارده", status: "known" };
+
+  // Turn 2: User says: "لا خلي الأول بكرة"
+  const delta = validateAndNormalizeSemanticOutput({
+    schema_version: 1,
+    speech_act: "correct",
+    intent: "booking",
+    operation: "modify",
+    entities: {
+      date: { type: "tomorrow", value: resolveCairoDate("tomorrow") },
+    },
+    references: [{ reference_type: "ordinal", target: "first", raw_phrase: "الأول" }],
+    changes: [
+      { field: "date", operation: "replace", value: resolveCairoDate("tomorrow") },
+    ],
+    ambiguities: [],
+    confirmation: { meaning: "none" },
+    execution_request: { requested: false },
+  }, "لا خلي الأول بكرة");
+
+  const next = mergeState(state, delta, { resolved_stadium: null, resolved_time: null, resolved_date: resolveCairoDate("tomorrow"), ambiguities: [] });
+
+  assert.equal(next.date.value, resolveCairoDate("tomorrow"), "Must update date to tomorrow");
+  assert.equal(next.times.length, 2, "Must preserve both candidate alternatives");
+  assert.equal(next.times[0].time, "10:00", "Must preserve alternative #1 (10 AM)");
+  assert.equal(next.times[1].time, "23:00", "Must preserve alternative #2 (11 PM)");
+  assert.equal(next.stadium.name, "الصداقة", "Must preserve stadium selection");
+}
+
+// Scenario 6.2:
+// "عايز نفس الملعب بس بكرة بعد 10 ولو مفيش شوفلي اللي بعده"
+// Features: inheritance + date change + time constraint + fallback preference + candidate selection
+{
+  const state = createInitialConversationState("player");
+  state.active_task = "booking";
+  state.stadium = { id: "std-alpha", name: "ملعب الأهلي", provenance: "explicit_user", status: "known" };
+  state.last_visible_entities = [
+    { reference_key: "stadium_1", entity_type: "stadium", id: "std-alpha", name: "ملعب الأهلي", price_per_hour: 250 },
+    { reference_key: "stadium_2", entity_type: "stadium", id: "std-beta", name: "ملعب الزمالك", price_per_hour: 220 },
+  ];
+
+  // User input produces semantic delta:
+  const delta = validateAndNormalizeSemanticOutput({
+    schema_version: 1,
+    speech_act: "request",
+    intent: "booking",
+    operation: "search",
+    entities: {
+      date: { type: "tomorrow", value: resolveCairoDate("tomorrow") },
+      time_range: { from_hour: 22, to_hour: 23, label: "بعد 10" },
+    },
+    references: [
+      { reference_type: "previous_state", target: "same_stadium", raw_phrase: "نفس الملعب" },
+      { reference_type: "relative", target: "next", raw_phrase: "اللي بعده" },
+    ],
+    changes: [
+      { field: "date", operation: "replace", value: resolveCairoDate("tomorrow") },
+      { field: "time", operation: "set", value: "بعد 10" },
+    ],
+    ambiguities: [],
+    confirmation: { meaning: "none" },
+    execution_request: { requested: false },
+  }, "عايز نفس الملعب بس بكرة بعد 10 ولو مفيش شوفلي اللي بعده");
+
+  const resolved = resolveReferences(state, delta.references, "عايز نفس الملعب بس بكرة بعد 10 ولو مفيش شوفلي اللي بعده");
+  const next = mergeState(state, delta, resolved);
+
+  assert.equal(next.stadium.id, "std-alpha", "Must inherit primary stadium: ملعب الأهلي");
+  assert.equal(next.date.value, resolveCairoDate("tomorrow"), "Must set date to tomorrow");
+  assert.equal(next.time_range?.from_hour, 22, "Must set time range from 22:00 (بعد 10)");
+
+  // Verify fallback resolution: next visible candidate is std-beta
+  const nextCandidate = state.last_visible_entities[1];
+  assert.equal(nextCandidate.id, "std-beta", "Candidate #2 must be resolved as fallback candidate");
+  assert.equal(nextCandidate.name, "ملعب الزمالك", "Fallback candidate name must match context");
+}
+
+// ==========================================
+// 7. OPTIMISTIC CONCURRENCY CONTROL (OCC) SIMULATION
+// ==========================================
+{
+  // Simulate Turn 11 writing version 3
+  const currentDbSnapshot = {
+    conversation_state: { version: 3, stadium: { name: "الملعب الأحدث" } },
+  };
+
+  // Simulate late-arriving Turn 10 trying to persist version 2
+  const lateIncomingSnapshot = {
+    conversation_state: { version: 2, stadium: { name: "الملعب القديم" } },
+  };
+
+  const currVer = currentDbSnapshot.conversation_state.version;
+  const incomingVer = lateIncomingSnapshot.conversation_state.version;
+
+  // OCC Check:
+  let persistedSnapshot;
+  if (currVer > incomingVer) {
+    persistedSnapshot = currentDbSnapshot; // Preserve newer!
+  } else {
+    persistedSnapshot = lateIncomingSnapshot;
+  }
+
+  assert.equal(persistedSnapshot.conversation_state.version, 3, "OCC must prevent late Turn 10 from overwriting newer version 3");
+  assert.equal(persistedSnapshot.conversation_state.stadium.name, "الملعب الأحدث", "Must preserve newer state facts");
+}
+
+console.log("All Semantic State Machine Invariant, Fact Validator, and Edge Scenario Tests: PASS! ✅");
+

@@ -6,6 +6,7 @@ import type { SemanticReference, SemanticAmbiguity } from "./semantic_schema.ts"
 
 export interface ResolvedReferences {
   resolved_stadium: VisibleEntity | null;
+  fallback_stadium: VisibleEntity | null;
   resolved_time: string | null;
   resolved_date: string | null;
   ambiguities: SemanticAmbiguity[];
@@ -18,6 +19,7 @@ export function resolveReferences(
 ): ResolvedReferences {
   const result: ResolvedReferences = {
     resolved_stadium: null,
+    fallback_stadium: null,
     resolved_time: null,
     resolved_date: null,
     ambiguities: [],
@@ -25,6 +27,9 @@ export function resolveReferences(
 
   const visible = state.last_visible_entities.filter(e => e.entity_type === "stadium");
   const candidates = visible.length > 0 ? visible : state.candidate_stadiums;
+
+  const hasSameStadiumRef = references.some(r => r.target === "same_stadium" || r.target === "same_as_before");
+  const isConditionalFallback = /(?:لو مفيش|لو مش متاح|لو مش فاضي|لو محجوز|بديل)/.test(rawInput);
 
   for (const ref of references) {
     // 1. Ordinal References: "الأول", "التاني", "التالت", "الرابع", "الأخير"
@@ -43,15 +48,19 @@ export function resolveReferences(
     // 2. Relative References: "اللي بعده", "اللي قبله"
     else if (ref.target === "next") {
       const currIdx = candidates.findIndex(c => c.id === state.stadium.id);
-      if (currIdx >= 0 && candidates[currIdx + 1]) {
-        result.resolved_stadium = candidates[currIdx + 1];
-      } else if (candidates.length > 1) {
-        result.resolved_stadium = candidates[1];
+      const nextCand = (currIdx >= 0 && candidates[currIdx + 1]) ? candidates[currIdx + 1] : candidates[1];
+      if (hasSameStadiumRef || isConditionalFallback) {
+        result.fallback_stadium = nextCand || null;
+      } else {
+        result.resolved_stadium = nextCand || null;
       }
     } else if (ref.target === "previous") {
       const currIdx = candidates.findIndex(c => c.id === state.stadium.id);
-      if (currIdx > 0 && candidates[currIdx - 1]) {
-        result.resolved_stadium = candidates[currIdx - 1];
+      const prevCand = (currIdx > 0 && candidates[currIdx - 1]) ? candidates[currIdx - 1] : candidates[0];
+      if (hasSameStadiumRef || isConditionalFallback) {
+        result.fallback_stadium = prevCand || null;
+      } else {
+        result.resolved_stadium = prevCand || null;
       }
     }
 
