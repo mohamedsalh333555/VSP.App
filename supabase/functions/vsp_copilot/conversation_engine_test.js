@@ -14,6 +14,8 @@ const rows = [
   ["الساعة 10", null, ["10:00"], null],
   ["10 نفر", 10, [], null],
   ["10 بالليل", null, ["22:00"], null],
+  ["10 م", null, ["22:00"], null],
+  ["10 ص", null, ["10:00"], null],
   ["10 أو 11 بالليل", null, ["22:00","23:00"], null],
   ["الساعة عشرة بالليل", null, ["22:00"], null],
 ];
@@ -56,6 +58,8 @@ assert.equal(s.intent, "booking_howto");
 assert.equal(s.confirmation_pending, undefined);
 
 assert.deepEqual(extractPreferredTimes("انا وعشر اشخاص النهارده بالليل"), []);
+assert.deepEqual(extractPreferredTimes("10 م"), ["22:00"]);
+assert.deepEqual(extractPreferredTimes("10 ص"), ["10:00"]);
 assert.equal(extractGroupSize("انا وعشر اشخاص النهارده بالليل"), 11);
 
 console.log("conversation_engine_test: PASS");
