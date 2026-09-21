@@ -1253,19 +1253,23 @@ ${JSON.stringify(taskState, null, 2)}
                 }
 
                 const detectedOwnerBookingPeriod = detectOwnerFinancialPeriod(userMessage);
-            const ownerQueryType = (detectedOwnerBookingPeriod || (args.query_type || "all")).toString().toLowerCase();
-                if (ownerQueryType === "today") {
-                  const todayWindow = parseTargetDate("اليوم");
-                  bQuery = bQuery
-                    .gte("start_time", todayWindow.dayStartIso)
-                    .lt("start_time", todayWindow.dayEndIso);
+                const ownerQueryType = (detectedOwnerBookingPeriod || (args.query_type || "all")).toString().toLowerCase();
+                const ownerMessageText = ownerFactNorm(userMessage);
+                const bookingDateInput = /بكره|بكرة|غدا|غداً/.test(ownerMessageText) ? "بكرة" : /امبارح|امبارحة|مبارح/.test(ownerMessageText) ? "امبارح" : /النهارده|النهاردة|اليوم/.test(ownerMessageText) ? "اليوم" : "";
+                if (bookingDateInput) {
+                  const bookingWindow = parseTargetDate(bookingDateInput);
+                  bQuery = bQuery.gte("start_time", bookingWindow.dayStartIso).lt("start_time", bookingWindow.dayEndIso);
+                } else if (ownerQueryType === "current_week" || ownerQueryType === "current_month" || ownerQueryType === "last_7_days" || ownerQueryType === "last_month") {
+                  const bookingRange = resolveOwnerFinancialRange(ownerQueryType);
+                  if (bookingRange) bQuery = bQuery.gte("operational_date", bookingRange.start).lte("operational_date", bookingRange.end);
                 }
 
                 const { data: bList, count: bCount, error: bErr } = await bQuery
-                  .order("start_time", { ascending: ownerQueryType === "today" })
+                  .order("start_time", { ascending: true })
                   .limit(50);
                 ownerBookings = bList || [];
                 ownerBookingsTotal = bCount ?? ownerBookings.length;
+                if (bErr) toolResponseData = { success: false, code: "OWNER_BOOKINGS_QUERY_ERROR", message: "تعذر قراءة الحجوزات بدقة حالياً." };
               }
 
               appAction = {
