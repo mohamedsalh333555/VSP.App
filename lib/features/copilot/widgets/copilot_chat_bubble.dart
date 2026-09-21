@@ -153,6 +153,15 @@ class CopilotChatBubble extends StatelessWidget {
             const SizedBox(height: 8),
             _buildActionCard(context, message.action!),
           ],
+          if ((message.uiMetadata['quick_replies'] as List?)?.isNotEmpty ?? false) ...[
+            const SizedBox(height: 8),
+            _buildQuickReplies(
+              context,
+              (message.uiMetadata['quick_replies'] as List)
+                  .map((item) => item.toString())
+                  .toList(),
+            ),
+          ],
           if (message.hasStadiums) ...[
             const SizedBox(height: 12),
             _buildStadiumsCarousel(context, message.stadiumResults),
@@ -167,6 +176,37 @@ class CopilotChatBubble extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildQuickReplies(BuildContext context, List<String> replies) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: replies.take(4).map((reply) {
+        return ActionChip(
+          label: Text(
+            reply,
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          backgroundColor: VSPColors.surfaceAlt,
+          side: const BorderSide(color: VSPColors.accent),
+          onPressed: onExecuteAction == null
+              ? null
+              : () => onExecuteAction!(
+                    CopilotAction(
+                      actionType: 'QUICK_REPLY',
+                      route: '',
+                      label: reply,
+                      params: {'message': reply},
+                    ),
+                  ),
+        );
+      }).toList(),
     );
   }
 
