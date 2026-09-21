@@ -383,11 +383,41 @@ function selectPreferredAvailableSlot(
   return null;
 }
 
+function resolveVisibleStadiumReference(contextSnapshot: Record<string, any>, input: string) {
+  const visible = Array.isArray(contextSnapshot.last_visible_stadiums)
+    ? contextSnapshot.last_visible_stadiums
+    : [];
+  if (visible.length === 0) return null;
+
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase()).trim();
+
+  const ordinalPatterns = [
+    /(?:^|\s)(?:اول|الأول|الاول)(?:\s|$)/,
+    /(?:^|\s)(?:تاني|الثاني|التاني)(?:\s|$)/,
+    /(?:^|\s)(?:تالت|الثالث|التالت)(?:\s|$)/,
+    /(?:^|\s)(?:رابع|الرابع|الرابعه|الرابعة)(?:\s|$)/,
+  ];
+
+  for (let i = 0; i < ordinalPatterns.length; i++) {
+    if (ordinalPatterns[i].test(normalized) && visible[i]) {
+      return visible[i];
+    }
+  }
+
+  // "الملعب ده/اللي فوق" is deterministic only when one stadium was visible.
+  if (visible.length === 1 && /الملعب ده|الملعب دي|اللي فوق|ده الملعب|هو ده|دي هي/.test(normalized)) {
+    return visible[0];
+  }
+
+  return null;
+}
+
 function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string) {
   const current = contextSnapshot.task_state && typeof contextSnapshot.task_state === "object"
     ? contextSnapshot.task_state
     : {};
   const next = { ...current };
+
   if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
@@ -398,12 +428,34 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     ? normalizedMessage.slice(Math.max(...correctionMatches))
     : normalizedMessage;
 
+  const explicitConfirmation = isExplicitConfirmation(userMessage);
+
   if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
 
   const preferredTimes = extractPreferredTimes(userMessage);
   const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
   const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
   const timeWindow = extractTimeWindow(effectiveMessage);
+  const visibleReference = resolveVisibleStadiumReference(contextSnapshot, effectiveMessage);
+
+  if (visibleReference) {
+    next.stadium_id = visibleReference.id;
+    next.stadium_name = visibleReference.name;
+  }
+
+  const stateChangedBySchedule =
+    hasDateCue(effectiveMessage) ||
+    preferredTimes.length > 0 ||
+    !!timeWindow ||
+    (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/));
+
+  const stateChangedByStadium = !!visibleReference;
+
+  // A pending confirmation is valid only for the exact state it was created from.
+  // Any later date/time/stadium change invalidates it before another confirmation can execute.
+  if (!explicitConfirmation && (stateChangedBySchedule || stateChangedByStadium)) {
+    delete next.confirmation_pending;
+  }
 
   if (preferredTimes.length > 0) {
     next.preferred_times = preferredTimes;
@@ -427,6 +479,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   next.missing_slots = [];
   if (!next.stadium_id) next.missing_slots.push("stadium");
   if (!next.date) next.missing_slots.push("date");
+
   const hasExactTime = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
   const hasTimeWindow = !!next.time_window;
   if (!hasExactTime && !hasTimeWindow) next.missing_slots.push("time");
