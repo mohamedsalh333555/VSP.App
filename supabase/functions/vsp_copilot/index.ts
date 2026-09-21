@@ -664,6 +664,83 @@ function generateStandardSlots(targetDateStr: string) {
   return slots;
 }
 
+async function findAvailableSlotsForStadium(
+  supabase: any,
+  stadium: any,
+  targetDateStr: string,
+  preferredTimes: string[],
+  timeWindow: any,
+) {
+  const target = parseTargetDate(targetDateStr);
+  const { data: existingBookings } = await supabase
+    .from("bookings")
+    .select("start_time, end_time, status, locked_until, created_at")
+    .eq("stadium_id", stadium.id)
+    .neq("status", "cancelled")
+    .gte("start_time", target.dayStartIso)
+    .lte("start_time", target.dayEndIso);
+
+  const activeBookings = (existingBookings || []).filter((b: any) => {
+    if (b.status === "pending") {
+      const lockExpire = b.locked_until
+        ? new Date(b.locked_until).getTime()
+        : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+      return lockExpire > Date.now();
+    }
+    return true;
+  });
+
+  const cairoNow = getCairoParts(new Date());
+  const isToday =
+    targetDateStr ===
+    String(cairoNow.year).padStart(4, "0") + "-" +
+    String(cairoNow.month).padStart(2, "0") + "-" +
+    String(cairoNow.day).padStart(2, "0");
+
+  let availableSlots = generateStandardSlots(targetDateStr).filter((slot) => {
+    const sStart = new Date(slot.start_time).getTime();
+    const sEnd = new Date(slot.end_time).getTime();
+    if (isToday && sEnd <= Date.now()) return false;
+
+    for (const b of activeBookings) {
+      const bStart = new Date(b.start_time).getTime();
+      const bEnd = new Date(b.end_time).getTime();
+      if (sStart < bEnd && sEnd > bStart) return false;
+    }
+    return true;
+  });
+
+  if (preferredTimes.length > 0) {
+    availableSlots = availableSlots.filter((slot) => slotMatchesPreferredTime(slot, preferredTimes));
+  } else if (timeWindow && typeof timeWindow.from_hour === "number") {
+    availableSlots = availableSlots.filter((slot) => {
+      const hour = slotHourFromIso(slot.start_time);
+      return hour >= timeWindow.from_hour && hour <= (timeWindow.to_hour ?? 23);
+    });
+  }
+
+  return {
+    targetDate: targetDateStr,
+    dayStartIso: target.dayStartIso,
+    dayEndIso: target.dayEndIso,
+    availableSlots,
+  };
+}
+
+function refreshBookingTaskState(task: Record<string, any>) {
+  task.missing_slots = [];
+  if (!task.stadium_id) task.missing_slots.push("stadium");
+  if (!task.date) task.missing_slots.push("date");
+  const hasExactTime = Array.isArray(task.preferred_times) && task.preferred_times.length > 0;
+  const hasTimeWindow = !!task.time_window;
+  if (!hasExactTime && !hasTimeWindow) task.missing_slots.push("time");
+  task.ready_for_execution =
+    task.missing_slots.length === 0 &&
+    task.time_period_confirmed === true &&
+    hasExactTime;
+  return task;
+}
+
 function ownerFactNorm(value: string): string {
   return normalizeArabicDigits((value || "").toString().toLowerCase()).trim().replace(/\s+/g, " ");
 }
@@ -1118,7 +1195,6 @@ ${JSON.stringify(taskState, null, 2)}
 
               const { data: stadiums } = await query;
               stadiumResults = stadiums || [];
-              toolResponseData = { count: stadiumResults.length, governorate: governorate, stadiums: stadiumResults };
 
               contextSnapshot.last_searched_governorate = governorate;
               contextSnapshot.last_visible_stadiums = stadiumResults.map((s: any) => ({
@@ -1129,18 +1205,114 @@ ${JSON.stringify(taskState, null, 2)}
                 image_url: s.image_url,
                 rating: s.rating,
               }));
+
+              const currentTask = contextSnapshot.task_state || {};
+              const requestedDate = currentTask.date;
+              const requestedTimes = Array.isArray(currentTask.preferred_times) ? currentTask.preferred_times : [];
+              const requestedWindow = currentTask.time_window || null;
+              const hasScheduleConstraint =
+                !!requestedDate && (requestedTimes.length > 0 || !!requestedWindow);
+
               if (stadiumResults.length === 1) {
-                contextSnapshot.last_stadium_id = stadiumResults[0].id;
-                contextSnapshot.last_stadium_name = stadiumResults[0].name;
-                contextSnapshot.task_state = {
-                  ...(contextSnapshot.task_state || {}),
-                  stadium_id: stadiumResults[0].id,
-                  stadium_name: stadiumResults[0].name,
-                };
+                const only = stadiumResults[0];
+                contextSnapshot.last_stadium_id = only.id;
+                contextSnapshot.last_stadium_name = only.name;
+                currentTask.stadium_id = only.id;
+                currentTask.stadium_name = only.name;
+                refreshBookingTaskState(currentTask);
               } else {
                 delete contextSnapshot.last_stadium_id;
                 delete contextSnapshot.last_stadium_name;
+                delete currentTask.stadium_id;
+                delete currentTask.stadium_name;
+                refreshBookingTaskState(currentTask);
               }
+
+              // Do not stop at discovery when the user already supplied a date/time.
+              // Automatically check real availability for the best candidates.
+              const availabilityCandidates = stadiumResults.slice(0, 5);
+              const availabilityMatches: any[] = [];
+              if (hasScheduleConstraint && availabilityCandidates.length > 0) {
+                const checks = await Promise.all(availabilityCandidates.map(async (stadium: any) => {
+                  try {
+                    const availability = await findAvailableSlotsForStadium(
+                      supabase,
+                      stadium,
+                      requestedDate,
+                      requestedTimes,
+                      requestedWindow,
+                    );
+                    return { stadium, ...availability };
+                  } catch (_) {
+                    return { stadium, targetDate: requestedDate, availableSlots: [] };
+                  }
+                }));
+
+                for (const check of checks) {
+                  if (Array.isArray(check.availableSlots) && check.availableSlots.length > 0) {
+                    availabilityMatches.push(check);
+                  }
+                }
+
+                toolResponseData = {
+                  count: stadiumResults.length,
+                  governorate,
+                  stadiums: stadiumResults,
+                  schedule_checked: true,
+                  schedule_date: requestedDate,
+                  schedule_matches: availabilityMatches.map((m: any) => ({
+                    stadium_id: m.stadium.id,
+                    stadium_name: m.stadium.name,
+                    price_per_hour: m.stadium.price_per_hour,
+                    available_slots: m.availableSlots,
+                  })),
+                };
+
+                // One matching stadium: continue the booking flow automatically.
+                if (availabilityMatches.length === 1) {
+                  const match = availabilityMatches[0];
+                  currentTask.stadium_id = match.stadium.id;
+                  currentTask.stadium_name = match.stadium.name;
+                  contextSnapshot.last_stadium_id = match.stadium.id;
+                  contextSnapshot.last_stadium_name = match.stadium.name;
+                  contextSnapshot.last_date = requestedDate;
+                  contextSnapshot.last_available_slots = match.availableSlots;
+
+                  const proposedSlot = requestedTimes.length > 0
+                    ? selectPreferredAvailableSlot(match.availableSlots, requestedTimes)
+                    : null;
+
+                  if (currentTask.intent === "book_stadium" && proposedSlot) {
+                    currentTask.confirmation_pending = {
+                      stadium_id: match.stadium.id,
+                      stadium_name: match.stadium.name,
+                      date: requestedDate,
+                      start_time: proposedSlot.start_time,
+                      end_time: proposedSlot.end_time,
+                      price_per_hour: match.stadium.price_per_hour,
+                    };
+                    appAction = {
+                      action_type: "CONFIRM_BOOKING",
+                      route: "/bookings",
+                      label: "تأكيد الحجز",
+                      params: { message: "أيوه، أكد الحجز" },
+                    };
+                  }
+                  refreshBookingTaskState(currentTask);
+                } else {
+                  // Multiple matches: present choices, never select one silently.
+                  quickReplies = availabilityMatches.slice(0, 4).map((m: any) => m.stadium.name);
+                }
+              } else {
+                toolResponseData = {
+                  count: stadiumResults.length,
+                  governorate,
+                  stadiums: stadiumResults,
+                  schedule_checked: false,
+                };
+              }
+
+              contextSnapshot.task_state = currentTask;
 
             } else if (funcName === "searchTournaments") {
               const tType = (args.tournament_type || "all").toString().toLowerCase();
@@ -1481,57 +1653,20 @@ ${JSON.stringify(taskState, null, 2)}
                 }
 
                 const { targetDateStr, dayStartIso, dayEndIso } = parseTargetDate(dateInput);
-                const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
-
-                const { data: existingBookings } = await supabase
-                  .from("bookings")
-                  .select("start_time, end_time, status, locked_until, created_at")
-                  .eq("stadium_id", targetStadium.id)
-                  .neq("status", "cancelled")
-                  .gte("start_time", dayStartIso)
-                  .lte("start_time", dayEndIso);
-
-                const activeBookings = (existingBookings || []).filter((b: any) => {
-                  if (b.status === "pending") {
-                    const lockExpire = b.locked_until ? new Date(b.locked_until).getTime() : new Date(b.created_at).getTime() + 5 * 60 * 1000;
-                    return lockExpire > Date.now();
-                  }
-                  return true;
-                });
-
-                const allSlots = generateStandardSlots(targetDateStr);
-                const cairoNow = getCairoParts(new Date());
-                const isToday =
-                  targetDateStr ===
-                  String(cairoNow.year).padStart(4, "0") + "-" +
-                  String(cairoNow.month).padStart(2, "0") + "-" +
-                  String(cairoNow.day).padStart(2, "0");
-
-                let availableSlots = allSlots.filter((slot) => {
-                  const sStart = new Date(slot.start_time).getTime();
-                  const sEnd = new Date(slot.end_time).getTime();
-
-                  // Never show a slot that has already started/ended on today's date.
-                  if (isToday && sEnd <= Date.now()) return false;
-
-                  for (const b of activeBookings) {
-                    const bStart = new Date(b.start_time).getTime();
-                    const bEnd = new Date(b.end_time).getTime();
-                    if (sStart < bEnd && sEnd > bStart) return false;
-                  }
-                  return true;
-                });
-
                 const taskForAvailability = contextSnapshot.task_state || {};
-                const timeWindow = taskForAvailability.time_window;
-                if (preferredTimes.length > 0) {
-                  availableSlots = availableSlots.filter((slot) => slotMatchesPreferredTime(slot, preferredTimes));
-                } else if (timeWindow && typeof timeWindow.from_hour === "number") {
-                  availableSlots = availableSlots.filter((slot) => {
-                    const hour = slotHourFromIso(slot.start_time);
-                    return hour >= timeWindow.from_hour && hour <= (timeWindow.to_hour ?? 23);
-                  });
-                }
+                const preferredTimes = Array.isArray(taskForAvailability.preferred_times)
+                  ? taskForAvailability.preferred_times
+                  : [];
+
+                const availability = await findAvailableSlotsForStadium(
+                  supabase,
+                  targetStadium,
+                  targetDateStr,
+                  preferredTimes,
+                  taskForAvailability.time_window || null,
+                );
+                const availableSlots = availability.availableSlots;
+                const allSlots = generateStandardSlots(targetDateStr);
 
                 contextSnapshot.last_stadium_id = targetStadium.id;
                 contextSnapshot.last_stadium_name = targetStadium.name;
