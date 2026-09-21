@@ -256,30 +256,59 @@ const allCopilotTools = [
   createBookingFromChatTool,
 ];
 
-function parseTargetDate(dateStr?: string): { targetDateStr: string; dayStartIso: string; dayEndIso: string } {
-  const now = new Date();
-  const egyptOffsetMs = 2 * 60 * 60 * 1000;
-  const egyptNow = new Date(now.getTime() + egyptOffsetMs);
-  let target = new Date(egyptNow);
+function getCairoParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Cairo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value || 0);
+  return { year: get("year"), month: get("month"), day: get("day"), hour: get("hour"), minute: get("minute"), second: get("second") };
+}
 
-  const clean = (dateStr || "").trim().toLowerCase();
-  if (clean.includes("بكره") || clean.includes("غدا") || clean.includes("غداً") || clean.includes("tomorrow")) {
-    target.setDate(target.getDate() + 1);
-  } else if (clean.includes("بعد بكره") || clean.includes("بعد غد")) {
-    target.setDate(target.getDate() + 2);
+function getCairoOffsetMs(date: Date): number {
+  const p = getCairoParts(date);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - date.getTime();
+}
+
+function cairoLocalToUtcIso(year: number, month: number, day: number, hour: number, minute = 0): string {
+  const guessMs = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const first = new Date(guessMs - getCairoOffsetMs(new Date(guessMs)));
+  const second = new Date(guessMs - getCairoOffsetMs(first));
+  return second.toISOString();
+}
+
+function cairoDateStartIso(year: number, month: number, day: number): string {
+  return cairoLocalToUtcIso(year, month, day, 0, 0);
+}
+
+function parseTargetDate(dateStr?: string): { targetDateStr: string; dayStartIso: string; dayEndIso: string } {
+  const nowParts = getCairoParts(new Date());
+  let target = new Date(Date.UTC(nowParts.year, nowParts.month - 1, nowParts.day, 12, 0, 0));
+
+  const clean = normalizeArabicDigits((dateStr || "").trim().toLowerCase());
+  if (clean.includes("بعد بكره") || clean.includes("بعد بكرة") || clean.includes("بعد غد")) {
+    target.setUTCDate(target.getUTCDate() + 2);
+  } else if (clean.includes("بكره") || clean.includes("بكرة") || clean.includes("غدا") || clean.includes("غداً") || clean.includes("tomorrow")) {
+    target.setUTCDate(target.getUTCDate() + 1);
   } else if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
     const parts = clean.split("-").map(Number);
-    target = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+    target = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
   }
 
-  const yyyy = target.getFullYear();
-  const mm = String(target.getMonth() + 1).padStart(2, "0");
-  const dd = String(target.getDate()).padStart(2, "0");
-  const targetDateStr = `${yyyy}-${mm}-${dd}`;
-
-  const dayStartIso = new Date(Date.UTC(yyyy, target.getMonth(), target.getDate() - 1, 22, 0, 0)).toISOString();
-  const dayEndIso = new Date(Date.UTC(yyyy, target.getMonth(), target.getDate(), 22, 0, 0)).toISOString();
-
+  const yyyy = target.getUTCFullYear();
+  const mm = String(target.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(target.getUTCDate()).padStart(2, "0");
+  const targetDateStr = yyyy + "-" + mm + "-" + dd;
+  const nextDay = new Date(target.getTime());
+  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+  const dayStartIso = cairoDateStartIso(yyyy, target.getUTCMonth() + 1, target.getUTCDate());
+  const dayEndIso = cairoDateStartIso(nextDay.getUTCFullYear(), nextDay.getUTCMonth() + 1, nextDay.getUTCDate());
   return { targetDateStr, dayStartIso, dayEndIso };
 }
 
@@ -380,7 +409,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
 }
 
 function slotHourFromIso(iso: string): number {
-  return (new Date(iso).getUTCHours() + 2) % 24;
+  return getCairoParts(new Date(iso)).hour;
 }
 
 function slotMatchesPreferredTime(slot: { start_time: string }, preferredTimes: string[]): boolean {
@@ -393,18 +422,17 @@ function generateStandardSlots(targetDateStr: string) {
   const slots: { start_time: string; end_time: string; display_time: string; hour: number }[] = [];
   const parts = targetDateStr.split("-").map(Number);
   const [yyyy, month, day] = parts;
-
-  // Operating hours Cairo: 16:00 (4 PM) to 01:00 (1 AM next day)
   const cairoHours = [16, 17, 18, 19, 20, 21, 22, 23, 0];
 
   for (const h of cairoHours) {
     const isNextDay = h === 0;
-    const utcStartHour = (h - 2 + 24) % 24;
-    const slotDay = isNextDay ? day + 1 : day;
-
-    const startIso = new Date(Date.UTC(yyyy, month - 1, slotDay, utcStartHour, 0, 0)).toISOString();
-    const endIso = new Date(Date.UTC(yyyy, month - 1, slotDay, (utcStartHour + 1) % 24, 0, 0)).toISOString();
-
+    const slotDayDate = new Date(Date.UTC(yyyy, month - 1, day + (isNextDay ? 1 : 0), 12, 0, 0));
+    const slotYear = slotDayDate.getUTCFullYear();
+    const slotMonth = slotDayDate.getUTCMonth() + 1;
+    const slotDay = slotDayDate.getUTCDate();
+    const startIso = cairoLocalToUtcIso(slotYear, slotMonth, slotDay, h, 0);
+    const nextLocal = new Date(Date.UTC(slotYear, slotMonth - 1, slotDay, h + 1, 0, 0));
+    const endIso = cairoLocalToUtcIso(nextLocal.getUTCFullYear(), nextLocal.getUTCMonth() + 1, nextLocal.getUTCDate(), h === 23 ? 0 : h + 1, 0);
     const displayHourStart = h === 0 ? 12 : (h > 12 ? h - 12 : h);
     const endH = (h + 1) % 24;
     const displayHourEnd = endH === 0 ? 12 : (endH > 12 ? endH - 12 : endH);
@@ -413,7 +441,7 @@ function generateStandardSlots(targetDateStr: string) {
     slots.push({
       start_time: startIso,
       end_time: endIso,
-      display_time: `${displayHourStart}:00 ${period} - ${displayHourEnd}:00 ${period}`,
+      display_time: displayHourStart + ":00 " + period + " - " + displayHourEnd + ":00 " + period,
       hour: h,
     });
   }
