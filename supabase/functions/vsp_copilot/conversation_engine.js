@@ -118,7 +118,7 @@ function extractGroupSize(input) {
 }
 
 function hasTimeCue(text) {
-  return /الساعة|ساعة|ساعه|وقت|ميعاد|موعد|بالليل|ليل|مساء|المساء|الصبح|صباح|صباحا|مسا|^\s*\d{1,2}:\d{2}/i.test(text);
+  return /الساعة|ساعة|ساعه|وقت|ميعاد|موعد|بالليل|ليل|مساء|المساء|الصبح|صباح|صباحا|مسا|(?:^|\s)م(?=\s|$)|(?:^|\s)ص(?=\s|$)|^\s*\d{1,2}:\d{2}/i.test(text);
 }
 
 function hourWordPattern() {
