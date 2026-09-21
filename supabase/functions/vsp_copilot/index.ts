@@ -553,10 +553,23 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     : normalizedMessage;
 
   const explicitConfirmation = isExplicitConfirmation(userMessage);
+  const bookingHowTo = isBookingHowToQuestion(userMessage);
+  const groupSize = extractGroupSize(userMessage);
+
+  // The current user turn has precedence over stale task-state interpretations.
+  // A how-to question must never inherit an old "book_stadium" execution intent.
+  if (bookingHowTo) {
+    next.intent = "booking_howto";
+    delete next.confirmation_pending;
+    // Do not infer schedule slots merely because the word "حجز" appears.
+    // Explicit date/time can still be preserved below when genuinely present.
+  }
 
   if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
 
-  const preferredTimes = extractPreferredTimes(userMessage);
+  const preferredTimes = bookingHowTo
+    ? extractPreferredTimes(userMessage)
+    : extractPreferredTimes(userMessage);
   const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
   const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
   const timeWindow = extractTimeWindow(effectiveMessage);
@@ -598,14 +611,11 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     next.requires_time_clarification = false;
   }
 
-  const bookingHowTo = isBookingHowToQuestion(userMessage);
-  if (bookingHowTo) {
-    next.intent = "booking_howto";
-  } else if (/احجزلي|احجز لي|حجزلي|احجزه|احجزها|عايز احجز|عايزة احجز|ممكن تحجز|ممكن نحجز|ثبت الحجز|أكد الحجز|اكد الحجز/.test(normalizedMessage)) {
+  if (!bookingHowTo &&
+      /احجزلي|احجز لي|حجزلي|احجزه|احجزها|عايز احجز|عايزة احجز|ممكن تحجز|ممكن نحجز|ثبت الحجز|أكد الحجز|اكد الحجز/.test(normalizedMessage)) {
     next.intent = "book_stadium";
   }
 
-  const groupSize = extractGroupSize(userMessage);
   if (groupSize != null) next.group_size = groupSize;
 
   next.missing_slots = [];
@@ -614,6 +624,13 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
 
   const hasExactTime = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
   const hasTimeWindow = !!next.time_window;
+
+  if (bookingHowTo && groupSize != null && !/الساعة|ساعه|ساعة|وقت|ميعاد|موعد/.test(effectiveMessage)) {
+    delete next.preferred_times;
+    delete next.time_window;
+    delete next.time_period_confirmed;
+    delete next.requires_time_clarification;
+  }
   if (!hasExactTime && !hasTimeWindow) next.missing_slots.push("time");
 
   const hasExplicitPeriod = hasPm || hasAm;
@@ -1115,13 +1132,19 @@ serve(async (req: Request) => {
     // "how do I book?" as an execution request.
     const taskIsBookingHowTo = contextSnapshot.task_state?.intent === "booking_howto";
     if (taskIsBookingHowTo) {
-      const groupSize = contextSnapshot.task_state?.group_size;
-      const groupText = groupSize ? " وإنتوا " + groupSize + " لاعبين" : "";
+      const howToGroupSize = contextSnapshot.task_state?.group_size;
+      const groupText = howToGroupSize ? " ولو عددكم " + howToGroupSize + " لاعب، خليه في تفاصيل الحجز عشان نختار الملعب المناسب." : "";
+      const knownDate = contextSnapshot.task_state?.date;
+      const knownTimes = Array.isArray(contextSnapshot.task_state?.preferred_times)
+        ? contextSnapshot.task_state.preferred_times
+        : [];
+      const knownSchedule = knownDate && knownTimes.length > 0
+        ? " وإنت محدد " + knownTimes.join(" أو ") + " ليوم " + knownDate
+        : "";
       assistantReply =
-        "تقدر تحجز من الملاعب القريبة في VSP: تختار الملعب، وبعدها اليوم والساعة، ثم تراجع ملخص الحجز وتأكد قبل التنفيذ." +
-        groupText +
-        ". " +
-        "لو تقصد إني أنا أحجزهولك، قولّي اليوم والساعة المناسبة ليك وأنا أكمل معاك.";
+        "تقدر تحجز من VSP باختيار الملعب، ثم اليوم والساعة، وبعدها تراجع ملخص الحجز وتأكد قبل التنفيذ." +
+        knownSchedule + groupText +
+        " ولو تقصد إني أنفذ الحجز معاك، قولّي اليوم والساعة والوقت لو لسه مش محددين.";
       quickReplies = ["عايز أحجزهولك", "شوفلي ملاعب قريبة"];
       handledByGemini = true;
     }
