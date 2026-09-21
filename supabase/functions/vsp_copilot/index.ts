@@ -1075,20 +1075,22 @@ ${JSON.stringify(taskState, null, 2)}
                   const proposedSlot = selectPreferredAvailableSlot(availableSlots, preferredTimes);
                   if (proposedSlot) {
                     contextSnapshot.task_state.confirmation_pending = {
-                    stadium_id: targetStadium.id,
-                    stadium_name: targetStadium.name,
-                    date: targetDateStr,
-                    start_time: proposedSlot.start_time,
-                    end_time: proposedSlot.end_time,
-                    price_per_hour: targetStadium.price_per_hour,
-                  };
-                  appAction = {
-                    action_type: "CONFIRM_BOOKING",
-                    route: "/bookings",
-                    label: "تأكيد الحجز",
-                    params: { message: "أيوه، أكد الحجز" },
+                      stadium_id: targetStadium.id,
+                      stadium_name: targetStadium.name,
+                      date: targetDateStr,
+                      start_time: proposedSlot.start_time,
+                      end_time: proposedSlot.end_time,
+                      price_per_hour: targetStadium.price_per_hour,
                     };
+                    appAction = {
+                      action_type: "CONFIRM_BOOKING",
+                      route: "/bookings",
+                      label: "تأكيد الحجز",
+                      params: { message: "أيوه، أكد الحجز" },
+                    };
+                    quickReplies = [];
                   }
+                }
 
                 toolResponseData = {
                   stadium_id: targetStadium.id,
