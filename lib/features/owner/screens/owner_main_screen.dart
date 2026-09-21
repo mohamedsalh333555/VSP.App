@@ -12,6 +12,11 @@ import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_inbox_screen.dart';
+import 'owner_ledger_screen.dart';
+import 'subscription_plans_screen.dart';
+
+final GlobalKey<_OwnerMainScreenState> ownerMainScreenKey =
+    GlobalKey<_OwnerMainScreenState>();
 
 class OwnerMainScreen extends StatefulWidget {
  const OwnerMainScreen({super.key});
@@ -99,6 +104,24 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
  _currentIndex = index;
  });
  }
+ }
+
+ void openDashboard() => _onItemTapped(0);
+ void openBookings() => _onItemTapped(3);
+ void openProfile() => _onItemTapped(4);
+ void openInbox() => _onItemTapped(2);
+
+ void openLedger() {
+   _onItemTapped(0);
+   Navigator.of(context).push(
+     MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+   );
+ }
+
+ void openSubscriptionPlans() {
+   Navigator.of(context).push(
+     MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+   );
  }
 
  @override
