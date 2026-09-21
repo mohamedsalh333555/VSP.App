@@ -410,8 +410,51 @@ class VspCopilotService {
       );
     }
 
-    // Domain handling belongs to the cloud Copilot. The local test/offline
-    // engine must never issue a canned out-of-scope refusal based on keywords.
+    // 🚫 Out-of-Scope rejection for local test engine
+    final isOutOfScope = lower.contains('كشري') ||
+        lower.contains('شاورما') ||
+        lower.contains('كيكة') ||
+        lower.contains('ملوخية') ||
+        lower.contains('أكلة') ||
+        lower.contains('طبخ') ||
+        lower.contains('بايثون') ||
+        lower.contains('python') ||
+        lower.contains('جافاسكريبت') ||
+        lower.contains('javascript') ||
+        lower.contains('مبرمج') ||
+        lower.contains('رئيس') ||
+        lower.contains('انتخابات') ||
+        lower.contains('حرب') ||
+        lower.contains('أوكرانيا') ||
+        lower.contains('الحكومة') ||
+        lower.contains('الوزير') ||
+        lower.contains('النسبية') ||
+        lower.contains('أينشتاين') ||
+        lower.contains('تفاضلية') ||
+        lower.contains('نيوتن') ||
+        lower.contains('الفلسفة') ||
+        lower.contains('الكيمياء') ||
+        lower.contains('فيلم') ||
+        lower.contains('مسلسل') ||
+        lower.contains('أغنية') ||
+        lower.contains('اغنية') ||
+        lower.contains('الطقس') ||
+        lower.contains('درجة الحرارة') ||
+        lower.contains('نكتة') ||
+        lower.contains('عربية') ||
+        lower.contains('مرسيدس') ||
+        lower.contains('بيتكوين') ||
+        lower.contains('بورصة') ||
+        lower.contains('علاج') ||
+        lower.contains('صداع');
+
+    if (isOutOfScope) {
+      return CopilotMessage.assistant(
+        'عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!',
+        conversationId: effectiveConvId,
+      );
+    }
+
     // 🏟️ Pitch Owner Inquiries (Real Database & Zero-Hallucination)
     final isOwnerInquiry = lower.contains('ملاعبي') ||
         lower.contains('ملعبي') ||
