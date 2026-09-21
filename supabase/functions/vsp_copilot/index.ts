@@ -1298,13 +1298,33 @@ ${JSON.stringify(taskState, null, 2)}
                   toolResponseData = { success: true, fact_type: ownerMetric, value: Number(currentValue || 0), metric_definition: ownerMetric === "available_balance" ? "الرصيد المتاح للسحب حالياً بعد التسويات والمدفوعات المعلقة والمديونية القائمة." : "مديونية عمولة الكاش الحالية المسجلة على حساب المالك.", period_label: "الوضع الحالي", as_of_cairo_date: cairoDateKey(), stadium_id: null, stadium_name: null };
                 }
               } else if (ownerNeedsHistoricalFacts) {
-                const { data: facts, error: factsErr } = await supabase.rpc("get_owner_copilot_financial_facts", { p_owner_id: callerUser.id, p_period_start: ownerPeriodRange.start, p_period_end: ownerPeriodRange.end, p_stadium_id: null });
+                const { data: ownerStadiums } = await supabase.from("stadiums").select("id, name").eq("owner_id", callerUser.id).eq("is_deleted_by_owner", false);
+                const ownerStadiumMap = new Map((ownerStadiums || []).map((s: any) => [s.id, s]));
+                let financialStadium: any = null;
+                const requestedStadiumId = (args.stadium_id || "").toString().trim();
+                const requestedStadiumName = (args.stadium_name || "").toString().trim();
+                if (requestedStadiumId) financialStadium = ownerStadiumMap.get(requestedStadiumId) || null;
+                if (requestedStadiumId && !financialStadium) toolResponseData = { success: false, code: "STADIUM_NOT_FOUND", needs_clarification: true, message: "الملعب ده مش تابع لحسابك، فمش هفترضه." };
+                if (!toolResponseData?.needs_clarification && requestedStadiumName) {
+                  const matches = (ownerStadiums || []).filter((s: any) => ownerFactNorm(s.name).includes(ownerFactNorm(requestedStadiumName)));
+                  if (matches.length === 1) financialStadium = matches[0];
+                  else if (matches.length === 0) toolResponseData = { success: false, code: "STADIUM_NOT_FOUND", needs_clarification: true, message: "الملعب المطلوب مش مسجل باسمك." };
+                  else toolResponseData = { success: false, code: "STADIUM_AMBIGUOUS", needs_clarification: true, message: "في أكتر من ملعب مطابق للاسم، فمش هفترض واحد منهم." };
+                }
+                if (!toolResponseData?.needs_clarification) {
+                  const t = ownerFactNorm(userMessage);
+                  const ordinal = /(?:^|\s)(?:اول|الأول|الاول)(?:\s|$)/.test(t) ? 0 : /(?:^|\s)(?:تاني|الثاني|التاني)(?:\s|$)/.test(t) ? 1 : /(?:^|\s)(?:تالت|الثالث|التالت)(?:\s|$)/.test(t) ? 2 : -1;
+                  if (!financialStadium && ordinal >= 0) financialStadium = ownerStadiums?.[ordinal] || null;
+                }
+                const { data: facts, error: factsErr } = !toolResponseData?.needs_clarification
+                  ? await supabase.rpc("get_owner_copilot_financial_facts", { p_owner_id: callerUser.id, p_period_start: ownerPeriodRange.start, p_period_end: ownerPeriodRange.end, p_stadium_id: financialStadium?.id || null })
+                  : { data: null, error: null };
                 if (factsErr || !facts?.success) {
                   toolResponseData = { success: false, code: "FINANCIAL_SOURCE_ERROR", error: factsErr?.message || facts?.message || "تعذر قراءة الأرقام المالية حالياً." };
                 } else {
                   const values = { completed_booking_value: facts.completed_booking_value, completed_booking_count: facts.completed_booking_count, cash_collected: facts.completed_cash_collected, online_gross: facts.completed_online_gross, online_net: facts.completed_online_net, vsp_commission: facts.completed_online_vsp_commission, gateway_fees: facts.completed_online_gateway_fees };
                   const definitions = { completed_booking_value: "قيمة الحجوزات المكتملة والمدفوعة خلال الفترة، قبل الرسوم والعمولة.", completed_booking_count: "عدد الحجوزات المكتملة والمدفوعة خلال الفترة.", cash_collected: "قيمة الكاش المحصل من الحجوزات المكتملة والمدفوعة خلال الفترة.", online_gross: "قيمة الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة قبل رسوم بوابة الدفع وعمولة VSP.", online_net: "صافي قيمة الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة بعد رسوم بوابة الدفع وعمولة VSP.", vsp_commission: "عمولة VSP على الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة.", gateway_fees: "رسوم بوابة الدفع على الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة." };
-                  toolResponseData = { success: true, fact_type: ownerMetric, value: Number(values[ownerMetric] || 0), metric_definition: definitions[ownerMetric], period_label: ownerPeriodRange.label, period_start: ownerPeriodRange.start, period_end: ownerPeriodRange.end, as_of_cairo_date: cairoDateKey(), stadium_id: null, stadium_name: null };
+                  toolResponseData = { success: true, fact_type: ownerMetric, value: Number(values[ownerMetric] || 0), metric_definition: definitions[ownerMetric], period_label: ownerPeriodRange.label, period_start: ownerPeriodRange.start, period_end: ownerPeriodRange.end, as_of_cairo_date: cairoDateKey(), stadium_id: facts.stadium_id, stadium_name: facts.stadium_name };
                 }
               }
             } else if (funcName === "checkStadiumAvailability") {
