@@ -870,12 +870,13 @@ async function findAvailableSlotsForStadium(
 
 function refreshBookingTaskState(task: Record<string, any>) {
   task.missing_slots = [];
-  if (!task.stadium_id) task.missing_slots.push("stadium");
+  if (!task.stadium_id && task.stadium_scope !== "nearby") task.missing_slots.push("stadium");
   if (!task.date) task.missing_slots.push("date");
   const hasExactTime = Array.isArray(task.preferred_times) && task.preferred_times.length > 0;
   const hasTimeWindow = !!task.time_window;
   if (!hasExactTime && !hasTimeWindow) task.missing_slots.push("time");
   task.ready_for_execution =
+    !!task.stadium_id &&
     task.missing_slots.length === 0 &&
     task.time_period_confirmed === true &&
     hasExactTime;
