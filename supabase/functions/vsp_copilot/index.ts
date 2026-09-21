@@ -814,8 +814,20 @@ ${JSON.stringify(taskState, null, 2)}
           const functionCallPart = candidate1?.parts?.find((p: any) => p.functionCall);
 
           if (functionCallPart) {
-            const funcName = functionCallPart.functionCall.name;
-            const args = functionCallPart.functionCall.args || {};
+            const forcedConfirmation =
+              isExplicitConfirmation(userMessage) &&
+              !!contextSnapshot.task_state?.confirmation_pending;
+            const funcName = forcedConfirmation
+              ? "createBookingFromChat"
+              : functionCallPart.functionCall.name;
+            const args = forcedConfirmation
+              ? {
+                  stadium_id: contextSnapshot.task_state.confirmation_pending.stadium_id,
+                  start_time: contextSnapshot.task_state.confirmation_pending.start_time,
+                  end_time: contextSnapshot.task_state.confirmation_pending.end_time,
+                  confirm: true,
+                }
+              : (functionCallPart.functionCall.args || {});
             let toolResponseData: any = {};
 
             if (funcName === "searchStadiums") {
@@ -1068,6 +1080,12 @@ ${JSON.stringify(taskState, null, 2)}
                   message: ambiguousTimes.length === 1 ? "تقصد الساعة الصبح ولا بالليل؟" : "تقصد 10 و11 الصبح ولا بالليل؟",
                 };
               } else {
+                // A fresh availability check replaces any older proposal. A previous
+                // confirmation must never survive a re-check with changed availability.
+                if (contextSnapshot.task_state?.intent === "book_stadium") {
+                  delete contextSnapshot.task_state.confirmation_pending;
+                }
+
                 const { targetDateStr, dayStartIso, dayEndIso } = parseTargetDate(dateInput);
                 const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
 
@@ -1124,7 +1142,11 @@ ${JSON.stringify(taskState, null, 2)}
                   available_times: availableSlots.map((s: any) => s.start_time),
                 };
 
-                if (contextSnapshot.task_state.intent === "book_stadium" && availableSlots.length > 0) {
+                if (
+                  contextSnapshot.task_state.intent === "book_stadium" &&
+                  availableSlots.length > 0 &&
+                  preferredTimes.length > 0
+                ) {
                   const proposedSlot = selectPreferredAvailableSlot(availableSlots, preferredTimes);
                   if (proposedSlot) {
                     contextSnapshot.task_state.confirmation_pending = {
@@ -1143,6 +1165,14 @@ ${JSON.stringify(taskState, null, 2)}
                     };
                     quickReplies = [];
                   }
+                } else if (
+                  contextSnapshot.task_state.intent === "book_stadium" &&
+                  availableSlots.length > 0 &&
+                  taskForAvailability.time_window
+                ) {
+                  // A vague window (e.g. "بعد العصر") must not pick an arbitrary hour.
+                  // Show the real available options and let the user choose one.
+                  quickReplies = availableSlots.slice(0, 4).map((slot: any) => slot.display_time);
                 }
 
                 toolResponseData = {
