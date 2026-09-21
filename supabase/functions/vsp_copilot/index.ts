@@ -1141,9 +1141,18 @@ serve(async (req: Request) => {
         handledByGemini = true;
       } else if (missing === "time_period") {
         const preferred = Array.isArray(taskState.preferred_times) ? taskState.preferred_times : [];
-        const label = preferred.length === 1 ? preferred[0] : preferred.join(" أو ");
-        assistantReply = "تمام، الساعة " + label + " اتفهمت. تقصد الصبح ولا بالليل؟";
-        quickReplies = responseContract.quick_replies || ["10 الصبح", "10 بالليل"];
+        const labels = preferred.map((t: string) => {
+          const h = Number(String(t).substring(0, 2));
+          const m = Number(String(t).substring(3, 5) || 0);
+          const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+          return displayHour + ":" + String(m).padStart(2, "0");
+        });
+        const label = labels.length === 1 ? labels[0] : labels.join(" أو ");
+        const candidate = taskState.time_period_candidate === "evening" ? "بالليل" : "";
+        assistantReply = candidate
+          ? "فاهم إنك تقصد الساعة " + label + " " + candidate + "، مظبوط كده؟"
+          : "فاهم إن الساعة " + label + " محددة؛ تقصد الصبح ولا بالليل؟";
+        quickReplies = responseContract.quick_replies || [];
         handledByGemini = true;
       } else if (missing === "stadium") {
         assistantReply = "تمام. أنهي ملعب تحب تحجز فيه؟";
@@ -1199,8 +1208,10 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
 - محرك الحوار هو مصدر قرار النية والـ slots والخطوة التالية؛ أنت تصيغ فقط.
 - لا تسأل عن حقل غير موجود في missing_slots أو next_slot.
 - لا تعيد سؤال معلومة موجودة في task_state.
-- لا تخترع ملعباً أو سعرًا أو توافرًا أو رقماً؛ الأدوات وبيانات VSP هي مصدر الحقيقة.
+- لا تخترع ملعباً أو سعرًا أو توافرًا أو رقماً؛ استخدم فقط الحقائق التي يعيدها النظام التشغيلي.
+- لا تغيّر حقيقة حُددت بالفعل في Task State أو نتائج الأداة دون تصحيح صريح من المستخدم.
 - عند وجود ambiguity، اتبع القرار المحدد ولا تخمّن.
+- لا تذكر أسماء الأدوات أو قاعدة البيانات أو المصطلحات الداخلية في الرد للمستخدم.
 - بعد نتيجة أي أداة، صِغ الرد من الحقائق التي أعادتها الأداة فقط.
 
 قاعدة صلاحيات الدور (ROLE CAPABILITY POLICY):
@@ -1218,7 +1229,8 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
 - إذا قال المستخدم "10 أو 11"، فهذه تفضيلات مرتبة وليست إذناً بالحجز. افحص الوقت الأول ثم البديل؛ إذا كان الأول متاحاً اقترحه، وإذا لم يكن متاحاً استخدم البديل، ثم اعرض ملخص الحجز واطلب تأكيداً نهائياً قبل التنفيذ.
 - إذا قال المستخدم "10 أو 11 بالليل"، اعتبرهما تفضيلين مرتبّين: افحص 10 أولاً، وإذا لم يتوفر افحص 11. لا تنفذ الحجز قبل عرض الموعد المقترح وطلب التأكيد النهائي.
 - إذا قال المستخدم "بعد العصر" أو "بالليل" بدون ساعة محددة، اعتبرها نافذة زمنية وليست ساعة واحدة؛ افحص الفترات الحقيقية داخل النافذة ثم اعرض الخيارات المتاحة بدل اختيار ساعة من نفسك.
-- إذا قال المستخدم "10" فقط دون صباح/مساء، لا تفترض الفترة. اطلب: "تقصد 10 الصبح ولا 10 بالليل؟"
+- إذا ذكر المستخدم وقتاً رقمياً من 5 إلى 11 من غير فترة صريحة في سياق حجز ملعب كرة، اعتبره مرشحاً مسائياً مؤقتاً، لكن لا تنفذ الحجز قبل تأكيد الفترة.
+- إذا كان next_slot هو time_period وكان الوقت معروفاً بالفعل، لا تسأل "الساعة كام؟" مرة أخرى؛ أعد ذكر الوقت المفهوم واسأل تأكيداً قصيراً على الفترة فقط.
 - الرقم المرتبط بكلمات مثل "نفر/شخص/لاعب/لاعيبة/أفراد" هو عدد أشخاص وليس ساعة. مثال: "أنا و10 نفر" يعني مجموعة من 11 شخصاً، ولا يجوز تفسير 10 كموعد.
 - "إزاي أحجز" أو "كيفية الحجز" سؤال عن طريقة الاستخدام، وليس موافقة أو طلب تنفيذ حجز. اشرح خطوات الحجز ووجّه المستخدم للشاشة المناسبة، ولا تنشئ حجزاً ولا تدخل في تأكيد حجز إلا إذا طلب التنفيذ صراحة.
 - إذا قال "قصدي..." أو "لأ..." أو صحح نفسه، اعتبر الجزء الأخير هو المعتمد وتجاهل القيمة المصححة السابقة لنفس الحقل.
@@ -1340,7 +1352,8 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
             let toolResponseData: any = {};
             const toolExecutionBlocked = !isCopilotToolAllowed(userProfile?.role, funcName);
 
-            if (toolExecutionBlocked) {
+            try {
+              if (toolExecutionBlocked) {
               toolResponseData = {
                 success: false,
                 code: "CAPABILITY_DENIED",
@@ -2149,6 +2162,21 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
               }
             }
 
+            } catch (toolError) {
+              console.error("[Copilot Tool Execution Guard]", funcName, toolError);
+              toolResponseData = {
+                success: false,
+                error_code: "TOOL_EXECUTION_GUARD",
+                message: "تعذر فحص أو تنفيذ الطلب حالياً بسبب مشكلة مؤقتة. لن أفترض نتيجة غير مؤكدة. تحب نجرب تاني؟",
+              };
+              appAction = null;
+              quickReplies = [];
+              stadiumResults = [];
+              tournamentResults = [];
+              leaderboardResults = [];
+              openMatchResults = [];
+            }
+
 
             // Deterministic response for chained discovery + availability.
             // When the user already supplied a schedule constraint, never stop at
@@ -2294,6 +2322,13 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
               }
             }
 
+            // 🛡️ Zero-Hallucination Guard: never turn a tool exception into an availability or booking claim.
+            if (toolResponseData?.error_code === "TOOL_EXECUTION_GUARD") {
+              assistantReply = toolResponseData.message;
+              appAction = null;
+              quickReplies = [];
+            }
+
             // 🛡️ Zero-Hallucination Guard: When DB returns 0 rows, strictly prevent any hallucinated text!
             if (funcName === "searchTournaments" && tournamentResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
@@ -2332,7 +2367,7 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
               } else {
                 assistantReply = "لم أجد تعريفاً رقمياً مؤكداً للطلب، لذلك لن أعطيك رقماً بالتخمين.";
               }
-            } else if (!assistantReply) {
+            } else if (!assistantReply && toolResponseData?.error_code !== "TOOL_EXECUTION_GUARD") {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
               } else if (funcName === "searchStadiums") {
