@@ -169,11 +169,14 @@ class VspCopilotService {
       final res = await client
           .from('copilot_conversations')
           .select('id, title, created_at, updated_at, context_snapshot, copilot_messages(count)')
+          .eq('is_initialized', true)
           .order('updated_at', ascending: false);
 
+      // Only initialized conversations are user-visible. A conversation is initialized
+      // by the atomic server-side turn persistence after both messages are saved.
       return (res as List<dynamic>)
           .map((m) => CopilotConversation.fromMap(m as Map<String, dynamic>))
-          .where((conv) => conv.messageCount > 0 || conv.contextSnapshot.isNotEmpty)
+          .where((conv) => conv.messageCount > 0)
           .toList();
     } catch (e) {
       debugPrint('[VspCopilotService] fetchConversations error: $e');
@@ -190,6 +193,7 @@ class VspCopilotService {
           .from('copilot_messages')
           .select()
           .eq('conversation_id', conversationId)
+          .order('message_sequence', ascending: true)
           .order('created_at', ascending: true);
 
       return (res as List<dynamic>)
