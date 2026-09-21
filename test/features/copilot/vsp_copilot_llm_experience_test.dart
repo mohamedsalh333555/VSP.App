@@ -8,7 +8,6 @@ import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_chat_bubble.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_conversations_drawer.dart';
-import 'package:vsp_application/features/copilot/widgets/copilot_starter_prompts.dart';
 
 class MockLlmCopilotService extends VspCopilotService {
   final List<CopilotConversation> conversations;
@@ -85,34 +84,7 @@ void main() {
     });
   });
 
-  group('🎨 VSP Copilot Starter Prompts & Bubble Tests', () {
-    testWidgets('CopilotStarterPrompts renders 4 starter cards and handles click', (tester) async {
-      String? clickedPrompt;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CopilotStarterPrompts(
-              onSelectPrompt: (p) => clickedPrompt = p,
-              isArabic: true,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      expect(find.text('يا كابتن! قولي إيه اللي في بالك — ملعب، ماتش، أو بطولة؟'), findsOneWidget);
-      expect(find.text('فين ألعب النهارده؟'), findsOneWidget);
-      expect(find.text('في ماتش ناقص لاعيب؟'), findsOneWidget);
-      expect(find.text('أرخص ملعب قريب مني'), findsOneWidget);
-      expect(find.text('في بطولات أقدر أشترك فيها؟'), findsOneWidget);
-
-      await tester.tap(find.text('فين ألعب النهارده؟'));
-      await tester.pump();
-
-      expect(clickedPrompt, 'فين ألعب النهارده؟');
-    });
-
+  group('🎨 VSP Copilot Bubble Tests', () {
     testWidgets('CopilotChatBubble renders copy button and handles stadium book click', (tester) async {
       CopilotStadiumSummary? bookedStadium;
       final msg = CopilotMessage.assistant(
@@ -154,7 +126,7 @@ void main() {
   });
 
   group('📱 VspCopilotScreen Full Experience Tests', () {
-    testWidgets('Renders full-screen, starts with starter prompts, and sends message', (tester) async {
+    testWidgets('Renders full-screen and sends message via input bar', (tester) async {
       final mockService = MockLlmCopilotService(
         conversations: [
           CopilotConversation(
@@ -198,11 +170,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Starts with starter prompts in empty state
-      expect(find.text('فين ألعب النهارده؟'), findsOneWidget);
-
-      // Tap starter prompt
-      await tester.tap(find.text('فين ألعب النهارده؟'));
+      // Enter query in input bar and submit
+      await tester.enterText(find.byType(TextField), 'فين ألعب النهارده؟');
+      await tester.tap(find.byIcon(Iconsax.send_2_copy));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
@@ -302,7 +272,7 @@ void main() {
           ),
         ],
         openMatches: [
-          CopilotOpenMatchSummary(
+          const CopilotOpenMatchSummary(
             id: 'm1',
             stadiumName: 'ملعب المعادي',
             currentPlayers: 8,
