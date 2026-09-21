@@ -350,7 +350,7 @@ function extractPreferredTimes(input: string): string[] {
 
 function hasDateCue(input: string): boolean {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
-  return /النهارده|اليوم|دلوقتي|حالا|حالاً|بكره|بكرة|غدا|غداً|بعد بكره|بعد بكرة|today|tomorrow/.test(normalized);
+  return /النهارده|النهاردة|اليوم|دلوقتي|حالا|حالاً|بكره|بكرة|غدا|غداً|بعد بكره|بعد بكرة|today|tomorrow/.test(normalized);
 }
 
 function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string) {
