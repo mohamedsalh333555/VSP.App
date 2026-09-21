@@ -279,6 +279,65 @@ function parseTargetDate(dateStr?: string): { targetDateStr: string; dayStartIso
   return { targetDateStr, dayStartIso, dayEndIso };
 }
 
+function normalizeArabicDigits(value: string): string {
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  return value.replace(/[٠-٩]/g, (d) => String(arabic.indexOf(d)));
+}
+
+function extractPreferredTimes(input: string): string[] {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  const hasTimeCue = /الساعة|ساعه|ساعة|وقت|ميعاد|موعد|احجز|الحجز|احجزلي|احجزه/.test(normalized);
+  if (!hasTimeCue) return [];
+  const globalPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(normalized);
+  const globalAm = /صباح|صبح|\bص\b/.test(normalized);
+  const matches = new Set<string>();
+  const re = /\b(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?\b/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(normalized)) !== null) {
+    let hour = Number(match[1]);
+    const minute = Number(match[2] || 0);
+    if (hour > 23 || minute > 59) continue;
+    const after = normalized.slice(match.index, Math.min(normalized.length, match.index + 18));
+    const explicitPm = globalPm || /مساء|مسا|\bم\b|بالليل|ليل/.test(after);
+    const explicitAm = globalAm || /صباح|صبح|\bص\b/.test(after);
+    if (explicitPm && hour < 12) hour += 12;
+    else if (explicitAm && hour === 12) hour = 0;
+    else if (!explicitAm && !explicitPm && hour >= 4 && hour <= 11) hour += 12;
+    matches.add(String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0"));
+  }
+  return Array.from(matches).slice(0, 4);
+}
+
+function hasDateCue(input: string): boolean {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  return /النهارده|اليوم|دلوقتي|حالا|حالاً|بكره|بكرة|غدا|غداً|بعد بكره|بعد بكرة|today|tomorrow/.test(normalized);
+}
+
+function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: string) {
+  const current = contextSnapshot.task_state && typeof contextSnapshot.task_state === "object"
+    ? contextSnapshot.task_state
+    : {};
+  const next = { ...current };
+  if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
+  if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
+  if (hasDateCue(userMessage)) next.date = parseTargetDate(normalizeArabicDigits(userMessage)).targetDateStr;
+  const preferredTimes = extractPreferredTimes(userMessage);
+  if (preferredTimes.length > 0) next.preferred_times = preferredTimes;
+  next.updated_at = new Date().toISOString();
+  contextSnapshot.task_state = next;
+  return next;
+}
+
+function slotHourFromIso(iso: string): number {
+  return (new Date(iso).getUTCHours() + 2) % 24;
+}
+
+function slotMatchesPreferredTime(slot: { start_time: string }, preferredTimes: string[]): boolean {
+  if (!preferredTimes || preferredTimes.length === 0) return true;
+  const hh = String(slotHourFromIso(slot.start_time)).padStart(2, "0");
+  return preferredTimes.some((t: string) => t.substring(0, 2) === hh);
+}
+
 function generateStandardSlots(targetDateStr: string) {
   const slots: { start_time: string; end_time: string; display_time: string; hour: number }[] = [];
   const parts = targetDateStr.split("-").map(Number);
@@ -437,19 +496,34 @@ serve(async (req: Request) => {
     }
 
     // 8. Build Multi-Turn History for Gemini
+    const taskState = mergeTaskState(contextSnapshot, userMessage);
+
     const { data: priorMessages } = await supabase
       .from("copilot_messages")
-      .select("role, content")
+      .select("role, content, stadium_results, ui_metadata")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
-      .limit(8);
+      .limit(10);
 
     const contents: any[] = [];
     if (priorMessages && priorMessages.length > 0) {
       for (const msg of priorMessages) {
+        let historyText = msg.content;
+        if (msg.role === "assistant") {
+          const ui = msg.ui_metadata || {};
+          const visible = {
+            stadiums: msg.stadium_results || ui.stadiums || [],
+            tournaments: ui.tournaments || [],
+            open_matches: ui.open_matches || [],
+            action: ui.action || null,
+          };
+          if ((visible.stadiums && visible.stadiums.length > 0) || (visible.tournaments && visible.tournaments.length > 0) || (visible.open_matches && visible.open_matches.length > 0) || visible.action) {
+            historyText += "\n[UI_CONTEXT_INTERNAL]" + JSON.stringify(visible) + "[/UI_CONTEXT_INTERNAL]";
+          }
+        }
         contents.push({
           role: msg.role === "user" ? "user" : "model",
-          parts: [{ text: msg.content }],
+          parts: [{ text: historyText }],
         });
       }
     }
@@ -471,7 +545,7 @@ serve(async (req: Request) => {
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
         const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
-تتحدث بلهجة مصرية كروية حماسية وودودة ومحترمة (يا كابتن، يا حريف، يا بطل).
+تتحدث باللهجة المصرية بشكل طبيعي، ودود ومختصر. استخدم "يا كابتن" عند الحاجة وبحد أقصى مرة واحدة في بداية الرد. لا تكرر ألقاباً شعبية متعددة في نفس الرد.
 
 سياق المستخدم الحالي:
 - اسم المستخدم: ${userName}
@@ -483,7 +557,14 @@ serve(async (req: Request) => {
 
 ذاكرة وسياق المحادثة المحفوظ (Conversation State & Context Snapshot):
 ${JSON.stringify(contextSnapshot, null, 2)}
-إذا أشار المستخدم إلى "الملعب ده" أو "احجزلي" أو "بكره" أو موعد سبق استعراضه، ارجع إلى السياق المخزن أعلاه فوراً دون إعادة سؤاله!
+حالة المهمة الحالية (Task State):
+${JSON.stringify(taskState, null, 2)}
+
+قواعد استمرارية السياق:
+- إذا كان هناك ملعب واحد فقط في آخر النتائج أو UI_CONTEXT_INTERNAL، وعبارة المستخدم تشير إليه مثل "الملعب ده" أو "احجزه" أو "احجزلي"، اعتبره المقصود تلقائياً.
+- إذا كانت هناك عدة ملاعب، لا تخمّن؛ اطلب تحديد الملعب.
+- لا تعيد سؤال slot موجود بالفعل في Task State إلا إذا غيّره المستخدم أو أصبح غير صالح.
+- إذا قال المستخدم "10 أو 11"، فهذه تفضيلات لوقتين وليست اختياراً نهائياً. افحص الاثنين أولاً ثم اطلب منه اختيار المتاح قبل حجز ساعة واحدة.
 
 قواعد صارمة جداً لرفض الأسئلة الخارجة عن نطاق التطبيق (STRICT OUT-OF-SCOPE REFUSAL POLICY):
 1. أنت وكيل رياضي وتشغيلي حصري لتطبيق VSP فقط (حجز الملاعب، إدارة ملاعب المالكين، البطولات، دوري الحريفة 1v1، والعمليات المالية في التطبيق).
@@ -497,10 +578,11 @@ ${JSON.stringify(contextSnapshot, null, 2)}
    "عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!"
 
 قاعدة الحقيقة المطلقة والنزاهة الصارمة (STRICT ZERO-HALLUCINATION POLICY):
-1. أنت متصل مباشرة بقاعدة بيانات VSP الحقيقية وتعتمد عليها حصراً في كل معلومة.
+1. استخدم فقط البيانات التي تعيدها الأدوات والسياق المرفق لك.
 2. ممنوع منعاً باتاً اختلاق، أو تأليف، أو افتراض، أو اقتراح أي بطولة، أو ملعب، أو مباراة، أو مواعيد، أو أسماء لاعبين، أو رسوم اشتراك، أو جوائز، أو أرقام أرباح غير موجودة في نتائج الأدوات (Function Calling Database Results) إطلاقاً!
 3. لفحص التوافر والمواعيد: استدعِ checkStadiumAvailability فوراً. اذكر الفترات الشاغرة بدقة كما وردت في نتائج الأداة.
-4. للحجز المباشر: استدعِ createBookingFromChat فوراً عند رغبة المستخدم في حجز موعد محدد.
+4. للحجز المباشر: استدعِ createBookingFromChat عندما يكون وقت الحجز محدداً بشكل كافٍ. إذا أعطى المستخدم أكثر من وقت بديل مثل "10 أو 11"، افحص التوافر أولاً ولا تختَر ساعة من نفسك.
+5. ممنوع ذكر مصدر البيانات أو البنية الداخلية للمستخدم، بما في ذلك "من بيانات VSP" أو "من قاعدة البيانات" أو "من السيستم" أو "من الـAPI".
    - إذا كان الملعب يتطلب عربون إلكتروني مسبقاً، وضح للمستخدم أنه تم تجهيز الحجز وقفل الموعد لمدة 5 دقائق لإتمام دفع العربون، وقدم له زر الدفع.
    - إذا كان الملعب يدعم الكاش كاملاً، وضح له أنه تم تأكيد الحجز بنجاح.
 5. إذا عادت نتائج أداة searchStadiums فارغة (0 نتائج)، صرح بذلك للمستخدم بأمانة: "عذراً يا كابتن، لا توجد حالياً ملاعب مسجلة في محافظة [المحافظة] على تطبيق VSP".
@@ -572,9 +654,25 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               toolResponseData = { count: stadiumResults.length, governorate: governorate, stadiums: stadiumResults };
 
               contextSnapshot.last_searched_governorate = governorate;
-              if (stadiumResults.length > 0) {
+              contextSnapshot.last_visible_stadiums = stadiumResults.map((s: any) => ({
+                id: s.id,
+                name: s.name,
+                governorate: s.governorate,
+                price_per_hour: s.price_per_hour,
+                image_url: s.image_url,
+                rating: s.rating,
+              }));
+              if (stadiumResults.length === 1) {
                 contextSnapshot.last_stadium_id = stadiumResults[0].id;
                 contextSnapshot.last_stadium_name = stadiumResults[0].name;
+                contextSnapshot.task_state = {
+                  ...(contextSnapshot.task_state || {}),
+                  stadium_id: stadiumResults[0].id,
+                  stadium_name: stadiumResults[0].name,
+                };
+              } else {
+                delete contextSnapshot.last_stadium_id;
+                delete contextSnapshot.last_stadium_name;
               }
 
             } else if (funcName === "searchTournaments") {
@@ -752,15 +850,20 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 const { data: s } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("id", contextSnapshot.last_stadium_id).maybeSingle();
                 targetStadium = s;
               }
-              if (!targetStadium) {
-                const { data: sList } = await supabase.from("stadiums").select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id").eq("is_verified", true).eq("is_blocked", false).limit(1);
-                if (sList && sList.length > 0) targetStadium = sList[0];
+              if (!targetStadium && contextSnapshot.last_visible_stadiums && contextSnapshot.last_visible_stadiums.length === 1) {
+                const visible = contextSnapshot.last_visible_stadiums[0];
+                const { data: s } = await supabase.from("stadiums")
+                  .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
+                  .eq("id", visible.id)
+                  .maybeSingle();
+                targetStadium = s;
               }
 
               if (!targetStadium) {
-                toolResponseData = { success: false, message: "لم يتم العثور على الملعب المطلوب في قاعدة البيانات." };
+                toolResponseData = { success: false, message: "لم يتم تحديد ملعب بشكل كافٍ لفحص التوافر. حدّد الملعب المطلوب أولاً." };
               } else {
                 const { targetDateStr, dayStartIso, dayEndIso } = parseTargetDate(dateInput);
+                const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
 
                 const { data: existingBookings } = await supabase
                   .from("bookings")
@@ -779,7 +882,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 });
 
                 const allSlots = generateStandardSlots(targetDateStr);
-                const availableSlots = allSlots.filter((slot) => {
+                let availableSlots = allSlots.filter((slot) => {
                   const sStart = new Date(slot.start_time).getTime();
                   const sEnd = new Date(slot.end_time).getTime();
                   for (const b of activeBookings) {
@@ -790,10 +893,22 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   return true;
                 });
 
+                if (preferredTimes.length > 0) {
+                  availableSlots = availableSlots.filter((slot) => slotMatchesPreferredTime(slot, preferredTimes));
+                }
+
                 contextSnapshot.last_stadium_id = targetStadium.id;
                 contextSnapshot.last_stadium_name = targetStadium.name;
                 contextSnapshot.last_date = targetDateStr;
                 contextSnapshot.last_available_slots = availableSlots;
+                contextSnapshot.task_state = {
+                  ...(contextSnapshot.task_state || {}),
+                  stadium_id: targetStadium.id,
+                  stadium_name: targetStadium.name,
+                  date: targetDateStr,
+                  preferred_times: preferredTimes,
+                  available_times: availableSlots.map((s: any) => s.start_time),
+                };
 
                 toolResponseData = {
                   stadium_id: targetStadium.id,
@@ -825,17 +940,33 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                 if (sList && sList.length > 0) targetStadium = sList[0];
               }
 
-              if ((!startTime || !endTime) && contextSnapshot.last_available_slots && contextSnapshot.last_available_slots.length > 0) {
-                const slot = contextSnapshot.last_available_slots[0];
-                startTime = slot.start_time;
-                endTime = slot.end_time;
+              const preferredTimes = Array.isArray(contextSnapshot.task_state?.preferred_times) ? contextSnapshot.task_state.preferred_times : [];
+              if (!startTime || !endTime) {
+                const candidateSlots = (contextSnapshot.last_available_slots || []).filter((slot: any) =>
+                  preferredTimes.length === 0 || preferredTimes.includes(String(slotHourFromIso(slot.start_time)).padStart(2, "0") + ":00")
+                );
+                if (candidateSlots.length === 1) {
+                  startTime = candidateSlots[0].start_time;
+                  endTime = candidateSlots[0].end_time;
+                } else if (candidateSlots.length > 1) {
+                  toolResponseData = {
+                    success: false,
+                    needs_clarification: true,
+                    missing_slot: "time",
+                    preferred_times: preferredTimes,
+                    available_slots: candidateSlots,
+                    message: "يوجد أكثر من وقت متاح. اختر وقتاً واحداً أولاً.",
+                  };
+                }
               }
 
               if (!targetStadium || !startTime || !endTime) {
-                toolResponseData = {
-                  success: false,
-                  message: "عذراً يا كابتن، بيانات الحجز غير مكتملة. يرجى تحديد الملعب والموعد المطلوب أولاً.",
-                };
+                if (!toolResponseData.needs_clarification) {
+                  toolResponseData = {
+                    success: false,
+                    message: "عذراً يا كابتن، بيانات الحجز غير مكتملة. يرجى تحديد الملعب والموعد المطلوب أولاً.",
+                  };
+                }
               } else {
                 const needsDeposit = targetStadium.needs_deposit || false;
                 const paymentMethod = needsDeposit ? "paymob" : (args.payment_method || "cash");
@@ -903,6 +1034,16 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               }
             }
 
+            const uiMetadata = {
+              tool_name: funcName,
+              stadiums: stadiumResults,
+              tournaments: tournamentResults,
+              leaderboard: leaderboardResults,
+              open_matches: openMatchResults,
+              action: appAction,
+              task_state: contextSnapshot.task_state || {},
+            };
+
             // Second turn for natural conversational response
             const secondContents = [
               ...contents,
@@ -939,10 +1080,10 @@ ${JSON.stringify(contextSnapshot, null, 2)}
             // 🛡️ Zero-Hallucination Guard: When DB returns 0 rows, strictly prevent any hallucinated text!
             if (funcName === "searchTournaments" && tournamentResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
+              assistantReply = `عذراً يا كابتن، راجعتلك المتاح ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
             } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، بحثتلك في قاعدة بيانات VSP ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
+              assistantReply = `عذراً يا كابتن، راجعتلك المتاح ومافيش حالياً ملاعب مسجلة في ${targetGov}. الملعب المتاح حالياً في التطبيق هو ملعب الصداقة الجديدة في أسوان!`;
             } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
               assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات خماسية مفتوحة محتاجة لاعيبة في قاعدة البيانات. تقدر تحجز ملعب وتبدأ تقسيمة جديدة بنفسك!";
             } else if (funcName === "getOwnerStadiumsAndBookings") {
@@ -959,7 +1100,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               const onlineRev = toolResponseData?.total_online_revenue ?? 0;
               const debt = toolResponseData?.accumulated_cash_debt ?? 0;
               const count = toolResponseData?.total_completed_bookings ?? 0;
-              assistantReply = `يا كابتن، دي بياناتك المالية الحقيقية المسجلة في قاعدة بيانات VSP:\n• الرصيد الإلكتروني المتاح للسحب: ${avail} ج.م\n• إجمالي الكاش المحصل بالملعب: ${cash} ج.م\n• إجمالي الإيرادات الأونلاين: ${onlineRev} ج.م\n• مديونية عمولة الكاش: ${debt} ج.م\n• عدد الحجوزات المكتملة: ${count}`;
+              assistantReply = `يا كابتن، دي بياناتك المالية:\n• الرصيد الإلكتروني المتاح للسحب: ${avail} ج.م\n• إجمالي الكاش المحصل بالملعب: ${cash} ج.م\n• إجمالي الإيرادات الأونلاين: ${onlineRev} ج.م\n• مديونية عمولة الكاش: ${debt} ج.م\n• عدد الحجوزات المكتملة: ${count}`;
             } else if (!assistantReply) {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
@@ -975,7 +1116,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
               } else if (funcName === "getUserBookingsAndRefunds") {
                 assistantReply = "يا كابتن، راجعتلك سجل حجوزاتك ومستحقاتك وكل العمليات مسجلة ومضمونة في VSP:";
               } else if (funcName === "getOwnerStadiumsAndBookings") {
-                assistantReply = "يا كابتن، دي تفاصيل ملاعبك وحجوزاتك المسجلة في قاعدة بيانات VSP:";
+                assistantReply = "يا كابتن، دي تفاصيل ملاعبك وحجوزاتك المسجلة في التطبيق:";
               } else if (funcName === "checkStadiumAvailability") {
                 if (toolResponseData.available_slots_count === 0) {
                   assistantReply = `عذراً يا كابتن، راجعت جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date} وجميع الفترات محجوزة بالكامل في هذا اليوم. تحب نفحص يوم تاني؟`;
@@ -1039,7 +1180,16 @@ ${JSON.stringify(contextSnapshot, null, 2)}
       assistantReply = "عذراً يا كابتن! حدث ضغط لحظي في خدمة الذكاء الاصطناعي، يرجى إعادة إرسال رسالتك أو تصفح الملاعب والبطولات مباشرة من القوائم.";
     }
 
-    // 10. Persist Messages & Update Conversation with Context Snapshot
+    // 10. Persist Messages + UI metadata + Context Snapshot
+    const persistedUiMetadata = {
+      stadiums: stadiumResults,
+      tournaments: tournamentResults,
+      leaderboard: leaderboardResults,
+      open_matches: openMatchResults,
+      action: appAction,
+      task_state: contextSnapshot.task_state || {},
+    };
+
     await supabase.from("copilot_messages").insert([
       {
         conversation_id: conversationId,
@@ -1047,6 +1197,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         role: "user",
         content: userMessage,
         stadium_results: [],
+        ui_metadata: { task_state: contextSnapshot.task_state || {} },
       },
       {
         conversation_id: conversationId,
@@ -1054,6 +1205,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         role: "assistant",
         content: assistantReply,
         stadium_results: stadiumResults,
+        ui_metadata: persistedUiMetadata,
       },
     ]);
 
@@ -1075,6 +1227,8 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         leaderboard: leaderboardResults,
         open_matches: openMatchResults,
         action: appAction,
+        ui_metadata: persistedUiMetadata,
+        task_state: contextSnapshot.task_state || {},
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
