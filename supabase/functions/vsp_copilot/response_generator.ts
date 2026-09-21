@@ -191,10 +191,52 @@ export function generateDeterministicResponse(
     }
   }
 
+  if (plan.action === "SAFE_DEGRADED_CLARIFICATION") {
+    return {
+      message: plan.reason || "يا كابتن، في ضغط لحظي مؤقت على خدمة الذكاء الاصطناعي وما قدرتش أستوعب رسالتك الأخيرة بدقة. بياناتك ومواعيدك السابقة محفوظة بأمان، تقدر تختار الخطوة التالية من الخيارات بالأسفل:",
+      quick_replies: plan.quick_replies || ["عايز ملعب قريب", "البطولات المفتوحة", "ترتيب الحريفة 1v1"],
+    };
+  }
+
   if (plan.action === "CLARIFY_AMBIGUITY") {
     return {
       message: plan.reason || "محتاج توضيح بسيط عشان أنفذ طلبك بدقة يا كابتن:",
       quick_replies: plan.quick_replies || [],
+    };
+  }
+
+  if (plan.action === "RESPOND_DIRECTLY") {
+    if (plan.reason) {
+      return {
+        message: plan.reason,
+        quick_replies: plan.quick_replies || [],
+      };
+    }
+    if (state.active_task === "booking") {
+      if (!state.stadium.name && !state.stadium.id) {
+        return {
+          message: "تمام يا كابتن. تحب نحجز في أنهي ملعب؟",
+          quick_replies: state.candidate_stadiums.slice(0, 3).map(s => s.name),
+        };
+      }
+      if (!state.date.value) {
+        return {
+          message: "تمام، تحب الحجز يكون النهارده ولا بكرة؟",
+          quick_replies: ["النهارده", "بكرة"],
+        };
+      }
+    }
+    return {
+      message: "يا كابتن، تحب أساعدك في حجز ملعب ولا استكشاف البطولات أو ماتشات التقسيمة؟",
+      quick_replies: ["عايز ملعب قريب", "البطولات المفتوحة", "ترتيب الحريفة 1v1"],
+    };
+  }
+
+  // If conversation has an active task, do NOT return welcome greeting
+  if (state.active_task && state.active_task !== "idle") {
+    return {
+      message: "محتاج توضيح بسيط عشان أنفذ طلبك بدقة يا كابتن، تحب نختار ميعاد تاني ولا ملعب مختلف؟",
+      quick_replies: ["ميعاد تاني", "ملعب مختلف"],
     };
   }
 

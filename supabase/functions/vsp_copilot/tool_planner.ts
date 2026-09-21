@@ -6,7 +6,7 @@ import type { SemanticParseOutput } from "./semantic_schema.ts";
 import { isToolAllowedForRole } from "./business_rules.ts";
 
 export interface ToolPlan {
-  action: "EXECUTE_TOOL" | "ASK_SLOT" | "CONFIRM_PROPOSAL" | "CLARIFY_AMBIGUITY" | "RESPOND_DIRECTLY";
+  action: "EXECUTE_TOOL" | "ASK_SLOT" | "CONFIRM_PROPOSAL" | "CLARIFY_AMBIGUITY" | "SAFE_DEGRADED_CLARIFICATION" | "RESPOND_DIRECTLY";
   toolName?: string;
   toolArgs?: Record<string, any>;
   missing_slot?: "stadium" | "date" | "time" | "time_period";
@@ -17,9 +17,45 @@ export interface ToolPlan {
 
 export function planToolExecution(
   state: ConversationState,
-  semanticOutput: SemanticParseOutput
+  semanticOutput: SemanticParseOutput,
+  options?: {
+    isDegraded?: boolean;
+    structuredUiAction?: { type: string; payload?: any };
+    isIdempotentReplay?: boolean;
+  }
 ): ToolPlan {
   const role = state.user_role;
+
+  // SAFE DEGRADED MODE (Strict Non-Execution Rule):
+  // When models are exhausted, NO new tool execution and NO state mutation.
+  // Exception: structured UI actions or idempotent replays.
+  if (options?.isDegraded) {
+    if (options.structuredUiAction?.type === "CONFIRM_BOOKING" && state.pending_confirmation) {
+      if (isToolAllowedForRole(role, "createBookingFromChat")) {
+        return {
+          action: "EXECUTE_TOOL",
+          toolName: "createBookingFromChat",
+          toolArgs: {
+            stadium_id: state.pending_confirmation.stadium_id,
+            stadium_name: state.pending_confirmation.stadium_name,
+            start_time: state.pending_confirmation.start_time,
+            end_time: state.pending_confirmation.end_time,
+            confirm: true,
+          },
+        };
+      }
+    }
+
+    return {
+      action: "SAFE_DEGRADED_CLARIFICATION",
+      reason: "يا كابتن، في ضغط لحظي مؤقت على خدمة الذكاء الاصطناعي وما قدرتش أستوعب رسالتك الأخيرة بدقة. بياناتك ومواعيدك السابقة محفوظة بأمان، تقدر تختار الخطوة التالية من الخيارات بالأسفل:",
+      quick_replies: state.pending_confirmation
+        ? ["تأكيد الحجز", "تغيير الميعاد", "إلغاء"]
+        : state.active_task === "booking"
+          ? ["اختيار ملعب", "ميعاد تاني", "مساعدة"]
+          : ["عايز ملعب قريب", "البطولات المفتوحة", "ترتيب الحريفة 1v1"],
+    };
+  }
 
   // 0. Acknowledge / non-operational turns do not trigger tool calls
   if (semanticOutput.speech_act === "acknowledge" || (semanticOutput.operation === "none" && !semanticOutput.execution_request.requested)) {

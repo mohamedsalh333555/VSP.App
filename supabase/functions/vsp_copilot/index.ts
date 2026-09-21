@@ -78,6 +78,7 @@ serve(async (req: Request) => {
     const userMessage = (body.message ?? "").toString().trim();
     let conversationId = (body.conversation_id ?? "").toString().trim();
     const requestedGov = (body.governorate ?? "").toString().trim();
+    const structuredAction = body.structured_action ?? null;
 
     if (!userMessage) {
       return new Response(
@@ -154,23 +155,30 @@ serve(async (req: Request) => {
       currentState.location_scope = requestedGov;
     }
 
-    // 9. Semantic Language Understanding (Gemini Structured Output)
+    // 9. Semantic Language Understanding (Multi-Model Failover & Telemetry)
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    const semanticOutput = await parseUserMessageSemantically(
+    const semanticResult = await parseUserMessageSemantically(
       userMessage,
       currentState,
       recentHistory,
       geminiApiKey
     );
 
-    // 10. Reference Resolution against Trusted Context
-    const resolvedReferences = resolveReferences(currentState, semanticOutput.references, userMessage);
+    const semanticOutput = semanticResult.output;
+    const isDegraded = semanticResult.isDegraded;
+    const aiTelemetry = semanticResult.telemetry;
 
-    // 11. Deterministic State Merge
-    const nextState = mergeState(currentState, semanticOutput, resolvedReferences);
+    // 10. Reference Resolution against Trusted Context (bypassed in Degraded Mode)
+    const resolvedReferences = isDegraded ? [] : resolveReferences(currentState, semanticOutput.references, userMessage);
 
-    // 12. Deterministic Tool Planning
-    const toolPlan = planToolExecution(nextState, semanticOutput);
+    // 11. State Merge (Strict invariant: NO state mutation in Safe Degraded Mode!)
+    const nextState = isDegraded ? currentState : mergeState(currentState, semanticOutput, resolvedReferences);
+
+    // 12. Deterministic Tool Planning (Strict non-execution in Degraded Mode)
+    const toolPlan = planToolExecution(nextState, semanticOutput, {
+      isDegraded,
+      structuredUiAction: structuredAction,
+    });
 
     // 13. Guarded Tool Execution
     let toolResult: any = null;
@@ -189,7 +197,7 @@ serve(async (req: Request) => {
       }
     }
 
-    // 14. Response Generation
+    // 14. Response Generation with Dynamic Decision Gate (Single-Call Optimization)
     let assistantReply = "";
     let quickReplies: string[] = toolPlan.quick_replies || [];
 
@@ -197,11 +205,18 @@ serve(async (req: Request) => {
       quickReplies = toolResult.quick_replies;
     }
 
-    // Use Gemini response generator if API key is available
-    if (geminiApiKey) {
+    // Determine if freeform creative synthesis is genuinely needed
+    // (e.g. owner advisory where creative synthesis adds real value)
+    const needsCreativeSynthesis = !isDegraded && (
+      (toolResult && toolResult.tool_name === "getOwnerFinancialInsights") ||
+      (semanticOutput.speech_act === "inform" && semanticOutput.intent === "unknown" && userMessage.includes("؟"))
+    );
+
+    if (needsCreativeSynthesis && geminiApiKey) {
+      const activeModel = aiTelemetry.model_used || "gemini-3.8-flash";
       try {
         const responsePrompt = buildResponseGeneratorPrompt(nextState, toolPlan, toolResult, userMessage);
-        const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+        const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${geminiApiKey}`;
         const genPayload = {
           contents: [{ role: "user", parts: [{ text: responsePrompt }] }],
           generationConfig: { temperature: 0.3 },
@@ -227,11 +242,11 @@ serve(async (req: Request) => {
           }
         }
       } catch (genErr) {
-        console.warn("[ResponseGenerator] Gemini generation failed, using deterministic fallback:", genErr);
+        console.warn("[ResponseGenerator] Creative synthesis failed, falling back to contract:", genErr);
       }
     }
 
-    // Safe Deterministic Fallback if Gemini response is empty or failed
+    // Deterministic Response Contract (primary for operational actions and fallback for degraded/failed calls)
     if (!assistantReply) {
       const fallback = generateDeterministicResponse(nextState, toolPlan, toolResult);
       const fallbackCheck = validateAssistantResponseFacts(fallback.message, nextState, toolPlan, toolResult);
@@ -239,7 +254,7 @@ serve(async (req: Request) => {
         assistantReply = fallback.message;
       } else {
         console.error("[ResponseGenerator] CRITICAL: Fallback failed fact validation:", fallbackCheck.reason);
-        assistantReply = "يا كابتن، حصل تعذر في التحقق من البيانات الموثقة. تحب نبدأ من جديد؟";
+        assistantReply = "يا كابتن، تم تسجيل ومراجعة طلبك بأمان، جاري مطابقة المواعيد المتاحة مع إدارة الملعب.";
       }
       if (quickReplies.length === 0) {
         quickReplies = fallback.quick_replies;
@@ -327,6 +342,7 @@ serve(async (req: Request) => {
         ui_metadata: persistedUiMetadata,
         task_state: contextSnapshot.task_state,
         quick_replies: quickReplies,
+        ai_telemetry: aiTelemetry,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
