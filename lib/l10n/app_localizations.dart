@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Please enter your date of birth'**
   String get pleaseEnterDob;
 
+  /// No description provided for @underRequiredAge.
+  ///
+  /// In en, this message translates to:
+  /// **'Players must be at least 16 years old and stadium owners must be at least 21 years old'**
+  String get underRequiredAge;
+
   /// No description provided for @invalidPhone.
   ///
   /// In en, this message translates to:
@@ -575,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @passwordTooShort.
   ///
   /// In en, this message translates to:
-  /// **'Password must be at least 6 characters'**
+  /// **'Password must be at least 8 characters'**
   String get passwordTooShort;
 
   /// No description provided for @verifyAccount.
