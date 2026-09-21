@@ -1868,12 +1868,12 @@ ${JSON.stringify(taskState, null, 2)}
             } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
               assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات مفتوحة محتاجة لاعيبة. تقدر تبدأ مباراة جديدة من التطبيق.";
             } else if (funcName === "getOwnerStadiumsAndBookings") {
-              const oStadiums = toolResponseData.owner_stadiums || [];
-              const oBookings = toolResponseData.recent_bookings || [];
-              if (oStadiums.length === 0) {
-                assistantReply = "يا كابتن، مفيش ملاعب مسجلة باسمك حالياً. تقدر تضيف ملعبك الأول من لوحة التحكم.";
-              } else if (oBookings.length === 0 && (args.query_type === "bookings" || args.query_type === "today")) {
-                assistantReply = `يا كابتن، ملاعبك الحالية (${oStadiums.map((s: any) => s.name).join("، ")})، ولكن لا توجد أي حجوزات مسجلة لها حالياً. أول ما يتم أي حجز هيظهرلك فوراً في جدول الحجوزات!`;
+              if (toolResponseData?.success === false) {
+                assistantReply = "مش هفترض نتيجة. " + (toolResponseData.message || "تعذر قراءة الحجوزات بدقة حالياً.");
+              } else if (/كام حجز|كم حجز|عدد الحجوزات/.test(ownerFactNorm(userMessage))) {
+                assistantReply = "عدد الحجوزات المطابقة للطلب: " + Number(toolResponseData.bookings_count || 0).toLocaleString("ar-EG") + " حجز."; 
+              } else if (toolResponseData?.details_truncated) {
+                assistantReply = "عندي " + Number(toolResponseData.bookings_count || 0).toLocaleString("ar-EG") + " حجز مطابق للطلب، والتفاصيل الكاملة موجودة في جدول الحجوزات."; 
               }
             } else if (funcName === "getOwnerFinancialInsights") {
               if (toolResponseData?.needs_clarification) {
