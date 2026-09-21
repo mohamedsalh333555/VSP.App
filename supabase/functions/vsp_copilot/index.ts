@@ -1372,7 +1372,7 @@ ${JSON.stringify(taskState, null, 2)}
 
               let query = supabase
                 .from("stadiums")
-                .select("id, name, governorate, price_per_hour, image_url, rating")
+                .select("id, name, governorate, price_per_hour, image_url, rating, seats_capacity, players_per_team, total_field_capacity")
                 .eq("is_verified", true)
                 .eq("is_blocked", false)
                 .eq("is_deleted_by_owner", false);
@@ -1382,7 +1382,18 @@ ${JSON.stringify(taskState, null, 2)}
               query = query.order("rating", { ascending: false }).limit(10);
 
               const { data: stadiums } = await query;
-              stadiumResults = stadiums || [];
+              const rawStadiums = stadiums || [];
+              const currentTaskForCapacity = contextSnapshot.task_state || {};
+              const requestedGroupSize = Number(currentTaskForCapacity.group_size || 0);
+
+              // A stated group size is a real search constraint. Use the stadium's
+              // declared field capacity when available; never invent capacity.
+              stadiumResults = requestedGroupSize > 0
+                ? rawStadiums.filter((s: any) => {
+                    const capacity = Number(s.total_field_capacity ?? s.seats_capacity ?? 0);
+                    return capacity > 0 ? capacity >= requestedGroupSize : true;
+                  })
+                : rawStadiums;
 
               contextSnapshot.last_searched_governorate = governorate;
               contextSnapshot.last_visible_stadiums = stadiumResults.map((s: any) => ({
@@ -1392,6 +1403,9 @@ ${JSON.stringify(taskState, null, 2)}
                 price_per_hour: s.price_per_hour,
                 image_url: s.image_url,
                 rating: s.rating,
+                seats_capacity: s.seats_capacity,
+                players_per_team: s.players_per_team,
+                total_field_capacity: s.total_field_capacity,
               }));
 
               const currentTask = contextSnapshot.task_state || {};
