@@ -300,7 +300,7 @@ function analyzeCopilotTurn(input, contextSnapshot = {}) {
     signals: {
       how_to: isBookingHowTo(original),
       explicit_execution: intent === "book_stadium",
-      explicit_period: /مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\\s)م(?:\\s|$)|(?:^|\\s)ص(?:\\s|$)/i.test(effective),
+      explicit_period: /مساء|مسا|بالليل|ليل|صباح|صبح|(?:^|\s)م(?:\s|$)|(?:^|\s)ص(?:\s|$)/i.test(effective),
     },
   };
 }
