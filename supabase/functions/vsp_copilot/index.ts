@@ -418,6 +418,11 @@ function isParticipantNumberContext(input: string, index: number, length: number
     /(?:انا و|أنا و|معايا|معاي|ومعايا|و\s*)$/.test(before);
 }
 
+function hasNearbyStadiumScope(input: string): boolean {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  return /قريب مني|قريب عني|قريب|جنبى|جنبي|حواليا|عندي|هنا|في منطقتي|بالقرب مني/.test(normalized);
+}
+
 function extractGroupSize(input: string): number | null {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
   let total: number | null = null;
@@ -555,6 +560,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   const explicitConfirmation = isExplicitConfirmation(userMessage);
   const bookingHowTo = isBookingHowToQuestion(userMessage);
   const groupSize = extractGroupSize(userMessage);
+  const nearbyScope = hasNearbyStadiumScope(userMessage);
 
   // The current user turn has precedence over stale task-state interpretations.
   // A how-to question must never inherit an old "book_stadium" execution intent.
@@ -617,9 +623,10 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   }
 
   if (groupSize != null) next.group_size = groupSize;
+  if (nearbyScope) next.stadium_scope = "nearby";
 
   next.missing_slots = [];
-  if (!next.stadium_id) next.missing_slots.push("stadium");
+  if (!next.stadium_id && next.stadium_scope !== "nearby") next.missing_slots.push("stadium");
   if (!next.date) next.missing_slots.push("date");
 
   const hasExactTime = Array.isArray(next.preferred_times) && next.preferred_times.length > 0;
@@ -1128,6 +1135,28 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
+    // Deterministic booking-slot guard: ask for the next actionable slot only.
+    // "قريب مني" is a search scope, not a missing stadium the customer must name.
+    if (contextSnapshot.task_state?.intent === "book_stadium" &&
+        !contextSnapshot.task_state?.confirmation_pending &&
+        !contextSnapshot.task_state?.ready_for_execution) {
+      const task = contextSnapshot.task_state || {};
+      const missing = Array.isArray(task.missing_slots) ? task.missing_slots : [];
+      if (missing.includes("date") && missing.includes("time") && !missing.includes("stadium")) {
+        assistantReply = "تمام، الملعب القريب منك أنا أدوّرهولك. فاضل بس تحددلي اليوم والساعة اللي تناسبك.";
+        quickReplies = ["النهارده الساعة 10 بالليل", "بكرة الساعة 10 بالليل"];
+        handledByGemini = true;
+      } else if (missing.includes("date") && !missing.includes("time")) {
+        assistantReply = "تمام، الساعة وصلت. قولّي اليوم بس: النهارده ولا بكرة؟";
+        quickReplies = ["النهارده", "بكرة"];
+        handledByGemini = true;
+      } else if (missing.includes("time") && !missing.includes("date")) {
+        assistantReply = "تمام، اليوم وصل. قولّي الساعة المناسبة ليك؟";
+        quickReplies = ["8 بالليل", "9 بالليل", "10 بالليل"];
+        handledByGemini = true;
+      }
+    }
+
     // Deterministic booking how-to guard: explain the user flow instead of treating
     // "how do I book?" as an execution request.
     const taskIsBookingHowTo = contextSnapshot.task_state?.intent === "booking_howto";
@@ -1368,6 +1397,7 @@ ${JSON.stringify(taskState, null, 2)}
               const requestedDate = currentTask.date;
               const requestedTimes = Array.isArray(currentTask.preferred_times) ? currentTask.preferred_times : [];
               const requestedWindow = currentTask.time_window || null;
+              const groupSizeForSearch = Number(currentTask.group_size || 0);
               const hasScheduleConstraint =
                 !!requestedDate && (requestedTimes.length > 0 || !!requestedWindow);
 
@@ -2148,7 +2178,8 @@ ${JSON.stringify(taskState, null, 2)}
                 assistantReply =
                   "تمام، لقيتلك " + match.stadium_name + " متاح " + slotText +
                   " بسعر " + Number(match.price_per_hour || 0).toLocaleString("ar-EG") +
-                  " ج.م للساعة.";
+                  " ج.م للساعة" +
+                  (groupSizeForSearch > 0 ? ". وعددكم " + groupSizeForSearch + " لاعب." : ".");
                 quickReplies = ["احجزه"];
               } else {
                 const names = matches.slice(0, 4).map((m: any) => m.stadium_name);
