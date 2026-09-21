@@ -166,15 +166,28 @@ const getOwnerStadiumsAndBookingsTool = {
 // 9. Tool: getOwnerFinancialInsights
 const getOwnerFinancialInsightsTool = {
   name: "getOwnerFinancialInsights",
-  description: "استعلام السجل المالي لمالك الملعب، والرصيد الإلكتروني القابل للسحب، والإيرادات النقدية (كاش) المحصلة، ومديونية المنصة، وعدد الحجوزات المكتملة مباشرة من قاعدة البيانات. استدعِ هذه الأداة فوراً عندما يسأل مالك الملعب عن أرباحه، رصيده، إيراداته، فلوسه، أو مديونية الكاش.",
+  description: "استعلام مالي دقيق لمالك الملعب. ممنوع اعتبار كلمات مثل دخلي أو عملت كام مقياساً محدداً من نفسك؛ يجب تحديد المقياس والفترة، والملعب فقط إذا طلب المالك ملعباً بعينه. لا تقدّر ولا تخمّن رقماً.",
   parameters: {
     type: "OBJECT",
     properties: {
+      metric: {
+        type: "STRING",
+        description: "available_balance، cash_debt، completed_booking_value، completed_booking_count، cash_collected، online_gross، online_net، vsp_commission، gateway_fees",
+      },
       period: {
         type: "STRING",
-        description: "الفترة: 'all' للإجمالي، أو 'current' للرصيد الحالي",
+        description: "today، yesterday، current_week، last_7_days، current_month، last_month، all_time، أو current للبيانات الحالية.",
+      },
+      stadium_id: {
+        type: "STRING",
+        description: "UUID لملعب من ملاعب المالك فقط إذا كان محدداً بوضوح.",
+      },
+      stadium_name: {
+        type: "STRING",
+        description: "اسم ملعب من ملاعب المالك فقط إذا كان محدداً بوضوح.",
       },
     },
+    required: ["metric", "period"],
   },
 };
 
@@ -616,6 +629,83 @@ function generateStandardSlots(targetDateStr: string) {
   return slots;
 }
 
+function ownerFactNorm(value: string): string {
+  return normalizeArabicDigits((value || "").toString().toLowerCase()).trim().replace(/\s+/g, " ");
+}
+
+function isOwnerFactQuestion(input: string): boolean {
+  return /كام|قد ايه|قد إيه|اعرف|عايز اعرف|عايز أعرف|إيراد|ايراد|دخل|دخلي|عملت|فلوس|رصيد|رصيدي|مديون|مستحق|حجوزات|حجز|دافع|دفع|تحصيل|محصل|داخل|داخلين|فاضي|متاح/.test(ownerFactNorm(input));
+}
+
+function detectOwnerFinancialMetric(input: string): string | null {
+  const t = ownerFactNorm(input);
+  const m: string[] = [];
+  if (/الرصيد|رصيدي|المتاح للسحب|متاح للسحب|أقدر اسحب|اقدر اسحب/.test(t)) m.push("available_balance");
+  if (/مديون|مديونيتي|عليا|عليّا|عمولة الكاش|مديونية الكاش/.test(t)) m.push("cash_debt");
+  if (/الكاش|كاش|نقدي|نقد|التحصيل الكاش|الكاش المحصل/.test(t)) m.push("cash_collected");
+  if (/اونلاين|أونلاين|الكتروني|إلكتروني/.test(t)) m.push(/صافي|بعد الخصم|بعد الرسوم/.test(t) ? "online_net" : "online_gross");
+  if (/عمولة فسب|عمولة vsp|عمولة المنصة/.test(t)) m.push("vsp_commission");
+  if (/رسوم البوابة|رسوم بوابة الدفع|gateway/.test(t)) m.push("gateway_fees");
+  if (/عدد الحجوزات|كام حجز|كم حجز|عدد الحجز/.test(t)) m.push("completed_booking_count");
+  if (/قيمة الحجوزات|اجمالي قيمة الحجوزات|إجمالي قيمة الحجوزات/.test(t)) m.push("completed_booking_value");
+  const u = [...new Set(m)];
+  return u.length === 1 ? u[0] : null;
+}
+
+function detectOwnerFinancialPeriod(input: string): string | null {
+  const t = ownerFactNorm(input);
+  if (/النهارده|النهاردة|اليوم|اليوم ده/.test(t)) return "today";
+  if (/امبارح|امبارحة|مبارح/.test(t)) return "yesterday";
+  if (/آخر 7 أيام|اخر 7 ايام|السبع أيام|الاسبوع الأخير|الأسبوع الأخير/.test(t)) return "last_7_days";
+  if (/الأسبوع ده|الاسبوع ده|هذا الأسبوع|الاسبوع الحالي|الأسبوع الحالي/.test(t)) return "current_week";
+  if (/من أول الشهر|من اول الشهر|الشهر ده|هذا الشهر|الشهر الحالي/.test(t)) return "current_month";
+  if (/الشهر اللي فات|الشهر الماضي/.test(t)) return "last_month";
+  if (/من أول ما بدأت|من اول ما بدأت|إجمالي كل الوقت|اجمالي كل الوقت|كل الوقت|الإجمالي الكلي|الاجمالي الكلي/.test(t)) return "all_time";
+  return null;
+}
+
+function cairoDateKey(offsetDays = 0): string {
+  const p = getCairoParts(new Date());
+  const d = new Date(Date.UTC(p.year, p.month - 1, p.day + offsetDays, 12, 0, 0));
+  return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
+}
+
+function ownerCurrentWeekStartKey(): string {
+  const p = getCairoParts(new Date());
+  const d = new Date(Date.UTC(p.year, p.month - 1, p.day, 12, 0, 0));
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 1) % 7));
+  return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
+}
+
+function resolveOwnerFinancialRange(period: string): { start: string; end: string; label: string } | null {
+  if (period === "today") return { start: cairoDateKey(), end: cairoDateKey(), label: "اليوم" };
+  if (period === "yesterday") return { start: cairoDateKey(-1), end: cairoDateKey(-1), label: "أمس" };
+  if (period === "last_7_days") return { start: cairoDateKey(-6), end: cairoDateKey(), label: "آخر 7 أيام" };
+  if (period === "current_week") return { start: ownerCurrentWeekStartKey(), end: cairoDateKey(), label: "هذا الأسبوع (من السبت حتى اليوم)" };
+  if (period === "current_month") { const p = getCairoParts(new Date()); return { start: p.year + "-" + String(p.month).padStart(2, "0") + "-01", end: cairoDateKey(), label: "من أول الشهر حتى اليوم" }; }
+  if (period === "last_month") { const p = getCairoParts(new Date()); const first = new Date(Date.UTC(p.year, p.month - 2, 1, 12)); const last = new Date(Date.UTC(p.year, p.month - 1, 0, 12)); return { start: first.getUTCFullYear() + "-" + String(first.getUTCMonth() + 1).padStart(2, "0") + "-01", end: last.getUTCFullYear() + "-" + String(last.getUTCMonth() + 1).padStart(2, "0") + "-" + String(last.getUTCDate()).padStart(2, "0"), label: "الشهر الماضي" }; }
+  if (period === "all_time") return { start: "1900-01-01", end: cairoDateKey(), label: "من بداية السجل حتى اليوم" };
+  return null;
+}
+
+function buildOwnerPrecisionClarification(userMessage: string) {
+  const t = ownerFactNorm(userMessage);
+  const financialSignal = /دخل|دخلي|إيراد|ايراد|فلوس|رصيد|رصيدي|مديون|مستحق|كاش|اونلاين|أونلاين|عمولة|رسوم/.test(t);
+  if (financialSignal) {
+    const metric = detectOwnerFinancialMetric(userMessage);
+    const period = detectOwnerFinancialPeriod(userMessage);
+    const currentOnly = metric === "available_balance" || metric === "cash_debt";
+    if (!metric) return { needs_clarification: true, message: "عشان أديك رقم صحيح من غير تخمين: تقصد الرصيد المتاح، ولا الكاش المحصل، ولا قيمة الأونلاين، ولا صافي الأونلاين، ولا عمولة VSP؟", quick_replies: ["الرصيد المتاح", "الكاش المحصل", "الأونلاين", "صافي الأونلاين"] };
+    if (!currentOnly && !period) return { needs_clarification: true, message: "حددلي الفترة عشان أطلع لك الرقم الدقيق: النهارده، آخر 7 أيام، من أول الشهر، ولا إجمالي السجل؟", quick_replies: ["النهارده", "آخر 7 أيام", "من أول الشهر", "إجمالي السجل"] };
+  }
+  if (/كام حجز|كم حجز|عدد الحجوزات|حجوزات/.test(t) && !detectOwnerFinancialPeriod(userMessage) && !/النهارده|النهاردة|اليوم|بكرة|بكره|غدا|غداً|امبارح|مبارح|الأسبوع|الاسبوع|الشهر|آخر 7 أيام|اخر 7 ايام/.test(t))
+    return { needs_clarification: true, message: "تقصد عدد الحجوزات النهارده، ولا خلال فترة معينة؟", quick_replies: ["حجوزات النهارده", "هذا الأسبوع", "من أول الشهر"] };
+  if (/مين داخل|مين حاجز|مين عندي الساعة|مين داخل عندي|مين حاجز عندي/.test(t) && !/النهارده|النهاردة|اليوم|بكرة|بكره|غدا|غداً|امبارح|مبارح/.test(t))
+    return { needs_clarification: true, message: "حدد اليوم الأول عشان أقولك مين داخل بالضبط.", quick_replies: ["النهارده", "بكرة"] };
+  if (/الساعة\s*\d{1,2}|ساعه\s*\d{1,2}/.test(t) && !/النهارده|النهاردة|اليوم|بكرة|بكره|غدا|غداً|امبارح|مبارح/.test(t))
+    return { needs_clarification: true, message: "الساعة وصلت، بس اليوم ناقص. تقصد النهارده ولا يوم تاني؟", quick_replies: ["النهارده", "بكرة"] };
+  return null;
+}
 serve(async (req: Request) => {
   // 1. CORS Preflight
   if (req.method === "OPTIONS") {
@@ -790,8 +880,26 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
-    // 9. Gemini 2.5 Flash Interaction
-    if (geminiApiKey) {
+    // 9. Deterministic owner factual-query guard.
+    const ownerRole = normalizeCopilotRole(userProfile?.role);
+    const ownerPrecisionClarification = ownerRole === "owner" ? buildOwnerPrecisionClarification(userMessage) : null;
+    let forcedOwnerTool: string | null = null;
+
+    if (ownerRole === "owner" && !ownerPrecisionClarification?.needs_clarification) {
+      const t = ownerFactNorm(userMessage);
+      const financialSignal = /دخل|دخلي|إيراد|ايراد|فلوس|رصيد|رصيدي|مديون|مستحق|كاش|اونلاين|أونلاين|عمولة|رسوم/.test(t);
+      if (financialSignal && detectOwnerFinancialMetric(userMessage)) forcedOwnerTool = "getOwnerFinancialInsights";
+      else if (/كام حجز|كم حجز|عدد الحجوزات|مين داخل|مين حاجز|مين عندي|فاضي|متاح/.test(t)) forcedOwnerTool = "getOwnerStadiumsAndBookings";
+    }
+
+    if (ownerPrecisionClarification?.needs_clarification) {
+      assistantReply = ownerPrecisionClarification.message;
+      quickReplies = ownerPrecisionClarification.quick_replies || [];
+      handledByGemini = true;
+    }
+
+    // 10. Gemini 2.5 Flash Interaction
+    if (!handledByGemini && geminiApiKey) {
       try {
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
         const systemPrompt = `أنت "كابتن VSP"، المساعد والمدير الذكي الشامل والوكيل التشغيلي لتطبيق VSP لحجز الملاعب والبطولات في مصر (Omni-Capable In-App Operating Agent).
@@ -913,7 +1021,7 @@ ${JSON.stringify(taskState, null, 2)}
               ? "createBookingFromChat"
               : (forcedAvailability
                   ? "checkStadiumAvailability"
-                  : functionCallPart.functionCall.name);
+                  : (forcedOwnerTool || functionCallPart.functionCall.name));
 
             const args = forcedConfirmation
               ? {
