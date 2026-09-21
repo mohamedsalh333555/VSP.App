@@ -18,12 +18,39 @@ class LocationService {
  bool timeThresholdMet = force || lastUpdateStr == null || 
  now.difference(DateTime.parse(lastUpdateStr)).inHours >= 24;
 
+ // Android/iOS persist the OS permission. Do not show the permission prompt
+ // repeatedly when the user has already granted location access.
  LocationPermission permission = await Geolocator.checkPermission();
+
+ // Cache a previously granted permission as an extra guard against a repeated
+ // prompt caused by lifecycle/reinitialization. If the OS later revokes it,
+ // we fail closed and let the user re-enable it from system settings instead
+ // of surprising them with a prompt on every app launch.
+ final hasPreviouslyGrantedLocation =
+     prefs.getBool('location_permission_granted') ?? false;
+
  if (permission == LocationPermission.denied) {
- permission = await Geolocator.requestPermission();
- if (permission == LocationPermission.denied) return (null, null);
+   if (hasPreviouslyGrantedLocation) {
+     VSPLogger.w(
+       'Location permission was previously granted but is currently unavailable; skipping prompt.',
+     );
+     return (null, prefs.getString('last_resolved_governorate'));
+   }
+
+   permission = await Geolocator.requestPermission();
+   if (permission == LocationPermission.denied) return (null, null);
  }
- if (permission == LocationPermission.deniedForever) return (null, null);
+
+ if (permission == LocationPermission.deniedForever) {
+   return (null, prefs.getString('last_resolved_governorate'));
+ }
+
+ // Any granted state (while-in-use or always) is remembered locally so a
+ // future app initialization can never trigger a redundant permission prompt.
+ if (permission == LocationPermission.always ||
+     permission == LocationPermission.whileInUse) {
+   await prefs.setBool('location_permission_granted', true);
+ }
 
  // Security Guard: Jailbreak and Mock Location Detection with safety timeouts
  try {
