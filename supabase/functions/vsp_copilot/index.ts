@@ -159,6 +159,14 @@ const getOwnerStadiumsAndBookingsTool = {
         type: "STRING",
         description: "حالة الحجز للفلترة: 'pending' للمعلقة، 'confirmed' للمؤكدة، 'all' للكل",
       },
+      payment_status: {
+        type: "STRING",
+        description: "حالة الدفع: paid أو pending أو failed، فقط عندما يذكر المالك حالة الدفع.",
+      },
+      stadium_name: {
+        type: "STRING",
+        description: "اسم ملعب من ملاعب هذا المالك فقط إذا كان محدداً بوضوح.",
+      },
     },
   },
 };
@@ -1218,10 +1226,11 @@ ${JSON.stringify(taskState, null, 2)}
 
               const stadiumIds = (ownerStadiums || []).map((s: any) => s.id);
               let ownerBookings: any[] = [];
+              let ownerBookingsTotal = 0;
               if (stadiumIds.length > 0) {
                 let bQuery = supabase
                   .from("bookings")
-                  .select("id, stadium_name, start_time, end_time, status, total_price, deposit_paid, payment_method, payment_status, player_name, player_phone")
+                  .select("id, stadium_id, stadium_name, start_time, end_time, status, total_price, deposit_paid, payment_method, payment_status, is_paid, player_name, player_phone", { count: "exact" })
                   .or(`owner_id.eq.${callerUser.id},stadium_id.in.(${stadiumIds.join(",")})`);
 
                 if (args.status && args.status !== "all") {
@@ -1236,10 +1245,11 @@ ${JSON.stringify(taskState, null, 2)}
                     .lt("start_time", todayWindow.dayEndIso);
                 }
 
-                const { data: bList } = await bQuery
+                const { data: bList, count: bCount, error: bErr } = await bQuery
                   .order("start_time", { ascending: ownerQueryType === "today" })
-                  .limit(10);
+                  .limit(50);
                 ownerBookings = bList || [];
+                ownerBookingsTotal = bCount ?? ownerBookings.length;
               }
 
               appAction = {
@@ -1251,7 +1261,9 @@ ${JSON.stringify(taskState, null, 2)}
               toolResponseData = {
                 owner_stadiums_count: (ownerStadiums || []).length,
                 owner_stadiums: ownerStadiums || [],
-                bookings_count: ownerBookings.length,
+                bookings_count: ownerBookingsTotal,
+                details_truncated: ownerBookingsTotal > ownerBookings.length,
+                count_definition: "العدد إجمالي ومطابق للفلاتر المطلوبة، وليس عدد الصفوف المعروضة فقط.",
                 recent_bookings: ownerBookings,
               };
 
