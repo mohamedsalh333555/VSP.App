@@ -2,11 +2,6 @@ name: VSP Shorebird Release
 
 on:
   workflow_dispatch:
-    inputs:
-      release_version:
-        description: "Release version (for example 1.0.0+1)"
-        required: true
-        type: string
 
 env:
   SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
@@ -16,36 +11,47 @@ jobs:
   release-android:
     name: Android Base Release
     runs-on: ubuntu-latest
-
     defaults:
       run:
         shell: bash
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-
       - name: Setup Shorebird
         uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
-
       - name: Validate Shorebird configuration
         run: |
           test -f shorebird.yaml
           test -n "${SHOREBIRD_TOKEN}"
           shorebird doctor
-
+      - name: Decode Android keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE }}
+        run: |
+          test -n "$KEYSTORE_B64"
+          echo "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/keystore.jks"
+      - name: Create Android key.properties
+        run: |
+          cat > "$GITHUB_WORKSPACE/android/key.properties" <<EOF
+          keyAlias=${{ secrets.KEYSTORE_ALIAS }}
+          keyPassword=${{ secrets.KEYSTORE_PASSWORD }}
+          storeFile=$GITHUB_WORKSPACE/keystore.jks
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          EOF
       - name: Shorebird Release
         uses: shorebirdtech/shorebird-release@v1
+        id: shorebird-release
         with:
           platform: android
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          args: "--build-name=${{ inputs.release_version }} --verbose"
+          args: "--verbose"
+      - name: Print release version
+        run: echo "Shorebird release: ${{ steps.shorebird-release.outputs.release-version }}"
