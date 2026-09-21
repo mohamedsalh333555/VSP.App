@@ -418,6 +418,38 @@ function isParticipantNumberContext(input: string, index: number, length: number
     /(?:انا و|أنا و|معايا|معاي|ومعايا|و\s*)$/.test(before);
 }
 
+const ARABIC_NUMBER_WORDS: Record<string, number> = {
+  "واحد": 1, "واحدة": 1, "اتنين": 2, "اثنين": 2, "اثنان": 2, "اتنين": 2,
+  "تلاتة": 3, "ثلاثة": 3, "اربعة": 4, "أربعة": 4, "خمسة": 5,
+  "ستة": 6, "سبعة": 7, "تمانية": 8, "ثمانية": 8, "تسعة": 9,
+  "عشرة": 10, "عشر": 10, "حداشر": 11, "احداشر": 11, "اتناشر": 12,
+  "اثناشر": 12, "تلتاشر": 13, "اربعتاشر": 14, "خمستاشر": 15,
+  "ستاشر": 16, "سبعتاشر": 17, "تمانتاشر": 18, "تمنتاشر": 18,
+  "تسعتاشر": 19, "عشرين": 20,
+};
+
+function parseParticipantNumberToken(input: string): number | null {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  const digit = normalized.match(/\b(\d{1,2})\b/);
+  if (digit) {
+    const value = Number(digit[1]);
+    if (value >= 1 && value <= 30) return value;
+  }
+  for (const [word, value] of Object.entries(ARABIC_NUMBER_WORDS)) {
+    if (normalized.includes(word)) return value;
+  }
+  return null;
+}
+
+function isBookingExecutionIntent(input: string): boolean {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase()).trim();
+
+  if (isBookingHowToQuestion(normalized)) return false;
+
+  return /(?:عايز|عايزه|عاوز|عاوزه|حابب|حابّه|حابه|محتاج|محتاجه|نفسي|ممكن|عايز اني|عايزك|عايزكلي|احجز|احجزل(?:ي|ه)|حجزلي|حجز لي|احجزه|احجزها|ثبت الحجز|أكد الحجز|اكد الحجز)/.test(normalized) &&
+    /(?:حجز|احجز|ملعب|ماتش|موعد|ميعاد)/.test(normalized);
+}
+
 function hasNearbyStadiumScope(input: string): boolean {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
   return /قريب مني|قريب عني|قريب|جنبى|جنبي|حواليا|عندي|هنا|في منطقتي|بالقرب مني/.test(normalized);
@@ -425,23 +457,23 @@ function hasNearbyStadiumScope(input: string): boolean {
 
 function extractGroupSize(input: string): number | null {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
-  let total: number | null = null;
 
-  const selfPlus = /(?:انا|أنا)\s*(?:و|معايا|معاي)\s*(\d{1,2})\s*(?:نفر|نفار|تنفار|شخص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
+  const selfPlus = /(?:انا|أنا)\s*(?:و|معايا|معاي|ومعايا|ومعاي)\s*([^،.\n]+)/.exec(normalized);
   if (selfPlus) {
-    const others = Number(selfPlus[1]);
-    if (others >= 1 && others <= 30) total = others + 1;
-  }
-
-  if (total == null) {
-    const direct = /(?:عدد|فيه|معايا|معاي|عددنا)?\s*(\d{1,2})\s*(?:نفر|نفار|تنفار|شخص|شخصا|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
-    if (direct) {
-      const count = Number(direct[1]);
-      if (count >= 1 && count <= 30) total = count;
+    const tail = selfPlus[1];
+    if (/(?:نفر|نفار|تنفار|شخص|شخصا|اشخاص|أشخاص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.test(tail)) {
+      const others = parseParticipantNumberToken(tail);
+      if (others != null && others >= 1 && others <= 30) return others + 1;
     }
   }
 
-  return total;
+  const direct = /([^،.\n]*?)\s*(?:نفر|نفار|تنفار|شخص|شخصا|اشخاص|أشخاص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
+  if (direct) {
+    const count = parseParticipantNumberToken(direct[1]);
+    if (count != null && count >= 1 && count <= 30) return count;
+  }
+
+  return null;
 }
 
 function isBookingHowToQuestion(input: string): boolean {
@@ -617,8 +649,7 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     next.requires_time_clarification = false;
   }
 
-  if (!bookingHowTo &&
-      /احجزلي|احجز لي|حجزلي|احجزه|احجزها|عايز احجز|عايزة احجز|ممكن تحجز|ممكن نحجز|ثبت الحجز|أكد الحجز|اكد الحجز/.test(normalizedMessage)) {
+  if (!bookingHowTo && isBookingExecutionIntent(userMessage)) {
     next.intent = "book_stadium";
   }
 
@@ -1136,23 +1167,31 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
-    // Deterministic booking-slot guard: ask for the next actionable slot only.
-    // "قريب مني" is a search scope, not a missing stadium the customer must name.
+    // Deterministic booking-slot guard: ask for ONE next actionable slot.
+    // The assistant chooses nearby stadiums; the customer should not be asked to name one.
     if (contextSnapshot.task_state?.intent === "book_stadium" &&
         !contextSnapshot.task_state?.confirmation_pending &&
         !contextSnapshot.task_state?.ready_for_execution) {
       const task = contextSnapshot.task_state || {};
       const missing = Array.isArray(task.missing_slots) ? task.missing_slots : [];
-      if (missing.includes("date") && missing.includes("time") && !missing.includes("stadium")) {
-        assistantReply = "تمام، الملعب القريب منك أنا أدوّرهولك. فاضل بس تحددلي اليوم والساعة اللي تناسبك.";
-        quickReplies = ["النهارده الساعة 10 بالليل", "بكرة الساعة 10 بالليل"];
-        handledByGemini = true;
-      } else if (missing.includes("date") && !missing.includes("time")) {
-        assistantReply = "تمام، الساعة وصلت. قولّي اليوم بس: النهارده ولا بكرة؟";
+      const groupSize = Number(task.group_size || 0);
+      const groupText = groupSize > 0 ? " وعددكم " + groupSize + " لاعب." : "";
+
+      if (missing.includes("date")) {
+        const hasTime = Array.isArray(task.preferred_times) && task.preferred_times.length > 0;
+        const timeText = hasTime
+          ? " الساعة " + task.preferred_times.map((t: string) => formatSlotTimeForUser(cairoLocalToUtcIso(
+              2026, 1, 1, Number(t.substring(0, 2)), Number(t.substring(3, 5) || 0)
+            ))).join(" أو ")
+          : "";
+        assistantReply =
+          "تمام، فهمت إنك عايز تحجز ملعب قريب منك" + timeText + "." + groupText +
+          " نبدأ باليوم: تحب النهارده ولا يوم تاني؟";
         quickReplies = ["النهارده", "بكرة"];
         handledByGemini = true;
-      } else if (missing.includes("time") && !missing.includes("date")) {
-        assistantReply = "تمام، اليوم وصل. قولّي الساعة المناسبة ليك؟";
+      } else if (missing.includes("time")) {
+        assistantReply =
+          "تمام، اليوم اتحدد." + groupText + " الساعة كام تحب نبدأ ندورلك عليها؟";
         quickReplies = ["8 بالليل", "9 بالليل", "10 بالليل"];
         handledByGemini = true;
       }
