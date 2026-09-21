@@ -1832,12 +1832,29 @@ ${JSON.stringify(taskState, null, 2)}
                 assistantReply = `يا كابتن، ملاعبك الحالية (${oStadiums.map((s: any) => s.name).join("، ")})، ولكن لا توجد أي حجوزات مسجلة لها حالياً. أول ما يتم أي حجز هيظهرلك فوراً في جدول الحجوزات!`;
               }
             } else if (funcName === "getOwnerFinancialInsights") {
-              const avail = toolResponseData?.available_balance ?? 0;
-              const cash = toolResponseData?.cash_revenue ?? 0;
-              const onlineRev = toolResponseData?.total_online_revenue ?? 0;
-              const debt = toolResponseData?.accumulated_cash_debt ?? 0;
-              const count = toolResponseData?.total_completed_bookings ?? 0;
-              assistantReply = `يا كابتن، دي بياناتك المالية:\n• الرصيد الإلكتروني المتاح للسحب: ${avail} ج.م\n• إجمالي الكاش المحصل بالملعب: ${cash} ج.م\n• إجمالي الإيرادات الأونلاين: ${onlineRev} ج.م\n• مديونية عمولة الكاش: ${debt} ج.م\n• عدد الحجوزات المكتملة: ${count}`;
+              if (toolResponseData?.needs_clarification) {
+                assistantReply = toolResponseData.message || "حددلي المقصود والفترة عشان أطلعلك الرقم الصحيح.";
+              } else if (toolResponseData?.success === false) {
+                assistantReply = "مش هديك رقم تقريبي. " + (toolResponseData.error || toolResponseData.message || "تعذر استخراج الرقم بدقة حالياً.");
+              } else if (toolResponseData?.fact_type) {
+                const fact = toolResponseData.fact_type;
+                const value = Number(toolResponseData.value || 0);
+                const label = fact === "available_balance" ? "الرصيد المتاح للسحب حالياً" :
+                  fact === "cash_debt" ? "مديونية عمولة الكاش الحالية" :
+                  fact === "completed_booking_value" ? "قيمة الحجوزات المكتملة والمدفوعة" :
+                  fact === "completed_booking_count" ? "عدد الحجوزات المكتملة والمدفوعة" :
+                  fact === "cash_collected" ? "الكاش المحصل من الحجوزات المكتملة والمدفوعة" :
+                  fact === "online_gross" ? "قيمة الحجوزات الأونلاين المكتملة والمدفوعة قبل الرسوم والعمولة" :
+                  fact === "online_net" ? "صافي الحجوزات الأونلاين المكتملة والمدفوعة بعد الرسوم والعمولة" :
+                  fact === "vsp_commission" ? "عمولة VSP على الحجوزات الأونلاين المكتملة والمدفوعة" :
+                  "رسوم بوابة الدفع على الحجوزات الأونلاين المكتملة والمدفوعة";
+                const suffix = fact === "completed_booking_count" ? " حجز" : " ج.م";
+                const scope = toolResponseData.stadium_name ? " — ملعب " + toolResponseData.stadium_name : " — كل ملاعبك";
+                const period = toolResponseData.period_label ? " — " + toolResponseData.period_label : "";
+                assistantReply = label + ": " + value.toLocaleString("ar-EG", { maximumFractionDigits: 2 }) + suffix + scope + period + ".";
+              } else {
+                assistantReply = "لم أجد تعريفاً رقمياً مؤكداً للطلب، لذلك لن أعطيك رقماً بالتخمين.";
+              }
             } else if (!assistantReply) {
               if (funcName === "get1v1Leaderboard") {
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
