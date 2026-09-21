@@ -209,7 +209,7 @@ const checkStadiumAvailabilityTool = {
 // 11. Tool: createBookingFromChat
 const createBookingFromChatTool = {
   name: "createBookingFromChat",
-  description: "بدء إجراءات حجز الملعب مباشرة من داخل المحادثة بناءً على رغبة المستخدم. تفحص ما إذا كان الملعب يتطلب عربون إلكتروني مسبقاً أم يقبل الدفع كاش كاملاً، وتقفل الموعد ذرياً (Atomic Lock) وتوجه المستخدم لإتمام الدفع أو تأكيد الحجز. استدعِ هذه الأداة فوراً عندما يطلب المستخدم صراحة حجز الملعب أو تأكيد الحجز لموعد محدد.",
+  description: "إدارة خطوة الحجز من داخل المحادثة. الطلب الأول يجهّز موعداً للتأكيد ولا ينشئ حجزاً، ولا يسمح بالتنفيذ إلا بعد وجود confirmation_pending وتأكيد صريح من المستخدم مثل أيوه/تمام/أكد الحجز. عند التنفيذ استخدم مسار الحجز الذري الحالي.",
   parameters: {
     type: "OBJECT",
     properties: {
@@ -332,7 +332,11 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
-  if (hasDateCue(userMessage)) next.date = parseTargetDate(normalizeArabicDigits(userMessage)).targetDateStr;
+  const correctionMatches = [...normalizedMessage.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
+  const effectiveMessage = correctionMatches.length > 0
+    ? normalizedMessage.slice(Math.max(...correctionMatches))
+    : normalizedMessage;
+  if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
   const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase();
   const preferredTimes = extractPreferredTimes(userMessage);
   const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(normalizedMessage);
@@ -1247,6 +1251,25 @@ ${JSON.stringify(taskState, null, 2)}
               assistantReply = geminiData2.candidates?.[0]?.content?.parts?.[0]?.text || "";
             }
 
+            // Smart Confirmation: once availability is known, show a concise booking summary instead of booking or asking from scratch.
+            if (funcName === "checkStadiumAvailability") {
+              const pending = contextSnapshot.task_state?.confirmation_pending;
+              if (pending && toolResponseData?.available_slots_count > 0 && contextSnapshot.task_state?.intent === "book_stadium") {
+                const proposed = pending.start_time;
+                const fallback = Array.isArray(contextSnapshot.task_state?.preferred_times) && contextSnapshot.task_state.preferred_times.length > 1
+                  ? " لو الموعد الأول مش متاح، أستخدم البديل اللي طلبته."
+                  : "";
+                assistantReply = "تمام. تقصد نحجز في " + pending.stadium_name + "، " + formatDateForUser(pending.date) + " الساعة " + formatSlotTimeForUser(proposed) + " لمدة ساعة؟" + fallback + " أأكد الحجز؟";
+              } else if (toolResponseData?.needs_clarification && toolResponseData?.missing_slot === "time_period") {
+                assistantReply = toolResponseData.message || "تقصد الساعة الصبح ولا بالليل؟";
+              }
+            } else if (funcName === "createBookingFromChat" && toolResponseData?.needs_confirmation) {
+              const pending = contextSnapshot.task_state?.confirmation_pending;
+              if (pending) {
+                assistantReply = "تمام. تقصد نحجز في " + pending.stadium_name + "، " + formatDateForUser(pending.date) + " الساعة " + formatSlotTimeForUser(pending.start_time) + " لمدة ساعة؟ أأكد الحجز؟";
+              }
+            }
+
             // 🛡️ Zero-Hallucination Guard: When DB returns 0 rows, strictly prevent any hallucinated text!
             if (funcName === "searchTournaments" && tournamentResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
@@ -1402,6 +1425,7 @@ ${JSON.stringify(taskState, null, 2)}
         action: appAction,
         ui_metadata: persistedUiMetadata,
         task_state: contextSnapshot.task_state || {},
+        quick_replies: quickReplies,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
