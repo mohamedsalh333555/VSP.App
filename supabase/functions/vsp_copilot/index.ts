@@ -1964,6 +1964,43 @@ ${JSON.stringify(taskState, null, 2)}
             }
 
 
+            // Deterministic response for chained discovery + availability.
+            // When the user already supplied a schedule constraint, never stop at
+            // "I found a stadium" and ask another unnecessary question.
+            if (funcName === "searchStadiums" && toolResponseData?.schedule_checked === true) {
+              const matches = Array.isArray(toolResponseData.schedule_matches)
+                ? toolResponseData.schedule_matches
+                : [];
+              const task = contextSnapshot.task_state || {};
+              if (matches.length === 0) {
+                assistantReply =
+                  "دورتلك في الملاعب القريبة المتاحة، ومفيش ملعب متاح في الوقت اللي طلبته. تحب أجرب وقت قريب منه؟";
+                appAction = null;
+                quickReplies = ["9 بالليل", "11 بالليل"];
+              } else if (matches.length === 1 && task.confirmation_pending) {
+                const pending = task.confirmation_pending;
+                assistantReply =
+                  "تمام. لقيتلك " + pending.stadium_name + " متاح " +
+                  formatSlotTimeForUser(pending.start_time) + " النهارده. " +
+                  "نحجزه لمدة ساعة؟ أأكد الحجز؟";
+              } else if (matches.length === 1) {
+                const match = matches[0];
+                const slot = Array.isArray(match.available_slots) ? match.available_slots[0] : null;
+                const slotText = slot ? formatSlotTimeForUser(slot.start_time) : "في الوقت المطلوب";
+                assistantReply =
+                  "تمام، لقيتلك " + match.stadium_name + " متاح " + slotText +
+                  " بسعر " + Number(match.price_per_hour || 0).toLocaleString("ar-EG") +
+                  " ج.م للساعة.";
+                quickReplies = ["احجزه"];
+              } else {
+                const names = matches.slice(0, 4).map((m: any) => m.stadium_name);
+                assistantReply =
+                  "لقيتلك " + matches.length.toLocaleString("ar-EG") +
+                  " ملاعب متاحة في الوقت اللي طلبته. اختار واحد منهم:";
+                quickReplies = names;
+              }
+            }
+
             // Second turn for natural conversational response.
             // Reconstruct the model's tool-call part using the deterministic function
             // name/args so the following functionResponse always matches the call.
