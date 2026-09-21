@@ -2209,9 +2209,14 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
                 quickReplies = ["احجزه"];
               } else {
                 const names = matches.slice(0, 4).map((m: any) => m.stadium_name);
+                const count = matches.length;
+                const countText =
+                  count === 1 ? "ملعب واحد" :
+                  count === 2 ? "ملعبين" :
+                  count.toLocaleString("ar-EG") + " ملاعب";
                 assistantReply =
-                  "لقيتلك " + matches.length.toLocaleString("ar-EG") +
-                  " ملاعب متاحة في الوقت اللي طلبته. اختار واحد منهم:";
+                  "لقيتلك " + countText +
+                  " متاح/ة في الوقت اللي طلبته. اختار اللي يناسبك:";
                 quickReplies = names;
               }
             }
@@ -2372,7 +2377,7 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
                 assistantReply = "يا كابتن، ده ترتيب قمة دوري الـ 1v1، والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):";
               } else if (funcName === "searchStadiums") {
                 const targetGov = (args.governorate || userGov).toString().trim();
-                assistantReply = `يا كابتن! دي الملاعب المتاحة على VSP في ${targetGov} للحجز الفوري:`;
+                assistantReply = `يا كابتن! دي الملاعب اللي لقيتها في ${targetGov} للحجز:`;
               } else if (funcName === "searchTournaments") {
                 assistantReply = "لقيتلك البطولات النشطة وجاهزة للتسجيل يا كابتن:";
               } else if (funcName === "getOpenMatches") {
@@ -2380,7 +2385,7 @@ ${JSON.stringify({ decision: dialogueDecision, contract: responseContract }, nul
               } else if (funcName === "updateUserProfile") {
                 assistantReply = "تم يا كابتن! عدلتلك بياناتك في البروفايل بنجاح ⚽";
               } else if (funcName === "getUserBookingsAndRefunds") {
-                assistantReply = "يا كابتن، راجعتلك سجل حجوزاتك ومستحقاتك وكل العمليات مسجلة ومضمونة في VSP:";
+                assistantReply = "يا كابتن، راجعتلك سجل حجوزاتك ومستحقاتك.";
               } else if (funcName === "getOwnerStadiumsAndBookings") {
                 assistantReply = "يا كابتن، دي تفاصيل ملاعبك وحجوزاتك المسجلة في التطبيق:";
               } else if (funcName === "checkStadiumAvailability") {
