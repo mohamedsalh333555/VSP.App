@@ -50,20 +50,35 @@ class CopilotConversation {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Map<String, dynamic> contextSnapshot;
+  final int messageCount;
 
   const CopilotConversation({
     required this.id,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    this.contextSnapshot = const {},
+    this.messageCount = 0,
   });
 
   factory CopilotConversation.fromMap(Map<String, dynamic> map) {
+    var messageCount = 0;
+    final rawCounts = map['copilot_messages'];
+    if (rawCounts is List && rawCounts.isNotEmpty && rawCounts.first is Map) {
+      messageCount = ((rawCounts.first as Map)['count'] as num?)?.toInt() ?? 0;
+    } else if (map['message_count'] is num) {
+      messageCount = (map['message_count'] as num).toInt();
+    }
+
+    final rawContext = map['context_snapshot'];
     return CopilotConversation(
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString() ?? 'محادثة جديدة',
       createdAt: DateTime.tryParse(map['created_at']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(map['updated_at']?.toString() ?? '') ?? DateTime.now(),
+      contextSnapshot: rawContext is Map ? Map<String, dynamic>.from(rawContext) : const {},
+      messageCount: messageCount,
     );
   }
 }
@@ -182,6 +197,7 @@ class CopilotMessage {
   final List<CopilotTournamentSummary> tournamentResults;
   final List<CopilotOpenMatchSummary> openMatchResults;
   final CopilotAction? action;
+  final Map<String, dynamic> uiMetadata;
 
   const CopilotMessage({
     required this.id,
@@ -193,6 +209,7 @@ class CopilotMessage {
     this.tournamentResults = const [],
     this.openMatchResults = const [],
     this.action,
+    this.uiMetadata = const {},
   });
 
   bool get isUser => sender == 'user';
@@ -237,10 +254,14 @@ class CopilotMessage {
   }
 
   factory CopilotMessage.fromMap(Map<String, dynamic> map) {
-    final rawStadiums = map['stadium_results'] as List<dynamic>? ?? [];
-    final rawTournaments = map['tournament_results'] as List<dynamic>? ?? map['tournaments'] as List<dynamic>? ?? [];
-    final rawMatches = map['open_matches'] as List<dynamic>? ?? [];
-    final rawAction = map['action'] is Map<String, dynamic> ? map['action'] as Map<String, dynamic> : null;
+    final rawUi = map['ui_metadata'] is Map
+        ? Map<String, dynamic>.from(map['ui_metadata'] as Map)
+        : <String, dynamic>{};
+    final rawStadiums = map['stadium_results'] as List<dynamic>? ?? (rawUi['stadiums'] as List<dynamic>?) ?? [];
+    final rawTournaments = map['tournament_results'] as List<dynamic>? ?? map['tournaments'] as List<dynamic>? ?? (rawUi['tournaments'] as List<dynamic>?) ?? [];
+    final rawMatches = map['open_matches'] as List<dynamic>? ?? (rawUi['open_matches'] as List<dynamic>?) ?? [];
+    final rawActionValue = map['action'] ?? rawUi['action'];
+    final rawAction = rawActionValue is Map ? Map<String, dynamic>.from(rawActionValue) : null;
 
     return CopilotMessage(
       id: map['id']?.toString() ?? '',
@@ -261,6 +282,7 @@ class CopilotMessage {
           .map((m) => CopilotOpenMatchSummary.fromMap(m))
           .toList(),
       action: rawAction != null ? CopilotAction.fromMap(rawAction) : null,
+      uiMetadata: rawUi,
     );
   }
 }
