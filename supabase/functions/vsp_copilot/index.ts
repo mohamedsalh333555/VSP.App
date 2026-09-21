@@ -256,6 +256,79 @@ const allCopilotTools = [
   createBookingFromChatTool,
 ];
 
+const COPILOT_ROLE_CAPABILITIES: Record<string, Set<string>> = {
+  player: new Set([
+    "searchStadiums",
+    "searchTournaments",
+    "get1v1Leaderboard",
+    "getOpenMatches",
+    "executeAppAction",
+    "updateUserProfile",
+    "getUserBookingsAndRefunds",
+    "checkStadiumAvailability",
+    "createBookingFromChat",
+  ]),
+  owner: new Set([
+    "executeAppAction",
+    "updateUserProfile",
+    "getOwnerStadiumsAndBookings",
+    "getOwnerFinancialInsights",
+  ]),
+  admin: new Set(allCopilotTools.map((tool: any) => tool.name)),
+  co_founder: new Set(allCopilotTools.map((tool: any) => tool.name)),
+};
+
+function normalizeCopilotRole(role: string | null | undefined): string {
+  const value = (role || "player").toString().trim().toLowerCase();
+  if (value === "co-founder" || value === "cofounder") return "co_founder";
+  if (value === "administrator") return "admin";
+  return value || "player";
+}
+
+function isCopilotToolAllowed(role: string | null | undefined, toolName: string): boolean {
+  const normalizedRole = normalizeCopilotRole(role);
+  return COPILOT_ROLE_CAPABILITIES[normalizedRole]?.has(toolName) === true;
+}
+
+function isCopilotRouteAllowed(role: string | null | undefined, route: string): boolean {
+  const normalizedRole = normalizeCopilotRole(role);
+  const value = (route || "").trim().toLowerCase();
+
+  if (normalizedRole === "player") {
+    return [
+      "/player",
+      "/tournaments",
+      "/1v1",
+      "/my-team",
+      "/bookings",
+      "/profile",
+      "/settings",
+      "/notifications",
+      "/copilot",
+    ].some((allowed) => value === allowed || value.startsWith(allowed + "/"));
+  }
+
+  if (normalizedRole === "owner") {
+    return [
+      "/owner",
+      "/owner/dashboard",
+      "/bookings",
+      "/profile",
+      "/settings",
+      "/notifications",
+      "/copilot",
+      "/ledger",
+      "/owner/ledger",
+      "/subscription",
+      "/owner/subscription",
+      "/owner/inbox",
+      "/owner/chat",
+    ].some((allowed) => value === allowed || value.startsWith(allowed + "/"));
+  }
+
+  return true;
+}
+
 function getCairoParts(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Cairo",
@@ -852,8 +925,15 @@ ${JSON.stringify(taskState, null, 2)}
                     }
                   : (functionCallPart.functionCall.args || {}));
             let toolResponseData: any = {};
+            const toolExecutionBlocked = !isCopilotToolAllowed(userProfile?.role, funcName);
 
-            if (funcName === "searchStadiums") {
+            if (toolExecutionBlocked) {
+              toolResponseData = {
+                success: false,
+                code: "CAPABILITY_DENIED",
+                message: "الإجراء ده مش متاح لنوع الحساب ده.",
+              };
+            } else if (funcName === "searchStadiums") {
               let governorate = (args.governorate || "").toString().trim();
               if (!governorate || governorate.includes("قريب") || governorate.includes("هنا") || governorate.includes("عندي")) {
                 governorate = userGov;
@@ -945,12 +1025,21 @@ ${JSON.stringify(taskState, null, 2)}
               toolResponseData = { open_matches: openMatchResults };
 
             } else if (funcName === "executeAppAction") {
-              appAction = {
-                action_type: args.action_type || "NAVIGATE",
-                route: args.route || "/tournaments",
-                label: args.label || "فتح الشاشة",
-              };
-              toolResponseData = { status: "ready_to_navigate", action: appAction };
+              const requestedRoute = (args.route || "/tournaments").toString().trim();
+              if (!isCopilotRouteAllowed(userProfile?.role, requestedRoute)) {
+                toolResponseData = {
+                  success: false,
+                  code: "CAPABILITY_DENIED",
+                  message: "الشاشة دي مش متاحة لنوع الحساب ده.",
+                };
+              } else {
+                appAction = {
+                  action_type: args.action_type || "NAVIGATE",
+                  route: requestedRoute,
+                  label: args.label || "فتح الشاشة",
+                };
+                toolResponseData = { status: "ready_to_navigate", action: appAction };
+              }
 
             } else if (funcName === "updateUserProfile") {
               const updates: any = { updated_at: new Date().toISOString() };
@@ -1296,8 +1385,25 @@ ${JSON.stringify(taskState, null, 2)}
                     if (!targetStadium) {
                       toolResponseData = { success: false, error: "تعذر استرجاع بيانات الملعب للحجز." };
                     } else {
-                      const needsDeposit = targetStadium.needs_deposit || false;
-                      const paymentMethod = needsDeposit ? "paymob" : "cash";
+                      const { data: activeCashBookings, error: activeCashErr } = await supabase
+                        .from("bookings")
+                        .select("id")
+                        .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
+                        .eq("payment_method", "cash")
+                        .eq("is_paid", false)
+                        .in("status", ["pending", "confirmed"])
+                        .gt("end_time", new Date().toISOString())
+                        .limit(1);
+
+                      const hasActiveCashBooking =
+                        !activeCashErr &&
+                        Array.isArray(activeCashBookings) &&
+                        activeCashBookings.length > 0;
+                      const needsDeposit =
+                        !hasActiveCashBooking && (targetStadium.needs_deposit || false);
+                      const paymentMethod =
+                        hasActiveCashBooking || needsDeposit ? "paymob" : "cash";
+
                       const { data: bookingResult, error: bookingErr } = await supabase.rpc("create_booking_atomic", {
                         p_stadium_id: targetStadium.id,
                         p_user_id: callerUser.id,
@@ -1320,7 +1426,23 @@ ${JSON.stringify(taskState, null, 2)}
                         delete task.confirmation_pending;
                         contextSnapshot.last_booking_id = bookingId;
                         contextSnapshot.last_booked_stadium = targetStadium.name;
-                        if (needsDeposit) {
+                        if (hasActiveCashBooking) {
+                          appAction = {
+                            action_type: "OPEN_PAYMENT",
+                            route: "/checkout",
+                            label: "إتمام الدفع الكامل أونلاين 💳",
+                            params: {
+                              booking_id: bookingId,
+                              stadium_id: targetStadium.id,
+                              stadium_name: targetStadium.name,
+                              total_price: targetStadium.price_per_hour,
+                              deposit_amount: 0,
+                              start_time: startTime,
+                              end_time: endTime,
+                              force_full_payment: true,
+                            },
+                          };
+                        } else if (needsDeposit) {
                           appAction = {
                             action_type: "OPEN_PAYMENT",
                             route: "/checkout",
@@ -1351,8 +1473,13 @@ ${JSON.stringify(taskState, null, 2)}
                           end_time: endTime,
                           total_price: targetStadium.price_per_hour,
                           deposit_required: needsDeposit,
-                          deposit_amount: targetStadium.deposit_amount || 0,
-                          message: needsDeposit ? "تم تجهيز الحجز. أكمل دفع العربون لتأكيده." : "تم تأكيد الحجز بنجاح.",
+                          deposit_amount: needsDeposit ? (targetStadium.deposit_amount || 0) : 0,
+                          full_payment_required: hasActiveCashBooking || !needsDeposit,
+                          message: needsDeposit
+                            ? "تم تجهيز الحجز. أكمل دفع العربون لتأكيده."
+                            : (hasActiveCashBooking
+                              ? "تم تجهيز الحجز الثاني، ويجب سداده بالكامل أونلاين بسبب وجود حجز كاش قائم."
+                              : "تم تأكيد الحجز بنجاح."),
                         };
                       }
                     }
