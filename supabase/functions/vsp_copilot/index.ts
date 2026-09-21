@@ -180,7 +180,7 @@ const getOwnerFinancialInsightsTool = {
     properties: {
       metric: {
         type: "STRING",
-        description: "available_balance، cash_debt، completed_booking_value، completed_booking_count، cash_collected، online_gross، online_net، vsp_commission، gateway_fees",
+        description: "available_balance، owner_online_earnings، completed_booking_value، completed_booking_count، cash_collected، owner_total_revenue",
       },
       period: {
         type: "STRING",
@@ -649,11 +649,9 @@ function detectOwnerFinancialMetric(input: string): string | null {
   const t = ownerFactNorm(input);
   const m: string[] = [];
   if (/الرصيد|رصيدي|المتاح للسحب|متاح للسحب|أقدر اسحب|اقدر اسحب/.test(t)) m.push("available_balance");
-  if (/مديون|مديونيتي|عليا|عليّا|عمولة الكاش|مديونية الكاش/.test(t)) m.push("cash_debt");
   if (/الكاش|كاش|نقدي|نقد|التحصيل الكاش|الكاش المحصل/.test(t)) m.push("cash_collected");
-  if (/اونلاين|أونلاين|الكتروني|إلكتروني/.test(t)) m.push(/صافي|بعد الخصم|بعد الرسوم/.test(t) ? "online_net" : "online_gross");
-  if (/عمولة فسب|عمولة vsp|عمولة المنصة/.test(t)) m.push("vsp_commission");
-  if (/رسوم البوابة|رسوم بوابة الدفع|gateway/.test(t)) m.push("gateway_fees");
+  if (/اونلاين|أونلاين|الكتروني|إلكتروني/.test(t)) m.push("owner_online_earnings");
+  if (/إجمالي التحصيل|اجمالي التحصيل|كل الإيراد|كل التحصيل/.test(t)) m.push("owner_total_revenue");
   if (/عدد الحجوزات|كام حجز|كم حجز|عدد الحجز/.test(t)) m.push("completed_booking_count");
   if (/قيمة الحجوزات|اجمالي قيمة الحجوزات|إجمالي قيمة الحجوزات/.test(t)) m.push("completed_booking_value");
   const u = [...new Set(m)];
@@ -702,8 +700,8 @@ function buildOwnerPrecisionClarification(userMessage: string) {
   if (financialSignal) {
     const metric = detectOwnerFinancialMetric(userMessage);
     const period = detectOwnerFinancialPeriod(userMessage);
-    const currentOnly = metric === "available_balance" || metric === "cash_debt";
-    if (!metric) return { needs_clarification: true, message: "عشان أديك رقم صحيح من غير تخمين: تقصد الرصيد المتاح، ولا الكاش المحصل، ولا قيمة الأونلاين، ولا صافي الأونلاين، ولا عمولة VSP؟", quick_replies: ["الرصيد المتاح", "الكاش المحصل", "الأونلاين", "صافي الأونلاين"] };
+    const currentOnly = metric === "available_balance";
+    if (!metric) return { needs_clarification: true, message: "عشان أديك رقم صحيح من غير تخمين: تقصد الرصيد المتاح، ولا الكاش المحصل، ولا إيراد الأونلاين، ولا إجمالي التحصيل؟", quick_replies: ["الرصيد المتاح", "الكاش المحصل", "إيراد الأونلاين", "إجمالي التحصيل"] };
     if (!currentOnly && !period) return { needs_clarification: true, message: "حددلي الفترة عشان أطلع لك الرقم الدقيق: النهارده، آخر 7 أيام، من أول الشهر، ولا إجمالي السجل؟", quick_replies: ["النهارده", "آخر 7 أيام", "من أول الشهر", "إجمالي السجل"] };
   }
   if (/كام حجز|كم حجز|عدد الحجوزات|حجوزات/.test(t) && !detectOwnerFinancialPeriod(userMessage) && !/النهارده|النهاردة|اليوم|بكرة|بكره|غدا|غداً|امبارح|مبارح|الأسبوع|الاسبوع|الشهر|آخر 7 أيام|اخر 7 ايام/.test(t))
@@ -1329,8 +1327,8 @@ ${JSON.stringify(taskState, null, 2)}
             } else if (funcName === "getOwnerFinancialInsights") {
               const ownerMetric = detectOwnerFinancialMetric(userMessage) || (args.metric || "").toString().trim().toLowerCase();
               const ownerPeriod = detectOwnerFinancialPeriod(userMessage) || (args.period || "").toString().trim().toLowerCase();
-              const currentMetric = ownerMetric === "available_balance" || ownerMetric === "cash_debt";
-              const validOwnerMetrics = ["available_balance","cash_debt","completed_booking_value","completed_booking_count","cash_collected","online_gross","online_net","vsp_commission","gateway_fees"];
+              const currentMetric = ownerMetric === "available_balance";
+              const validOwnerMetrics = ["available_balance","owner_online_earnings","completed_booking_value","completed_booking_count","cash_collected","owner_total_revenue"];
               const ownerMetricValid = validOwnerMetrics.includes(ownerMetric);
               const ownerPeriodRange = resolveOwnerFinancialRange(ownerPeriod);
               const ownerNeedsHistoricalFacts = ownerMetricValid && !currentMetric && !!ownerPeriodRange;
@@ -1353,7 +1351,7 @@ ${JSON.stringify(taskState, null, 2)}
                 if (finErr || !finSummary?.success) {
                   toolResponseData = { success: false, code: "FINANCIAL_SOURCE_ERROR", error: finErr?.message || finSummary?.error || "تعذر قراءة الرقم المالي حالياً." };
                 } else {
-                  const currentValue = ownerMetric === "available_balance" ? finSummary?.available_balance : finSummary?.accumulated_cash_debt;
+                  const currentValue = finSummary?.available_balance;
                   toolResponseData = { success: true, fact_type: ownerMetric, value: Number(currentValue || 0), metric_definition: ownerMetric === "available_balance" ? "الرصيد المتاح للسحب حالياً بعد التسويات والمدفوعات المعلقة والمديونية القائمة." : "مديونية عمولة الكاش الحالية المسجلة على حساب المالك.", period_label: "الوضع الحالي", as_of_cairo_date: cairoDateKey(), stadium_id: null, stadium_name: null };
                 }
               } else if (ownerNeedsHistoricalFacts) {
@@ -1381,8 +1379,20 @@ ${JSON.stringify(taskState, null, 2)}
                 if (factsErr || !facts?.success) {
                   toolResponseData = { success: false, code: "FINANCIAL_SOURCE_ERROR", error: factsErr?.message || facts?.message || "تعذر قراءة الأرقام المالية حالياً." };
                 } else {
-                  const values = { completed_booking_value: facts.completed_booking_value, completed_booking_count: facts.completed_booking_count, cash_collected: facts.completed_cash_collected, online_gross: facts.completed_online_gross, online_net: facts.completed_online_net, vsp_commission: facts.completed_online_vsp_commission, gateway_fees: facts.completed_online_gateway_fees };
-                  const definitions = { completed_booking_value: "قيمة الحجوزات المكتملة والمدفوعة خلال الفترة، قبل الرسوم والعمولة.", completed_booking_count: "عدد الحجوزات المكتملة والمدفوعة خلال الفترة.", cash_collected: "قيمة الكاش المحصل من الحجوزات المكتملة والمدفوعة خلال الفترة.", online_gross: "قيمة الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة قبل رسوم بوابة الدفع وعمولة VSP.", online_net: "صافي قيمة الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة بعد رسوم بوابة الدفع وعمولة VSP.", vsp_commission: "عمولة VSP على الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة.", gateway_fees: "رسوم بوابة الدفع على الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة." };
+                  const values = {
+                    completed_booking_value: facts.completed_booking_value,
+                    completed_booking_count: facts.completed_booking_count,
+                    cash_collected: facts.completed_cash_collected,
+                    owner_online_earnings: facts.completed_online_gross,
+                    owner_total_revenue: Number(facts.completed_online_gross || 0) + Number(facts.completed_cash_collected || 0),
+                  };
+                  const definitions = {
+                    completed_booking_value: "قيمة الحجوزات المكتملة والمدفوعة خلال الفترة.",
+                    completed_booking_count: "عدد الحجوزات المكتملة والمدفوعة خلال الفترة.",
+                    cash_collected: "قيمة الكاش المحصل من الحجوزات المكتملة والمدفوعة خلال الفترة.",
+                    owner_online_earnings: "إيراد المالك من الحجوزات الأونلاين المكتملة والمدفوعة خلال الفترة، بكامل قيمة الحجز دون خصم عمولة من المالك.",
+                    owner_total_revenue: "إجمالي تحصيل المالك من الحجوزات المكتملة والمدفوعة خلال الفترة: أونلاين + كاش، دون خصم عمولة من المالك.",
+                  };
                   toolResponseData = { success: true, fact_type: ownerMetric, value: Number(values[ownerMetric] || 0), metric_definition: definitions[ownerMetric], period_label: ownerPeriodRange.label, period_start: ownerPeriodRange.start, period_end: ownerPeriodRange.end, as_of_cairo_date: cairoDateKey(), stadium_id: facts.stadium_id, stadium_name: facts.stadium_name };
                 }
               }
@@ -1923,14 +1933,11 @@ ${JSON.stringify(taskState, null, 2)}
                 const fact = toolResponseData.fact_type;
                 const value = Number(toolResponseData.value || 0);
                 const label = fact === "available_balance" ? "الرصيد المتاح للسحب حالياً" :
-                  fact === "cash_debt" ? "مديونية عمولة الكاش الحالية" :
+                  fact === "owner_online_earnings" ? "إيراد المالك من الحجوزات الأونلاين المكتملة والمدفوعة" :
+                  fact === "owner_total_revenue" ? "إجمالي تحصيل المالك من الحجوزات المكتملة والمدفوعة" :
                   fact === "completed_booking_value" ? "قيمة الحجوزات المكتملة والمدفوعة" :
                   fact === "completed_booking_count" ? "عدد الحجوزات المكتملة والمدفوعة" :
-                  fact === "cash_collected" ? "الكاش المحصل من الحجوزات المكتملة والمدفوعة" :
-                  fact === "online_gross" ? "قيمة الحجوزات الأونلاين المكتملة والمدفوعة قبل الرسوم والعمولة" :
-                  fact === "online_net" ? "صافي الحجوزات الأونلاين المكتملة والمدفوعة بعد الرسوم والعمولة" :
-                  fact === "vsp_commission" ? "عمولة VSP على الحجوزات الأونلاين المكتملة والمدفوعة" :
-                  "رسوم بوابة الدفع على الحجوزات الأونلاين المكتملة والمدفوعة";
+                  "الكاش المحصل من الحجوزات المكتملة والمدفوعة";
                 const suffix = fact === "completed_booking_count" ? " حجز" : " ج.م";
                 const scope = toolResponseData.stadium_name ? " — ملعب " + toolResponseData.stadium_name : " — كل ملاعبك";
                 const period = toolResponseData.period_label ? " — " + toolResponseData.period_label : "";
