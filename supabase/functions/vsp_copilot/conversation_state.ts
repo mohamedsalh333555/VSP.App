@@ -106,12 +106,13 @@ export function hydrateConversationState(rawSnapshot: any, userRole: "player" | 
     return createInitialConversationState(userRole);
   }
 
-  // Check if it already has our new schema
-  if (rawSnapshot.version && rawSnapshot.stadium && rawSnapshot.date) {
+  // Check if it has conversation_state property or direct schema
+  const source = rawSnapshot.conversation_state || rawSnapshot;
+  if (source.version && source.stadium && source.date) {
     return {
       ...createInitialConversationState(userRole),
-      ...rawSnapshot,
-      version: (rawSnapshot.version || 1) + 1,
+      ...source,
+      version: (source.version || 1) + 1,
       updated_at: new Date().toISOString(),
     };
   }
@@ -119,6 +120,10 @@ export function hydrateConversationState(rawSnapshot: any, userRole: "player" | 
   // Hydrate from legacy context_snapshot / task_state
   const state = createInitialConversationState(userRole);
   const task = rawSnapshot.task_state || {};
+
+  if (task.duration_hours) {
+    state.duration_hours = Number(task.duration_hours);
+  }
 
   if (task.intent === "book_stadium" || task.intent === "booking") {
     state.active_task = "booking";

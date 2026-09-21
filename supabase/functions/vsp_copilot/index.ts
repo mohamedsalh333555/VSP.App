@@ -234,7 +234,13 @@ serve(async (req: Request) => {
     // Safe Deterministic Fallback if Gemini response is empty or failed
     if (!assistantReply) {
       const fallback = generateDeterministicResponse(nextState, toolPlan, toolResult);
-      assistantReply = fallback.message;
+      const fallbackCheck = validateAssistantResponseFacts(fallback.message, nextState, toolPlan, toolResult);
+      if (fallbackCheck.isValid) {
+        assistantReply = fallback.message;
+      } else {
+        console.error("[ResponseGenerator] CRITICAL: Fallback failed fact validation:", fallbackCheck.reason);
+        assistantReply = "يا كابتن، حصل تعذر في التحقق من البيانات الموثقة. تحب نبدأ من جديد؟";
+      }
       if (quickReplies.length === 0) {
         quickReplies = fallback.quick_replies;
       }
