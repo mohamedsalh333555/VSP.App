@@ -1087,7 +1087,7 @@ ${JSON.stringify(taskState, null, 2)}
               const oStadiums = toolResponseData.owner_stadiums || [];
               const oBookings = toolResponseData.recent_bookings || [];
               if (oStadiums.length === 0) {
-                assistantReply = "يا كابتن، راجعت قاعدة بيانات VSP ولم أجد أي ملاعب مسجلة باسمك حالياً. تقدر تضيف ملعبك الأول بكل سهولة من زر 'إضافة ملعب' في لوحة التحكم!";
+                assistantReply = "يا كابتن، مفيش ملاعب مسجلة باسمك حالياً. تقدر تضيف ملعبك الأول من لوحة التحكم.";
               } else if (oBookings.length === 0 && (args.query_type === "bookings" || args.query_type === "today")) {
                 assistantReply = `يا كابتن، ملاعبك مسجلة في قاعدة البيانات (${oStadiums.map((s: any) => s.name).join("، ")})، ولكن لا توجد أي حجوزات مسجلة لها حالياً. أول ما يتم أي حجز هيظهرلك فوراً في جدول الحجوزات!`;
               }
