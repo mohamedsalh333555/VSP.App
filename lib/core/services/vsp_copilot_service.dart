@@ -49,6 +49,7 @@ class OwnerDatabaseMockData {
 class VspCopilotService {
   final SupabaseClient? _client;
   final OwnerDatabaseMockData? _mockOwnerDb;
+  final bool _enableLocalTestEngine;
 
   // Rate Limiting Tracking: Sliding Window (10 requests max per 60 seconds)
   static final List<DateTime> _requestTimestamps = [];
@@ -136,8 +137,10 @@ class VspCopilotService {
   const VspCopilotService({
     SupabaseClient? client,
     OwnerDatabaseMockData? mockOwnerDb,
+    bool enableLocalTestEngine = false,
   })  : _client = client,
-        _mockOwnerDb = mockOwnerDb;
+        _mockOwnerDb = mockOwnerDb,
+        _enableLocalTestEngine = enableLocalTestEngine;
 
   /// Resets the rate limiter timestamps (used by test suites)
   void resetRateLimiter() {
@@ -282,9 +285,18 @@ class VspCopilotService {
       }
     }
 
-    // 4. Intelligent Local Zero-Hallucination Engine is reserved for tests/offline
-    // modes only. Authenticated live users must not see mock catalog data.
-    return _generateIntelligentResponse(cleanText, conversationId, governorate: governorate);
+    // 4. Local NLP is test-only. Never fall back to the legacy local engine
+    // for a real app session, because it contains curated/test responses and can
+    // bypass the live Conversation Engine.
+    if (_enableLocalTestEngine || _mockOwnerDb != null) {
+      return _generateIntelligentResponse(
+        cleanText,
+        conversationId,
+        governorate: governorate,
+      );
+    }
+
+    throw const CopilotUnavailableException();
   }
 
   /// Convenience helper allowing positional string call
