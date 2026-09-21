@@ -332,15 +332,18 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
   if (!next.stadium_id && contextSnapshot.last_stadium_id) next.stadium_id = contextSnapshot.last_stadium_id;
   if (!next.stadium_name && contextSnapshot.last_stadium_name) next.stadium_name = contextSnapshot.last_stadium_name;
   if (!next.date && contextSnapshot.last_date) next.date = contextSnapshot.last_date;
+
+  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase();
   const correctionMatches = [...normalizedMessage.matchAll(/قصدي|لأ|لا|أقصد|اقصد|بدّل|بدل|غيرت رأيي/g)].map(m => m.index ?? -1);
   const effectiveMessage = correctionMatches.length > 0
     ? normalizedMessage.slice(Math.max(...correctionMatches))
     : normalizedMessage;
+
   if (hasDateCue(effectiveMessage)) next.date = parseTargetDate(effectiveMessage).targetDateStr;
-  const normalizedMessage = normalizeArabicDigits(userMessage).toLowerCase();
+
   const preferredTimes = extractPreferredTimes(userMessage);
-  const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(normalizedMessage);
-  const hasAm = /صباح|صبح|\bص\b/.test(normalizedMessage);
+  const hasPm = /مساء|مسا|\bم\b|بالليل|ليل/.test(effectiveMessage);
+  const hasAm = /صباح|صبح|\bص\b/.test(effectiveMessage);
   if (preferredTimes.length > 0) {
     next.preferred_times = preferredTimes;
   } else if (Array.isArray(next.preferred_times) && (hasPm || hasAm) && !normalizedMessage.match(/\b\d{1,2}\b/)) {
