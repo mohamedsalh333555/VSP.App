@@ -1,0 +1,51 @@
+name: VSP Shorebird Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version (for example 1.0.0+1)"
+        required: true
+        type: string
+
+env:
+  SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+  FLUTTER_VERSION: "3.32.8"
+
+jobs:
+  release-android:
+    name: Android Base Release
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          cache: true
+
+      - name: Validate Shorebird configuration
+        run: |
+          test -f shorebird.yaml
+          test -n "${SHOREBIRD_TOKEN}"
+          shorebird doctor
+
+      - name: Shorebird Release
+        uses: shorebirdtech/shorebird-release@v1
+        with:
+          platform: android
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          args: "--build-name=${{ inputs.release_version }} --verbose"
