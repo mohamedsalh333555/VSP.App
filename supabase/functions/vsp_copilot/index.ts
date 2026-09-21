@@ -519,6 +519,25 @@ async function recordCopilotAuditEvent(
   }
 }
 
+async function fetchGeminiWithTimeout(
+  url: string,
+  payload: any,
+  timeoutMs = 25000,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function hasConfirmedPendingIntent(contextSnapshot: any, intent: string, key: string, value: string): boolean {
   const p = contextSnapshot?.pending_intent;
   if (!p || p.intent !== intent || p.confirmed !== true) return false;
@@ -1939,6 +1958,27 @@ serve(async (req: Request) => {
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
 
+    // 🔎 Fail fast on missing AI configuration instead of masking it as "offline".
+    if (!geminiApiKey || !geminiApiKey.trim()) {
+      await recordCopilotAuditEvent(supabase, {
+        requestId,
+        userId: callerUser.id,
+        userRole: "unknown",
+        eventType: "configuration_error",
+        status: "failed",
+        errorCode: "GEMINI_API_KEY_MISSING",
+        metadata: { endpoint: "vsp_copilot", stage: "configuration" },
+      });
+      return new Response(
+        JSON.stringify({
+          error: "AI service is not configured.",
+          error_code: "GEMINI_API_KEY_MISSING",
+          retryable: false,
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Rate Limiting
     const { data: isAllowed, error: rateLimitErr } = await supabase.rpc("check_rate_limit", {
       p_user_id: callerUser.id,
@@ -2092,7 +2132,25 @@ serve(async (req: Request) => {
     let handledByGemini = false;
 
     // ⚽ Egyptian Football Lexicon Analysis
+    await recordCopilotAuditEvent(supabase, {
+      requestId,
+      conversationId,
+      userId: callerUser.id,
+      userRole: effectiveUserRole,
+      eventType: "processing_stage",
+      status: "started",
+      metadata: { stage: "lexicon_analysis" },
+    });
     const lexiconAnalysis = EgyptianFootballLexicon.analyze(userMessage, contextSnapshot);
+    await recordCopilotAuditEvent(supabase, {
+      requestId,
+      conversationId,
+      userId: callerUser.id,
+      userRole: effectiveUserRole,
+      eventType: "processing_stage",
+      status: "completed",
+      metadata: { stage: "lexicon_analysis" },
+    });
 
     const normalizeAction = (action: any) => finalizeAiAction(action, effectiveUserRole, ownerAiEnabled);
 
@@ -2750,21 +2808,23 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         let geminiModel = "gemini-2.5-flash";
         let geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
 
-        let geminiRes1 = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(firstPayload),
+        await recordCopilotAuditEvent(supabase, {
+          requestId,
+          conversationId,
+          userId: callerUser.id,
+          userRole: effectiveUserRole,
+          eventType: "processing_stage",
+          status: "started",
+          metadata: { stage: "gemini_request", model: geminiModel },
         });
 
-        // 🛡️ High-Availability Model Fallback on 429 Quota
-        if (geminiRes1.status === 429) {
+        let geminiRes1 = await fetchGeminiWithTimeout(geminiUrl, firstPayload);
+
+        // 🛡️ High-Availability Model Fallback on quota/transient upstream failures.
+        if ([429, 500, 502, 503, 504].includes(geminiRes1.status)) {
           geminiModel = "gemini-flash-latest";
           geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`;
-          geminiRes1 = await fetch(geminiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(firstPayload),
-          });
+          geminiRes1 = await fetchGeminiWithTimeout(geminiUrl, firstPayload);
         }
 
         if (geminiRes1.ok) {
@@ -3591,11 +3651,7 @@ ${JSON.stringify(contextSnapshot, null, 2)}
                   contents: secondContents,
                 };
 
-                const geminiRes2 = await fetch(geminiUrl, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(secondPayload),
-                });
+                const geminiRes2 = await fetchGeminiWithTimeout(geminiUrl, secondPayload);
 
                 if (geminiRes2.ok) {
                   const geminiData2 = await geminiRes2.json();
@@ -3729,10 +3785,38 @@ ${JSON.stringify(contextSnapshot, null, 2)}
         } else {
           const errText = await geminiRes1.text();
           debugInfo = { source: "gemini_res1", status: geminiRes1.status, body: errText };
+          await recordCopilotAuditEvent(supabase, {
+            requestId,
+            conversationId,
+            userId: callerUser.id,
+            userRole: effectiveUserRole,
+            eventType: "gemini_error",
+            status: "failed",
+            errorCode: `GEMINI_HTTP_${geminiRes1.status}`,
+            metadata: {
+              stage: "gemini_request",
+              model: geminiModel,
+              status: geminiRes1.status,
+              body: errText.slice(0, 1500),
+            },
+          });
           console.warn("Gemini call failed:", geminiRes1.status, errText);
         }
       } catch (geminiErr: any) {
-        debugInfo = { source: "catch_gemini", message: geminiErr?.message || String(geminiErr) };
+        const message = geminiErr?.name === "AbortError"
+          ? "Gemini request timed out after 25 seconds."
+          : (geminiErr?.message || String(geminiErr));
+        debugInfo = { source: "catch_gemini", message };
+        await recordCopilotAuditEvent(supabase, {
+          requestId,
+          conversationId,
+          userId: callerUser.id,
+          userRole: effectiveUserRole,
+          eventType: "gemini_error",
+          status: "failed",
+          errorCode: geminiErr?.name === "AbortError" ? "GEMINI_TIMEOUT" : "GEMINI_FETCH_ERROR",
+          metadata: { stage: "gemini_request", model: geminiModel, message: message.slice(0, 1500) },
+        });
         console.warn("Gemini API error:", geminiErr);
       }
     }
@@ -3871,6 +3955,19 @@ ${JSON.stringify(contextSnapshot, null, 2)}
     );
   } catch (err: any) {
     console.error("VSP Copilot function error:", err);
+    try {
+      await recordCopilotAuditEvent(supabase, {
+        requestId,
+        conversationId: conversationId || null,
+        userId: callerUser?.id,
+        userRole: typeof effectiveUserRole === "string" ? effectiveUserRole : "unknown",
+        eventType: "function_error",
+        status: "failed",
+        errorCode: "COPILOT_INTERNAL_ERROR",
+        latencyMs: Date.now() - requestStartedAt,
+        metadata: { message: (err?.message || String(err)).slice(0, 1500) },
+      });
+    } catch (_) {}
     return new Response(
       JSON.stringify({ error: err.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
