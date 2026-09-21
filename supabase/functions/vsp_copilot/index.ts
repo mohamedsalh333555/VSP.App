@@ -624,6 +624,85 @@ function buildBookingMissingDateReply(taskState: Record<string, any>, userMessag
   };
 }
 
+function buildConversationalRecovery(
+  taskState: Record<string, any>,
+  contextSnapshot: Record<string, any>,
+  userMessage: string,
+): { message: string; quick_replies: string[] } {
+  const t = normalizeArabicDigits((userMessage || "").toLowerCase()).trim();
+  const missing = Array.isArray(taskState?.missing_slots) ? taskState.missing_slots : [];
+  const preferred = Array.isArray(taskState?.preferred_times) ? taskState.preferred_times : [];
+  const visible = Array.isArray(contextSnapshot?.last_visible_stadiums)
+    ? contextSnapshot.last_visible_stadiums
+    : [];
+
+  if (taskState?.intent === "book_stadium") {
+    if (taskState?.confirmation_pending) {
+      const pending = taskState.confirmation_pending;
+      return {
+        message: "أنا فاهم الحجز المقصود: " + pending.stadium_name +
+          " يوم " + formatDateForUser(pending.date) +
+          " الساعة " + formatSlotTimeForUser(pending.start_time) +
+          " لمدة ساعة. أأكد الحجز؟",
+        quick_replies: ["أيوه، أكد الحجز", "عدّل الموعد"],
+      };
+    }
+
+    if (taskState?.requires_time_clarification && preferred.length > 0) {
+      const hour = Number(preferred[0].substring(0, 2));
+      return {
+        message: "تمام، الساعة " + hour + " وصلت. تقصدها الصبح ولا بالليل؟",
+        quick_replies: [hour + ":00 الصبح", hour + ":00 بالليل"],
+      };
+    }
+
+    if (missing.includes("date") && preferred.length > 0) {
+      const labels = preferred.map((x: string) => {
+        const h = Number(x.substring(0, 2));
+        return (h === 0 ? 12 : (h > 12 ? h - 12 : h)) + ":00 " + (h >= 12 ? "بالليل" : "الصبح");
+      });
+      return {
+        message: "فاهم إنك عايز تحجز " +
+          (labels.length === 1 ? "الساعة " + labels[0] : "الساعة " + labels.join(" أو ")) +
+          ". اليوم بس ناقص؛ تقصد النهارده ولا يوم تاني؟",
+        quick_replies: ["النهارده", "بكرة"],
+      };
+    }
+
+    if (missing.includes("time")) {
+      return {
+        message: "تمام، فهمت إنك عايز تحجز. فاضلي أعرف الساعة المناسبة ليك بس.",
+        quick_replies: ["8 بالليل", "9 بالليل", "10 بالليل"],
+      };
+    }
+
+    if (missing.includes("stadium")) {
+      if (visible.length > 1) {
+        return {
+          message: "تمام، لقيتلك أكتر من ملعب ينفع للطلب. اختار الملعب اللي تقصده وأنا أكمل الحجز عليه.",
+          quick_replies: visible.slice(0, 4).map((s: any) => s.name),
+        };
+      }
+      return {
+        message: "تمام، فاهم إنك عايز حجز. هحدد لك ملعب مناسب قريب منك وأكمل معاك الحجز.",
+        quick_replies: [],
+      };
+    }
+  }
+
+  if (/ماتش|ملعب|حجز|بطولة|دوري|حريفة|مواعيد|متاح|شاغر/.test(t)) {
+    return {
+      message: "فاهمك. خلّيني أحدد المطلوب بدقة بدل ما أفترض: إنت عايز تدور على ملعب، تشوف ميعاد متاح، ولا تكمل حجز؟",
+      quick_replies: ["أدور على ملعب", "أشوف المواعيد", "أكمل الحجز"],
+    };
+  }
+
+  return {
+    message: "فاهمك يا كابتن. قولّي عايز تعمل إيه في VSP وأنا أكمل معاك خطوة بخطوة.",
+    quick_replies: ["حجز ملعب", "ملاعب قريبة", "مباريات مفتوحة", "بطولات"],
+  };
+}
+
 function slotHourFromIso(iso: string): number {
   return getCairoParts(new Date(iso)).hour;
 }
@@ -2110,12 +2189,12 @@ ${JSON.stringify(taskState, null, 2)}
             // 🛡️ Zero-Hallucination Guard: When DB returns 0 rows, strictly prevent any hallucinated text!
             if (funcName === "searchTournaments" && tournamentResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، راجعتلك المتاح ومافيش حالياً بطولات مفتوحة للتسجيل في ${targetGov}. أول ما تنزل بطولة جديدة هتلاقيها معلنة في صفحة البطولات وتقدر تشترك فوراً!`;
+              assistantReply = `دورتلك على البطولات المفتوحة حالياً في ${targetGov}، ومفيش بطولة متاحة للتسجيل دلوقتي. تحب أدورلك على 5v5 ولا 1v1؟`;
             } else if (funcName === "searchStadiums" && stadiumResults.length === 0) {
               const targetGov = (args.governorate || userGov).toString().trim();
-              assistantReply = `عذراً يا كابتن، مفيش حالياً ملاعب متاحة في ${targetGov}. نقدر نجرب محافظة أو منطقة تانية.`;
+              assistantReply = `دورتلك في ${targetGov} ومفيش ملعب متاح بالمواصفات دي دلوقتي. تحب أوسّع البحث لمنطقة قريبة ولا نغيّر الوقت؟`;
             } else if (funcName === "getOpenMatches" && openMatchResults.length === 0) {
-              assistantReply = "عذراً يا كابتن، مفيش حالياً ماتشات مفتوحة محتاجة لاعيبة. تقدر تبدأ مباراة جديدة من التطبيق.";
+              assistantReply = "دورت على الماتشات المفتوحة ومفيش تقسيمة محتاجة لاعيبة دلوقتي. تحب أدور في محافظة تانية ولا تفتح ماتش جديد؟";
             } else if (funcName === "getOwnerStadiumsAndBookings") {
               if (toolResponseData?.success === false) {
                 assistantReply = "مش هفترض نتيجة. " + (toolResponseData.message || "تعذر قراءة الحجوزات بدقة حالياً.");
@@ -2163,7 +2242,7 @@ ${JSON.stringify(taskState, null, 2)}
                 assistantReply = "يا كابتن، دي تفاصيل ملاعبك وحجوزاتك المسجلة في التطبيق:";
               } else if (funcName === "checkStadiumAvailability") {
                 if (toolResponseData.available_slots_count === 0) {
-                  assistantReply = `عذراً يا كابتن، راجعت جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date} وجميع الفترات محجوزة بالكامل في هذا اليوم. تحب نفحص يوم تاني؟`;
+                  assistantReply = `بصيت على جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} يوم ${formatDateForUser(toolResponseData.date)}، ومفيش فترة فاضية في اليوم ده. تحب نجرب بكرة ولا تختار وقت تاني؟`;
                 } else {
                   const slotsText = (toolResponseData.available_slots || []).slice(0, 5).map((s: any) => `• ${s.display_time}`).join("\n");
                   assistantReply = `يا كابتن! بحثتلك في جدول مواعيد ${toolResponseData.stadium_name || 'الملعب'} ليوم ${toolResponseData.date}، ودي الفترات المتاحة للحجز:\n${slotsText}\nسعر الساعة: ${toolResponseData.price_per_hour} ج.م. تحب أحجزلك أي ميعاد منهم؟`;
@@ -2179,7 +2258,10 @@ ${JSON.stringify(taskState, null, 2)}
                   const options = (toolResponseData.preferred_times || []).join(" أو ");
                   assistantReply = `الوقت لسه محتاج اختيار واحد. المتاح من اختياراتك: ${options || "أكثر من موعد"}. اختار الساعة اللي تناسبك.`;
                 } else {
-                  assistantReply = `عذراً يا كابتن، لم نتمكن من إتمام الحجز: ${toolResponseData.error || toolResponseData.message}`;
+                  const bookingFailure = (toolResponseData.error || toolResponseData.message || "الحجز ما اكتملش حالياً").toString();
+                  assistantReply = bookingFailure.includes("محجوز") || bookingFailure.includes("اتاخد")
+                    ? "الميعاد ده اتاخد قبل ما نكمل الحجز. تحب أشوف لك أقرب ميعاد متاح؟"
+                    : "الحجز ما اكتملش المرة دي. تحب أعيد فحص الميعاد نفسه ولا نجرّب وقت تاني؟";
                 }
               } else {
                 assistantReply = "تمام يا كابتن، طلبك جاهز!";
@@ -2207,7 +2289,7 @@ ${JSON.stringify(taskState, null, 2)}
               lowerMsg.includes("دواء") || lowerMsg.includes("تاريخ فرنسا") || lowerMsg.includes("عاصمة");
 
             if (isOutOfScope) {
-              assistantReply = 'عذراً يا كابتن! أنا "كابتن VSP"، مساعدك الرياضي المتخصص فقط في تطبيق VSP لحجز وإدارة الملاعب والبطولات في مصر ⚽. مقدرش أساعدك غير في اللي يخص ملاعبك وحجوزاتك وخدمات التطبيق يا بطل!';
+              assistantReply = 'خلّينا في اللي أقدر أساعدك فيه داخل VSP ⚽: حجز الملاعب، مواعيدها، البطولات، المباريات المفتوحة، وحسابات مالك الملعب.';
               handledByGemini = true;
             } else {
               assistantReply = candidate1?.parts?.[0]?.text || "";
@@ -2224,7 +2306,13 @@ ${JSON.stringify(taskState, null, 2)}
 
     // 🛡️ Safe Server Fallback (Phase 5: Clean Architecture - No brittle keyword guessing on Edge Function)
     if (!handledByGemini) {
-      assistantReply = "عذراً يا كابتن! حدث ضغط لحظي في خدمة الذكاء الاصطناعي، يرجى إعادة إرسال رسالتك أو تصفح الملاعب والبطولات مباشرة من القوائم.";
+      const recovery = buildConversationalRecovery(
+        contextSnapshot.task_state || {},
+        contextSnapshot,
+        userMessage,
+      );
+      assistantReply = recovery.message;
+      quickReplies = recovery.quick_replies;
     }
 
     // 10. Build the exact turn payload before atomic persistence.
