@@ -411,6 +411,40 @@ function normalizeArabicDigits(value: string): string {
   return value.replace(/[٠-٩]/g, (d) => String(arabic.indexOf(d)));
 }
 
+function isParticipantNumberContext(input: string, index: number, length: number): boolean {
+  const before = input.slice(Math.max(0, index - 18), index);
+  const after = input.slice(index + length, Math.min(input.length, index + length + 24));
+  return /(?:نفر|نفار|تنفار|شخص|شخصا|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.test(after) ||
+    /(?:انا و|أنا و|معايا|معاي|ومعايا|و\s*)$/.test(before);
+}
+
+function extractGroupSize(input: string): number | null {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
+  let total: number | null = null;
+
+  const selfPlus = /(?:انا|أنا)\s*(?:و|معايا|معاي)\s*(\d{1,2})\s*(?:نفر|نفار|تنفار|شخص|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
+  if (selfPlus) {
+    const others = Number(selfPlus[1]);
+    if (others >= 1 && others <= 30) total = others + 1;
+  }
+
+  if (total == null) {
+    const direct = /(?:عدد|فيه|معايا|معاي|عددنا)?\s*(\d{1,2})\s*(?:نفر|نفار|تنفار|شخص|شخصا|افراد|أفراد|لاعب|لاعبين|لاعيبة|فرد)/.exec(normalized);
+    if (direct) {
+      const count = Number(direct[1]);
+      if (count >= 1 && count <= 30) total = count;
+    }
+  }
+
+  return total;
+}
+
+function isBookingHowToQuestion(input: string): boolean {
+  const normalized = normalizeArabicDigits((input || "").toString().toLowerCase()).trim();
+  return /(?:ازاي|إزاي|ازاى|كيف|كيفية|ازاى اقدر|ازاي اقدر|إزاي أقدر)/.test(normalized) &&
+    /حجز|احجز|حجزلي|احجزلي|ملعب/.test(normalized);
+}
+
 function extractPreferredTimes(input: string): string[] {
   const normalized = normalizeArabicDigits((input || "").toString().toLowerCase());
   const hasTimeCue = /الساعة|ساعه|ساعة|وقت|ميعاد|موعد|احجز|الحجز|احجزلي|احجزه/.test(normalized);
@@ -424,6 +458,7 @@ function extractPreferredTimes(input: string): string[] {
   const re = /\b(\d{1,2})(?:\s*[:٫.]\s*(\d{1,2}))?\b/g;
   let match: RegExpExecArray | null;
   while ((match = re.exec(effective)) !== null) {
+    if (isParticipantNumberContext(effective, match.index, match[0].length)) continue;
     let hour = Number(match[1]);
     const minute = Number(match[2] || 0);
     if (hour > 23 || minute > 59) continue;
@@ -432,11 +467,6 @@ function extractPreferredTimes(input: string): string[] {
     const explicitAm = globalAm || /صباح|صبح|\bص\b/.test(after);
     if (explicitPm && hour < 12) hour += 12;
     else if (explicitAm && hour === 12) hour = 0;
-    else if (!explicitAm && !explicitPm && hour >= 0 && hour <= 23) {
-      // Keep the hour unresolved when AM/PM is not explicitly stated.
-      matches.add(String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0"));
-      continue;
-    }
     matches.add(String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0"));
   }
   return Array.from(matches).slice(0, 4);
@@ -568,7 +598,15 @@ function mergeTaskState(contextSnapshot: Record<string, any>, userMessage: strin
     next.requires_time_clarification = false;
   }
 
-  if (/احجز|حجز|احجزلي|احجزه|حجزلي/.test(normalizedMessage)) next.intent = "book_stadium";
+  const bookingHowTo = isBookingHowToQuestion(userMessage);
+  if (bookingHowTo) {
+    next.intent = "booking_howto";
+  } else if (/احجزلي|احجز لي|حجزلي|احجزه|احجزها|عايز احجز|عايزة احجز|ممكن تحجز|ممكن نحجز|ثبت الحجز|أكد الحجز|اكد الحجز/.test(normalizedMessage)) {
+    next.intent = "book_stadium";
+  }
+
+  const groupSize = extractGroupSize(userMessage);
+  if (groupSize != null) next.group_size = groupSize;
 
   next.missing_slots = [];
   if (!next.stadium_id) next.missing_slots.push("stadium");
@@ -1073,6 +1111,21 @@ serve(async (req: Request) => {
     let assistantReply = "";
     let handledByGemini = false;
 
+    // Deterministic booking how-to guard: explain the user flow instead of treating
+    // "how do I book?" as an execution request.
+    const taskIsBookingHowTo = contextSnapshot.task_state?.intent === "booking_howto";
+    if (taskIsBookingHowTo) {
+      const groupSize = contextSnapshot.task_state?.group_size;
+      const groupText = groupSize ? " وإنتوا " + groupSize + " لاعبين" : "";
+      assistantReply =
+        "تقدر تحجز من الملاعب القريبة في VSP: تختار الملعب، وبعدها اليوم والساعة، ثم تراجع ملخص الحجز وتأكد قبل التنفيذ." +
+        groupText +
+        ". " +
+        "لو تقصد إني أنا أحجزهولك، قولّي اليوم والساعة المناسبة ليك وأنا أكمل معاك.";
+      quickReplies = ["عايز أحجزهولك", "شوفلي ملاعب قريبة"];
+      handledByGemini = true;
+    }
+
     // 9. Deterministic owner factual-query guard.
     const ownerRole = normalizeCopilotRole(userProfile?.role);
     const ownerPrecisionClarification = ownerRole === "owner" ? buildOwnerPrecisionClarification(userMessage) : null;
@@ -1127,7 +1180,10 @@ ${JSON.stringify(taskState, null, 2)}
 - إذا قال المستخدم "10 أو 11 بالليل"، اعتبرهما تفضيلين مرتبّين: افحص 10 أولاً، وإذا لم يتوفر افحص 11. لا تنفذ الحجز قبل عرض الموعد المقترح وطلب التأكيد النهائي.
 - إذا قال المستخدم "بعد العصر" أو "بالليل" بدون ساعة محددة، اعتبرها نافذة زمنية وليست ساعة واحدة؛ افحص الفترات الحقيقية داخل النافذة ثم اعرض الخيارات المتاحة بدل اختيار ساعة من نفسك.
 - إذا قال المستخدم "10" فقط دون صباح/مساء، لا تفترض الفترة. اطلب: "تقصد 10 الصبح ولا 10 بالليل؟"
+- الرقم المرتبط بكلمات مثل "نفر/شخص/لاعب/لاعيبة/أفراد" هو عدد أشخاص وليس ساعة. مثال: "أنا و10 نفر" يعني مجموعة من 11 شخصاً، ولا يجوز تفسير 10 كموعد.
+- "إزاي أحجز" أو "كيفية الحجز" سؤال عن طريقة الاستخدام، وليس موافقة أو طلب تنفيذ حجز. اشرح خطوات الحجز ووجّه المستخدم للشاشة المناسبة، ولا تنشئ حجزاً ولا تدخل في تأكيد حجز إلا إذا طلب التنفيذ صراحة.
 - إذا قال "قصدي..." أو "لأ..." أو صحح نفسه، اعتبر الجزء الأخير هو المعتمد وتجاهل القيمة المصححة السابقة لنفس الحقل.
+- لا تعيد سؤال معلومة موجودة بالفعل في نفس الرسالة، حتى لو كانت المعلومة ليست كاملة لكل حقول المهمة. اسأل فقط عن الحقل الناقص المطلوب للخطوة التالية.
 - بعد الوصول إلى موعد قابل للحجز، استخدم تأكيداً ذكياً بصيغة طبيعية: اذكر الملعب + اليوم + الساعة + المدة، ثم اطلب تأكيداً واحداً قبل التنفيذ.
 - لو قال المستخدم "طب ما أنا لسه قايلك" أو "ما أنا قلتلك"، لا تعيد السؤال من البداية. راجع السياق فوراً، استخرج المعلومة السابقة، وامتص الاعتذار في جملة قصيرة ثم أكمل المهمة.
 - تعامل مع العامية والتصحيح داخل نفس الرسالة كمعنى واحد؛ مثال: "دلوقتي... لأ قصدي النهاردة" يعني اعتمد "النهاردة" للحقل المصحح.
