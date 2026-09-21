@@ -1129,9 +1129,20 @@ ${JSON.stringify(taskState, null, 2)}
                 });
 
                 const allSlots = generateStandardSlots(targetDateStr);
+                const cairoNow = getCairoParts(new Date());
+                const isToday =
+                  targetDateStr ===
+                  String(cairoNow.year).padStart(4, "0") + "-" +
+                  String(cairoNow.month).padStart(2, "0") + "-" +
+                  String(cairoNow.day).padStart(2, "0");
+
                 let availableSlots = allSlots.filter((slot) => {
                   const sStart = new Date(slot.start_time).getTime();
                   const sEnd = new Date(slot.end_time).getTime();
+
+                  // Never show a slot that has already started/ended on today's date.
+                  if (isToday && sEnd <= Date.now()) return false;
+
                   for (const b of activeBookings) {
                     const bStart = new Date(b.start_time).getTime();
                     const bEnd = new Date(b.end_time).getTime();
@@ -1460,10 +1471,35 @@ ${JSON.stringify(taskState, null, 2)}
               const pending = contextSnapshot.task_state?.confirmation_pending;
               if (pending && toolResponseData?.available_slots_count > 0 && contextSnapshot.task_state?.intent === "book_stadium") {
                 const proposed = pending.start_time;
-                const fallback = Array.isArray(contextSnapshot.task_state?.preferred_times) && contextSnapshot.task_state.preferred_times.length > 1
-                  ? " لو الموعد الأول مش متاح، أستخدم البديل اللي طلبته."
-                  : "";
-                assistantReply = "تمام. تقصد نحجز في " + pending.stadium_name + "، " + formatDateForUser(pending.date) + " الساعة " + formatSlotTimeForUser(proposed) + " لمدة ساعة؟" + fallback + " أأكد الحجز؟";
+                const preferred = Array.isArray(contextSnapshot.task_state?.preferred_times)
+                  ? contextSnapshot.task_state.preferred_times
+                  : [];
+                let preferenceNote = "";
+                if (preferred.length > 1) {
+                  const proposedHour = String(slotHourFromIso(proposed)).padStart(2, "0");
+                  const proposedIndex = preferred.findIndex((t: string) => t.substring(0, 2) === proposedHour);
+                  if (proposedIndex > 0) {
+                    const firstRequested = preferred[0];
+                    preferenceNote =
+                      " الساعة " + formatSlotTimeForUser(
+                        cairoLocalToUtcIso(
+                          Number(pending.date.substring(0, 4)),
+                          Number(pending.date.substring(5, 7)),
+                          Number(pending.date.substring(8, 10)),
+                          Number(firstRequested.substring(0, 2)),
+                          Number(firstRequested.substring(3, 5) || 0)
+                        )
+                      ) + " مش متاحة، و" + formatSlotTimeForUser(proposed) + " متاحة.";
+                  }
+                }
+                assistantReply =
+                  "تمام. " +
+                  (preferenceNote || ("متاح " + formatSlotTimeForUser(proposed) + ".")) +
+                  " " +
+                  "نحجز في " + pending.stadium_name + "، " +
+                  formatDateForUser(pending.date) +
+                  " الساعة " + formatSlotTimeForUser(proposed) +
+                  " لمدة ساعة؟ أأكد الحجز؟";
               } else if (toolResponseData?.needs_clarification && toolResponseData?.missing_slot === "time_period") {
                 assistantReply = toolResponseData.message || "تقصد الساعة الصبح ولا بالليل؟";
               }
