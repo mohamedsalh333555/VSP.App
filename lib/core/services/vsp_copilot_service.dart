@@ -154,11 +154,12 @@ class VspCopilotService {
     try {
       final res = await client
           .from('copilot_conversations')
-          .select()
+          .select('id, title, created_at, updated_at, context_snapshot, copilot_messages(count)')
           .order('updated_at', ascending: false);
 
       return (res as List<dynamic>)
           .map((m) => CopilotConversation.fromMap(m as Map<String, dynamic>))
+          .where((conv) => conv.messageCount > 0 || conv.contextSnapshot.isNotEmpty)
           .toList();
     } catch (e) {
       debugPrint('[VspCopilotService] fetchConversations error: $e');
@@ -322,6 +323,10 @@ class VspCopilotService {
       action = CopilotAction.fromMap(Map<String, dynamic>.from(rawAction));
     }
 
+    final rawUi = data['ui_metadata'] is Map
+        ? Map<String, dynamic>.from(data['ui_metadata'] as Map)
+        : <String, dynamic>{};
+
     return CopilotMessage.assistant(
       replyText,
       conversationId: returnedConvId,
@@ -329,6 +334,7 @@ class VspCopilotService {
       tournaments: tournaments,
       openMatches: openMatches,
       action: action,
+      uiMetadata: rawUi,
     );
   }
 
