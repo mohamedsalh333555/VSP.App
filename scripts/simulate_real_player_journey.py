@@ -116,6 +116,11 @@ def service_delete(path):
 
 def compute_paymob_hmac(obj, secret):
     """Mirrors computePaymobHMAC() in paymob_webhook/index.ts (20 fields, SHA-512)."""
+    def js_str(val):
+        if isinstance(val, bool):
+            return "true" if val else "false"
+        return "" if val is None else str(val)
+
     order = obj.get("order", "")
     order_id = order.get("id", "") if isinstance(order, dict) else order
     src = obj.get("source_data", {})
@@ -141,7 +146,7 @@ def compute_paymob_hmac(obj, secret):
         src.get("type", ""),
         obj.get("success", ""),
     ]
-    concatenated = "".join(str(p) for p in parts)
+    concatenated = "".join(js_str(p) for p in parts)
     return hmac_lib.new(
         secret.encode("utf-8"),
         concatenated.encode("utf-8"),
