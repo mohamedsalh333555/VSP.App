@@ -54,12 +54,12 @@ void main() {
       expect(unpaid.paymentStatus, 'unpaid');
     });
 
-    test('isPendingBookingExpired respects 5-minute timeout window', () {
+    test('isPendingBookingExpired respects 8-minute timeout window', () {
       final now = DateTime.now();
-      // 3 minutes ago -> not expired
-      expect(BookingDomainRules.isPendingBookingExpired(now.subtract(const Duration(minutes: 3)), now), isFalse);
-      // 6 minutes ago -> expired
-      expect(BookingDomainRules.isPendingBookingExpired(now.subtract(const Duration(minutes: 6)), now), isTrue);
+      // 5 minutes ago -> not expired
+      expect(BookingDomainRules.isPendingBookingExpired(now.subtract(const Duration(minutes: 5)), now), isFalse);
+      // 9 minutes ago -> expired
+      expect(BookingDomainRules.isPendingBookingExpired(now.subtract(const Duration(minutes: 9)), now), isTrue);
     });
 
     test('shouldChallengeExpire respects 4-hour creation and 12-hour match windows', () {
