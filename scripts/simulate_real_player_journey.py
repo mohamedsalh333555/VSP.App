@@ -12,6 +12,7 @@ Fixes vs v1:
   Fix5: .gitignore hardened separately
 """
 
+import os
 import urllib.request
 import urllib.error
 import json
@@ -30,13 +31,51 @@ ANON_KEY = env["SUPABASE_ANON_KEY"]
 SERVICE_KEY = env["SUPABASE_SERVICE_ROLE_KEY"]
 PAYMOB_HMAC_SECRET = env.get("PAYMOB_HMAC_SECRET", "")
 
-with open("test_user_token.txt") as f:
-    player_token = f.read().strip()
+def get_valid_player_token():
+    token = None
+    if os.path.exists("test_user_token.txt"):
+        try:
+            with open("test_user_token.txt") as f:
+                token = f.read().strip()
+            p = token.split(".")[1]
+            p += "=" * ((4 - len(p) % 4) % 4)
+            d = json.loads(base64.urlsafe_b64decode(p).decode("utf-8"))
+            if d.get("exp", 0) > time.time() + 60:
+                return token, d["sub"]
+        except Exception:
+            pass
 
-payload_part = player_token.split(".")[1]
-payload_part += "=" * ((4 - len(payload_part) % 4) % 4)
-player_jwt = json.loads(base64.urlsafe_b64decode(payload_part).decode("utf-8"))
-PLAYER_ID = player_jwt["sub"]
+    # Self-healing: generate fresh token via Supabase Auth Admin API
+    req = urllib.request.Request(
+        f"{SUPABASE_URL}/auth/v1/admin/generate_link",
+        data=json.dumps({"type": "magiclink", "email": "redteam_tester@vsp.test"}).encode(),
+        headers={
+            "apikey": SERVICE_KEY,
+            "Authorization": f"Bearer {SERVICE_KEY}",
+            "Content-Type": "application/json",
+        },
+    )
+    with urllib.request.urlopen(req) as r:
+        res = json.loads(r.read().decode())
+        token_hash = res.get("hashed_token")
+
+    req2 = urllib.request.Request(
+        f"{SUPABASE_URL}/auth/v1/verify",
+        data=json.dumps({"type": "magiclink", "token_hash": token_hash}).encode(),
+        headers={"apikey": ANON_KEY, "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req2) as r2:
+        res2 = json.loads(r2.read().decode())
+        token = res2.get("access_token")
+        with open("test_user_token.txt", "w") as out:
+            out.write(token)
+        p = token.split(".")[1]
+        p += "=" * ((4 - len(p) % 4) % 4)
+        d = json.loads(base64.urlsafe_b64decode(p).decode("utf-8"))
+        return token, d["sub"]
+
+
+player_token, PLAYER_ID = get_valid_player_token()
 
 
 # Helpers
@@ -231,7 +270,7 @@ try:
     else:
         mock_txn_id   = 998811
         mock_order_id = 555999
-        iso_now       = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000000")
+        iso_now       = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000000")
         amount_cents  = int(actual_db_price * 100)   # uses REAL DB price
 
         webhook_obj = {
