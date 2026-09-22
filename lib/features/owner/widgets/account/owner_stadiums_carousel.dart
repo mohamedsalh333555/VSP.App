@@ -88,7 +88,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            isArabic ? 'الباقة الأساسية: ملعب 1 فقط (أول شهرين مجاناً)' : 'Basic Plan: 1 Stadium only (1st 2 Months Free)',
+                            isArabic ? 'الباقة الأساسية: ملعب 1 فقط (أول سنة مجاناً)' : 'Basic Plan: 1 Stadium only (1st Year Free)',
                             style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
                           ),
                         ),

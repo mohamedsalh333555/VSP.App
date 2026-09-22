@@ -72,7 +72,7 @@ class UserModel {
   bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
   DateTime? get effectiveTrialEndsAt =>
-      trialEndsAt ?? createdAt?.add(const Duration(days: 60));
+      trialEndsAt ?? createdAt?.add(const Duration(days: 365));
 
   bool get isInActiveTrial =>
       subscriptionPlan == 'free_trial' &&

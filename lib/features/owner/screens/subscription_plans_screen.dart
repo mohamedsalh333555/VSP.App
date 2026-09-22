@@ -102,17 +102,17 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isArabic ? '500 ج.م' : '500 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
-              badgeText: isArabic ? 'أول شهرين مجاناً' : 'First 2 Months Free',
+              badgeText: isArabic ? 'أول سنة مجاناً' : 'First Year Free',
               badgeColor: VSPColors.accent,
               isHighlighted: false,
               isCurrentPlan: isTrialOrBasic,
               buttonText: isTrialOrBasic
                   ? (isArabic ? 'باقتك الحالية (فترة تجريبية)' : 'Current Plan (Free Trial)')
-                  : (isArabic ? 'ابدأ مجاناً (أول شهرين)' : 'Start Free (1st 2 Months)'),
+                  : (isArabic ? 'ابدأ مجاناً (أول سنة)' : 'Start Free (1st Year)'),
               features: [
                 isArabic ? 'تشغيل وإدارة ملعب واحد فقط (1)' : 'Full operation for 1 stadium only',
                 isArabic ? 'استقبال الحجوزات النقدية والأونلاين ومنع التضارب' : 'Accept Cash & Online bookings with conflict prevention',
-                isArabic ? 'فترة تجريبية مجانية شهرين بالكامل لتقييم المنظومة' : 'Full 2-month free evaluation period',
+                isArabic ? 'فترة تجريبية مجانية سنة كاملة لتقييم المنظومة' : 'Full 1-year free evaluation period',
                 isArabic ? 'تنظيم وإدارة البطولات والكؤوس لجميع الفرق مجاناً' : 'Free Tournament creation & cup management',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),

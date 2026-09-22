@@ -161,7 +161,7 @@ class AuthOAuthCoordinator {
           isIdentityVerified: false,
           verificationStatus: 'pending',
           subscriptionPlan: 'free_trial',
-          trialEndsAt: DateTime.now().add(const Duration(days: 60)),
+          trialEndsAt: DateTime.now().add(const Duration(days: 365)),
         );
       }
 

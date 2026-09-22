@@ -6,7 +6,6 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
-import 'package:go_router/go_router.dart';
 import '../../screens/global_search_screen.dart';
 import '../filter_bottom_sheet.dart';
 import 'home_feed_sections.dart';

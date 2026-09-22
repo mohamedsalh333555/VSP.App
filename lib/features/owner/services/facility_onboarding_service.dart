@@ -29,8 +29,8 @@ class FacilityOnboardingService {
   }) {
     if (user.isInActiveTrial) {
       return isArabic
-          ? 'اشتراك مجاني — فترة تجريبية شهرين'
-          : 'Free Trial — 2 Month Plan';
+          ? 'اشتراك مجاني — فترة تجريبية سنة'
+          : 'Free Trial — 1 Year Plan';
     }
     return isArabic ? 'الباقة الأساسية (Basic)' : 'Basic Plan';
   }

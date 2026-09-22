@@ -60,11 +60,11 @@ void main() {
 
       expect(
         FacilityOnboardingService.getPlanLabel(user: trialOwner, isArabic: true),
-        equals('اشتراك مجاني — فترة تجريبية شهرين'),
+        equals('اشتراك مجاني — فترة تجريبية سنة'),
       );
       expect(
         FacilityOnboardingService.getPlanLabel(user: trialOwner, isArabic: false),
-        equals('Free Trial — 2 Month Plan'),
+        equals('Free Trial — 1 Year Plan'),
       );
 
       final basicOwner = UserModel(

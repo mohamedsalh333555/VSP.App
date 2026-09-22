@@ -173,8 +173,8 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
               _buildFAQTile(
                 question: isArabic ? 'ما هي باقات الاشتراك لأصحاب الملاعب (Basic vs PRO)؟' : 'What are the subscription plans for stadium owners (Basic vs PRO)?',
                 answer: isArabic 
-                  ? 'تمنحك الباقة الأساسية تشغيل ملعب واحد مجاناً لمدة شهرين كاملين لتقييم المنظومة، بينما تمنحك الباقة الاحترافية (PRO) إدارة حتى 3 ملاعب كاملة، تحليلات متقدمة للإيرادات وساعات الذروة، وأولوية الظهور في نتائج البحث.'
-                  : 'The Basic plan offers free management of 1 pitch for 2 months, while the PRO plan includes managing up to 3 pitches, advanced analytics for peak hours, and priority search visibility.',
+                  ? 'تمنحك الباقة الأساسية تشغيل ملعب واحد مجاناً لمدة سنة كاملة لتقييم المنظومة، بينما تمنحك الباقة الاحترافية (PRO) إدارة حتى 3 ملاعب كاملة، تحليلات متقدمة للإيرادات وساعات الذروة، وأولوية الظهور في نتائج البحث.'
+                  : 'The Basic plan offers free management of 1 pitch for 1 year, while the PRO plan includes managing up to 3 pitches, advanced analytics for peak hours, and priority search visibility.',
               ),
               _buildFAQTile(
                 question: isArabic ? 'ما هي رسوم المنصة وكيف يتم تسوية الخدمات؟' : 'What are the platform fees for stadium owners?',
