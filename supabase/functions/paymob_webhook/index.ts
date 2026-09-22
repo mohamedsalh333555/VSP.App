@@ -420,7 +420,7 @@ serve(async (req: Request) => {
     // Fetch existing booking to verify expected amount
     const { data: existingBooking, error: fetchError } = await supabase
       .from("bookings")
-      .select("id, total_price, deposit_amount, needs_deposit, owner_id, user_id, created_by_user_id, stadium_name")
+      .select("id, status, total_price, deposit_amount, needs_deposit, owner_id, user_id, created_by_user_id, stadium_name")
       .eq("id", bookingId)
       .maybeSingle();
 
@@ -487,6 +487,106 @@ serve(async (req: Request) => {
 
     // 4. Update Booking Status atomically if transaction succeeded
     if (isSuccess) {
+      // 🛡️ LATE PAYMENT / EXPIRED LOCK (8-MIN) HANDLER: Real Paymob Auto-Refund
+      if (existingBooking.status === "cancelled") {
+        console.warn(`🚨 Payment received for cancelled/expired booking ${bookingId}. Initiating REAL Paymob Auto-Refund...`);
+        let refundSuccess = false;
+        let refundId = null;
+        let refundErrorMsg = null;
+
+        try {
+          const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
+          if (!paymobApiKey) {
+            throw new Error("Missing PAYMOB_SECRET_KEY on server environment");
+          }
+
+          // Step A: Authenticate with Paymob
+          const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ api_key: paymobApiKey }),
+          });
+
+          if (!authRes.ok) {
+            const authErrText = await authRes.text();
+            throw new Error(`Paymob auth token request failed: ${authErrText}`);
+          }
+
+          const authData = await authRes.json();
+          const authToken = authData.token;
+
+          // Step B: Call Paymob Void/Refund API
+          const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              auth_token: authToken,
+              transaction_id: Number(transactionId),
+              amount_cents: obj.amount_cents,
+            }),
+          });
+
+          const refundData = await refundRes.json();
+          if (refundRes.ok && (refundData.id || refundData.success !== false)) {
+            refundSuccess = true;
+            refundId = String(refundData.id || transactionId);
+            console.log(`✅ Paymob Auto-Refund executed successfully for expired booking ${bookingId} (Refund Tx: ${refundId})`);
+          } else {
+            refundErrorMsg = JSON.stringify(refundData);
+            console.error(`❌ Paymob Auto-Refund failed:`, refundData);
+          }
+        } catch (refundEx: any) {
+          console.error("Exception during Paymob Auto-Refund:", refundEx);
+          refundErrorMsg = refundEx.message || String(refundEx);
+        }
+
+        // Record in bookings & webhook_logs
+        await supabase
+          .from("bookings")
+          .update({
+            payment_status: refundSuccess ? "refunded" : "failed",
+            refund_amount: (obj.amount_cents || 0) / 100,
+            refund_transaction_id: refundId,
+            cancellation_reason: "انتهت مهلة الدفع (8 دقائق) - تم استرداد المبلغ تلقائياً للبطاقة",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", bookingId);
+
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "auto_refund_expired_booking",
+          txn_id: transactionId,
+          booking_id: bookingId,
+          payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: obj },
+          signature_verified: true,
+          status: refundSuccess ? "refunded" : "refund_failed",
+          error_message: refundErrorMsg,
+        });
+
+        // Notify user
+        const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
+        if (playerUserId) {
+          try {
+            await supabase.from("notifications").insert({
+              user_id: playerUserId,
+              title: "استرداد تلقائي للمبلغ 💸",
+              body: `تم إرجاع (${((obj.amount_cents || 0) / 100).toFixed(0)} ج.م) لبطاقتك البنكية نظراً لانتهاء مهلة حجز الموعد (8 دقائق).`,
+              type: "refund_success",
+              created_at: new Date().toISOString(),
+            });
+          } catch (_) {}
+        }
+
+        return new Response(JSON.stringify({
+          status: "expired_auto_refunded",
+          refund_success: refundSuccess,
+          booking_id: bookingId
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       const paidAmountEgp = (obj.amount_cents || 0) / 100;
       const expectedAmount = (existingBooking.needs_deposit && Number(existingBooking.deposit_amount) > 0)
         ? Number(existingBooking.deposit_amount)
@@ -518,7 +618,9 @@ serve(async (req: Request) => {
 
       const updatedIsPaid = !isDepositOnly;
       const updatedPaymentStatus = isDepositOnly ? "partially_paid" : "paid";
-      const updatedDepositPaid = isDepositOnly ? Number(existingBooking.deposit_amount) : paidAmountEgp;
+      const updatedDepositPaid = isDepositOnly
+        ? Number(existingBooking.deposit_amount)
+        : Math.min(paidAmountEgp, Number(existingBooking.total_price));
       const remainingAmount = isDepositOnly ? Math.max(0, Number(existingBooking.total_price) - updatedDepositPaid) : 0;
 
       // 🛡️ Normalize payment method to match database constraint (card, wallet, paymob)

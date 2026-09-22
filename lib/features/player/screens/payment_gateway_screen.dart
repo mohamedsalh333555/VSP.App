@@ -50,7 +50,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
   Booking? _booking;
-  int _remainingSeconds = 300; // 5 minutes atomic hold timer
+  int _remainingSeconds = 480; // 8 minutes atomic hold timer
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;

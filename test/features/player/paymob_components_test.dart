@@ -39,6 +39,10 @@ void main() {
         PaymobCallbackUrlParser.evaluateUrl('https://accept.paymob.com/post_pay?txn_response_code=00'),
         equals(PaymobCallbackStatus.success),
       );
+      expect(
+        PaymobCallbackUrlParser.evaluateUrl('https://www.vspapp.online/payment-callback?id=540006822&pending=false&amount_cents=33820&success=true&txn_response_code=APPROVED'),
+        equals(PaymobCallbackStatus.success),
+      );
     });
 
     test('evaluateUrl returns failure on explicit rejection params', () {

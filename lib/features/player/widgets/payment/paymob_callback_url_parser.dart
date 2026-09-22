@@ -12,6 +12,7 @@ class PaymobCallbackUrlParser {
   static bool isSafeDomain(String url) {
     final lowerUrl = url.toLowerCase();
     return lowerUrl.contains('paymob.com') ||
+        lowerUrl.contains('vspapp.online') ||
         lowerUrl.contains('nbe.com.eg') ||
         lowerUrl.contains('banquemisr.com') ||
         lowerUrl.contains('cibeg.com');
@@ -39,6 +40,8 @@ class PaymobCallbackUrlParser {
         lowerUrl.contains('checkout.paymob.com') ||
         lowerUrl.contains('paymob.com') ||
         lowerUrl.contains('vsp_payment_callback') ||
+        lowerUrl.contains('payment-callback') ||
+        lowerUrl.contains('vspapp.online') ||
         lowerUrl.contains('/payment-status');
 
     if (!isPaymobEndpoint) return PaymobCallbackStatus.pendingOrIgnored;

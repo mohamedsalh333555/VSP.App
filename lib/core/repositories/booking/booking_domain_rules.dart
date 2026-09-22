@@ -57,10 +57,10 @@ class BookingDomainRules {
 
   // ═══════════════════════ Pending Booking Expiry ══════════════════════════
 
-  /// Returns true if a pending booking has exceeded the 5-minute payment window.
+  /// Returns true if a pending booking has exceeded the 8-minute payment window.
   /// Expired pending bookings should not block time slots in availability checks.
   static bool isPendingBookingExpired(DateTime createdAt, DateTime now) {
-    return now.difference(createdAt.toLocal()).inMinutes >= 5;
+    return now.difference(createdAt.toLocal()).inMinutes >= 8;
   }
 
   // ═══════════════════════ Challenge Expiry ════════════════════════════════
@@ -94,7 +94,7 @@ class BookingDomainRules {
   ///
   /// Filters out:
   /// - Cancelled bookings
-  /// - Expired pending bookings (pending > 5 minutes without payment)
+  /// - Expired pending bookings (pending > 8 minutes without payment)
   static bool isBookingVisible(Booking booking, DateTime now) {
     if (booking.status == BookingStatus.cancelled) return false;
     if (booking.status == BookingStatus.pending) {
