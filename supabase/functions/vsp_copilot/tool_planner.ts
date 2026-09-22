@@ -68,11 +68,10 @@ export function planToolExecution(
     (semanticOutput.speech_act === "question" && (semanticOutput.raw_user_language || "").includes("اسمك"));
 
   if (isBotIdentity) {
-    const hasParked = state.task_manager?.parked_tasks && state.task_manager.parked_tasks.length > 0;
     return {
       action: "RESPOND_DIRECTLY",
-      reason: "أنا «كابتن VSP»، مساعدك الرياضي الذكي لحجز الملاعب والبطولات في مصر! ⚽",
-      quick_replies: hasParked ? ["تمام نرجع للحجز", "عايز ملعب قريب", "البطولات المفتوحة"] : ["عايز ملعب قريب", "حجوزاتي", "البطولات المفتوحة"],
+      reason: "أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات! ⚽📊",
+      quick_replies: ["أرباحي كام", "حجوزات ملعبي", "الساعات الفاضية"],
     };
   }
 

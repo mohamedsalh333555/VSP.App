@@ -3,20 +3,8 @@
 
 import type { SemanticConfirmation } from "./semantic_schema.ts";
 
-// Role-Based Access Control allowlist
-const PLAYER_ALLOWED_TOOLS = new Set([
-  "searchStadiums",
-  "checkStadiumAvailability",
-  "createBookingFromChat",
-  "searchTournaments",
-  "get1v1Leaderboard",
-  "getOpenMatches",
-  "getUserBookingsAndRefunds",
-  "reconcileBookingPayment",
-  "cancelUserBooking",
-  "updateUserProfile",
-  "executeAppAction",
-]);
+// Role-Based Access Control allowlist (Strictly Pitch Owners only)
+const PLAYER_ALLOWED_TOOLS = new Set<string>([]);
 
 const OWNER_ALLOWED_TOOLS = new Set([
   "getOwnerStadiumsAndBookings",
@@ -31,8 +19,8 @@ export function isToolAllowedForRole(role: string | undefined | null, toolName: 
   if (normRole === "owner" || normRole === "pitch_owner") {
     return OWNER_ALLOWED_TOOLS.has(toolName);
   }
-  // Default to player
-  return PLAYER_ALLOWED_TOOLS.has(toolName);
+  // Zero tools allowed for players
+  return false;
 }
 
 export function isRouteAllowedForRole(role: string | undefined | null, route: string): boolean {

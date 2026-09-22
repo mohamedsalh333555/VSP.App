@@ -108,10 +108,17 @@ class AppRouter {
  path: '/player',
  builder: (context, state) => const PlayerHomeScreen(),
  ),
- GoRoute(
- path: '/copilot',
- builder: (context, state) => const VspCopilotScreen(),
- ),
+      GoRoute(
+        path: '/copilot',
+        redirect: (context, state) {
+          final role = authProvider.userModel?.role?.toLowerCase().trim();
+          if (role != 'owner' && role != 'pitch_owner') {
+            return '/player';
+          }
+          return null;
+        },
+        builder: (context, state) => const VspCopilotScreen(),
+      ),
  GoRoute(
  path: '/copilot-playground',
  builder: (context, state) => const CopilotTestPlayground(),

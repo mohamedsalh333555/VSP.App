@@ -98,6 +98,18 @@ serve(async (req: Request) => {
     const userRole: "player" | "owner" | "admin" =
       userProfile?.role === "pitch_owner" || userProfile?.role === "owner" ? "owner" : "player";
 
+    // 5b. Zero-Cost Role Guard (Strict Owner-Only Access)
+    if (userRole !== "owner") {
+      return new Response(
+        JSON.stringify({
+          error: "FORBIDDEN_ROLE",
+          message: "يا كابتن، خدمة المساعد الذكي مخصصة حصرياً لإدارة الملاعب والماليات لأصحاب الملاعب والشركاء.",
+          role: userRole,
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 6. Retrieve or Initialize Conversation Session
     let contextSnapshot: Record<string, any> = {};
     if (conversationId) {
@@ -223,7 +235,7 @@ serve(async (req: Request) => {
     );
 
     if (needsCreativeSynthesis && geminiApiKey) {
-      const activeModel = aiTelemetry.model_used || "gemini-3.8-flash";
+      const activeModel = aiTelemetry.model_used || "gemini-3.5-flash-lite";
       try {
         const responsePrompt = buildResponseGeneratorPrompt(nextState, toolPlan, toolResult, userMessage);
         const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${geminiApiKey}`;
