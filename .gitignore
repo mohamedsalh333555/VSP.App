@@ -40,6 +40,12 @@ env.json
 env.*.json
 !env.json.example
 
+# Test credential files — explicit named exclusion (defense-in-depth over *.txt)
+test_user_token.txt
+test_owner_token.txt
+*_token.txt
+*.token
+
 # Miscellaneous
 *.class
 *.log
