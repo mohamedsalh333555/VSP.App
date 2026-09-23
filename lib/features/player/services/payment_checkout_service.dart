@@ -1,4 +1,3 @@
-import 'package:uuid/uuid.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../data/models.dart';
 
@@ -32,7 +31,7 @@ class PaymentCheckoutService {
     String? bookingId,
   }) {
     if (bookingId != null && bookingId.isNotEmpty) return bookingId;
-    if (isTournamentPayment) return 'TOURN_\${const Uuid().v4()}';
+    if (isTournamentPayment) => throw StateError('A tournament order reference must be issued by the server.');
     throw StateError('A booking ID is required for a booking payment.');
   }
 
