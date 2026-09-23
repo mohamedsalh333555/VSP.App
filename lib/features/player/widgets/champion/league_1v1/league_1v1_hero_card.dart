@@ -35,7 +35,7 @@ class League1v1HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [VSPColors.cardGreen, VSPColors.surface],
+          colors: [VSPColors.surfaceAlt, VSPColors.surface],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
@@ -88,10 +88,10 @@ class League1v1HeroCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: status == 'registration_open' ? VSPColors.cardGreen : VSPColors.warning.withValues(alpha: 0.15),
+                  color: VSPColors.iconBadgeBg,
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                   border: Border.all(
-                    color: status == 'registration_open' ? VSPColors.success : VSPColors.warning,
+                    color: status == 'registration_open' ? VSPColors.accent : VSPColors.warning,
                     width: 0.8,
                   ),
                 ),

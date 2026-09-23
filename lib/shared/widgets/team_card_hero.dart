@@ -32,7 +32,7 @@ class TeamCardHero extends StatelessWidget {
           colors: [
             VSPColors.surface,
             VSPColors.background,
-            VSPColors.cardDarkGreen,
+            VSPColors.surfaceAlt,
           ],
         ),
         boxShadow: [

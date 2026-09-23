@@ -2,16 +2,24 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../utils/device_performance.dart';
 
+/// ⚠️ ممنوع استخدام Colors.green أو أي hex أخضر مباشر في أي مكان بالتطبيق.
+/// الأخضر الوحيد المعتمد هو accent (#9FDF02) أو accentSoft.
+/// أي خلفية دائرية محايدة لازم تستخدم iconBadgeBg.
 class VSPColors {
   static const background = Color(0xFF09090B); // Deep matte Zinc 950 (100% Solid)
   static const surface = Color(0xFF18181B); // Zinc 900 (100% Solid Opaque)
   static const surfaceAlt = Color(0xFF27272A); // Zinc 800 (100% Solid Opaque)
-  static const surfaceLight = Color(0xFF1D241D); 
+  static const surfaceLight = surfaceAlt; 
   static const accent = Color(0xFF9FDF02); 
   static const primary = accent;
   static const accentSoft = Color(0x1F9FDF02);
   static const accentMuted = Color(0x339FDF02);
   static const accentGlow = Color(0x1F9FDF02);
+
+  /// خلفية دائرية موحدة لأي أيقونة داخل شارة/badge/status circle
+  static const iconBadgeBg = surfaceAlt; // #27272A الفحمي
+  static const iconBadgeBgElevated = Color(0xFF323238); // درجة أفتح شوية لو محتاج تباين أعلى فوق surface
+
   static const textPrimary = Color(0xFFE4E4E7);
   static const textSecondary = Color(0xFFA1A1AA);
   static const textMuted = Color(0xFF6B7280);
@@ -24,8 +32,10 @@ class VSPColors {
   static const Color whatsApp = Color(0xFF25D366);
   static const Color proAccent = Color(0xFFD4AF37); // Metallic Gold
   static const Color proAccentSoft = Color(0x1FD4AF37); // 12% Tint
-  static const cardGreen = Color(0xFF2D4B15);
-  static const cardDarkGreen = Color(0xFF1E330E);
+
+  // Aliased to clean surface tokens to completely eliminate legacy muddy olive tints
+  static const cardGreen = surfaceAlt;
+  static const cardDarkGreen = surface;
   static const white12 = Color(0x1FFFFFFF);
   static const white38 = Color(0x61FFFFFF);
   static const white = Color(0xFFFFFFFF);
@@ -51,7 +61,7 @@ class VSPColors {
     center: Alignment(-0.4, -0.2),
     radius: 1.2,
     colors: [
-      Color(0xFF1E330E),
+      Color(0x1F9FDF02), // subtle accent glow instead of murky olive
       Color(0xFF09090B),
     ],
     stops: [0.0, 0.7],

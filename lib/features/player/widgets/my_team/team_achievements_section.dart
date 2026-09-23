@@ -133,7 +133,7 @@ class TeamAchievementsSection extends StatelessWidget {
                             height: 48,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isUnlocked ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
+                              color: VSPColors.iconBadgeBg,
                               border: Border.all(
                                 color: isUnlocked ? VSPColors.accent : VSPColors.divider,
                                 width: isUnlocked ? 1.5 : 1.0,
@@ -231,7 +231,7 @@ class TeamAchievementsSection extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: isUnlocked ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
+                color: VSPColors.iconBadgeBg,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(color: isUnlocked ? VSPColors.accent : VSPColors.divider),
               ),

@@ -119,7 +119,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  Container(
  padding: const EdgeInsets.all(10),
  decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.15),
+ color: VSPColors.iconBadgeBg,
  shape: BoxShape.circle,
  border: Border.all(
  color: VSPColors.accent.withValues(alpha: 0.3),

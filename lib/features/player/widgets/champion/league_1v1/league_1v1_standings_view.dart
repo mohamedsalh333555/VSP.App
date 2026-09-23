@@ -133,7 +133,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                           points: top3[0].totalPoints,
                           badgeIcon: Iconsax.crown_copy,
                           borderColor: VSPColors.accent,
-                          bgColor: VSPColors.cardDarkGreen,
+                          bgColor: VSPColors.surfaceAlt,
                           isCenter: true,
                           pointsLabel: isArabic ? 'نقطة' : 'PTS',
                         ),

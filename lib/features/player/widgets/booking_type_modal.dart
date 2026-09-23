@@ -226,8 +226,9 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.12),
+                      color: VSPColors.iconBadgeBg,
                       shape: BoxShape.circle,
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
                     ),
                     child: Icon(iconData, color: VSPColors.accent, size: 22),
                   ),

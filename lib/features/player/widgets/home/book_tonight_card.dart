@@ -40,7 +40,7 @@ class BookTonightCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [VSPColors.cardDarkGreen, VSPColors.surface],
+                colors: [VSPColors.surfaceAlt, VSPColors.surface],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
               ),

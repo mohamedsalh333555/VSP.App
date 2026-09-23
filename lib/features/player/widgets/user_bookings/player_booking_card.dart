@@ -101,8 +101,12 @@ class PlayerBookingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: isHistory ? VSPColors.surface : VSPColors.cardGreen,
+        color: isHistory ? VSPColors.surface : VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(
+          color: isHistory ? VSPColors.divider : VSPColors.accent.withValues(alpha: 0.25),
+          width: 1.0,
+        ),
         boxShadow: const [VSPShadow.subtle],
       ),
       child: Column(

@@ -13,7 +13,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
     {'name': 'أبيض', 'value': '#FFFFFF', 'color': Colors.white},
     {'name': 'أحمر', 'value': '#EF4444', 'color': Colors.red},
     {'name': 'أزرق', 'value': '#3B82F6', 'color': Colors.blue},
-    {'name': 'أخضر', 'value': '#22C55E', 'color': Colors.green},
+    {'name': 'أخضر', 'value': '#22C55E', 'color': Color(0xFF22C55E)},
     {'name': 'أصفر', 'value': '#F59E0B', 'color': Colors.amber},
     {'name': 'أسود', 'value': '#18181B', 'color': Colors.black},
   ];

@@ -67,9 +67,7 @@ class TeamProfileAchievementsSection extends StatelessWidget {
                     height: 64,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isUnlocked
-                          ? VSPColors.accent.withValues(alpha: 0.1)
-                          : VSPColors.surfaceAlt.withValues(alpha: 0.5),
+                      color: VSPColors.iconBadgeBg,
                       border: Border.all(
                         color: isUnlocked ? VSPColors.accent : VSPColors.divider,
                         width: 2,

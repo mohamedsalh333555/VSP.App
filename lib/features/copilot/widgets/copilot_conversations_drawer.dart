@@ -149,7 +149,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
           child: Material(
             color: isActive
                 ? VSPColors.accent.withValues(alpha: 0.14)
-                : VSPColors.cardDarkGreen,
+                : VSPColors.surfaceAlt,
             borderRadius: BorderRadius.circular(VSPRadius.md),
             child: ListTile(
               shape: RoundedRectangleBorder(

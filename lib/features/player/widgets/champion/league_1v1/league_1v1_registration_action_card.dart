@@ -57,9 +57,9 @@ class League1v1RegistrationActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: VSPColors.cardGreen,
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        border: Border.all(color: VSPColors.success.withValues(alpha: 0.5)),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [

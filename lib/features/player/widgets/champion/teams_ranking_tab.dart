@@ -177,7 +177,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                           points: top3[0].points,
                           badgeIcon: Iconsax.crown_copy,
                           borderColor: VSPColors.accent,
-                          bgColor: VSPColors.cardGreen,
+                          bgColor: VSPColors.surfaceAlt,
                           isCenter: true,
                         ),
                       ),

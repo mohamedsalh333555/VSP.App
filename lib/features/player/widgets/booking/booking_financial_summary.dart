@@ -32,9 +32,9 @@ class BookingFinancialSummary extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.12),
+              color: VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

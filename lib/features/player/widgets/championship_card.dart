@@ -98,10 +98,10 @@ class ChampionshipCard extends StatelessWidget {
                     badgeColor = VSPColors.accent;
                   } else if (isFull) {
                     badgeText = AppLocalizations.of(context)!.full.toUpperCase();
-                    badgeColor = Colors.orange;
+                    badgeColor = VSPColors.warning;
                   } else {
                     badgeText = AppLocalizations.of(context)!.open.toUpperCase();
-                    badgeColor = Colors.green;
+                    badgeColor = VSPColors.accent;
                   }
 
                   return _buildStatusBadge(badgeText, badgeColor);
@@ -115,7 +115,7 @@ class ChampionshipCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt,
+                    color: VSPColors.iconBadgeBg,
                     shape: BoxShape.circle,
                     border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1.5),
                   ),
@@ -313,9 +313,9 @@ class ChampionshipCard extends StatelessWidget {
   Widget _buildStatusBadge(String text, Color color) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.4))),
+          color: VSPColors.iconBadgeBg,
+          borderRadius: BorderRadius.circular(VSPRadius.full),
+          border: Border.all(color: color.withValues(alpha: 0.35))),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
