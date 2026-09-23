@@ -73,16 +73,15 @@ class TournamentRegistrationCoordinator {
         throw Exception(rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
       }
 
-      // Save team roster
-      try {
-        await _rosterCoord.updateSingleTeamRoster(
-          championshipId: championshipId,
-          teamId: teamId,
-          playerIds: selectedPlayerIds,
-          guestNames: offlineGuestNames,
-        );
-      } catch (rosterErr) {
-        debugPrint('Roster sync notice: $rosterErr');
+      // Save the roster as part of a successful registration.
+      final rosterSaved = await _rosterCoord.updateSingleTeamRoster(
+        championshipId: championshipId,
+        teamId: teamId,
+        playerIds: selectedPlayerIds,
+        guestNames: offlineGuestNames,
+      );
+      if (!rosterSaved) {
+        throw Exception('تعذر حفظ تشكيلة الفريق. لم يتم تأكيد التسجيل لأن بيانات التشكيلة غير مكتملة.');
       }
 
       // Alert championship owner
