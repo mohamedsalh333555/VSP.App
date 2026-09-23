@@ -80,6 +80,7 @@ class PaymentCheckoutService {
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
+      paymentMethod: selectedMethod,
       isTournamentPayment: isTournamentPayment,
       isFullPayment: isFullPayment,
     );
