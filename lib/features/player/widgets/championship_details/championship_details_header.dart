@@ -48,7 +48,7 @@ class ChampionshipStatCard extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 11),
                 maxLines: 1,
               ),
             ),
@@ -127,7 +127,7 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                   children: [
                     Text(
                       championship.name,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -180,20 +180,20 @@ class ChampionshipDetailsHeader extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: championship.prizeDelivered
-                    ? const Color(0xFF10B981).withValues(alpha: 0.1)
-                    : const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                    ? VSPColors.success.withValues(alpha: 0.1)
+                    : VSPColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(
                   color: championship.prizeDelivered
-                      ? const Color(0xFF10B981).withValues(alpha: 0.3)
-                      : const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      ? VSPColors.success.withValues(alpha: 0.3)
+                      : VSPColors.warning.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     championship.prizeDelivered ? Iconsax.verify_copy : Iconsax.clock_copy,
-                    color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                    color: championship.prizeDelivered ? VSPColors.success : VSPColors.warning,
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -207,7 +207,7 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                               ? 'بانتظار تسليم الجائزة المالية للبطل'
                               : 'Pending prize delivery to champion'),
                       style: TextStyle(
-                        color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                        color: championship.prizeDelivered ? VSPColors.success : VSPColors.warning,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

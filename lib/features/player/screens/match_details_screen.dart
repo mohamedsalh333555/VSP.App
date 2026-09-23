@@ -363,7 +363,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  ? 'دعوة أصحابك عبر جروب الواتساب ' 
  : 'Invite Friends via WhatsApp Group ',
  height: 48,
- color: const Color(0xFF25D366),
+ color: VSPColors.whatsApp,
  textColor: Colors.white,
  onPressed: () async {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';

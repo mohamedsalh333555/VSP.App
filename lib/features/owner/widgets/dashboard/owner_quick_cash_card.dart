@@ -339,7 +339,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
                   height: 36,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: VSPColors.success,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),

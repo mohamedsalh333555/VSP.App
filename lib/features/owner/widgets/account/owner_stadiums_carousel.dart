@@ -69,7 +69,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 isArabic ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -77,24 +77,24 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.03),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  border: Border.all(color: VSPColors.divider),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Icon(Iconsax.building_3_copy, color: Color(0xFFA1A1AA), size: 16),
+                        const Icon(Iconsax.building_3_copy, color: VSPColors.textSecondary, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             isArabic ? 'الباقة الأساسية: ملعب 1 فقط (أول سنة مجاناً)' : 'Basic Plan: 1 Stadium only (1st Year Free)',
-                            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                           ),
                         ),
                       ],
                     ),
-                    const Divider(color: Color(0xFF262626), height: 16),
+                    const Divider(color: VSPColors.divider, height: 16),
                     Row(
                       children: [
                         const Icon(Iconsax.buildings_copy, color: VSPColors.accent, size: 16),
@@ -102,7 +102,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                         Expanded(
                           child: Text(
                             isArabic ? 'الباقة الاحترافية: حتى 3 ملاعب كاملة (1000 ج.م/شهر)' : 'Pro Plan: Up to 3 Stadiums (1000 EGP/mo)',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
                         ),
                       ],
@@ -186,7 +186,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
             Text(
               isArabic ? 'إضافة ملعب آخر' : 'Add Another Stadium',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.textPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),
@@ -209,7 +209,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
           child: Text(
             isArabic ? 'الملاعب المسجلة' : 'My Stadiums',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),

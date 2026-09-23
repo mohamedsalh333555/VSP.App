@@ -66,17 +66,17 @@ class WelcomeOnboardingSlide extends StatelessWidget {
               ),
               // Premium Dark Gradient Mask
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color(0x99000000),
+                      VSPColors.black80,
                       Colors.transparent,
-                      Color(0x8009090B),
+                      VSPColors.background.withValues(alpha: 0.5),
                       VSPColors.background,
                     ],
-                    stops: [0.0, 0.3, 0.75, 1.0],
+                    stops: const [0.0, 0.3, 0.75, 1.0],
                   ),
                 ),
               ),

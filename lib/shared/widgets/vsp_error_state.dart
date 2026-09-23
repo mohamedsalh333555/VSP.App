@@ -56,7 +56,7 @@ class VSPErrorState extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFFEF4444),
+                color: VSPColors.error,
                 size: 48,
               ),
             ),
@@ -67,7 +67,7 @@ class VSPErrorState extends StatelessWidget {
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: VSPColors.textPrimary,
                   ),
             ),
             const SizedBox(height: 8),

@@ -142,7 +142,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       child: Column(
         children: [
           _buildHeader(),
-          const Divider(color: Colors.white12, height: 1),
+          const Divider(color: VSPColors.divider, height: 1),
           Expanded(child: _buildMessagesList()),
           if (!_isLoading) _buildQuickPrompt(quickPrompt),
           _buildInputBar(),
@@ -160,7 +160,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: VSPColors.accent.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(VSPRadius.chip),
             ),
             child: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
           ),
@@ -186,7 +186,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           ),
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Iconsax.close_circle_copy, color: Colors.white70, size: 20),
+            icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 20),
           ),
         ],
       ),
@@ -221,10 +221,10 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
             decoration: BoxDecoration(
               color: isUser ? VSPColors.accent : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(14),
-                topRight: const Radius.circular(14),
-                bottomLeft: Radius.circular(isUser ? 14 : 2),
-                bottomRight: Radius.circular(isUser ? 2 : 14),
+                topLeft: const Radius.circular(VSPRadius.input),
+                topRight: const Radius.circular(VSPRadius.input),
+                bottomLeft: Radius.circular(isUser ? VSPRadius.input : 2),
+                bottomRight: Radius.circular(isUser ? 2 : VSPRadius.input),
               ),
               border: Border.all(
                 color: isUser ? Colors.transparent : VSPColors.borderLight,
@@ -280,7 +280,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                         Expanded(
                           child: Text(
                             s.name,
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -305,7 +305,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: Colors.white54),
+                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: VSPColors.textMuted),
                       ],
                     ),
                   ],
@@ -325,7 +325,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: VSPColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           border: Border.all(color: VSPColors.borderLight),
         ),
         child: const Row(
@@ -371,14 +371,14 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
-        border: Border(top: BorderSide(color: Colors.white10)),
+        border: Border(top: BorderSide(color: VSPColors.divider)),
       ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: widget.isArabic ? 'اكتب طلبك للبحث عن ملاعب...' : 'Search pitches...',
                 hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),

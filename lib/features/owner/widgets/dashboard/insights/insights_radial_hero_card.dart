@@ -35,7 +35,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
       ),
@@ -53,7 +53,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                   painter: RadialTickGaugePainter(
                     progress: ringProgress.clamp(0.0, 1.0),
                     activeColor: VSPColors.accent,
-                    inactiveColor: const Color(0xFF27272A),
+                    inactiveColor: VSPColors.surfaceAlt,
                     totalTicks: 52,
                     tickLength: 13.5,
                     strokeWidth: 2.3,

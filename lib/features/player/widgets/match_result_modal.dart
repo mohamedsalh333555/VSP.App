@@ -132,7 +132,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  // Selection Options
  _buildSelectionOption(0, isArabic ? 'فزنا بالمباراة ' : 'We Won', Iconsax.cup_copy, VSPColors.warning),
  const SizedBox(height: 12),
- _buildSelectionOption(1, isArabic ? 'تعادل ' : 'Draw', Iconsax.repeat_copy, const Color(0xFF3B82F6)),
+ _buildSelectionOption(1, isArabic ? 'تعادل ' : 'Draw', Iconsax.repeat_copy, VSPColors.info),
  const SizedBox(height: 12),
  _buildSelectionOption(2, isArabic ? 'خسرنا المباراة' : 'We Lost', Iconsax.warning_2_copy, VSPColors.error),
 

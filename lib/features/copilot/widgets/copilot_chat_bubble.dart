@@ -39,10 +39,10 @@ class CopilotChatBubble extends StatelessWidget {
             decoration: BoxDecoration(
               color: isUser ? VSPColors.accent : VSPColors.surface,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isUser ? 16 : 4),
-                bottomRight: Radius.circular(isUser ? 4 : 16),
+                topLeft: const Radius.circular(VSPRadius.input),
+                topRight: const Radius.circular(VSPRadius.input),
+                bottomLeft: Radius.circular(isUser ? VSPRadius.input : VSPRadius.xs),
+                bottomRight: Radius.circular(isUser ? VSPRadius.xs : VSPRadius.input),
               ),
               border: Border.all(
                 color: isUser ? Colors.transparent : VSPColors.borderLight,
@@ -106,7 +106,7 @@ class CopilotChatBubble extends StatelessWidget {
                           ),
                           codeblockDecoration: BoxDecoration(
                             color: VSPColors.surface,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(VSPRadius.sm),
                             border: Border.all(color: VSPColors.borderLight),
                           ),
                           blockquote: const TextStyle(
@@ -138,9 +138,9 @@ class CopilotChatBubble extends StatelessWidget {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Iconsax.copy_copy, size: 12, color: Colors.white54),
+                          Icon(Iconsax.copy_copy, size: 12, color: VSPColors.textMuted),
                           SizedBox(width: 4),
-                          Text('نسخ', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                          Text('نسخ', style: TextStyle(color: VSPColors.textMuted, fontSize: 10)),
                         ],
                       ),
                     ),
@@ -252,7 +252,7 @@ class CopilotChatBubble extends StatelessWidget {
               Text(
                 action.label,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
@@ -302,7 +302,7 @@ class CopilotChatBubble extends StatelessWidget {
                           child: Text(
                             s.name,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: VSPColors.textPrimary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -400,7 +400,7 @@ class CopilotChatBubble extends StatelessWidget {
                           child: Text(
                             t.name,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: VSPColors.textPrimary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -486,7 +486,7 @@ class CopilotChatBubble extends StatelessWidget {
                           child: Text(
                             m.stadiumName,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: VSPColors.textPrimary,
                               fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -559,7 +559,7 @@ class CopilotLoadingBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: VSPColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           border: Border.all(color: VSPColors.borderLight),
         ),
         child: const Row(

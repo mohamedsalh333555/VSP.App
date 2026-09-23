@@ -81,7 +81,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         title: Text(
           isArabic ? 'باقات الاشتراك' : 'Subscription Plans',
           style: const TextStyle(
-            color: Colors.white,
+            color: VSPColors.textPrimary,
             fontWeight: FontWeight.w800,
             fontSize: 17,
           ),
@@ -171,7 +171,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isExpired ? Colors.redAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.06),
+          color: isExpired ? VSPColors.error.withValues(alpha: 0.3) : VSPColors.divider,
           width: 1,
         ),
       ),
@@ -182,7 +182,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             children: [
               Icon(
                 isExpired ? Iconsax.warning_2_copy : Iconsax.timer_1_copy,
-                color: isExpired ? Colors.redAccent : VSPColors.accent,
+                color: isExpired ? VSPColors.error : VSPColors.accent,
                 size: 18,
               ),
               const SizedBox(width: 10),
@@ -193,7 +193,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     isExpired
                         ? (isArabic ? 'الاشتراك منتهي' : 'Subscription Expired')
                         : (isArabic ? 'الحالة: $planLabelText' : 'Status: $planLabelText'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -209,13 +209,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isExpired ? Colors.redAccent.withValues(alpha: 0.12) : VSPColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
+              color: isExpired ? VSPColors.error.withValues(alpha: 0.12) : VSPColors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(VSPRadius.xs),
             ),
             child: Text(
               isExpired ? (isArabic ? 'منتهي' : 'Expired') : (isArabic ? 'نشط' : 'Active'),
               style: TextStyle(
-                color: isExpired ? Colors.redAccent : VSPColors.accent,
+                color: isExpired ? VSPColors.error : VSPColors.accent,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -246,7 +246,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isHighlighted ? VSPColors.accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06),
+          color: isHighlighted ? VSPColors.accent.withValues(alpha: 0.4) : VSPColors.divider,
           width: isHighlighted ? 1.4 : 1.0,
         ),
       ),
@@ -260,7 +260,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               Text(
                 title,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w800,
                   fontSize: 17,
                 ),
@@ -294,7 +294,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               Text(
                 priceText,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.3,
@@ -349,7 +349,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      border: Border.all(color: VSPColors.divider),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -358,7 +358,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         const SizedBox(width: 6),
                         Text(
                           buttonText,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                          style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -367,19 +367,19 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     onPressed: onSelect,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isHighlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
-                      foregroundColor: isHighlighted ? Colors.black : Colors.white,
+                      foregroundColor: isHighlighted ? Colors.black : VSPColors.textPrimary,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.sm),
                         side: isHighlighted
                             ? BorderSide.none
-                            : BorderSide(color: Colors.white.withValues(alpha: 0.12), width: 1),
+                            : const BorderSide(color: VSPColors.divider, width: 1),
                       ),
                     ),
                     child: Text(
                       buttonText,
                       style: TextStyle(
-                        color: isHighlighted ? Colors.black : Colors.white,
+                        color: isHighlighted ? Colors.black : VSPColors.textPrimary,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),

@@ -6,6 +6,7 @@ class VSPColors {
  static const surfaceAlt = Color(0xFF27272A); // Zinc 800 (100% Solid Opaque)
  static const surfaceLight = Color(0xFF1D241D); 
  static const accent = Color(0xFF9FDF02); 
+ static const primary = accent;
  static const accentSoft = Color(0x1F9FDF02);
  static const accentMuted = Color(0x339FDF02);
  static const accentGlow = Color(0x1F9FDF02);
@@ -18,11 +19,17 @@ class VSPColors {
  static const success = Color(0xFF22C55E);
  static const warning = Color(0xFFF59E0B);
  static const info = Color(0xFF3B82F6);
+ static const Color whatsApp = Color(0xFF25D366);
  static const cardGreen = Color(0xFF2D4B15);
  static const cardDarkGreen = Color(0xFF1E330E);
  static const white12 = Color(0x1FFFFFFF);
  static const white38 = Color(0x61FFFFFF);
  static const white = Color(0xFFFFFFFF);
+ 
+ // Podiums & Medals
+ static const Color medalGold = Color(0xFFFFD700);
+ static const Color medalSilver = Color(0xFFC0C0C0);
+ static const Color medalBronze = Color(0xFFCD7F32);
  
  static const Color borderLight = Color(0x1FFFFFFF); 
  static const Color borderAccent = Color(0x409FDF02);
@@ -69,6 +76,7 @@ class VSPRadius {
  static const double chip = sm; // All filter chips, tags, position badges
  static const double dialog = xl; // All popup dialogs and modals
  static const double bottomSheet = xl; // All bottom sheets
+ static const double sheet = bottomSheet;
 }
 
 class VSPSize {

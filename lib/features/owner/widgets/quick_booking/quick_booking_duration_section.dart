@@ -47,7 +47,7 @@ class QuickBookingDurationSection extends StatelessWidget {
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent : const Color(0xFF18181B),
+          color: isSelected ? VSPColors.accent : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
             color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.1),

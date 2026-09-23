@@ -35,11 +35,11 @@ class League1v1HeroCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E2614), VSPColors.surface],
+          colors: [VSPColors.cardGreen, VSPColors.surface],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
@@ -61,7 +61,7 @@ class League1v1HeroCard extends StatelessWidget {
                   children: [
                     Text(
                       tourneyName,
-                      style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
+                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w900),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -88,10 +88,10 @@ class League1v1HeroCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: status == 'registration_open' ? const Color(0xFF14301A) : const Color(0xFF332B10),
+                  color: status == 'registration_open' ? VSPColors.cardGreen : VSPColors.warning.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                   border: Border.all(
-                    color: status == 'registration_open' ? const Color(0xFF22C55E) : const Color(0xFFEAB308),
+                    color: status == 'registration_open' ? VSPColors.success : VSPColors.warning,
                     width: 0.8,
                   ),
                 ),
@@ -100,7 +100,7 @@ class League1v1HeroCard extends StatelessWidget {
                       ? (isArabic ? 'التسجيل متاح' : 'Open')
                       : (isArabic ? 'التسجيل مغلق' : 'Closed'),
                   style: TextStyle(
-                    color: status == 'registration_open' ? const Color(0xFF4ADE80) : const Color(0xFFFDE047),
+                    color: status == 'registration_open' ? VSPColors.success : VSPColors.warning,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -119,7 +119,7 @@ class League1v1HeroCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     formatScheduledDate(scheduledAt),
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -148,13 +148,13 @@ class League1v1HeroCard extends StatelessWidget {
               ),
               Text(
                 '$registeredCount / $targetCount ($remainingCount ${isArabic ? "متبقي" : "left"})',
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(VSPRadius.sm),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,

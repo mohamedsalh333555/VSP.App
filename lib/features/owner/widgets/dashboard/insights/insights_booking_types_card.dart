@@ -32,7 +32,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
       ),

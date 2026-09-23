@@ -83,8 +83,8 @@ class OwnerDashboardHeader extends StatelessWidget {
                             ? const SweepGradient(
                                 colors: [
                                   VSPColors.accent,
-                                  Color(0xFF84CC16),
-                                  Color(0xFF22C55E),
+                                  VSPColors.accent,
+                                  VSPColors.success,
                                   VSPColors.accent,
                                 ],
                               )

@@ -118,7 +118,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                   border: Border.all(
                     color: isOngoing
-                        ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                        ? VSPColors.success.withValues(alpha: 0.3)
                         : Colors.white.withValues(alpha: 0.06),
                     width: 1,
                   ),
@@ -129,7 +129,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
                         color: isOngoing
-                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                            ? VSPColors.success.withValues(alpha: 0.12)
                             : Colors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(VSPRadius.sm),
                       ),
@@ -143,14 +143,14 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                               margin: const EdgeInsets.only(right: 5),
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Color(0xFF34D399),
+                                color: VSPColors.success,
                               ),
                             ),
                           ],
                           Text(
                             AppDateFormatter.formatTime(b.startTime.toLocal(), locale),
                             style: TextStyle(
-                              color: isOngoing ? const Color(0xFF34D399) : VSPColors.textPrimary,
+                              color: isOngoing ? VSPColors.success : VSPColors.textPrimary,
                               fontSize: 11.5,
                               fontWeight: FontWeight.bold,
                             ),

@@ -14,8 +14,8 @@ void showOwnerCupFormatModal(BuildContext context) {
       return Container(
         decoration: const BoxDecoration(
           color: VSPColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border(top: BorderSide(color: Color(0xFF3F3F46), width: 2)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.sheet)),
+          border: Border(top: BorderSide(color: VSPColors.borderLight, width: 2)),
         ),
         padding: EdgeInsets.fromLTRB(
           20,

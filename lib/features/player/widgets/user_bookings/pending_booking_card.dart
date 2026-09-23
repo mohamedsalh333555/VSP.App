@@ -24,27 +24,27 @@ class PendingBookingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: VSPSpacing.md),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: Colors.amber, width: 1.2),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.warning, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.timer_1_copy, color: Colors.amber, size: 20),
+              const Icon(Iconsax.timer_1_copy, color: VSPColors.warning, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
               IconButton(
                 constraints: const BoxConstraints(),
                 padding: EdgeInsets.zero,
-                icon: const Icon(Iconsax.trash_copy, color: Colors.redAccent, size: 18),
+                icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
                 tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
                 onPressed: () async {
                   final bp = Provider.of<BookingProvider>(context, listen: false);
@@ -64,7 +64,7 @@ class PendingBookingCard extends StatelessWidget {
             isArabic
                 ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
                 : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.',
-            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, height: 1.4),
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 12),
           Row(
@@ -88,7 +88,7 @@ class PendingBookingCard extends StatelessWidget {
                             content: Text(isArabic
                                 ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.'
                                 : 'Payment pending. Complete checkout.'),
-                            backgroundColor: Colors.amber,
+                            backgroundColor: VSPColors.warning,
                           ),
                         );
                       }
@@ -100,8 +100,8 @@ class PendingBookingCard extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF27272A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: VSPColors.surfaceAlt,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.chip)),
                   ),
                 ),
               ),
@@ -142,7 +142,7 @@ class PendingBookingCard extends StatelessWidget {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.chip)),
                   ),
                 ),
               ),

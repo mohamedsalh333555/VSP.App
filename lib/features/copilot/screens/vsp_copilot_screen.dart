@@ -475,7 +475,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
             width: 7,
             height: 7,
             decoration: const BoxDecoration(
-              color: Color(0xFF00E676),
+              color: VSPColors.accent,
               shape: BoxShape.circle,
             ),
           ),

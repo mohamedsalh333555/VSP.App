@@ -93,7 +93,7 @@ class TeamMembersSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: VSPColors.accent.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
         border: Border.all(color: VSPColors.accent),
       ),
       child: Row(
@@ -115,7 +115,7 @@ class TeamMembersSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             decoration: BoxDecoration(
               color: VSPColors.accent,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(VSPRadius.xs),
             ),
             child: Text(
               isArabic ? 'كابتن' : 'C',
@@ -132,7 +132,7 @@ class TeamMembersSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
         border: Border.all(color: VSPColors.divider),
       ),
       child: Row(

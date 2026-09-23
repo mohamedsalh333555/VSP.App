@@ -63,10 +63,10 @@ class OwnerAvatarHeader extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: isPro
                     ? const SweepGradient(
-                        colors: [VSPColors.accent, Color(0xFF84CC16), Color(0xFF22C55E), VSPColors.accent],
+                        colors: [VSPColors.accent, VSPColors.accent, VSPColors.success, VSPColors.accent],
                       )
                     : null,
-                color: isPro ? null : const Color(0xFF1E1E24),
+                color: isPro ? null : VSPColors.surfaceAlt,
                 border: isPro ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                 boxShadow: isPro
                     ? [
@@ -76,7 +76,7 @@ class OwnerAvatarHeader extends StatelessWidget {
               ),
               padding: EdgeInsets.all(isPro ? 2.5 : 0),
               child: Container(
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF141417)),
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: VSPColors.background),
                 clipBehavior: Clip.antiAlias,
                 child: (photoUrl != null && photoUrl.trim().isNotEmpty)
                     ? CachedNetworkImage(

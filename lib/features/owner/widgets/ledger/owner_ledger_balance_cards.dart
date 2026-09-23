@@ -20,9 +20,9 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         children: [
@@ -34,19 +34,19 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 children: [
                   Text(
                     isAr ? 'الرصيد الإلكتروني المتاح' : 'Available Digital Balance',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     isAr ? 'مستحقات قابلة للتحويل' : 'Withdrawable earnings',
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                   ),
                 ],
               ),
               Text(
                 '${digitalBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w900,
                   fontSize: 20,
                 ),
@@ -62,7 +62,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: VSPColors.accent,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
                 ),
                 child: Center(
                   child: Text(
@@ -96,9 +96,9 @@ class OwnerPitchCashCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -108,19 +108,19 @@ class OwnerPitchCashCard extends StatelessWidget {
             children: [
               Text(
                 isAr ? 'إجمالي التحصيل النقدي' : 'Pitch Cash Collected',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13.5),
               ),
               const SizedBox(height: 2),
               Text(
                 isAr ? 'تم استلامها كاش بالملعب' : 'Received in cash at pitch',
-                style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
               ),
             ],
           ),
           Text(
             '${pitchCash.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.textPrimary,
               fontWeight: FontWeight.w900,
               fontSize: 18,
             ),

@@ -289,7 +289,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  await VSPLauncherUtils.openWhatsApp(context, phone: '', message: message);
  },
  style: ElevatedButton.styleFrom(
- backgroundColor: const Color(0xFF25D366),
+ backgroundColor: VSPColors.whatsApp,
  foregroundColor: Colors.white,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
  elevation: 0,

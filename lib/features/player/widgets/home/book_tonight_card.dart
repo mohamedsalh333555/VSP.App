@@ -40,7 +40,7 @@ class BookTonightCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF082619), Color(0xFF0B1B2D)],
+                colors: [VSPColors.cardDarkGreen, VSPColors.surface],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
               ),
@@ -64,7 +64,7 @@ class BookTonightCard extends StatelessWidget {
                   height: 46,
                   decoration: BoxDecoration(
                     color: VSPColors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(VSPRadius.card),
                     border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                   ),
                   child: const Center(
@@ -95,7 +95,7 @@ class BookTonightCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: VSPColors.accent,
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(VSPRadius.full),
                             ),
                             child: Text(
                               isArabic ? 'سريع' : 'Fast',

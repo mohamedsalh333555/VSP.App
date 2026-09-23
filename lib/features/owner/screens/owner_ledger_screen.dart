@@ -90,7 +90,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -143,11 +143,11 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Iconsax.receipt_2_1_copy, size: 36, color: Color(0xFFA1A1AA)),
+                  const Icon(Iconsax.receipt_2_1_copy, size: 36, color: VSPColors.textSecondary),
                   const SizedBox(height: 12),
                   Text(
                     isAr ? 'لا توجد معاملات مالية مسجلة بعد' : 'No financial transactions yet',
-                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 13, fontWeight: FontWeight.w500),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),

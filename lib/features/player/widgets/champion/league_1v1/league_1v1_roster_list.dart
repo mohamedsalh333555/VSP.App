@@ -79,8 +79,8 @@ class League1v1RosterList extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isMe ? const Color(0xFF1B2A16) : VSPColors.surface,
-                  borderRadius: BorderRadius.circular(14),
+                  color: isMe ? VSPColors.primary.withValues(alpha: 0.15) : VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.card),
                   border: Border.all(
                     color: isMe ? VSPColors.accent : VSPColors.divider.withValues(alpha: 0.3),
                     width: isMe ? 1.5 : 0.5,
@@ -137,14 +137,14 @@ class League1v1RosterList extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF142E18),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.3), width: 0.5),
+                        color: VSPColors.success.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(VSPRadius.xs),
+                        border: Border.all(color: VSPColors.success.withValues(alpha: 0.3), width: 0.5),
                       ),
                       child: Text(
                         isArabic ? 'مسجل ومسدد' : 'Paid & Confirmed',
                         style: const TextStyle(
-                          color: Color(0xFF86EFAC),
+                          color: VSPColors.success,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),

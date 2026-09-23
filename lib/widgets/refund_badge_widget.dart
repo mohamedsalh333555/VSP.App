@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../core/ui/tokens/vsp_tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../models/refund_info.dart';
 
@@ -20,8 +21,8 @@ class RefundBadgeWidget extends StatelessWidget {
     final copyToastText = l10n?.refIdCopied ?? 'تم نسخ رقم الإيصال';
     final Color channelColor = _channelColor(refundInfo.channel);
 
-    final Color refTextColor = isDark ? Colors.white.withValues(alpha: 0.8) : const Color(0xFF4B5563);
-    final Color hintTextColor = isDark ? Colors.white.withValues(alpha: 0.6) : Colors.grey[600]!;
+    final Color refTextColor = isDark ? VSPColors.textPrimary : VSPColors.textSecondary;
+    final Color hintTextColor = isDark ? VSPColors.textSecondary : VSPColors.textMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +32,7 @@ class RefundBadgeWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: channelColor.withValues(alpha: isDark ? 0.15 : 0.1),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(VSPRadius.full),
             border: Border.all(
               color: channelColor.withValues(alpha: 0.45),
             ),
@@ -115,8 +116,8 @@ class RefundBadgeWidget extends StatelessWidget {
   }
 
   Color _channelColor(RefundChannel channel) => switch (channel) {
-    RefundChannel.wallet => const Color(0xFF10B981), // Green
-    RefundChannel.card   => const Color(0xFF3B82F6), // Blue
-    RefundChannel.cash   => const Color(0xFFF59E0B), // Orange
+    RefundChannel.wallet => VSPColors.success,
+    RefundChannel.card   => VSPColors.info,
+    RefundChannel.cash   => VSPColors.warning,
   };
 }

@@ -18,7 +18,6 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const itemStyle = TextStyle(
-      fontFamily: 'Tajawal',
       color: VSPColors.textPrimary,
       fontSize: 12.5,
       fontWeight: FontWeight.w700,
@@ -43,8 +42,8 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selectedTimePeriod,
-          dropdownColor: const Color(0xFF1C1C21),
-          borderRadius: BorderRadius.circular(14),
+          dropdownColor: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.card),
           icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 13),
           style: itemStyle,
           selectedItemBuilder: (context) {
@@ -54,7 +53,6 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
                 child: Text(
                   p['label']!,
                   style: const TextStyle(
-                    fontFamily: 'Tajawal',
                     color: VSPColors.textPrimary,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
@@ -70,7 +68,6 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
               child: Text(
                 p['label']!,
                 style: TextStyle(
-                  fontFamily: 'Tajawal',
                   color: isCurrent ? VSPColors.accent : VSPColors.textPrimary,
                   fontSize: 13,
                   fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,

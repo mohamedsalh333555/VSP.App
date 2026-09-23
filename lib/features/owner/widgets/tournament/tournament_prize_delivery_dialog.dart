@@ -30,7 +30,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Row(
               children: [
-                const Icon(Iconsax.award_copy, color: Color(0xFF10B981), size: 22),
+                const Icon(Iconsax.award_copy, color: VSPColors.success, size: 22),
                 const SizedBox(width: 8),
                 Text(
                   isAr ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Handover',
@@ -68,7 +68,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             Text(
                               '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
                               style: const TextStyle(
-                                  color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 13),
+                                  color: VSPColors.success, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                           ],
                         ),
@@ -98,7 +98,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: VSPColors.success,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),

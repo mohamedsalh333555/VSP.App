@@ -40,12 +40,12 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  return s;
  }
 
- Color get _strengthColor {
- if (_strength <= 0.25) return Colors.redAccent;
- if (_strength <= 0.5) return Colors.orange;
- if (_strength <= 0.75) return Colors.yellow;
- return VSPColors.accent;
- }
+  Color get _strengthColor {
+    if (_strength <= 0.25) return VSPColors.error;
+    if (_strength <= 0.5) return VSPColors.warning;
+    if (_strength <= 0.75) return VSPColors.warning;
+    return VSPColors.accent;
+  }
 
  String _getStrengthLabel(bool isAr) {
  if (_strength <= 0.25) return isAr ? 'ضعيفة' : 'Weak';
@@ -185,7 +185,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  children: [
  Expanded(
  child: ClipRRect(
- borderRadius: BorderRadius.circular(4),
+ borderRadius: BorderRadius.circular(VSPRadius.xs),
  child: LinearProgressIndicator(
  value: _strength,
  minHeight: 6,

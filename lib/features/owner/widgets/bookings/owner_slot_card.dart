@@ -105,7 +105,7 @@ class OwnerSlotCard extends StatelessWidget {
       height: isMerged ? null : 70,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMerged ? 14 : 0),
       decoration: BoxDecoration(
-        color: isManual ? VSPColors.surface : const Color(0xFF141417),
+        color: isManual ? VSPColors.surface : VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
           color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08),
@@ -189,7 +189,7 @@ class OwnerSlotCard extends StatelessWidget {
                         badgeLabel = isAr
                             ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م'
                             : 'Rem. ${remaining.toStringAsFixed(0)} EGP';
-                        badgeColor = const Color(0xFF38BDF8);
+                        badgeColor = VSPColors.info;
                       } else {
                         badgeLabel = isAr ? 'كاش عند الحضور' : 'Pay on Arrival';
                         badgeColor = Colors.white60;
@@ -199,7 +199,7 @@ class OwnerSlotCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: badgeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(VSPRadius.xs),
                           border: Border.all(color: badgeColor.withValues(alpha: 0.25), width: 0.5),
                         ),
                         child: Text(

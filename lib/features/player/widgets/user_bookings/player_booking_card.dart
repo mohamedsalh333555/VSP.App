@@ -101,8 +101,8 @@ class PlayerBookingCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: isHistory ? VSPColors.surface : const Color(0xFF2D4B15),
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        color: isHistory ? VSPColors.surface : VSPColors.cardGreen,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         boxShadow: VSPShadow.subtle,
       ),
       child: Column(
@@ -382,10 +382,10 @@ class PlayerBookingCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
+          color: VSPColors.warning.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+            color: VSPColors.warning.withValues(alpha: 0.45),
           ),
         ),
         child: Row(
@@ -394,7 +394,7 @@ class PlayerBookingCard extends StatelessWidget {
             const Icon(
               Iconsax.message_question_copy,
               size: 13,
-              color: Color(0xFFF59E0B),
+              color: VSPColors.warning,
             ),
             const SizedBox(width: 5),
             Text(
@@ -402,7 +402,7 @@ class PlayerBookingCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFF59E0B),
+                color: VSPColors.warning,
               ),
             ),
           ],
@@ -415,10 +415,10 @@ class PlayerBookingCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF38BDF8).withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        color: VSPColors.info.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
         border: Border.all(
-          color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
+          color: VSPColors.info.withValues(alpha: 0.45),
         ),
       ),
       child: Row(
@@ -429,7 +429,7 @@ class PlayerBookingCard extends StatelessWidget {
             height: 11,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+              valueColor: AlwaysStoppedAnimation<Color>(VSPColors.info),
             ),
           ),
           const SizedBox(width: 6),
@@ -438,7 +438,7 @@ class PlayerBookingCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF38BDF8),
+              color: VSPColors.info,
             ),
           ),
         ],

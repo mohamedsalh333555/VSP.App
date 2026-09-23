@@ -42,7 +42,7 @@ class VSPFeedback {
  _showOverlayToast(
  context: context,
  message: message,
- backgroundColor: const Color(0xFFE67E22),
+ backgroundColor: VSPColors.warning,
  textColor: Colors.white,
  icon: Iconsax.warning_2_copy,
  );

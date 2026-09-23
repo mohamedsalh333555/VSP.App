@@ -30,9 +30,9 @@ class TeamCardHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1A1A1A),
-            Color(0xFF0D0D0D),
-            Color(0xFF1E3A1E), // Subtle dark emerald hint
+            VSPColors.surface,
+            VSPColors.background,
+            VSPColors.cardDarkGreen,
           ],
         ),
         boxShadow: [
@@ -170,7 +170,7 @@ class TeamCardHero extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: isGold ? Colors.amber : VSPColors.white38,
+            color: isGold ? VSPColors.warning : VSPColors.white38,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),
@@ -178,7 +178,7 @@ class TeamCardHero extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: isGold ? Colors.amber : VSPColors.white,
+            color: isGold ? VSPColors.warning : VSPColors.white,
             fontSize: 24,
             fontWeight: FontWeight.w900,
           ),

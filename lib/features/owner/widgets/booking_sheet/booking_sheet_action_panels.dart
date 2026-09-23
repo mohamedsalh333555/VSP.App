@@ -157,8 +157,8 @@ class BookingSheetCashPanel extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF38BDF8),
-                    side: const BorderSide(color: Color(0xFF38BDF8)),
+                    foregroundColor: VSPColors.info,
+                    side: const BorderSide(color: VSPColors.info),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.md)),
                   ),

@@ -135,14 +135,14 @@ class QuickBookingPaymentSection extends StatelessWidget {
             color: isFullyPaid
                 ? VSPColors.accent.withValues(alpha: 0.12)
                 : (isPartiallyPaid
-                    ? const Color(0xFF38BDF8).withValues(alpha: 0.12)
+                    ? VSPColors.info.withValues(alpha: 0.12)
                     : Colors.white.withValues(alpha: 0.04)),
             borderRadius: BorderRadius.circular(VSPRadius.md),
             border: Border.all(
               color: isFullyPaid
                   ? VSPColors.accent.withValues(alpha: 0.3)
                   : (isPartiallyPaid
-                      ? const Color(0xFF38BDF8).withValues(alpha: 0.3)
+                      ? VSPColors.info.withValues(alpha: 0.3)
                       : Colors.white.withValues(alpha: 0.08)),
             ),
           ),
@@ -154,7 +154,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                     : (isPartiallyPaid ? Iconsax.receipt_2_copy : Iconsax.money_copy),
                 color: isFullyPaid
                     ? VSPColors.accent
-                    : (isPartiallyPaid ? const Color(0xFF38BDF8) : VSPColors.textSecondary),
+                    : (isPartiallyPaid ? VSPColors.info : VSPColors.textSecondary),
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -174,7 +174,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                   style: TextStyle(
                     color: isFullyPaid
                         ? VSPColors.accent
-                        : (isPartiallyPaid ? const Color(0xFF38BDF8) : Colors.white70),
+                        : (isPartiallyPaid ? VSPColors.info : Colors.white70),
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                   ),

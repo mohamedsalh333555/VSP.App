@@ -221,15 +221,15 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
                     height: 50,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366).withValues(alpha: 0.08),
-                        side: BorderSide(color: const Color(0xFF25D366).withValues(alpha: 0.5)),
+                        backgroundColor: VSPColors.whatsApp.withValues(alpha: 0.08),
+                        side: BorderSide(color: VSPColors.whatsApp.withValues(alpha: 0.5)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)),
                       ),
-                      icon: const Icon(Iconsax.message_copy, color: Color(0xFF25D366), size: 18),
+                      icon: const Icon(Iconsax.message_copy, color: VSPColors.whatsApp, size: 18),
                       label: Text(
                         widget.isArabic ? 'مساعدة فورية عبر واتساب' : 'WhatsApp Instant Support',
                         style: const TextStyle(
-                          color: Color(0xFF25D366),
+                          color: VSPColors.whatsApp,
                           fontWeight: FontWeight.bold,
                           fontSize: 13.5,
                           decoration: TextDecoration.none,

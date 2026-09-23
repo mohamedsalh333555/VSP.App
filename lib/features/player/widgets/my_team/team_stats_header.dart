@@ -34,11 +34,11 @@ class TeamStatsHeader extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: VSPSpacing.md),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF332608), Color(0xFF1E1A0C)],
+                  gradient: LinearGradient(
+                    colors: [VSPColors.warning.withValues(alpha: 0.25), VSPColors.surface],
                   ),
                   borderRadius: BorderRadius.circular(VSPRadius.lg),
-                  border: Border.all(color: const Color(0xFFEAB308), width: 1),
+                  border: Border.all(color: VSPColors.warning, width: 1),
                 ),
                 child: Row(
                   children: [
@@ -51,7 +51,7 @@ class TeamStatsHeader extends StatelessWidget {
                           Text(
                             isArabic ? 'فريق يضم بطل 1v1 رسمي!' : 'Home of Official 1v1 Champion!',
                             style: const TextStyle(
-                              color: Color(0xFFFDE047),
+                              color: VSPColors.warning,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                             ),
@@ -60,7 +60,7 @@ class TeamStatsHeader extends StatelessWidget {
                             isArabic
                                 ? 'أحد لاعبي هذا الفريق حاصل على المركز الأول في بطولة الفردي'
                                 : 'A member of this team won 1st place in the 1v1 tournament',
-                            style: const TextStyle(color: Color(0xFFCA8A04), fontSize: 11),
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
                         ],
                       ),

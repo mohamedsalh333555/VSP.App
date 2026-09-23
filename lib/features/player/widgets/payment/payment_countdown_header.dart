@@ -75,9 +75,9 @@ class PaymentCountdownHeader extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF18181B),
+            color: VSPColors.surface,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
-            border: Border.all(color: const Color(0xFF27272A), width: 1.2),
+            border: Border.all(color: VSPColors.surfaceAlt, width: 1.2),
           ),
           child: Column(
             children: [

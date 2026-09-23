@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../core/ui/tokens/vsp_tokens.dart';
 import '../l10n/app_localizations.dart';
 import '../models/refund_info.dart';
 
@@ -31,14 +32,14 @@ class RefundNoticeWidget extends StatelessWidget {
     final timelineLabel = isArabic ? 'المدة المتوقعة' : 'Expected timeline';
 
     final Color color = _channelColor(refundInfo.channel);
-    final Color textColor = isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF1F2937);
-    final Color subTextColor = isDark ? Colors.white.withValues(alpha: 0.6) : Colors.grey[600]!;
+    const Color textColor = VSPColors.textPrimary;
+    const Color subTextColor = VSPColors.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.12 : 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
         border: Border.all(
           color: color.withValues(alpha: 0.35),
           width: 1,
@@ -58,7 +59,7 @@ class RefundNoticeWidget extends StatelessWidget {
               children: [
                 Text(
                   noticeText,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: textColor,
                     height: 1.45,
@@ -68,7 +69,7 @@ class RefundNoticeWidget extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Iconsax.clock_copy,
                       size: 13,
                       color: subTextColor,
@@ -76,7 +77,7 @@ class RefundNoticeWidget extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '$timelineLabel: $etaText',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: subTextColor,
                         fontWeight: FontWeight.w500,
@@ -93,9 +94,9 @@ class RefundNoticeWidget extends StatelessWidget {
   }
 
   Color _channelColor(RefundChannel channel) => switch (channel) {
-    RefundChannel.wallet => const Color(0xFF10B981), // Green / Emerald
-    RefundChannel.card   => const Color(0xFF3B82F6), // Blue
-    RefundChannel.cash   => const Color(0xFFF59E0B), // Orange / Amber
+    RefundChannel.wallet => VSPColors.success,
+    RefundChannel.card   => VSPColors.info,
+    RefundChannel.cash   => VSPColors.warning,
   };
 
   String _channelIcon(RefundChannel channel) => switch (channel) {

@@ -41,14 +41,14 @@ class BookingSlotCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
         decoration: BoxDecoration(
           color: isBooked
-              ? Colors.red.withValues(alpha: 0.08)
+              ? VSPColors.error.withValues(alpha: 0.08)
               : (isPast
                   ? VSPColors.surface.withValues(alpha: 0.3)
                   : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent)),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
             color: isBooked
-                ? Colors.red.withValues(alpha: 0.3)
+                ? VSPColors.error.withValues(alpha: 0.3)
                 : (isPast
                     ? Colors.transparent
                     : (isSelected
@@ -71,10 +71,10 @@ class BookingSlotCard extends StatelessWidget {
                   slotItem.startTime,
                   style: TextStyle(
                     color: isBooked
-                        ? Colors.redAccent.withValues(alpha: 0.7)
+                        ? VSPColors.error.withValues(alpha: 0.7)
                         : (isPast
                             ? VSPColors.textSecondary.withValues(alpha: 0.4)
-                            : (isSelected ? Colors.white : VSPColors.textPrimary)),
+                            : (isSelected ? VSPColors.textPrimary : VSPColors.textPrimary)),
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
@@ -86,7 +86,7 @@ class BookingSlotCard extends StatelessWidget {
                     '–',
                     style: TextStyle(
                       color: isBooked
-                          ? Colors.redAccent.withValues(alpha: 0.7)
+                          ? VSPColors.error.withValues(alpha: 0.7)
                           : (isSelected ? VSPColors.accent : VSPColors.textSecondary),
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -97,10 +97,10 @@ class BookingSlotCard extends StatelessWidget {
                   slotItem.endTime,
                   style: TextStyle(
                     color: isBooked
-                        ? Colors.redAccent.withValues(alpha: 0.7)
+                        ? VSPColors.error.withValues(alpha: 0.7)
                         : (isPast
                             ? VSPColors.textSecondary.withValues(alpha: 0.4)
-                            : (isSelected ? Colors.white : VSPColors.textPrimary)),
+                            : (isSelected ? VSPColors.textPrimary : VSPColors.textPrimary)),
                     fontSize: 15,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
@@ -113,18 +113,18 @@ class BookingSlotCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                  color: VSPColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Iconsax.lock_copy, size: 12, color: Colors.redAccent),
+                    const Icon(Iconsax.lock_copy, size: 12, color: VSPColors.error),
                     const SizedBox(width: 4),
                     Text(
                       isArabic ? ' محجوز' : ' Booked',
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.error, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -134,13 +134,13 @@ class BookingSlotCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.amber),
+                  color: VSPColors.warning.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                  border: Border.all(color: VSPColors.warning),
                 ),
                 child: Text(
                   isArabic ? ' الآن' : ' NOW',
-                  style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ] else if (isNextAvailable) ...[
@@ -149,7 +149,7 @@ class BookingSlotCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: VSPColors.accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
                 ),
                 child: Text(
@@ -182,7 +182,7 @@ class BookingSlotCard extends StatelessWidget {
             child: Text(
               isArabic ? 'بعد منتصف الليل ($nextDayName)' : 'After Midnight ($nextDayName)',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),

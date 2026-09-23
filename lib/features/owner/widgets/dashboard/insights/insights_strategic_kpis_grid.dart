@@ -39,11 +39,11 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF141417),
+      backgroundColor: VSPColors.surface,
       barrierColor: Colors.black87,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0xFF27272A), width: 1),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+        side: BorderSide(color: VSPColors.divider, width: 1),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -59,8 +59,8 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+                      color: VSPColors.textMuted,
+                      borderRadius: BorderRadius.circular(VSPRadius.xs),
                     ),
                   ),
                 ),
@@ -74,7 +74,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         color: VSPColors.accent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(VSPRadius.chip),
                         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
                       ),
                       child: const Icon(Iconsax.info_circle_copy, size: 20, color: VSPColors.accent),
@@ -87,7 +87,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                           Text(
                             title,
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: VSPColors.textPrimary,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -113,14 +113,14 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A1E),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.input),
+                    border: Border.all(color: VSPColors.divider),
                   ),
                   child: Text(
                     explanation,
                     style: const TextStyle(
-                      color: Colors.white70,
+                      color: VSPColors.textSecondary,
                       fontSize: 13,
                       height: 1.5,
                     ),
@@ -134,17 +134,17 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                   height: 44,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
+                      side: const BorderSide(color: VSPColors.divider),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(VSPRadius.chip),
                       ),
-                      backgroundColor: Colors.white.withValues(alpha: 0.04),
+                      backgroundColor: VSPColors.surfaceAlt,
                     ),
                     onPressed: () => Navigator.of(ctx).pop(),
                     child: Text(
                       isArabic ? 'إغلاق' : 'Close',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.textPrimary,
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -180,9 +180,9 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFF141417),
+            color: VSPColors.surface,
             borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
+            border: Border.all(color: VSPColors.divider, width: 1.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,15 +195,15 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                     height: 32,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      border: Border.all(color: VSPColors.divider),
                     ),
-                    child: Icon(icon, size: 16, color: Colors.white70),
+                    child: Icon(icon, size: 16, color: VSPColors.textSecondary),
                   ),
                   const Icon(
                     Iconsax.info_circle_copy,
                     size: 13,
-                    color: Colors.white30,
+                    color: VSPColors.textMuted,
                   ),
                 ],
               ),
@@ -225,7 +225,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -236,7 +236,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: Colors.white54,
+                  color: VSPColors.textMuted,
                   fontSize: 10.5,
                   fontWeight: FontWeight.w400,
                 ),

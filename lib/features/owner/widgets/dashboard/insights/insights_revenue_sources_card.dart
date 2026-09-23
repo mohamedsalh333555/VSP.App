@@ -61,11 +61,11 @@ class FramedMetricProgressBar extends StatelessWidget {
         ),
         const SizedBox(height: 7),
         ClipRRect(
-          borderRadius: BorderRadius.circular(3),
+          borderRadius: BorderRadius.circular(VSPRadius.xs),
           child: LinearProgressIndicator(
             value: (percentage / 100.0).clamp(0.0, 1.0),
             minHeight: 5,
-            backgroundColor: const Color(0xFF27272A),
+            backgroundColor: VSPColors.surfaceAlt,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -97,7 +97,7 @@ class InsightsRevenueSourcesCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
       ),

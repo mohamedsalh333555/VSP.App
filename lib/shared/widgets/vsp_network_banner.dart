@@ -42,8 +42,8 @@ class VSPNetworkBanner extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
+                            gradient: LinearGradient(
+                              colors: [VSPColors.error, VSPColors.error.withValues(alpha: 0.8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -56,7 +56,7 @@ class VSPNetworkBanner extends StatelessWidget {
                               ),
                             ],
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: VSPColors.borderLight,
                               width: 1,
                             ),
                           ),
@@ -65,7 +65,7 @@ class VSPNetworkBanner extends StatelessWidget {
                             children: [
                               const Icon(
                                 Iconsax.wifi_square_copy,
-                                color: Colors.white,
+                                color: VSPColors.textPrimary,
                                 size: 20,
                               ),
                               const SizedBox(width: 10),
@@ -75,7 +75,7 @@ class VSPNetworkBanner extends StatelessWidget {
                                       ? 'لا يوجد اتصال بالإنترنت — البيانات قد تكون غير محدثة'
                                       : 'No internet connection — data may be outdated',
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: VSPColors.textPrimary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     height: 1.2,

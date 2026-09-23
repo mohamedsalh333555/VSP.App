@@ -57,13 +57,13 @@ class League1v1RegistrationActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF142E18),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.5)),
+        color: VSPColors.cardGreen,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.success.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.tick_circle_copy, color: Color(0xFF22C55E), size: 28),
+          const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -71,14 +71,14 @@ class League1v1RegistrationActionCard extends StatelessWidget {
               children: [
                 Text(
                   isArabic ? 'أنت مسجل في البطولة بنجاح!' : 'You are registered!',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   isArabic
                       ? 'رقم مقعدك في الجدول: #$myIndex (تم سداد الاشتراك)'
                       : 'Your seat number: #$myIndex (Entry fee paid)',
-                  style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 12),
+                  style: TextStyle(color: VSPColors.success.withValues(alpha: 0.8), fontSize: 12),
                 ),
               ],
             ),
@@ -93,15 +93,15 @@ class League1v1RegistrationActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF231C10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFEAB308).withValues(alpha: 0.4)),
+        color: VSPColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(Iconsax.info_circle_copy, color: Color(0xFFFDE047), size: 18),
+              const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -109,7 +109,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                       ? 'أنت تتصفح بطولة خارج محافظتك (${championTranslateItem(context, tourneyLocation.toString())}). الاشتراك متاح فقط في بطولات محافظتك ($userGov).'
                       : 'Viewing tournament in ${championTranslateItem(context, tourneyLocation.toString())}. Registration is available only in your home city ($userGov).',
                   style: const TextStyle(
-                    color: Color(0xFFFDE047),
+                    color: VSPColors.warning,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -124,16 +124,16 @@ class League1v1RegistrationActionCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onSwitchToUserGov,
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFEAB308)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                side: const BorderSide(color: VSPColors.warning),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.input)),
               ),
-              icon: const Icon(Iconsax.location_copy, size: 16, color: Color(0xFFFDE047)),
+              icon: const Icon(Iconsax.location_copy, size: 16, color: VSPColors.warning),
               label: Text(
                 isArabic
                     ? 'الانتقال إلى بطولات محافظتي ($userGov)'
                     : 'Switch to My City ($userGov)',
                 style: const TextStyle(
-                  color: Color(0xFFFDE047),
+                  color: VSPColors.warning,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -165,7 +165,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(color: VSPColors.divider),
       ),
       child: Text(

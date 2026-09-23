@@ -270,12 +270,12 @@ class _NotificationCard extends StatelessWidget {
       case 'result_confirmation':
         return VSPColors.accent;
       case 'chat':
-        return const Color(0xFF818CF8); // Indigo
+        return VSPColors.info;
       case 'booking_new':
         return VSPColors.success;
       case 'info':
       default:
-        return Colors.blue;
+        return VSPColors.info;
     }
   }
 

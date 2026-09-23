@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Single transaction item row in owner financial ledger.
 class OwnerLedgerTransactionItem extends StatelessWidget {
@@ -45,8 +46,8 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
-        borderRadius: BorderRadius.circular(14),
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
       ),
       child: Row(
@@ -62,7 +63,7 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   formattedDate,
-                  style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                 ),
               ],
             ),

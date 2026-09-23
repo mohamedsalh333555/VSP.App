@@ -11,20 +11,20 @@ class VSPSkeleton extends StatelessWidget {
     super.key,
     required this.width,
     required this.height,
-    this.borderRadius = 12,
+    this.borderRadius = VSPRadius.input,
   });
 
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFF1E1E22),
-      highlightColor: const Color(0xFF2C2C32),
+      baseColor: VSPColors.inputFill,
+      highlightColor: VSPColors.surfaceAlt,
       period: const Duration(milliseconds: 1400),
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E22),
+          color: VSPColors.inputFill,
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),
@@ -44,7 +44,7 @@ class CardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 0.8),
+        border: Border.all(color: VSPColors.divider, width: 0.8),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -269,7 +269,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  PrimaryButton(
  text: isArabic ? 'مشاركة الماتش على جروب الواتساب ' : 'Share Match to WhatsApp Group ',
  height: 52,
- color: const Color(0xFF25D366), // WhatsApp Brand Green
+ color: VSPColors.whatsApp,
  textColor: Colors.white,
  onPressed: () async {
  final inviteMessage = VSPMatchInviteFormatter.buildInviteMessage(

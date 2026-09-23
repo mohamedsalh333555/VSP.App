@@ -42,16 +42,16 @@ class InsightsTopFiltersRow extends StatelessWidget {
             height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF141417),
+              color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: VSPColors.divider),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedStadiumFilter,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1C1C21),
-                borderRadius: BorderRadius.circular(14),
+                dropdownColor: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.card),
                 icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 12),
                 selectedItemBuilder: (context) {
                   final items = [
@@ -62,8 +62,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontFamily: 'Tajawal',
-                          color: Colors.white,
+                          color: VSPColors.textPrimary,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -76,8 +75,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Tajawal',
-                              color: Colors.white,
+                              color: VSPColors.textPrimary,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -94,7 +92,6 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     child: Text(
                       isArabic ? 'جميع الملاعب' : 'All Pitches',
                       style: TextStyle(
-                        fontFamily: 'Tajawal',
                         color: selectedStadiumFilter == 'all' ? VSPColors.accent : VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: selectedStadiumFilter == 'all' ? FontWeight.w800 : FontWeight.w600,
@@ -106,7 +103,6 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         child: Text(
                           s.name,
                           style: TextStyle(
-                            fontFamily: 'Tajawal',
                             color: selectedStadiumFilter == s.id ? VSPColors.accent : VSPColors.textPrimary,
                             fontSize: 12.5,
                             fontWeight: selectedStadiumFilter == s.id ? FontWeight.w800 : FontWeight.w600,
@@ -132,16 +128,16 @@ class InsightsTopFiltersRow extends StatelessWidget {
             height: 38,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF141417),
+              color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: VSPColors.divider),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedTimePeriod,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1C1C21),
-                borderRadius: BorderRadius.circular(14),
+                dropdownColor: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.card),
                 icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 12),
                 selectedItemBuilder: (context) {
                   return periodOptions.map((p) {
@@ -152,8 +148,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontFamily: 'Tajawal',
-                          color: Colors.white,
+                          color: VSPColors.textPrimary,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w700,
                         ),
@@ -168,7 +163,6 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     child: Text(
                       p['label']!,
                       style: TextStyle(
-                        fontFamily: 'Tajawal',
                         color: isCurrent ? VSPColors.accent : VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
@@ -208,13 +202,13 @@ class InsightsEmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF141417),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         children: [
-          const Icon(Iconsax.chart_21_copy, size: 28, color: Colors.white54),
+          const Icon(Iconsax.chart_21_copy, size: 28, color: VSPColors.textMuted),
           const SizedBox(height: 8),
           Text(
             isArabic ? 'التحليلات في انتظار أول حجز' : 'Awaiting Your First Booking',
@@ -231,7 +225,7 @@ class InsightsEmptyState extends StatelessWidget {
                 : 'Charts and performance metrics will appear after your first booking.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white70,
+              color: VSPColors.textSecondary,
               fontSize: 12.5,
               height: 1.4,
             ),

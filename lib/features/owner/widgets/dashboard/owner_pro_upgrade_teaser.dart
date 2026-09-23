@@ -20,7 +20,7 @@ class OwnerProUpgradeTeaser extends StatelessWidget {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,10 +30,10 @@ class OwnerProUpgradeTeaser extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  color: VSPColors.warning.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(VSPRadius.sm),
                 ),
-                child: const Icon(Iconsax.crown_copy, color: Color(0xFFF59E0B), size: 18),
+                child: const Icon(Iconsax.crown_copy, color: VSPColors.warning, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(

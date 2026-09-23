@@ -24,7 +24,7 @@ class League1v1PrizeCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.35)),
       ),
       child: Row(
@@ -35,7 +35,7 @@ class League1v1PrizeCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(VSPRadius.card),
                 border: Border.all(color: VSPColors.divider.withValues(alpha: 0.25)),
               ),
               child: Column(
@@ -75,8 +75,8 @@ class League1v1PrizeCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF162512),
-                borderRadius: BorderRadius.circular(14),
+                color: VSPColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(VSPRadius.card),
                 border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
               ),
               child: Column(
@@ -105,7 +105,7 @@ class League1v1PrizeCard extends StatelessWidget {
                   Text(
                     '$registeredCount ${isArabic ? "دفعوا واشتركوا" : "paid entries"}',
                     style: const TextStyle(
-                      color: Color(0xFF86EFAC),
+                      color: VSPColors.success,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
