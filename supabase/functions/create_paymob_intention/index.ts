@@ -227,6 +227,12 @@ serve(async (req: Request) => {
       gatewayRate,
       Number(feeConfig.booking_paymob_fixed_fee),
     );
+    const baseAmountCents = Math.round(finalBaseAmount * 100);
+    const vspFeeCents = Math.round(
+      baseAmountCents * Number(feeConfig.booking_vsp_rate),
+    );
+    const gatewayFeeCents = amountInCents - baseAmountCents - vspFeeCents;
+    const totalPaymentFeesCents = amountInCents - baseAmountCents;
     const totalAmountEgp = amountInCents / 100;
 
     const profileName = String(user_name || callerUser.user_metadata?.full_name || "").trim();
@@ -316,9 +322,9 @@ serve(async (req: Request) => {
         checkout_url: checkoutUrl,
         client_secret: clientSecret,
         base_amount: finalBaseAmount,
-        vsp_fee: vspFee,
-        gateway_fee: gatewayFee,
-        total_fees: totalPaymentFees,
+        vsp_fee: vspFeeCents / 100,
+        gateway_fee: gatewayFeeCents / 100,
+        total_fees: totalPaymentFeesCents / 100,
         total_amount: totalAmountEgp,
       }),
       {
