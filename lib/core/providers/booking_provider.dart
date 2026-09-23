@@ -227,13 +227,17 @@ class BookingProvider with ChangeNotifier {
         BookingListModifier.removeBooking(_historyBookings, bookingId);
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
-        _errorMessage = 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
+        _errorMessage ??= 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
       }
-      _cancellingIds.remove(bookingId);
-      notifyListeners();
       return success;
     } catch (e) {
+      _errorMessage = e is Exception
+          ? e.toString().replaceFirst('Exception: ', '').trim()
+          : 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
       return false;
+    } finally {
+      _cancellingIds.remove(bookingId);
+      notifyListeners();
     }
   }
 

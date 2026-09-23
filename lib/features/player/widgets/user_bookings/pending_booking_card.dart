@@ -48,8 +48,14 @@ class PendingBookingCard extends StatelessWidget {
                 tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
                 onPressed: () async {
                   final bp = Provider.of<BookingProvider>(context, listen: false);
-                  await bp.cancelBooking(pendingBooking.id);
+                  final success = await bp.cancelBooking(pendingBooking.id);
                   if (context.mounted) {
+                    if (!success && bp.errorMessage != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(bp.errorMessage!),
+                        backgroundColor: VSPColors.error,
+                      ));
+                    }
                     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
                     if (auth.currentUser?.uid != null) {
                       bp.loadUserBookings(auth.currentUser!.uid);

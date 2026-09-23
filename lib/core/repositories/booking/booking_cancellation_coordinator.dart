@@ -12,14 +12,39 @@ class BookingCancellationCoordinator {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
+  static String sanitizeCancellationError(dynamic error, [String? serverMsg]) {
+    final raw = serverMsg ?? error?.toString() ?? '';
+    if (raw.contains('cannot_cancel_within_6_hours') || raw.contains('6 ساعات')) {
+      return 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من 6 ساعات (إلا خلال أول 20 دقيقة من الحجز).';
+    }
+    if (raw.contains('cannot_cancel_within_2_hours') || raw.contains('ساعتين')) {
+      return 'لا يمكن إلغاء الحجز قبل موعد المباراة بأقل من ساعتين وفقاً للائحة الملعب.';
+    }
+    if (raw.contains('cannot_cancel_completed_booking')) {
+      return 'عذراً، لا يمكن إلغاء حجز لمباراة مكتملة تم حضورها بالفعل.';
+    }
+    if (raw.contains('forbidden') || raw.contains('غير مصرح')) {
+      return 'غير مصرح لك بإلغاء هذا الحجز.';
+    }
+    if (raw.contains('already_cancelled') || raw.contains('ملغي بالفعل')) {
+      return 'هذا الحجز ملغي بالفعل مسبقاً.';
+    }
+    if (serverMsg != null && serverMsg.trim().isNotEmpty) {
+      return serverMsg.trim();
+    }
+    return 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
+  }
+
   /// Cancels booking, triggers Paymob refund if applicable, and alerts involved parties.
   Future<bool> cancelBooking({
     required Booking? booking,
     required String bookingId,
   }) async {
-    try {
-      if (booking == null) return false;
+    if (booking == null) {
+      throw Exception('بيانات الحجز غير متوفرة.');
+    }
 
+    try {
       final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
 
       if (isManual) {
@@ -32,6 +57,7 @@ class BookingCancellationCoordinator {
       } else {
         final bool isPaidOnline = booking.isPaid || booking.isDepositPaid || booking.paymentStatus == 'paid';
         if (isPaidOnline && (booking.depositPaid > 0 || booking.totalPrice > 0)) {
+          bool paymobProcessed = false;
           try {
             final res = await _supabase.functions.invoke('process_paymob_refund', body: {
               'booking_id': bookingId,
@@ -40,52 +66,39 @@ class BookingCancellationCoordinator {
             final data = res.data;
             if (data is Map && data['success'] == true) {
               VSPLogger.i('Paymob refund processed successfully for booking: $bookingId');
+              paymobProcessed = true;
             } else {
-              VSPLogger.w('Paymob refund notice for booking $bookingId: ${data?['message']}');
+              final msg = data is Map ? data['message']?.toString() : null;
+              throw Exception(sanitizeCancellationError(null, msg));
             }
           } catch (fnErr) {
+            if (paymobProcessed) rethrow;
+            if (fnErr is Exception && !fnErr.toString().contains('FunctionException') && !fnErr.toString().contains('invoke failed')) {
+              rethrow;
+            }
             VSPLogger.w('process_paymob_refund invoke failed, falling back to atomic RPC: $fnErr');
-            await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
-              'p_booking_id': bookingId,
-              'p_user_id': _supabase.auth.currentUser?.id,
-              'p_reason': 'User requested cancellation from app',
-            });
-          }
-        } else {
-          try {
             final rpcRes = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
               'p_booking_id': bookingId,
               'p_user_id': _supabase.auth.currentUser?.id,
               'p_reason': 'User requested cancellation from app',
             });
             if (rpcRes is Map && rpcRes['success'] == false) {
-              VSPLogger.w('cancel_booking_with_refund_atomic message: ${rpcRes['message']}');
+              throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
             }
-          } catch (e) {
-            VSPLogger.w('cancel_booking_with_refund_atomic fallback to update: $e');
-            try {
-              await _supabase
-                  .from('bookings')
-                  .update({
-                    'status': BookingStatus.cancelled.name,
-                    'updated_at': DateTime.now().toUtc().toIso8601String(),
-                  })
-                  .eq('id', bookingId);
-            } on PostgrestException catch (pe) {
-              if (pe.message.contains('cannot_cancel_within_6_hours') ||
-                  pe.message.contains('cannot_cancel_within_2_hours') ||
-                  pe.message.contains('6 ساعات')) {
-                VSPLogger.w('Cannot cancel booking within 6 hours: ${pe.message}');
-                return false;
-              } else {
-                rethrow;
-              }
-            }
+          }
+        } else {
+          final rpcRes = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
+            'p_booking_id': bookingId,
+            'p_user_id': _supabase.auth.currentUser?.id,
+            'p_reason': 'User requested cancellation from app',
+          });
+          if (rpcRes is Map && rpcRes['success'] == false) {
+            throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
           }
         }
       }
 
-      // Notify other participants
+      // Notify other participants ONLY after verified backend success
       final List<String> otherParticipants = booking.joinedUserIds
           .where((uid) => uid != booking.createdByUserId)
           .toList();
@@ -102,7 +115,7 @@ class BookingCancellationCoordinator {
         }
       }
 
-      // Notify stadium owner
+      // Notify stadium owner ONLY after verified backend success
       if (booking.ownerId.isNotEmpty) {
         try {
           await NotificationHandler.notifyBookingCancelledByPlayer(
@@ -119,7 +132,7 @@ class BookingCancellationCoordinator {
       return true;
     } catch (e) {
       debugPrint('Error cancelling booking: $e');
-      return false;
+      rethrow;
     }
   }
 }
