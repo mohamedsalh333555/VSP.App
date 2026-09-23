@@ -1,62 +1,34 @@
-name: VSP Quality & CI Pipeline
+name: Flutter CI
 
 on:
-  push:
-    branches: [ main, master ]
   pull_request:
-    branches: [ main, master ]
+    branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-  analyze_and_test:
-    name: Code Quality & Automated Test Suite
+  analyze-test-build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
-      - name: Checkout Code Repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Java Development Kit (JDK 17)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Flutter Environment
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: '3.32.8'
+          channel: stable
           cache: true
-
-      - name: Verify Flutter Installation
-        run: flutter --version
-
-      - name: Install Project Dependencies
-        run: flutter pub get
-
-      - name: Generate Localizations
-        run: flutter gen-l10n
-
-      - name: Ensure Firebase Options Exist
+      - name: Require Firebase client options
         run: |
-          if [ ! -f lib/firebase_options.dart ]; then
-            cat << 'EOF' > lib/firebase_options.dart
-          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
-          import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
-
-          class DefaultFirebaseOptions {
-            static FirebaseOptions get currentPlatform => const FirebaseOptions(
-              apiKey: 'ci-mock-key',
-              appId: '1:123456789:android:ci-mock-app-id',
-              messagingSenderId: '123456789',
-              projectId: 'vsp-ci-project',
-            );
+          test -f lib/firebase_options.dart || {
+            echo "lib/firebase_options.dart is missing; CI will not synthesize mock configuration."
+            exit 1
           }
-          EOF
-          fi
-
-      - name: Run Static Code Analysis (Zero Tolerance Gate)
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze
         run: flutter analyze
-
-      - name: Run Automated Test Suite
+      - name: Test
         run: flutter test --coverage
+      - name: Build Android APK
+        run: flutter build apk --debug
