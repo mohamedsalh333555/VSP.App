@@ -104,6 +104,38 @@ class TournamentRegistrationCoordinator {
     }
   }
 
+  Future<bool> verifyTournamentOrderPaid({
+    required String orderReference,
+  }) async {
+    try {
+      for (var attempt = 0; attempt < 18; attempt++) {
+        final row = await _supabase
+            .from('tournament_orders')
+            .select('payment_status')
+            .eq('order_reference', orderReference)
+            .maybeSingle();
+        if (row == null) {
+          throw StateError('Tournament payment order was not found.');
+        }
+
+        final status = row['payment_status']?.toString();
+        if (status == 'paid') return true;
+        if (status != 'pending') {
+          throw StateError('Tournament payment was not confirmed by the server.');
+        }
+
+        if (attempt < 17) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint('Error verifying tournament order payment: $e');
+      rethrow;
+    }
+  }
+
   /// Create tournament payment order in the database via atomic RPC.
   Future<Map<String, dynamic>?> createTournamentOrder({
     required String championshipId,
