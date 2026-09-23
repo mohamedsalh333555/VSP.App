@@ -1,38 +1,44 @@
 import 'package:flutter/foundation.dart';
-import '../services/logger_service.dart';
 
-/// إدارة المتغيرات البيئية بأمان تام عند الـ Compile-Time مع Fallbacks موثوقة للتشغيل الفوري
+/// Compile-time configuration. Production builds must provide explicit values.
 class AppEnv {
   static String get supabaseUrl {
-    const url = String.fromEnvironment('SUPABASE_URL');
-    if (url.isNotEmpty) return url;
-    if (kReleaseMode) {
-      VSPLogger.w(' Production build running with standard project SUPABASE_URL.');
+    const value = String.fromEnvironment('SUPABASE_URL');
+    if (value.isEmpty) {
+      throw StateError('SUPABASE_URL is required at build time.');
     }
-    return 'https://mktqkddbcddrxjxabdua.supabase.co';
+    return value;
   }
 
   static String get supabaseAnonKey {
-    const key = String.fromEnvironment('SUPABASE_ANON_KEY');
-    if (key.isNotEmpty) return key;
-    if (kReleaseMode) {
-      VSPLogger.w(' Production build running with standard project SUPABASE_ANON_KEY.');
+    const value = String.fromEnvironment('SUPABASE_ANON_KEY');
+    if (value.isEmpty) {
+      throw StateError('SUPABASE_ANON_KEY is required at build time.');
     }
-    return 'sb_publishable_ht3eLKZoEiQ49hh413Yfgw_E-S4k3-k';
+    return value;
   }
 
-  // Paymob Public Key فقط في التطبيق
   static String get paymobPublicKey {
-    const key = String.fromEnvironment('PAYMOB_PUBLIC_KEY');
-    if (key.isNotEmpty) return key;
-    if (kReleaseMode) {
-      VSPLogger.w(' Production build running with standard project PAYMOB_PUBLIC_KEY.');
+    const value = String.fromEnvironment('PAYMOB_PUBLIC_KEY');
+    if (value.isEmpty) {
+      throw StateError('PAYMOB_PUBLIC_KEY is required only for Paymob payment flows.');
     }
-    return 'egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx';
+    return value;
   }
 
+  static String get googleWebClientId {
+    const value = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
+    if (value.isEmpty) {
+      throw StateError('GOOGLE_WEB_CLIENT_ID is required for Google web sign-in.');
+    }
+    return value;
+  }
 
-  // Google OAuth Client IDs
-  static const String googleWebClientId = '860837572098-uad28p5kb2n567utmk382ogqorpn6vid.apps.googleusercontent.com';
-  static const String googleIosClientId = '860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com';
+  static String get googleIosClientId {
+    const value = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+    if (value.isEmpty) {
+      throw StateError('GOOGLE_IOS_CLIENT_ID is required for Google iOS sign-in.');
+    }
+    return value;
+  }
 }
