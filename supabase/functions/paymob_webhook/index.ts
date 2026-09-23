@@ -1,9 +1,21 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { calculatePaymobGrossCents } from "../_shared/paymob_amount.ts";
 
 declare const Deno: any;
+
+function calculatePaymobGrossCents(
+  baseAmountEgp: number,
+  vspRate: number,
+  gatewayRate: number,
+  fixedFeeEgp: number,
+): number {
+  const baseCents = Math.round(baseAmountEgp * 100);
+  const vspCents = Math.round(baseCents * Number(vspRate));
+  const gatewayVariableCents = Math.round(baseCents * Number(gatewayRate));
+  const gatewayFixedCents = Math.round(Number(fixedFeeEgp) * 100);
+  return baseCents + vspCents + gatewayVariableCents + gatewayFixedCents;
+}
 
 console.log("⚡ Paymob Webhook Edge Function Initialized (Hardened & Unified)!");
 
