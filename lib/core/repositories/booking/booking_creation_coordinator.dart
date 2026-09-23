@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/analytics_service.dart';
 import '../../services/logger_service.dart';
-import '../../services/paymob_service.dart';
 import '../notification_repository.dart';
 import '../team_repository.dart';
 import '../user_repository.dart';
