@@ -41,6 +41,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   bool _isLoadingMembers = true;
   bool _isSubmitting = false;
   bool _hasPaid = false;
+  String? _paymentOrderReference;
   late Future<PaymobFeeBreakdown> _feeBreakdownFuture;
 
   @override
@@ -225,6 +226,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           throw StateError('تعذر إنشاء أمر الدفع الرسمي للبطولة.');
         }
 
+        _paymentOrderReference = orderReference;
+
         if (mounted) {
           final paymentResult = await Navigator.push<bool>(
             context,
@@ -267,9 +270,12 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     if (entryFee > 0) {
       // The Paymob webhook atomically confirms the official tournament order
       // and updates championship membership. The client only syncs roster data.
+      final orderReference = _paymentOrderReference;
+      if (orderReference == null || orderReference.isEmpty) {
+        throw StateError('رقم أمر الدفع الرسمي غير متوفر.');
+      }
       final paid = await tournamentRepo.verifyTournamentOrderPaid(
-        championshipId: widget.championship.id,
-        teamId: widget.team.id,
+        orderReference: orderReference,
       );
       if (!paid) {
         throw StateError('لم يتم تأكيد سداد رسوم البطولة من الخادم بعد.');
