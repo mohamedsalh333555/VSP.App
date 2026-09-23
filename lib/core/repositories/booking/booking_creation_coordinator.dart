@@ -54,7 +54,8 @@ class BookingCreationCoordinator {
     required Future<Booking?> Function(String) getBookingById,
   }) async {
     try {
-      final platformFee = PaymobService.calculateServiceFee(draft.totalPrice);
+      // The server calculates payment fees from the authoritative payment transaction.
+      const double platformFee = 0.0;
       final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
         'p_stadium_id': draft.stadiumId,
         'p_user_id': userId,
