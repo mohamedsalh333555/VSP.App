@@ -1,4 +1,3 @@
-import '../../../core/config/app_config.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../data/models.dart';
 
@@ -26,19 +25,6 @@ class PaymentCheckoutService {
       return depositPaid;
     }
     return totalPrice;
-  }
-
-  /// Calculates the final total amount including any gateway processing fees.
-  static double calculateTotalAmountWithFees(double baseAmount) {
-    return PaymobService.calculateTotalAmount(baseAmount);
-  }
-
-  /// Returns the corresponding Paymob integration ID based on selected payment method.
-  static String getIntegrationId(String method) {
-    if (method == 'wallet') {
-      return AppConfig.paymobWalletIntegrationId;
-    }
-    return AppConfig.paymobCardIntegrationId;
   }
 
   /// Generates a unique tracking payment reference ID for the Paymob transaction.
@@ -90,8 +76,7 @@ class PaymentCheckoutService {
       totalPrice: draft.totalPrice,
       isFullPayment: isFullPayment,
     );
-    final totalAmount = calculateTotalAmountWithFees(baseAmount);
-    final selectedIntegrationId = getIntegrationId(selectedMethod);
+    // The authoritative server calculates all payment fees from the actual amount.
     final paymentRefId = generatePaymentReference(
       isTournamentPayment: isTournamentPayment,
       playerTeamId: draft.playerTeamId,
@@ -105,7 +90,6 @@ class PaymentCheckoutService {
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
-      integrationId: selectedIntegrationId,
       isTournamentPayment: isTournamentPayment,
       isFullPayment: isFullPayment,
     );
