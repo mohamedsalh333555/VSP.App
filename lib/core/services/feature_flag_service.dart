@@ -14,22 +14,31 @@ class FeatureFlagService {
   /// The table is column-based, not key/value based.
   Future<void> fetchRemoteFlags() async {
     try {
-      final row = await Supabase.instance.client
+      final settingsRow = await Supabase.instance.client
           .from('app_settings')
           .select()
           .limit(1)
           .maybeSingle()
           .timeout(const Duration(seconds: 4));
 
-      if (row == null) {
-        throw StateError('VSP app settings are unavailable in Supabase.');
+      final configRow = await Supabase.instance.client
+          .from('app_config')
+          .select()
+          .limit(1)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 4));
+
+      if (settingsRow == null || configRow == null) {
+        throw StateError('VSP runtime configuration is unavailable in Supabase.');
       }
 
       _flags
         ..clear()
         ..addAll({
-          'is_online_payment_enabled': row['online_payment_enabled'],
-          'is_cash_booking_enabled': row['cash_booking_enabled'],
+          'is_online_payment_enabled': settingsRow['online_payment_enabled'],
+          'is_cash_booking_enabled': settingsRow['cash_booking_enabled'],
+          'is_maintenance_mode': configRow['is_maintenance'],
+          'is_1v1_registration_open': configRow['vsp_1v1_is_open'],
         });
 
       _isFetched = true;
@@ -64,7 +73,7 @@ class FeatureFlagService {
   bool get isOnlinePaymentEnabled =>
       isEnabled('is_online_payment_enabled', defaultValue: false);
 
-  bool get isMaintenanceMode => false;
+  bool get isMaintenanceMode => isEnabled('is_maintenance_mode', defaultValue: false);
 
   bool get isFetched => _isFetched;
 }
