@@ -35,7 +35,16 @@ jobs:
           path: analyze-report.txt
           if-no-files-found: ignore
       - name: Test
-        run: flutter test --coverage
+        run: |
+          set -o pipefail
+          flutter test --coverage 2>&1 | tee test-report.txt
+      - name: Upload test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-report
+          path: test-report.txt
+          if-no-files-found: ignore
       - name: Build Android debug APK
         run: |
           flutter build apk --debug \
