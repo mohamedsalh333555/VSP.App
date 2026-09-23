@@ -54,7 +54,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;
-  String _selectedMethod = 'card';
 
   @override
   void initState() {
@@ -235,7 +234,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
       draft: widget.bookingDraft,
-      selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
       bookingId: _booking?.id,
       userEmail: userEmail,
