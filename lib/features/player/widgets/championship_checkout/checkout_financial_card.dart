@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../core/services/platform_fee_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
-class CheckoutFinancialCard extends StatelessWidget {
+class CheckoutFinancialCard extends StatefulWidget {
   final double entryFee;
-  final double serviceFee;
-  final double totalCheckoutPrice;
 
   const CheckoutFinancialCard({
     super.key,
     required this.entryFee,
-    required this.serviceFee,
-    required this.totalCheckoutPrice,
   });
+
+  @override
+  State<CheckoutFinancialCard> createState() => _CheckoutFinancialCardState();
+}
+
+class _CheckoutFinancialCardState extends State<CheckoutFinancialCard> {
+  late final Future<PlatformFeeConfig> _feeConfigFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _feeConfigFuture = PlatformFeeService().getBookingFeeConfig();
+  }
 
   void _showFeeTransparencyModal(BuildContext context, bool isArabic) {
     showModalBottomSheet(
@@ -50,17 +60,19 @@ class CheckoutFinancialCard extends StatelessWidget {
                     child: const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    isArabic ? 'شفافية رسوم خدمات المنصة' : 'Platform Service Fee Transparency',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      isArabic ? 'شفافية رسوم الدفع' : 'Payment Fee Transparency',
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               Text(
                 isArabic
-                    ? 'رسوم خدمات المنصة تغطي تكاليف المعاملات البنكية المشفرة، وتأمين الجوائز، وتنظيم الجداول والقرعة إلكترونياً، والدعم الفني المباشر للبطولات.'
-                    : 'The platform service fee covers encrypted payment processing, prize pool escrow, automated bracket generation, and dedicated tournament management support.',
+                    ? 'الرسوم تُحتسب من قيمة الاشتراك الأساسية وتشمل عمولة VSP ورسوم بوابة الدفع. المبلغ النهائي يحدده الخادم عند إنشاء عملية الدفع.'
+                    : 'Fees are calculated from the base registration amount and include the VSP commission and payment gateway fee. The server determines the final checkout amount.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
               ),
               const SizedBox(height: 20),
@@ -84,69 +96,93 @@ class CheckoutFinancialCard extends StatelessWidget {
     );
   }
 
+  Widget _row(String label, String value, {bool bold = false, VoidCallback? info}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: bold ? Colors.white : VSPColors.textSecondary,
+                    fontSize: bold ? 15 : 13,
+                    fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+              if (info != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: info,
+                  child: const Icon(Iconsax.info_circle_copy, size: 14, color: VSPColors.accent),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          value,
+          style: TextStyle(
+            color: bold ? VSPColors.accent : Colors.white,
+            fontSize: bold ? 18 : 13,
+            fontWeight: bold ? FontWeight.w900 : FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return FutureBuilder<PlatformFeeConfig>(
+      future: _feeConfigFuture,
+      builder: (context, snapshot) {
+        final feeConfig = snapshot.data;
+        final vspFee = feeConfig?.calculateVspFee(widget.entryFee) ?? 0;
+        final gatewayFee = feeConfig?.calculateGatewayFee(widget.entryFee, 'card') ?? 0;
+        final serviceFee = feeConfig?.calculateTotalFees(widget.entryFee, 'card');
+        final total = feeConfig?.calculateTotalAmount(widget.entryFee, 'card');
 
-    return Container(
-      padding: const EdgeInsets.all(VSPSpacing.md),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: VSPColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'تفاصيل الرسوم والاشتراك',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+        return Container(
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
+            border: Border.all(color: VSPColors.divider),
           ),
-          const Divider(color: VSPColors.divider, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('رسوم اشتراك البطولة:', style: TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-              Text('${entryFee.toInt()} ج.م', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    isArabic ? 'رسوم خدمات المنصة:' : 'Platform Service Fee:',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                  ),
-                  const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () => _showFeeTransparencyModal(context, isArabic),
-                    child: const Icon(
-                      Iconsax.info_circle_copy,
-                      size: 14,
-                      color: VSPColors.accent,
-                    ),
-                  ),
-                ],
-              ),
-              Text('${serviceFee.toStringAsFixed(1)} ج.م', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-            ],
-          ),
-          const Divider(color: VSPColors.divider, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('المبلغ الإجمالي المطلـوب:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               Text(
-                '${totalCheckoutPrice.toStringAsFixed(1)} ج.م',
-                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 18),
+                isArabic ? 'تفاصيل الرسوم والاشتراك' : 'Registration & Fee Details',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
               ),
+              const Divider(color: VSPColors.divider, height: 20),
+              _row(isArabic ? 'رسوم اشتراك البطولة' : 'Tournament Entry Fee', '${widget.entryFee.toStringAsFixed(2)} ج.م'),
+              const SizedBox(height: 8),
+              if (snapshot.connectionState == ConnectionState.waiting)
+                _row(isArabic ? 'رسوم الدفع' : 'Payment Fees', isArabic ? 'جاري الحساب…' : 'Calculating…')
+              else if (feeConfig == null)
+                _row(isArabic ? 'رسوم الدفع' : 'Payment Fees', isArabic ? 'تُحتسب تلقائياً' : 'Calculated automatically', info: () => _showFeeTransparencyModal(context, isArabic))
+              else ...[
+                _row(isArabic ? 'عمولة VSP' : 'VSP Commission', '${vspFee.toStringAsFixed(2)} ج.م'),
+                const SizedBox(height: 8),
+                _row(isArabic ? 'رسوم بوابة الدفع' : 'Payment Gateway Fee', '${gatewayFee.toStringAsFixed(2)} ج.م'),
+                const SizedBox(height: 8),
+                _row(isArabic ? 'إجمالي رسوم الدفع' : 'Total Payment Fees', '${serviceFee!.toStringAsFixed(2)} ج.م'),
+                const Divider(color: VSPColors.divider, height: 20),
+                _row(isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Amount', '${total!.toStringAsFixed(2)} ج.م', bold: true, info: () => _showFeeTransparencyModal(context, isArabic)),
+              ],
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
