@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/config/app_env.dart';
+import 'package:vsp_application/core/config/app_config.dart';
 import 'package:vsp_application/core/services/paymob_service.dart';
 import 'package:vsp_application/core/services/platform_fee_service.dart';
 import 'package:vsp_application/data/models.dart';
 
 void main() {
   group('🔒 Paymob Zero-Trust Security & Configuration Tests', () {
-    test('1. Verify the public Paymob key is exposed only through AppEnv', () {
-      expect(AppEnv.paymobPublicKey, isNotEmpty);
+    test('1. Verify the legacy Paymob configuration surface is retired', () {
+      expect(AppConfig.isRetired, isTrue);
     });
 
     test('2. Verify signed fee configuration is represented by the pure domain model', () {
