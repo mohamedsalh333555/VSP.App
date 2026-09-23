@@ -130,11 +130,14 @@ class PaymentCheckoutCoordinator {
   }) async {
     final client = Supabase.instance.client;
     final deadline = DateTime.now().add(timeout);
+    final tableName = orderReference.startsWith('TOURN_1V1_')
+        ? 'vsp_1v1_tournament_orders'
+        : 'tournament_orders';
 
     while (DateTime.now().isBefore(deadline)) {
       try {
         final order = await client
-            .from('tournament_orders')
+            .from(tableName)
             .select('payment_status')
             .eq('order_reference', orderReference)
             .maybeSingle();
