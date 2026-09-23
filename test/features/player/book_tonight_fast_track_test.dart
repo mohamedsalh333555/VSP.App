@@ -22,6 +22,11 @@ class _TestBookingRepository implements BookingRepository {
   }
 
   @override
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
+    return Stream.value(bookings.where((b) => b.stadiumId == stadiumId).toList());
+  }
+
+  @override
   noSuchMethod(Invocation invocation) =>
       throw UnsupportedError('This test repository method is not configured.');
 }
