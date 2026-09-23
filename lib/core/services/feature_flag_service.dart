@@ -9,14 +9,7 @@ class FeatureFlagService {
   factory FeatureFlagService() => _instance;
   FeatureFlagService._internal();
 
-  final Map<String, dynamic> _flags = {
-    'is_online_payment_enabled': true,
-    'is_maintenance_mode': false,
-    'is_championships_enabled': true,
-    'is_matchups_enabled': true,
-    'min_app_version': '1.0.0',
-    'max_daily_bookings_per_user': 3,
-  };
+  final Map<String, dynamic> _flags = {};
 
   bool _isFetched = false;
 
@@ -37,11 +30,12 @@ class FeatureFlagService {
       _isFetched = true;
       debugPrint('[FeatureFlagService] Remote flags synchronized: ${_flags.keys.length} flags loaded.');
     } catch (e) {
-      debugPrint('[FeatureFlagService] Offline or remote fetch skipped, using safe fallbacks: $e');
+      _isFetched = false;
+      debugPrint('[FeatureFlagService] Remote flags unavailable; features remain fail-closed: $e');
     }
   }
 
-  /// Check if a boolean feature is enabled (with offline-safe fallback)
+  /// Check if a boolean feature is enabled. If Supabase has not been read, fail closed.
   bool isEnabled(String flagKey, {bool defaultValue = true}) {
     if (_flags.containsKey(flagKey)) {
       final val = _flags[flagKey];
@@ -71,7 +65,7 @@ class FeatureFlagService {
   }
 
   /// Online payment kill switch check
-  bool get isOnlinePaymentEnabled => isEnabled('is_online_payment_enabled', defaultValue: true);
+  bool get isOnlinePaymentEnabled => isEnabled('is_online_payment_enabled', defaultValue: false);
 
   /// Maintenance mode check
   bool get isMaintenanceMode => isEnabled('is_maintenance_mode', defaultValue: false);
