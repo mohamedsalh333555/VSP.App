@@ -85,3 +85,11 @@ The staging Supabase project is a separate environment until its schema is inten
 For every business rule there must be one authoritative definition, one backend contract, and one test contract.
 Never reintroduce hardcoded financial percentages in client code, client-authoritative tournament prices, final-success semantics for partial payments, or parallel direct booking state mutation when an atomic RPC exists.
 
+## Cash collection rule — debt model retired (2026-09-24)
+- Cash bookings are collected by the stadium owner at the full booking amount.
+- VSP commission on cash payments: **0%**.
+- Paymob fees on cash payments: **0 EGP** because Paymob is not involved.
+- Cash collection must never increase `accumulated_cash_debt`.
+- Cash collection must never set or depend on `is_debt_blocked` or `debt_limit`.
+- The owner financial summary must not subtract cash debt from available balance.
+- Legacy API keys for cash debt may remain temporarily as zero-valued compatibility fields only; they are not business state.
