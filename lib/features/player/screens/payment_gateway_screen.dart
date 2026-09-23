@@ -266,6 +266,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               throw Exception('Missing tournament payment order reference.');
             }
 
+            _coordinator.cancelWebhookTimeout();
             final orderPaid = await _coordinator.waitForTournamentOrderPaid(
               orderReference: orderReference,
             );
