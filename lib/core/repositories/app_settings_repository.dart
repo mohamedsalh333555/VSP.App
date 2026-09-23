@@ -7,14 +7,8 @@ class AppSettingsRepository {
   AppSettingsRepository._internal();
 
   final SupabaseClient _supabase = Supabase.instance.client;
-  AppSettings? _cachedSettings;
-
   /// Supabase is authoritative. Cache is only an in-process optimization after a successful read.
-  Future<AppSettings> getSettings({bool forceRefresh = false}) async {
-    if (_cachedSettings != null && !forceRefresh) {
-      return _cachedSettings!;
-    }
-
+  Future<AppSettings> getSettings({bool forceRefresh = false}) async { // forceRefresh kept for API compatibility; Supabase is always read.
     final response = await _supabase
         .from('app_settings')
         .select()
@@ -26,14 +20,12 @@ class AppSettingsRepository {
       throw StateError('VSP app settings are unavailable in Supabase.');
     }
 
-    _cachedSettings = AppSettings.fromMap(response);
-    return _cachedSettings!;
+    return AppSettings.fromMap(response);
   }
 
   Future<bool> updateSettings(AppSettings settings) async {
     try {
       await _supabase.from('app_settings').upsert(settings.toMap());
-      _cachedSettings = settings;
       return true;
     } catch (_) {
       return false;
