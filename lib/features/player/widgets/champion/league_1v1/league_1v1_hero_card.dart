@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
-import '../champion_podium_components.dart';
 
-/// Hero header card showcasing tournament title, governorate, status, date, countdown, and seat capacity.
+/// كارت الهيدر الرئيسي لبطولة 1vs1 مع إبراز نظام الـ 32 لاعب وعدد الجولات
 class League1v1HeroCard extends StatelessWidget {
   final String tourneyName;
   final String? governorate;
@@ -30,24 +29,15 @@ class League1v1HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveTarget = targetCount > 0 ? targetCount : 32;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [VSPColors.surfaceAlt, VSPColors.surface],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
+        color: VSPColors.surface, // #18181B الفحمي
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          )
-        ],
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,103 +51,79 @@ class League1v1HeroCard extends StatelessWidget {
                   children: [
                     Text(
                       tourneyName,
-                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w900,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (governorate != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Iconsax.location_copy, size: 13, color: VSPColors.accent),
-                          const SizedBox(width: 4),
-                          Text(
-                            championTranslateItem(context, governorate.toString()),
-                            style: const TextStyle(
-                              color: VSPColors.accent,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 6),
+                    // شارة نظام البطولة
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.full),
+                        border: Border.all(color: VSPColors.divider),
                       ),
-                    ],
+                      child: Text(
+                        isArabic
+                            ? 'بطولة إقصائية ($effectiveTarget لاعب) • مباريات من 6 جولات'
+                            : '$effectiveTarget Players Knockout • 6 Rounds per Match',
+                        style: const TextStyle(
+                          color: VSPColors.accent,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: VSPColors.iconBadgeBg,
-                  borderRadius: BorderRadius.circular(VSPRadius.full),
-                  border: Border.all(
-                    color: status == 'registration_open' ? VSPColors.accent : VSPColors.warning,
-                    width: 0.8,
-                  ),
+                  shape: BoxShape.circle,
+                  color: VSPColors.surfaceAlt,
+                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                 ),
-                child: Text(
-                  status == 'registration_open'
-                      ? (isArabic ? 'التسجيل متاح' : 'Open')
-                      : (isArabic ? 'التسجيل مغلق' : 'Closed'),
-                  style: TextStyle(
-                    color: status == 'registration_open' ? VSPColors.success : VSPColors.warning,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 22),
               ),
             ],
           ),
-          const SizedBox(height: 14),
 
-          // Date & Countdown Badges
-          if (scheduledAt != null) ...[
-            Row(
-              children: [
-                const Icon(Iconsax.calendar_1_copy, size: 16, color: VSPColors.accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    formatScheduledDate(scheduledAt),
-                    style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Iconsax.clock_copy, size: 16, color: VSPColors.accent),
-                const SizedBox(width: 8),
-                Text(
-                  calculateCountdown(scheduledAt),
-                  style: const TextStyle(color: VSPColors.accent, fontSize: 13, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ],
+          const SizedBox(height: 16),
+          const Divider(color: VSPColors.divider, height: 1),
+          const SizedBox(height: 12),
 
-          // Capacity Bar
+          // السطر السفلي: نسبة اكتمال المقاعد
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'المقاعد المحجوزة' : 'Seats Reserved',
+                isArabic ? 'المقاعد المكتملة:' : 'Confirmed Players:',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
               ),
               Text(
-                '$registeredCount / $targetCount ($remainingCount ${isArabic ? "متبقي" : "left"})',
-                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+                '$registeredCount / $effectiveTarget ${isArabic ? "لاعب" : "Players"}',
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(VSPRadius.sm),
+            borderRadius: BorderRadius.circular(VSPRadius.full),
             child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 5,
               backgroundColor: VSPColors.surfaceAlt,
               valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
             ),
@@ -165,57 +131,5 @@ class League1v1HeroCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static String formatScheduledDate(String? rawIso) {
-    if (rawIso == null) return 'قريباً';
-    try {
-      final dt = DateTime.parse(rawIso).toLocal();
-      final dayNames = ['الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
-      final monthNames = [
-        '',
-        'يناير',
-        'فبراير',
-        'مارس',
-        'أبريل',
-        'مايو',
-        'يونيو',
-        'يوليو',
-        'أغسطس',
-        'سبتمبر',
-        'أكتوبر',
-        'نوفمبر',
-        'ديسمبر'
-      ];
-      final dayName = dayNames[dt.weekday - 1];
-      final monthName = monthNames[dt.month];
-      final hour = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
-      final period = dt.hour >= 12 ? 'م' : 'ص';
-      final min = dt.minute.toString().padLeft(2, '0');
-      return '$dayName، ${dt.day} $monthName - $hour:$min $period';
-    } catch (_) {
-      return rawIso;
-    }
-  }
-
-  static String calculateCountdown(String? rawIso) {
-    if (rawIso == null) return '';
-    try {
-      final dt = DateTime.parse(rawIso).toLocal();
-      final now = DateTime.now();
-      final diff = dt.difference(now);
-      if (diff.isNegative) return 'انطلقت الفعالية الآن';
-      if (diff.inDays > 0) {
-        final hours = diff.inHours % 24;
-        return 'متبقي ${diff.inDays} يوم و $hours ساعة';
-      }
-      if (diff.inHours > 0) {
-        final mins = diff.inMinutes % 60;
-        return 'متبقي ${diff.inHours} ساعة و $mins دقيقة';
-      }
-      return 'متبقي ${diff.inMinutes} دقيقة';
-    } catch (_) {
-      return '';
-    }
   }
 }

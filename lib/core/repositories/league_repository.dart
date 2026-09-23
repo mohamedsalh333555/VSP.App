@@ -250,6 +250,7 @@ class LeagueRepository {
                 titles: (data['titles'] ?? (i == 0 ? 1 : 0)) as int,
                 rank: i + 1,
                 trend: data['trend'] ?? (i == 0 ? 'up' : 'stable'),
+                roundReached: data['round_reached']?.toString(),
               ));
             }
             if (!controller.isClosed) controller.add(players);
@@ -273,6 +274,7 @@ class LeagueRepository {
           final goals = (data['goals'] ?? 0) as int;
           final skills = (data['skills'] ?? data['skill_points'] ?? 0) as int;
           final totalPoints = (data['total_points'] ?? (tackles + goals + skills)) as int;
+          final isChampion = data['round_reached']?.toString().toLowerCase() == 'champion';
           players.add(VSP1v1Player(
             id: data['id'].toString(),
             name: data['player_name'] ?? data['name'] ?? 'لاعب',
@@ -281,9 +283,10 @@ class LeagueRepository {
             skillPoints: skills,
             goals: goals,
             tackles: tackles,
-            titles: i == 0 ? 1 : 0,
+            titles: (data['titles'] != null) ? (data['titles'] as int) : (isChampion ? 1 : 0),
             rank: i + 1,
-            trend: i == 0 ? 'up' : 'stable',
+            trend: isChampion ? 'up' : (data['trend'] ?? 'stable'),
+            roundReached: data['round_reached']?.toString(),
           ));
         }
 

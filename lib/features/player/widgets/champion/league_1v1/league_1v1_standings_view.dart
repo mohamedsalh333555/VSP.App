@@ -8,7 +8,7 @@ import '../../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../champion_podium_components.dart';
 
-/// Standings phase view displaying the championship podium (Top 3) and full ranking list for 1v1 tournaments.
+/// شاشة عرض الترتيب والمنصة الرسمية لمواجهات 1v1 وفقاً لمنظومة الـ 32 لاعب
 class League1v1StandingsView extends StatefulWidget {
   final Stream<List<VSP1v1Player>> standingsStream;
   final VoidCallback onRetry;
@@ -73,86 +73,34 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
         final top3 = players.take(3).toList();
         final rest = players.skip(3).toList();
 
-        if (players.length < 3) {
-          return ListView.builder(
-            padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 24),
-            physics: const BouncingScrollPhysics(),
-            itemCount: players.length,
-            itemBuilder: (ctx, i) => VSPFadeInItem(
-              index: i,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: League1v1RankListItem(
-                  player: players[i],
-                  rank: i + 1,
-                  isArabic: isArabic,
-                ),
-              ),
-            ),
-          );
-        }
-
         return SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 12),
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // Premium 1v1 Podium
-              SizedBox(
-                height: 290,
+              // ── شريط قواعد ورصد البطولة الميدانية (بدون كلمة لجنة) ──
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.divider),
+                ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Rank 2 - Left (Silver)
+                    const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 16),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: VSPFadeInItem(
-                        index: 1,
-                        child: ChampionPodiumItem(
-                          rank: 2,
-                          name: top3[1].name,
-                          logo: top3[1].avatarUrl,
-                          points: top3[1].totalPoints,
-                          badgeIcon: Iconsax.medal_star_copy,
-                          borderColor: VSPColors.medalSilver,
-                          bgColor: VSPColors.surface,
-                          pointsLabel: isArabic ? 'نقطة' : 'PTS',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Rank 1 - Center (Gold Champion)
-                    Expanded(
-                      child: VSPFadeInItem(
-                        index: 0,
-                        child: ChampionPodiumItem(
-                          rank: 1,
-                          name: top3[0].name,
-                          logo: top3[0].avatarUrl,
-                          points: top3[0].totalPoints,
-                          badgeIcon: Iconsax.crown_copy,
-                          borderColor: VSPColors.accent,
-                          bgColor: VSPColors.surfaceAlt,
-                          isCenter: true,
-                          pointsLabel: isArabic ? 'نقطة' : 'PTS',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Rank 3 - Right (Bronze)
-                    Expanded(
-                      child: VSPFadeInItem(
-                        index: 2,
-                        child: ChampionPodiumItem(
-                          rank: 3,
-                          name: top3[2].name,
-                          logo: top3[2].avatarUrl,
-                          points: top3[2].totalPoints,
-                          badgeIcon: Iconsax.award_copy,
-                          borderColor: VSPColors.medalBronze,
-                          bgColor: VSPColors.surface,
-                          pointsLabel: isArabic ? 'نقطة' : 'PTS',
+                      child: Text(
+                        isArabic
+                            ? 'مباريات إقصائية من 6 جولات • نقطة للدفاع، الهدف، والمهارة • المجموع تراكمي لمشوار البطولة'
+                            : '6-Round Knockout Matches • Points for Defense, Goals & Skill • Cumulative Total',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -160,9 +108,74 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 10),
 
-              // Expanded Ranking List (#4, #5...)
+              // ── منصة التتويج Top 3 Podium ──
+              if (players.length >= 3)
+                SizedBox(
+                  height: 290,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // المركز الثاني (الوصيف)
+                      Expanded(
+                        child: VSPFadeInItem(
+                          index: 1,
+                          child: ChampionPodiumItem(
+                            rank: 2,
+                            name: top3[1].name,
+                            logo: top3[1].avatarUrl,
+                            points: top3[1].totalPoints,
+                            badgeIcon: Iconsax.medal_star_copy,
+                            borderColor: VSPColors.medalSilver,
+                            bgColor: VSPColors.surface,
+                            pointsLabel: isArabic ? 'نقطة' : 'PTS',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // المركز الأول (البطل)
+                      Expanded(
+                        child: VSPFadeInItem(
+                          index: 0,
+                          child: ChampionPodiumItem(
+                            rank: 1,
+                            name: top3[0].name,
+                            logo: top3[0].avatarUrl,
+                            points: top3[0].totalPoints,
+                            badgeIcon: Iconsax.crown_copy,
+                            borderColor: VSPColors.accent,
+                            bgColor: VSPColors.surfaceAlt,
+                            isCenter: true,
+                            pointsLabel: isArabic ? 'نقطة' : 'PTS',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // المركز الثالث (نصف النهائي)
+                      Expanded(
+                        child: VSPFadeInItem(
+                          index: 2,
+                          child: ChampionPodiumItem(
+                            rank: 3,
+                            name: top3[2].name,
+                            logo: top3[2].avatarUrl,
+                            points: top3[2].totalPoints,
+                            badgeIcon: Iconsax.award_copy,
+                            borderColor: VSPColors.medalBronze,
+                            bgColor: VSPColors.surface,
+                            pointsLabel: isArabic ? 'نقطة' : 'PTS',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // ── قائمة الترتيب التفصيلية لباقي اللاعبين (#4 وما بعده) ──
               ...List.generate(rest.length, (index) {
                 final player = rest[index];
                 final rank = index + 4;
@@ -188,7 +201,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
   }
 }
 
-/// Item representing an individual player rank with metrics and points.
+/// بطاقة تفاصيل اللاعب الفردي مع إبراز الدور الإقصائي وتفصيل (دفاع • أهداف • مهارة)
 class League1v1RankListItem extends StatelessWidget {
   final VSP1v1Player player;
   final int rank;
@@ -205,30 +218,32 @@ class League1v1RankListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final initialLetter =
         player.name.trim().isNotEmpty ? player.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'P';
+    final stageTitle = player.getStageTitle();
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Row(
         children: [
-          // Rank Number
+          // رقم الترتيب
           SizedBox(
             width: 28,
             child: Text(
               '#$rank',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
+              style: TextStyle(
+                color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
             ),
           ),
 
-          // Player Avatar / Initial
+          // الصورة الرمزية
           Container(
             width: 38,
             height: 38,
@@ -250,41 +265,69 @@ class League1v1RankListItem extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // Player Name & Breakdown
+          // اسم اللاعب وشارة الدور وتفصيل الدرجات
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  player.name,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        player.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: VSPColors.textPrimary,
+                          fontSize: 13.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                    ),
+                    if (stageTitle.isNotEmpty) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.xs),
+                          border: Border.all(color: VSPColors.divider, width: 0.8),
+                        ),
+                        child: Text(
+                          stageTitle,
+                          style: const TextStyle(
+                            color: VSPColors.accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
+                // تفصيل الدرجات الصريح: دفاع • أهداف • مهارة
                 Text(
                   isArabic
-                      ? 'قطع كرات: ${player.tackles}  •  أهداف: ${player.goals}  •  مهارات: ${player.skillPoints}'
-                      : 'Tackles: ${player.tackles}  •  Goals: ${player.goals}  •  Skills: ${player.skillPoints}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11,
-                      ),
+                      ? 'دفاع: ${player.tackles}  •  أهداف: ${player.goals}  •  مهارة: ${player.skillPoints}'
+                      : 'Defense: ${player.tackles}  •  Goals: ${player.goals}  •  Skill: ${player.skillPoints}',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // Total Points Badge
+          // المجموع التراكمي
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: VSPColors.surfaceAlt,
+              color: VSPColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
             ),
             child: Text(
               '${player.totalPoints} ${isArabic ? "نقطة" : "PTS"}',
