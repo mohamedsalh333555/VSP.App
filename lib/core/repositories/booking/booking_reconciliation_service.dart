@@ -53,7 +53,7 @@ class BookingReconciliationService {
 
         if (existing != null) {
           VSPLogger.i(
-            'Skipping duplicate review submission for booking ' + booking.id,
+            'Skipping duplicate review submission for booking $booking.id',
           );
           return;
         }
@@ -109,11 +109,11 @@ class BookingReconciliationService {
       final errorCode = result['error']?.toString();
       if (errorCode == 'RESULT_DISPUTED') {
         VSPLogger.w(
-          'Match result disputed for booking ' + booking.id + '; admin intervention required.',
+          'Match result disputed for booking ${booking.id}; admin intervention required.',
         );
       } else {
         VSPLogger.w(
-          'Match result rejected for booking ' + booking.id + ': ' + (errorCode ?? 'unknown'),
+          'Match result rejected for booking ${booking.id}: ${errorCode ?? 'unknown'}',
         );
       }
       return false;
