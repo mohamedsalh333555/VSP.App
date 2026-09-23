@@ -27,8 +27,8 @@ class AppSettingsRepository {
     try {
       await _supabase.from('app_settings').upsert(settings.toMap());
       return true;
-    } catch (_) {
-      return false;
+    } catch (e) {
+      rethrow;
     }
   }
 }
