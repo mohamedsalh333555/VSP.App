@@ -67,7 +67,7 @@ Referral records and points ledger are server-side sources of truth.
 ## Owner Finance
 
 Owner financial truth is derived from server accounting/ledger RPCs and transaction records. Client-side revenue calculations are presentation concerns only and must not override server accounting.
-Cash collection may increase owner cash debt according to the configured VSP commission policy.
+Cash collection is settled directly by the stadium owner. VSP commission on cash is 0%, Paymob fees are 0 EGP, and cash collection never creates owner cash debt or debt blocking.
 
 ## Security
 
