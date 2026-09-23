@@ -48,10 +48,19 @@ void main() {
       );
       expect(tournRef, 'bk_999');
 
+      final serverOrderRef = PaymentCheckoutService.generatePaymentReference(
+        isTournamentPayment: true,
+        playerTeamId: null,
+        bookingId: 'server_order_999',
+        timestampMs: 1700000000000,
+      );
+      // Tournament payment must preserve the server-created order reference.
+      expect(serverOrderRef, 'server_order_999');
+
       final tournRefFallback = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: true,
         playerTeamId: null,
-        bookingId: 'bk_999',
+        bookingId: null,
         timestampMs: 1700000000000,
       );
       expect(tournRefFallback, 'TOURN_TEAM_1700000000000');
