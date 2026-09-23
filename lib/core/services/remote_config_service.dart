@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Enterprise Realtime Remote Config & Feature Flag Engine.
@@ -15,27 +13,19 @@ class RemoteConfigService extends ChangeNotifier {
   factory RemoteConfigService() => _instance;
   RemoteConfigService._internal();
 
-  static const String _cacheKey = 'cached_app_config';
   final _supabase = Supabase.instance.client;
   StreamSubscription<List<Map<String, dynamic>>>? _streamSubscription;
 
   // Configuration Fields & Defaults
   bool _isMaintenanceMode = false;
-  String _minAppVersion = '1.0.0';
+  String _minAppVersion = '';
   String _forceUpdateUrl = '';
-  bool _is1v1RegistrationOpen = true;
+  bool _is1v1RegistrationOpen = false;
   String _vsp1v1Link = '';
-  double _stadiumPriceDefault = 150.0;
-  bool _copilotEnabled = true;
+  double _stadiumPriceDefault = 0.0;
+  bool _copilotEnabled = false;
 
-  final Map<String, dynamic> _features = {
-    '1v1_enabled': true,
-    'copilot_enabled': true,
-    'online_payment_enabled': true,
-    'cash_booking_enabled': true,
-    'tournaments_enabled': true,
-    'matchups_enabled': true,
-  };
+  final Map<String, dynamic> _features = {};
 
   // Getters
   bool get isMaintenanceMode => _isMaintenanceMode;
@@ -57,55 +47,25 @@ class RemoteConfigService extends ChangeNotifier {
     return defaultValue;
   }
 
-  /// 1. Initialize: Loads Offline Cache -> Fetches Fresh REST -> Hooks Realtime Stream
+  /// Initialize from Supabase first. Cached values are never treated as current truth.
   Future<void> initialize() async {
-    // Step A: Instant Offline Cache Load (Zero-delay UI startup)
-    await _loadFromOfflineCache();
-
-    // Step B: REST Initial Fetch
     await _fetchLatestConfig();
-
-    // Step C: Realtime Stream Subscription (Instant Live Updates from Supabase)
     _subscribeToRealtimeUpdates();
   }
 
-  Future<void> _loadFromOfflineCache() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cachedJson = prefs.getString(_cacheKey);
-      if (cachedJson != null && cachedJson.isNotEmpty) {
-        final decoded = jsonDecode(cachedJson);
-        if (decoded is Map<String, dynamic>) {
-          _parseConfig(decoded);
-          debugPrint('[RemoteConfigService] Loaded configuration from offline cache.');
-        }
-      }
-    } catch (e) {
-      debugPrint('[RemoteConfigService] Error reading offline cache: $e');
-    }
-  }
-
-  Future<void> _cacheConfig(Map<String, dynamic> configMap) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_cacheKey, jsonEncode(configMap));
-    } catch (e) {
-      debugPrint('[RemoteConfigService] Error caching configuration: $e');
-    }
-  }
-
   Future<void> _fetchLatestConfig() async {
-    try {
-      final response = await _supabase
-          .from('app_config')
-          .select()
-          .maybeSingle();
+    final response = await _supabase
+        .from('app_config')
+        .select()
+        .maybeSingle();
 
-      if (response != null) {
-        _parseConfig(response);
-        await _cacheConfig(response);
-        notifyListeners();
-      }
+    if (response == null) {
+      throw StateError('VSP app configuration is unavailable in Supabase.');
+    }
+
+    _parseConfig(response);
+    notifyListeners();
+  }
     } catch (e) {
       debugPrint('[RemoteConfigService] Network fetch skipped/failed, using cached values: $e');
     }
@@ -121,7 +81,6 @@ class RemoteConfigService extends ChangeNotifier {
         if (data.isNotEmpty) {
           final latestRow = data.first;
           _parseConfig(latestRow);
-          _cacheConfig(latestRow);
           notifyListeners();
           debugPrint('[RemoteConfigService] Realtime config updated instantly from Supabase.');
         }
