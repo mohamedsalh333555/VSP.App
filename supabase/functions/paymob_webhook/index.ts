@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { calculatePaymobGrossCents } from "../_shared/paymob_amount.ts";
 
 declare const Deno: any;
 
@@ -273,15 +274,15 @@ serve(async (req: Request) => {
           ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
           : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
         const baseAmount = Number(oneVsOneOrder.amount) || 0;
-        const expectedGrossAmount = Math.round(
-          (baseAmount
-            + baseAmount * Number(feeConfig.booking_vsp_rate)
-            + baseAmount * gatewayRate
-            + Number(feeConfig.booking_paymob_fixed_fee)) * 100
-        ) / 100;
-        const actualGrossAmount = Math.round((Number(obj.amount_cents || 0) / 100) * 100) / 100;
+        const expectedGrossAmountCents = calculatePaymobGrossCents(
+          baseAmount,
+          Number(feeConfig.booking_vsp_rate),
+          gatewayRate,
+          Number(feeConfig.booking_paymob_fixed_fee),
+        );
+        const actualGrossAmountCents = Number(obj.amount_cents || 0);
 
-        if (Math.abs(actualGrossAmount - expectedGrossAmount) > 0.01) {
+        if (!Number.isInteger(actualGrossAmountCents) || actualGrossAmountCents !== expectedGrossAmountCents) {
           console.error(
             `1v1 tournament payment amount mismatch: actual=${actualGrossAmount}, expected=${expectedGrossAmount}, order=${specialReference}`
           );
