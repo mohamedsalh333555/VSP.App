@@ -428,3 +428,6 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           onPressed: isSelectionValid ? _handleConfirmAndPay : null,
         ),
       ),
+    );
+  }
+}
