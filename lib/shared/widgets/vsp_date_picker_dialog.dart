@@ -100,11 +100,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  width: 1.5,
  ),
  boxShadow: [
- BoxShadow(
- color: Colors.black.withValues(alpha: 0.8),
- blurRadius: 32,
- offset: const Offset(0, 16),
- ),
+ VSPShadow.strong,
  BoxShadow(
  color: VSPColors.accent.withValues(alpha: 0.08),
  blurRadius: 20,

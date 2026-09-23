@@ -119,7 +119,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               isArabic: isArabic,
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.lg),
 
             // ── 3. الباقة الاحترافية (Pro Plan) ──
             _buildPlanCard(
@@ -127,7 +127,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               priceText: isArabic ? '1000 ج.م' : '1000 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               badgeText: isArabic ? 'الأكثر اختياراً' : 'Most Popular',
-              badgeColor: VSPColors.accent,
+              badgeColor: VSPColors.proAccent,
               isHighlighted: true,
               isCurrentPlan: isPro,
               buttonText: isPro
@@ -145,7 +145,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               isArabic: isArabic,
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.xxl),
           ],
         ),
       ),
@@ -241,13 +241,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     bool isCurrentPlan = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(VSPSpacing.xl),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(
-          color: isHighlighted ? VSPColors.accent.withValues(alpha: 0.4) : VSPColors.divider,
-          width: isHighlighted ? 1.4 : 1.0,
+          color: isHighlighted ? VSPColors.proAccent.withValues(alpha: 0.45) : VSPColors.divider,
+          width: isHighlighted ? 1.5 : 1.0,
         ),
       ),
       child: Column(

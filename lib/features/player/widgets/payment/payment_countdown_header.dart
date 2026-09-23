@@ -57,23 +57,27 @@ class PaymentCountdownHeader extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: VSPColors.accent,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
                   child: Text(
                     formatCountdown(remainingSeconds),
-                    style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900),
+                    style: VSPTypography.numericStyle.copyWith(
+                      color: Colors.black,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: VSPSpacing.lg),
         ],
 
         // 2. Amount Header Card
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(VSPSpacing.lg),
           decoration: BoxDecoration(
             color: VSPColors.surface,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -89,10 +93,10 @@ class PaymentCountdownHeader extends StatelessWidget {
                         : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount')),
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: VSPSpacing.xs),
               Text(
                 '${amountToPay.toInt()} $currency',
-                style: const TextStyle(
+                style: VSPTypography.numericStyle.copyWith(
                   color: VSPColors.accent,
                   fontSize: 34,
                   fontWeight: FontWeight.w900,

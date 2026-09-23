@@ -103,7 +103,7 @@ class PlayerBookingCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isHistory ? VSPColors.surface : VSPColors.cardGreen,
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        boxShadow: VSPShadow.subtle,
+        boxShadow: const [VSPShadow.subtle],
       ),
       child: Column(
         children: [

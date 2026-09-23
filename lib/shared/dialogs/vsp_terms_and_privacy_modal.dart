@@ -29,13 +29,7 @@ class VSPTermsAndPrivacyModal {
                 color: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.xl),
                 border: Border.all(color: VSPColors.divider, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+                boxShadow: VSPShadow.strongList,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

@@ -92,8 +92,8 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
         child: Material(
           type: MaterialType.transparency,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 26),
+            margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl, vertical: VSPSpacing.xxl),
             decoration: BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.dialog),
@@ -101,13 +101,7 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
                 color: VSPColors.borderLight,
                 width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.65),
-                  blurRadius: 36,
-                  offset: const Offset(0, 12),
-                ),
-              ],
+              boxShadow: VSPShadow.strongList,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

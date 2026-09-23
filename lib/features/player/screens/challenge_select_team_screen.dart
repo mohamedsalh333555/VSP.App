@@ -259,13 +259,13 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  // Continue Button
  Container(
  padding: const EdgeInsets.all(VSPSpacing.lg),
- decoration: BoxDecoration(
+ decoration: const BoxDecoration(
  color: VSPColors.surface,
- borderRadius: const BorderRadius.only(
+ borderRadius: BorderRadius.only(
  topLeft: Radius.circular(VSPRadius.xl),
  topRight: Radius.circular(VSPRadius.xl),
  ),
- boxShadow: VSPShadow.subtle,
+ boxShadow: [VSPShadow.subtle],
  ),
  child: SafeArea(
  child: PrimaryButton(

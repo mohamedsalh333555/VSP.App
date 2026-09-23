@@ -63,14 +63,14 @@ class OwnerAvatarHeader extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: isPro
                     ? const SweepGradient(
-                        colors: [VSPColors.accent, VSPColors.accent, VSPColors.success, VSPColors.accent],
+                        colors: [VSPColors.proAccent, VSPColors.accent, VSPColors.proAccent],
                       )
                     : null,
                 color: isPro ? null : VSPColors.surfaceAlt,
                 border: isPro ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
                 boxShadow: isPro
                     ? [
-                        BoxShadow(color: VSPColors.accent.withValues(alpha: 0.3), blurRadius: 12),
+                        BoxShadow(color: VSPColors.proAccent.withValues(alpha: 0.35), blurRadius: 14),
                       ]
                     : null,
               ),

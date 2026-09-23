@@ -90,6 +90,7 @@ class ChampionPodiumItem extends StatelessWidget {
         ),
         boxShadow: isCenter
             ? [
+                VSPShadow.strong,
                 BoxShadow(
                   color: VSPColors.accent.withValues(alpha: 0.25),
                   blurRadius: 16,
@@ -97,7 +98,7 @@ class ChampionPodiumItem extends StatelessWidget {
                   offset: const Offset(0, 4),
                 )
               ]
-            : [],
+            : const [VSPShadow.subtle],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,7 +152,7 @@ class ChampionPodiumItem extends StatelessWidget {
             ),
             child: Text(
               '$points $ptsText',
-              style: TextStyle(
+              style: VSPTypography.numericStyle.copyWith(
                 color: isCenter ? VSPColors.accent : Colors.white70,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
@@ -170,7 +171,7 @@ class ChampionPodiumItem extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               '$rank',
-              style: TextStyle(
+              style: VSPTypography.numericStyle.copyWith(
                 color: isCenter ? Colors.black : Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: isCenter ? 18 : 13,

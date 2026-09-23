@@ -81,6 +81,7 @@ dependencies:
   sign_in_with_apple: ^7.0.1
   uuid: ^4.6.0
   iconsax_flutter: ^1.0.1
+  device_info_plus: ^12.4.0
 
 
 dev_dependencies:

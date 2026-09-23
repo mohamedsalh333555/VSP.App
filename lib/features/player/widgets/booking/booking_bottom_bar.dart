@@ -50,21 +50,15 @@ class BookingBottomBar extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        20,
-        16,
-        20,
-        bottomPadding > 0 ? bottomPadding + 14 : 20,
+        VSPSpacing.xl,
+        VSPSpacing.md,
+        VSPSpacing.xl,
+        bottomPadding > 0 ? bottomPadding + 14 : VSPSpacing.xl,
       ),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         border: const Border(top: BorderSide(color: VSPColors.divider, width: 1.5)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, -6),
-          ),
-        ],
+        boxShadow: VSPShadow.mediumList,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -213,7 +207,7 @@ class BookingBottomBar extends StatelessWidget {
                               color: isBallRented ? Colors.white : VSPColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                            ),
+                            ).merge(VSPTypography.numericStyle),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -278,7 +272,7 @@ class BookingBottomBar extends StatelessWidget {
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
-                        ),
+                        ).merge(VSPTypography.numericStyle),
                       ),
                       if (depositAmount > 0 && needsDeposit) ...[
                         const SizedBox(width: 6),
@@ -290,7 +284,7 @@ class BookingBottomBar extends StatelessWidget {
                           ),
                           child: Text(
                             isArabic ? 'عربون ${depositAmount.toInt()}' : 'Dep ${depositAmount.toInt()}',
-                            style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold).merge(VSPTypography.numericStyle),
                           ),
                         ),
                       ],
@@ -298,7 +292,7 @@ class BookingBottomBar extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: VSPSpacing.lg),
               Expanded(
                 child: SizedBox(
                   height: 52,
@@ -311,6 +305,7 @@ class BookingBottomBar extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.lg),
                       ),
+                      overlayColor: VSPStates.pressedOverlay(),
                     ),
                     onPressed: (!isSlotSelected || isLoading) ? null : onConfirmPressed,
                     child: isLoading

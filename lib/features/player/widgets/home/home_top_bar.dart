@@ -41,7 +41,7 @@ class HomeTopBar extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: (auth.userModel?.isPro == true)
                           ? const SweepGradient(
-                              colors: [VSPColors.accent, VSPColors.accent, VSPColors.success, VSPColors.accent],
+                              colors: [VSPColors.proAccent, VSPColors.accent, VSPColors.proAccent],
                             )
                           : null,
                       color: (auth.userModel?.isPro == true) ? null : VSPColors.surface,
@@ -51,7 +51,7 @@ class HomeTopBar extends StatelessWidget {
                       boxShadow: (auth.userModel?.isPro == true)
                           ? [
                               BoxShadow(
-                                color: VSPColors.accent.withValues(alpha: 0.35),
+                                color: VSPColors.proAccent.withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 spreadRadius: 1,
                               ),

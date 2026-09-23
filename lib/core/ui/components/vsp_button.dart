@@ -43,14 +43,18 @@ class VSPPrimaryButton extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-        color: hasCustomColor ? color : null,
-        boxShadow: [
-          BoxShadow(
-            color: (color ?? VSPColors.accent).withValues(alpha: 0.18),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: hasCustomColor 
+            ? (onPressed == null ? VSPStates.disabled(color!) : color)
+            : (onPressed == null ? VSPStates.disabled(VSPColors.accent) : null),
+        boxShadow: onPressed == null
+            ? []
+            : [
+                BoxShadow(
+                  color: (color ?? VSPColors.accent).withValues(alpha: 0.18),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
@@ -60,6 +64,8 @@ class VSPPrimaryButton extends StatelessWidget {
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: const StadiumBorder(),
+          overlayColor: VSPStates.pressedOverlay(),
+          disabledForegroundColor: VSPStates.disabled(textColor ?? Colors.black),
         ),
         child: isLoading
             ? SizedBox(

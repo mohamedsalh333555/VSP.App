@@ -79,7 +79,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       ),
                       child: const Icon(Iconsax.info_circle_copy, size: 20, color: VSPColors.accent),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: VSPSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,14 +99,14 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                               color: VSPColors.accent,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
-                            ),
+                            ).merge(VSPTypography.numericStyle),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.lg),
 
                 // Explanation Box
                 Container(
@@ -218,7 +218,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                     fontSize: 21,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
-                  ),
+                  ).merge(VSPTypography.numericStyle),
                 ),
               ),
               const SizedBox(height: 2),
@@ -277,7 +277,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: VSPSpacing.md),
             Expanded(
               child: _buildFramedKpiCard(
                 icon: Iconsax.moneys_copy,
@@ -302,7 +302,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: VSPSpacing.md),
 
         // Row 2: Actual Occupancy + Avg Ticket Price
         Row(
@@ -329,7 +329,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: VSPSpacing.md),
             Expanded(
               child: _buildFramedKpiCard(
                 icon: Iconsax.ticket_copy,

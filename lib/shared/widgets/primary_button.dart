@@ -66,7 +66,9 @@ class _PrimaryButtonState extends State<PrimaryButton> {
             foregroundColor: widget.textColor ?? VSPColors.background,
             shape: const StadiumBorder(),
             elevation: 0,
-            disabledBackgroundColor: VSPColors.surface,
+            disabledBackgroundColor: VSPStates.disabled(widget.color ?? VSPColors.accent),
+            disabledForegroundColor: VSPStates.disabled(widget.textColor ?? VSPColors.background),
+            overlayColor: VSPStates.pressedOverlay(),
             padding: widget.padding,
           ),
           child: widget.isLoading

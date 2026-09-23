@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/ui/tokens/vsp_tokens.dart';
+import 'core/utils/device_performance.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/language_provider.dart';
 import 'core/providers/auth_provider.dart' as app_auth;
@@ -36,13 +37,14 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
- await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
- VSPLogger.i('Handling a background FCM message: ${message.messageId}');
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  VSPLogger.i('Handling a background FCM message: ${message.messageId}');
 }
 
 void main() async {
- WidgetsFlutterBinding.ensureInitialized();
- usePathUrlStrategy();
+  WidgetsFlutterBinding.ensureInitialized();
+  await DevicePerformance.init();
+  usePathUrlStrategy();
  
   // CONCURRENT INITIALIZATION (Supabase & Firebase)
   await Future.wait([
