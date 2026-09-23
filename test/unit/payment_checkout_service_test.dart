@@ -95,12 +95,24 @@ void main() {
       );
     });
 
-    test('isPaymentConfirmed requires full payment confirmation', () {
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed'), isTrue);
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isTrue);
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'partially_paid'), isFalse);
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
+    test('isPaymentConfirmed requires explicit paid payment state', () {
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'confirmed',
+        paymentStatus: 'paid',
+      ), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'confirmed',
+        paymentStatus: 'partially_paid',
+      ), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'pending',
+        paymentStatus: 'pending',
+      ), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: null,
+        paymentStatus: null,
+      ), isFalse);
     });
 
     test('preparePendingDraft sets status to pending and method to paymob', () {
