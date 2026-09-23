@@ -62,6 +62,78 @@ void main() {
       expect(() => coordinator.dispose(), returnsNormally);
     });
 
+    test('fallback polling does not confirm partially paid booking', () async {
+      final coordinator = PaymentCheckoutCoordinator();
+      final now = DateTime(2026, 9, 9, 20, 0);
+      final draft = BookingDraft(
+        stadiumId: 's1',
+        stadiumName: 'S',
+        ownerId: 'o1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        bookingType: BookingType.openJoin,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+        paymentStatus: 'partially_paid',
+        isPaid: false,
+      );
+      final booking = Booking.fromDraft(
+        id: 'bk_partial',
+        draft: draft,
+        userId: 'u1',
+        status: BookingStatus.confirmed,
+      );
+      var confirmed = false;
+
+      coordinator.startFallbackPolling(
+        bookingId: booking.id,
+        pollingInterval: const Duration(milliseconds: 20),
+        fetchBooking: (_) async => booking,
+        onConfirmed: (_) => confirmed = true,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 70));
+      coordinator.dispose();
+      expect(confirmed, isFalse);
+    });
+
+    test('fallback polling confirms only fully paid booking', () async {
+      final coordinator = PaymentCheckoutCoordinator();
+      final now = DateTime(2026, 9, 9, 20, 0);
+      final draft = BookingDraft(
+        stadiumId: 's1',
+        stadiumName: 'S',
+        ownerId: 'o1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        bookingType: BookingType.openJoin,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 100,
+        paymentStatus: 'paid',
+        isPaid: true,
+      );
+      final booking = Booking.fromDraft(
+        id: 'bk_paid',
+        draft: draft,
+        userId: 'u1',
+        status: BookingStatus.confirmed,
+      );
+      var confirmed = false;
+
+      coordinator.startFallbackPolling(
+        bookingId: booking.id,
+        pollingInterval: const Duration(milliseconds: 20),
+        fetchBooking: (_) async => booking,
+        onConfirmed: (_) => confirmed = true,
+      );
+
+      await Future.delayed(const Duration(milliseconds: 70));
+      coordinator.dispose();
+      expect(confirmed, isTrue);
+    });
+
     test('resolveInitialBooking returns null for tournament payment', () async {
       final coordinator = PaymentCheckoutCoordinator();
       final now = DateTime(2026, 9, 9, 20, 0);

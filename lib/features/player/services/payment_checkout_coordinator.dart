@@ -64,12 +64,16 @@ class PaymentCheckoutCoordinator {
     required String bookingId,
     required Future<Booking?> Function(String) fetchBooking,
     required void Function(Booking booking) onConfirmed,
+    Duration pollingInterval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
-    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    _fallbackPollingTimer = Timer.periodic(pollingInterval, (timer) async {
       try {
         final booking = await fetchBooking(bookingId);
-        if (booking != null && (booking.status == BookingStatus.confirmed || booking.isPaid)) {
+        if (booking != null && PaymentCheckoutService.isPaymentConfirmed(
+            status: booking.status.name,
+            paymentStatus: booking.paymentStatus,
+          )) {
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
