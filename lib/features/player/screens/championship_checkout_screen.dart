@@ -213,6 +213,18 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           needsDeposit: true,
         );
 
+        final order = await TournamentRepository().createTournamentOrder(
+          championshipId: widget.championship.id,
+          teamId: widget.team.id,
+          amount: entryFee,
+          playerIds: _selectedPlayerIds,
+          guestNames: _offlineGuestNames,
+        );
+        final orderReference = order?['order_reference']?.toString();
+        if (orderReference == null || orderReference.isEmpty) {
+          throw StateError('تعذر إنشاء أمر الدفع الرسمي للبطولة.');
+        }
+
         if (mounted) {
           final paymentResult = await Navigator.push<bool>(
             context,
@@ -221,6 +233,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                 bookingDraft: draft,
                 forceFullPayment: true,
                 isTournamentPayment: true,
+                existingBookingId: orderReference,
               ),
             ),
           );
@@ -248,12 +261,44 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   }
 
   Future<void> _executeJoinChampionship() async {
-    final success = await TournamentRepository().joinChampionship(
+    final tournamentRepo = TournamentRepository();
+    final entryFee = widget.championship.entryFee;
+
+    if (entryFee > 0) {
+      // The Paymob webhook atomically confirms the official tournament order
+      // and updates championship membership. The client only syncs roster data.
+      final paid = await tournamentRepo.verifyTournamentOrderPaid(
+        championshipId: widget.championship.id,
+        teamId: widget.team.id,
+      );
+      if (!paid) {
+        throw StateError('لم يتم تأكيد سداد رسوم البطولة من الخادم بعد.');
+      }
+      await tournamentRepo.updateSingleTeamRoster(
+        championshipId: widget.championship.id,
+        teamId: widget.team.id,
+        playerIds: _selectedPlayerIds,
+        guestNames: _offlineGuestNames,
+      );
+      _hasPaid = true;
+      if (mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'تم الاشتراك في البطولة بنجاح!'
+              : 'Joined tournament successfully!',
+        );
+        Navigator.pop(context, true);
+      }
+      return;
+    }
+
+    final success = await tournamentRepo.joinChampionship(
       widget.championship.id,
       widget.team.id,
       selectedPlayerIds: _selectedPlayerIds,
       offlineGuestNames: _offlineGuestNames,
-      isPaid: true,
+      isPaid: false,
     );
 
     if (success && mounted) {
