@@ -79,6 +79,48 @@ serve(async (req: Request) => {
 
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
+
+    // Paid team-tournament checkouts must reference a server-created tournament
+    // order. Never trust an amount supplied by the mobile client for this flow.
+    if (is_tournament_payment) {
+      const { data: tournamentOrder, error: tournamentOrderError } = await supabase
+        .from("tournament_orders")
+        .select("order_reference, amount, captain_user_id, payment_status")
+        .eq("order_reference", booking_id)
+        .maybeSingle();
+
+      if (tournamentOrderError || !tournamentOrder) {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (tournamentOrder.captain_user_id !== callerUser.id) {
+        const { data: callerProfile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", callerUser.id)
+          .maybeSingle();
+
+        if (!callerProfile || !["admin", "co_founder", "super_admin"].includes(callerProfile.role)) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden: You do not own this tournament payment order" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      if (tournamentOrder.payment_status !== "pending") {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order is no longer pending" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      finalBaseAmount = Number(tournamentOrder.amount) || 0;
+    }
+
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
         .from("bookings")
