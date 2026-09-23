@@ -61,7 +61,6 @@ class PaymentCheckoutService {
 
   static Future<String?> requestPaymobCheckoutUrl({
     required BookingDraft draft,
-    required String selectedMethod,
     required bool isTournamentPayment,
     String? bookingId,
     required String userEmail,
