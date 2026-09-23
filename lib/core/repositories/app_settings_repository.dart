@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/app_settings_model.dart';
 
@@ -10,40 +9,33 @@ class AppSettingsRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
   AppSettings? _cachedSettings;
 
-  /// Returns cached settings or fetches fresh dynamic configuration from Supabase
+  /// Supabase is authoritative. Cache is only an in-process optimization after a successful read.
   Future<AppSettings> getSettings({bool forceRefresh = false}) async {
     if (_cachedSettings != null && !forceRefresh) {
       return _cachedSettings!;
     }
 
-    try {
-      final response = await _supabase
-          .from('app_settings')
-          .select()
-          .limit(1)
-          .maybeSingle()
-          .timeout(const Duration(seconds: 5));
+    final response = await _supabase
+        .from('app_settings')
+        .select()
+        .limit(1)
+        .maybeSingle()
+        .timeout(const Duration(seconds: 5));
 
-      if (response != null) {
-        _cachedSettings = AppSettings.fromMap(response);
-        return _cachedSettings!;
-      }
-    } catch (e) {
-      debugPrint('AppSettingsRepository: Using fallback settings due to: $e');
+    if (response == null) {
+      throw StateError('VSP app settings are unavailable in Supabase.');
     }
 
-    _cachedSettings ??= const AppSettings();
+    _cachedSettings = AppSettings.fromMap(response);
     return _cachedSettings!;
   }
 
-  /// Updates app settings on Supabase (Admin usage)
   Future<bool> updateSettings(AppSettings settings) async {
     try {
       await _supabase.from('app_settings').upsert(settings.toMap());
       _cachedSettings = settings;
       return true;
-    } catch (e) {
-      debugPrint('AppSettingsRepository: Error updating settings: $e');
+    } catch (_) {
       return false;
     }
   }
