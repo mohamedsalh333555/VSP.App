@@ -5,6 +5,10 @@ import '../booking_repository.dart';
 
 /// Mock implementation of [BookingRepository] for testing and demo environments.
 class MockBookingRepository implements BookingRepository {
+  MockBookingRepository() {
+    throw UnsupportedError('MockBookingRepository is disabled in production. Use SupabaseBookingRepository.');
+  }
+
   final List<Booking> _bookings = [];
   final _controller = StreamController<List<Booking>>.broadcast();
 

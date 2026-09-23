@@ -8,25 +8,25 @@ class AppSettings {
   final bool onlinePaymentEnabled;
 
   const AppSettings({
-    this.supportPhone = '01100229462',
-    this.whatsappNumber = '+201100229462',
-    this.supportEmail = 'vspapp.eg@gmail.com',
-    this.vodafoneCashNumber = '01100229462',
-    this.instapayHandle = 'vsp@instapay',
-    this.cashBookingEnabled = true,
-    this.onlinePaymentEnabled = true,
+    this.supportPhone = '',
+    this.whatsappNumber = '',
+    this.supportEmail = '',
+    this.vodafoneCashNumber = '',
+    this.instapayHandle = '',
+    this.cashBookingEnabled = false,
+    this.onlinePaymentEnabled = false,
   });
 
   factory AppSettings.fromMap(Map<String, dynamic>? data) {
-    if (data == null) return const AppSettings();
+    if (data == null) throw StateError('App settings row is missing from Supabase.');
     return AppSettings(
-      supportPhone: data['support_phone'] ?? data['supportPhone'] ?? '01100229462',
-      whatsappNumber: data['whatsapp_number'] ?? data['whatsappNumber'] ?? '+201100229462',
-      supportEmail: data['support_email'] ?? data['supportEmail'] ?? 'vspapp.eg@gmail.com',
-      vodafoneCashNumber: data['vodafone_cash_number'] ?? data['vodafoneCashNumber'] ?? data['vodafone_cash'] ?? '01100229462',
-      instapayHandle: data['instapay_handle'] ?? data['instapayHandle'] ?? data['instapay'] ?? 'vsp@instapay',
-      cashBookingEnabled: data['cash_booking_enabled'] ?? data['cashBookingEnabled'] ?? true,
-      onlinePaymentEnabled: data['online_payment_enabled'] ?? data['onlinePaymentEnabled'] ?? true,
+      supportPhone: data['support_phone'] ?? data['supportPhone'] ?? '',
+      whatsappNumber: data['whatsapp_number'] ?? data['whatsappNumber'] ?? '',
+      supportEmail: data['support_email'] ?? data['supportEmail'] ?? '',
+      vodafoneCashNumber: data['vodafone_cash_number'] ?? data['vodafoneCashNumber'] ?? data['vodafone_cash'] ?? '',
+      instapayHandle: data['instapay_handle'] ?? data['instapayHandle'] ?? data['instapay'] ?? '',
+      cashBookingEnabled: data['cash_booking_enabled'] ?? data['cashBookingEnabled'] ?? false,
+      onlinePaymentEnabled: data['online_payment_enabled'] ?? data['onlinePaymentEnabled'] ?? false,
     );
   }
 
