@@ -756,7 +756,7 @@ serve(async (req: Request) => {
 
       // Verified electronic payment must match the server-calculated gross amount.
       if (Math.abs(paidAmountEgp - expectedGrossAmount) > 0.01) {
-        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedAmount} EGP) for booking ${bookingId}`);
+        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedGrossAmount} EGP) for booking ${bookingId}`);
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "underpayment_fraud_alert",
@@ -766,7 +766,7 @@ serve(async (req: Request) => {
           payload: obj,
           signature_verified: true,
           status: "fraud_detected",
-          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedAmount} EGP`,
+          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedGrossAmount} EGP`,
         });
         return new Response(JSON.stringify({ error: "Payment amount does not match booking price" }), {
           status: 400,
