@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { calculatePaymobGrossCents } from "../_shared/paymob_amount.ts";
 
 declare const Deno: any;
 
@@ -208,13 +209,13 @@ serve(async (req: Request) => {
     const gatewayRate = normalizedPaymentMethod === "wallet"
       ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
       : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
-    const vspFee = Math.round((finalBaseAmount * Number(feeConfig.booking_vsp_rate)) * 100) / 100;
-    const gatewayFee = Math.round(
-      (finalBaseAmount * gatewayRate + Number(feeConfig.booking_paymob_fixed_fee)) * 100
-    ) / 100;
-    const totalPaymentFees = Math.round((vspFee + gatewayFee) * 100) / 100;
-    const totalAmountEgp = Math.round((finalBaseAmount + totalPaymentFees) * 100) / 100;
-    const amountInCents = Math.round(totalAmountEgp * 100);
+    const amountInCents = calculatePaymobGrossCents(
+      finalBaseAmount,
+      Number(feeConfig.booking_vsp_rate),
+      gatewayRate,
+      Number(feeConfig.booking_paymob_fixed_fee),
+    );
+    const totalAmountEgp = amountInCents / 100;
 
     const profileName = String(user_name || callerUser.user_metadata?.full_name || "").trim();
     const profileEmail = String(user_email || callerUser.email || "").trim();
