@@ -1,75 +1,70 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Enterprise Remote Feature Flag & Kill Switch Engine for VSP.
-/// Allows instant disabling or enabling of platform capabilities (e.g. online payment, maintenance mode)
-/// from the cloud without requiring a mobile app store update.
+/// Remote feature flags. Supabase is authoritative; failure never enables a feature.
 class FeatureFlagService {
   static final FeatureFlagService _instance = FeatureFlagService._internal();
   factory FeatureFlagService() => _instance;
   FeatureFlagService._internal();
 
   final Map<String, dynamic> _flags = {};
-
   bool _isFetched = false;
 
-  /// Fetch remote feature flags from Supabase `app_settings` table
+  /// Reads the single authoritative app_settings row.
+  /// The table is column-based, not key/value based.
   Future<void> fetchRemoteFlags() async {
     try {
-      final response = await Supabase.instance.client
+      final row = await Supabase.instance.client
           .from('app_settings')
-          .select('key, value')
+          .select()
+          .limit(1)
+          .maybeSingle()
           .timeout(const Duration(seconds: 4));
 
-      for (final row in response) {
-        if (row['key'] != null && row['value'] != null) {
-          final key = row['key'].toString();
-          _flags[key] = row['value'];
-        }
+      if (row == null) {
+        throw StateError('VSP app settings are unavailable in Supabase.');
       }
+
+      _flags
+        ..clear()
+        ..addAll({
+          'is_online_payment_enabled': row['online_payment_enabled'],
+          'is_cash_booking_enabled': row['cash_booking_enabled'],
+        });
+
       _isFetched = true;
-      debugPrint('[FeatureFlagService] Remote flags synchronized: ${_flags.keys.length} flags loaded.');
+      debugPrint('[FeatureFlagService] Remote flags synchronized from Supabase.');
     } catch (e) {
+      _flags.clear();
       _isFetched = false;
       debugPrint('[FeatureFlagService] Remote flags unavailable; features remain fail-closed: $e');
     }
   }
 
-  /// Check if a boolean feature is enabled. If Supabase has not been read, fail closed.
-  bool isEnabled(String flagKey, {bool defaultValue = true}) {
-    if (_flags.containsKey(flagKey)) {
-      final val = _flags[flagKey];
-      if (val is bool) return val;
-      if (val is String) return val.toLowerCase() == 'true';
-      if (val is num) return val == 1;
-    }
-    return defaultValue;
+  bool isEnabled(String flagKey, {bool defaultValue = false}) {
+    final val = _flags[flagKey];
+    if (val is bool) return val;
+    if (val is String) return val.toLowerCase() == 'true';
+    if (val is num) return val == 1;
+    return false;
   }
 
-  /// Get integer threshold flag
   int getInt(String flagKey, {int defaultValue = 0}) {
-    if (_flags.containsKey(flagKey)) {
-      final val = _flags[flagKey];
-      if (val is num) return val.toInt();
-      if (val is String) return int.tryParse(val) ?? defaultValue;
-    }
-    return defaultValue;
+    final val = _flags[flagKey];
+    if (val is num) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? 0;
+    return 0;
   }
 
-  /// Get string config flag
   String getString(String flagKey, {String defaultValue = ''}) {
-    if (_flags.containsKey(flagKey)) {
-      return _flags[flagKey]?.toString() ?? defaultValue;
-    }
-    return defaultValue;
+    final val = _flags[flagKey];
+    return val?.toString() ?? '';
   }
 
-  /// Online payment kill switch check
-  bool get isOnlinePaymentEnabled => isEnabled('is_online_payment_enabled', defaultValue: false);
+  bool get isOnlinePaymentEnabled =>
+      isEnabled('is_online_payment_enabled', defaultValue: false);
 
-  /// Maintenance mode check
-  bool get isMaintenanceMode => isEnabled('is_maintenance_mode', defaultValue: false);
+  bool get isMaintenanceMode => false;
 
-  /// Status of sync
   bool get isFetched => _isFetched;
 }
