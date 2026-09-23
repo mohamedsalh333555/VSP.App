@@ -296,7 +296,7 @@ serve(async (req: Request) => {
 
         if (!Number.isInteger(actualGrossAmountCents) || actualGrossAmountCents !== expectedGrossAmountCents) {
           console.error(
-            `1v1 tournament payment amount mismatch: actual=${actualGrossAmount}, expected=${expectedGrossAmount}, order=${specialReference}`
+            `1v1 tournament payment amount mismatch: actual=${actualGrossAmountCents / 100}, expected=${expectedGrossAmountCents / 100}, order=${specialReference}`
           );
           await supabase.from("webhook_logs").insert({
             provider: "paymob",
@@ -305,8 +305,8 @@ serve(async (req: Request) => {
             order_id: orderId,
             payload: {
               order_reference: specialReference,
-              actual_gross_amount: actualGrossAmount,
-              expected_gross_amount: expectedGrossAmount,
+              actual_gross_amount_cents: actualGrossAmountCents,
+              expected_gross_amount_cents: expectedGrossAmountCents,
               base_amount: baseAmount,
             },
             signature_verified: true,
@@ -443,17 +443,17 @@ serve(async (req: Request) => {
           ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
           : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
         const baseAmount = Number(tournamentOrder.amount) || 0;
-        const expectedGrossAmount = Math.round(
-          (baseAmount
-            + baseAmount * Number(feeConfig.booking_vsp_rate)
-            + baseAmount * gatewayRate
-            + Number(feeConfig.booking_paymob_fixed_fee)) * 100
-        ) / 100;
-        const actualGrossAmount = Math.round((Number(obj.amount_cents || 0) / 100) * 100) / 100;
+        const expectedGrossAmountCents = calculatePaymobGrossCents(
+          baseAmount,
+          Number(feeConfig.booking_vsp_rate),
+          gatewayRate,
+          Number(feeConfig.booking_paymob_fixed_fee),
+        );
+        const actualGrossAmountCents = Number(obj.amount_cents || 0);
 
-        if (Math.abs(actualGrossAmount - expectedGrossAmount) > 0.01) {
+        if (!Number.isInteger(actualGrossAmountCents) || actualGrossAmountCents !== expectedGrossAmountCents) {
           console.error(
-            `Tournament payment amount mismatch: actual=${actualGrossAmount}, expected=${expectedGrossAmount}, order=${specialReference}`
+            `Tournament payment amount mismatch: actual=${actualGrossAmountCents / 100}, expected=${expectedGrossAmountCents / 100}, order=${specialReference}`
           );
           await supabase.from("webhook_logs").insert({
             provider: "paymob",
@@ -462,8 +462,8 @@ serve(async (req: Request) => {
             order_id: orderId,
             payload: {
               order_reference: specialReference,
-              actual_gross_amount: actualGrossAmount,
-              expected_gross_amount: expectedGrossAmount,
+              actual_gross_amount_cents: actualGrossAmountCents,
+              expected_gross_amount_cents: expectedGrossAmountCents,
               base_amount: baseAmount,
             },
             signature_verified: true,
@@ -760,16 +760,17 @@ serve(async (req: Request) => {
       const gatewayRate = sourceType.includes("wallet")
         ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
         : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
-      const expectedGrossAmount = Math.round(
-        (expectedBaseAmount
-          + expectedBaseAmount * Number(feeConfig.booking_vsp_rate)
-          + expectedBaseAmount * gatewayRate
-          + Number(feeConfig.booking_paymob_fixed_fee)) * 100
-      ) / 100;
+      const expectedGrossAmountCents = calculatePaymobGrossCents(
+        expectedBaseAmount,
+        Number(feeConfig.booking_vsp_rate),
+        gatewayRate,
+        Number(feeConfig.booking_paymob_fixed_fee),
+      );
+      const paidAmountCents = Number(obj.amount_cents || 0);
 
       // Verified electronic payment must match the server-calculated gross amount.
-      if (Math.abs(paidAmountEgp - expectedGrossAmount) > 0.01) {
-        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedGrossAmount} EGP) for booking ${bookingId}`);
+      if (!Number.isInteger(paidAmountCents) || paidAmountCents !== expectedGrossAmountCents) {
+        console.error(`🚨 Security Alert: Paid amount (${paidAmountCents / 100} EGP) does not match expected (${expectedGrossAmountCents / 100} EGP) for booking ${bookingId}`);
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "underpayment_fraud_alert",
@@ -779,7 +780,7 @@ serve(async (req: Request) => {
           payload: obj,
           signature_verified: true,
           status: "fraud_detected",
-          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedGrossAmount} EGP`,
+          error_message: `Paid ${paidAmountCents / 100} EGP, expected ${expectedGrossAmountCents / 100} EGP`,
         });
         return new Response(JSON.stringify({ error: "Payment amount does not match booking price" }), {
           status: 400,
