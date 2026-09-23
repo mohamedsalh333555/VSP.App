@@ -1,11 +1,11 @@
+import 'package:uuid/uuid.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../data/models.dart';
 
-/// Pure domain service handling calculation, reference generation, and validation for payment checkout.
+/// Client adapter around a server-authoritative payment flow.
 class PaymentCheckoutService {
   const PaymentCheckoutService();
 
-  /// Prepares a pending booking draft ready for insertion into the database.
   static BookingDraft preparePendingDraft(BookingDraft draft) {
     return draft.copyWith(
       paymentStatus: 'pending',
@@ -14,7 +14,6 @@ class PaymentCheckoutService {
     );
   }
 
-  /// Calculates the base payable amount depending on whether a deposit is required.
   static double calculateBasePayableAmount({
     required bool needsDeposit,
     required double depositPaid,
@@ -27,21 +26,16 @@ class PaymentCheckoutService {
     return totalPrice;
   }
 
-  /// Generates a unique tracking payment reference ID for the Paymob transaction.
+  /// Correlation reference only; server remains authoritative for accounting.
   static String generatePaymentReference({
     required bool isTournamentPayment,
-    String? playerTeamId,
     String? bookingId,
-    required int timestampMs,
   }) {
-    if (isTournamentPayment) {
-      final teamId = (playerTeamId != null && playerTeamId.isNotEmpty) ? playerTeamId : 'TEAM';
-      return 'TOURN_${teamId}_$timestampMs';
-    }
-    return bookingId ?? 'BK_$timestampMs';
+    if (bookingId != null && bookingId.isNotEmpty) return bookingId;
+    if (isTournamentPayment) return 'TOURN_\${const Uuid().v4()}';
+    throw StateError('A booking ID is required for a booking payment.');
   }
 
-  /// Determines if stale pending bookings should be cleaned up for the user.
   static bool shouldCleanupStaleBookings({
     required bool isTournamentPayment,
     required String? existingBookingId,
@@ -49,7 +43,6 @@ class PaymentCheckoutService {
     return !isTournamentPayment && existingBookingId == null;
   }
 
-  /// Evaluates whether the booking status indicates successful payment confirmation.
   static bool isPaymentConfirmed({
     String? status,
     String? paymentStatus,
@@ -59,7 +52,6 @@ class PaymentCheckoutService {
         paymentStatus == 'partially_paid';
   }
 
-  /// Requests Paymob checkout URL using standard fee and reference calculations.
   static Future<String?> requestPaymobCheckoutUrl({
     required BookingDraft draft,
     required String selectedMethod,
@@ -76,16 +68,14 @@ class PaymentCheckoutService {
       totalPrice: draft.totalPrice,
       isFullPayment: isFullPayment,
     );
-    // The authoritative server calculates all payment fees from the actual amount.
+
     final paymentRefId = generatePaymentReference(
       isTournamentPayment: isTournamentPayment,
-      playerTeamId: draft.playerTeamId,
       bookingId: bookingId,
-      timestampMs: DateTime.now().millisecondsSinceEpoch,
     );
 
     return PaymobService.getCheckoutUrlFromServer(
-      amountInEgp: totalAmount,
+      amountInEgp: baseAmount,
       bookingId: paymentRefId,
       userEmail: userEmail,
       userName: userName,
