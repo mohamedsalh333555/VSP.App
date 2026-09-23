@@ -54,7 +54,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;
-  final String _selectedMethod = 'card';
+  String _selectedMethod = 'card';
 
   @override
   void initState() {
@@ -87,7 +87,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
-              isArabic ? 'انتهت مهلة حجز الوقت (5 دقائق).' : 'Booking reservation timeout (5 mins).',
+              isArabic ? 'انتهت مهلة حجز الوقت (8 دقائق).' : 'Booking reservation timeout (8 mins).',
             );
             Navigator.pop(context);
           }
