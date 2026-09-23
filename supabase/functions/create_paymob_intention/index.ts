@@ -4,6 +4,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 declare const Deno: any;
 
+function calculatePaymobGrossCents(
+  baseAmountEgp: number,
+  vspRate: number,
+  gatewayRate: number,
+  fixedFeeEgp: number,
+): number {
+  const baseCents = Math.round(baseAmountEgp * 100);
+  const vspCents = Math.round(baseCents * Number(vspRate));
+  const gatewayVariableCents = Math.round(baseCents * Number(gatewayRate));
+  const gatewayFixedCents = Math.round(Number(fixedFeeEgp) * 100);
+  return baseCents + vspCents + gatewayVariableCents + gatewayFixedCents;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -64,10 +77,10 @@ serve(async (req: Request) => {
       is_tournament_payment = false,
       is_full_payment = false,
       amount_egp,
+      payment_method = "card",
       user_phone = "",
-      user_name = "Player",
-      user_email = "player@vsp.app",
-      integration_id,
+      user_name = "",
+      user_email = "",
     } = payload;
 
     if (!booking_id) {
@@ -79,6 +92,62 @@ serve(async (req: Request) => {
 
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
+
+    // Paid tournament checkouts must reference a server-created order.
+    // Never trust an amount supplied by the mobile client for tournament flows.
+    if (is_tournament_payment) {
+      const isOneVsOne = booking_id.startsWith("TOURN_1V1_");
+      const tableName = isOneVsOne
+        ? "vsp_1v1_tournament_orders"
+        : "tournament_orders";
+
+      const selectColumns = isOneVsOne
+        ? "order_reference, amount, user_id, payment_status"
+        : "order_reference, amount, captain_user_id, payment_status";
+
+      const { data: tournamentOrder, error: tournamentOrderError } = await supabase
+        .from(tableName)
+        .select(selectColumns)
+        .eq("order_reference", booking_id)
+        .maybeSingle();
+
+      if (tournamentOrderError || !tournamentOrder) {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const orderOwnerId = isOneVsOne
+        ? tournamentOrder.user_id
+        : tournamentOrder.captain_user_id;
+
+      if (orderOwnerId !== callerUser.id) {
+        const { data: callerProfile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", callerUser.id)
+          .maybeSingle();
+
+        if (!callerProfile || !["admin", "co_founder", "super_admin"].includes(callerProfile.role)) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden: You do not own this tournament payment order" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      if (tournamentOrder.payment_status !== "pending") {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order is no longer pending" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      finalBaseAmount = Number(tournamentOrder.amount) || 0;
+    }
+
+
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
         .from("bookings")
@@ -131,21 +200,75 @@ serve(async (req: Request) => {
       );
     }
 
-    // Calculate official platform fee: (amount * 0.0475) + 3.0 EGP
-    const platformFee = Math.round(((finalBaseAmount * 0.0475) + 3.0) * 100) / 100;
-    const totalAmountEgp = Math.round((finalBaseAmount + platformFee) * 100) / 100;
-    const amountInCents = Math.round(totalAmountEgp * 100);
+    // Calculate official checkout fees from public.platform_fee_config.
+    // Contract: VSP 2.0%; Paymob local cards/wallets 2.4% + 3 EGP;
+    // Paymob foreign cards 2.6% + 3 EGP. The database is authoritative.
+    const { data: feeConfig, error: feeConfigError } = await supabase
+      .from("platform_fee_config")
+      .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_foreign_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
+      .eq("id", 1)
+      .maybeSingle();
 
-    const safeFirstName = user_name.trim().split(" ")[0] || "Player";
-    const safeLastName = user_name.trim().split(" ").slice(1).join(" ") || "VSP";
-    const rawPhone = user_phone.trim().replace(/[^\d+]/g, "");
-    const safePhone = rawPhone.length > 0
-      ? (rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`)
-      : "+201000000000";
+    if (feeConfigError || !feeConfig) {
+      console.error("Missing authoritative booking fee configuration:", feeConfigError);
+      return new Response(
+        JSON.stringify({ error: "Payment fee configuration unavailable" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    const cardIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")) || 5933044;
-    const walletIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")) || 5933043;
-    const paymentMethods = [cardIntegration, walletIntegration];
+    const normalizedPaymentMethod = String(payment_method || "card").toLowerCase();
+    const gatewayRate = normalizedPaymentMethod === "wallet"
+      ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
+      : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+    const amountInCents = calculatePaymobGrossCents(
+      finalBaseAmount,
+      Number(feeConfig.booking_vsp_rate),
+      gatewayRate,
+      Number(feeConfig.booking_paymob_fixed_fee),
+    );
+    const baseAmountCents = Math.round(finalBaseAmount * 100);
+    const vspFeeCents = Math.round(
+      baseAmountCents * Number(feeConfig.booking_vsp_rate),
+    );
+    const gatewayFeeCents = amountInCents - baseAmountCents - vspFeeCents;
+    const totalPaymentFeesCents = amountInCents - baseAmountCents;
+    const totalAmountEgp = amountInCents / 100;
+
+    const profileName = String(user_name || callerUser.user_metadata?.full_name || "").trim();
+    const profileEmail = String(user_email || callerUser.email || "").trim();
+    const profilePhone = String(user_phone || callerUser.phone || "").trim();
+
+    if (!profileName || !profileEmail || !profilePhone) {
+      return new Response(
+        JSON.stringify({ error: "Complete authenticated user billing information is required before creating a Paymob checkout session" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const nameParts = profileName.split(/\s+/).filter(Boolean);
+    const safeFirstName = nameParts[0];
+    const safeLastName = nameParts.slice(1).join(" ") || safeFirstName;
+    const rawPhone = profilePhone.trim().replace(/[^\d+]/g, "");
+    const safePhone = rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`;
+
+    // Paymob Intention API requires Integration IDs, not the public key or iframe ID.
+    // Integration IDs are identifiers, not secrets. Keep them server-side and allow
+    // optional environment overrides, with the known production IDs as fallbacks.
+    const cardIntegration =
+      Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")) || 5933044;
+    const walletIntegration =
+      Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")) || 5933043;
+    const paymentMethods = [cardIntegration, walletIntegration]
+      .filter((value) => Number.isInteger(value) && value > 0);
+
+    if (paymentMethods.length === 0) {
+      console.error("No valid Paymob integration IDs are configured.");
+      return new Response(
+        JSON.stringify({ error: "Paymob payment configuration is unavailable on the server" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // 5. Call Paymob Intention API securely from backend (AFTER ALL SECURITY CHECKS PASS)
     const intentionPayload = {
@@ -156,7 +279,7 @@ serve(async (req: Request) => {
         first_name: safeFirstName,
         last_name: safeLastName,
         phone_number: safePhone,
-        email: user_email.trim() || "customer@vsp.eg",
+        email: profileEmail,
       },
       special_reference: booking_id,
       redirection_url: "https://vspapp.online/payment-callback",
@@ -198,6 +321,10 @@ serve(async (req: Request) => {
         success: true,
         checkout_url: checkoutUrl,
         client_secret: clientSecret,
+        base_amount: finalBaseAmount,
+        vsp_fee: vspFeeCents / 100,
+        gateway_fee: gatewayFeeCents / 100,
+        total_fees: totalPaymentFeesCents / 100,
         total_amount: totalAmountEgp,
       }),
       {

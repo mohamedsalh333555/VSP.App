@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/config/app_config.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/services/payment_checkout_service.dart';
 
@@ -30,7 +29,7 @@ void main() {
       expect(amount2, 350.0);
     });
 
-    test('calculateBasePayableAmount returns totalPrice when isFullPayment is true even if needsDeposit is true', () {
+    test('calculateBasePayableAmount returns totalPrice when isFullPayment is true', () {
       final amount = PaymentCheckoutService.calculateBasePayableAmount(
         needsDeposit: true,
         depositPaid: 150.0,
@@ -40,17 +39,6 @@ void main() {
       expect(amount, 400.0);
     });
 
-    test('getIntegrationId returns wallet vs card integration ID accurately', () {
-      expect(
-        PaymentCheckoutService.getIntegrationId('wallet'),
-        AppConfig.paymobWalletIntegrationId,
-      );
-      expect(
-        PaymentCheckoutService.getIntegrationId('card'),
-        AppConfig.paymobCardIntegrationId,
-      );
-    });
-
     test('generatePaymentReference formats tournament and pitch references correctly', () {
       final tournRef = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: true,
@@ -58,15 +46,26 @@ void main() {
         bookingId: 'bk_999',
         timestampMs: 1700000000000,
       );
-      expect(tournRef, 'TOURN_team_abc_123_1700000000000');
+      expect(tournRef, 'bk_999');
 
-      final tournRefFallback = PaymentCheckoutService.generatePaymentReference(
+      final serverOrderRef = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: true,
         playerTeamId: null,
-        bookingId: 'bk_999',
+        bookingId: 'server_order_999',
         timestampMs: 1700000000000,
       );
-      expect(tournRefFallback, 'TOURN_TEAM_1700000000000');
+      // Tournament payment must preserve the server-created order reference.
+      expect(serverOrderRef, 'server_order_999');
+
+      expect(
+        () => PaymentCheckoutService.generatePaymentReference(
+          isTournamentPayment: true,
+          playerTeamId: null,
+          bookingId: null,
+          timestampMs: 1700000000000,
+        ),
+        throwsArgumentError,
+      );
 
       final bookingRef = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: false,
@@ -107,12 +106,24 @@ void main() {
       );
     });
 
-    test('isPaymentConfirmed returns true when status is confirmed or paymentStatus is paid or partially_paid', () {
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed'), isTrue);
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'paid'), isTrue);
-      expect(PaymentCheckoutService.isPaymentConfirmed(paymentStatus: 'partially_paid'), isTrue);
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
-      expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
+    test('isPaymentConfirmed requires explicit paid payment state', () {
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'confirmed',
+        paymentStatus: 'paid',
+      ), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'confirmed',
+        paymentStatus: 'partially_paid',
+      ), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: 'pending',
+        paymentStatus: 'pending',
+      ), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(
+        status: null,
+        paymentStatus: null,
+      ), isFalse);
     });
 
     test('preparePendingDraft sets status to pending and method to paymob', () {

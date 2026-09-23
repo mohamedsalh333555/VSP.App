@@ -1,59 +1,57 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/services/paymob_service.dart';
+import 'package:vsp_application/core/services/platform_fee_service.dart';
+
+PlatformFeeConfig contractFeeConfig() => PlatformFeeConfig(
+  vspRate: 0.02,
+  paymobRate: 0.024,
+  paymobLocalRate: 0.024,
+  paymobForeignRate: 0.026,
+  paymobWalletRate: 0.024,
+  paymobFixedFee: 3.0,
+);
 
 void main() {
-  group('Paymob Service Fee & Commission Split Calculations', () {
-    test('Zero amount returns 0.0 fee and shares', () {
-      expect(PaymobService.calculateServiceFee(0.0), equals(0.0));
-      expect(PaymobService.calculatePlatformShare(0.0), equals(0.0));
-      expect(PaymobService.calculateGatewayShare(0.0), equals(0.0));
+  group('Authoritative booking fee configuration', () {
+    test('100 EGP local card uses VSP 2% + Paymob 2.4% + 3 EGP', () {
+      final config = contractFeeConfig();
+
+      expect(config.calculateVspFee(100), 2.00);
+      expect(config.calculateGatewayFee(100, 'card'), 5.40);
+      expect(config.calculateTotalFees(100, 'card'), 7.40);
+      expect(config.calculateTotalAmount(100, 'card'), 107.40);
     });
 
-    test('100 EGP exact commission split: 2% Platform vs (2.75% + 3 EGP) Paymob Gateway', () {
-      const baseAmount = 100.0;
+    test('100 EGP wallet uses the same Paymob rate as local cards', () {
+      final config = contractFeeConfig();
 
-      // 1. Platform Owner Share (2.0%): Exactly 2.00 EGP
-      final platformShare = PaymobService.calculatePlatformShare(baseAmount);
-      expect(platformShare, equals(2.00));
-
-      // 2. Paymob Gateway Share (2.75% + 3.0 EGP): Exactly 5.75 EGP
-      final gatewayShare = PaymobService.calculateGatewayShare(baseAmount);
-      expect(gatewayShare, equals(5.75));
-
-      // 3. Total Service Fee paid by customer: 2.00 + 5.75 = 7.75 EGP
-      final totalServiceFee = PaymobService.calculateServiceFee(baseAmount);
-      expect(totalServiceFee, equals(7.75));
-      expect(totalServiceFee, equals(platformShare + gatewayShare));
-
-      // 4. Total customer checkout amount: 100 + 7.75 = 107.75 EGP
-      final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
-      expect(totalAmount, equals(107.75));
+      expect(config.calculateGatewayFee(100, 'wallet'), 5.40);
+      expect(config.calculateTotalFees(100, 'wallet'), 7.40);
+      expect(config.calculateTotalAmount(100, 'wallet'), 107.40);
     });
 
-    test('200 EGP exact commission split', () {
-      const baseAmount = 200.0;
+    test('100 EGP foreign card uses 2.6% + 3 EGP', () {
+      final config = contractFeeConfig();
 
-      // Platform share (2%): 4.00 EGP
-      expect(PaymobService.calculatePlatformShare(baseAmount), equals(4.00));
-
-      // Gateway share (2.75% + 3 EGP): 5.50 + 3.00 = 8.50 EGP
-      expect(PaymobService.calculateGatewayShare(baseAmount), equals(8.50));
-
-      // Total fee: 4.00 + 8.50 = 12.50 EGP
-      expect(PaymobService.calculateServiceFee(baseAmount), equals(12.50));
+      expect(config.calculateGatewayFee(100, 'foreign_card'), 5.60);
+      expect(config.calculateTotalFees(100, 'foreign_card'), 7.60);
+      expect(config.calculateTotalAmount(100, 'foreign_card'), 107.60);
     });
 
-    test('1000 EGP tournament registration split', () {
-      const baseAmount = 1000.0;
+    test('250 EGP local card rounds to 14.00 EGP total fees', () {
+      final config = contractFeeConfig();
 
-      // Platform share (2%): 20.00 EGP
-      expect(PaymobService.calculatePlatformShare(baseAmount), equals(20.00));
+      expect(config.calculateVspFee(250), 5.00);
+      expect(config.calculateGatewayFee(250, 'card'), 9.00);
+      expect(config.calculateTotalFees(250, 'card'), 14.00);
+      expect(config.calculateTotalAmount(250, 'card'), 264.00);
+    });
 
-      // Gateway share (2.75% + 3 EGP): 27.50 + 3.00 = 30.50 EGP
-      expect(PaymobService.calculateGatewayShare(baseAmount), equals(30.50));
+    test('Zero amount has zero variable and fixed fee', () {
+      final config = contractFeeConfig();
 
-      // Total fee: 20.00 + 30.50 = 50.50 EGP
-      expect(PaymobService.calculateServiceFee(baseAmount), equals(50.50));
+      expect(config.calculateVspFee(0), 0.0);
+      expect(config.calculateGatewayFee(0, 'card'), 3.0);
+      expect(config.calculateTotalFees(0, 'card'), 3.0);
     });
   });
 }

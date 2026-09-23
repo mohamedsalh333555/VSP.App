@@ -4,6 +4,19 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 declare const Deno: any;
 
+function calculatePaymobGrossCents(
+  baseAmountEgp: number,
+  vspRate: number,
+  gatewayRate: number,
+  fixedFeeEgp: number,
+): number {
+  const baseCents = Math.round(baseAmountEgp * 100);
+  const vspCents = Math.round(baseCents * Number(vspRate));
+  const gatewayVariableCents = Math.round(baseCents * Number(gatewayRate));
+  const gatewayFixedCents = Math.round(Number(fixedFeeEgp) * 100);
+  return baseCents + vspCents + gatewayVariableCents + gatewayFixedCents;
+}
+
 console.log("⚡ Paymob Webhook Edge Function Initialized (Hardened & Unified)!");
 
 /**
@@ -238,6 +251,74 @@ serve(async (req: Request) => {
     if (specialReference.startsWith("TOURN_1V1_")) {
       console.log(`🥋 Processing 1v1 tournament webhook for order: ${specialReference}`);
       if (isSuccess) {
+        // Verify the Paymob amount against the server-created 1v1 order and
+        // authoritative fee configuration before changing tournament state.
+        const { data: oneVsOneOrder, error: oneVsOneOrderError } = await supabase
+          .from("vsp_1v1_tournament_orders")
+          .select("order_reference, amount, user_id, payment_status")
+          .eq("order_reference", specialReference)
+          .maybeSingle();
+
+        if (oneVsOneOrderError || !oneVsOneOrder) {
+          console.error(`1v1 tournament order ${specialReference} not found for verified Paymob transaction ${transactionId}`);
+          return new Response(JSON.stringify({ error: "1v1 tournament order not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: feeConfig, error: feeConfigError } = await supabase
+          .from("platform_fee_config")
+          .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (feeConfigError || !feeConfig) {
+          console.error("Missing authoritative fee configuration while validating 1v1 payment.");
+          return new Response(JSON.stringify({ error: "Payment fee configuration unavailable" }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+        const gatewayRate = sourceType.includes("wallet")
+          ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
+          : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+        const baseAmount = Number(oneVsOneOrder.amount) || 0;
+        const expectedGrossAmountCents = calculatePaymobGrossCents(
+          baseAmount,
+          Number(feeConfig.booking_vsp_rate),
+          gatewayRate,
+          Number(feeConfig.booking_paymob_fixed_fee),
+        );
+        const actualGrossAmountCents = Number(obj.amount_cents || 0);
+
+        if (!Number.isInteger(actualGrossAmountCents) || actualGrossAmountCents !== expectedGrossAmountCents) {
+          console.error(
+            `1v1 tournament payment amount mismatch: actual=${actualGrossAmountCents / 100}, expected=${expectedGrossAmountCents / 100}, order=${specialReference}`
+          );
+          await supabase.from("webhook_logs").insert({
+            provider: "paymob",
+            event_type: "1v1_payment_amount_mismatch",
+            txn_id: transactionId,
+            order_id: orderId,
+            payload: {
+              order_reference: specialReference,
+              actual_gross_amount_cents: actualGrossAmountCents,
+              expected_gross_amount_cents: expectedGrossAmountCents,
+              base_amount: baseAmount,
+            },
+            signature_verified: true,
+            status: "fraud_detected",
+            error_message: "Verified Paymob amount does not match the server-calculated 1v1 checkout amount.",
+          });
+
+          return new Response(JSON.stringify({ error: "Payment amount does not match 1v1 tournament order" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
         // Step 1: Atomic confirmation & capacity check (with row lock)
         const { data: tournResult, error: tournErr } = await supabase.rpc(
           "confirm_1v1_payment_atomic",
@@ -327,6 +408,74 @@ serve(async (req: Request) => {
     if (specialReference.startsWith("TOURN_")) {
       console.log(`Processing tournament webhook for order: ${specialReference}`);
       if (isSuccess) {
+        // Verify the Paymob amount against the server-created tournament order
+        // and the authoritative fee configuration before mutating tournament state.
+        const { data: tournamentOrder, error: tournamentOrderFetchError } = await supabase
+          .from("tournament_orders")
+          .select("order_reference, amount, captain_user_id, payment_status")
+          .eq("order_reference", specialReference)
+          .maybeSingle();
+
+        if (tournamentOrderFetchError || !tournamentOrder) {
+          console.error(`Tournament order ${specialReference} not found for verified Paymob transaction ${transactionId}`);
+          return new Response(JSON.stringify({ error: "Tournament order not found" }), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: feeConfig, error: feeConfigError } = await supabase
+          .from("platform_fee_config")
+          .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (feeConfigError || !feeConfig) {
+          console.error("Missing authoritative fee configuration while validating tournament payment.");
+          return new Response(JSON.stringify({ error: "Payment fee configuration unavailable" }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+        const gatewayRate = sourceType.includes("wallet")
+          ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
+          : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+        const baseAmount = Number(tournamentOrder.amount) || 0;
+        const expectedGrossAmountCents = calculatePaymobGrossCents(
+          baseAmount,
+          Number(feeConfig.booking_vsp_rate),
+          gatewayRate,
+          Number(feeConfig.booking_paymob_fixed_fee),
+        );
+        const actualGrossAmountCents = Number(obj.amount_cents || 0);
+
+        if (!Number.isInteger(actualGrossAmountCents) || actualGrossAmountCents !== expectedGrossAmountCents) {
+          console.error(
+            `Tournament payment amount mismatch: actual=${actualGrossAmountCents / 100}, expected=${expectedGrossAmountCents / 100}, order=${specialReference}`
+          );
+          await supabase.from("webhook_logs").insert({
+            provider: "paymob",
+            event_type: "tournament_payment_amount_mismatch",
+            txn_id: transactionId,
+            order_id: orderId,
+            payload: {
+              order_reference: specialReference,
+              actual_gross_amount_cents: actualGrossAmountCents,
+              expected_gross_amount_cents: expectedGrossAmountCents,
+              base_amount: baseAmount,
+            },
+            signature_verified: true,
+            status: "fraud_detected",
+            error_message: "Verified Paymob amount does not match the server-calculated tournament checkout amount.",
+          });
+
+          return new Response(JSON.stringify({ error: "Payment amount does not match tournament order" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
         // Step 1: Atomic confirmation & capacity check (with row lock)
         const { data: tournResult, error: tournErr } = await supabase.rpc(
           "confirm_tournament_order_atomic",
@@ -589,13 +738,39 @@ serve(async (req: Request) => {
       }
 
       const paidAmountEgp = (obj.amount_cents || 0) / 100;
-      const expectedAmount = (existingBooking.needs_deposit && Number(existingBooking.deposit_amount) > 0)
+      const expectedBaseAmount = (existingBooking.needs_deposit && Number(existingBooking.deposit_amount) > 0)
         ? Number(existingBooking.deposit_amount)
         : Number(existingBooking.total_price);
 
-      // Verify that the paid amount satisfies the expected amount
-      if (paidAmountEgp < (expectedAmount - 0.5)) {
-        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedAmount} EGP) for booking ${bookingId}`);
+      const { data: feeConfig, error: feeConfigError } = await supabase
+        .from("platform_fee_config")
+        .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
+        .eq("id", 1)
+        .maybeSingle();
+
+      if (feeConfigError || !feeConfig) {
+        console.error("Missing authoritative fee configuration while validating booking payment.");
+        return new Response(JSON.stringify({ error: "Payment fee configuration unavailable" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+      const gatewayRate = sourceType.includes("wallet")
+        ? Number(feeConfig.booking_paymob_wallet_rate ?? feeConfig.booking_paymob_rate)
+        : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+      const expectedGrossAmountCents = calculatePaymobGrossCents(
+        expectedBaseAmount,
+        Number(feeConfig.booking_vsp_rate),
+        gatewayRate,
+        Number(feeConfig.booking_paymob_fixed_fee),
+      );
+      const paidAmountCents = Number(obj.amount_cents || 0);
+
+      // Verified electronic payment must match the server-calculated gross amount.
+      if (!Number.isInteger(paidAmountCents) || paidAmountCents !== expectedGrossAmountCents) {
+        console.error(`🚨 Security Alert: Paid amount (${paidAmountCents / 100} EGP) does not match expected (${expectedGrossAmountCents / 100} EGP) for booking ${bookingId}`);
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
           event_type: "underpayment_fraud_alert",
@@ -605,7 +780,7 @@ serve(async (req: Request) => {
           payload: obj,
           signature_verified: true,
           status: "fraud_detected",
-          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedAmount} EGP`,
+          error_message: `Paid ${paidAmountCents / 100} EGP, expected ${expectedGrossAmountCents / 100} EGP`,
         });
         return new Response(JSON.stringify({ error: "Payment amount does not match booking price" }), {
           status: 400,

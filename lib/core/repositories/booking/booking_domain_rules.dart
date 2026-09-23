@@ -5,7 +5,7 @@ import '../../../data/models.dart';
 ///
 /// Covers:
 /// - Manual booking payment normalization (deposit vs full payment detection)
-/// - Pending booking expiry rules (5-minute payment window)
+/// - Pending booking expiry rules (8-minute payment window)
 /// - Challenge expiry rules (4-hour creation timeout or 12-hour proximity)
 /// - Match result submission time-lock guard
 class BookingDomainRules {

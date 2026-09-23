@@ -1,3 +1,5 @@
+> **Current SSOT notice (2026-09-23):** `SYSTEM_SSOT.md` is the authoritative current architecture. Supabase Auth/PostgreSQL/Realtime/Storage/Edge Functions are the primary backend. Firebase is auxiliary only for FCM, Analytics, and Crashlytics; Firebase Auth and Firestore are not part of the active runtime.
+
 # VSP (Vision Sports Performance) — Application Architecture & Guidelines
 
 Single Source of Truth (SSOT) for tech stack, system architecture, module connections, database schema, screen routing map, and engineering rules for `vsp_application`.
@@ -6,9 +8,9 @@ Single Source of Truth (SSOT) for tech stack, system architecture, module connec
 
 ## 1. Tech Stack & Environment
 
-- **Framework**: Flutter SDK ^3.8.1 (Dart 3.x)
-- **Primary Backend & Realtime DB**: Supabase (`supabase_flutter` ^2.8.0)
-- **Secondary Backend & Mobile Services**: Firebase (`firebase_core`, `firebase_auth`, `firebase_messaging`, `firebase_analytics`, `firebase_crashlytics`)
+- **Framework**: Flutter SDK 3.32.8 (Dart 3.8.1)
+- **Primary Backend, Auth & Realtime DB**: Supabase (`supabase_flutter` ^2.15.4)
+- **Auxiliary Mobile Services**: Firebase Messaging, Analytics, and Crashlytics only; no Firebase Auth/Firestore
 - **State Management**: Provider (`provider` ^6.1.1)
 - **Design System Tokens**: Custom VSP Design Tokens (`VSPColors`, `VSPRadius`, `VSPSpacing`, `VSPShadow`)
 - **Icons**: `lucide_icons_flutter`, `font_awesome_flutter`
@@ -20,7 +22,7 @@ Single Source of Truth (SSOT) for tech stack, system architecture, module connec
 
 ```text
 lib/
-├── main.dart                      # App entry point, Firebase/Supabase initialization, Provider tree setup
+├── main.dart                      # App entry point, Supabase + auxiliary Firebase initialization, Provider tree setup
 ├── firebase_options.dart          # Firebase project configuration
 ├── core/
 │   ├── models/                    # Domain data models (UserModel, etc.)
@@ -73,7 +75,7 @@ lib/
 ### 🔐 Auth & Identity Flow (`lib/features/auth`)
 
 - **Flow**: `SplashScreen` ➔ `WelcomeScreen` ➔ `LoginScreen` / `SignupScreen` ➔ `VerifyEmailScreen` ➔ Role Router (`PlayerHomeScreen` vs `OwnerMainScreen`).
-- **State**: Managed via `AuthProvider` (`auth_provider.dart`) wrapping `AuthService` (Firebase Auth) & `UserRepository` (Supabase `users` table).
+- **State**: Managed via `AuthProvider` (`auth_provider.dart`) wrapping `AuthService` (Supabase Auth) & `UserRepository` (Supabase `users` table).
 
 ### ⚽ Player Booking Flow (`lib/features/player`)
 
@@ -106,7 +108,7 @@ lib/
 
 ## 5. SDLC Development Guidelines
 
-1. **Always Plan Before Coding**: Spec-driven development with Given/When/Then, edge case mapping, step-by-step small increments. Wait for user approval before modifying code files.
+1. **Always Plan Before Coding**: Spec-driven development with Given/When/Then, edge case mapping, step-by-step small increments. Modify code only after the user explicitly requests execution.
 2. **Scientific Debugging**: No guessing. Stack trace examination ➔ 3 ranked hypotheses ➔ empirical log/test proof ➔ root cause fix + regression test.
 3. **Instant Live Sync**: Development is continuously synced via `flutter run` on attached emulators. Perform Hot Reload (`r`) / Hot Restart (`R`) to verify UI changes without full reinstalls.
 4. **Clean Code Hygiene**: Verify repo-wide search before deleting unused code/imports. Ensure clean compilation (`flutter analyze`) after every step.

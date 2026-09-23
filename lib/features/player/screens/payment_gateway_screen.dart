@@ -54,7 +54,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;
-  final String _selectedMethod = 'card';
 
   @override
   void initState() {
@@ -87,7 +86,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
-              isArabic ? 'انتهت مهلة حجز الوقت (5 دقائق).' : 'Booking reservation timeout (5 mins).',
+              isArabic ? 'انتهت مهلة حجز الوقت (8 دقائق).' : 'Booking reservation timeout (8 mins).',
             );
             Navigator.pop(context);
           }
@@ -235,9 +234,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
       draft: widget.bookingDraft,
-      selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
-      bookingId: _booking?.id,
+      bookingId: widget.existingBookingId ?? _booking?.id,
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
@@ -263,6 +261,33 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
         if (mounted && (isPaidSuccess == true)) {
           if (widget.isTournamentPayment) {
+            final orderReference = widget.existingBookingId;
+            if (orderReference == null || orderReference.isEmpty) {
+              throw Exception('Missing tournament payment order reference.');
+            }
+
+            _coordinator.cancelWebhookTimeout();
+            final orderPaid = await _coordinator.waitForTournamentOrderPaid(
+              orderReference: orderReference,
+            );
+
+            if (!mounted) return;
+            if (!orderPaid) {
+              if (mounted) {
+                setState(() {
+                  _isAwaitingWebhook = false;
+                  _isLoading = false;
+                });
+                VSPFeedback.showError(
+                  context,
+                  isArabic
+                      ? 'تمت عملية الدفع، لكن لم يصل تأكيدها النهائي بعد. راجع حالة الاشتراك قبل المحاولة مرة أخرى.'
+                      : 'Payment was received, but final server confirmation has not arrived yet. Please verify the order before retrying.',
+                );
+              }
+              return;
+            }
+
             _paymentCompleted = true;
             _coordinator.cancelCountdownTimer();
             Navigator.pop(context, true);

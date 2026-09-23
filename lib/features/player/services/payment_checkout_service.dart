@@ -1,12 +1,14 @@
-import '../../../core/config/app_config.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../data/models.dart';
 
-/// Pure domain service handling calculation, reference generation, and validation for payment checkout.
+/// Domain adapter for the Paymob checkout flow.
+///
+/// The client only determines the principal amount to be paid (full booking
+/// or required deposit). VSP and gateway fees are calculated authoritatively
+/// by the backend from public.platform_fee_config.
 class PaymentCheckoutService {
   const PaymentCheckoutService();
 
-  /// Prepares a pending booking draft ready for insertion into the database.
   static BookingDraft preparePendingDraft(BookingDraft draft) {
     return draft.copyWith(
       paymentStatus: 'pending',
@@ -15,7 +17,6 @@ class PaymentCheckoutService {
     );
   }
 
-  /// Calculates the base payable amount depending on whether a deposit is required.
   static double calculateBasePayableAmount({
     required bool needsDeposit,
     required double depositPaid,
@@ -28,20 +29,6 @@ class PaymentCheckoutService {
     return totalPrice;
   }
 
-  /// Calculates the final total amount including any gateway processing fees.
-  static double calculateTotalAmountWithFees(double baseAmount) {
-    return PaymobService.calculateTotalAmount(baseAmount);
-  }
-
-  /// Returns the corresponding Paymob integration ID based on selected payment method.
-  static String getIntegrationId(String method) {
-    if (method == 'wallet') {
-      return AppConfig.paymobWalletIntegrationId;
-    }
-    return AppConfig.paymobCardIntegrationId;
-  }
-
-  /// Generates a unique tracking payment reference ID for the Paymob transaction.
   static String generatePaymentReference({
     required bool isTournamentPayment,
     String? playerTeamId,
@@ -49,13 +36,17 @@ class PaymentCheckoutService {
     required int timestampMs,
   }) {
     if (isTournamentPayment) {
-      final teamId = (playerTeamId != null && playerTeamId.isNotEmpty) ? playerTeamId : 'TEAM';
-      return 'TOURN_${teamId}_$timestampMs';
+      // Paid tournament flows must preserve the server-created order reference.
+      if (bookingId == null || bookingId.isEmpty) {
+        throw ArgumentError(
+          'Tournament payments require a server-created order reference.',
+        );
+      }
+      return bookingId;
     }
     return bookingId ?? 'BK_$timestampMs';
   }
 
-  /// Determines if stale pending bookings should be cleaned up for the user.
   static bool shouldCleanupStaleBookings({
     required bool isTournamentPayment,
     required String? existingBookingId,
@@ -63,20 +54,20 @@ class PaymentCheckoutService {
     return !isTournamentPayment && existingBookingId == null;
   }
 
-  /// Evaluates whether the booking status indicates successful payment confirmation.
+  /// Only an explicitly paid payment is a successful payment completion.
+  ///
+  /// Booking status is intentionally not treated as payment confirmation because
+  /// deposit bookings may be confirmed while their payment status is
+  /// partially_paid.
   static bool isPaymentConfirmed({
     String? status,
     String? paymentStatus,
   }) {
-    return status == 'confirmed' ||
-        paymentStatus == 'paid' ||
-        paymentStatus == 'partially_paid';
+    return paymentStatus == 'paid';
   }
 
-  /// Requests Paymob checkout URL using standard fee and reference calculations.
   static Future<String?> requestPaymobCheckoutUrl({
     required BookingDraft draft,
-    required String selectedMethod,
     required bool isTournamentPayment,
     String? bookingId,
     required String userEmail,
@@ -90,8 +81,7 @@ class PaymentCheckoutService {
       totalPrice: draft.totalPrice,
       isFullPayment: isFullPayment,
     );
-    final totalAmount = calculateTotalAmountWithFees(baseAmount);
-    final selectedIntegrationId = getIntegrationId(selectedMethod);
+
     final paymentRefId = generatePaymentReference(
       isTournamentPayment: isTournamentPayment,
       playerTeamId: draft.playerTeamId,
@@ -100,12 +90,11 @@ class PaymentCheckoutService {
     );
 
     return PaymobService.getCheckoutUrlFromServer(
-      amountInEgp: totalAmount,
+      amountInEgp: baseAmount,
       bookingId: paymentRefId,
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
-      integrationId: selectedIntegrationId,
       isTournamentPayment: isTournamentPayment,
       isFullPayment: isFullPayment,
     );

@@ -23,10 +23,63 @@ jobs:
         run: flutter gen-l10n
       - name: Verify real Firebase client options
         run: test -s lib/firebase_options.dart
+      - name: Generate Android Google Services config
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          config = {
+            "project_info": {
+              "project_number": "860837572098",
+              "project_id": "vsp-app-103b1",
+              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+                "android_client_info": {
+                  "package_name": "app.vsp.sports"
+                }
+              },
+              "api_key": [{
+                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
+              }],
+              "services": {
+                "appinvite_service": {
+                  "other_platform_oauth_client": []
+                }
+              }
+            }]
+          }
+
+          target = Path("android/app/google-services.json")
+          target.write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+          PY
+          test -s android/app/google-services.json
+          python3 -m json.tool android/app/google-services.json >/dev/null
       - name: Analyze
-        run: flutter analyze
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee analyze-report.txt
+      - name: Upload analyzer report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyzer-report
+          path: analyze-report.txt
+          if-no-files-found: ignore
       - name: Test
-        run: flutter test --coverage
+        run: |
+          set -o pipefail
+          flutter test --coverage 2>&1 | tee test-report.txt
+      - name: Upload test report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-test-report
+          path: test-report.txt
+          if-no-files-found: ignore
       - name: Build Android debug APK
         run: |
           flutter build apk --debug \

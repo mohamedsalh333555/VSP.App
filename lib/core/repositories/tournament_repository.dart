@@ -207,6 +207,21 @@ class TournamentRepository {
         paymobTransactionId: paymobTransactionId,
       );
 
+  Future<bool> finalizePaidTournamentRegistration({
+    required String orderReference,
+    required String championshipId,
+    required String teamId,
+    required List<String> selectedPlayerIds,
+    required List<String> offlineGuestNames,
+  }) =>
+      registrationCoord.finalizePaidTournamentRegistration(
+        orderReference: orderReference,
+        championshipId: championshipId,
+        teamId: teamId,
+        selectedPlayerIds: selectedPlayerIds,
+        offlineGuestNames: offlineGuestNames,
+      );
+
   Future<bool> leaveChampionship(String championshipId, String teamId) =>
       registrationCoord.leaveChampionship(championshipId, teamId);
 

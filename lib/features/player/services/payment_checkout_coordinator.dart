@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
 import 'payment_checkout_service.dart';
@@ -63,12 +64,16 @@ class PaymentCheckoutCoordinator {
     required String bookingId,
     required Future<Booking?> Function(String) fetchBooking,
     required void Function(Booking booking) onConfirmed,
+    Duration pollingInterval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
-    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    _fallbackPollingTimer = Timer.periodic(pollingInterval, (timer) async {
       try {
         final booking = await fetchBooking(bookingId);
-        if (booking != null && (booking.status == BookingStatus.confirmed || booking.isPaid)) {
+        if (booking != null && PaymentCheckoutService.isPaymentConfirmed(
+            status: booking.status.name,
+            paymentStatus: booking.paymentStatus,
+          )) {
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -120,6 +125,38 @@ class PaymentCheckoutCoordinator {
       userId: userId,
       stadiumId: stadiumId,
     );
+  }
+
+  /// Waits for the server-side tournament order to become paid after Paymob checkout.
+  Future<bool> waitForTournamentOrderPaid({
+    required String orderReference,
+    Duration timeout = const Duration(minutes: 5),
+  }) async {
+    final client = Supabase.instance.client;
+    final deadline = DateTime.now().add(timeout);
+    final tableName = orderReference.startsWith('TOURN_1V1_')
+        ? 'vsp_1v1_tournament_orders'
+        : 'tournament_orders';
+
+    while (DateTime.now().isBefore(deadline)) {
+      try {
+        final order = await client
+            .from(tableName)
+            .select('payment_status')
+            .eq('order_reference', orderReference)
+            .maybeSingle();
+
+        final status = order?['payment_status']?.toString();
+        if (status == 'paid') return true;
+        if (status == 'failed_over_capacity' || status == 'failed') return false;
+      } catch (e) {
+        debugPrint('Tournament payment polling notice: $e');
+      }
+
+      await Future<void>.delayed(const Duration(seconds: 3));
+    }
+
+    return false;
   }
 
   /// Simulates test payment webhook in development/staging.
