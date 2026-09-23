@@ -37,11 +37,12 @@ class PaymentCheckoutService {
   }) {
     if (isTournamentPayment) {
       // Paid tournament flows must preserve the server-created order reference.
-      if (bookingId != null && bookingId.isNotEmpty) return bookingId;
-      final teamId = (playerTeamId != null && playerTeamId.isNotEmpty)
-          ? playerTeamId
-          : 'TEAM';
-      return 'TOURN_${teamId}_$timestampMs';
+      if (bookingId == null || bookingId.isEmpty) {
+        throw ArgumentError(
+          'Tournament payments require a server-created order reference.',
+        );
+      }
+      return bookingId;
     }
     return bookingId ?? 'BK_$timestampMs';
   }
