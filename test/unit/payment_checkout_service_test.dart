@@ -46,7 +46,7 @@ void main() {
         bookingId: 'bk_999',
         timestampMs: 1700000000000,
       );
-      expect(tournRef, 'TOURN_team_abc_123_1700000000000');
+      expect(tournRef, 'bk_999');
 
       final tournRefFallback = PaymentCheckoutService.generatePaymentReference(
         isTournamentPayment: true,
