@@ -20,19 +20,7 @@ class StadiumProvider with ChangeNotifier {
  bool _hasMore = true;
  int? _lastDocument;
 
- StadiumProvider() {
- _initFastCache();
- }
-
- Future<void> _initFastCache() async {
- try {
- final cached = await FastCacheService.getCachedStadiums();
- if (cached.isNotEmpty && _stadiums.isEmpty) {
- _stadiums = cached;
- notifyListeners();
- }
- } catch (_) {}
- }
+ StadiumProvider();
  String? _errorMessage;
  String? _selectedGovernorate;
  bool _isGeographicFallback = false;
