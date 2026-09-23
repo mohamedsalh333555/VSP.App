@@ -233,15 +233,18 @@ serve(async (req: Request) => {
     const rawPhone = profilePhone.trim().replace(/[^\d+]/g, "");
     const safePhone = rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`;
 
-    const cardIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_CARD");
-    const walletIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET");
-    const paymentMethods = [cardIntegrationRaw, walletIntegrationRaw]
-      .filter((value) => value != null && value.trim() !== "")
-      .map((value) => Number(value))
+    // Paymob Intention API requires Integration IDs, not the public key or iframe ID.
+    // Integration IDs are identifiers, not secrets. Keep them server-side and allow
+    // optional environment overrides, with the known production IDs as fallbacks.
+    const cardIntegration =
+      Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")) || 5933044;
+    const walletIntegration =
+      Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")) || 5933043;
+    const paymentMethods = [cardIntegration, walletIntegration]
       .filter((value) => Number.isInteger(value) && value > 0);
 
     if (paymentMethods.length === 0) {
-      console.error("Missing Paymob integration IDs in Supabase Edge Function secrets.");
+      console.error("No valid Paymob integration IDs are configured.");
       return new Response(
         JSON.stringify({ error: "Paymob payment configuration is unavailable on the server" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
