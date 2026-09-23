@@ -218,53 +218,20 @@ class TournamentRegistrationCoordinator {
   /// Atomic team withdrawal from championship.
   Future<bool> leaveChampionship(String championshipId, String teamId) async {
     try {
-      try {
-        await _supabase.rpc('leave_championship_atomic', params: {
-          'p_championship_id': championshipId,
-          'p_team_id': teamId,
-        });
-        debugPrint(
-          'Team $teamId left championship $championshipId via leave_championship_atomic RPC.',
-        );
-        return true;
-      } catch (rpcErr) {
-        debugPrint('leave_championship_atomic RPC fallback notice: $rpcErr');
-        final champDoc = await _supabase
-            .from('championships')
-            .select('joined_teams, paid_teams, status')
-            .eq('id', championshipId)
-            .maybeSingle();
-
-        if (champDoc != null) {
-          final String status = (champDoc['status'] ?? 'open').toString();
-          if (status == 'ongoing' || status == 'completed') {
-            throw Exception('لا يمكن الانسحاب من بطولة جارية أو مكتملة.');
-          }
-
-          final joinedTeams =
-              List<String>.from(champDoc['joined_teams'] ?? [])..remove(teamId);
-          final paidTeams =
-              List<String>.from(champDoc['paid_teams'] ?? [])..remove(teamId);
-
-          await _supabase.from('championships').update({
-            'joined_teams': joinedTeams,
-            'paid_teams': paidTeams,
-          }).eq('id', championshipId);
-
-          try {
-            await _supabase
-                .from('championship_rosters')
-                .delete()
-                .eq('championship_id', championshipId)
-                .eq('team_id', teamId);
-          } catch (_) {}
-
-          return true;
-        }
+      final response = await _supabase.rpc('leave_championship_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+      });
+      if (response is Map && response['success'] == false) {
+        debugPrint('leave_championship_atomic rejected: ${response['error']}');
         return false;
       }
+      debugPrint(
+        'Team $teamId left championship $championshipId via leave_championship_atomic RPC.',
+      );
+      return true;
     } catch (e) {
-      debugPrint('Error in leaveChampionship: $e');
+      debugPrint('Error in leaveChampionship atomic RPC: $e');
       return false;
     }
   }
@@ -272,21 +239,21 @@ class TournamentRegistrationCoordinator {
   /// Removes a team from a tournament (by owner or admin).
   Future<bool> removeTournamentTeam(String championshipId, String teamId) async {
     try {
-      try {
-        await _supabase.rpc('remove_tournament_team_atomic', params: {
-          'p_championship_id': championshipId,
-          'p_team_id': teamId,
-        });
-        debugPrint(
-          'Team $teamId removed via remove_tournament_team_atomic RPC.',
-        );
-        return true;
-      } catch (rpcErr) {
-        debugPrint('remove_tournament_team_atomic fallback: $rpcErr');
-        return await leaveChampionship(championshipId, teamId);
+      final response =
+          await _supabase.rpc('remove_tournament_team_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+      });
+      if (response is Map && response['success'] == false) {
+        debugPrint('remove_tournament_team_atomic rejected: ${response['error']}');
+        return false;
       }
+      debugPrint(
+        'Team $teamId removed via remove_tournament_team_atomic RPC.',
+      );
+      return true;
     } catch (e) {
-      debugPrint('Error in removeTournamentTeam: $e');
+      debugPrint('Error in removeTournamentTeam atomic RPC: $e');
       return false;
     }
   }
@@ -298,27 +265,17 @@ class TournamentRegistrationCoordinator {
     required bool isPaid,
   }) async {
     try {
-      final response = await _supabase
-          .from('championships')
-          .select('paid_teams')
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (response == null) throw 'Championship not found';
-
-      final paidTeams = List<String>.from(response['paid_teams'] ?? []);
-      if (isPaid) {
-        if (!paidTeams.contains(teamId)) {
-          paidTeams.add(teamId);
-        }
-      } else {
-        paidTeams.remove(teamId);
+      final response =
+          await _supabase.rpc('toggle_championship_team_payment_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+        'p_is_paid': isPaid,
+      });
+      if (response is Map && response['success'] == false) {
+        throw Exception(response['error']?.toString() ?? 'فشل تحديث حالة الدفع.');
       }
-
-      await _supabase.from('championships').update({
-        'paid_teams': paidTeams,
-      }).eq('id', championshipId);
     } catch (e) {
-      debugPrint('Error toggling team payment: $e');
+      debugPrint('Error toggling team payment atomically: $e');
       rethrow;
     }
   }
