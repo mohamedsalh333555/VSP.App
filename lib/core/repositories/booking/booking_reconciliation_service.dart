@@ -29,7 +29,7 @@ class BookingReconciliationService {
   UserRepository get _userRepo => _userRepository ?? UserRepository();
   TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
 
-  /// Submits match outcome and optional stadium rating review.
+  /// Submits a challenge result through the server-authoritative atomic state machine.
   Future<bool> submitMatchResult({
     required Booking booking,
     required String teamId,
@@ -38,93 +38,83 @@ class BookingReconciliationService {
     String? review,
   }) async {
     try {
-      if (BookingDomainRules.isResultSubmissionTimeLocked(booking.endTime, DateTime.now())) {
-        VSPLogger.w('Result submission blocked: Match has not ended yet for booking ${booking.id}');
+      Future<void> saveRating() async {
+        if (rating == null || rating <= 0) return;
+
+        final effectiveUserId =
+            _supabase.auth.currentUser?.id ?? booking.createdByUserId;
+
+        final existing = await _supabase
+            .from('reviews')
+            .select('id')
+            .eq('stadium_id', booking.stadiumId)
+            .eq('user_id', effectiveUserId)
+            .maybeSingle();
+
+        if (existing != null) {
+          VSPLogger.i(
+            'Skipping duplicate review submission for booking ' + booking.id,
+          );
+          return;
+        }
+
+        String userName = 'لاعب VSP';
+        String userImageUrl = '';
+        try {
+          final userDoc = await _userRepo.getUserData(effectiveUserId);
+          if (userDoc != null) {
+            userName = userDoc['name'] ?? userName;
+            userImageUrl = userDoc['profile_image_url'] ?? '';
+          }
+        } catch (_) {}
+
+        await _supabase.from('reviews').insert({
+          'stadium_id': booking.stadiumId,
+          'user_id': effectiveUserId,
+          'user_name': userName,
+          'user_image_url': userImageUrl,
+          'rating': rating.toInt(),
+          'review_text': review ?? '',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
+
+      // Fast client-side UX guard only. The server re-validates official time.
+      if (BookingDomainRules.isResultSubmissionTimeLocked(
+        booking.endTime,
+        DateTime.now(),
+      )) {
         throw Exception('Cannot submit results before the match officially ends.');
       }
 
-      final currentMatchStatus = booking.matchResultStatus;
-      final submittedBy = booking.resultSubmittedByTeamId;
+      final rpcRes = await _supabase.rpc(
+        'submit_challenge_result_atomic',
+        params: {
+          'p_booking_id': booking.id,
+          'p_team_id': teamId,
+          'p_outcome': outcome.name,
+        },
+      );
 
-      Future<void> saveRating() async {
-        if (rating != null && rating > 0) {
-          final effectiveUserId = _supabase.auth.currentUser?.id ?? booking.createdByUserId;
-
-          final existing = await _supabase
-              .from('reviews')
-              .select('id')
-              .eq('stadium_id', booking.stadiumId)
-              .eq('user_id', effectiveUserId)
-              .maybeSingle();
-
-          if (existing != null) {
-            VSPLogger.i('Skipping duplicate review submission for booking ${booking.id}');
-            return;
-          }
-
-          String userName = 'لاعب VSP';
-          String userImageUrl = '';
-          try {
-            final userDoc = await _userRepo.getUserData(effectiveUserId);
-            if (userDoc != null) {
-              userName = userDoc['name'] ?? userName;
-              userImageUrl = userDoc['profile_image_url'] ?? '';
-            }
-          } catch (_) {}
-
-          await _supabase.from('reviews').insert({
-            'stadium_id': booking.stadiumId,
-            'user_id': effectiveUserId,
-            'user_name': userName,
-            'user_image_url': userImageUrl,
-            'rating': rating.toInt(),
-            'review_text': review ?? '',
-            'created_at': DateTime.now().toUtc().toIso8601String(),
-          });
-
-          VSPLogger.i('Stadium review inserted. DB Trigger will update rating average.');
-        }
+      if (rpcRes is! Map) {
+        throw Exception('Invalid result response from server.');
       }
 
-      // Case A: First submission (no result yet) OR Captain 1 editing their submitted result
-      if (currentMatchStatus == MatchResultStatus.noResult || submittedBy == teamId) {
-        await _supabase.from('bookings').update({
-          'pending_outcome': outcome.name,
-          'result_submitted_by_team_id': teamId,
-          'match_result_status': MatchResultStatus.waitingOpponent.name,
-          'requires_admin_intervention': false,
-          'final_outcome': null,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', booking.id);
+      final result = Map<String, dynamic>.from(rpcRes);
+      if (result['success'] == true) {
         await saveRating();
         return true;
       }
-      // Case B: Captain 2 responding
-      else if (submittedBy != teamId) {
-        final pendingOutcomeStr = booking.pendingOutcome?.name;
 
-        if (pendingOutcomeStr == outcome.name) {
-          await _supabase.from('bookings').update({
-            'final_outcome': outcome.name,
-            'match_result_status': MatchResultStatus.confirmed.name,
-            'status': BookingStatus.completed.name,
-            'requires_admin_intervention': false,
-            'pending_outcome': null,
-            'result_submitted_by_team_id': null,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          }).eq('id', booking.id);
-
-          await saveRating();
-          return true;
-        } else {
-          await _supabase.from('bookings').update({
-            'match_result_status': MatchResultStatus.disputed.name,
-            'requires_admin_intervention': true,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          }).eq('id', booking.id);
-          await saveRating();
-          return false;
-        }
+      final errorCode = result['error']?.toString();
+      if (errorCode == 'RESULT_DISPUTED') {
+        VSPLogger.w(
+          'Match result disputed for booking ' + booking.id + '; admin intervention required.',
+        );
+      } else {
+        VSPLogger.w(
+          'Match result rejected for booking ' + booking.id + ': ' + (errorCode ?? 'unknown'),
+        );
       }
       return false;
     } catch (e) {
