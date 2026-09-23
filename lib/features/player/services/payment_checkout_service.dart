@@ -53,12 +53,16 @@ class PaymentCheckoutService {
     return !isTournamentPayment && existingBookingId == null;
   }
 
-  /// Only a fully paid booking is a successful payment completion.
+  /// Only an explicitly paid payment is a successful payment completion.
+  ///
+  /// Booking status is intentionally not treated as payment confirmation because
+  /// deposit bookings may be confirmed while their payment status is
+  /// partially_paid.
   static bool isPaymentConfirmed({
     String? status,
     String? paymentStatus,
   }) {
-    return status == 'confirmed' || paymentStatus == 'paid';
+    return paymentStatus == 'paid';
   }
 
   static Future<String?> requestPaymobCheckoutUrl({
