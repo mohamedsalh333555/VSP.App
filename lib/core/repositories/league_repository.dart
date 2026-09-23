@@ -274,7 +274,7 @@ class LeagueRepository {
           final goals = (data['goals'] ?? 0) as int;
           final skills = (data['skills'] ?? data['skill_points'] ?? 0) as int;
           final totalPoints = (data['total_points'] ?? (tackles + goals + skills)) as int;
-          final isChampion = data['round_reached']?.toString().toLowerCase() == 'champion';
+          final isTop = (i == 0);
           players.add(VSP1v1Player(
             id: data['id'].toString(),
             name: data['player_name'] ?? data['name'] ?? 'لاعب',
@@ -283,9 +283,9 @@ class LeagueRepository {
             skillPoints: skills,
             goals: goals,
             tackles: tackles,
-            titles: (data['titles'] != null) ? (data['titles'] as int) : (isChampion ? 1 : 0),
+            titles: (data['titles'] != null) ? (data['titles'] as int) : (isTop ? 1 : 0),
             rank: i + 1,
-            trend: isChampion ? 'up' : (data['trend'] ?? 'stable'),
+            trend: isTop ? 'up' : (data['trend'] ?? 'stable'),
             roundReached: data['round_reached']?.toString(),
           ));
         }

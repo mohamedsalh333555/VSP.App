@@ -70,8 +70,8 @@ class League1v1HeroCard extends StatelessWidget {
                       ),
                       child: Text(
                         isArabic
-                            ? 'بطولة إقصائية ($effectiveTarget لاعب) • مباريات من 6 جولات'
-                            : '$effectiveTarget Players Knockout • 6 Rounds per Match',
+                            ? 'بطولة تحديات ($effectiveTarget لاعب) • مباريات من 6 جولات'
+                            : '$effectiveTarget Players Challenge • 6 Rounds per Match',
                         style: const TextStyle(
                           color: VSPColors.accent,
                           fontSize: 10.5,

@@ -95,8 +95,8 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                     Expanded(
                       child: Text(
                         isArabic
-                            ? 'مباريات إقصائية من 6 جولات • نقطة للدفاع، الهدف، والمهارة • المجموع تراكمي لمشوار البطولة'
-                            : '6-Round Knockout Matches • Points for Defense, Goals & Skill • Cumulative Total',
+                            ? 'مباريات من 6 جولات • نقطة للدفاع، الهدف، والمهارة • الترتيب حسب أعلى مجموع نقاط تراكمية'
+                            : '6-Round Matches • Points for Defense, Goals & Skill • Ranked by Highest Points',
                         style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontSize: 11.5,
