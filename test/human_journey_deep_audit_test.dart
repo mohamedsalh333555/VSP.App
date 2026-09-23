@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:vsp_application/core/models/user_model.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/core/services/stats_service.dart';
-import 'package:vsp_application/core/services/paymob_service.dart';
+import 'package:vsp_application/core/services/platform_fee_service.dart';
 import 'package:vsp_application/core/utils/app_date_formatter.dart';
 import 'package:vsp_application/core/navigation/app_router.dart';
 import 'package:vsp_application/core/providers/auth_provider.dart';
@@ -214,13 +214,20 @@ void main() {
       expect(calculateTotal(slotsCount, pricePerHour, false, ballPrice), equals(300.0));
     });
 
-    test('Paymob platform fee formula (amount * 0.0475) + 3.0 EGP', () {
+    test('Booking payment fee formula uses the signed Paymob contract', () {
       const baseAmount = 100.0;
-      final serviceFee = PaymobService.calculateServiceFee(baseAmount);
-      expect(serviceFee, equals(7.75));
+      const config = PlatformFeeConfig(
+        vspRate: 0.02,
+        paymobRate: 0.024,
+        paymobLocalRate: 0.024,
+        paymobForeignRate: 0.026,
+        paymobWalletRate: 0.024,
+        paymobFixedFee: 3.0,
+      );
 
-      final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
-      expect(totalAmount, equals(107.75));
+      expect(config.calculateTotalFees(baseAmount, 'card'), equals(7.40));
+      expect(config.calculateTotalAmount(baseAmount, 'card'), equals(107.40));
+      expect(config.calculateTotalAmount(baseAmount, 'foreign_card'), equals(107.60));
     });
 
     test('Deposit mode cap: deposit <= 50% of hourly price', () {
