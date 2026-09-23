@@ -49,7 +49,6 @@ class PaymentCheckoutCoordinator {
     required void Function(Map<String, dynamic> data) onStatusUpdated,
     void Function(Object error)? onError,
   }) {
-    if (bookingId.startsWith('mock_')) return;
     _bookingSubscription?.cancel();
     _bookingSubscription = bookingRepo.streamBookingStatus(bookingId).listen((data) {
       if (data.isNotEmpty) {
@@ -100,7 +99,7 @@ class PaymentCheckoutCoordinator {
     required Booking? booking,
   }) async {
     cancelAllTimers();
-    if (!isTournamentPayment && booking != null && !booking.id.startsWith('mock_')) {
+    if (!isTournamentPayment && booking != null) {
       try {
         await bookingRepo.releaseBookingLock(booking.id);
       } catch (e) {

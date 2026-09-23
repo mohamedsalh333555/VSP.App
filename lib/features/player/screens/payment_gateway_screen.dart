@@ -237,7 +237,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       draft: widget.bookingDraft,
       selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
-      bookingId: _booking?.id,
+      bookingId: _booking?.id ?? widget.existingBookingId,
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,

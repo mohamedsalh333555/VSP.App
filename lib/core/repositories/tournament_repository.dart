@@ -198,6 +198,12 @@ class TournamentRepository {
         guestNames: guestNames,
       );
 
+  Future<bool> verifyTournamentOrderPaid({
+    required String orderReference,
+  }) => registrationCoord.verifyTournamentOrderPaid(
+        orderReference: orderReference,
+      );
+
   Future<bool> confirmTournamentOrder({
     required String orderReference,
     required String paymobTransactionId,

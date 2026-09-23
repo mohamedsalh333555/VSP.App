@@ -1,26 +1,69 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/app_config.dart';
 
-/// Service responsible for Paymob payment calculation and server-side checkout generation.
-/// Strictly follows Zero-Trust security principles (No secrets on mobile client).
+class PaymobFeeBreakdown {
+  const PaymobFeeBreakdown({
+    required this.baseAmount,
+    required this.vspFee,
+    required this.gatewayFee,
+    required this.totalFees,
+    required this.totalAmount,
+  });
+
+  final double baseAmount;
+  final double vspFee;
+  final double gatewayFee;
+  final double totalFees;
+  final double totalAmount;
+}
+
+/// Client adapter around server-authoritative Paymob checkout.
+/// Fee configuration is read from the central Supabase policy for display;
+/// the payment Edge Function recalculates it server-side before charging.
 class PaymobService {
-  /// Generate Paymob Unified Checkout URL via secure Supabase Edge Function (create_paymob_intention).
-  /// The Secret Key is kept exclusively on the server side.
-  /// Returns checkout URL string if successful, or null on failure (Fail-Closed).
+  static Future<PaymobFeeBreakdown> getFeeBreakdown(double baseAmount) async {
+    if (baseAmount <= 0) {
+      throw ArgumentError.value(baseAmount, 'baseAmount', 'Must be greater than zero.');
+    }
+
+    final response = await Supabase.instance.client
+        .from('platform_fee_config')
+        .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_fixed_fee')
+        .eq('id', 1)
+        .maybeSingle();
+
+    if (response == null) {
+      throw StateError('Authoritative payment fee configuration is unavailable.');
+    }
+
+    final vspRate = NumberFormatHelper.toDouble(response['booking_vsp_rate']);
+    final gatewayRate = NumberFormatHelper.toDouble(response['booking_paymob_rate']);
+    final fixedFee = NumberFormatHelper.toDouble(response['booking_paymob_fixed_fee']);
+
+    final vspFee = _round2(baseAmount * vspRate);
+    final gatewayFee = _round2((baseAmount * gatewayRate) + fixedFee);
+    final totalFees = _round2(vspFee + gatewayFee);
+
+    return PaymobFeeBreakdown(
+      baseAmount: baseAmount,
+      vspFee: vspFee,
+      gatewayFee: gatewayFee,
+      totalFees: totalFees,
+      totalAmount: _round2(baseAmount + totalFees),
+    );
+  }
+
   static Future<String?> getCheckoutUrlFromServer({
     required double amountInEgp,
     required String bookingId,
     required String userEmail,
     required String userName,
     required String userPhone,
-    String? integrationId,
+    String paymentMethod = 'card',
     bool isTournamentPayment = false,
     bool isFullPayment = false,
   }) async {
     try {
-      final activeIntegration = int.tryParse(integrationId ?? AppConfig.paymobCardIntegrationId) ?? 5772488;
-
       final response = await Supabase.instance.client.functions.invoke(
         'create_paymob_intention',
         body: {
@@ -31,7 +74,7 @@ class PaymobService {
           'user_email': userEmail,
           'user_name': userName,
           'user_phone': userPhone,
-          'integration_id': activeIntegration,
+          'payment_method': paymentMethod,
         },
       );
 
@@ -39,43 +82,33 @@ class PaymobService {
         final data = response.data is Map<String, dynamic>
             ? response.data as Map<String, dynamic>
             : null;
-
-        if (data != null && data['checkout_url'] != null) {
-          final checkoutUrl = data['checkout_url'] as String;
-          debugPrint('[PaymobService] Secure Server-Generated Checkout URL: $checkoutUrl');
+        final checkoutUrl = data?['checkout_url'];
+        if (checkoutUrl is String && checkoutUrl.isNotEmpty) {
+          debugPrint('[PaymobService] Server-generated checkout URL received.');
           return checkoutUrl;
         }
       }
 
-      debugPrint('[PaymobService] Edge Function create_paymob_intention failed with status: ${response.status}. Response: ${response.data}');
+      debugPrint(
+        '[PaymobService] create_paymob_intention failed: '
+        'status=${response.status}, response=${response.data}',
+      );
       return null;
     } catch (e) {
-      debugPrint('[PaymobService] getCheckoutUrlFromServer Exception: $e');
+      debugPrint('[PaymobService] Checkout request failed: $e');
       return null;
     }
   }
 
-  /// Calculate Platform Owner Net Profit (2.0% of base amount)
-  static double calculatePlatformShare(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse((baseAmountEgp * 0.02).toStringAsFixed(2));
-  }
+  static double _round2(double value) => double.parse(value.toStringAsFixed(2));
+}
 
-  /// Calculate Paymob Banking Gateway Cost (2.75% + 3.0 EGP)
-  static double calculateGatewayShare(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse(((baseAmountEgp * 0.0275) + 3.0).toStringAsFixed(2));
+class NumberFormatHelper {
+  static double toDouble(dynamic value) {
+    final result = double.tryParse(value?.toString() ?? '');
+    if (result == null) {
+      throw StateError('Invalid numeric fee configuration.');
+    }
+    return result;
   }
-
-  /// Total platform service fee in EGP paid by customer: Platform (2.0%) + Gateway (2.75% + 3.0 EGP) = (amount * 0.0475) + 3.0 EGP
-  static double calculateServiceFee(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse(((baseAmountEgp * 0.0475) + 3.0).toStringAsFixed(2));
-  }
-
-  /// Calculate total checkout price including platform fee
-  static double calculateTotalAmount(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse((baseAmountEgp + calculateServiceFee(baseAmountEgp)).toStringAsFixed(2));
-  }
-}
+}
