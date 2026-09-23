@@ -36,6 +36,8 @@ class PaymentCheckoutService {
     required int timestampMs,
   }) {
     if (isTournamentPayment) {
+      // Paid tournament flows must preserve the server-created order reference.
+      if (bookingId != null && bookingId.isNotEmpty) return bookingId;
       final teamId = (playerTeamId != null && playerTeamId.isNotEmpty)
           ? playerTeamId
           : 'TEAM';
