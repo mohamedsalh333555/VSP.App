@@ -162,14 +162,14 @@ class BookingScheduleCoordinator {
     }
   }
 
-  /// Cancels stale pending bookings for user and stadium older than 10 minutes.
+  /// Cancels stale pending bookings for user and stadium after the authoritative 8-minute lock window.
   Future<void> cleanupStalePendingBookings({
     required String userId,
     required String stadiumId,
   }) async {
     try {
-      final tenMinutesAgo = DateTime.now()
-          .subtract(const Duration(minutes: 10))
+      final eightMinutesAgo = DateTime.now()
+          .subtract(const Duration(minutes: 8))
           .toUtc()
           .toIso8601String();
 
@@ -183,7 +183,7 @@ class BookingScheduleCoordinator {
           .eq('created_by_user_id', userId)
           .eq('stadium_id', stadiumId)
           .eq('status', 'pending')
-          .lt('created_at', tenMinutesAgo);
+          .lt('created_at', eightMinutesAgo);
       debugPrint('Stale pending bookings transitioned to expired/cancelled safely.');
     } catch (e) {
       debugPrint('Error cleaning up stale bookings: $e');
