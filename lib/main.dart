@@ -35,6 +35,41 @@ import 'shared/widgets/vsp_network_banner.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+class _StartupFailureApp extends StatelessWidget {
+  const _StartupFailureApp({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      home: Scaffold(
+        backgroundColor: VSPColors.background,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(VSPSpacing.xl),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Iconsax.warning_2_copy, size: 72, color: VSPColors.error),
+                const SizedBox(height: VSPSpacing.lg),
+                const Text('VSP cannot connect to its backend.',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center),
+                const SizedBox(height: VSPSpacing.sm),
+                Text('Please check your connection and try again.\\n$message',
+                  style: const TextStyle(color: VSPColors.textSecondary),
+                  textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -46,36 +81,33 @@ void main() async {
   await DevicePerformance.init();
   usePathUrlStrategy();
  
-  // CONCURRENT INITIALIZATION (Supabase & Firebase)
-  await Future.wait([
-    (() async {
-      try {
-        await Supabase.initialize(
-          url: AppEnv.supabaseUrl,
-          publishableKey: AppEnv.supabaseAnonKey,
-        ).timeout(const Duration(seconds: 8));
-        VSPLogger.i("Supabase initialized securely");
-        unawaited(VSPTimeService.syncWithServer());
-      } catch (e) {
-        VSPLogger.e("Supabase initialization error: $e");
-      }
-    })(),
-    (() async {
-      try {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        ).timeout(const Duration(seconds: 8));
-        VSPLogger.i("Firebase initialized successfully");
-        try {
-          FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-        } catch (e) {
-          VSPLogger.w("Firebase Messaging background handler notice: $e");
-        }
-      } catch (e) {
-        VSPLogger.w("Firebase initialization notice: $e");
-      }
-    })(),
-  ]);
+  try {
+    await Supabase.initialize(
+      url: AppEnv.supabaseUrl,
+      publishableKey: AppEnv.supabaseAnonKey,
+    ).timeout(const Duration(seconds: 8));
+    VSPLogger.i("Supabase initialized securely");
+    unawaited(VSPTimeService.syncWithServer());
+  } catch (e, stack) {
+    VSPLogger.e("Supabase initialization failed: $e", e, stack);
+    runApp(_StartupFailureApp(message: e.toString()));
+    return;
+  }
+
+  // Firebase is auxiliary only (FCM, Analytics, Crashlytics).
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 8));
+    VSPLogger.i("Firebase initialized successfully");
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      VSPLogger.w("Firebase Messaging handler notice: $e");
+    }
+  } catch (e) {
+    VSPLogger.w("Firebase auxiliary initialization notice: $e");
+  }
   
   // Initialize Remote Config & App Feature Engine
   final configService = RemoteConfigService();

@@ -4,31 +4,34 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, full-system-hardening-app]
+    branches: [main]
 
 jobs:
   analyze-test-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.8'
           channel: stable
           cache: true
-      - name: Require Firebase client options
-        run: |
-          test -f lib/firebase_options.dart || {
-            echo "lib/firebase_options.dart is missing; CI will not synthesize mock configuration."
-            exit 1
-          }
       - name: Install dependencies
         run: flutter pub get
+      - name: Generate localizations
+        run: flutter gen-l10n
+      - name: Verify real Firebase client options
+        run: test -s lib/firebase_options.dart
       - name: Analyze
         run: flutter analyze
       - name: Test
         run: flutter test --coverage
-      - name: Build Android APK
-        run: flutter build apk --debug
+      - name: Build Android debug APK
+        run: |
+          flutter build apk --debug \
+            --dart-define=SUPABASE_URL=https://mktqkddbcddrxjxabdua.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
+            --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
+            --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
