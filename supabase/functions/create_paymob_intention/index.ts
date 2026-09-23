@@ -187,7 +187,9 @@ serve(async (req: Request) => {
       );
     }
 
-    // Calculate official platform fee: (amount * 0.0475) + 3.0 EGP
+    // Calculate official checkout fees from public.platform_fee_config.
+    // Contract: VSP 2.0%; Paymob local cards/wallets 2.4% + 3 EGP;
+    // Paymob foreign cards 2.6% + 3 EGP. The database is authoritative.
     const { data: feeConfig, error: feeConfigError } = await supabase
       .from("platform_fee_config")
       .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_foreign_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
