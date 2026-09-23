@@ -4,13 +4,32 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/providers/booking_provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
-import 'package:vsp_application/core/repositories/booking/mock_booking_repository.dart';
+import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/player/screens/booking_confirmation_screen.dart';
 import 'package:vsp_application/features/player/services/book_tonight_service.dart';
 import 'package:vsp_application/features/player/widgets/home/book_tonight_card.dart';
 import 'package:vsp_application/features/player/widgets/home/book_tonight_sheet.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+
+class _TestBookingRepository implements BookingRepository {
+  _TestBookingRepository([this.bookings = const []]);
+  final List<Booking> bookings;
+
+  @override
+  Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) async {
+    return bookings.where((b) => b.stadiumId == stadiumId).toList();
+  }
+
+  @override
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
+    return Stream.value(bookings.where((b) => b.stadiumId == stadiumId).toList());
+  }
+
+  @override
+  noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('This test repository method is not configured.');
+}
 
 class _FakeAuth extends ChangeNotifier implements AuthProvider {
   @override
@@ -104,9 +123,9 @@ void main() {
       expect(slots.any((s) => s.slotKeys.contains('06:30 PM')), isFalse);
     });
 
-    test('findTonightOffers returns populated offers via MockBookingRepository', () async {
-      final mockRepo = MockBookingRepository();
-      final service = BookTonightService(bookingRepository: mockRepo);
+    test('findTonightOffers returns populated offers from the booking repository contract', () async {
+      final repository = _TestBookingRepository();
+      final service = BookTonightService(bookingRepository: repository);
 
       final offers = await service.findTonightOffers(
         stadiums: [testStadium],
@@ -144,15 +163,15 @@ void main() {
     });
 
     testWidgets('BookTonightSheet renders open slots and navigates with preselected slots', (tester) async {
-      final mockRepo = MockBookingRepository();
-      final mockService = BookTonightService(bookingRepository: mockRepo);
+      final repository = _TestBookingRepository();
+      final mockService = BookTonightService(bookingRepository: repository);
 
       await tester.pumpWidget(
         MultiProvider(
           providers: [
             ChangeNotifierProvider<AuthProvider>.value(value: _FakeAuth()),
             ChangeNotifierProvider<BookingProvider>(
-              create: (_) => BookingProvider(repository: mockRepo),
+              create: (_) => BookingProvider(repository: repository),
             ),
           ],
           child: MaterialApp(

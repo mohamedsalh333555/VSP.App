@@ -3,9 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/booking_provider.dart';
-import 'package:vsp_application/core/repositories/booking/mock_booking_repository.dart';
+import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/owner/widgets/dashboard/owner_quick_cash_card.dart';
+
+class _TestBookingRepository implements BookingRepository {
+  @override
+  Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async => true;
+
+  @override
+  noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('This test repository method is not configured.');
+}
 
 void main() {
   setUpAll(() async {
@@ -61,12 +70,12 @@ void main() {
 
   group('💵 OwnerQuickCashCard Tests', () {
     testWidgets('Renders all settled badge when all today bookings are paid', (tester) async {
-      final mockRepo = MockBookingRepository();
+      final repository = _TestBookingRepository();
 
       await tester.pumpWidget(
         MaterialApp(
           home: ChangeNotifierProvider<BookingProvider>(
-            create: (_) => BookingProvider(repository: mockRepo),
+            create: (_) => BookingProvider(repository: repository),
             child: Scaffold(
               body: OwnerQuickCashCard(
                 allBookings: [paidBooking],
@@ -82,8 +91,8 @@ void main() {
     });
 
     testWidgets('Renders cash collection card with remaining amount and allows 1-tap confirmation', (tester) async {
-      final mockRepo = MockBookingRepository();
-      final provider = BookingProvider(repository: mockRepo);
+      final repository = _TestBookingRepository();
+      final provider = BookingProvider(repository: repository);
 
       await tester.pumpWidget(
         MaterialApp(

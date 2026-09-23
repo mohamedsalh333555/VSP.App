@@ -13,8 +13,6 @@ import 'notification_repository.dart';
 import 'team_repository.dart';
 import 'user_repository.dart';
 
-export 'booking/mock_booking_repository.dart';
-
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
   Future<Booking> createBooking(BookingDraft draft, String userId);

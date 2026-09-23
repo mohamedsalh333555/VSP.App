@@ -196,6 +196,8 @@ class StadiumProvider with ChangeNotifier {
         _setLoading(false);
       },
       onError: (error) {
+        _stadiums = [];
+        _filteredStadiums = [];
         _setError('Failed to fetch your stadiums: ${error.toString()}');
         _setLoading(false);
       },
@@ -207,8 +209,8 @@ class StadiumProvider with ChangeNotifier {
  try {
  return await _databaseService.getStadiumById(stadiumId);
  } catch (e) {
- debugPrint('Error fetching stadium by ID: $e');
- return null;
+ _setError('Failed to fetch stadium: ${e.toString()}');
+ rethrow;
  }
  }
 
@@ -224,7 +226,7 @@ class StadiumProvider with ChangeNotifier {
  } catch (e) {
  _setError('Failed to add stadium: ${e.toString()}');
  _setLoading(false);
- return null;
+ rethrow;
  }
  }
 
@@ -240,7 +242,7 @@ class StadiumProvider with ChangeNotifier {
  } catch (e) {
  _setError('Failed to update stadium: ${e.toString()}');
  _setLoading(false);
- return false;
+ rethrow;
  }
  }
 

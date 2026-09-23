@@ -1,21 +1,4 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ],
   "hosting": {
     "public": "web_dist",
     "ignore": [
@@ -27,14 +10,8 @@
       {
         "source": "/.well-known/**",
         "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          },
-          {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
-          }
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Access-Control-Allow-Origin", "value": "*"}
         ]
       }
     ]

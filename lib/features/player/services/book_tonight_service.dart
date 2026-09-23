@@ -66,7 +66,7 @@ class BookTonightService {
         return MapEntry(stadium, existingBookings);
       } catch (e) {
         debugPrint('Failed to query bookings for stadium ${stadium.id}: $e');
-        return MapEntry(stadium, <Booking>[]);
+        rethrow;
       }
     });
 

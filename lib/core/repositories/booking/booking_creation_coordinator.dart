@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/analytics_service.dart';
 import '../../services/logger_service.dart';
-import '../../services/paymob_service.dart';
 import '../notification_repository.dart';
 import '../team_repository.dart';
 import '../user_repository.dart';
@@ -54,7 +53,8 @@ class BookingCreationCoordinator {
     required Future<Booking?> Function(String) getBookingById,
   }) async {
     try {
-      final platformFee = PaymobService.calculateServiceFee(draft.totalPrice);
+      // The server calculates payment fees from the authoritative payment transaction.
+      const double platformFee = 0.0;
       final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
         'p_stadium_id': draft.stadiumId,
         'p_user_id': userId,
