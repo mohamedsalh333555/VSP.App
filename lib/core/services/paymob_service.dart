@@ -59,6 +59,7 @@ class PaymobService {
     required String userEmail,
     required String userName,
     required String userPhone,
+    String paymentMethod = 'card',
     bool isTournamentPayment = false,
     bool isFullPayment = false,
   }) async {
@@ -73,6 +74,7 @@ class PaymobService {
           'user_email': userEmail,
           'user_name': userName,
           'user_phone': userPhone,
+          'payment_method': paymentMethod,
         },
       );
 
