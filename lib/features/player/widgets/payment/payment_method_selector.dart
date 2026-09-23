@@ -2,114 +2,204 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
-/// Interactive selector allowing players to switch between Mobile Wallets and Debit/Credit Cards.
+/// كارت موحد لعرض وسائل الدفع الإلكتروني المعتمدة (فيزا، ماستركارد، ميزة، ومحافظ الهاتف)
+/// بتصميم نظام VSP (فحمي وأخضر نيون فقط) بدون تكرار أو تشتيت للعميل
 class PaymentMethodSelector extends StatelessWidget {
-  final String selectedMethod;
+  final String? selectedMethod;
   final bool isArabic;
-  final ValueChanged<String> onMethodChanged;
+  final ValueChanged<String>? onMethodChanged;
 
   const PaymentMethodSelector({
     super.key,
-    required this.selectedMethod,
+    this.selectedMethod,
     required this.isArabic,
-    required this.onMethodChanged,
+    this.onMethodChanged,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Align(
-          alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
-          child: Text(
-            isArabic ? 'اختر وسيلة الدفع المناسبة لك:' : 'Select Payment Method:',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surface, // #18181B الفحمي
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(
+          color: VSPColors.divider,
+          width: 1.0,
         ),
-        const SizedBox(height: 10),
-        _buildPaymentMethodCard(
-          id: 'wallet',
-          title: isArabic ? 'محفظة إلكترونية' : 'Mobile Wallet',
-          subtitle: isArabic
-              ? 'فودافون كاش، أورنج، اتصالات، وي كاش ومحافظ البنوك'
-              : 'Pay with Vodafone Cash, Orange, Etisalat & Bank Wallets',
-        ),
-        const SizedBox(height: 10),
-        _buildPaymentMethodCard(
-          id: 'card',
-          title: isArabic ? 'بطاقة بنكية / كارت ميزة' : 'Bank Card / Meeza Card',
-          subtitle: isArabic
-              ? 'دفع آمن بالفيزا أو الماستركارد أو كارت ميزة'
-              : 'Secure payment via Debit/Credit card',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentMethodCard({
-    required String id,
-    required String title,
-    required String subtitle,
-  }) {
-    final bool isSelected = selectedMethod == id;
-
-    return InkWell(
-      onTap: () => onMethodChanged(id),
-      borderRadius: BorderRadius.circular(VSPRadius.lg),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent.withValues(alpha: 0.08) : VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(
-            color: isSelected ? VSPColors.accent : VSPColors.divider,
-            width: isSelected ? 1.5 : 0.8,
-          ),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? VSPColors.accent : Colors.transparent,
-                border: Border.all(
-                  color: isSelected ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
-                  width: 2,
-                ),
-              ),
-              child: isSelected ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 14) : null,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── السطر العلوي: العنوان وشارة الأمان ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isSelected ? VSPColors.accent : Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  const Icon(
+                    Iconsax.shield_tick_copy,
+                    color: VSPColors.accent, // #9FDF02
+                    size: 18,
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(width: 8),
                   Text(
-                    subtitle,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                    isArabic ? 'وسائل الدفع المعتمدة' : 'Accepted Payment Methods',
+                    style: const TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                    ),
                   ),
                 ],
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  border: Border.all(
+                    color: VSPColors.accent.withValues(alpha: 0.35),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Iconsax.lock_copy,
+                      color: VSPColors.accent,
+                      size: 11,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isArabic ? 'دفع آمن 100%' : '100% Secure',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          // ── 1. البطاقات البنكية وكروت ميزة ──
+          _buildMethodItem(
+            icon: Iconsax.card_copy,
+            title: isArabic ? 'البطاقات البنكية وكارت ميزة' : 'Bank Cards & Meeza',
+            subtitle: isArabic
+                ? 'فيزا، ماستركارد، كارت ميزة الوطني'
+                : 'Visa, Mastercard & Meeza Debit/Credit Cards',
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: Divider(color: VSPColors.divider, height: 1, thickness: 1),
+          ),
+
+          // ── 2. المحافظ الإلكترونية الذكية ──
+          _buildMethodItem(
+            icon: Iconsax.mobile_copy,
+            title: isArabic ? 'المحافظ الذكية الإلكترونية' : 'Smart Mobile Wallets',
+            subtitle: isArabic
+                ? 'فودافون كاش، أورنج، اتصالات، وي كاش، ومحافظ البنوك'
+                : 'Vodafone Cash, Orange, Etisalat, WE & Bank Wallets',
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── ملاحظة إرشادية هادئة ──
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
             ),
-          ],
-        ),
+            child: Row(
+              children: [
+                const Icon(
+                  Iconsax.info_circle_copy,
+                  color: VSPColors.textSecondary,
+                  size: 14,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isArabic
+                        ? 'ستختار وسيلة الدفع المناسبة لك مباشرة داخل بوابة Paymob الرسمية.'
+                        : 'You will choose your preferred payment method on the official Paymob gateway.',
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildMethodItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: VSPColors.surfaceAlt,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: VSPColors.divider,
+              width: 0.8,
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: VSPColors.accent, // #9FDF02
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

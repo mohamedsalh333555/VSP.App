@@ -143,13 +143,15 @@ serve(async (req: Request) => {
       ? (rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`)
       : "+201000000000";
 
-    const activeIntegration = Number(integration_id) || 5772488;
+    const cardIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")) || 5933044;
+    const walletIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")) || 5933043;
+    const paymentMethods = [cardIntegration, walletIntegration];
 
     // 5. Call Paymob Intention API securely from backend (AFTER ALL SECURITY CHECKS PASS)
     const intentionPayload = {
       amount: amountInCents,
       currency: "EGP",
-      payment_methods: [activeIntegration, 5772488, 5772511],
+      payment_methods: paymentMethods,
       billing_data: {
         first_name: safeFirstName,
         last_name: safeLastName,

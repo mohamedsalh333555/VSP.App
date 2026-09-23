@@ -54,7 +54,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;
-  String _selectedMethod = 'card'; // 'card', 'wallet'
+  final String _selectedMethod = 'card';
 
   @override
   void initState() {
@@ -255,7 +255,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           MaterialPageRoute(
             builder: (_) => PaymobWebViewScreen(
               initialUrl: paymobUrl,
-              title: isArabic ? 'سداد الحجز بالفيزا ' : 'Pay via Card ',
+              title: isArabic ? 'بوابة الدفع الإلكتروني' : 'Secure Online Payment',
               bookingId: _booking?.id,
             ),
           ),
@@ -291,8 +291,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           VSPFeedback.showError(
             context,
             isArabic
-                ? 'لم تكتمل عملية الدفع بالبطاقة. يمكنك إعادة المحاولة أو اختيار وسيلة دفع أخرى.'
-                : 'Payment was not completed. You can try again or select another payment method.',
+                ? 'لم تكتمل عملية الدفع. يمكنك إعادة المحاولة في أي وقت.'
+                : 'Payment was not completed. You can try again anytime.',
           );
         }
       } catch (e) {
@@ -445,9 +445,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     ),
                     const SizedBox(height: 16),
                     PaymentMethodSelector(
-                      selectedMethod: _selectedMethod,
                       isArabic: isArabic,
-                      onMethodChanged: (val) => setState(() => _selectedMethod = val),
                     ),
                     const SizedBox(height: 16),
                     PaymentBreakdownCard(
