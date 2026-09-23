@@ -125,8 +125,8 @@ export async function executePaymentReconciliationWorkflow(
       };
     }
 
-    const txList = transactions || [];
-    const bList = bookings || [];
+    const txList: Array<Record<string, any>> = transactions || [];
+    const bList: Array<Record<string, any>> = bookings || [];
 
     // Case 1: No recent transactions found
     if (txList.length === 0) {
@@ -178,7 +178,7 @@ export async function executePaymentReconciliationWorkflow(
       return {
         reconciliation_state: "MULTIPLE_CANDIDATES",
         user_id: callerUser.id,
-        candidate_transactions: txList.map(t => ({
+        candidate_transactions: txList.map((t: Record<string, any>) => ({
           id: t.id,
           amount: t.amount,
           status: t.status,
@@ -196,9 +196,9 @@ export async function executePaymentReconciliationWorkflow(
     const isTxFailed = primaryTx.status === "failed" || primaryTx.status === "cancelled" || primaryTx.status === "error";
 
     // Find matching booking
-    let matchingBooking = bList.find(b => b.id === primaryTx.booking_id);
+    let matchingBooking = bList.find((b: Record<string, any>) => b.id === primaryTx.booking_id);
     if (!matchingBooking && primaryTx.paymob_transaction_id) {
-      matchingBooking = bList.find(b => b.paymob_transaction_id === primaryTx.paymob_transaction_id);
+      matchingBooking = bList.find((b: Record<string, any>) => b.paymob_transaction_id === primaryTx.paymob_transaction_id);
     }
     if (!matchingBooking && bList.length > 0) {
       // Check if only 1 recent booking exists within close temporal range

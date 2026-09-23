@@ -51,7 +51,7 @@ export interface SemanticChange {
 }
 
 export interface SemanticAmbiguity {
-  type: "time_period" | "entity_choice" | "date" | "financial_metric" | "financial_period" | "other";
+  type: "time_period" | "entity_choice" | "booking_choice" | "date" | "financial_metric" | "financial_period" | "other";
   description: string;
   options?: string[];
 }
