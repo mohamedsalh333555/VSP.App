@@ -41,11 +41,13 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   bool _isLoadingMembers = true;
   bool _isSubmitting = false;
   bool _hasPaid = false;
+  late Future<PaymobFeeBreakdown> _feeBreakdownFuture;
 
   @override
   void initState() {
     super.initState();
     _loadTeamMembers();
+    _feeBreakdownFuture = PaymobService.getFeeBreakdown(widget.championship.entryFee);
   }
 
   @override
@@ -246,17 +248,12 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   }
 
   Future<void> _executeJoinChampionship() async {
-    final entryFee = widget.championship.entryFee;
-    // DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
-
     final success = await TournamentRepository().joinChampionship(
       widget.championship.id,
       widget.team.id,
       selectedPlayerIds: _selectedPlayerIds,
       offlineGuestNames: _offlineGuestNames,
       isPaid: true,
-      totalPaidAmount: totalCheckoutPrice,
     );
 
     if (success && mounted) {
@@ -291,8 +288,6 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
 
     final entryFee = widget.championship.entryFee;
-    final serviceFee = PaymobService.calculateServiceFee(entryFee);
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -359,11 +354,33 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             const SizedBox(height: VSPSpacing.xl),
 
             // 5. Financial Breakdown Card
-            CheckoutFinancialCard(
-              entryFee: entryFee,
-              serviceFee: serviceFee,
-              totalCheckoutPrice: totalCheckoutPrice,
-            ),
+            if (entryFee > 0)
+              FutureBuilder<PaymobFeeBreakdown>(
+                future: _feeBreakdownFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return const Text(
+                      'تعذر تحميل سياسة الرسوم الرسمية. لا يمكن عرض إجمالي دفع غير موثوق.',
+                      style: TextStyle(color: VSPColors.error, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    );
+                  }
+                  if (!snapshot.hasData) {
+                    return const Center(child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    ));
+                  }
+                  final fees = snapshot.data!;
+                  return CheckoutFinancialCard(
+                    entryFee: entryFee,
+                    serviceFee: fees.totalFees,
+                    totalCheckoutPrice: fees.totalAmount,
+                  );
+                },
+              )
+            else
+              const SizedBox.shrink(),
             const SizedBox(height: 32),
           ],
         ),
