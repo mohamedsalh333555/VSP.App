@@ -189,12 +189,13 @@ class TournamentRegistrationCoordinator {
           .maybeSingle();
       if (champResponse == null) return false;
 
-      await _rosterCoord.updateSingleTeamRoster(
+      final rosterSaved = await _rosterCoord.updateSingleTeamRoster(
         championshipId: championshipId,
         teamId: teamId,
         playerIds: selectedPlayerIds,
         guestNames: offlineGuestNames,
       );
+      if (!rosterSaved) return false;
 
       final ownerId = champResponse['owner_id']?.toString() ?? '';
       if (ownerId.isNotEmpty) {
