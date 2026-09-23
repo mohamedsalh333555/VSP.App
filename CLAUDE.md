@@ -108,7 +108,7 @@ lib/
 
 ## 5. SDLC Development Guidelines
 
-1. **Always Plan Before Coding**: Spec-driven development with Given/When/Then, edge case mapping, step-by-step small increments. Modify code only after the user explicitly requests execution, as this task does.
+1. **Always Plan Before Coding**: Spec-driven development with Given/When/Then, edge case mapping, step-by-step small increments. Modify code only after the user explicitly requests execution.
 2. **Scientific Debugging**: No guessing. Stack trace examination ➔ 3 ranked hypotheses ➔ empirical log/test proof ➔ root cause fix + regression test.
 3. **Instant Live Sync**: Development is continuously synced via `flutter run` on attached emulators. Perform Hot Reload (`r`) / Hot Restart (`R`) to verify UI changes without full reinstalls.
 4. **Clean Code Hygiene**: Verify repo-wide search before deleting unused code/imports. Ensure clean compilation (`flutter analyze`) after every step.
