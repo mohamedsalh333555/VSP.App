@@ -6,35 +6,48 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 
 /// Shows the payment breakdown using the same fee configuration used by the backend.
-class PaymentBreakdownCard extends StatelessWidget {
-  final BookingDraft bookingDraft;
-  final bool isChampionship;
-  final bool hasDeposit;
-  final double amountToPay;
-  final bool isArabic;
+class PaymentBreakdownCard extends StatefulWidget {
+  final BookingDraft widget.bookingDraft;
+  final bool widget.isChampionship;
+  final bool widget.hasDeposit;
+  final double widget.amountToPay;
+  final bool widget.isArabic;
 
   const PaymentBreakdownCard({
     super.key,
-    required this.bookingDraft,
-    required this.isChampionship,
-    required this.hasDeposit,
-    required this.amountToPay,
-    required this.isArabic,
+    required this.widget.bookingDraft,
+    required this.widget.isChampionship,
+    required this.widget.hasDeposit,
+    required this.widget.amountToPay,
+    required this.widget.isArabic,
   });
+
+  @override
+  State<PaymentBreakdownCard> createState() => _PaymentBreakdownCardState();
+}
+
+class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
+  late final Future<PlatformFeeConfig> _feeConfigFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _feeConfigFuture = PlatformFeeService().getBookingFeeConfig();
+  }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<PlatformFeeConfig>(
-      future: PlatformFeeService().getBookingFeeConfig(),
+      future: _feeConfigFuture,
       builder: (context, snapshot) {
         final feeConfig = snapshot.data;
-        final paymentMethod = bookingDraft.paymentMethod ?? 'paymob';
+        final paymentMethod = widget.bookingDraft.paymentMethod ?? 'paymob';
 
         final String displayStadiumName =
-            (bookingDraft.stadiumName.trim().isEmpty ||
-                    bookingDraft.stadiumName.trim() == 'Mo')
-                ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
-                : bookingDraft.stadiumName;
+            (widget.bookingDraft.stadiumName.trim().isEmpty ||
+                    widget.bookingDraft.stadiumName.trim() == 'Mo')
+                ? (widget.isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
+                : widget.bookingDraft.stadiumName;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -48,7 +61,7 @@ class PaymentBreakdownCard extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    isChampionship
+                    widget.isChampionship
                         ? Iconsax.cup_copy
                         : Iconsax.building_copy,
                     color: VSPColors.textSecondary,
@@ -73,68 +86,68 @@ class PaymentBreakdownCard extends StatelessWidget {
                   const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 14),
                   const SizedBox(width: 8),
                   Text(
-                    DateFormat('yyyy/MM/dd').format(bookingDraft.startTime),
+                    DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                   const SizedBox(width: 14),
                   const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 14),
                   const SizedBox(width: 6),
                   Text(
-                    DateFormat('hh:mm a').format(bookingDraft.startTime),
+                    DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ),
               const Divider(color: VSPColors.divider, height: 20),
               _buildFeeRow(
-                label: isChampionship
-                    ? (isArabic ? 'رسوم اشتراك البطولة' : 'Championship Entry Fee')
-                    : (hasDeposit
-                        ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
-                        : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
-                value: '${amountToPay.toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                label: widget.isChampionship
+                    ? (widget.isArabic ? 'رسوم اشتراك البطولة' : 'Championship Entry Fee')
+                    : (widget.hasDeposit
+                        ? (widget.isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
+                        : (widget.isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
+                value: '${widget.amountToPay.toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                 isBold: false,
               ),
               const SizedBox(height: 6),
               if (snapshot.connectionState == ConnectionState.waiting) ...[
                 _buildFeeRow(
-                  label: isArabic ? 'رسوم الدفع' : 'Payment Fees',
-                  value: isArabic ? 'جاري الحساب…' : 'Calculating…',
+                  label: widget.isArabic ? 'رسوم الدفع' : 'Payment Fees',
+                  value: widget.isArabic ? 'جاري الحساب…' : 'Calculating…',
                 ),
               ] else if (feeConfig != null) ...[
                 _buildFeeRow(
-                  label: isArabic ? 'عمولة VSP' : 'VSP Commission',
-                  value: '${feeConfig.calculateVspFee(amountToPay).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  label: widget.isArabic ? 'عمولة VSP' : 'VSP Commission',
+                  value: '${feeConfig.calculateVspFee(widget.amountToPay).toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                 ),
                 const SizedBox(height: 6),
                 _buildFeeRow(
-                  label: isArabic ? 'رسوم بوابة الدفع' : 'Payment Gateway Fee',
-                  value: '${feeConfig.calculateGatewayFee(amountToPay, paymentMethod).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  label: widget.isArabic ? 'رسوم بوابة الدفع' : 'Payment Gateway Fee',
+                  value: '${feeConfig.calculateGatewayFee(widget.amountToPay, paymentMethod).toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                 ),
                 const SizedBox(height: 6),
                 _buildFeeRow(
-                  label: isArabic ? 'إجمالي رسوم الدفع' : 'Total Payment Fees',
-                  value: '${feeConfig.calculateTotalFees(amountToPay, paymentMethod).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  label: widget.isArabic ? 'إجمالي رسوم الدفع' : 'Total Payment Fees',
+                  value: '${feeConfig.calculateTotalFees(widget.amountToPay, paymentMethod).toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                 ),
                 const SizedBox(height: 6),
                 _buildFeeRow(
-                  label: isArabic ? 'إجمالي الدفع النهائي' : 'Total Checkout Amount',
-                  value: '${feeConfig.calculateTotalAmount(amountToPay, paymentMethod).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  label: widget.isArabic ? 'إجمالي الدفع النهائي' : 'Total Checkout Amount',
+                  value: '${feeConfig.calculateTotalAmount(widget.amountToPay, paymentMethod).toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                   isBold: true,
-                  onInfoTap: () => showFeeTransparencyModal(context, isArabic),
+                  onInfoTap: () => showFeeTransparencyModal(context, widget.isArabic),
                 ),
               ] else ...[
                 _buildFeeRow(
-                  label: isArabic ? 'رسوم الدفع' : 'Payment Fees',
-                  value: isArabic ? 'تُحتسب تلقائياً' : 'Calculated automatically',
-                  onInfoTap: () => showFeeTransparencyModal(context, isArabic),
+                  label: widget.isArabic ? 'رسوم الدفع' : 'Payment Fees',
+                  value: widget.isArabic ? 'تُحتسب تلقائياً' : 'Calculated automatically',
+                  onInfoTap: () => showFeeTransparencyModal(context, widget.isArabic),
                 ),
               ],
-              if (hasDeposit && (bookingDraft.totalPrice - amountToPay) > 0) ...[
+              if (widget.hasDeposit && (widget.bookingDraft.totalPrice - widget.amountToPay) > 0) ...[
                 const SizedBox(height: 6),
                 _buildFeeRow(
-                  label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-                  value: '${(bookingDraft.totalPrice - amountToPay).toStringAsFixed(2)} ${isArabic ? 'ج.م' : 'EGP'}',
+                  label: widget.isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
+                  value: '${(widget.bookingDraft.totalPrice - widget.amountToPay).toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
                 ),
               ],
             ],
@@ -144,7 +157,7 @@ class PaymentBreakdownCard extends StatelessWidget {
     );
   }
 
-  static void showFeeTransparencyModal(BuildContext context, bool isArabic) {
+  static void showFeeTransparencyModal(BuildContext context, bool widget.isArabic) {
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
@@ -182,7 +195,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      isArabic ? 'شفافية رسوم الدفع' : 'Payment Fee Transparency',
+                      widget.isArabic ? 'شفافية رسوم الدفع' : 'Payment Fee Transparency',
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -190,7 +203,7 @@ class PaymentBreakdownCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                isArabic
+                widget.isArabic
                     ? 'الرسوم تُحسب من قيمة العملية الأساسية، وتشمل عمولة VSP ورسوم بوابة الدفع. القيمة النهائية تُحسم على الخادم عند إنشاء عملية الدفع.'
                     : 'Fees are calculated from the base transaction amount and include the VSP commission and payment gateway fee. The server determines the final checkout amount.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
@@ -206,7 +219,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text(isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(widget.isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
