@@ -7,19 +7,19 @@ import '../../../../data/models.dart';
 
 /// Shows the payment breakdown using the same fee configuration used by the backend.
 class PaymentBreakdownCard extends StatefulWidget {
-  final BookingDraft widget.bookingDraft;
-  final bool widget.isChampionship;
-  final bool widget.hasDeposit;
-  final double widget.amountToPay;
-  final bool widget.isArabic;
+  final BookingDraft bookingDraft;
+  final bool isChampionship;
+  final bool hasDeposit;
+  final double amountToPay;
+  final bool isArabic;
 
   const PaymentBreakdownCard({
     super.key,
-    required this.widget.bookingDraft,
-    required this.widget.isChampionship,
-    required this.widget.hasDeposit,
-    required this.widget.amountToPay,
-    required this.widget.isArabic,
+    required this.bookingDraft,
+    required this.isChampionship,
+    required this.hasDeposit,
+    required this.amountToPay,
+    required this.isArabic,
   });
 
   @override
@@ -42,8 +42,7 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
       builder: (context, snapshot) {
         final feeConfig = snapshot.data;
         final paymentMethod = widget.bookingDraft.paymentMethod ?? 'paymob';
-
-        final String displayStadiumName =
+        final displayStadiumName =
             (widget.bookingDraft.stadiumName.trim().isEmpty ||
                     widget.bookingDraft.stadiumName.trim() == 'Mo')
                 ? (widget.isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
@@ -106,7 +105,6 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
                         ? (widget.isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit')
                         : (widget.isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
                 value: '${widget.amountToPay.toStringAsFixed(2)} ${widget.isArabic ? 'ج.م' : 'EGP'}',
-                isBold: false,
               ),
               const SizedBox(height: 6),
               if (snapshot.connectionState == ConnectionState.waiting) ...[
@@ -157,7 +155,7 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
     );
   }
 
-  static void showFeeTransparencyModal(BuildContext context, bool widget.isArabic) {
+  static void showFeeTransparencyModal(BuildContext context, bool isArabic) {
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
@@ -195,7 +193,7 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      widget.isArabic ? 'شفافية رسوم الدفع' : 'Payment Fee Transparency',
+                      isArabic ? 'شفافية رسوم الدفع' : 'Payment Fee Transparency',
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -203,7 +201,7 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
               ),
               const SizedBox(height: 16),
               Text(
-                widget.isArabic
+                isArabic
                     ? 'الرسوم تُحسب من قيمة العملية الأساسية، وتشمل عمولة VSP ورسوم بوابة الدفع. القيمة النهائية تُحسم على الخادم عند إنشاء عملية الدفع.'
                     : 'Fees are calculated from the base transaction amount and include the VSP commission and payment gateway fee. The server determines the final checkout amount.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
@@ -219,7 +217,7 @@ class _PaymentBreakdownCardState extends State<PaymentBreakdownCard> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text(widget.isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
