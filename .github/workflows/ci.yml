@@ -32,20 +32,11 @@ jobs:
       - name: Verify Firebase options are real source config
         run: test -s lib/firebase_options.dart
       - name: Static analysis
-        env:
-          SUPABASE_URL: https://mktqkddbcddrxjxabdua.supabase.co
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
-          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         run: flutter analyze
+
       - name: Unit and widget tests
         run: flutter test --coverage
+
       - name: Android debug build
-        env:
-          SUPABASE_URL: https://mktqkddbcddrxjxabdua.supabase.co
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
-          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
-        run: flutter build apk --debug
+        run: |
+          flutter build apk --debug             --dart-define=SUPABASE_URL=https://mktqkddbcddrxjxabdua.supabase.co             --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"             --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}"             --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}"             --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
