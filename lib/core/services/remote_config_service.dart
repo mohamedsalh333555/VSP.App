@@ -37,7 +37,7 @@ class RemoteConfigService extends ChangeNotifier {
   bool get copilotEnabled => _copilotEnabled;
   Map<String, dynamic> get features => Map.unmodifiable(_features);
 
-  bool isFeatureEnabled(String key, {bool defaultValue = true}) {
+  bool isFeatureEnabled(String key, {bool defaultValue = false}) {
     if (_features.containsKey(key)) {
       final val = _features[key];
       if (val is bool) return val;
@@ -65,10 +65,6 @@ class RemoteConfigService extends ChangeNotifier {
 
     _parseConfig(response);
     notifyListeners();
-  }
-    } catch (e) {
-      debugPrint('[RemoteConfigService] Network fetch skipped/failed, using cached values: $e');
-    }
   }
 
   void _subscribeToRealtimeUpdates() {
