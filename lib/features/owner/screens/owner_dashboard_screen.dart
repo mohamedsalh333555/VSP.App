@@ -15,15 +15,14 @@ import 'owner_ledger_screen.dart';
 
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
+import '../../../core/repositories/owner_repository.dart';
+import '../widgets/ledger/owner_payout_dialog.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
-import '../widgets/dashboard/owner_pro_overview_card.dart';
-import '../widgets/dashboard/owner_pro_insights_view.dart';
-import '../widgets/dashboard/owner_basic_financial_glance.dart';
-import '../widgets/dashboard/owner_glanceable_timeline.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
-import '../widgets/dashboard/owner_pro_segmented_tabs.dart';
-import '../widgets/dashboard/owner_quick_cash_card.dart';
+import '../widgets/dashboard/owner_operational_finance_card.dart';
+import '../widgets/dashboard/owner_today_pitch_schedule_card.dart';
+import '../widgets/dashboard/owner_pending_actions_bar.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -36,8 +35,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with SingleTickerProviderStateMixin {
   String _selectedStadiumFilter = 'all';
-  String _selectedTimePeriod = 'today';
-  int _selectedProTabIndex = 0; // 0 = Overview (نظرة عامة), 1 = Insights (التحليلات)
+  final String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
 
@@ -73,6 +71,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
 
+  Map<String, dynamic>? _financialSummary;
+
+  Future<void> _fetchFinancialSummary(String uid) async {
+    try {
+      final summary = await OwnerRepository().getOwnerFinancialSummary(uid);
+      if (mounted) {
+        setState(() {
+          _financialSummary = summary;
+        });
+      }
+    } catch (e) {
+      VSPLogger.w('Failed to load owner financial summary for dashboard: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +93,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final uid = auth.currentUser?.id;
       if (uid != null) {
+        _fetchFinancialSummary(uid);
         Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
         _champSubscription = TournamentRepository()
@@ -143,6 +157,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final metrics = _getOrCalculateMetrics(allBookings);
 
+    final double availableBalance = (_financialSummary?['available_balance'] as num?)?.toDouble() ??
+        metrics.digitalVspBalance;
+    final double cashThisMonth = (_financialSummary?['cash_revenue'] as num?)?.toDouble() ??
+        metrics.pitchCashRevenue;
+    final double onlineThisMonth = (_financialSummary?['online_net_revenue'] as num?)?.toDouble() ??
+        (_financialSummary?['total_online_gross'] as num?)?.toDouble() ??
+        metrics.digitalVspBalance;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
@@ -156,6 +178,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
             }
             await Future.wait([
+              _fetchFinancialSummary(uid),
               if (context.mounted)
                 Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true),
               auth.refreshProfile(),
@@ -195,97 +218,73 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     onRenew: () => _showProUpgradeSheet(context),
                   ),
 
-                // 3. المحتوى المتفرع حسب الباقة (Basic vs Pro)
-                if (isProOwner) ...[
-                  // شريط التبويب المقسم (Pill Segmented Switcher)
-                  OwnerProSegmentedTabs(
-                    selectedIndex: _selectedProTabIndex,
-                    onTabSelected: (index) => setState(() => _selectedProTabIndex = index),
+                // 3. المحتوى التشغيلي الموحد للباقتين (Operational Dashboard)
+                // شريط فلاتر الملاعب (يظهر لأصحاب باقة Pro أو عند امتلاك أكثر من ملعب)
+                if (isProOwner && stadiums.length > 1) ...[
+                  OwnerVenueFilterChips(
+                    stadiums: stadiums,
+                    selectedStadiumId: _selectedStadiumFilter,
+                    onStadiumSelected: (id) => setState(() {
+                      _selectedStadiumFilter = id;
+                      _cachedMetrics = null;
+                    }),
                     isArabic: isArabic,
                   ),
                   const SizedBox(height: 12),
-
-                  // شريط فلاتر الملاعب الأفقي (يظهر فقط إذا كان المالك يمتلك أكثر من ملعب)
-                  if (stadiums.length > 1) ...[
-                    OwnerVenueFilterChips(
-                      stadiums: stadiums,
-                      selectedStadiumId: _selectedStadiumFilter,
-                      onStadiumSelected: (id) => setState(() => _selectedStadiumFilter = id),
-                      isArabic: isArabic,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  if (_selectedProTabIndex == 0) ...[
-                    // تاب نظرة عامة (Overview)
-                    OwnerProOverviewCard(
-                      metrics: metrics,
-                      selectedTimePeriod: _selectedTimePeriod,
-                      onTimePeriodChanged: (period) => setState(() => _selectedTimePeriod = period),
-                      onSettleDues: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerLedgerScreen())),
-                      isArabic: isArabic,
-                    ),
-                    const SizedBox(height: 16),
-                    OwnerQuickCashCard(
-                      allBookings: allBookings,
-                      stadiums: stadiums,
-                      selectedStadiumFilter: _selectedStadiumFilter,
-                      isArabic: isArabic,
-                    ),
-                    OwnerGlanceableTimeline(
-                      allBookings: allBookings,
-                      selectedStadiumFilter: _selectedStadiumFilter,
-                      isArabic: isArabic,
-                      onNavigateToBookings: () {
-                        if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(3);
-                        } else {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()));
-                        }
-                      },
-                    ),
-                  ] else ...[
-                    // تاب التحليلات العميقة (Insights)
-                    OwnerProInsightsView(
-                      allBookings: allBookings,
-                      metrics: metrics,
-                      stadiums: stadiums,
-                      selectedTimePeriod: _selectedTimePeriod,
-                      selectedStadiumFilter: _selectedStadiumFilter,
-                      onTimePeriodChanged: (period) => setState(() => _selectedTimePeriod = period),
-                      onStadiumFilterChanged: (id) => setState(() => _selectedStadiumFilter = id),
-                      onNavigateTab: widget.onNavigateTab,
-                      isArabic: isArabic,
-                    ),
-                  ],
-                ] else ...[
-                  // واجهة الباقة الأساسية (Overview Only)
-                  OwnerBasicFinancialGlance(
-                    metrics: metrics,
-                    selectedTimePeriod: _selectedTimePeriod,
-                    onTimePeriodChanged: (period) => setState(() => _selectedTimePeriod = period),
-                    isArabic: isArabic,
-                  ),
-                  const SizedBox(height: 16),
-                  OwnerQuickCashCard(
-                    allBookings: allBookings,
-                    stadiums: stadiums,
-                    selectedStadiumFilter: _selectedStadiumFilter,
-                    isArabic: isArabic,
-                  ),
-                  OwnerGlanceableTimeline(
-                    allBookings: allBookings,
-                    selectedStadiumFilter: _selectedStadiumFilter,
-                    isArabic: isArabic,
-                    onNavigateToBookings: () {
-                      if (widget.onNavigateTab != null) {
-                        widget.onNavigateTab!(3);
-                      } else {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()));
-                      }
-                    },
-                  ),
                 ],
+
+                // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
+                OwnerOperationalFinanceCard(
+                  availableBalance: availableBalance,
+                  cashThisMonth: cashThisMonth,
+                  onlineThisMonth: onlineThisMonth,
+                  onOpenLedger: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+                    );
+                  },
+                  onRequestPayout: () {
+                    OwnerPayoutDialog.show(context, availableBalance, isArabic);
+                  },
+                  isArabic: isArabic,
+                ),
+                const SizedBox(height: 16),
+
+                // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده)
+                OwnerTodayPitchScheduleCard(
+                  allBookings: allBookings,
+                  stadiums: stadiums,
+                  selectedStadiumFilter: _selectedStadiumFilter,
+                  isArabic: isArabic,
+                  onNavigateToBookings: () {
+                    if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(3);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // ج. شريط الإجراء التشغيلي الفوري للحجوزات المعلقة
+                OwnerPendingActionsBar(
+                  allBookings: allBookings,
+                  isArabic: isArabic,
+                  onActionTap: () {
+                    if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(3);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(height: 80),
               ],
             ),
