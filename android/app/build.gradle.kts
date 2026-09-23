@@ -57,11 +57,17 @@ android {
         }
         release {
             // RELEASE SIGNING: Uses the credentials loaded from android/key.properties.
-            // Strict Invariant: Must fail immediately if key.properties is missing (no silent fallback to debug).
+            // Strict invariant: release tasks must fail without the production keystore.
+            // Debug builds are allowed to use Android's default debug signing in CI/local development.
+            val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+                it.contains("release", ignoreCase = true)
+            }
             if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
-            } else {
-                throw org.gradle.api.GradleException("FATAL: android/key.properties not found! Release builds MUST be signed with the production keystore.")
+            } else if (isReleaseBuildRequested) {
+                throw org.gradle.api.GradleException(
+                    "FATAL: android/key.properties not found! Release builds MUST be signed with the production keystore."
+                )
             }
             isMinifyEnabled = false          // Disabled to prevent MethodChannel & reflection crashes
             isShrinkResources = false
