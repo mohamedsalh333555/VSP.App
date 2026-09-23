@@ -1,5 +1,5 @@
 # VSP Current System SSOT
-## Current as of 2026-09-23
+## Current as of 2026-09-24
 
 This document describes the production architecture that code, Supabase, Edge Functions, and business rules must converge on.
 
@@ -25,10 +25,13 @@ partially_paid is not final payment completion.
 
 Approved booking-payment contract:
 - VSP commission: 2.00%
-- Paymob: 2.75%
-- Fixed Paymob fee: 3.00 EGP
+- Paymob local cards: 2.40% + 3.00 EGP
+- Paymob electronic wallets: 2.40% + 3.00 EGP
+- Paymob foreign cards: 2.60% + 3.00 EGP
+- InstaPay: no configured fee
 
 Authoritative values live in public.platform_fee_config.
+The signed Paymob merchant contract establishes the gateway merchant fees above; the customer-vs-merchant incidence of those gateway costs must not be inferred from the contract alone.
 The client may display the current configuration, but the server computes and verifies the final checkout amount.
 Electronic webhook processing verifies the gross amount against the server fee configuration before financial state changes.
 
