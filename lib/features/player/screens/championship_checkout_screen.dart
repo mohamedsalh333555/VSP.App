@@ -252,7 +252,26 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         }
       }
 
-      await _executeJoinChampionship();
+      // Free tournament: use the server-authoritative atomic registration path directly.
+      if (entryFee <= 0) {
+        final success = await TournamentRepository().joinChampionship(
+          widget.championship.id,
+          widget.team.id,
+          selectedPlayerIds: _selectedPlayerIds,
+          offlineGuestNames: _offlineGuestNames,
+          isPaid: false,
+        );
+        if (success && mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showSuccess(
+            context,
+            isArabic ? 'تم الاشتراك في البطولة بنجاح! ' : 'Joined tournament successfully! ',
+          );
+          Navigator.pop(context, true);
+        } else if (mounted) {
+          VSPFeedback.showError(context, 'فشل تأكيد الاشتراك في البطولة. حاول مرة أخرى.');
+        }
+      }
     } catch (e) {
       if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -386,5 +405,26 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             ),
             const SizedBox(height: 32),
           ],
+        ),
+      ),
+
+      // Sticky Bottom Navigation Action Bar
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          VSPSpacing.lg,
+          VSPSpacing.sm,
+          VSPSpacing.lg,
+          MediaQuery.of(context).padding.bottom + VSPSpacing.sm,
+        ),
+        decoration: const BoxDecoration(
+          color: VSPColors.surface,
+          border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
+        ),
+        child: PrimaryButton(
+          text: entryFee > 0
+              ? (isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Payment')
+              : (isArabic ? 'تأكيد الاشتراك في البطولة' : 'Confirm Registration'),
+          isLoading: _isSubmitting,
+          onPressed: isSelectionValid ? _handleConfirmAndPay : null,
         ),
       ),
