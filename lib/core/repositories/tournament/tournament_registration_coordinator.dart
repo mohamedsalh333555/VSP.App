@@ -150,6 +150,71 @@ class TournamentRegistrationCoordinator {
     }
   }
 
+  /// Finalizes a previously paid tournament order without attempting a second
+  /// paid-join mutation. The Paymob webhook is responsible for adding the team;
+  /// this method only verifies the paid order, syncs the roster, and notifies
+  /// the championship owner.
+  Future<bool> finalizePaidTournamentRegistration({
+    required String orderReference,
+    required String championshipId,
+    required String teamId,
+    required List<String> selectedPlayerIds,
+    required List<String> offlineGuestNames,
+  }) async {
+    try {
+      final callerId = _supabase.auth.currentUser?.id;
+      if (callerId == null) return false;
+
+      final order = await _supabase
+          .from('tournament_orders')
+          .select('championship_id, team_id, captain_user_id, payment_status')
+          .eq('order_reference', orderReference)
+          .maybeSingle();
+
+      if (order == null ||
+          order['championship_id']?.toString() != championshipId ||
+          order['team_id']?.toString() != teamId ||
+          order['captain_user_id']?.toString() != callerId ||
+          order['payment_status']?.toString() != 'paid') {
+        return false;
+      }
+
+      final team = await _teamRepo.getTeam(teamId);
+      if (team == null) return false;
+
+      final champResponse = await _supabase
+          .from('championships')
+          .select('id, owner_id, name')
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champResponse == null) return false;
+
+      await _rosterCoord.updateSingleTeamRoster(
+        championshipId: championshipId,
+        teamId: teamId,
+        playerIds: selectedPlayerIds,
+        guestNames: offlineGuestNames,
+      );
+
+      final ownerId = champResponse['owner_id']?.toString() ?? '';
+      if (ownerId.isNotEmpty) {
+        try {
+          await NotificationHandler.notifyTeamJoinedTournament(
+            ownerId: ownerId,
+            teamName: team.name,
+            tournamentName: champResponse['name']?.toString() ?? 'البطولة',
+            championshipId: championshipId,
+          );
+        } catch (_) {}
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('Error finalizing paid tournament registration: $e');
+      return false;
+    }
+  }
+
   /// Atomic team withdrawal from championship.
   Future<bool> leaveChampionship(String championshipId, String teamId) async {
     try {
