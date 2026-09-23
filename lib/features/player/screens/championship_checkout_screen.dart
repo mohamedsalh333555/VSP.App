@@ -315,8 +315,6 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
 
     final entryFee = widget.championship.entryFee;
-    final serviceFee = PaymobService.calculateServiceFee(entryFee);
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -385,34 +383,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             // 5. Financial Breakdown Card
             CheckoutFinancialCard(
               entryFee: entryFee,
-              serviceFee: serviceFee,
-              totalCheckoutPrice: totalCheckoutPrice,
             ),
             const SizedBox(height: 32),
           ],
         ),
       ),
-
-      // Sticky Bottom Navigation Action Bar
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-          VSPSpacing.lg,
-          VSPSpacing.sm,
-          VSPSpacing.lg,
-          MediaQuery.of(context).padding.bottom + VSPSpacing.sm,
-        ),
-        decoration: const BoxDecoration(
-          color: VSPColors.surface,
-          border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-        ),
-        child: PrimaryButton(
-          text: entryFee > 0
-              ? (isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Payment')
-              : (isArabic ? 'تأكيد الاشتراك في البطولة' : 'Confirm Registration'),
-          isLoading: _isSubmitting,
-          onPressed: isSelectionValid ? _handleConfirmAndPay : null,
-        ),
-      ),
-    );
-  }
-}
