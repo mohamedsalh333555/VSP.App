@@ -80,12 +80,21 @@ serve(async (req: Request) => {
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
 
-    // Paid team-tournament checkouts must reference a server-created tournament
-    // order. Never trust an amount supplied by the mobile client for this flow.
+    // Paid tournament checkouts must reference a server-created order.
+    // Never trust an amount supplied by the mobile client for tournament flows.
     if (is_tournament_payment) {
+      const isOneVsOne = booking_id.startsWith("TOURN_1V1_");
+      const tableName = isOneVsOne
+        ? "vsp_1v1_tournament_orders"
+        : "tournament_orders";
+
+      const selectColumns = isOneVsOne
+        ? "order_reference, amount, user_id, payment_status"
+        : "order_reference, amount, captain_user_id, payment_status";
+
       const { data: tournamentOrder, error: tournamentOrderError } = await supabase
-        .from("tournament_orders")
-        .select("order_reference, amount, captain_user_id, payment_status")
+        .from(tableName)
+        .select(selectColumns)
         .eq("order_reference", booking_id)
         .maybeSingle();
 
@@ -96,7 +105,11 @@ serve(async (req: Request) => {
         );
       }
 
-      if (tournamentOrder.captain_user_id !== callerUser.id) {
+      const orderOwnerId = isOneVsOne
+        ? tournamentOrder.user_id
+        : tournamentOrder.captain_user_id;
+
+      if (orderOwnerId !== callerUser.id) {
         const { data: callerProfile } = await supabase
           .from("users")
           .select("role")
@@ -120,6 +133,7 @@ serve(async (req: Request) => {
 
       finalBaseAmount = Number(tournamentOrder.amount) || 0;
     }
+
 
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
