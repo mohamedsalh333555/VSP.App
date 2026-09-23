@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/repositories/user_repository.dart';
-import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -41,6 +40,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   bool _isLoadingMembers = true;
   bool _isSubmitting = false;
   bool _hasPaid = false;
+  String? _paidOrderReference;
 
   @override
   void initState() {
@@ -190,6 +190,25 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       }
 
       if (entryFee > 0) {
+        final order = await TournamentRepository().createTournamentOrder(
+          championshipId: widget.championship.id,
+          teamId: widget.team.id,
+          amount: entryFee,
+          playerIds: _selectedPlayerIds,
+          guestNames: _offlineGuestNames,
+        );
+
+        final orderReference = order?['order_reference']?.toString();
+        if (orderReference == null || orderReference.isEmpty) {
+          if (mounted) {
+            VSPFeedback.showError(
+              context,
+              'تعذر إنشاء طلب الدفع الآمن للبطولة. لم يتم بدء الدفع.',
+            );
+          }
+          return;
+        }
+
         final draft = BookingDraft(
           stadiumId: '00000000-0000-0000-0000-000000000000',
           stadiumName: 'بطولة: ${widget.championship.name}',
@@ -219,12 +238,14 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                 bookingDraft: draft,
                 forceFullPayment: true,
                 isTournamentPayment: true,
+                existingBookingId: orderReference,
               ),
             ),
           );
 
           if (paymentResult == true && mounted) {
             _hasPaid = true;
+            _paidOrderReference = orderReference;
             await _executeJoinChampionship();
           }
           return;
@@ -246,17 +267,20 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   }
 
   Future<void> _executeJoinChampionship() async {
-    final entryFee = widget.championship.entryFee;
-    // DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
+    final orderReference = _paidOrderReference;
+    if (orderReference == null || orderReference.isEmpty) {
+      if (mounted) {
+        VSPFeedback.showError(context, 'طلب الدفع المؤكد غير موجود.');
+      }
+      return;
+    }
 
-    final success = await TournamentRepository().joinChampionship(
-      widget.championship.id,
-      widget.team.id,
+    final success = await TournamentRepository().finalizePaidTournamentRegistration(
+      orderReference: orderReference,
+      championshipId: widget.championship.id,
+      teamId: widget.team.id,
       selectedPlayerIds: _selectedPlayerIds,
       offlineGuestNames: _offlineGuestNames,
-      isPaid: true,
-      totalPaidAmount: totalCheckoutPrice,
     );
 
     if (success && mounted) {
@@ -271,8 +295,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       VSPFeedback.showError(
         context,
         isArabic
-            ? 'فشل الانضمام للبطولة، يرجى المحاولة مرة أخرى.'
-            : 'Failed to join tournament, please try again.',
+            ? 'فشل تأكيد الاشتراك في البطولة. تحقق من حالة الدفع وحاول مرة أخرى.'
+            : 'Tournament registration could not be finalized. Verify the payment status and try again.',
       );
     }
   }
