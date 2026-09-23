@@ -24,7 +24,16 @@ jobs:
       - name: Verify real Firebase client options
         run: test -s lib/firebase_options.dart
       - name: Analyze
-        run: flutter analyze
+        run: |
+          set -o pipefail
+          flutter analyze 2>&1 | tee analyze-report.txt
+      - name: Upload analyzer report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyzer-report
+          path: analyze-report.txt
+          if-no-files-found: ignore
       - name: Test
         run: flutter test --coverage
       - name: Build Android debug APK
