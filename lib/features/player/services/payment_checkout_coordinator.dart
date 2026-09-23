@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
 import 'payment_checkout_service.dart';
@@ -120,6 +121,35 @@ class PaymentCheckoutCoordinator {
       userId: userId,
       stadiumId: stadiumId,
     );
+  }
+
+  /// Waits for the server-side tournament order to become paid after Paymob checkout.
+  Future<bool> waitForTournamentOrderPaid({
+    required String orderReference,
+    Duration timeout = const Duration(minutes: 5),
+  }) async {
+    final client = Supabase.instance.client;
+    final deadline = DateTime.now().add(timeout);
+
+    while (DateTime.now().isBefore(deadline)) {
+      try {
+        final order = await client
+            .from('tournament_orders')
+            .select('payment_status')
+            .eq('order_reference', orderReference)
+            .maybeSingle();
+
+        final status = order?['payment_status']?.toString();
+        if (status == 'paid') return true;
+        if (status == 'failed_over_capacity' || status == 'failed') return false;
+      } catch (e) {
+        debugPrint('Tournament payment polling notice: $e');
+      }
+
+      await Future<void>.delayed(const Duration(seconds: 3));
+    }
+
+    return false;
   }
 
   /// Simulates test payment webhook in development/staging.
