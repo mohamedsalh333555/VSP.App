@@ -270,6 +270,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               orderReference: orderReference,
             );
 
+            if (!mounted) return;
             if (!orderPaid) {
               if (mounted) {
                 setState(() {
