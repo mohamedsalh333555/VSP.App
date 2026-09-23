@@ -31,7 +31,7 @@ class PaymentCheckoutService {
     String? bookingId,
   }) {
     if (bookingId != null && bookingId.isNotEmpty) return bookingId;
-    if (isTournamentPayment) => throw StateError('A tournament order reference must be issued by the server.');
+    if (isTournamentPayment) {\n      throw StateError('A tournament order reference must be issued by the server.');\n    }
     throw StateError('A booking ID is required for a booking payment.');
   }
 
