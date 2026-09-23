@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/repositories/booking/booking_creation_coordinator.dart';
 import 'package:vsp_application/core/repositories/booking/booking_domain_rules.dart';
-import 'package:vsp_application/core/repositories/booking/mock_booking_repository.dart';
 import 'package:vsp_application/data/models.dart';
 
 void main() {
