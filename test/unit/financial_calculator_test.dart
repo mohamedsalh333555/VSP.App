@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/services/paymob_service.dart';
+import 'package:vsp_application/core/services/platform_fee_service.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/utils/owner_financial_calculator.dart';
 
@@ -66,22 +66,23 @@ void main() {
       expect(metrics.activeBookingsCount, equals(2));
     });
 
-    test('Validates 100 EGP booking fee distribution between Platform (2%) and Paymob (2.75% + 3 EGP)', () {
+    test('Validates 100 EGP booking fee configuration', () {
       const baseAmount = 100.0;
+      const config = PlatformFeeConfig(
+        vspRate: 0.02,
+        paymobRate: 0.024,
+        paymobLocalRate: 0.024,
+        paymobForeignRate: 0.026,
+        paymobWalletRate: 0.024,
+        paymobFixedFee: 3.0,
+      );
 
-      // Platform Owner Net Profit (2.0%): Exactly 2.00 EGP
-      final platformShare = PaymobService.calculatePlatformShare(baseAmount);
-      expect(platformShare, equals(2.00));
+      expect(config.calculateVspFee(baseAmount), 2.00);
+      expect(config.calculateGatewayFee(baseAmount, 'card'), 5.40);
+      expect(config.calculateTotalFees(baseAmount, 'card'), 7.40);
+      expect(config.calculateTotalAmount(baseAmount, 'card'), 107.40);
 
-      // Paymob Banking Gateway Share (2.75% + 3.0 EGP): Exactly 5.75 EGP
-      final gatewayShare = PaymobService.calculateGatewayShare(baseAmount);
-      expect(gatewayShare, equals(5.75));
-
-      // Total fee: 2.00 + 5.75 = 7.75 EGP
-      final totalFee = PaymobService.calculateServiceFee(baseAmount);
-      expect(totalFee, equals(7.75));
-
-      // Owner receives full pitch rental price: 100.00 EGP
+      // Owner receives the full pitch rental principal; fee handling is separate.
       expect(baseAmount, equals(100.00));
     });
 
