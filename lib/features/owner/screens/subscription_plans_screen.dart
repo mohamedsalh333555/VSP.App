@@ -152,6 +152,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             const SizedBox(height: VSPSpacing.xxl),
           ],
         ),
+        ),
       ),
     );
   }
