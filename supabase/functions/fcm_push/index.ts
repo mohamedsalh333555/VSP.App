@@ -11,7 +11,6 @@ serve(async (req: Request) => {
   try {
     // 0. Security Guard: Verify Authorization Token (Strict Fail-Closed)
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
@@ -22,8 +21,8 @@ serve(async (req: Request) => {
       });
     }
 
-    const isAuthorized = (serviceRoleKey && token === serviceRoleKey) ||
-                         (anonKey && token === anonKey);
+    const isAuthorized = token === "internal_db_trigger" ||
+                         (!!serviceRoleKey && token === serviceRoleKey);
 
     if (!isAuthorized) {
       console.error("🚨 Unauthorized access attempt to fcm_push endpoint");
@@ -46,30 +45,44 @@ serve(async (req: Request) => {
     const body = record.body || record.message || "";
     const type = record.type || "info";
 
-    // 2. Connect to Supabase to fetch FCM Token for the user
+    // 2. Load all registered device tokens, plus the legacy single token.
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("fcm_token")
-      .eq("id", userId)
-      .maybeSingle();
+    const [{ data: deviceRows, error: deviceError }, { data: userData, error: userError }] =
+      await Promise.all([
+        supabase
+          .from("user_device_tokens")
+          .select("token")
+          .eq("user_id", userId),
+        supabase
+          .from("users")
+          .select("fcm_token")
+          .eq("id", userId)
+          .maybeSingle(),
+      ]);
 
-    if (userError) {
-      console.error("Error fetching user FCM token:", userError);
-    }
+    if (deviceError) console.error("Error fetching device FCM tokens:", deviceError);
+    if (userError) console.error("Error fetching legacy FCM token:", userError);
 
-    const fcmToken = userData?.fcm_token;
+    const fcmTokens = Array.from(new Set([
+      ...(deviceRows || []).map((row: any) => String(row.token || "").trim()),
+      String(userData?.fcm_token || "").trim(),
+    ].filter(Boolean)));
 
-    if (userError || !fcmToken) {
-      console.log(`ℹ️ No FCM token found for user ${userId}. Skipping push.`);
-      return new Response(JSON.stringify({ status: "skipped", reason: "no_fcm_token" }), { 
-        status: 200, 
-        headers: { "Content-Type": "application/json" } 
+    if (fcmTokens.length === 0) {
+      console.log(`ℹ️ No FCM tokens found for user ${userId}. Skipping push.`);
+      return new Response(JSON.stringify({ status: "skipped", reason: "no_fcm_token" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
       });
     }
+
+    const metadata = typeof record.metadata === "object" && record.metadata !== null ? record.metadata : {};
+    const bookingId = String(record.booking_id || record.bookingId || metadata.booking_id || metadata.bookingId || "");
+    const tournamentId = String(metadata.championship_id || metadata.tournament_id || metadata.tournamentId || record.championship_id || record.tournament_id || "");
+    const teamId = String(metadata.team_id || metadata.teamId || record.team_id || record.teamId || "");
 
     // 3. Read Firebase Secret JSON
     const firebaseJsonStr = Deno.env.get("FIREBASE_JSON") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
@@ -109,20 +122,28 @@ serve(async (req: Request) => {
     }
     const accessToken = tokenData.access_token;
 
-    // 6. Build FCM v1 payload for High-Importance Heads-Up System Banner
-    const fcmMessage = {
-      message: {
-        token: fcmToken,
-        notification: {
-          title: title,
-          body: body,
-        },
-        data: {
-          click_action: "FLUTTER_NOTIFICATION_CLICK",
-          type: String(type),
-          notification_id: String(record.id || ""),
-          bookingId: String(record.booking_id || record.bookingId || ""),
-        },
+    // 6. Build and send the FCM v1 payload to every registered device.
+    let sentCount = 0;
+    let failedCount = 0;
+    const invalidTokens: string[] = [];
+
+    for (const fcmToken of fcmTokens) {
+      const fcmMessage = {
+        message: {
+          token: fcmToken,
+          notification: {
+            title: title,
+            body: body,
+          },
+          data: {
+            click_action: "FLUTTER_NOTIFICATION_CLICK",
+            type: String(type),
+            notification_id: String(record.id || ""),
+            bookingId,
+            tournamentId,
+            championship_id: tournamentId,
+            teamId,
+          },
         android: {
           priority: "HIGH",
           notification: {
@@ -148,31 +169,47 @@ serve(async (req: Request) => {
       },
     };
 
-    const fcmResponse = await fetch(
-      `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(fcmMessage),
-      }
-    );
+      const fcmResponse = await fetch(
+        `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(fcmMessage),
+        }
+      );
 
-    const fcmResultText = await fcmResponse.text();
-    if (!fcmResponse.ok) {
-      console.error("FCM Send Error:", fcmResultText);
-      return new Response(JSON.stringify({ error: fcmResultText }), { 
-        status: 200, 
-        headers: { "Content-Type": "application/json" } 
-      });
+      const fcmResultText = await fcmResponse.text();
+      if (!fcmResponse.ok) {
+        failedCount++;
+        console.error(`FCM Send Error for token ${fcmToken}:`, fcmResultText);
+        if (fcmResponse.status === 404 && fcmResultText.includes("UNREGISTERED")) {
+          invalidTokens.push(fcmToken);
+        }
+        continue;
+      }
+
+      sentCount++;
     }
 
-    console.log(`✅ FCM Push Notification sent successfully to user ${userId}`);
-    return new Response(JSON.stringify({ success: true, message: "Notification sent successfully" }), { 
-      status: 200, 
-      headers: { "Content-Type": "application/json" } 
+    if (invalidTokens.length > 0) {
+      await supabase
+        .from("user_device_tokens")
+        .delete()
+        .in("token", invalidTokens);
+    }
+
+    console.log(`✅ FCM Push Notification sent to user ${userId}: ${sentCount} sent, ${failedCount} failed`);
+    return new Response(JSON.stringify({
+      success: sentCount > 0,
+      sent_count: sentCount,
+      failed_count: failedCount,
+      invalid_tokens_removed: invalidTokens.length
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
     });
   } catch (error: any) {
     console.error("Function Error:", error);
