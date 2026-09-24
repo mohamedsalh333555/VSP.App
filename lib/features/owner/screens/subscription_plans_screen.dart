@@ -90,7 +90,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       body: SafeArea(
         bottom: true,
         child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 48),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
@@ -102,16 +102,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             // ── 2. الباقة الأساسية (Basic Plan) ──
             _buildPlanCard(
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
-              priceText: isArabic ? '500 ج.م' : '500 EGP',
+              priceText: isTrialOrBasic && userModel?.isInActiveTrial == true
+                  ? (isArabic ? '0 ج.م' : '0 EGP')
+                  : (isArabic ? '500 ج.م' : '500 EGP'),
               periodText: isTrialOrBasic && userModel?.isInActiveTrial == true
-                  ? (isArabic ? 'شهرياً بعد انتهاء التجربة' : 'Monthly after trial ends')
+                  ? (isArabic ? 'مجاناً حالياً (500 ج.م شهرياً بعد انتهاء التجربة)' : 'Free now (500 EGP/mo after trial)')
                   : (isArabic ? 'شهرياً' : 'Monthly'),
               badgeText: isArabic ? 'أول سنة مجاناً' : 'First Year Free',
               badgeColor: VSPColors.accent,
               isHighlighted: false,
               isCurrentPlan: isTrialOrBasic,
               buttonText: isTrialOrBasic
-                  ? (isArabic ? 'باقتك الحالية (فترة تجريبية)' : 'Current Plan (Free Trial)')
+                  ? (isArabic ? 'باقتك الحالية (فترة تجريبية مجانية)' : 'Current Plan (Free Trial)')
                   : (isArabic ? 'ابدأ مجاناً (أول سنة)' : 'Start Free (1st Year)'),
               features: [
                 isArabic ? 'تشغيل وإدارة ملعب واحد فقط (1)' : 'Full operation for 1 stadium only',
@@ -149,7 +151,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               isArabic: isArabic,
             ),
 
-            const SizedBox(height: VSPSpacing.xxl),
+            const SizedBox(height: 48),
           ],
         ),
         ),
@@ -305,10 +307,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   letterSpacing: -0.3,
                 ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                '/ $periodText',
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  periodText.startsWith('مجاناً') || periodText.startsWith('Free')
+                      ? periodText
+                      : '/ $periodText',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.3,
+                  ),
+                ),
               ),
             ],
           ),

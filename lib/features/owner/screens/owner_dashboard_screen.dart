@@ -35,7 +35,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with SingleTickerProviderStateMixin {
   String _selectedStadiumFilter = 'all';
-  final String _selectedTimePeriod = 'today';
+  String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
 
@@ -173,11 +173,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final double availableBalance = (_financialSummary?['available_balance'] as num?)?.toDouble() ??
         metrics.digitalVspBalance;
-    final double cashThisMonth = (_financialSummary?['cash_revenue'] as num?)?.toDouble() ??
-        metrics.pitchCashRevenue;
-    final double onlineThisMonth = (_financialSummary?['online_net_revenue'] as num?)?.toDouble() ??
-        (_financialSummary?['total_online_gross'] as num?)?.toDouble() ??
-        metrics.digitalVspBalance;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -248,11 +243,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   const SizedBox(height: 12),
                 ],
 
+                // شريط الفلتر الزمني الواضح
+                _buildTimeFilterBar(isArabic),
+                const SizedBox(height: 12),
+
                 // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                 OwnerOperationalFinanceCard(
                   availableBalance: availableBalance,
-                  cashThisMonth: cashThisMonth,
-                  onlineThisMonth: onlineThisMonth,
+                  cashThisMonth: metrics.pitchCashRevenue,
+                  onlineThisMonth: metrics.digitalVspBalance,
                   onOpenLedger: () {
                     Navigator.push(
                       context,
@@ -379,7 +378,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     }
                   },
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 16),
+
+                // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
+                _buildQuickOperationalActions(context, isArabic),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -388,4 +391,166 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     );
   }
 
+  Widget _buildTimeFilterBar(bool isArabic) {
+    final periods = [
+      {'key': 'today', 'labelAr': 'اليوم', 'labelEn': 'Today'},
+      {'key': 'week', 'labelAr': 'هذا الأسبوع', 'labelEn': 'This Week'},
+      {'key': 'month', 'labelAr': 'هذا الشهر', 'labelEn': 'This Month'},
+      {'key': 'all', 'labelAr': 'الكل', 'labelEn': 'All Time'},
+    ];
+
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.only(bottom: 2),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: periods.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final p = periods[index];
+          final isSelected = _selectedTimePeriod == p['key'];
+          final label = isArabic ? p['labelAr']! : p['labelEn']!;
+
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() {
+                _selectedTimePeriod = p['key']!;
+                _cachedMetrics = null;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? VSPColors.accent.withValues(alpha: 0.15)
+                    : VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.full),
+                border: Border.all(
+                  color: isSelected
+                      ? VSPColors.accent
+                      : VSPColors.divider.withValues(alpha: 0.6),
+                  width: isSelected ? 1.2 : 0.8,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickOperationalActions(BuildContext context, bool isArabic) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isArabic ? 'إجراءات تشغيلية سريعة' : 'Quick Operations',
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontWeight: FontWeight.w800,
+              fontSize: 13.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: Icons.receipt_long_outlined,
+                  label: isArabic ? 'كشف الحساب' : 'Ledger',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: Icons.calendar_month_outlined,
+                  label: isArabic ? 'جدول الحجوزات' : 'Bookings',
+                  onTap: () {
+                    if (widget.onNavigateTab != null) {
+                      widget.onNavigateTab!(3);
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                      );
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: Icons.workspace_premium_outlined,
+                  label: isArabic ? 'الباقات' : 'Plans',
+                  onTap: () => _showProUpgradeSheet(context),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.sm),
+          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: VSPColors.accent),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: VSPColors.textPrimary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

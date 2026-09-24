@@ -122,21 +122,18 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                         HapticFeedback.mediumImpact();
                         onRequestPayout();
                       }
-                    : () {
-                        HapticFeedback.lightImpact();
-                        onOpenLedger();
-                      },
+                    : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: hasBalance
                         ? VSPColors.accent.withValues(alpha: 0.12)
-                        : VSPColors.surfaceAlt,
+                        : Colors.white.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(VSPRadius.full),
                     border: Border.all(
                       color: hasBalance
                           ? VSPColors.accent.withValues(alpha: 0.5)
-                          : VSPColors.divider,
+                          : VSPColors.divider.withValues(alpha: 0.5),
                       width: 1.0,
                     ),
                   ),
@@ -146,13 +143,15 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       Icon(
                         Iconsax.wallet_3_copy,
                         size: 14,
-                        color: hasBalance ? VSPColors.accent : VSPColors.textSecondary,
+                        color: hasBalance ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        isArabic ? 'طلب سحب' : 'Payout',
+                        hasBalance
+                            ? (isArabic ? 'طلب سحب' : 'Payout')
+                            : (isArabic ? 'الرصيد 0' : '0 EGP'),
                         style: TextStyle(
-                          color: hasBalance ? VSPColors.accent : VSPColors.textSecondary,
+                          color: hasBalance ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),

@@ -133,17 +133,17 @@ class OwnerDashboardHeader extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      bottom: -1,
-                      right: isArabic ? null : -1,
-                      left: isArabic ? -1 : null,
+                      bottom: -2,
+                      right: isArabic ? null : -2,
+                      left: isArabic ? -2 : null,
                       child: Container(
-                        width: 19,
-                        height: 19,
+                        width: 24,
+                        height: 24,
                         decoration: BoxDecoration(
                           color: VSPColors.surfaceAlt,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: Colors.white.withValues(alpha: 0.3),
                             width: 1.5,
                           ),
                           boxShadow: [
@@ -155,7 +155,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                         ),
                         child: const Icon(
                           Iconsax.edit_2_copy,
-                          size: 10,
+                          size: 13,
                           color: Colors.white,
                         ),
                       ),
@@ -188,35 +188,13 @@ class OwnerDashboardHeader extends StatelessWidget {
                           ),
                         ),
                         if (user?.isIdentityVerified == true || user?.verificationStatus == 'approved') ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: VSPColors.success.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(VSPRadius.full),
-                              border: Border.all(
-                                color: VSPColors.success.withValues(alpha: 0.25),
-                                width: 0.8,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Iconsax.verify_copy,
-                                  color: VSPColors.success,
-                                  size: 11,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  isArabic ? 'معتمد' : 'Verified',
-                                  style: const TextStyle(
-                                    color: VSPColors.success,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                          const SizedBox(width: 5),
+                          const Tooltip(
+                            message: 'حساب موثق ومعتمد',
+                            child: Icon(
+                              Icons.verified,
+                              color: Color(0xFF1DA1F2),
+                              size: 16,
                             ),
                           ),
                         ],

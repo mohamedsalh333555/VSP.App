@@ -36,6 +36,9 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.only(
@@ -51,9 +54,11 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
             ? MediaQuery.of(context).padding.bottom + 16
             : 36,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // ─── Handle Bar ───
           Container(
             width: 40,
@@ -170,6 +175,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

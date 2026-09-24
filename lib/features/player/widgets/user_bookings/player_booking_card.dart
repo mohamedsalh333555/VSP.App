@@ -208,27 +208,42 @@ class PlayerBookingCard extends StatelessWidget {
           ),
           // 🔒 REFUND BADGE LOGIC: Strictly verify real refund vs unconfirmed payment
           Builder(builder: (context) {
-            final bool hasRealRefund = booking.status == BookingStatus.cancelled &&
-                booking.paymentStatus == 'refunded' &&
+            // First check if the user actually paid any money at all.
+            // If the user cancelled during checkout or paid nothing (0 EGP, unpaid, cash, etc.),
+            // NEVER show any refund badge!
+            final bool hasPaidMoney = (booking.depositPaid > 0) ||
+                (booking.refundAmount != null && booking.refundAmount! > 0) ||
+                booking.isDepositPaid ||
+                booking.isPaid ||
+                booking.paymentStatus == 'paid' ||
+                booking.paymentStatus == 'refunded' ||
+                booking.paymentStatus == 'refund_pending';
+
+            if (!hasPaidMoney || booking.status != BookingStatus.cancelled) {
+              return const SizedBox.shrink();
+            }
+
+            final bool isCashMethod = booking.paymentMethod.toLowerCase() == 'cash';
+            if (isCashMethod && (booking.depositPaid <= 0 && !booking.isDepositPaid)) {
+              return const SizedBox.shrink();
+            }
+
+            final bool hasRealRefund = booking.paymentStatus == 'refunded' &&
                 ((booking.refundTransactionId != null &&
                         booking.refundTransactionId!.isNotEmpty) ||
                     (booking.refundAmount != null &&
                         booking.refundAmount! > 0));
 
-            final bool isRefundPending = booking.status == BookingStatus.cancelled &&
-                !hasRealRefund &&
+            final bool isRefundPending = !hasRealRefund &&
                 booking.paymentStatus == 'refund_pending';
 
-            final bool isUnconfirmedPayment = booking.status == BookingStatus.cancelled &&
-                !hasRealRefund &&
+            // Only show contact support if money was ACTUALLY paid, and payment failed or needs manual refund handling.
+            // Exclude abandoned checkouts where no money was paid!
+            final bool isUnconfirmedPayment = !hasRealRefund &&
                 !isRefundPending &&
                 (booking.paymentStatus == 'refund_failed' ||
-                    booking.cancellationReason == 'Cancelled by user during payment checkout' ||
                     (booking.paymentMethod.toLowerCase() != 'cash' &&
-                        (booking.depositPaid > 0 ||
-                            booking.isDepositPaid ||
-                            booking.isPaid ||
-                            booking.paymentStatus == 'pending')));
+                        (booking.depositPaid > 0 || booking.isPaid || booking.isDepositPaid)));
 
             if (hasRealRefund) {
               return Padding(

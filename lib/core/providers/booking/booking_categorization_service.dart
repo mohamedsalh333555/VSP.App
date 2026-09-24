@@ -52,12 +52,27 @@ class BookingCategorizationService {
       return b.status == BookingStatus.pending && !b.isPaid && isRecent && isFuture && !hasConfirmedSameSlot;
     }).take(1).toList();
 
-    final history = bookings
-        .where((b) =>
-            b.status == BookingStatus.completed ||
-            b.status == BookingStatus.cancelled ||
-            (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
-        .toList();
+    final history = bookings.where((b) {
+      if (b.status == BookingStatus.completed) return true;
+      if (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)) return true;
+      if (b.status == BookingStatus.cancelled) {
+        // Exclude abandoned checkouts where no money was ever paid
+        final bool isAbandonedCheckout =
+            b.cancellationReason == 'Cancelled by user during payment checkout' ||
+            (b.cancellationReason?.toLowerCase().contains('checkout') ?? false);
+        final bool hasPaidMoney = b.depositPaid > 0 ||
+            b.isDepositPaid ||
+            b.isPaid ||
+            b.paymentStatus == 'paid' ||
+            b.paymentStatus == 'refunded' ||
+            b.paymentStatus == 'refund_pending';
+        if (isAbandonedCheckout && !hasPaidMoney) {
+          return false; // Do not show fake abandoned drafts in player history
+        }
+        return true;
+      }
+      return false;
+    }).toList();
 
     return CategorizedUserBookings(
       upcoming: upcoming,

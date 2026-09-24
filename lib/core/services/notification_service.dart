@@ -289,6 +289,22 @@ class NotificationService {
    } catch (_) {}
  }
 
+ // 3.1 SUBSCRIPTION DEEP LINK
+ if (type == 'subscription') {
+   try {
+     GoRouter.of(context).push('/subscription-plans');
+     return;
+   } catch (_) {}
+ }
+
+ // 3.2 OWNER PAYOUT / LEDGER DEEP LINK
+ if (type == 'payout' || type == 'ledger') {
+   try {
+     GoRouter.of(context).push('/owner-ledger');
+     return;
+   } catch (_) {}
+ }
+
  // 4. NOTIFICATIONS CENTER DEEP LINK
  try {
  GoRouter.of(context).push('/notifications');

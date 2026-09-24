@@ -20,10 +20,17 @@ class LocationService {
 
  LocationPermission permission = await Geolocator.checkPermission();
  if (permission == LocationPermission.denied) {
- permission = await Geolocator.requestPermission();
- if (permission == LocationPermission.denied) return (null, null);
+   if (!force) {
+     final cachedGov = prefs.getString('last_resolved_governorate');
+     return (null, cachedGov);
+   }
+   permission = await Geolocator.requestPermission();
+   if (permission == LocationPermission.denied) return (null, null);
  }
- if (permission == LocationPermission.deniedForever) return (null, null);
+ if (permission == LocationPermission.deniedForever) {
+   final cachedGov = prefs.getString('last_resolved_governorate');
+   return (null, cachedGov);
+ }
 
  // Security Guard: Jailbreak and Mock Location Detection with safety timeouts
  try {

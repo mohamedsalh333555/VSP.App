@@ -6,6 +6,10 @@ import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import 'package:go_router/go_router.dart';
+import '../../owner/screens/subscription_plans_screen.dart';
+import '../../owner/screens/owner_ledger_screen.dart';
+import '../../../core/services/notification/notification_ui_helper.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -115,7 +119,7 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: notification.isRead ? null : () => NotificationRepository().markNotificationAsRead(userId, notification.id),
+      onTap: () => _onNotificationTap(context),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: Container(
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
@@ -133,8 +137,12 @@ class _NotificationCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _getIconColor(notification.type).withValues(alpha: 0.1),
+                color: _getIconColor(notification.type).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: _getIconColor(notification.type).withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               child: Icon(
                 _getIcon(notification.type),
@@ -219,10 +227,91 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
+  void _onNotificationTap(BuildContext context) {
+    if (!notification.isRead) {
+      NotificationRepository().markNotificationAsRead(userId, notification.id);
+    }
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final type = notification.type.toLowerCase();
+    final bookingId = notification.bookingId;
+    final metadata = notification.metadata ?? {};
+
+    if (bookingId != null && bookingId.isNotEmpty) {
+      if (type == 'chat') {
+        NotificationUiHelper.navigateToChat(context, bookingId);
+        return;
+      }
+      NotificationUiHelper.navigateToBooking(context, bookingId);
+      return;
+    }
+
+    if (type == 'subscription') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+      );
+      return;
+    }
+
+    if (type == 'payout') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+      );
+      return;
+    }
+
+    final tournamentId = (metadata['tournament_id'] ?? metadata['championship_id'])?.toString();
+    if (tournamentId != null && tournamentId.isNotEmpty) {
+      try {
+        GoRouter.of(context).push('/championship/$tournamentId');
+        return;
+      } catch (_) {}
+    }
+
+    // Default announcement dialog for system / informational notifications
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.card)),
+        title: Row(
+          children: [
+            Icon(_getIcon(notification.type), color: _getIconColor(notification.type), size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _localizeText(context, notification.title),
+                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          _localizeText(context, notification.body),
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isArabic ? 'حسناً' : 'OK', style: const TextStyle(color: VSPColors.accent)),
+          ),
+        ],
+      ),
+    );
+  }
+
   IconData _getIcon(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
+      case 'system':
+      case 'announcement':
+        return Iconsax.shield_tick_copy;
+      case 'subscription':
+        return Iconsax.crown_copy;
+      case 'payout':
+        return Iconsax.wallet_3_copy;
       case 'challenge':
-        return Iconsax.cup_copy;
       case 'result_confirmation':
         return Iconsax.cup_copy;
       case 'booking_confirmed':
@@ -254,12 +343,20 @@ class _NotificationCard extends StatelessWidget {
   }
 
   Color _getIconColor(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
+      case 'system':
+      case 'announcement':
+        return const Color(0xFFF59E0B); // Amber / Gold for system alerts
+      case 'subscription':
+        return VSPColors.proAccent;
+      case 'payout':
+        return VSPColors.accent;
       case 'challenge':
       case 'booking_confirmed':
       case 'stadium_approved':
       case 'public_match_joined':
       case 'match_full':
+      case 'result_confirmation':
         return VSPColors.accent;
       case 'booking_cancelled':
       case 'debt_warning':
@@ -267,8 +364,6 @@ class _NotificationCard extends StatelessWidget {
       case 'account_blocked':
       case 'player_blocked':
         return VSPColors.error;
-      case 'result_confirmation':
-        return VSPColors.accent;
       case 'chat':
         return VSPColors.info;
       case 'booking_new':

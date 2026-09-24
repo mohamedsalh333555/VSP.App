@@ -14,6 +14,14 @@ class OwnerPayoutDialog {
   /// Displays payout request modal with payment destination verification.
   static void show(BuildContext context, double digitalBalance, bool isAr) {
     HapticFeedback.mediumImpact();
+    if (digitalBalance <= 0) {
+      VSPFeedback.showWarning(
+        context,
+        isAr ? 'لا يوجد رصيد إلكتروني متاح للسحب حالياً.' : 'No available digital balance for payout.',
+      );
+      return;
+    }
+
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.userModel;
 

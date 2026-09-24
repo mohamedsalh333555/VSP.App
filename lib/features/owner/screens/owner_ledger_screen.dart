@@ -163,11 +163,12 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                 onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
               ),
 
-              // كارت التحصيل النقدي بالملعب
-              OwnerPitchCashCard(
-                pitchCash: totalPitchCash,
-                isAr: isAr,
-              ),
+              // كارت التحصيل النقدي بالملعب (يظهر فقط عند وجود تحصيل نقدي)
+              if (totalPitchCash > 0)
+                OwnerPitchCashCard(
+                  pitchCash: totalPitchCash,
+                  isAr: isAr,
+                ),
 
                   // قائمة المعاملات
               Expanded(
