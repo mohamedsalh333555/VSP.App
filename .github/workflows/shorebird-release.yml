@@ -27,10 +27,21 @@ jobs:
         uses: shorebirdtech/setup-shorebird@v1
         with:
           cache: true
-      - name: Validate Shorebird configuration
+      - name: Validate required build configuration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         run: |
           test -f shorebird.yaml
           test -n "${SHOREBIRD_TOKEN}"
+          test -n "${SUPABASE_URL}"
+          test -n "${SUPABASE_ANON_KEY}"
+          test -n "${PAYMOB_PUBLIC_KEY}"
+          test -n "${GOOGLE_WEB_CLIENT_ID}"
+          test -n "${GOOGLE_IOS_CLIENT_ID}"
           shorebird doctor
       - name: Decode Android keystore
         env:
@@ -49,9 +60,22 @@ jobs:
       - name: Shorebird Release
         uses: shorebirdtech/shorebird-release@v1
         id: shorebird-release
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         with:
           platform: android
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          args: "--verbose"
+          args: >-
+            --verbose
+            --
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+            --dart-define=PAYMOB_PUBLIC_KEY=${{ secrets.PAYMOB_PUBLIC_KEY }}
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+            --dart-define=GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}
       - name: Print release version
         run: echo "Shorebird release: ${{ steps.shorebird-release.outputs.release-version }}"
