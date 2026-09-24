@@ -344,8 +344,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
  icon: Iconsax.location_copy,
  title: isArabic ? 'الموقع والمحافظة' : 'Location & Governorate',
  subtitle: isArabic
- ? 'المحافظة الحالية: $displayGov (اضغط للتغيير)'
- : 'Current: $displayGov (Tap to change)',
+ ? 'المحافظة الحالية: $displayGov'
+ : 'Current: $displayGov',
  onTap: () => _showLocationPicker(context, auth),
  );
  }),
@@ -363,8 +363,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
  index: 6,
  child: VSPMenuItem(
  icon: Iconsax.security_safe_copy,
- title: l10n.privacy,
- subtitle: isArabic ? 'الشروط والأحكام وسياسة الخصوصية (PDPL 2020)' : l10n.privacyPolicy,
+ title: isArabic ? 'الشروط والخصوصية' : l10n.privacy,
+ subtitle: isArabic ? 'الشروط والأحكام وسياسة الخصوصية' : l10n.privacyPolicy,
  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsAndPrivacyScreen())),
  ),
  ),
