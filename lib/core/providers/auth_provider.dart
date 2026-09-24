@@ -42,6 +42,7 @@ class AuthProvider with ChangeNotifier {
   bool _dataFetchError = false;
   bool _isGhostUser = false;
   bool _preserveError = false;
+  bool _locationUpdateInProgress = false;
 
   // Getters
   @Deprecated('Use currentUser instead')
@@ -466,14 +467,23 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> updateUserLocation({bool force = false}) async {
-    final newGov = await determineGPSGovernorate(force: force);
-    if (newGov != null &&
-        _userModel != null &&
-        _userModel!.governorate != newGov) {
-      await updateProfile({'governorate': newGov});
-      return true;
+    // RootScreen and PlayerHomeScreen can both request location during startup.
+    // Serialize the operation so the OS permission dialog can never be triggered
+    // concurrently by two startup paths.
+    if (_locationUpdateInProgress) return false;
+    _locationUpdateInProgress = true;
+    try {
+      final newGov = await determineGPSGovernorate(force: force);
+      if (newGov != null &&
+          _userModel != null &&
+          _userModel!.governorate != newGov) {
+        await updateProfile({'governorate': newGov});
+        return true;
+      }
+      return newGov != null;
+    } finally {
+      _locationUpdateInProgress = false;
     }
-    return newGov != null;
   }
 
   void clearError() {
