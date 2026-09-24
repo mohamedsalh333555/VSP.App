@@ -39,6 +39,7 @@ class Championship {
 
  // TOURNAMENT Lifecycle
  final String status; // 'open', 'ongoing', 'completed'
+ final bool isApproved;
  final String? championTeamId;
  final String? championTeamName;
 
@@ -84,6 +85,7 @@ class Championship {
  this.qualifyingPerGroup = 2,
  this.isTwoLegs = false,
  this.status = 'open',
+ this.isApproved = false,
  this.championTeamId,
  this.championTeamName,
  this.paidTeams = const [],
@@ -148,6 +150,7 @@ class Championship {
  qualifyingPerGroup: int.tryParse((data['qualifying_per_group'] ?? data['qualifyingPerGroup'] ?? 2).toString()) ?? 2,
  isTwoLegs: data['is_two_legs'] == true || data['isTwoLegs'] == true,
  status: data['status']?.toString() ?? 'open',
+ isApproved: data['is_approved'] == true || data['isApproved'] == true,
  championTeamId: data['champion_team_id'] ?? data['championTeamId']?.toString(),
  championTeamName: data['champion_team_name'] ?? data['championTeamName']?.toString(),
  paidTeams: (data['paid_teams'] as List? ?? data['paidTeams'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
@@ -207,6 +210,7 @@ class Championship {
  int? qualifyingPerGroup,
  bool? isTwoLegs,
  String? status,
+ bool? isApproved,
  String? championTeamId,
  String? championTeamName,
  List<String>? paidTeams,
@@ -246,6 +250,7 @@ class Championship {
  qualifyingPerGroup: qualifyingPerGroup ?? this.qualifyingPerGroup,
  isTwoLegs: isTwoLegs ?? this.isTwoLegs,
  status: status ?? this.status,
+ isApproved: isApproved ?? this.isApproved,
  championTeamId: championTeamId ?? this.championTeamId,
  championTeamName: championTeamName ?? this.championTeamName,
  paidTeams: paidTeams ?? this.paidTeams,
@@ -321,6 +326,7 @@ class Championship {
  'fairPlayScoring': fairPlayScoring,
  },
  'status': status,
+ 'is_approved': isApproved,
  'champion_team_id': championTeamId,
  'championTeamId': championTeamId,
  'champion_team_name': championTeamName,
