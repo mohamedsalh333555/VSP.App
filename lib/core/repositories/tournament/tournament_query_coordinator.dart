@@ -84,6 +84,43 @@ class TournamentQueryCoordinator {
     }
   }
 
+  /// Fetch championships once via direct REST query.
+  Future<List<Championship>> getChampionships({
+    String? governorate,
+    String? sportType,
+    bool isOwner = false,
+    String? ownerId,
+  }) async {
+    try {
+      final List<dynamic> response;
+      if (isOwner && ownerId != null) {
+        response = await _supabase
+            .from('championships')
+            .select()
+            .eq('owner_id', ownerId)
+            .order('created_at', ascending: false)
+            .limit(50);
+      } else {
+        response = await _supabase
+            .from('championships')
+            .select()
+            .eq('is_approved', true)
+            .order('created_at', ascending: false)
+            .limit(50);
+      }
+      return parseChampionshipsList(
+        response,
+        governorate: governorate,
+        sportType: sportType,
+        isOwner: isOwner,
+        ownerId: ownerId,
+      );
+    } catch (e, s) {
+      VSPLogger.e('Error fetching championships via REST', e, s);
+      return [];
+    }
+  }
+
   /// Fetch single championship by ID.
   Future<Championship?> getChampionshipById(String id) async {
     try {

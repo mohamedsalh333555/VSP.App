@@ -86,6 +86,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     }
   }
 
+  Future<void> _fetchOwnerChampionships(String uid) async {
+    try {
+      final champs = await TournamentRepository()
+          .getChampionships(isOwner: true, ownerId: uid);
+      if (mounted) {
+        setState(() {
+          _ownerChampionships = champs;
+        });
+      }
+    } catch (e) {
+      VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -179,6 +193,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             }
             await Future.wait([
               _fetchFinancialSummary(uid),
+              _fetchOwnerChampionships(uid),
               if (context.mounted)
                 Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true),
               auth.refreshProfile(),
@@ -275,7 +290,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   builder: (context) {
                     final now = DateTime.now();
                     final upcoming = _ownerChampionships
-                        .where((c) => c.isApproved && c.startDate.isAfter(now))
+                        .where((c) =>
+                            c.isApproved &&
+                            c.status.toLowerCase() != 'completed' &&
+                            (c.status.toLowerCase() == 'open' ||
+                                c.status.toLowerCase() == 'ongoing' ||
+                                c.endDate.isAfter(now)))
                         .toList()
                       ..sort((a, b) => a.startDate.compareTo(b.startDate));
 

@@ -97,6 +97,19 @@ class TournamentRepository {
         ownerId: ownerId,
       );
 
+  Future<List<Championship>> getChampionships({
+    String? governorate,
+    String? sportType,
+    bool isOwner = false,
+    String? ownerId,
+  }) =>
+      queryCoord.getChampionships(
+        governorate: governorate,
+        sportType: sportType,
+        isOwner: isOwner,
+        ownerId: ownerId,
+      );
+
   Future<Championship?> getChampionshipById(String id) =>
       queryCoord.getChampionshipById(id);
 

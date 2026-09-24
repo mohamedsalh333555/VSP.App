@@ -60,9 +60,17 @@ class NotificationService {
 
  // 1. Get & store token
  try {
- await getToken();
+   final token = await getToken();
+   final user = Supabase.instance.client.auth.currentUser;
+   if (token != null && user != null) {
+     await Supabase.instance.client
+         .from('users')
+         .update({'fcm_token': token})
+         .eq('id', user.id);
+     VSPLogger.i('Silently stored initialized FCM token for user: ${user.id}');
+   }
  } catch (e) {
- VSPLogger.w('Failed to initialize token: $e');
+   VSPLogger.w('Failed to initialize token: $e');
  }
 
  // 2. Token refresh listener
@@ -223,10 +231,14 @@ class NotificationService {
  final context = _navigatorKey?.currentContext;
  if (context == null) return;
 
- final String? type = data['type'];
- final String? bookingId = data['bookingId'];
- final String? teamId = data['teamId'];
- final String? tournamentId = data['tournamentId'];
+ final String? type = data['type']?.toString();
+ final String? bookingId = (data['bookingId'] ?? data['booking_id'])?.toString();
+ final String? teamId = (data['teamId'] ?? data['team_id'])?.toString();
+ final String? tournamentId = (data['tournamentId'] ??
+         data['tournament_id'] ??
+         data['championship_id'] ??
+         data['championshipId'])
+     ?.toString();
 
  VSPLogger.i('Handling notification click with GoRouter: type=$type, bookingId=$bookingId, teamId=$teamId, tournamentId=$tournamentId');
 
