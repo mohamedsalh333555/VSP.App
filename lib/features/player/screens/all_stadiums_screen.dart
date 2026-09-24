@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/skeleton_loader.dart';
@@ -143,12 +142,9 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           // 1. Search Bar & Quick Filters
           _buildSearchHeader(context, isArabic),
 
-          // 2. Governorate Filter Chips
-          _buildGovernorateFilterRow(context, isArabic),
-
           const SizedBox(height: 8),
 
-          // 3. Stadiums List
+          // 2. Stadiums List
           Expanded(
             child: Consumer<StadiumProvider>(
               builder: (context, provider, _) {
@@ -317,57 +313,6 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildGovernorateFilterRow(BuildContext context, bool isArabic) {
-    return Container(
-      height: 44,
-      color: VSPColors.surface.withValues(alpha: 0.7),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        itemCount: _governorates.length,
-        itemBuilder: (context, index) {
-          final gov = _governorates[index];
-          final isSelected = _selectedGovernorate.toLowerCase() == gov.toLowerCase();
-          final arabicLabel = gov == 'All'
-              ? (isArabic ? 'الكل' : 'All')
-              : (EgyptGovernorates.governorateToArabic[gov] ?? gov);
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ChoiceChip(
-              label: Text(
-                isArabic ? arabicLabel : gov,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : VSPColors.textPrimary,
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                ),
-              ),
-              selected: isSelected,
-              selectedColor: VSPColors.accent,
-              backgroundColor: VSPColors.surfaceAlt,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? VSPColors.accent : VSPColors.divider,
-                  width: 0.8,
-                ),
-              ),
-              onSelected: (selected) {
-                if (selected) {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _selectedGovernorate = gov;
-                  });
-                }
-              },
-            ),
-          );
-        },
       ),
     );
   }
