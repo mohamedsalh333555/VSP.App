@@ -11,17 +11,19 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   final String currentUserId;
   final String currentUserRole;
   final UserRepository? _userRepository;
+  final bool isArabic;
 
   UserSearchDelegate({
     required this.currentUserId,
     required this.currentUserRole,
     UserRepository? userRepository,
+    this.isArabic = false,
   }) : _userRepository = userRepository;
 
   UserRepository get _userRepo => _userRepository ?? UserRepository();
 
   @override
-  String? get searchFieldLabel => 'بحث عن لاعبين...';
+  String? get searchFieldLabel => isArabic ? 'بحث عن لاعبين...' : 'Search Players...';
 
   @override
   ThemeData appBarTheme(BuildContext context) {
