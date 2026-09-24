@@ -27,6 +27,7 @@ class CreateTeamSheet extends StatefulWidget {
 
 class _CreateTeamSheetState extends State<CreateTeamSheet> {
   final _nameController = TextEditingController();
+  final _bioController = TextEditingController();
   String _selectedSport = 'Football';
   final List<UserModel> _teamMembers = [];
   bool _isSubmitting = false;
@@ -36,6 +37,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   @override
   void dispose() {
     _nameController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
@@ -145,6 +147,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
       final teamData = {
         'name': name,
+        'bio': _bioController.text.trim(),
         'captainName': auth.userModel?.name ?? 'Captain',
         'captainPhone': PhoneUtils.normalize(auth.userModel?.phone ?? ''),
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
@@ -263,6 +266,27 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     ),
                   ),
                   const SizedBox(height: VSPSpacing.md),
+
+                  // Team bio
+                  Text('نبذة عن الفريق', style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: VSPSpacing.sm),
+                  TextField(
+                    controller: _bioController,
+                    minLines: 2,
+                    maxLines: 4,
+                    maxLength: 160,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      hintText: 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...',
+                      filled: true,
+                      fillColor: VSPColors.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: VSPSpacing.lg),
 
                   // Sport type dropdown
                   Text(l10n.sportsType, style: Theme.of(context).textTheme.labelMedium),
