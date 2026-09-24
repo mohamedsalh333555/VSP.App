@@ -87,8 +87,10 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      body: SafeArea(
+        bottom: true,
+        child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 48),
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
@@ -101,7 +103,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             _buildPlanCard(
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isArabic ? '500 ج.م' : '500 EGP',
-              periodText: isArabic ? 'شهرياً' : 'Monthly',
+              periodText: isTrialOrBasic && userModel?.isInActiveTrial == true
+                  ? (isArabic ? 'شهرياً بعد انتهاء التجربة' : 'Monthly after trial ends')
+                  : (isArabic ? 'شهرياً' : 'Monthly'),
               badgeText: isArabic ? 'أول سنة مجاناً' : 'First Year Free',
               badgeColor: VSPColors.accent,
               isHighlighted: false,
