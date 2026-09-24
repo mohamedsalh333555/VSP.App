@@ -139,20 +139,6 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   }
 
   Future<void> _executeStartTournament() async {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final now = DateTime.now();
-
-    if (now.isBefore(_currentChampionship.startDate)) {
-      final formattedDate = AppDateFormatter.formatFullDate(_currentChampionship.startDate, isArabic ? 'ar' : 'en');
-      VSPFeedback.showError(
-        context,
-        isArabic
-            ? 'لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.'
-            : 'Tournament cannot be started before its official date ($formattedDate).',
-      );
-      return;
-    }
-
     final teamCount = _currentChampionship.joinedTeams.length;
 
     if (teamCount < _currentChampionship.maxTeams) {
@@ -185,7 +171,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, 'Error: $e');
+        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

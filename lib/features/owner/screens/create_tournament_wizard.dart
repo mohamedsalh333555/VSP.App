@@ -116,7 +116,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _prizeController.text = savedPrize;
     }
     final savedType = draft['type'] as String?;
-    if (savedType != null && savedType.isNotEmpty) {
+    if (savedType != null && savedType.isNotEmpty && widget.preselectedType == null) {
       _selectedType = savedType;
     }
     final savedTeams = draft['teams'] as String?;
@@ -343,13 +343,22 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       );
 
       if (result.success && mounted) {
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
         if (isEditing) {
-          VSPFeedback.showSuccess(context, 'Tournament updated successfully.');
+          VSPFeedback.showSuccess(
+            context,
+            isAr ? 'تم تحديث بيانات البطولة بنجاح.' : 'Tournament updated successfully.',
+          );
           Navigator.pop(context);
         } else {
           await _clearTournamentDraft();
           if (!mounted) return;
-          VSPFeedback.showSuccess(context, 'Tournament created successfully.');
+          VSPFeedback.showSuccess(
+            context,
+            isAr
+                ? 'تم إنشاء البطولة بنجاح، وهي قيد مراجعة الإدارة.'
+                : 'Tournament created successfully and pending review.',
+          );
           Navigator.pop(context);
 
           try {

@@ -5,6 +5,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../player/widgets/championship_details/championship_standings_table.dart';
 import '../widgets/brackets/tournament_champion_banner.dart';
 import '../widgets/brackets/tournament_match_card.dart';
 import '../widgets/brackets/tournament_round_auto_schedule_sheet.dart';
@@ -40,6 +41,10 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final isLeague = widget.championship.type == 'League';
+    final isStandingsEligible = isLeague || widget.championship.type == 'GroupsAndKnockout';
+
     return StreamBuilder<List<TournamentMatch>>(
       key: ValueKey(_refreshKey),
       stream: TournamentRepository().getTournamentMatches(widget.championship.id),
@@ -96,10 +101,13 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           groupedMatches.putIfAbsent(match.roundIndex, () => []).add(match);
         }
 
-        final sortedRounds = groupedMatches.keys.toList()..sort((a, b) => b.compareTo(a));
+        final sortedRounds = groupedMatches.keys.toList()
+          ..sort((a, b) => isLeague ? a.compareTo(b) : b.compareTo(a));
+
+        final totalTabs = sortedRounds.length + (isStandingsEligible ? 1 : 0);
 
         return DefaultTabController(
-          length: sortedRounds.length,
+          length: totalTabs,
           child: Scaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(
@@ -107,66 +115,96 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               elevation: 0,
               centerTitle: true,
               leading: const VSPBackButton(),
-              title: Text(l10n.tournamentBrackets, style: Theme.of(context).textTheme.displaySmall),
+              title: Text(
+                isLeague
+                    ? (isArabic ? 'جدول ومباريات الدوري' : 'League Matches & Standings')
+                    : l10n.tournamentBrackets,
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
               bottom: TabBar(
                 isScrollable: true,
                 indicatorColor: VSPColors.accent,
                 labelColor: VSPColors.accent,
                 unselectedLabelColor: VSPColors.textSecondary,
-                tabs: sortedRounds.map((roundIdx) {
-                  return Tab(text: _getRoundLabel(context, roundIdx, sortedRounds.length));
-                }).toList(),
+                tabs: [
+                  if (isStandingsEligible)
+                    Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.award_copy, size: 16),
+                          const SizedBox(width: 6),
+                          Text(isArabic ? 'جدول الترتيب' : 'Standings'),
+                        ],
+                      ),
+                    ),
+                  ...sortedRounds.map((roundIdx) {
+                    return Tab(text: _getRoundLabel(context, roundIdx, sortedRounds.length));
+                  }),
+                ],
               ),
             ),
             body: TabBarView(
-              children: sortedRounds.map((roundIdx) {
-                final roundMatches = groupedMatches[roundIdx]!;
-                final showChampion = roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null;
-                final showOwnerBanner = widget.isOwner;
-                final headerOffset = (showChampion ? 1 : 0) + (showOwnerBanner ? 1 : 0);
-                final totalItems = headerOffset + roundMatches.length;
-                final roundName = _getRoundLabel(context, roundIdx, sortedRounds.length);
+              children: [
+                if (isStandingsEligible)
+                  RefreshIndicator(
+                    onRefresh: () async => _refreshMatches(),
+                    color: VSPColors.accent,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+                      child: ChampionshipStandingsSection(championship: widget.championship),
+                    ),
+                  ),
+                ...sortedRounds.map((roundIdx) {
+                  final roundMatches = groupedMatches[roundIdx]!;
+                  final showChampion = !isLeague && roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null;
+                  final showOwnerBanner = widget.isOwner;
+                  final headerOffset = (showChampion ? 1 : 0) + (showOwnerBanner ? 1 : 0);
+                  final totalItems = headerOffset + roundMatches.length;
+                  final roundName = _getRoundLabel(context, roundIdx, sortedRounds.length);
 
-                return ListView.builder(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
-                  itemCount: totalItems,
-                  itemBuilder: (context, index) {
-                    var currentIndex = index;
-                    if (showChampion) {
-                      if (currentIndex == 0) {
-                        final winnerName = roundMatches.first.winnerId == roundMatches.first.homeTeamId
-                            ? (roundMatches.first.homeTeamName ?? 'Winner')
-                            : (roundMatches.first.awayTeamName ?? 'Winner');
-                        return TournamentChampionBanner(championName: winnerName);
+                  return ListView.builder(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+                    itemCount: totalItems,
+                    itemBuilder: (context, index) {
+                      var currentIndex = index;
+                      if (showChampion) {
+                        if (currentIndex == 0) {
+                          final winnerName = roundMatches.first.winnerId == roundMatches.first.homeTeamId
+                              ? (roundMatches.first.homeTeamName ?? 'Winner')
+                              : (roundMatches.first.awayTeamName ?? 'Winner');
+                          return TournamentChampionBanner(championName: winnerName);
+                        }
+                        currentIndex--;
                       }
-                      currentIndex--;
-                    }
 
-                    if (showOwnerBanner) {
-                      if (currentIndex == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: TournamentRoundAutoScheduleBanner(
-                            championship: widget.championship,
-                            roundIndex: roundIdx,
-                            matches: roundMatches,
-                            roundName: roundName,
-                            onRefresh: _refreshMatches,
-                          ),
-                        );
+                      if (showOwnerBanner) {
+                        if (currentIndex == 0) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: TournamentRoundAutoScheduleBanner(
+                              championship: widget.championship,
+                              roundIndex: roundIdx,
+                              matches: roundMatches,
+                              roundName: roundName,
+                              onRefresh: _refreshMatches,
+                            ),
+                          );
+                        }
+                        currentIndex--;
                       }
-                      currentIndex--;
-                    }
 
-                    return TournamentMatchCard(
-                      match: roundMatches[currentIndex],
-                      championship: widget.championship,
-                      isOwner: widget.isOwner,
-                      onRefresh: _refreshMatches,
-                    );
-                  },
-                );
-              }).toList(),
+                      return TournamentMatchCard(
+                        match: roundMatches[currentIndex],
+                        championship: widget.championship,
+                        isOwner: widget.isOwner,
+                        onRefresh: _refreshMatches,
+                      );
+                    },
+                  );
+                }),
+              ],
             ),
           ),
         );
@@ -177,6 +215,10 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
   String _getRoundLabel(BuildContext context, int roundIndex, int totalRounds) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    if (widget.championship.type == 'League') {
+      return isArabic ? 'الجولة ${roundIndex + 1}' : 'Round ${roundIndex + 1}';
+    }
 
     switch (roundIndex) {
       case 0:

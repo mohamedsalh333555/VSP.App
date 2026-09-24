@@ -116,10 +116,11 @@ class TournamentMatchCoordinator {
                 .eq('id', nextMatchId);
           }
         }
-      } else {
-        // ── Final Match: Crown the Champion ──
-        if (winnerId != null) {
-          final champRes = await _supabase
+      }
+
+      // ── Final Match Check: Crown the Champion ONLY when there is no next match (Final Round) ──
+      if (nextMatchId == null && winnerId != null) {
+        final champRes = await _supabase
               .from('championships')
               .select('champion_team_id')
               .eq('id', championshipId)
@@ -166,12 +167,11 @@ class TournamentMatchCoordinator {
             await _onChampionCrowned(winnerId);
           }
         }
+      } catch (e) {
+        debugPrint('Error updating tournament match score: $e');
+        rethrow;
       }
-    } catch (e) {
-      debugPrint('Error updating tournament match score: $e');
-      rethrow;
     }
-  }
 
   /// Update scheduled time for a single match.
   Future<void> updateMatchScheduledTime({

@@ -252,6 +252,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   availableBalance: availableBalance,
                   cashThisMonth: metrics.pitchCashRevenue,
                   onlineThisMonth: metrics.digitalVspBalance,
+                  timePeriod: _selectedTimePeriod,
                   onOpenLedger: () {
                     Navigator.push(
                       context,
@@ -265,124 +266,128 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
                 const SizedBox(height: 16),
 
-                // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده)
-                OwnerTodayPitchScheduleCard(
-                  allBookings: allBookings,
-                  stadiums: stadiums,
-                  selectedStadiumFilter: _selectedStadiumFilter,
-                  isArabic: isArabic,
-                  onNavigateToBookings: () {
-                    if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(3);
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
-                      );
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
+                // الأقسام الإضافية تظهر فقط للباقة الاحترافية (Pro) بينما باقة الـ 500 ج (التجربة المجانية) مخصصة لمركز مالي صافٍ
+                if (isProOwner) ...[
+                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده)
+                  OwnerTodayPitchScheduleCard(
+                    allBookings: allBookings,
+                    stadiums: stadiums,
+                    selectedStadiumFilter: _selectedStadiumFilter,
+                    isArabic: isArabic,
+                    onNavigateToBookings: () {
+                      if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(3);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // ج. البطولة القادمة: لا تظهر للمالك إلا بعد اعتماد الإدارة.
-                Builder(
-                  builder: (context) {
-                    final now = DateTime.now();
-                    final upcoming = _ownerChampionships
-                        .where((c) =>
-                            c.isApproved &&
-                            c.status.toLowerCase() != 'completed' &&
-                            (c.status.toLowerCase() == 'open' ||
-                                c.status.toLowerCase() == 'ongoing' ||
-                                c.endDate.isAfter(now)))
-                        .toList()
-                      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+                  // ج. البطولة القادمة: لا تظهر للمالك إلا بعد اعتماد الإدارة.
+                  Builder(
+                    builder: (context) {
+                      final now = DateTime.now();
+                      final upcoming = _ownerChampionships
+                          .where((c) =>
+                              c.isApproved &&
+                              c.status.toLowerCase() != 'completed' &&
+                              (c.status.toLowerCase() == 'open' ||
+                                  c.status.toLowerCase() == 'ongoing' ||
+                                  c.endDate.isAfter(now)))
+                          .toList()
+                        ..sort((a, b) => a.startDate.compareTo(b.startDate));
 
-                    if (upcoming.isEmpty) return const SizedBox.shrink();
-                    final championship = upcoming.first;
+                      if (upcoming.isEmpty) return const SizedBox.shrink();
+                      final championship = upcoming.first;
 
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.card),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.emoji_events_outlined, color: VSPColors.accent, size: 20),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  isArabic ? 'البطولة القادمة' : 'Upcoming Tournament',
-                                  style: const TextStyle(
-                                    color: VSPColors.textPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.card),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.emoji_events_outlined, color: VSPColors.accent, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    isArabic ? 'البطولة القادمة' : 'Upcoming Tournament',
+                                    style: const TextStyle(
+                                      color: VSPColors.textPrimary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Text(
-                                isArabic ? 'معتمدة' : 'Approved',
-                                style: const TextStyle(
-                                  color: VSPColors.accent,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                                Text(
+                                  isArabic ? 'معتمدة' : 'Approved',
+                                  style: const TextStyle(
+                                    color: VSPColors.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              championship.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: VSPColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            championship.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: VSPColors.textPrimary,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            isArabic
-                                ? 'تبدأ ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
-                                : 'Starts ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} teams',
-                            style: const TextStyle(
-                              color: VSPColors.textSecondary,
-                              fontSize: 12,
+                            const SizedBox(height: 6),
+                            Text(
+                              isArabic
+                                  ? 'تبدأ ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
+                                  : 'Starts ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} teams',
+                              style: const TextStyle(
+                                color: VSPColors.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-
-                // د. شريط الإجراء التشغيلي الفوري للحجوزات المعلقة
-                OwnerPendingActionsBar(
-                  allBookings: allBookings,
-                  isArabic: isArabic,
-                  onActionTap: () {
-                    if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(3);
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                          ],
+                        ),
                       );
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
-                _buildQuickOperationalActions(context, isArabic),
-                const SizedBox(height: 32),
+                  // د. شريط الإجراء التشغيلي الفوري للحجوزات المعلقة
+                  OwnerPendingActionsBar(
+                    allBookings: allBookings,
+                    isArabic: isArabic,
+                    onActionTap: () {
+                      if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(3);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
+                  _buildQuickOperationalActions(context, isArabic),
+                  const SizedBox(height: 32),
+                ],
               ],
             ),
           ),

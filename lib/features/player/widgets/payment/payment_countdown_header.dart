@@ -6,6 +6,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 class PaymentCountdownHeader extends StatelessWidget {
   final int remainingSeconds;
   final double amountToPay;
+  final double? totalAmountWithFees;
   final bool isChampionship;
   final bool hasDeposit;
   final String currency;
@@ -15,6 +16,7 @@ class PaymentCountdownHeader extends StatelessWidget {
     super.key,
     required this.remainingSeconds,
     required this.amountToPay,
+    this.totalAmountWithFees,
     required this.isChampionship,
     required this.hasDeposit,
     required this.currency,
@@ -29,6 +31,11 @@ class PaymentCountdownHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double displayAmount = totalAmountWithFees ?? amountToPay;
+    final String formattedAmount = (displayAmount % 1 == 0)
+        ? displayAmount.toInt().toString()
+        : displayAmount.toStringAsFixed(1);
+
     return Column(
       children: [
         // 1. Hold Countdown Timer Banner (only for pitch bookings)
@@ -87,15 +94,13 @@ class PaymentCountdownHeader extends StatelessWidget {
             children: [
               Text(
                 isChampionship
-                    ? (isArabic ? 'رسوم الاشتراك المطلوبة' : 'Entry Fee Required')
-                    : (hasDeposit
-                        ? (isArabic ? 'عربون الحجز المطلوب أونلاين' : 'Upfront Deposit Required')
-                        : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount')),
+                    ? (isArabic ? 'إجمالي الاشتراك المطلوب الآن' : 'Total Entry Fee Due Now')
+                    : (isArabic ? 'المبلغ المطلوب دفعه الآن' : 'Total Amount Due Now'),
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: VSPSpacing.xs),
               Text(
-                '${amountToPay.toInt()} $currency',
+                '$formattedAmount $currency',
                 style: VSPTypography.numericStyle.copyWith(
                   color: VSPColors.accent,
                   fontSize: 34,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -28,9 +28,12 @@ class TournamentMatchCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final hasSchedule = match.scheduledTime != null;
-    final isTimePassed = hasSchedule && DateTime.now().isAfter(match.scheduledTime!);
     final tbdText = isAr ? 'لم يحدد' : 'TBD';
     final winnerName = match.winnerId == match.homeTeamId ? (match.homeTeamName ?? tbdText) : (match.awayTeamName ?? tbdText);
+
+    final String scheduleText = hasSchedule
+        ? '${AppDateFormatter.formatDayMonth(match.scheduledTime!, isAr ? "ar" : "en")}، ${AppDateFormatter.formatTime(match.scheduledTime!, isAr ? "ar" : "en")}'
+        : l10n.notScheduled;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -51,7 +54,7 @@ class TournamentMatchCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  hasSchedule ? DateFormat('MMM d, hh:mm a').format(match.scheduledTime!) : l10n.notScheduled,
+                  scheduleText,
                   style: TextStyle(
                     color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary,
                     fontSize: 12,
@@ -112,27 +115,21 @@ class TournamentMatchCard extends StatelessWidget {
                   : (isAr ? 'قيد الانتظار' : 'Pending'),
               style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54),
             ),
-            trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null
+            trailing: isOwner && match.homeTeamId != null && match.awayTeamId != null
                 ? IconButton(
+                    tooltip: match.winnerId != null
+                        ? (isAr ? 'تعديل النتيجة' : 'Edit Score')
+                        : (isAr ? 'تسجيل النتيجة' : 'Enter Score'),
                     icon: Icon(
-                      Iconsax.edit_copy,
-                      color: (!hasSchedule || !isTimePassed)
-                          ? VSPColors.textSecondary.withValues(alpha: 0.5)
-                          : VSPColors.accent,
+                      match.winnerId != null ? Iconsax.edit_2_copy : Iconsax.edit_copy,
+                      color: VSPColors.accent,
                       size: 18,
                     ),
                     onPressed: () {
                       if (!hasSchedule) {
                         VSPFeedback.showError(
-                            context, isAr ? 'يجب تحديد موعد المباراة أولاً!' : 'Match must be scheduled first!');
-                        return;
-                      }
-                      if (!isTimePassed) {
-                        VSPFeedback.showError(
                           context,
-                          isAr
-                              ? 'لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول!'
-                              : 'Cannot enter score before scheduled match time!',
+                          isAr ? 'يجب تحديد موعد المباراة أولاً!' : 'Match must be scheduled first!',
                         );
                         return;
                       }

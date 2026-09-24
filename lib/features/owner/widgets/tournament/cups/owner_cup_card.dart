@@ -77,10 +77,18 @@ class OwnerCupCard extends StatelessWidget {
                         tournament.name,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$translatedSport • $translatedCategory',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Text(
+                            '$translatedSport • $translatedCategory',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                          ),
+                          _buildStatusBadge(context, tournament, isArabic),
+                        ],
                       ),
                     ],
                   ),
@@ -187,6 +195,51 @@ class OwnerCupCard extends StatelessWidget {
           style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+
+  Widget _buildStatusBadge(BuildContext context, Championship tourney, bool isArabic) {
+    if (!tourney.isApproved) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: VSPColors.warning.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.5), width: 0.5),
+        ),
+        child: Text(
+          isArabic ? 'قيد المراجعة' : 'Pending',
+          style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    final status = tourney.status.toLowerCase();
+    final Color badgeColor;
+    final String label;
+
+    if (status == 'ongoing') {
+      badgeColor = VSPColors.accent;
+      label = isArabic ? 'جارية' : 'Ongoing';
+    } else if (status == 'completed' || status == 'finished') {
+      badgeColor = VSPColors.textSecondary;
+      label = isArabic ? 'مكتملة' : 'Completed';
+    } else {
+      badgeColor = VSPColors.success;
+      label = isArabic ? 'مفتوحة للتسجيل' : 'Open';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.5), width: 0.5),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_feedback.dart';
 
 /// كارت المالية والتشغيل الموحد للباقتين (فحمي وأخضر نيون فقط)
 class OwnerOperationalFinanceCard extends StatelessWidget {
   final double availableBalance;
   final double cashThisMonth;
   final double onlineThisMonth;
+  final String timePeriod;
   final VoidCallback onOpenLedger;
   final VoidCallback onRequestPayout;
   final bool isArabic;
@@ -17,6 +19,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required this.availableBalance,
     required this.cashThisMonth,
     required this.onlineThisMonth,
+    this.timePeriod = 'today',
     required this.onOpenLedger,
     required this.onRequestPayout,
     required this.isArabic,
@@ -117,12 +120,19 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
 
               // زر سحب الأموال الموحد في نفس المكان لكلا الباقتين
               GestureDetector(
-                onTap: hasBalance
-                    ? () {
-                        HapticFeedback.mediumImpact();
-                        onRequestPayout();
-                      }
-                    : null,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  if (hasBalance) {
+                    onRequestPayout();
+                  } else {
+                    VSPFeedback.showWarning(
+                      context,
+                      isArabic
+                          ? 'لا يوجد رصيد متاح للسحب حالياً'
+                          : 'No balance available for payout right now',
+                    );
+                  }
+                },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
@@ -147,9 +157,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        hasBalance
-                            ? (isArabic ? 'طلب سحب' : 'Payout')
-                            : (isArabic ? 'الرصيد 0' : '0 EGP'),
+                        isArabic ? 'طلب سحب' : 'Payout',
                         style: TextStyle(
                           color: hasBalance ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
                           fontSize: 12,
@@ -167,70 +175,90 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
           const Divider(color: VSPColors.divider, height: 1, thickness: 1),
           const SizedBox(height: 14),
 
-          // ── السطر السفلي: كاش هذا الشهر وأونلاين هذا الشهر ──
-          Row(
-            children: [
-              // كاش هذا الشهر
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'كاش هذا الشهر' : 'Cash This Month',
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${cashThisMonth.toStringAsFixed(0)} $currencyLabel',
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          // ── السطر السفلي: كاش وأونلاين الفترة الزمنية المحددة ──
+          Builder(
+            builder: (context) {
+              String cashLabel;
+              String onlineLabel;
+              if (timePeriod == 'today') {
+                cashLabel = isArabic ? 'كاش اليوم' : 'Cash Today';
+                onlineLabel = isArabic ? 'أونلاين اليوم' : 'Online Today';
+              } else if (timePeriod == 'week') {
+                cashLabel = isArabic ? 'كاش هذا الأسبوع' : 'Cash This Week';
+                onlineLabel = isArabic ? 'أونلاين هذا الأسبوع' : 'Online This Week';
+              } else if (timePeriod == 'month') {
+                cashLabel = isArabic ? 'كاش هذا الشهر' : 'Cash This Month';
+                onlineLabel = isArabic ? 'أونلاين هذا الشهر' : 'Online This Month';
+              } else {
+                cashLabel = isArabic ? 'إجمالي الكاش' : 'Total Cash';
+                onlineLabel = isArabic ? 'إجمالي الأونلاين' : 'Total Online';
+              }
 
-              Container(
-                width: 1,
-                height: 28,
-                color: VSPColors.divider,
-              ),
-              const SizedBox(width: 16),
+              return Row(
+                children: [
+                  // كاش الفترة
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cashLabel,
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${cashThisMonth.toStringAsFixed(0)} $currencyLabel',
+                          style: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-              // أونلاين هذا الشهر
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'أونلاين هذا الشهر' : 'Online This Month',
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Container(
+                    width: 1,
+                    height: 28,
+                    color: VSPColors.divider,
+                  ),
+                  const SizedBox(width: 16),
+
+                  // أونلاين الفترة
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          onlineLabel,
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${onlineThisMonth.toStringAsFixed(0)} $currencyLabel',
+                          style: const TextStyle(
+                            color: VSPColors.textPrimary,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${onlineThisMonth.toStringAsFixed(0)} $currencyLabel',
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

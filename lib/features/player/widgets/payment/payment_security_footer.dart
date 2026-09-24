@@ -9,6 +9,7 @@ class PaymentSecurityFooter extends StatelessWidget {
   final bool isAwaitingWebhook;
   final bool isArabic;
   final bool canProceed;
+  final double? totalAmount;
   final VoidCallback onProceed;
 
   const PaymentSecurityFooter({
@@ -17,6 +18,7 @@ class PaymentSecurityFooter extends StatelessWidget {
     required this.isAwaitingWebhook,
     required this.isArabic,
     required this.canProceed,
+    this.totalAmount,
     required this.onProceed,
   });
 
@@ -64,7 +66,13 @@ class PaymentSecurityFooter extends StatelessWidget {
           width: double.infinity,
           height: 54,
           child: PrimaryButton(
-            text: isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Checkout',
+            text: isArabic
+                ? (totalAmount != null
+                    ? 'الانتقال للدفع الآمن • ${totalAmount!.toStringAsFixed(1)} ج.م'
+                    : 'الانتقال للدفع الآمن')
+                : (totalAmount != null
+                    ? 'Proceed to Checkout • ${totalAmount!.toStringAsFixed(1)} EGP'
+                    : 'Proceed to Secure Checkout'),
             isLoading: isLoading || isAwaitingWebhook,
             onPressed: canProceed ? onProceed : null,
           ),

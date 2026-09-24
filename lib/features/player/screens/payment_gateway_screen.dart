@@ -11,11 +11,11 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
+import '../../../core/services/paymob_service.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
 import '../widgets/payment/payment_cancel_dialog.dart';
 import '../widgets/payment/payment_countdown_header.dart';
-import '../widgets/payment/payment_method_selector.dart';
 import '../widgets/payment/payment_security_footer.dart';
 import 'booking_success_screen.dart';
 import 'paymob_web_view_screen.dart';
@@ -87,7 +87,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
-              isArabic ? 'انتهت مهلة حجز الوقت (5 دقائق).' : 'Booking reservation timeout (5 mins).',
+              isArabic ? 'انتهت مهلة حجز الوقت (8 دقائق).' : 'Booking reservation timeout (8 mins).',
             );
             Navigator.pop(context);
           }
@@ -414,6 +414,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:');
     final hasDeposit = !widget.forceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
+    final double totalWithFees = PaymobService.calculateTotalAmount(amountToPay);
 
     return PopScope(
       canPop: false,
@@ -438,13 +439,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     PaymentCountdownHeader(
                       remainingSeconds: _remainingSeconds,
                       amountToPay: amountToPay,
+                      totalAmountWithFees: totalWithFees,
                       isChampionship: isChampionship,
                       hasDeposit: hasDeposit,
                       currency: l10n.egCurrency,
-                      isArabic: isArabic,
-                    ),
-                    const SizedBox(height: 16),
-                    PaymentMethodSelector(
                       isArabic: isArabic,
                     ),
                     const SizedBox(height: 16),
@@ -461,6 +459,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       isAwaitingWebhook: _isAwaitingWebhook,
                       isArabic: isArabic,
                       canProceed: !(_booking == null && !widget.isTournamentPayment),
+                      totalAmount: totalWithFees,
                       onProceed: _startPaymobCheckout,
                     ),
                   ],

@@ -408,8 +408,11 @@ VSPLogger.e('Error saving booking confirmation to Supabase', e);
  }
  }
 
-  Future<bool> _shouldShowNotification(String? type) =>
-      NotificationFilterService.shouldShowNotification(type);
+  Future<bool> _shouldShowNotification(String? type) async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasOwnerToggles = prefs.containsKey('notif_owner_new_bookings') || prefs.containsKey('notif_owner_payouts');
+    return NotificationFilterService.shouldShowNotification(type, isOwner: hasOwnerToggles, prefs: prefs);
+  }
 
   RealtimeChannel? _realtimeNotifChannel;
 

@@ -30,6 +30,7 @@ class TournamentBasicsStep extends StatelessWidget {
     required String title,
     required String subtitle,
     required IconData icon,
+    required bool isAr,
   }) {
     final isSelected = selectedType == type;
     return InkWell(
@@ -43,7 +44,7 @@ class TournamentBasicsStep extends StatelessWidget {
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
             color: isSelected ? VSPColors.accent : VSPColors.divider,
-            width: isSelected ? 2 : 1,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
@@ -68,7 +69,28 @@ class TournamentBasicsStep extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      isAr ? 'مُحدد' : 'Selected',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -198,6 +220,7 @@ class TournamentBasicsStep extends StatelessWidget {
           title: isAr ? 'خروج المغلوب' : 'Knockout',
           subtitle: isAr ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
           icon: Iconsax.cup_copy,
+          isAr: isAr,
         ),
         const SizedBox(height: 10),
 
@@ -207,6 +230,7 @@ class TournamentBasicsStep extends StatelessWidget {
           title: isAr ? 'دوري نقاط كامل' : 'Full League',
           subtitle: isAr ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
           icon: Iconsax.award_copy,
+          isAr: isAr,
         ),
         const SizedBox(height: 10),
 
@@ -216,6 +240,7 @@ class TournamentBasicsStep extends StatelessWidget {
           title: isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout',
           subtitle: isAr ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
           icon: Iconsax.security_safe_copy,
+          isAr: isAr,
         ),
 
         const SizedBox(height: 24),

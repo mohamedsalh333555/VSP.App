@@ -6,8 +6,27 @@ class NotificationFilterService {
   const NotificationFilterService._();
 
   /// Maps notification [type] to the corresponding SharedPreferences toggle key.
-  static String? getPrefKeyForType(String? type) {
+  static String? getPrefKeyForType(String? type, {bool isOwner = false}) {
     if (type == null) return null;
+    if (isOwner) {
+      switch (type) {
+        case 'chat':
+          return 'notif_chat';
+        case 'booking_new':
+        case 'booking_confirmed':
+        case 'booking_cancelled':
+          return 'notif_owner_new_bookings';
+        case 'payout':
+        case 'debt_warning':
+        case 'debt_grace':
+          return 'notif_owner_payouts';
+        case 'daily_schedule':
+          return 'notif_owner_daily_schedule';
+        default:
+          return null;
+      }
+    }
+
     switch (type) {
       case 'chat':
         return 'notif_chat';
@@ -34,13 +53,14 @@ class NotificationFilterService {
   static Future<bool> shouldShowNotification(
     String? type, {
     SharedPreferences? prefs,
+    bool isOwner = false,
   }) async {
     try {
       final preferences = prefs ?? await SharedPreferences.getInstance();
       final general = preferences.getBool('notif_general') ?? true;
       if (!general) return false;
 
-      final key = getPrefKeyForType(type);
+      final key = getPrefKeyForType(type, isOwner: isOwner);
       if (key == null) return true;
 
       return preferences.getBool(key) ?? true;

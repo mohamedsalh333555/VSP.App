@@ -13,7 +13,7 @@ import '../../../core/services/notification/notification_ui_helper.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
-import 'package:intl/intl.dart';
+import '../../../core/utils/app_date_formatter.dart';
 import 'package:provider/provider.dart';
 
 class NotificationsCenterScreen extends StatefulWidget {
@@ -65,11 +65,15 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
           final notifications = snapshot.data ?? [];
 
           if (notifications.isEmpty) {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             return VSPEmptyState(
               icon: Iconsax.notification_copy,
               title: AppLocalizations.of(context)!.noNotificationsTitle,
               subtitle: AppLocalizations.of(context)!.noNotificationsSubtitle,
-              buttonText: AppLocalizations.of(context)!.backToDashboard,
+              buttonText: auth.isOwner
+                  ? (isArabic ? 'العودة للوحة التحكم' : 'Back to Dashboard')
+                  : AppLocalizations.of(context)!.backToDashboard,
               onButtonPressed: () => Navigator.pop(context),
             );
           }
@@ -97,7 +101,29 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                     child: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
-                    NotificationRepository().deleteNotification(_userId, notification.id);
+                    final deletedItem = notification;
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    NotificationRepository().deleteNotification(_userId, deletedItem.id);
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isArabic ? 'تم حذف الإشعار' : 'Notification deleted',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        backgroundColor: VSPColors.surface,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                        action: SnackBarAction(
+                          label: isArabic ? 'تراجع' : 'Undo',
+                          textColor: VSPColors.accent,
+                          onPressed: () {
+                            NotificationRepository().sendNotification(_userId, deletedItem);
+                          },
+                        ),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
                   },
                   child: _NotificationCard(notification: notification, userId: _userId),
                 ),
@@ -118,6 +144,7 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return InkWell(
       onTap: () => _onNotificationTap(context),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -183,21 +210,19 @@ class _NotificationCard extends StatelessWidget {
                     ),
                   ),
   
-                  // BETA READY: Interactive actions for challenges
-                  if (notification.type == 'challenge' && !notification.isRead && notification.bookingId != null) ...[
+                  // Secure interactive actions for challenges
+                  if (notification.type == 'challenge' && notification.bookingId != null) ...[
                     const SizedBox(height: VSPSpacing.md),
                     Row(
                       children: [
                         Expanded(
                           child: VSPAnimatedButton(
-                            text: AppLocalizations.of(context)!.accept,
+                            text: isArabic ? 'عرض التحدي والرد' : 'View & Respond',
                             height: 44,
-                            onPressed: () => NotificationRepository().respondToChallenge(
-                              userId,
-                              notification.id, 
-                              notification.bookingId!, 
-                              true
-                            ),
+                            onPressed: () {
+                              NotificationRepository().markNotificationAsRead(userId, notification.id);
+                              NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                            },
                           ),
                         ),
                         const SizedBox(width: VSPSpacing.sm),
@@ -206,13 +231,24 @@ class _NotificationCard extends StatelessWidget {
                             text: AppLocalizations.of(context)!.decline,
                             height: 44,
                             color: VSPColors.surfaceAlt,
-                            textColor: VSPColors.textSecondary,
-                            onPressed: () => NotificationRepository().respondToChallenge(
-                              userId,
-                              notification.id, 
-                              notification.bookingId!, 
-                              false
-                            ),
+                            textColor: VSPColors.error,
+                            onPressed: () async {
+                              await NotificationRepository().respondToChallenge(
+                                userId,
+                                notification.id, 
+                                notification.bookingId!, 
+                                false
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(isArabic ? 'تم رفض طلب التحدي' : 'Challenge declined'),
+                                    backgroundColor: VSPColors.surface,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                       ],
@@ -254,7 +290,7 @@ class _NotificationCard extends StatelessWidget {
       return;
     }
 
-    if (type == 'payout') {
+    if (type == 'payout' || type == 'debt_warning' || type == 'debt_grace' || type == 'account_blocked') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
@@ -377,10 +413,11 @@ class _NotificationCard extends StatelessWidget {
   String _formatTime(BuildContext context, DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minutesAgo(diff.inMinutes);
     if (diff.inHours < 24) return AppLocalizations.of(context)!.hoursAgo(diff.inHours);
-    return DateFormat('MMM d', AppLocalizations.of(context)!.localeName).format(dt);
+    return AppDateFormatter.formatDayMonth(dt, isArabic ? 'ar' : 'en');
   }
 
   String _localizeText(BuildContext context, String text) {

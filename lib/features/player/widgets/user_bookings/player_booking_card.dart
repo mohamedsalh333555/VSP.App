@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/widgets/shimmer_image.dart';
@@ -8,6 +9,7 @@ import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/chat_screen.dart';
+import '../../screens/match_details_screen.dart';
 import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
 import 'player_booking_cancel_dialog.dart';
@@ -55,7 +57,8 @@ class PlayerBookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoColumn(BuildContext context, String label, String value) {
+  Widget _buildInfoColumn(BuildContext context, String label, String value, {bool isTime = false}) {
+    final isArabic = Localizations.localeOf(context).languageCode.startsWith('ar');
     return Column(
       children: [
         Text(
@@ -68,25 +71,42 @@ class PlayerBookingCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: VSPSpacing.xs),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: VSPColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
+        Directionality(
+          textDirection: isTime
+              ? (isArabic ? TextDirection.rtl : TextDirection.ltr)
+              : Directionality.of(context),
+          child: Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: VSPColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
       ],
     );
   }
 
-  String _formatTimeShort(String timeRange) {
-    final parts = timeRange.split(' - ');
-    if (parts.length == 2) {
-      final start = parts[0].replaceAll(':00', '');
-      final end = parts[1].replaceAll(':00', '');
-      return '$start - $end';
+  String _formatDate(BuildContext context, DateTime dt) {
+    final locale = Localizations.localeOf(context).languageCode;
+    return AppDateFormatter.formatDayMonth(dt, locale);
+  }
+
+  String _formatTimeRange(BuildContext context, DateTime startDt, DateTime endDt) {
+    final isArabic = Localizations.localeOf(context).languageCode.startsWith('ar');
+    final start = startDt.toLocal();
+    final end = endDt.toLocal();
+
+    String formatSingle(DateTime dt) {
+      final h = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+      final period = isArabic ? (dt.hour >= 12 ? 'م' : 'ص') : (dt.hour >= 12 ? 'PM' : 'AM');
+      if (dt.minute == 0) {
+        return '$h $period';
+      }
+      return '$h:${dt.minute.toString().padLeft(2, '0')} $period';
     }
-    return timeRange;
+
+    return '${formatSingle(start)} - ${formatSingle(end)}';
   }
 
   void _showCancelDialog(BuildContext context) {
@@ -98,114 +118,131 @@ class PlayerBookingCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(VSPSpacing.md),
-      decoration: BoxDecoration(
-        color: isHistory ? VSPColors.surface : VSPColors.surfaceAlt,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        border: Border.all(
-          color: isHistory ? VSPColors.divider : VSPColors.accent.withValues(alpha: 0.25),
-          width: 1.0,
-        ),
-        boxShadow: const [VSPShadow.subtle],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MatchDetailsScreen(bookingId: booking.id),
+            ),
+          );
+        },
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          decoration: BoxDecoration(
+            color: isHistory ? VSPColors.surface : VSPColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(VSPRadius.card),
+            border: Border.all(
+              color: isHistory ? VSPColors.divider : VSPColors.accent.withValues(alpha: 0.25),
+              width: 1.0,
+            ),
+            boxShadow: const [VSPShadow.subtle],
+          ),
+          child: Column(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.15), width: 1.5),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(VSPRadius.md - 1),
-                  child: booking.stadiumImageUrl.isNotEmpty
-                      ? ShimmerImage(
-                          imageUrl: booking.stadiumImageUrl,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          color: VSPColors.surface,
-                          child: const Icon(Iconsax.location_copy, color: VSPColors.accent),
-                        ),
-                ),
-              ),
-              const SizedBox(width: VSPSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      booking.stadiumName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: VSPColors.textPrimary,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.15), width: 1.5),
                     ),
-                    const SizedBox(height: VSPSpacing.xs),
-                    Row(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(VSPRadius.md - 1),
+                      child: booking.stadiumImageUrl.isNotEmpty
+                          ? ShimmerImage(
+                              imageUrl: booking.stadiumImageUrl,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                            )
+                          : Container(
+                              color: VSPColors.surface,
+                              child: const Icon(Iconsax.location_copy, color: VSPColors.accent),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildTag(_getLocalizedBookingType(context, booking.bookingType)),
-                        if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
-                          const SizedBox(width: VSPSpacing.sm),
-                          _buildTag(l10n.private, color: VSPColors.warning),
-                        ],
+                        Text(
+                          booking.stadiumName,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: VSPColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: VSPSpacing.xs),
+                        Row(
+                          children: [
+                            _buildTag(_getLocalizedBookingType(context, booking.bookingType)),
+                            if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
+                              const SizedBox(width: VSPSpacing.sm),
+                              _buildTag(l10n.private, color: VSPColors.warning),
+                            ],
+                          ],
+                        ),
                       ],
+                    ),
+                  ),
+                  if (booking.status == BookingStatus.cancelled) ...[
+                    ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', VSPColors.error),
+                  ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
+                    ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
+                  ] else if (!isHistory) ...[
+                    ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
+                  ] else ...[
+                    if (booking.endTime.isAfter(DateTime.now()))
+                      ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.accent)
+                    else if (booking.bookingType == BookingType.challenge) ...[
+                      Builder(
+                        builder: (ctx) {
+                          final badge = ChallengeResultActions.buildChallengeStatusBadge(context, booking: booking, myTeamId: myTeamId);
+                          if (badge is SizedBox) {
+                            return ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary);
+                          }
+                          return badge;
+                        },
+                      ),
+                    ] else ...[
+                      ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary),
+                    ],
+                  ],
+                ],
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.background.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildInfoColumn(context, l10n.date, _formatDate(context, booking.startTime)),
+                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
+                    _buildInfoColumn(context, l10n.time, _formatTimeRange(context, booking.startTime, booking.endTime), isTime: true),
+                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
                     ),
                   ],
                 ),
               ),
-              if (booking.status == BookingStatus.cancelled) ...[
-                ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', VSPColors.error),
-              ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
-                ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
-              ] else if (!isHistory) ...[
-                ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
-              ] else ...[
-                if (booking.endTime.isAfter(DateTime.now()))
-                  ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.accent)
-                else if (booking.bookingType == BookingType.challenge)
-                  ChallengeResultActions.buildChallengeStatusBadge(context, booking: booking, myTeamId: myTeamId)
-                else if (booking.status == BookingStatus.completed &&
-                    (booking.matchResultStatus == MatchResultStatus.noResult ||
-                        booking.matchResultStatus == MatchResultStatus.waitingOpponent))
-                  ChallengeResultActions.buildStatusBadge(l10n.submitResult, VSPColors.warning)
-                else
-                  ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary),
-              ],
-            ],
-          ),
-          const SizedBox(height: VSPSpacing.md),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.md),
-            decoration: BoxDecoration(
-              color: VSPColors.background.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildInfoColumn(context, l10n.date, booking.formattedDate),
-                Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, l10n.time, _formatTimeShort(booking.formattedTimeRange)),
-                Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
-                ),
-              ],
-            ),
-          ),
           // 🔒 REFUND BADGE LOGIC: Strictly verify real refund vs unconfirmed payment
           Builder(builder: (context) {
             // First check if the user actually paid any money at all.
@@ -369,7 +406,7 @@ class PlayerBookingCard extends StatelessWidget {
                       bookingId: booking.id,
                       teamName: booking.playerTeamName ?? (isArabic ? 'فريقي' : 'My Team'),
                       stadiumName: booking.stadiumName,
-                      date: '${booking.formattedDate} - ${booking.formattedTimeRange}',
+                      date: '${_formatDate(context, booking.startTime)} - ${_formatTimeRange(context, booking.startTime, booking.endTime)}',
                     ),
                   ),
                 ),
@@ -400,7 +437,9 @@ class PlayerBookingCard extends StatelessWidget {
           ],
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildContactSupportRefundBadge(BuildContext context, bool isArabic) {

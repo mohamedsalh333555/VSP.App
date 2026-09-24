@@ -84,14 +84,14 @@ class PaymentBreakdownCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
-            label: isArabic ? 'رسوم خدمات المنصة' : 'Platform Service Fee',
+            label: isArabic ? 'مصاريف إدارية' : 'Administrative Fee',
             value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
             onInfoTap: () => showFeeTransparencyModal(context, isArabic),
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
-            label: isArabic ? 'إجمالي الدفع النهائي' : 'Total Checkout Amount',
+            label: isArabic ? 'إجمالي المطلوب دفعه الآن' : 'Total Amount Due Now',
             value: '${totalWithFees.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: true,
           ),
@@ -144,7 +144,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    isArabic ? 'شفافية رسوم خدمات المنصة' : 'Platform Service Fee Transparency',
+                    isArabic ? 'تفاصيل المصاريف الإدارية' : 'Administrative Fee Details',
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -152,8 +152,8 @@ class PaymentBreakdownCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 isArabic
-                    ? 'رسوم خدمات المنصة تغطي تكاليف المعاملات البنكية المشفرة، والتثبيت الذري الفوري للمواعيد (منع التكرار)، وخدمة العملاء والدعم الفني المباشر على مدار الساعة.'
-                    : 'The platform service fee covers end-to-end encrypted payment processing, instant atomic slot locking (zero double-bookings), and 24/7 priority customer support.',
+                    ? 'تشمل المصاريف الإدارية تأكيد الحجز الفوري، ومصاريف المعاملات البنكية المعتمدة، والدعم الفني المباشر على مدار الساعة.'
+                    : 'Administrative fees cover instant booking confirmation, certified banking processing, and 24/7 customer support.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
               ),
               const SizedBox(height: 20),

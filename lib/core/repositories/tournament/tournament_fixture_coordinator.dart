@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/logger_service.dart';
-import '../../utils/app_date_formatter.dart';
 import 'tournament_bracket_engine.dart';
 import 'tournament_draw_notifier.dart';
 import 'tournament_group_advancer.dart';
@@ -129,18 +128,6 @@ class TournamentFixtureCoordinator {
         );
       }
 
-      final String? rawStartDate =
-          champDoc['start_date'] ?? champDoc['startDate'];
-      if (rawStartDate != null) {
-        final startDate = DateTime.parse(rawStartDate);
-        if (DateTime.now().isBefore(startDate)) {
-          final formattedDate =
-              AppDateFormatter.formatFullDate(startDate, 'ar');
-          throw Exception(
-            'لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.',
-          );
-        }
-      }
 
       final int configuredMaxTeams =
           champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;

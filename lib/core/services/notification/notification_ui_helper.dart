@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../ui/tokens/vsp_tokens.dart';
 import '../logger_service.dart';
 import '../../repositories/booking_repository.dart';
-import '../../../features/player/screens/booking_success_screen.dart';
+import '../../../features/owner/screens/owner_bookings_screen.dart';
+import '../../../features/player/screens/match_details_screen.dart';
 import '../../../features/player/screens/chat_screen.dart';
 
 /// Helper for presenting in-app notification snackbars and performing target screen navigation.
@@ -89,16 +92,24 @@ class NotificationUiHelper {
     }
   }
 
-  /// Navigates to the booking success / details screen for a given booking ID.
+  /// Navigates to the proper booking details screen based on the user role.
   static Future<void> navigateToBooking(BuildContext context, String bookingId, {BookingRepository? repository}) async {
     try {
       final repo = repository ?? SupabaseBookingRepository();
       final booking = await repo.getBookingById(bookingId);
       if (booking != null && context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
-        );
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        if (auth.isOwner) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => MatchDetailsScreen(bookingId: booking.id)),
+          );
+        }
       }
     } catch (e) {
       VSPLogger.e('Error navigating to booking', e);
