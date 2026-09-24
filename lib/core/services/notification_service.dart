@@ -54,6 +54,19 @@ class NotificationService {
 
  GlobalKey<NavigatorState>? _navigatorKey;
 
+ Future<void> _storeDeviceToken(String userId, String token) async {
+   if (token.trim().isEmpty) return;
+   final platform = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
+   await Supabase.instance.client
+       .from('user_device_tokens')
+       .upsert({
+         'token': token.trim(),
+         'user_id': userId,
+         'platform': platform,
+         'updated_at': DateTime.now().toUtc().toIso8601String(),
+       }, onConflict: 'token');
+ }
+
  Future<void> initialize(GlobalKey<NavigatorState> navKey) async {
  _navigatorKey = navKey;
  if (kIsWeb) return;
@@ -63,6 +76,8 @@ class NotificationService {
    final token = await getToken();
    final user = Supabase.instance.client.auth.currentUser;
    if (token != null && user != null) {
+     await _storeDeviceToken(user.id, token);
+     // Keep the legacy single-token field for backward compatibility.
      await Supabase.instance.client
          .from('users')
          .update({'fcm_token': token})
@@ -78,6 +93,7 @@ class NotificationService {
  final user = Supabase.instance.client.auth.currentUser;
  if (user != null) {
  try {
+ await _storeDeviceToken(user.id, newToken);
  await Supabase.instance.client
  .from('users')
  .update({'fcm_token': newToken})
