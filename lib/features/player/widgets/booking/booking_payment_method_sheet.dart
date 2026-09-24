@@ -25,7 +25,7 @@ void showBookingPaymentMethodSheet({
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
   final config = Provider.of<RemoteConfigService>(context, listen: false);
-  final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled');
+  final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled', defaultValue: true);
 
   showModalBottomSheet(
     context: context,
