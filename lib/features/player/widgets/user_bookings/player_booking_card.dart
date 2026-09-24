@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
+import '../../../../core/services/sharing_service.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -343,10 +344,25 @@ class PlayerBookingCard extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: VSPSpacing.sm),
+                if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
                 Expanded(
                   child: VSPAnimatedButton(
-                    text: l10n.chat,
+                    text: isArabic ? 'مشاركة' : 'Share',
+                    color: VSPColors.accent,
+                    textColor: Colors.black,
+                    onPressed: () => SharingService.shareMatch(
+                      bookingId: booking.id,
+                      teamName: booking.playerTeamName ?? (isArabic ? 'فريقي' : 'My Team'),
+                      stadiumName: booking.stadiumName,
+                      date: booking.formattedDate + ' - ' + booking.formattedTimeRange,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: VSPSpacing.sm),
+              ],
+              Expanded(
+                child: VSPAnimatedButton(
+                  text: l10n.chat,
                     onPressed: () {
                       Navigator.push(
                         context,
