@@ -55,19 +55,19 @@ class PaymobService {
     }
   }
 
-  /// Calculate Platform Owner Net Profit (2.0% of base amount)
+  /// Calculate VSP fee share: 2.0% of the base amount
   static double calculatePlatformShare(double baseAmountEgp) {
     if (baseAmountEgp <= 0) return 0.0;
     return double.parse((baseAmountEgp * 0.02).toStringAsFixed(2));
   }
 
-  /// Calculate Paymob Banking Gateway Cost (2.75% + 3.0 EGP)
+  /// Calculate Paymob gateway fee: 2.75% + 3.0 EGP
   static double calculateGatewayShare(double baseAmountEgp) {
     if (baseAmountEgp <= 0) return 0.0;
     return double.parse(((baseAmountEgp * 0.0275) + 3.0).toStringAsFixed(2));
   }
 
-  /// Total platform service fee in EGP paid by customer: Platform (2.0%) + Gateway (2.75% + 3.0 EGP) = (amount * 0.0475) + 3.0 EGP
+  /// Total customer service fee: VSP 2.0% + Paymob 2.75% + 3.0 EGP
   static double calculateServiceFee(double baseAmountEgp) {
     if (baseAmountEgp <= 0) return 0.0;
     return double.parse(((baseAmountEgp * 0.0475) + 3.0).toStringAsFixed(2));

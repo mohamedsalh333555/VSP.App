@@ -6,6 +6,7 @@ class TeamPayloadBuilder {
   static Map<String, dynamic> buildCreatePayload(Map<String, dynamic> data) {
     return {
       'name': data['name'],
+      'bio': data['bio'] ?? '',
       'captain_id': (data['memberUids'] as List?)?.first?.toString(),
       'logo_url': data['logoUrl'] ?? data['logo_url'] ?? '',
       'primary_color': data['primaryColor'] ?? data['primary_color'] ?? '#FFFFFF',
@@ -31,6 +32,7 @@ class TeamPayloadBuilder {
   static Map<String, dynamic> buildUpdatePayload(Map<String, dynamic> data) {
     final pgData = <String, dynamic>{};
     if (data.containsKey('name')) pgData['name'] = data['name'];
+    if (data.containsKey('bio')) pgData['bio'] = data['bio'];
     if (data.containsKey('logoUrl')) pgData['logo_url'] = data['logoUrl'];
     if (data.containsKey('logo_url')) pgData['logo_url'] = data['logo_url'];
     if (data.containsKey('primaryColor')) pgData['primary_color'] = data['primaryColor'];

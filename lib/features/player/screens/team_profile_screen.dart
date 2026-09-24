@@ -220,6 +220,29 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
               has1v1Champion: _has1v1Champion,
             ),
 
+            if (team.bio.trim().isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.card),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(isArabic ? 'نبذة عن الفريق' : 'About the team',
+                        style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 14)),
+                    const SizedBox(height: 8),
+                    Text(team.bio,
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5, height: 1.5)),
+                  ],
+                ),
+              ),
+            ],
+
             const SizedBox(height: 32),
 
             // 2. Stats Grid

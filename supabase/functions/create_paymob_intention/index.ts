@@ -131,8 +131,19 @@ serve(async (req: Request) => {
       );
     }
 
-    // Calculate official platform fee: (amount * 0.0475) + 3.0 EGP
-    const platformFee = Math.round(((finalBaseAmount * 0.0475) + 3.0) * 100) / 100;
+    // Canonical fee SSOT: VSP 2% + Paymob 2.75% + 3 EGP.
+    const { data: feeConfig } = await supabase
+      .from("platform_fee_config")
+      .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
+      .eq("id", 1)
+      .maybeSingle();
+
+    const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
+    const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
+    const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
+    const vspFee = Math.round(finalBaseAmount * vspRate * 100) / 100;
+    const gatewayFee = Math.round((finalBaseAmount * gatewayRate + gatewayFixed) * 100) / 100;
+    const platformFee = Math.round((vspFee + gatewayFee) * 100) / 100;
     const totalAmountEgp = Math.round((finalBaseAmount + platformFee) * 100) / 100;
     const amountInCents = Math.round(totalAmountEgp * 100);
 
