@@ -30,7 +30,7 @@ jobs:
       - name: Build Android debug APK
         run: |
           flutter build apk --debug \
-            --dart-define=SUPABASE_URL=https://mktqkddbcddrxjxabdua.supabase.co \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
             --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
             --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
