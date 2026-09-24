@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/constants/egypt_governorates.dart';
+import '../../../../core/services/location_service.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/booking_repository.dart';
 import '../../../../core/services/logger_service.dart';
@@ -71,6 +73,78 @@ class BookingConfirmationHandler {
 
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
+    // Mandatory anti-manipulation location check: the player must be physically
+    // located in the same Egyptian governorate as the selected stadium.
+    try {
+      final (position, resolvedGovernorate) =
+          await LocationService().getThrottledLocation(force: true);
+      if (!context.mounted) return;
+
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      if (resolvedGovernorate == 'mock_location_detected') {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا يمكن إتمام الحجز باستخدام موقع وهمي. فعّل الموقع الحقيقي على جهازك.'
+              : 'Booking cannot continue with a mock location. Please enable your real device location.',
+        );
+        onLoadingChanged(false);
+        return;
+      }
+
+      if (position == null || resolvedGovernorate == null || resolvedGovernorate.trim().isEmpty) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا يمكن إتمام الحجز بدون تحديد موقعك الفعلي. فعّل صلاحية الموقع وحاول مرة أخرى.'
+              : 'Booking requires your current location. Please enable location permission and try again.',
+        );
+        onLoadingChanged(false);
+        return;
+      }
+
+      final playerGovernorate =
+          EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
+              resolvedGovernorate.trim().toLowerCase();
+      final stadiumGovernorate =
+          EgyptGovernorates.resolveGoogleName(stadium.governorate) ??
+              stadium.governorate.trim().toLowerCase();
+
+      if (playerGovernorate.toLowerCase() != stadiumGovernorate.toLowerCase()) {
+        final stadiumName = EgyptGovernorates.getLocalizedName(
+          EgyptGovernorates.resolveGoogleName(stadium.governorate) ??
+              stadium.governorate,
+          isArabic,
+        );
+        final playerName = EgyptGovernorates.getLocalizedName(
+          EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
+              resolvedGovernorate,
+          isArabic,
+        );
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'لا يمكن إتمام الحجز لأنك موجود حالياً في محافظة $playerName بينما الملعب موجود في $stadiumName. يجب أن تكون داخل نفس المحافظة لإتمام الحجز.'
+              : 'Booking is unavailable because you are currently in $playerName while this stadium is in $stadiumName. You must be in the same governorate to book.',
+        );
+        onLoadingChanged(false);
+        return;
+      }
+    } catch (e) {
+      VSPLogger.w('Mandatory location validation failed closed: $e');
+      if (context.mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من موقعك الحالي. فعّل GPS وحاول مرة أخرى.'
+              : 'Unable to verify your current location. Please enable GPS and try again.',
+        );
+      }
+      onLoadingChanged(false);
+      return;
+    }
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
     try {

@@ -290,6 +290,26 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  if (uid != null) {
  final team = await TeamRepository().getUserTeam(uid);
  if (team != null) {
+ // Official challenges require both teams to have at least 5 registered players.
+ if (team.memberUids.length < 5 || _selectedTeam!.memberUids.length < 5) {
+   if (context.mounted) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     final incompleteTeam = team.memberUids.length < 5
+         ? team.name
+         : _selectedTeam!.name;
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(
+           isArabic
+               ? 'لا يمكن بدء التحدي. فريق $incompleteTeam لديه أقل من 5 لاعبين.'
+               : 'Challenge cannot start. Team $incompleteTeam has fewer than 5 players.',
+         ),
+         backgroundColor: VSPColors.error,
+       ),
+     );
+   }
+   return;
+ }
  if (!ChallengeTeamService.isFairPlayEligible(team)) {
  if (context.mounted) {
  ScaffoldMessenger.of(context).showSnackBar(

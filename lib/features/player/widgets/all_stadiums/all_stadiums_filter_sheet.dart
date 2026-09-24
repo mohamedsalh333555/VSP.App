@@ -115,9 +115,13 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
+    return SafeArea(
+      bottom: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -199,6 +203,8 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
             ),
           ),
         ],
+          ),
+        ),
       ),
     );
   }

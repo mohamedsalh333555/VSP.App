@@ -23,6 +23,7 @@ class StadiumRatingsTab extends StatefulWidget {
 
 class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
   late final Stream<List<Map<String, dynamic>>> _reviewsStream;
+  static const Color _ratingUnselectedColor = Color(0xFF4A4F54);
 
   @override
   void initState() {
@@ -89,8 +90,9 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                           return IconButton(
                             icon: Icon(
                               isSelected ? Icons.star_rounded : Icons.star_border_rounded,
-                              color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                              size: 36,
+                              color: isSelected ? VSPColors.accent : _ratingUnselectedColor,
+                              size: 38,
+                              weight: isSelected ? 900 : 400,
                             ),
                             onPressed: () {
                               setSheetState(() {
@@ -234,9 +236,9 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                   children: List.generate(
                     5,
                     (i) => Icon(
-                      i < rating ? Iconsax.star_1_copy : Iconsax.star_copy,
-                      size: 14,
-                      color: i < rating ? VSPColors.accent : VSPColors.textSecondary,
+                      i < rating ? Icons.star_rounded : Icons.star_border_rounded,
+                      size: 16,
+                      color: i < rating ? VSPColors.accent : _ratingUnselectedColor,
                     ),
                   ),
                 ),
@@ -295,9 +297,10 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                               children: List.generate(
                                 5,
                                 (i) => Icon(
-                                  i < liveRating.round() ? Iconsax.star_1_copy : Iconsax.star_copy,
-                                  color: i < liveRating.round() ? VSPColors.accent : VSPColors.textSecondary,
-                                  size: 18,
+                                  i < liveRating.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                                  color: i < liveRating.round() ? VSPColors.accent : _ratingUnselectedColor,
+                                  size: 20,
+                                  weight: i < liveRating.round() ? 900 : 400,
                                 ),
                               ),
                             ),
