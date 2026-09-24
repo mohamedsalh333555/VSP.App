@@ -226,7 +226,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                     (i) => Icon(
                       i < rating ? Iconsax.star_1_copy : Iconsax.star_copy,
                       size: 14,
-                      color: i < rating ? Colors.amber : VSPColors.textSecondary,
+                      color: i < rating ? VSPColors.accent : VSPColors.textSecondary,
                     ),
                   ),
                 ),
@@ -286,7 +286,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                                 5,
                                 (i) => Icon(
                                   i < liveRating.round() ? Iconsax.star_1_copy : Iconsax.star_copy,
-                                  color: i < liveRating.round() ? Colors.amber : VSPColors.textSecondary,
+                                  color: i < liveRating.round() ? VSPColors.accent : VSPColors.textSecondary,
                                   size: 18,
                                 ),
                               ),
