@@ -28,17 +28,23 @@ class NotificationService {
  if (kIsWeb) return null;
  try {
  // Request Permission (Required for iOS)
- NotificationSettings settings = await _firebaseMessaging.requestPermission(
- alert: true,
- badge: true,
- sound: true,
- );
+ NotificationSettings settings = await _firebaseMessaging.getNotificationSettings();
 
- if (settings.authorizationStatus == AuthorizationStatus.authorized) {
- return await _firebaseMessaging.getToken();
+ // Never prompt repeatedly. Only request when the OS has not decided yet.
+ if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+   settings = await _firebaseMessaging.requestPermission(
+     alert: true,
+     badge: true,
+     sound: true,
+   );
  }
- 
- VSPLogger.w('Notification permission declined');
+
+ if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+     settings.authorizationStatus == AuthorizationStatus.provisional) {
+   return await _firebaseMessaging.getToken();
+ }
+
+ VSPLogger.w('Notification permission is disabled/declined; no repeated prompt.');
  return null;
  } catch (e) {
  VSPLogger.w('Failed to get notifications token: $e');
@@ -141,11 +147,15 @@ class NotificationService {
  final androidPlugin = _localNotifications
  .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
  if (androidPlugin != null) {
- // Request Android 13+ (API 33+) Notification Permission explicitly
+ // Request Android 13+ only while permission is still undecided.
+ // Do not repeatedly prompt users who already denied/disabled notifications.
  try {
- await androidPlugin.requestNotificationsPermission();
+   final enabled = await androidPlugin.areNotificationsEnabled();
+   if (enabled == false) {
+     VSPLogger.w('Android notifications are disabled; respecting the OS setting.');
+   }
  } catch (e) {
- VSPLogger.w('Android 13+ notification permission request notice: $e');
+   VSPLogger.w('Could not read Android notification permission state: $e');
  }
 
  const AndroidNotificationChannel defaultChannel = AndroidNotificationChannel(
@@ -402,7 +412,12 @@ VSPLogger.e('Error saving booking confirmation to Supabase', e);
  title,
  body,
  details,
- payload: jsonEncode({'type': type, 'bookingId': bookingId}),
+ payload: jsonEncode({
+   'type': type ?? 'info',
+   if (bookingId != null && bookingId.isNotEmpty) 'bookingId': bookingId,
+   if (record['team_id'] != null) 'teamId': record['team_id'].toString(),
+   if (record['tournament_id'] != null) 'tournamentId': record['tournament_id'].toString(),
+ }),
  );
  }
  },
