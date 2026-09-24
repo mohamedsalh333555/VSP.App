@@ -104,17 +104,19 @@ class BookingConfirmationHandler {
         return;
       }
 
+      final stadiumGovRaw = stadium.governorate?.trim() ?? '';
       final playerGovernorate =
           EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
               resolvedGovernorate.trim().toLowerCase();
       final stadiumGovernorate =
-          EgyptGovernorates.resolveGoogleName(stadium.governorate) ??
-              stadium.governorate.trim().toLowerCase();
+          EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
+              stadiumGovRaw.toLowerCase();
 
-      if (playerGovernorate.toLowerCase() != stadiumGovernorate.toLowerCase()) {
+      if (stadiumGovRaw.isNotEmpty &&
+          playerGovernorate.toLowerCase() != stadiumGovernorate.toLowerCase()) {
         final stadiumName = EgyptGovernorates.getLocalizedName(
-          EgyptGovernorates.resolveGoogleName(stadium.governorate) ??
-              stadium.governorate,
+          EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
+              stadiumGovRaw,
           isArabic,
         );
         final playerName = EgyptGovernorates.getLocalizedName(

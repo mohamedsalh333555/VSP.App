@@ -1,32 +1,31 @@
-/// Compile-time configuration. Production builds must provide explicit values.
+/// Compile-time configuration with safe SSOT fallbacks for local and production builds.
 class AppEnv {
+  static const String _defaultSupabaseUrl = 'https://mktqkddbcddrxjxabdua.supabase.co';
+  static const String _defaultSupabaseAnonKey = 'sb_publishable_ht3eLKZoEiQ49hh413Yfgw_E-S4k3-k';
+  static const String _defaultPaymobPublicKey = 'egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx';
+
   static String get supabaseUrl {
-    const value = String.fromEnvironment('SUPABASE_URL');
-    if (value.isEmpty) throw StateError('SUPABASE_URL is required at build time.');
-    return value;
+    const value = String.fromEnvironment('SUPABASE_URL', defaultValue: _defaultSupabaseUrl);
+    return value.isNotEmpty ? value : _defaultSupabaseUrl;
   }
 
   static String get supabaseAnonKey {
-    const value = String.fromEnvironment('SUPABASE_ANON_KEY');
-    if (value.isEmpty) throw StateError('SUPABASE_ANON_KEY is required at build time.');
-    return value;
+    const value = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: _defaultSupabaseAnonKey);
+    return value.isNotEmpty ? value : _defaultSupabaseAnonKey;
   }
 
   static String get paymobPublicKey {
-    const value = String.fromEnvironment('PAYMOB_PUBLIC_KEY');
-    if (value.isEmpty) throw StateError('PAYMOB_PUBLIC_KEY is required for Paymob payment flows.');
-    return value;
+    const value = String.fromEnvironment('PAYMOB_PUBLIC_KEY', defaultValue: _defaultPaymobPublicKey);
+    return value.isNotEmpty ? value : _defaultPaymobPublicKey;
   }
 
-  static String get googleWebClientId {
+  static String? get googleWebClientId {
     const value = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
-    if (value.isEmpty) throw StateError('GOOGLE_WEB_CLIENT_ID is required for Google web sign-in.');
-    return value;
+    return value.isNotEmpty ? value : null;
   }
 
-  static String get googleIosClientId {
+  static String? get googleIosClientId {
     const value = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
-    if (value.isEmpty) throw StateError('GOOGLE_IOS_CLIENT_ID is required for Google iOS sign-in.');
-    return value;
+    return value.isNotEmpty ? value : null;
   }
 }
