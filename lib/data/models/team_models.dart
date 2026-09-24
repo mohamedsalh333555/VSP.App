@@ -36,6 +36,7 @@ class Team {
  final int lastResetYear; // Year of last annual reset, default 2026
 
  final bool isOfficial;
+ final String bio;
 
  Team({
  required this.id,
@@ -68,6 +69,7 @@ class Team {
  this.fairPlayScore = 100,
  this.lastResetYear = 2026,
  this.isOfficial = false,
+ this.bio = '',
  });
 
  String get rankTitle => EloCalculator.getRankTitle(points);
@@ -111,6 +113,7 @@ class Team {
  fairPlayScore: data['fairPlayScore'] ?? data['fair_play_score'] ?? 100,
  lastResetYear: data['lastResetYear'] ?? data['last_reset_year'] ?? 2026,
  isOfficial: data['is_official'] ?? data['isOfficial'] ?? calculatedOfficial,
+ bio: data['bio'] ?? '',
  );
  }
 
@@ -206,6 +209,7 @@ class Team {
  fairPlayScore: fairPlayScore ?? this.fairPlayScore,
  lastResetYear: lastResetYear ?? this.lastResetYear,
  unlockedBadges: unlockedBadges ?? this.unlockedBadges,
+ bio: bio ?? this.bio,
  );
  }
 
