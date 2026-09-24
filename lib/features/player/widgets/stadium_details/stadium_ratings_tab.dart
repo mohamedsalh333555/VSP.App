@@ -40,7 +40,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
       return;
     }
 
-    int selectedRating = 5;
+    int selectedRating = 0;
     final commentController = TextEditingController();
     bool isSubmitting = false;
 
@@ -88,8 +88,8 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                           final isSelected = starIndex <= selectedRating;
                           return IconButton(
                             icon: Icon(
-                              isSelected ? Iconsax.star_1_copy : Iconsax.star_copy,
-                              color: isSelected ? Colors.amber : VSPColors.textSecondary,
+                              isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+                              color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
                               size: 36,
                             ),
                             onPressed: () {
