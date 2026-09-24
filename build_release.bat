@@ -3,36 +3,46 @@ chcp 65001 >nul
 title VSP Release APK Builder
 
 echo ========================================================
-echo        🚀 VSP Application - Release APK Build
+echo        VSP Application - Release APK Build
 echo ========================================================
 echo.
 
 if not exist "%~dp0env.json" (
-    echo [ERROR] ملف env.json غير موجود في المسار الرئيسي!
-    echo يرجى نسخ env.json.example إلى env.json وملء المتغيرات.
-    echo.
+    echo [ERROR] env.json غير موجود في المسار الرئيسي.
+    echo انسخ env.json.example إلى env.json واملأ القيم.
     pause
     exit /b 1
 )
 
-echo [1/2] جارٍ التحقق من بيئة Flutter وجلب الحزم...
-call flutter pub get
+echo [1/3] التحقق من إعدادات Build...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$j=Get-Content '%~dp0env.json' -Raw | ConvertFrom-Json; $required='SUPABASE_URL','SUPABASE_ANON_KEY','PAYMOB_PUBLIC_KEY','GOOGLE_WEB_CLIENT_ID','GOOGLE_IOS_CLIENT_ID'; $missing=@($required | ? { -not $_ -or -not $j.$_ -or $j.$_ -match '^your-.*-here$' }); if($missing.Count){ Write-Host '[ERROR] قيم Build ناقصة:' ($missing -join ', '); exit 1 }"
 
-echo.
-echo [2/2] جارٍ بناء ملف الـ Release APK باستخدام env.json...
+if %ERRORLEVEL% neq 0 (
+    pause
+    exit /b 1
+)
+
+echo [2/3] جارٍ جلب الحزم...
+call flutter pub get
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] flutter pub get فشل.
+    pause
+    exit /b 1
+)
+
+echo [3/3] جارٍ بناء Release APK بالإعدادات الموحدة...
 call flutter build apk --release --dart-define-from-file=env.json
 
 if %ERRORLEVEL% equ 0 (
     echo.
     echo ========================================================
-    echo  ✅ تم بناء الـ Release APK بنجاح!
-    echo  📁 المسار: build\app\outputs\flutter-apk\
-    echo ========================================================
-    echo.
-    explorer "%~dp0build\app\outputs\flutter-apk"
+    echo  تم بناء Release APK بنجاح.
+    echo  buildappoutputslutter-apk    echo ========================================================
+    explorer "%~dp0buildappoutputslutter-apk"
 ) else (
     echo.
-    echo ❌ فشل البناء! يرجى مراجعة الأخطاء بالأعلى.
+    echo فشل البناء. راجع الخطأ بالأعلى.
 )
 
 pause
