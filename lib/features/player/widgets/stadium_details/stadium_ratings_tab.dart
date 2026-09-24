@@ -124,10 +124,6 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                         isLoading: isSubmitting,
                         onPressed: () async {
                           final comment = commentController.text.trim();
-                          if (comment.isEmpty) {
-                            VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى كتابة تعليق' : 'Please enter a comment');
-                            return;
-                          }
                           setSheetState(() => isSubmitting = true);
                           try {
                             final userModel = auth.userModel;
