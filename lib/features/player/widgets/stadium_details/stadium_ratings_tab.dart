@@ -124,6 +124,16 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                         isLoading: isSubmitting,
                         onPressed: () async {
                           final comment = commentController.text.trim();
+                          // Guard: at least 1 star must be selected
+                          if (selectedRating == 0) {
+                            VSPFeedback.showError(
+                              sheetCtx,
+                              isArabic
+                                  ? 'يرجى اختيار تقييم بالنجوم أولاً'
+                                  : 'Please select a star rating first',
+                            );
+                            return;
+                          }
                           setSheetState(() => isSubmitting = true);
                           try {
                             final userModel = auth.userModel;

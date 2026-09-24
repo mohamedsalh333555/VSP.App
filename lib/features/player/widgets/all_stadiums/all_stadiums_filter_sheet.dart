@@ -31,6 +31,8 @@ class AllStadiumsFilterSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
+      useSafeArea: true,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),

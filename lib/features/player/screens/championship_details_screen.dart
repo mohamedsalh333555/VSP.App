@@ -43,8 +43,13 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _singleChampionshipStream = TournamentRepository().getSingleChampionshipStream(widget.championship.id).asBroadcastStream();
-    _matchesStream = TournamentRepository().getTournamentMatches(widget.championship.id).asBroadcastStream();
+    // Use asBroadcastStream() to allow multiple listeners (TabBarView rebuilds).
+    _singleChampionshipStream = TournamentRepository()
+        .getSingleChampionshipStream(widget.championship.id)
+        .asBroadcastStream();
+    _matchesStream = TournamentRepository()
+        .getTournamentMatches(widget.championship.id)
+        .asBroadcastStream();
     _checkUserTeamState();
   }
 

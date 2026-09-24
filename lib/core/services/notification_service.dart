@@ -226,8 +226,9 @@ class NotificationService {
  final String? type = data['type'];
  final String? bookingId = data['bookingId'];
  final String? teamId = data['teamId'];
+ final String? tournamentId = data['tournamentId'];
 
- VSPLogger.i('Handling notification click with GoRouter: type=$type, bookingId=$bookingId, teamId=$teamId');
+ VSPLogger.i('Handling notification click with GoRouter: type=$type, bookingId=$bookingId, teamId=$teamId, tournamentId=$tournamentId');
 
  // 1. MATCH DETAILS / BOOKING DEEP LINK
  if (bookingId != null && bookingId.isNotEmpty) {
