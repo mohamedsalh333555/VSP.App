@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
@@ -31,9 +32,25 @@ class PlayerHomeScreen extends StatefulWidget {
 
 class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   int _selectedIndex = 0;
+  static const _selectedTabKey = 'player_last_selected_tab';
 
   void switchToTab(int index) {
+    if (index < 0 || index > 4) return;
     setState(() => _selectedIndex = index);
+    _persistSelectedTab(index);
+  }
+
+  Future<void> _persistSelectedTab(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_selectedTabKey, index);
+  }
+
+  Future<void> _restoreSelectedTab() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getInt(_selectedTabKey);
+    if (saved != null && saved >= 0 && saved <= 4 && mounted) {
+      setState(() => _selectedIndex = saved);
+    }
   }
 
   @override
@@ -44,6 +61,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   void _fetchInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _restoreSelectedTab();
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
@@ -170,7 +188,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       ),
       bottomNavigationBar: VspBottomNavBar(
         selectedIndex: _selectedIndex,
-        onItemTapped: (index) => setState(() => _selectedIndex = index),
+        onItemTapped: (index) {
+          setState(() => _selectedIndex = index);
+          _persistSelectedTab(index);
+        },
         items: [
           VspNavItem(
             activeIcon: Iconsax.home_1_copy,
