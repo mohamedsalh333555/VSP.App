@@ -252,7 +252,15 @@ class NotificationService {
  } catch (_) {}
  }
 
- // 3. NOTIFICATIONS CENTER DEEP LINK
+ // 3. TOURNAMENT DEEP LINK
+ if (tournamentId != null && tournamentId.isNotEmpty) {
+   try {
+     GoRouter.of(context).push('/championship/$tournamentId');
+     return;
+   } catch (_) {}
+ }
+
+ // 4. NOTIFICATIONS CENTER DEEP LINK
  try {
  GoRouter.of(context).push('/notifications');
  } catch (_) {
