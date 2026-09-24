@@ -132,7 +132,8 @@ class BookingCancellationCoordinator {
       return true;
     } catch (e) {
       debugPrint('Error cancelling booking: $e');
-      rethrow;
+      // Never expose raw PostgREST/SQL exceptions to the player.
+      throw Exception(sanitizeCancellationError(e));
     }
   }
 }
