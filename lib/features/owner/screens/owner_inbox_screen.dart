@@ -60,7 +60,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  final selectedUser = await showSearch<UserModel?>(
  context: context,
- delegate: UserSearchDelegate(currentUserId: currentUserId, currentUserRole: userRole),
+ delegate: UserSearchDelegate(
+      currentUserId: currentUserId,
+      currentUserRole: userRole,
+      isArabic: Localizations.localeOf(context).languageCode == 'ar',
+    ),
  );
 
  if (selectedUser == null || !context.mounted) return;
