@@ -151,6 +151,7 @@ class Team {
  'championshipsWon': championshipsWon,
  'fairPlayScore': fairPlayScore,
  'lastResetYear': lastResetYear,
+ 'bio': bio,
  };
  }
 
@@ -181,6 +182,7 @@ class Team {
  int? fairPlayScore,
  int? lastResetYear,
  List<String>? unlockedBadges,
+ String? bio,
  }) {
  return Team(
  id: id ?? this.id,
