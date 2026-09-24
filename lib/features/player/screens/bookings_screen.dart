@@ -72,6 +72,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
+        centerTitle: true,
         title: Text(
           l10n.bookedTitle,
           style: Theme.of(context).textTheme.displayMedium,
