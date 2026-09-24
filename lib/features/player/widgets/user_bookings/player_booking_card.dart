@@ -354,7 +354,7 @@ class PlayerBookingCard extends StatelessWidget {
                       bookingId: booking.id,
                       teamName: booking.playerTeamName ?? (isArabic ? 'فريقي' : 'My Team'),
                       stadiumName: booking.stadiumName,
-                      date: booking.formattedDate + ' - ' + booking.formattedTimeRange,
+                      date: '${booking.formattedDate} - ${booking.formattedTimeRange}',
                     ),
                   ),
                 ),

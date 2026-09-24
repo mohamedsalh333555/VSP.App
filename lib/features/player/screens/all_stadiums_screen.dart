@@ -37,37 +37,6 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
   String _selectedFloorType = 'All';
   StadiumSortOption _sortOption = StadiumSortOption.featured;
 
-  final List<String> _governorates = [
-    'All',
-    'Cairo',
-    'Giza',
-    'Alexandria',
-    'Qalyubia',
-    'Dakahlia',
-    'Sharqia',
-    'Gharbia',
-    'Monufia',
-    'Beheira',
-    'Kafr El Sheikh',
-    'Damietta',
-    'Port Said',
-    'Ismailia',
-    'Suez',
-    'North Sinai',
-    'South Sinai',
-    'Beni Suef',
-    'Faiyum',
-    'Minya',
-    'Asyut',
-    'Sohag',
-    'Qena',
-    'Luxor',
-    'Aswan',
-    'Red Sea',
-    'New Valley',
-    'Matrouh',
-  ];
-
   @override
   void initState() {
     super.initState();
