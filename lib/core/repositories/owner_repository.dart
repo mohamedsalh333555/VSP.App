@@ -109,7 +109,6 @@ class OwnerRepository {
  return _supabase
  .from('transactions')
  .stream(primaryKey: ['id'])
- .eq('user_id', uid)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
