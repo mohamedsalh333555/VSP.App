@@ -56,8 +56,8 @@ class UserRepository {
     if (ids.isEmpty) return [];
     try {
       final response = await _supabase
-          .from('users')
-          .select()
+          .from('user_public_profiles')
+          .select('id, name, profile_image_url, position')
           .inFilter('id', ids);
 
       return (response as List)
@@ -412,13 +412,10 @@ class UserRepository {
   }) async {
     try {
       var dbQuery = _supabase
-          .from('users')
-          .select('id, name, email, role, profile_image_url')
+          .from('user_public_profiles')
+          .select('id, name, profile_image_url, position')
           .neq('id', currentUserId);
 
-      if (role != null) {
-        dbQuery = dbQuery.eq('role', role);
-      }
 
       if (query.isNotEmpty) {
         dbQuery = dbQuery.ilike('name', '%$query%');
