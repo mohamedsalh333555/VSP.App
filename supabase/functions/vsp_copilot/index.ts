@@ -91,7 +91,7 @@ serve(async (req: Request) => {
     // 5. Fetch User Profile
     const { data: userProfile } = await supabase
       .from("users")
-      .select("name, governorate, position, role")
+      .select("name, governorate, position, role, subscription_plan, subscription_expires_at, trial_ends_at")
       .eq("id", callerUser.id)
       .maybeSingle();
 
@@ -100,6 +100,23 @@ serve(async (req: Request) => {
       ["admin","super_admin","cofounder","co_founder"].includes(dbRole)
         ? "admin"
         : (dbRole === "pitch_owner" || dbRole === "owner" ? "owner" : "player");
+
+    // Copilot is available to players for free. Owners require an active paid/trial entitlement.
+    if (userRole === "owner") {
+      const nowMs = Date.now();
+      const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
+      const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
+      const activePlan = ["basic","pro","free_trial"].includes(String(userProfile?.subscription_plan || "").toLowerCase());
+      if (!activePlan || Math.max(trialMs, subMs) <= nowMs) {
+        return new Response(
+          JSON.stringify({
+            error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
+            message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Copilot is available to players and owners. Owner-only operations are
     // protected again by the capability registry/tool planner and executor.
