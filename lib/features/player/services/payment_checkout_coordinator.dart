@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'payment_checkout_service.dart';
 
 /// Coordinates asynchronous polling, timers, subscriptions, and safe lock release
@@ -105,6 +106,22 @@ class PaymentCheckoutCoordinator {
         await bookingRepo.releaseBookingLock(booking.id);
       } catch (e) {
         debugPrint('Error releasing booking lock: $e');
+      }
+    }
+
+    if (isTournamentPayment) {
+      // Tournament payments do not create a booking row. Cancel only the
+      // server-created pending payment order when the checkout is abandoned.
+      final orderReference = booking?.id;
+      if (orderReference != null && orderReference.isNotEmpty) {
+        try {
+          await Supabase.instance.client.rpc(
+            'cancel_tournament_payment_order_atomic',
+            params: {'p_order_reference': orderReference},
+          );
+        } catch (e) {
+          debugPrint('Error cancelling tournament payment order: $e');
+        }
       }
     }
   }
