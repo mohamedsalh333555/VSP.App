@@ -174,8 +174,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final metrics = _getOrCalculateMetrics(allBookings);
 
-    final double availableBalance = (_financialSummary?['available_balance'] as num?)?.toDouble() ??
-        metrics.digitalVspBalance;
+    final double availableBalance = (_financialSummary?['success'] == true)
+        ? ((_financialSummary?['available_balance'] as num?)?.toDouble() ?? 0.0)
+        : 0.0;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
