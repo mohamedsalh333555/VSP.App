@@ -300,9 +300,30 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
         if (mounted && (isPaidSuccess == true)) {
           if (widget.isTournamentPayment) {
-            _paymentCompleted = true;
-            _coordinator.cancelCountdownTimer();
-            Navigator.pop(context, true);
+            final orderReference = widget.existingBookingId;
+            if (orderReference == null || orderReference.isEmpty) {
+              if (mounted) {
+                setState(() {
+                  _isAwaitingWebhook = false;
+                  _isLoading = false;
+                });
+                VSPFeedback.showError(context, isArabic ? 'مرجع الدفع غير متاح.' : 'Payment reference is missing.');
+              }
+              return;
+            }
+
+            // Never trust the Paymob WebView/browser result as proof of payment.
+            // The server-side order status is the financial source of truth.
+            _coordinator.startTournamentOrderPolling(
+              orderReference: orderReference,
+              fetchStatus: (ref) => TournamentRepository().getTournamentPaymentOrderStatus(ref),
+              onPaid: (_) {
+                if (!mounted || _paymentCompleted) return;
+                _paymentCompleted = true;
+                _coordinator.cancelAllTimers();
+                Navigator.pop(context, true);
+              },
+            );
             return;
           }
 
