@@ -360,7 +360,7 @@ serve(async (req: Request) => {
         if (tournErr) {
           console.error("Failed to confirm tournament order via RPC:", tournErr);
         } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
-          // OVER-CAPACITY DETECTED: Real Paymob Refund API call FIRST
+          // OVER-CAPACITY DETECTED: refund the exact gross amount charged to the payer.
           console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
           
           let refundSuccess = false;
@@ -388,8 +388,21 @@ serve(async (req: Request) => {
             const authData = await authRes.json();
             const authToken = authData.token;
 
-            // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
-            const amountCents = Math.round(Number(tournResult.amount) * 100);
+            // Step B: Rebuild the same gross amount charged by the intention service:
+            // principal + VSP fee + Paymob local fee + fixed fee.
+            const { data: feeConfig } = await supabase
+              .from("platform_fee_config")
+              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
+              .eq("id", 1)
+              .maybeSingle();
+            const principal = Number(tournResult.amount || 0);
+            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
+            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
+            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
+            const vspFee = Math.round(principal * vspRate * 100) / 100;
+            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
+            const grossAmount = Math.round((principal + vspFee + gatewayFee) * 100) / 100;
+            const amountCents = Math.round(grossAmount * 100);
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -420,6 +433,7 @@ serve(async (req: Request) => {
             p_refund_success: refundSuccess,
             p_paymob_refund_id: refundId,
             p_error_message: refundErrorMsg,
+            p_refund_amount: amountCents / 100,
           });
 
         } else {
