@@ -150,18 +150,20 @@ class VspCopilotService {
   /// Returns total count of verified available stadiums (used for safety checks)
   Future<int> getStadiumCount() async {
     final client = _supabase;
-    if (client != null) {
+    if (client != null && client.auth.currentUser != null) {
       try {
         final res = await client
             .from('stadiums')
             .select('id')
             .eq('is_verified', true)
-            .eq('is_blocked', false);
-        final list = res as List<dynamic>?;
-        if (list != null && list.isNotEmpty) return list.length;
-      } catch (_) {}
+            .eq('is_blocked', false)
+            .eq('is_deleted_by_owner', false);
+        return (res as List<dynamic>).length;
+      } catch (_) {
+        return 0;
+      }
     }
-    return _curatedStadiums.length;
+    return _enableLocalTestEngine ? _curatedStadiums.length : 0;
   }
 
   /// Fetches all conversation sessions belonging to the authenticated user.
