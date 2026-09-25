@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -6,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
-import '../../../auth/widgets/verify_email/otp_box.dart';
 
 /// Modal dialog/sheet to re-authenticate sensitive payout changes with the real account password.
 /// Protects against field workers or unauthorized persons changing payout info on the owner's phone.
