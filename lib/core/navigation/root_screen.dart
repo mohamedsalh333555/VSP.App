@@ -35,11 +35,6 @@ class _RootScreenState extends State<RootScreen> {
  // Trigger location check and pending deep link check after first frame
  WidgetsBinding.instance.addPostFrameCallback((_) {
  final auth = Provider.of<AuthProvider>(context, listen: false);
- // Only run for authenticated players (Owners have fixed stadium locations usually)
- if (auth.isAuthenticated && !auth.isOwner) {
- auth.updateUserLocation();
- }
-
  // معالجة الرابط العميق المعلق بعد نجاح التحقق والدخول
  if (auth.isAuthenticated && auth.userModel != null) {
  _deepLinkChecked = true;
