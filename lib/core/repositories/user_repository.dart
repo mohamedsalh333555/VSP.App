@@ -207,47 +207,10 @@ class UserRepository {
       );
       return true;
     } catch (e) {
-      VSPLogger.w(
-        'RPC complete_user_registration fallback to direct update for $userId: $e',
-      );
-      try {
-        final updateMap = <String, dynamic>{
-          'is_registration_complete': true,
-          'is_email_verified': true,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        };
-        if (additionalData['phone'] != null) {
-          updateMap['phone'] = additionalData['phone'];
-        }
-        if (additionalData['name'] != null) {
-          updateMap['name'] = additionalData['name'];
-        }
-        if (additionalData['position'] != null) {
-          updateMap['position'] = additionalData['position'];
-        }
-        if (additionalData['governorate'] != null) {
-          updateMap['governorate'] = additionalData['governorate'];
-        }
-        if (additionalData['date_of_birth'] != null) {
-          updateMap['date_of_birth'] = additionalData['date_of_birth'];
-        }
-        if (additionalData['p2p_instapay'] != null) {
-          updateMap['p2p_instapay'] = additionalData['p2p_instapay'];
-        }
-        if (additionalData['p2p_vodafone'] != null) {
-          updateMap['p2p_vodafone'] = additionalData['p2p_vodafone'];
-        }
-        if (additionalData['p2p_bank'] != null) {
-          updateMap['p2p_bank'] = additionalData['p2p_bank'];
-        }
-
-        await _supabase.from('users').update(updateMap).eq('id', userId);
-        return true;
-      } catch (innerErr) {
-        VSPLogger.e('Direct update fallback failed for $userId', innerErr);
-        return false;
-      }
+      VSPLogger.e('complete_user_registration RPC failed for $userId', e);
+      return false;
     }
+
   }
 
   Future<void> updateUserModerationStatus(
@@ -326,43 +289,26 @@ class UserRepository {
     required String fileUrl,
   }) async {
     if (!_allowedDocFieldNames.contains(docFieldName)) {
-      throw ArgumentError(
-        'Unauthorized or invalid document field: $docFieldName',
-      );
+      throw ArgumentError('Unauthorized or invalid document field: $docFieldName');
     }
     try {
-      final response = await _supabase
-          .from('users')
-          .select('additional_data')
-          .eq('id', uid)
-          .maybeSingle();
-
-      final additionalData = Map<String, dynamic>.from(
-        response?['additional_data'] ?? {},
+      final response = await _supabase.rpc(
+        'update_owner_verification_document',
+        params: {
+          'p_user_id': uid,
+          'p_doc_field_name': docFieldName,
+          'p_file_url': fileUrl,
+        },
       );
-      final verificationDocuments = Map<String, dynamic>.from(
-        additionalData['verificationDocuments'] ?? {},
-      );
-      verificationDocuments[docFieldName] = fileUrl;
-      additionalData['verificationDocuments'] = verificationDocuments;
-
-      await _supabase
-          .from('users')
-          .update({
-            'additional_data': additionalData,
-            'verification_status': 'pending',
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', uid);
+      if (response is Map && response['success'] == false) {
+        throw Exception(response['error']?.toString() ?? 'Failed to update verification document');
+      }
     } catch (e, stack) {
-      VSPLogger.e(
-        'Error updating owner verification document for $uid',
-        e,
-        stack,
-      );
+      VSPLogger.e('Error updating owner verification document for $uid', e, stack);
       rethrow;
     }
   }
+
 
   /// Update owner onboarding status and extra config safely in Supabase
   Future<bool> updateOnboardingStatus(
@@ -370,38 +316,38 @@ class UserRepository {
     Map<String, dynamic> additionalData,
   ) async {
     try {
-      await _supabase
-          .from('users')
-          .update({
-            'has_stadium': true,
-            'is_onboarding_confirmed': true,
-            'additional_data': additionalData,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', uid);
-      return true;
+      final response = await _supabase.rpc(
+        'update_owner_onboarding_atomic',
+        params: {
+          'p_user_id': uid,
+          'p_additional_data': additionalData,
+        },
+      );
+      return response is Map ? response['success'] != false : true;
     } catch (e, stack) {
       VSPLogger.e('Error updating user onboarding status', e, stack);
       return false;
     }
   }
 
+
   /// Update owner onboarding confirmed flag directly in Supabase
   Future<bool> updateOnboardingConfirmed(String uid, bool confirmed) async {
     try {
-      await _supabase
-          .from('users')
-          .update({
-            'is_onboarding_confirmed': confirmed,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', uid);
-      return true;
+      final response = await _supabase.rpc(
+        'update_onboarding_confirmed_atomic',
+        params: {
+          'p_user_id': uid,
+          'p_confirmed': confirmed,
+        },
+      );
+      return response is Map ? response['success'] != false : true;
     } catch (e, stack) {
       VSPLogger.e('Error updating is_onboarding_confirmed', e, stack);
       return false;
     }
   }
+
 
   /// Search users for inbox or team invite
   Future<List<UserModel>> searchUsers({
@@ -438,8 +384,8 @@ class UserRepository {
     if (ids.isEmpty) return [];
     try {
       final rows = await _supabase
-          .from('users')
-          .select('id, name, profile_image_url')
+          .from('user_public_profiles')
+          .select('id, name, profile_image_url, position')
           .inFilter('id', ids);
       return List<Map<String, dynamic>>.from(rows as List<dynamic>);
     } catch (e, stack) {
