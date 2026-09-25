@@ -1,0 +1,1 @@
+alter view public.owner_subscription_status set (security_invoker = true);
