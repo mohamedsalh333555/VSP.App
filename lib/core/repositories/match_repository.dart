@@ -260,7 +260,7 @@ class MatchRepository {
  final stadiumName = doc?['stadium_name'] ?? 'Match';
 
  // PostgreSQL Atomic RPC
- await _supabase.rpc('leave_public_match_atomic', params: {
+ await _supabase.rpc('remove_public_match_participant_atomic', params: {
  'p_booking_id': bookingId,
  'p_user_id': userId,
  });
