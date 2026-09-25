@@ -468,19 +468,22 @@ serve(async (req: Request) => {
 
       console.log(`💸 Paymob Webhook Refund confirmed for booking ${bookingId} via ${refundMethod} (Tx: ${refundTxnId})`);
 
-      await supabase
-        .from("bookings")
-        .update({
-          status: "cancelled",
-          payment_status: "refunded",
-          refund_transaction_id: refundTxnId,
-          refunded_at: new Date().toISOString(),
-          refund_payment_method: refundMethod,
-          refund_amount: refundAmount,
-          cancelled_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", bookingId);
+      const { data: refundResult, error: refundRecordError } = await supabase.rpc(
+        "record_booking_gateway_refund_atomic",
+        {
+          p_booking_id: bookingId,
+          p_refund_amount: refundAmount,
+          p_refund_txn_id: refundTxnId,
+          p_refund_payment_method: refundMethod,
+        }
+      );
+      if (refundRecordError || refundResult?.success !== true) {
+        console.error("❌ Failed to atomically record booking refund:", refundRecordError || refundResult);
+        return new Response(JSON.stringify({ error: "Refund recording failed" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
 
       // Notify player about successful refund
       const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
