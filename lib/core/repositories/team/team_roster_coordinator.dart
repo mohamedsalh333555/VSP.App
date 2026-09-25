@@ -29,7 +29,7 @@ class TeamRosterCoordinator {
   Future<List<String>> getTeamPlayerImages(List<String> memberUids) async {
     if (memberUids.isEmpty) return [];
     final response = await _supabase
-        .from('users')
+        .from('user_public_profiles')
         .select('profile_image_url')
         .inFilter('id', memberUids);
     return (response as List)
@@ -43,16 +43,16 @@ class TeamRosterCoordinator {
       final memberUids = await getTeamMemberUids(teamId);
       if (memberUids.isEmpty) return [];
 
-      final response = await _supabase
-          .from('users')
-          .select('id, name, phone, position')
-          .inFilter('id', memberUids);
+      final response = await _supabase.rpc(
+        'get_team_member_profiles',
+        params: {'p_team_id': teamId},
+      );
 
       return (response as List).map((row) => {
-        'uid': row['id']?.toString() ?? '',
+        'uid': row['uid']?.toString() ?? '',
         'name': row['name']?.toString() ?? 'Player',
         'phone': row['phone']?.toString() ?? '',
-        'position': row['position']?.toString() ?? 'Player',
+        'position': row['p_position']?.toString() ?? 'Player',
       }).toList();
     } catch (e) {
       debugPrint('Error getting team member profiles: $e');
