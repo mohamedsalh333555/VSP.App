@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -277,9 +276,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           if (_booking != null) {
             final bookingId = _booking!.id;
             _showVerificationModal(bookingId, isArabic);
-            if (kDebugMode) {
-              await _coordinator.simulateTestPaymentWebhook(bookingId);
-            }
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {
@@ -400,7 +396,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       centerTitle: true,
       title: Text(
         isChampionship
-            ? (isArabic ? 'تأكيد اشتراك البطولة' : 'Championship Payment')
+            ? (isArabic
+                ? (widget.bookingDraft.stadiumName.contains('دوري:') ? 'تأكيد اشتراك الدوري' : 'تأكيد اشتراك البطولة')
+                : (widget.bookingDraft.stadiumName.contains('دوري:') ? 'League Payment' : 'Championship Payment'))
             : l10n.confirmBooking,
         style: Theme.of(context).textTheme.displaySmall,
       ),
