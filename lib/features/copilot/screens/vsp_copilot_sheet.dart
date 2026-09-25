@@ -38,9 +38,6 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
   final List<CopilotMessage> _messages = [];
   bool _isLoading = false;
 
-  static const String _singleQuickPromptAr = 'دور لي على ملاعب فاضية النهاردة';
-  static const String _singleQuickPromptEn = 'Find available pitches today';
-
   Future<void> _handleBookStadium(CopilotStadiumSummary summary) async {
     Navigator.of(context).pop();
 
@@ -53,7 +50,6 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
             builder: (_) => BookingConfirmationScreen(
               stadium: stadium,
               selectedDate: DateTime.now(),
-              initialSelectedSlots: const ['08:00 PM - 09:00 PM'],
             ),
           ),
         );
@@ -125,12 +121,6 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final auth = Provider.of<AuthProvider?>(context, listen: false);
-    final userGov = auth?.userModel?.governorate;
-    final quickPrompt = widget.isArabic
-        ? (userGov != null ? 'دور لي على ملاعب فاضية في $userGov' : _singleQuickPromptAr)
-        : _singleQuickPromptEn;
-
     return Container(
       height: MediaQuery.of(context).size.height * 0.78,
       margin: EdgeInsets.only(bottom: bottomInset),
@@ -144,7 +134,6 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           _buildHeader(),
           const Divider(color: VSPColors.divider, height: 1),
           Expanded(child: _buildMessagesList()),
-          if (!_isLoading) _buildQuickPrompt(quickPrompt),
           _buildInputBar(),
         ],
       ),
@@ -342,25 +331,6 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
               style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickPrompt(String prompt) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: ActionChip(
-          backgroundColor: VSPColors.accent.withValues(alpha: 0.12),
-          side: BorderSide(color: VSPColors.accent.withValues(alpha: 0.25)),
-          avatar: const Icon(Iconsax.search_normal_copy, size: 13, color: VSPColors.accent),
-          label: Text(
-            prompt,
-            style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w600),
-          ),
-          onPressed: () => _handleSendMessage(prompt),
         ),
       ),
     );
