@@ -246,7 +246,9 @@ void main() {
         ),
       ));
       await tester.pump();
-      await tester.tap(find.byIcon(Iconsax.money_send_copy), warnIfMissed: false);
+      // While saving, the button intentionally replaces its money icon with a spinner.
+      // Tap the disabled button itself to verify the callback remains blocked.
+      await tester.tap(find.byType(ElevatedButton), warnIfMissed: false);
       await tester.pump();
       expect(fired, isFalse);
     });
