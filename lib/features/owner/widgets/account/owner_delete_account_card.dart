@@ -13,6 +13,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
   void _showDeleteAccountDialog(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     bool isDeleting = false;
+    final passwordController = TextEditingController();
 
     showDialog(
       context: context,
@@ -25,11 +26,39 @@ class OwnerDeleteAccountCard extends StatelessWidget {
               isArabic ? 'حذف حساب المالك نهائياً؟ ' : 'Delete Account?',
               style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
             ),
-            content: Text(
-              isArabic
-                  ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وملاعبك وتاريخ حجوزاتك نهائياً.'
-                  : 'Are you sure? This action cannot be undone. You will lose all your data, stadiums, and match history permanently.',
-              style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic
+                      ? 'هذا الإجراء نهائي. يجب أن تكون الحجوزات والتسويات المعلقة منتهية أولاً، ولن يتم حذف أي جزء من الحساب إذا تعذر الإتمام بأمان.'
+                      : 'This action is permanent. Active bookings and pending settlements must be clear first. No partial deletion will occur if secure deletion cannot complete.',
+                  style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isArabic ? 'أدخل كلمة مرور الحساب للتأكيد' : 'Enter your account password to confirm',
+                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  enabled: !isDeleting,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Iconsax.lock_1_copy, color: VSPColors.textSecondary),
+                    hintText: isArabic ? 'كلمة مرور الحساب' : 'Account password',
+                    filled: true,
+                    fillColor: VSPColors.surfaceAlt,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      borderSide: const BorderSide(color: VSPColors.divider),
+                    ),
+                  ),
+                ),
+              ],
             ),
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
@@ -55,8 +84,28 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                       onPressed: isDeleting
                           ? null
                           : () async {
+                              if (passwordController.text.isEmpty) {
+                                VSPFeedback.showWarning(
+                                  dialogCtx,
+                                  isArabic ? 'أدخل كلمة مرور الحساب أولاً.' : 'Enter your account password first.',
+                                );
+                                return;
+                              }
+
                               setDialogState(() => isDeleting = true);
                               final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                              final verified = await authProvider.reauthenticateWithPassword(passwordController.text);
+                              if (!dialogCtx.mounted) return;
+
+                              if (!verified) {
+                                setDialogState(() => isDeleting = false);
+                                VSPFeedback.showError(
+                                  dialogCtx,
+                                  isArabic ? 'كلمة المرور غير صحيحة. لم يتم حذف الحساب.' : 'Incorrect password. The account was not deleted.',
+                                );
+                                return;
+                              }
+
                               final success = await authProvider.deleteAccount();
 
                               if (!context.mounted) return;
