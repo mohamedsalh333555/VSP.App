@@ -104,9 +104,12 @@ class OwnerRepository {
  }
 
  Stream<List<Map<String, dynamic>>> getTransactionsStream() {
+ final uid = _supabase.auth.currentUser?.id;
+ if (uid == null) return Stream.value(const <Map<String, dynamic>>[]);
  return _supabase
  .from('transactions')
  .stream(primaryKey: ['id'])
+ .eq('user_id', uid)
  .timeout(
  const Duration(seconds: 10),
  onTimeout: (sink) => sink.add([]),
@@ -127,9 +130,12 @@ class OwnerRepository {
 
  Future<List<Map<String, dynamic>>> getTransactionsList({int limit = 50}) async {
  try {
+ final uid = _supabase.auth.currentUser?.id;
+ if (uid == null) return [];
  final list = await _supabase
  .from('transactions')
  .select()
+ .eq('user_id', uid)
  .order('created_at', ascending: false)
  .limit(limit);
  return List<Map<String, dynamic>>.from(list);
