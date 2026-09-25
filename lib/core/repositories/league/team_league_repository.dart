@@ -212,7 +212,7 @@ class TeamLeagueRepository {
   }
 
   /// Creates a new 4-team league with 30 EGP entry fee per team
-  Future<String> createTeamLeague({
+  Future<Map<String, dynamic>> createTeamLeague({
     required String teamId,
     required String leagueName,
     String? governorate,
@@ -228,7 +228,18 @@ class TeamLeagueRepository {
     if (res == null || res['success'] != true) {
       throw Exception(res?['message'] ?? 'فشل إنشاء الدوري');
     }
-    return res['championship_id'].toString();
+    return Map<String, dynamic>.from(res as Map);
+  }
+
+  Future<Map<String, dynamic>> getTeamLeaguePaymentStatus({
+    required String championshipId,
+    required String teamId,
+  }) async {
+    final res = await _supabase.rpc('get_team_league_payment_status', params: {
+      'p_championship_id': championshipId,
+      'p_team_id': teamId,
+    });
+    return Map<String, dynamic>.from(res as Map);
   }
 
   /// Joins an existing 4-team league using the championship id / code
