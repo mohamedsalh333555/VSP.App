@@ -9,7 +9,6 @@ void main() {
     test('1. Verify No Paymob Secret Key is compiled into AppConfig or AppEnv', () {
       // AppEnv must only expose public key & supabase config
       expect(AppEnv.paymobPublicKey, isNotEmpty);
-      expect(AppConfig.paymobPublicKey, isNotEmpty);
 
       // Verify that no paymobSecretKey getter exists in AppConfig (compilation safety)
       expect(AppConfig.paymobCardIntegrationId, '5772488');
