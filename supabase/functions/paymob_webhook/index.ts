@@ -297,7 +297,9 @@ serve(async (req: Request) => {
             const authToken = authData.token;
 
             // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
-            const amountCents = Math.round(Number(tournResult.amount) * 100);
+            // Refund the exact gross amount Paymob actually charged, including VSP/gateway fees.
+            // This is authoritative for the external refund and avoids under-refunding the payer.
+            const amountCents = Math.round(Number(obj.amount_cents || 0));
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -328,6 +330,7 @@ serve(async (req: Request) => {
             p_refund_success: refundSuccess,
             p_paymob_refund_id: refundId,
             p_error_message: refundErrorMsg,
+            p_refund_amount: amountCents / 100,
           });
 
         } else {
