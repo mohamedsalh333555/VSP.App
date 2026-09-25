@@ -2,12 +2,60 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/app_config.dart';
 
-/// Service responsible for Paymob payment calculation and server-side checkout generation.
-/// Strictly follows Zero-Trust security principles (No secrets on mobile client).
+class PaymobFeePolicy {
+  final double vspRate;
+  final double gatewayRate;
+  final double fixedGatewayFee;
+  final bool vspAppliesToCash;
+  final bool paymobAppliesToElectronic;
+
+  const PaymobFeePolicy({
+    required this.vspRate,
+    required this.gatewayRate,
+    required this.fixedGatewayFee,
+    required this.vspAppliesToCash,
+    required this.paymobAppliesToElectronic,
+  });
+
+  factory PaymobFeePolicy.fromMap(Map<String, dynamic> map) => PaymobFeePolicy(
+    vspRate: (map['booking_vsp_rate'] as num?)?.toDouble() ?? 0,
+    gatewayRate: (map['booking_paymob_rate'] as num?)?.toDouble() ?? 0,
+    fixedGatewayFee: (map['booking_paymob_fixed_fee'] as num?)?.toDouble() ?? 0,
+    vspAppliesToCash: map['vsp_applies_to_cash'] == true,
+    paymobAppliesToElectronic: map['paymob_applies_to_electronic'] == true,
+  );
+
+  double platformFee(double baseAmount) =>
+      baseAmount <= 0 ? 0 : double.parse((baseAmount * vspRate).toStringAsFixed(2));
+
+  double gatewayFee(double baseAmount) =>
+      baseAmount <= 0 || !paymobAppliesToElectronic
+          ? 0
+          : double.parse((baseAmount * gatewayRate + fixedGatewayFee).toStringAsFixed(2));
+
+  double serviceFee(double baseAmount) =>
+      double.parse((platformFee(baseAmount) + gatewayFee(baseAmount)).toStringAsFixed(2));
+
+  double total(double baseAmount) =>
+      double.parse((baseAmount + serviceFee(baseAmount)).toStringAsFixed(2));
+}
+
 class PaymobService {
-  /// Generate Paymob Unified Checkout URL via secure Supabase Edge Function (create_paymob_intention).
-  /// The Secret Key is kept exclusively on the server side.
-  /// Returns checkout URL string if successful, or null on failure (Fail-Closed).
+  static Future<PaymobFeePolicy?> fetchFeePolicy() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('platform_fee_config')
+          .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_fixed_fee,vsp_applies_to_cash,paymob_applies_to_electronic')
+          .eq('id', 1)
+          .maybeSingle();
+      if (response == null) return null;
+      return PaymobFeePolicy.fromMap(Map<String, dynamic>.from(response));
+    } catch (e) {
+      debugPrint('[PaymobService] Fee policy unavailable: $e');
+      return null;
+    }
+  }
+
   static Future<String?> getCheckoutUrlFromServer({
     required double amountInEgp,
     required String bookingId,
@@ -19,8 +67,6 @@ class PaymobService {
     bool isFullPayment = false,
   }) async {
     try {
-      final activeIntegration = int.tryParse(integrationId ?? AppConfig.paymobCardIntegrationId) ?? 5772488;
-
       final response = await Supabase.instance.client.functions.invoke(
         'create_paymob_intention',
         body: {
@@ -31,51 +77,36 @@ class PaymobService {
           'user_email': userEmail,
           'user_name': userName,
           'user_phone': userPhone,
-          'integration_id': activeIntegration,
+          'integration_id': integrationId,
         },
       );
 
-      if (response.status == 200 && response.data != null) {
-        final data = response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : null;
-
-        if (data != null && data['checkout_url'] != null) {
-          final checkoutUrl = data['checkout_url'] as String;
-          debugPrint('[PaymobService] Secure Server-Generated Checkout URL: $checkoutUrl');
-          return checkoutUrl;
-        }
+      if (response.status == 200 && response.data is Map<String, dynamic>) {
+        final checkoutUrl = (response.data as Map<String, dynamic>)['checkout_url'];
+        if (checkoutUrl is String && checkoutUrl.isNotEmpty) return checkoutUrl;
       }
-
-      debugPrint('[PaymobService] Edge Function create_paymob_intention failed with status: ${response.status}. Response: ${response.data}');
       return null;
     } catch (e) {
-      debugPrint('[PaymobService] getCheckoutUrlFromServer Exception: $e');
+      debugPrint('[PaymobService] Checkout error: $e');
       return null;
     }
   }
 
-  /// Calculate VSP fee share: 2.0% of the base amount
+  // Legacy test helpers; production UI reads the same policy row via fetchFeePolicy().
+  @Deprecated('Use fetchFeePolicy() for runtime fee display.')
   static double calculatePlatformShare(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
+    if (baseAmountEgp <= 0) return 0;
     return double.parse((baseAmountEgp * 0.02).toStringAsFixed(2));
   }
-
-  /// Calculate Paymob gateway fee: 2.75% + 3.0 EGP
+  @Deprecated('Use fetchFeePolicy() for runtime fee display.')
   static double calculateGatewayShare(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse(((baseAmountEgp * 0.0275) + 3.0).toStringAsFixed(2));
+    if (baseAmountEgp <= 0) return 0;
+    return double.parse(((baseAmountEgp * 0.0275) + 3).toStringAsFixed(2));
   }
-
-  /// Total customer service fee: VSP 2.0% + Paymob 2.75% + 3.0 EGP
-  static double calculateServiceFee(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse(((baseAmountEgp * 0.0475) + 3.0).toStringAsFixed(2));
-  }
-
-  /// Calculate total checkout price including platform fee
-  static double calculateTotalAmount(double baseAmountEgp) {
-    if (baseAmountEgp <= 0) return 0.0;
-    return double.parse((baseAmountEgp + calculateServiceFee(baseAmountEgp)).toStringAsFixed(2));
-  }
-}
+  @Deprecated('Use fetchFeePolicy() for runtime fee display.')
+  static double calculateServiceFee(double baseAmountEgp) =>
+      double.parse((calculatePlatformShare(baseAmountEgp) + calculateGatewayShare(baseAmountEgp)).toStringAsFixed(2));
+  @Deprecated('Use fetchFeePolicy() for runtime fee display.')
+  static double calculateTotalAmount(double baseAmountEgp) =>
+      double.parse((baseAmountEgp + calculateServiceFee(baseAmountEgp)).toStringAsFixed(2));
+}
