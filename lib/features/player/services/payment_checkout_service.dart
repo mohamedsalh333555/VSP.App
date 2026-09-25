@@ -93,7 +93,6 @@ class PaymentCheckoutService {
       totalPrice: draft.totalPrice,
       isFullPayment: isFullPayment,
     );
-    final totalAmount = calculateTotalAmountWithFees(baseAmount);
     final selectedIntegrationId = getIntegrationId(selectedMethod);
     final paymentRefId = generatePaymentReference(
       isTournamentPayment: isTournamentPayment,
@@ -103,7 +102,7 @@ class PaymentCheckoutService {
     );
 
     return PaymobService.getCheckoutUrlFromServer(
-      amountInEgp: totalAmount,
+      amountInEgp: baseAmount,
       bookingId: paymentRefId,
       userEmail: userEmail,
       userName: userName,
