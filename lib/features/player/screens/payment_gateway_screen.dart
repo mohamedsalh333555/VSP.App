@@ -411,7 +411,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:');
+    final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final hasDeposit = !widget.forceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
     final double totalWithFees = PaymobService.calculateTotalAmount(amountToPay);
