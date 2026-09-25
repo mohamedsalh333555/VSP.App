@@ -114,10 +114,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         (bank != origBank);
 
     if (hasSensitiveChanged) {
-      final verified = await OwnerPayoutOtpDialog.show(
-        context,
-        phoneNumber: authProvider.userModel?.phone ?? phone,
-      );
+      final verified = await OwnerPayoutOtpDialog.show(context);
       if (!verified) {
         if (mounted) {
           VSPFeedback.showWarning(
