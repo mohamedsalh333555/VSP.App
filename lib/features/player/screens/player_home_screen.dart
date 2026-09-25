@@ -86,8 +86,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
           final success = await auth.updateUserLocation();
 
           if (success) {
-            final resolvedGov = auth.userModel?.governorate ?? (isAr ? 'القاهرة' : 'Cairo');
-            stadiumProvider.applyGovernorateFilter(resolvedGov);
+            final resolvedGov = auth.userModel?.governorate;
+            if (resolvedGov != null && resolvedGov.isNotEmpty) {
+              stadiumProvider.applyGovernorateFilter(resolvedGov);
+            }
           } else {
             // إذا فشل الـ GPS أو رفض المستخدم الإذن، نفتح له نافذة الاختيار اليدوي كخيار بديل
             if (mounted) {
