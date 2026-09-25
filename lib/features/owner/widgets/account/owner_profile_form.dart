@@ -89,13 +89,13 @@ class OwnerProfileForm extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'المحافظة الحالية' : 'Current Governorate',
+                        isArabic ? 'محافظة الحساب' : 'Account Governorate',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                       Text(
                         governorate != null && isArabic
                             ? EgyptGovernorates.getArabicName(governorate!)
-                            : (governorate ?? (isArabic ? 'غير محدد' : 'Not set')),
+                            : (governorate ?? (isArabic ? 'غير محددة' : 'Not set')),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
