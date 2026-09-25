@@ -71,9 +71,12 @@ class PaymentCheckoutService {
     String? status,
     String? paymentStatus,
   }) {
-    return status == 'confirmed' ||
-        paymentStatus == 'paid' ||
-        paymentStatus == 'partially_paid';
+    // Booking status alone is not proof of payment: cash bookings can be
+    // confirmed while payment remains pending. Payment confirmation must come
+    // from the authoritative payment state.
+    return paymentStatus == 'paid' ||
+        paymentStatus == 'partially_paid' ||
+        paymentStatus == 'confirmed';
   }
 
   /// Requests Paymob checkout URL using standard fee and reference calculations.
