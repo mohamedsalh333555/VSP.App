@@ -94,7 +94,7 @@ serve(async (req: Request) => {
       .select("role")
       .eq("id", callerUser.id)
       .maybeSingle();
-    if (userProfile?.role === "admin") {
+    if (["admin", "co_founder", "cofounder", "super_admin"].includes(String(userProfile?.role || "").toLowerCase())) {
       isAdmin = true;
     }
 
@@ -227,15 +227,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // If cancelled in the 20-minute grace window when match is less than 6 hours away:
-    // Deduct non-refundable administrative and payment gateway expenses (Paymob 2.4% + 3 EGP + platform fee)
-    let adminDeduction = 0;
-    if (isWithin20MinGrace && matchStartTime <= sixHoursFromNow) {
-      adminDeduction = Math.min(verifiedRefundAmount, Math.round((verifiedRefundAmount * 0.074 + 3.0) * 100) / 100);
-      verifiedRefundAmount = Math.max(0, verifiedRefundAmount - adminDeduction);
-      console.log(`ℹ️ Grace window cancellation: deducted admin fees ${adminDeduction} EGP. Net refund to Paymob: ${verifiedRefundAmount} EGP`);
-    }
-
+    // First 20 minutes are the VSP cancellation grace period: refund the verified paid amount in full.
     // Strip non-numeric prefixes (e.g. "PAYMOB_12345" -> "12345")
     if (typeof paymobTxnId === "string") {
       const match = paymobTxnId.match(/\d+/);
