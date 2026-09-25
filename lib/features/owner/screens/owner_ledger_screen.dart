@@ -122,21 +122,14 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           final transactions = snapshot.data ?? [];
 
-          // Authoritative DB summary values if loaded, fallback to transaction summation
-          double availableDigital = (_summary?['available_balance'] as num?)?.toDouble() ?? 0.0;
-          double totalPitchCash = (_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0;
-          if (_summary == null) {
-            for (var doc in transactions) {
-              final type = doc['type']?.toString() ?? 'cash';
-              final amt = (doc['amount'] ?? 0).toDouble();
-
-              if (type == 'digital' || type == 'online' || type == 'paymob') {
-                availableDigital += amt;
-              } else if (type != 'match_win' && type != 'payout' && type != 'payout_pending' && type != 'payout_disbursed') {
-                totalPitchCash += amt;
-              }
-            }
-          }
+          // الرصيد المالي لا يُستنتج من قائمة المعاملات؛ المصدر الوحيد هو ملخص الخادم.
+          final summaryReady = _summary?['success'] == true;
+          final double availableDigital = summaryReady
+              ? ((_summary?['available_balance'] as num?)?.toDouble() ?? 0.0)
+              : 0.0;
+          final double totalPitchCash = summaryReady
+              ? ((_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0)
+              : 0.0;
 
           if (transactions.isEmpty && _summary == null) {
             return Center(
