@@ -121,6 +121,7 @@ class AppRouter {
       ),
  GoRoute(
  path: '/copilot-playground',
+ redirect: (context, state) => authProvider.isAdmin ? null : (authProvider.isOwner ? '/owner' : '/player'),
  builder: (context, state) => const CopilotTestPlayground(),
  ),
  GoRoute(
