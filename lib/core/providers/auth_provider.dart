@@ -355,6 +355,27 @@ class AuthProvider with ChangeNotifier {
   Future<bool> updatePassword(String newPassword) =>
       _c.profileService.updatePassword(newPassword);
 
+  /// Re-authenticate the currently signed-in account before sensitive actions.
+  /// Uses the real Supabase credential rather than a client-generated OTP.
+  Future<bool> reauthenticateWithPassword(String password) async {
+    final email = _supabaseUser?.email?.trim();
+    final currentId = _supabaseUser?.id;
+    if (email == null || email.isEmpty || currentId == null || password.isEmpty) {
+      return false;
+    }
+
+    try {
+      final result = await _authService.signInWithEmail(
+        email: email,
+        password: password,
+      );
+      return result['success'] == true &&
+          (result['user'] as User?)?.id == currentId;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     if (_supabaseUser == null) return false;
     _isLoading = true;
