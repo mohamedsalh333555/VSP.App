@@ -349,9 +349,7 @@ class Booking {
  startTime.isAfter(DateTime.now());
 
  /// Check if booking is completed
- bool get isCompleted => 
- status == BookingStatus.completed || 
- endTime.isBefore(DateTime.now());
+ bool get isCompleted => status == BookingStatus.completed;
 
  /// Get formatted date string
  String get formattedDate {
