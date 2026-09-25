@@ -233,7 +233,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 const SizedBox(height: 12),
 
-                // 3. شريط التبديل بين [ التشغيل اليومي ⚡ ] و [ التحليلات والقرارات 📊 ]
+                // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
                   height: 42,
                   decoration: BoxDecoration(
@@ -290,7 +290,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                 ),
                                 if (!isProOwner) ...[
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.lock_rounded, size: 13, color: Colors.amber),
+                                  const Icon(Icons.lock_rounded, size: 13, color: VSPColors.textSecondary),
                                 ],
                               ],
                             ),
