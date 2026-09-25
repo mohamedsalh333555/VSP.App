@@ -146,8 +146,16 @@ class StadiumRepository {
 
       if (pgData.isEmpty) return true;
 
-      await _supabase.from('stadiums').update(pgData).eq('id', stadiumId);
-      return true;
+      // Every owner edit reopens review. This is intentionally conservative because
+      // the wizard submits the full stadium record, including pricing/hours/location.
+      pgData['is_verified'] = false;
+      final response = await _supabase
+          .from('stadiums')
+          .update(pgData)
+          .eq('id', stadiumId)
+          .select('id, is_verified')
+          .maybeSingle();
+      return response != null;
     } catch (e, stack) {
       VSPLogger.e(' CRITICAL ERROR IN updateStadium', e, stack);
       return false;
