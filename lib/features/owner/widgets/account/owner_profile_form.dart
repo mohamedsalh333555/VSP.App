@@ -56,8 +56,20 @@ class OwnerProfileForm extends StatelessWidget {
           _buildInputLabel(context, isArabic ? 'البريد الإلكتروني' : 'Email Address'),
           CustomTextField(
             controller: emailController,
-            hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+            hintText: isArabic ? 'البريد المرتبط بالحساب' : 'Account email',
+            readOnly: true,
+            keyboardType: TextInputType.emailAddress,
             suffixIcon: const Icon(Iconsax.lock_copy, size: 18, color: VSPColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              isArabic
+                  ? 'البريد الإلكتروني مرتبط بالحساب ولا يمكن تغييره من هذه الشاشة.'
+                  : 'This email is linked to your account and cannot be changed here.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10.5),
+            ),
           ),
           const SizedBox(height: 16),
           _buildInputLabel(context, isArabic ? 'الموقع' : 'Location'),
