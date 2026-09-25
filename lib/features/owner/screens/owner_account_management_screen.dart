@@ -102,16 +102,18 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       return;
     }
 
-    // Verify OTP if payout methods changed (to protect against staff altering transfer numbers)
+    // Sensitive changes (phone or payout destination) require real account re-authentication.
+    final origPhone = (authProvider.userModel?.phone ?? '').trim();
     final origInstapay = (authProvider.userModel?.p2pInstapay ?? '').trim();
     final origVodafone = (authProvider.userModel?.p2pVodafone ?? '').trim();
     final origBank = (authProvider.userModel?.p2pBank ?? '').trim();
 
-    final hasPayoutChanged = (instapay != origInstapay) ||
+    final hasSensitiveChanged = (phone != origPhone) ||
+        (instapay != origInstapay) ||
         (vodafone != origVodafone) ||
         (bank != origBank);
 
-    if (hasPayoutChanged) {
+    if (hasSensitiveChanged) {
       final verified = await OwnerPayoutOtpDialog.show(
         context,
         phoneNumber: authProvider.userModel?.phone ?? phone,
@@ -121,8 +123,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           VSPFeedback.showWarning(
             context,
             isArabic
-                ? 'تم إلغاء التعديل: لم يتم التحقق من رمز الأمان OTP، ولم يتم تعديل بيانات التحويل.'
-                : 'Update cancelled: OTP was not verified.',
+                ? 'تم إلغاء التعديل: لم يتم التحقق من أمان الحساب، ولم يتم حفظ رقم الهاتف أو بيانات الاستلام.'
+                : 'Update cancelled: account security verification failed.',
           );
         }
         return;
@@ -243,7 +245,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           ],
         ),
         child: PrimaryButton(
-          text: isArabic ? 'تأكيد' : 'Confirm',
+          text: isArabic ? 'حفظ التغييرات' : 'Save Changes',
           isLoading: _isLoading,
           onPressed: _isLoading ? null : _updateUserData,
         ),
