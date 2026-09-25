@@ -79,9 +79,20 @@ class StadiumWizardMediaCoordinator {
     images.add(imageEntry);
     onStateChanged();
 
+    final ownerId = uid?.trim();
+    if (ownerId == null || ownerId.isEmpty) {
+      images.remove(imageEntry);
+      onStateChanged();
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'تعذر تحديد حساب مالك الملعب. سجل الدخول وحاول مرة أخرى.' : 'Owner account could not be verified. Please sign in again.',
+      );
+      return;
+    }
+
     final url = await StadiumWizardImageService.uploadImageFile(
       xFile: xFile,
-      ownerId: uid ?? '',
+      ownerId: ownerId,
       onProgress: (progress) {
         imageEntry['progress'] = progress;
         onStateChanged();
