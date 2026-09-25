@@ -96,6 +96,26 @@ serve(async (req: Request) => {
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
 
+    if (is_tournament_payment) {
+      const recognizedTournamentReference =
+        typeof booking_id === "string" &&
+        (booking_id.startsWith("TOURN_1V1_") || booking_id.startsWith("LEAGUE_") || booking_id.startsWith("TOURN_"));
+
+      if (!recognizedTournamentReference) {
+        return new Response(
+          JSON.stringify({ error: "Invalid tournament payment reference" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (!is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("mock_")) {
+      return new Response(
+        JSON.stringify({ error: "Mock bookings cannot enter real Paymob checkout" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 1v1 tournament payments are backed by a server-created order. Never trust the client amount.
     if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("TOURN_1V1_")) {
       const { data: oneVsOneOrder, error: oneVsOneOrderError } = await supabase
@@ -164,7 +184,7 @@ serve(async (req: Request) => {
           .eq("id", callerUser.id)
           .maybeSingle();
 
-        if (!userData || !["admin", "co_founder"].includes(userData.role)) {
+        if (!userData || !["admin", "co_founder", "cofounder", "super_admin"].includes(String(userData.role || "").toLowerCase())) {
           return new Response(
             JSON.stringify({ error: "Forbidden: You do not have permission to pay for this booking" }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
