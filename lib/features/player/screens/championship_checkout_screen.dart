@@ -247,7 +247,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
           if (paymentResult == true && mounted) {
             _hasPaid = true;
-            await _finalizePaidTournamentRoster();
+            await _finalizePaidTournamentRoster(orderReference);
           }
           return;
         }
@@ -266,16 +266,36 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     }
   }
 
-  Future<void> _finalizePaidTournamentRoster() async {
-    final rosterSaved = await TournamentRepository().updateSingleTeamRoster(
-      championshipId: widget.championship.id,
-      teamId: widget.team.id,
-      playerIds: _selectedPlayerIds,
-      guestNames: _offlineGuestNames,
-    );
+  Future<void> _finalizePaidTournamentRoster(String orderReference) async {
+    Map<String, dynamic>? status;
+    for (int attempt = 0; attempt < 12; attempt++) {
+      status = await TournamentRepository().getTournamentPaymentOrderStatus(orderReference);
 
-    if (!rosterSaved) {
-      throw Exception('تم الدفع وتسجيل الفريق، لكن تعذر حفظ كشف اللاعبين. يمكنك تحديث الكشف من صفحة البطولة.');
+      if (status['success'] == true && status['payment_status'] == 'paid') {
+        break;
+      }
+
+      if (status['success'] == true &&
+          status['payment_status'] == 'failed_over_capacity') {
+        throw Exception('اكتملت مقاعد البطولة قبل تأكيد الدفع. سيتم تنفيذ الاسترداد تلقائيًا.');
+      }
+
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+    }
+
+    if (status?['success'] != true || status?['payment_status'] != 'paid') {
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showInfo(
+          context,
+          isArabic
+              ? 'تم استلام عملية الدفع. جاري تأكيد الاشتراك، وسيظهر الفريق تلقائيًا بعد وصول التأكيد.'
+              : 'Payment received. Registration confirmation is still processing and will appear automatically.',
+        );
+        Navigator.pop(context, true);
+      }
+      return;
     }
 
     if (mounted) {
@@ -287,6 +307,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       Navigator.pop(context, true);
     }
   }
+
 
   Future<void> _executeJoinChampionship() async {
     final success = await TournamentRepository().joinChampionship(
