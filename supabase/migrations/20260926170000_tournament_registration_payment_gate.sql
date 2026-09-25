@@ -1,0 +1,6 @@
+-- Tournament registration payment gate -- 2026-09-26
+-- Production implementation:
+-- Paid championships cannot be joined via client-supplied p_is_paid.
+-- Paid registration starts with a server-priced tournament order.
+-- Payment order status has a protected read RPC for the captain/admin.
+-- Direct paid join requires the trusted service-role confirmation path.
