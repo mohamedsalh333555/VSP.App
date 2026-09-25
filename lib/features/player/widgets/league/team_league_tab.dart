@@ -7,6 +7,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_confirmation_screen.dart';
+import '../../screens/payment_gateway_screen.dart';
 import '../create_team_sheet.dart';
 import 'team_league_fixtures_view.dart';
 import 'team_league_gathering_card.dart';
@@ -32,6 +33,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   final TeamLeagueRepository _leagueRepo = TeamLeagueRepository();
   bool _isLoading = true;
   TeamLeagueData? _leagueData;
+  String _leaguePaymentStatus = 'not_created';
   int _selectedSubTab = 0; // 0 = المباريات, 1 = الترتيب
 
   @override
@@ -57,9 +59,20 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     if (mounted) setState(() => _isLoading = true);
     try {
       final data = await _leagueRepo.getTeamActiveLeague(widget.userTeam!.id);
+      var paymentStatus = 'not_created';
+      if (data != null) {
+        try {
+          final payment = await _leagueRepo.getTeamLeaguePaymentStatus(
+            championshipId: data.id,
+            teamId: widget.userTeam!.id,
+          );
+          paymentStatus = payment['status']?.toString() ?? 'not_created';
+        } catch (_) {}
+      }
       if (mounted) {
         setState(() {
           _leagueData = data;
+          _leaguePaymentStatus = paymentStatus;
           _isLoading = false;
         });
       }
@@ -67,6 +80,58 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _payCurrentLeague() async {
+    final league = _leagueData;
+    final team = widget.userTeam;
+    if (league == null || team == null) return;
+    try {
+      final payment = await _leagueRepo.joinTeamLeague(
+        championshipId: league.id,
+        teamId: team.id,
+      );
+      final reference = payment['payment_reference']?.toString();
+      if (reference == null || reference.isEmpty) throw Exception('تعذر إنشاء عملية الدفع');
+      await _openLeaguePayment(reference);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+    }
+  }
+
+  Future<void> _openLeaguePayment(String paymentReference) async {
+    final team = widget.userTeam;
+    if (team == null) return;
+    final now = DateTime.now();
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentGatewayScreen(
+          isTournamentPayment: true,
+          forceFullPayment: true,
+          bookingDraft: BookingDraft(
+            stadiumId: 'league_fee',
+            stadiumName: 'دوري: رسوم الاشتراك',
+            ownerId: '',
+            startTime: now,
+            endTime: now.add(const Duration(hours: 1)),
+            bookingType: BookingType.team,
+            playerTeamId: team.id,
+            playerTeamName: team.name,
+            isPrivate: true,
+            rentBall: false,
+            totalPrice: 30,
+            currency: 'EGP',
+            needsDeposit: false,
+          ),
+          existingBookingId: paymentReference,
+        ),
+      ),
+    );
+    if (mounted) {
+      if (result == true) VSPFeedback.triggerSuccess();
+      await _loadLeague();
     }
   }
 
@@ -170,13 +235,17 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
                         setSheetState(() => isSubmitting = true);
                         try {
-                          await _leagueRepo.createTeamLeague(
+                          final result = await _leagueRepo.createTeamLeague(
                             teamId: widget.userTeam!.id,
                             leagueName: name,
                           );
-                          VSPFeedback.triggerSuccess();
+                          final paymentReference = result['payment_reference']?.toString();
                           if (ctx.mounted) Navigator.pop(ctx);
-                          await _loadLeague();
+                          if (paymentReference != null && paymentReference.isNotEmpty) {
+                            await _openLeaguePayment(paymentReference);
+                          } else {
+                            await _loadLeague();
+                          }
                         } catch (e) {
                           setSheetState(() => isSubmitting = false);
                           if (ctx.mounted) {
@@ -290,13 +359,17 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
                                 setDialogState(() => isSubmitting = true);
                                 try {
-                                  await _leagueRepo.joinTeamLeague(
+                                  final result = await _leagueRepo.joinTeamLeague(
                                     championshipId: code,
                                     teamId: widget.userTeam!.id,
                                   );
-                                  VSPFeedback.triggerSuccess();
+                                  final paymentReference = result['payment_reference']?.toString();
                                   if (ctx.mounted) Navigator.pop(ctx);
-                                  await _loadLeague();
+                                  if (paymentReference != null && paymentReference.isNotEmpty) {
+                                    await _openLeaguePayment(paymentReference);
+                                  } else {
+                                    await _loadLeague();
+                                  }
                                 } catch (e) {
                                   setDialogState(() => isSubmitting = false);
                                   if (ctx.mounted) {
@@ -574,6 +647,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               league: league,
               onRefresh: _loadLeague,
               onCancelLeague: () => _cancelLeague(league.id),
+              onPayFee: _leaguePaymentStatus == 'paid' ? null : _payCurrentLeague,
             ),
           ],
         ),
