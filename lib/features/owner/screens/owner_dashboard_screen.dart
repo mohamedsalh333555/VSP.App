@@ -255,7 +255,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              isArabic ? 'التشغيل اليومي ⚡' : 'Operations ⚡',
+                              isArabic ? 'التشغيل اليومي' : 'Operations',
                               style: TextStyle(
                                 color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
                                 fontWeight: FontWeight.bold,
@@ -281,7 +281,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  isArabic ? 'التحليلات الذكية 📊' : 'Insights 📊',
+                                  isArabic ? 'التحليلات الذكية' : 'Insights',
                                   style: TextStyle(
                                     color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
                                     fontWeight: FontWeight.bold,
@@ -661,14 +661,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.xl),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1.5),
+        border: Border.all(
+          color: VSPColors.accent.withValues(alpha: 0.22),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+            color: VSPColors.accent.withValues(alpha: 0.06),
+            blurRadius: 22,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -677,94 +680,95 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         children: [
           Center(
             child: Container(
-              width: 64,
-              height: 64,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.amber.withValues(alpha: 0.25),
-                    Colors.amber.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                color: VSPColors.accent.withValues(alpha: 0.10),
+                border: Border.all(
+                  color: VSPColors.accent.withValues(alpha: 0.28),
+                  width: 1,
                 ),
-                border: Border.all(color: Colors.amber, width: 2),
               ),
-              child: const Icon(Iconsax.chart_2_copy, color: Colors.amber, size: 32),
+              child: const Icon(
+                Iconsax.chart_2_copy,
+                color: VSPColors.accent,
+                size: 28,
+              ),
             ),
           ),
           const SizedBox(height: 14),
           Text(
-            isArabic ? '📊 تحليلات وقرارات الملاعب الذكية' : 'Smart Pitch Insights & Decisions',
+            isArabic ? 'تحليلات وقرارات الملاعب الذكية' : 'Smart Pitch Insights',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+              color: VSPColors.textPrimary,
+              fontWeight: FontWeight.w900,
               fontSize: 18,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             isArabic
-                ? 'ميزة حصرية لمشتركي الباقة الاحترافية (1000 ج.م شهرياً)'
-                : 'Exclusive to 1000 EGP Pro Plan Subscribers',
+                ? 'أدوات احترافية تساعدك على فهم تشغيل ملعبك وزيادة الاستفادة منه.'
+                : 'Professional tools to understand your pitch operation and improve utilization.',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.amber,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+              color: VSPColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.45,
             ),
           ),
-          const SizedBox(height: 16),
-          const Divider(color: VSPColors.divider),
-          const SizedBox(height: 8),
+          const SizedBox(height: 18),
 
           _buildTeaserFeatureRow(
             icon: Iconsax.status_up_copy,
-            title: isArabic ? 'معدل إشغال الملعب الفعلي' : 'Pitch Occupancy Rate',
+            title: isArabic ? 'معدل الإشغال الفعلي' : 'Actual Occupancy Rate',
             subtitle: isArabic
-                ? 'حساب نسبة استغلال ساعات الملعب مقارنة بالطاقة القصوى'
-                : 'Compare booked hours vs maximum capacity',
+                ? 'اعرف نسبة استغلال ساعات ملعبك بدقة.'
+                : 'See how much of your available pitch time is actually used.',
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _buildTeaserFeatureRow(
             icon: Iconsax.money_remove_copy,
-            title: isArabic ? 'مؤشر «الإيراد الضائع»' : 'Lost Revenue Indicator',
+            title: isArabic ? 'الإيراد الضائع' : 'Lost Revenue',
             subtitle: isArabic
-                ? 'كشف قيمة المبالغ المهدرة من الساعات غير المحجوزة'
-                : 'Track unearned money from idle pitch hours',
+                ? 'اكتشف قيمة الساعات الفارغة التي كان يمكن استغلالها.'
+                : 'Identify revenue opportunities from idle hours.',
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _buildTeaserFeatureRow(
             icon: Iconsax.card_pos_copy,
-            title: isArabic ? 'تحليل مصادر الدخل الرقمي والكاش' : 'Revenue Breakdown (Digital vs Cash)',
+            title: isArabic ? 'تفصيل الدخل' : 'Revenue Breakdown',
             subtitle: isArabic
-                ? 'توزيع دقيق ومقارنات أسبوعية وشهرية للأرباح'
-                : 'Detailed cash vs digital tracking and weekly growth',
-          ),
-          const SizedBox(height: 10),
-          _buildTeaserFeatureRow(
-            icon: Iconsax.ranking_copy,
-            title: isArabic ? 'تفضيلات اللاعبين وأنواع الحجوزات' : 'Booking Types & Player Preferences',
-            subtitle: isArabic
-                ? 'معرفة الحصص الأكثر طلباً (تحديات، تجميع، شخصي)'
-                : 'Identify top booking patterns and peak demands',
+                ? 'تابع الكاش والدفع الرقمي وأنواع الحجوزات الأكثر طلباً.'
+                : 'Understand cash, digital payments, and your most requested booking types.',
           ),
 
           const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: () => _showProUpgradeSheet(context),
-            icon: const Icon(Icons.star_rounded, color: Colors.black, size: 20),
-            label: Text(
-              isArabic ? 'الترقية للباقة الاحترافية (1000 ج)' : 'Upgrade to Pro Plan (1000 EGP)',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () => _showProUpgradeSheet(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                ),
+              ),
+              child: Text(
+                isArabic
+                    ? 'الترقية للباقة الاحترافية — 1,000 ج.م/شهر'
+                    : 'Upgrade to Pro — 1,000 EGP/month',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -786,7 +790,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.amber, size: 20),
+          Icon(icon, color: VSPColors.accent, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
