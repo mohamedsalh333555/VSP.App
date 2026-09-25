@@ -51,13 +51,11 @@ class BookingCancellationCoordinator {
             'p_owner_id': booking.ownerId,
             'p_refund_deposit': false,
           });
-        } catch (_) {
-          await _supabase.from('bookings').update({
-            'status': BookingStatus.cancelled.name,
-            'cancellation_reason': 'Owner cancelled manual walk-in slot',
-            'cancelled_at': DateTime.now().toUtc().toIso8601String(),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          }).eq('id', bookingId);
+        } catch (e) {
+          // Never fall back to a direct bookings UPDATE: cancellation must pass
+          // the server-side authorization/state/financial rules atomically.
+          VSPLogger.e('Owner manual booking cancellation RPC failed', e);
+          rethrow;
         }
       } else {
         final bool isPaidOnline = booking.isPaid || booking.isDepositPaid || booking.paymentStatus == 'paid';
