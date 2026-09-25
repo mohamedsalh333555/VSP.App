@@ -44,11 +44,11 @@ void main() {
       expect(msg, contains('6 ساعات'));
     });
 
-    test('sanitizes 2-hour policy error', () {
+    test('sanitizes legacy 2-hour policy error using current 6-hour rule', () {
       final msg = BookingCancellationCoordinator.sanitizeCancellationError(
         'PostgrestException: cannot_cancel_within_2_hours',
       );
-      expect(msg, contains('ساعتين'));
+      expect(msg, contains('6 ساعات'));
     });
 
     test('sanitizes completed match error', () {
