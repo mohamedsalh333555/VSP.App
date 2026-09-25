@@ -81,8 +81,8 @@ class _OwnerPayoutSettingsCardState extends State<OwnerPayoutSettingsCard> {
                   Expanded(
                     child: Text(
                       isArabic
-                          ? 'حماية أمنية: تعديل أرقام التحويل يتطلب تأكيد رمز OTP يُرسل لهاتفك المسجل.'
-                          : 'Security Notice: Changing payout details requires OTP verification.',
+                          ? 'حماية أمنية: تغيير وسيلة الاستلام يتطلب إعادة التحقق من كلمة مرور حسابك.'
+                          : 'Security Notice: Changing payout details requires account re-authentication.',
                       style: const TextStyle(
                         color: VSPColors.accent,
                         fontSize: 11,
