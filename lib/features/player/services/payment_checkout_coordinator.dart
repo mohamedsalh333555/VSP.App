@@ -99,6 +99,7 @@ class PaymentCheckoutCoordinator {
   Future<void> releaseBookingSafely({
     required bool isTournamentPayment,
     required Booking? booking,
+    String? paymentOrderReference,
   }) async {
     cancelAllTimers();
     if (!isTournamentPayment && booking != null && !booking.id.startsWith('mock_')) {
@@ -112,7 +113,7 @@ class PaymentCheckoutCoordinator {
     if (isTournamentPayment) {
       // Tournament payments do not create a booking row. Cancel only the
       // server-created pending payment order when the checkout is abandoned.
-      final orderReference = booking?.id;
+      final orderReference = paymentOrderReference;
       if (orderReference != null && orderReference.isNotEmpty) {
         try {
           await Supabase.instance.client.rpc(
