@@ -81,6 +81,7 @@ class StadiumWizardMediaCoordinator {
 
     final url = await StadiumWizardImageService.uploadImageFile(
       xFile: xFile,
+      ownerId: uid ?? '',
       onProgress: (progress) {
         imageEntry['progress'] = progress;
         onStateChanged();
