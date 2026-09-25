@@ -1,0 +1,1 @@
+-- Fix explicit text[]/uuid[] handling in tournament withdrawal -- 2026-09-26
