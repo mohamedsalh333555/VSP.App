@@ -81,6 +81,30 @@ class PaymentCheckoutCoordinator {
     });
   }
 
+
+  /// Polls a tournament payment order until the server marks it paid.
+  /// The browser/webview result is never treated as financial proof.
+  void startTournamentOrderPolling({
+    required String orderReference,
+    required Future<Map<String, dynamic>> Function(String) fetchStatus,
+    required void Function(Map<String, dynamic>) onPaid,
+  }) {
+    _fallbackPollingTimer?.cancel();
+    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      try {
+        final status = await fetchStatus(orderReference);
+        if (status['success'] == true && status['payment_status'] == 'paid') {
+          timer.cancel();
+          _webhookTimeoutTimer?.cancel();
+          _fallbackPollingTimer?.cancel();
+          onPaid(status);
+        }
+      } catch (e) {
+        debugPrint('Tournament payment polling notice: $e');
+      }
+    });
+  }
+
   /// Starts a timeout timer for awaiting webhook confirmation.
   void startWebhookTimeout({
     Duration timeout = const Duration(seconds: 300),
