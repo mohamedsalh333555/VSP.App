@@ -61,100 +61,19 @@ class TeamRosterCoordinator {
   }
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
-    try {
-      final memberUids = await getTeamMemberUids(teamId);
-      if (memberUids.length >= 12) {
-        throw Exception("تنبيه: عذراً، اكتمل الحد الأقصى لأعضاء الفريق (12 لاعباً كحد أقصى).");
-      }
-
-      final userTeamMemberships = await _supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId);
-      if ((userTeamMemberships as List).length >= 3) {
-        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى).");
-      }
-
-      await _supabase.from('team_members').insert({
-        'team_id': teamId,
-        'user_id': userId,
-      });
-      sendJoinNotification(userId);
-    } on PostgrestException catch (e) {
-      if (e.message.contains('الحد الأقصى') || e.message.contains('limit') || e.message.contains('12')) {
-        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى) أو الفريق اكتمال (12 لاعباً).");
-      }
-      rethrow;
-    } catch (e) {
-      debugPrint('Error adding member to team: $e');
-      rethrow;
+    final response = await _supabase.rpc('add_team_member_atomic', params: {'p_team_id': teamId, 'p_user_id': userId});
+    if (response is! Map || response['success'] != true) {
+      throw Exception(response is Map ? response['error'] ?? 'فشل إضافة اللاعب' : 'فشل إضافة اللاعب');
     }
+    await sendJoinNotification(userId);
   }
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
-    try {
-      final nowIso = DateTime.now().toUtc().toIso8601String();
-      final activeBookings = await _supabase
-          .from('bookings')
-          .select('id')
-          .eq('status', 'confirmed')
-          .or('player_team_id.eq.$teamId,opponent_team_id.eq.$teamId')
-          .gt('end_time', nowIso)
-          .limit(1);
-
-      final bool hasActiveMatch = (activeBookings as List).isNotEmpty;
-
-      final activeTournaments = await _supabase
-          .from('championships')
-          .select('id')
-          .inFilter('status', ['open', 'ongoing'])
-          .contains('joined_teams', [teamId]);
-      final bool hasActiveTournament = (activeTournaments as List).isNotEmpty;
-
-      if (hasActiveMatch || hasActiveTournament) {
-        throw Exception("active_match_or_tournament_error");
-      }
-
-      // Automatic Captain Transfer: If the departing user is the captain, transfer to next member
-      final teamData = await _supabase
-          .from('teams')
-          .select('captain_id')
-          .eq('id', teamId)
-          .maybeSingle();
-
-      final String currentCaptainId = teamData?['captain_id']?.toString() ?? '';
-      if (currentCaptainId == userId) {
-        final allMembers = await getTeamMemberUids(teamId);
-        final remainingMembers = allMembers.where((uid) => uid != userId).toList();
-
-        if (remainingMembers.isNotEmpty) {
-          final nextCaptainId = remainingMembers.first;
-          final nextCaptainUser = await _supabase
-              .from('users')
-              .select('name, phone, profile_image_url')
-              .eq('id', nextCaptainId)
-              .maybeSingle();
-
-          await _supabase.from('teams').update({
-            'captain_id': nextCaptainId,
-            'captain_name': nextCaptainUser?['name'] ?? 'Captain',
-            'captain_phone': PhoneUtils.normalize(nextCaptainUser?['phone']?.toString() ?? ''),
-            'captain_image_url': nextCaptainUser?['profile_image_url'] ?? '',
-          }).eq('id', teamId);
-        }
-      }
-
-      await _supabase
-          .from('team_members')
-          .delete()
-          .eq('team_id', teamId)
-          .eq('user_id', userId);
-    } catch (e) {
-      debugPrint('Error removing member from team: $e');
-      rethrow;
+    final response = await _supabase.rpc('remove_team_member_atomic', params: {'p_team_id': teamId, 'p_user_id': userId});
+    if (response is! Map || response['success'] != true) {
+      throw Exception(response is Map ? response['error'] ?? 'تعذر إزالة اللاعب' : 'تعذر إزالة اللاعب');
     }
   }
-
   Future<void> sendJoinNotification(String userId) async {
     try {
       await _notificationRepository.sendNotification(
