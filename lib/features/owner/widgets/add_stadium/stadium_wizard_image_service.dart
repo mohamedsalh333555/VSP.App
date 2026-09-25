@@ -84,6 +84,7 @@ class StadiumWizardImageService {
   static Future<String?> uploadImageFile({
     required XFile xFile,
     required void Function(int progress) onProgress,
+    required String ownerId,
   }) async {
     final imageFile = File(xFile.path);
     Timer? progressTimer;
@@ -102,7 +103,7 @@ class StadiumWizardImageService {
       final url = await _storageService.uploadFile(
         file: xFile,
         bucket: 'stadium-images',
-        path: 'stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
+        path: '$ownerId/stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
       );
       progressTimer.cancel();
 
