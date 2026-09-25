@@ -146,8 +146,13 @@ class UserRepository {
     if (securedData.isEmpty) return true;
 
     try {
-      await _supabase.from('users').update(securedData).eq('id', userId);
-      return true;
+      final response = await _supabase
+          .from('users')
+          .update(securedData)
+          .eq('id', userId)
+          .select('id')
+          .maybeSingle();
+      return response != null;
     } catch (e) {
       VSPLogger.e('Error updating user profile $userId', e);
       return false;
