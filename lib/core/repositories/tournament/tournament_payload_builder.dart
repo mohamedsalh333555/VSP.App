@@ -72,6 +72,10 @@ class TournamentPayloadBuilder {
           sanitized['redCardSuspension'] ?? sanitized['red_card_suspension'] ?? true,
       'fair_play_scoring':
           sanitized['fairPlayScoring'] ?? sanitized['fair_play_scoring'] ?? false,
+      if (sanitized.containsKey('template_type') || sanitized.containsKey('templateType'))
+        'template_type': sanitized['template_type'] ?? sanitized['templateType'],
+      'number_of_groups': sanitized['number_of_groups'] ?? sanitized['numberOfGroups'] ?? (normalizeType(rawType) == 'groups' ? 4 : 1),
+      'qualifying_per_group': sanitized['qualifying_per_group'] ?? sanitized['qualifyingPerGroup'] ?? 2,
     };
   }
 

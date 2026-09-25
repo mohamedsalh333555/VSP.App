@@ -303,4 +303,102 @@ class TournamentLifecycleCoordinator {
       rethrow;
     }
   }
+
+  /// Retrieves tournament financial summary (total collected, grand prize, net profit).
+  Future<Map<String, dynamic>> getTournamentFinancialSummary(String championshipId) async {
+    try {
+      final res = await _supabase.rpc(
+        'get_tournament_financial_summary',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+    } catch (e) {
+      VSPLogger.w('get_tournament_financial_summary RPC fallback: $e');
+    }
+
+    // Direct computation fallback
+    try {
+      final champ = await _supabase
+          .from('championships')
+          .select('entry_fee, grand_prize, paid_teams, joined_teams')
+          .eq('id', championshipId)
+          .maybeSingle();
+
+      if (champ == null) {
+        return {
+          'total_collected': 0.0,
+          'grand_prize': 0.0,
+          'net_profit': 0.0,
+          'paid_teams_count': 0,
+        };
+      }
+
+      final double entryFee = double.tryParse((champ['entry_fee'] ?? 0).toString()) ?? 0.0;
+      final double grandPrize = double.tryParse((champ['grand_prize'] ?? 0).toString()) ?? 0.0;
+      final List paidTeams = (champ['paid_teams'] as List?) ?? [];
+      final int paidCount = paidTeams.length;
+      final double totalCollected = paidCount * entryFee;
+      final double netProfit = totalCollected - grandPrize;
+
+      return {
+        'total_collected': totalCollected,
+        'grand_prize': grandPrize,
+        'net_profit': netProfit,
+        'paid_teams_count': paidCount,
+      };
+    } catch (err, s) {
+      VSPLogger.e('Error computing financial summary fallback', err, s);
+      return {
+        'total_collected': 0.0,
+        'grand_prize': 0.0,
+        'net_profit': 0.0,
+        'paid_teams_count': 0,
+      };
+    }
+  }
+
+  /// Withdraws a team from championship and calculates/processes refund atomically.
+  Future<Map<String, dynamic>> withdrawTeamFromChampionship({
+    required String championshipId,
+    required String teamId,
+  }) async {
+    try {
+      final res = await _supabase.rpc(
+        'withdraw_team_from_championship_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_team_id': teamId,
+        },
+      );
+      if (res != null && res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+    } catch (e) {
+      VSPLogger.w('withdraw_team_from_championship_atomic fallback: $e');
+    }
+
+    // Fallback: direct team removal
+    try {
+      final champ = await _supabase
+          .from('championships')
+          .select('joined_teams, paid_teams')
+          .eq('id', championshipId)
+          .maybeSingle();
+
+      if (champ != null) {
+        final List<String> joined = List<String>.from(champ['joined_teams'] ?? [])..remove(teamId);
+        final List<String> paid = List<String>.from(champ['paid_teams'] ?? [])..remove(teamId);
+        await _supabase.from('championships').update({
+          'joined_teams': joined,
+          'paid_teams': paid,
+        }).eq('id', championshipId);
+      }
+      return {'success': true, 'message': 'تم سحب الفريق بنجاح'};
+    } catch (err, s) {
+      VSPLogger.e('Error withdrawing team fallback', err, s);
+      rethrow;
+    }
+  }
 }

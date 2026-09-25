@@ -52,6 +52,8 @@ class Championship {
  final DateTime? prizeDeliveredAt;
  final String? prizeDeliveredBy;
  final String? prizeDeliveryNotes;
+ final String? templateType;
+ final DateTime? registrationLockedAt;
 
  bool get isFull => joinedTeams.length >= maxTeams || status == 'full';
 
@@ -94,6 +96,8 @@ class Championship {
  this.prizeDeliveredAt,
  this.prizeDeliveredBy,
  this.prizeDeliveryNotes,
+ this.templateType,
+ this.registrationLockedAt,
  });
 
  // SECURITY PATCH: Robust type parsing with crash prevention for malicious or corrupted data payloads.
@@ -159,6 +163,8 @@ class Championship {
  prizeDeliveredAt: data['prize_delivered_at'] != null ? DateTime.tryParse(data['prize_delivered_at'].toString()) : null,
  prizeDeliveredBy: (data['prize_delivered_by'] ?? data['prizeDeliveredBy'])?.toString(),
  prizeDeliveryNotes: (data['prize_delivery_notes'] ?? data['prizeDeliveryNotes'])?.toString(),
+ templateType: (data['template_type'] ?? data['templateType'])?.toString(),
+ registrationLockedAt: data['registration_locked_at'] != null ? DateTime.tryParse(data['registration_locked_at'].toString()) : null,
  );
  } catch (e) {
  // كود أمان احتياطي لمنع انهيار التطبيق في حال وجود بيانات تالفة
@@ -219,6 +225,8 @@ class Championship {
  DateTime? prizeDeliveredAt,
  String? prizeDeliveredBy,
  String? prizeDeliveryNotes,
+ String? templateType,
+ DateTime? registrationLockedAt,
  }) {
  return Championship(
  id: id ?? this.id,
@@ -259,6 +267,8 @@ class Championship {
  prizeDeliveredAt: prizeDeliveredAt ?? this.prizeDeliveredAt,
  prizeDeliveredBy: prizeDeliveredBy ?? this.prizeDeliveredBy,
  prizeDeliveryNotes: prizeDeliveryNotes ?? this.prizeDeliveryNotes,
+ templateType: templateType ?? this.templateType,
+ registrationLockedAt: registrationLockedAt ?? this.registrationLockedAt,
  );
  }
 
@@ -286,6 +296,8 @@ class Championship {
  'prize_delivered_at': prizeDeliveredAt?.toIso8601String(),
  'prize_delivered_by': prizeDeliveredBy,
  'prize_delivery_notes': prizeDeliveryNotes,
+ 'template_type': templateType,
+ 'registration_locked_at': registrationLockedAt?.toIso8601String(),
  'max_teams': maxTeams,
  'maxTeams': maxTeams,
  'joined_teams': joinedTeams,

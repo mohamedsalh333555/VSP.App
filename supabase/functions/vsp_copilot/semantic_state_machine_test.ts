@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Semantic State Machine & Invariant Test Suite for VSP Copilot
 // Verifies semantic categories, state invariants, reference resolution, and Scenarios A-L.
 
@@ -516,7 +517,7 @@ console.log("Starting VSP Copilot Semantic State Machine Test Suite...");
   // Test 5.4: Fact Validator rejects false 'unavailable' claim when tool had a technical exception
   const fakeUnavailableReply = "للأسف يا كابتن، الملعب غير متاح حالياً ومفيش مواعيد.";
   const failedToolResult = {
-    status: "TEMPORARY_ERROR",
+    status: "TEMPORARY_ERROR" as const,
     tool_name: "checkStadiumAvailability",
     data: {},
     error_message: "Connection timeout to Postgres",
