@@ -251,7 +251,7 @@ export async function executeGuardedTool(
         if (b.status === "pending") {
           const lockExpire = b.locked_until
             ? new Date(b.locked_until).getTime()
-            : new Date(b.created_at).getTime() + 5 * 60 * 1000;
+            : new Date(b.created_at).getTime() + 8 * 60 * 1000;
           return lockExpire > Date.now();
         }
         return true;
@@ -341,7 +341,6 @@ export async function executeGuardedTool(
         .select("id")
         .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`)
         .eq("payment_method", "cash")
-        .eq("is_paid", false)
         .in("status", ["pending", "confirmed"])
         .gt("end_time", new Date().toISOString())
         .limit(1);
@@ -371,7 +370,7 @@ export async function executeGuardedTool(
         p_owner_id: stadiumRow.owner_id,
         p_start_time: pending.start_time,
         p_end_time: pending.end_time,
-        p_booking_type: "individual",
+        p_booking_type: "personal",
         p_total_price: pending.price_per_hour,
         p_stadium_name: stadiumRow.name,
         p_payment_method: paymentMethod,
