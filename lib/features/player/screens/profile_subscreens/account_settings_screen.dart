@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/ui/components/vsp_menu_item.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
