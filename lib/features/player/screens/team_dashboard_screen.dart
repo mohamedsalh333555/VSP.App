@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
@@ -28,12 +29,12 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   final ScrollController _scrollController = ScrollController();
   late final Stream<List<Booking>> _matchesStream;
-  int _selectedMainTab = 1; // 1 = تجميع افتراضياً
+  int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
 
   @override
   void initState() {
     super.initState();
-    _matchesStream = MatchRepository().getPublicMatches();
+    _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
     _fetchUserTeam();
   }
 
@@ -52,7 +53,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         if (team != null) {
           final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
           if (mounted && activeLeague != null && (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
-            setState(() => _selectedMainTab = 0);
+            setState(() => _selectedMainTab = 1);
           }
         }
       }
@@ -90,69 +91,115 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         bottom: false,
         child: Column(
           children: [
-            // Pill Switcher: [ دوري ] [ تجميع ]
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                height: 42,
-                decoration: BoxDecoration(
-                  color: VSPColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(21),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedMainTab = 0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _selectedMainTab == 0 ? VSPColors.accent : Colors.transparent,
-                            borderRadius: BorderRadius.circular(21),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'دوري 🏆',
-                            style: TextStyle(
-                              color: _selectedMainTab == 0 ? Colors.black : VSPColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+            // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              height: 48,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.full),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
+              child: Stack(
+                children: [
+                  // Animated background pill for 2 tabs
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeInOut,
+                    alignment: Directionality.of(context) == TextDirection.rtl
+                        ? (_selectedMainTab == 0
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft)
+                        : (_selectedMainTab == 0
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight),
+                    child: FractionallySizedBox(
+                      widthFactor: 0.5,
+                      child: Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent,
+                          borderRadius: BorderRadius.circular(VSPRadius.full),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      // Tab 0: تجميع
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedMainTab = 0);
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Center(
+                            child: Builder(
+                              builder: (context) {
+                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                final label = isArabic ? 'تجميع' : 'Gathering';
+                                return Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: _selectedMainTab == 0 ? Colors.black : Colors.white,
+                                        fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                );
+                              },
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedMainTab = 1),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _selectedMainTab == 1 ? VSPColors.accent : Colors.transparent,
-                            borderRadius: BorderRadius.circular(21),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'تجميع ⚽',
-                            style: TextStyle(
-                              color: _selectedMainTab == 1 ? Colors.black : VSPColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                      // Tab 1: دوري
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedMainTab = 1);
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Center(
+                            child: Builder(
+                              builder: (context) {
+                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                final label = isArabic ? 'دوري' : 'League';
+                                return Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: _selectedMainTab == 1 ? Colors.black : Colors.white,
+                                        fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                );
+                              },
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
             Expanded(
-              child: _selectedMainTab == 0
-                  ? TeamLeagueTab(
-                      userTeam: _userTeam,
-                      onTeamCreated: _fetchUserTeam,
-                    )
-                  : _buildGatheringTab(),
+              child: IndexedStack(
+                index: _selectedMainTab,
+                children: [
+                  _buildGatheringTab(),
+                  TeamLeagueTab(
+                    userTeam: _userTeam,
+                    onTeamCreated: _fetchUserTeam,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

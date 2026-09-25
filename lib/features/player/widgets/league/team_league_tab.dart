@@ -509,7 +509,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 ),
               ),
               const SizedBox(height: VSPSpacing.xl),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -518,14 +518,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     builder: (ctx) => const CreateTeamSheet(),
                   ).then((_) => widget.onTeamCreated());
                 },
-                icon: const Icon(Iconsax.add_circle_copy, size: 20),
-                label: const Text('إنشاء فريق جديد', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
                   foregroundColor: VSPColors.background,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
+                child: const Text('إنشاء فريق جديد', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               ),
             ],
           ),
