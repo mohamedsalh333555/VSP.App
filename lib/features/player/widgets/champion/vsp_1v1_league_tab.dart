@@ -316,7 +316,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
       // FIX 2: أغلق WebView بدون دفع → ألغِ الـ order المعلق
       if (isPaidSuccess != true) {
-        LeagueRepository().leave1v1Tournament(tournamentId).catchError((_) => <String, dynamic>{});
+        await LeagueRepository().cancel1v1PaymentOrder(orderRef);
         VSPFeedback.showWarning(
             context, isArabic ? 'تم إلغاء طلب الاشتراك.' : 'Registration request cancelled.');
         return;
