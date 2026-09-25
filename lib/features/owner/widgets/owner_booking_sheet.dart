@@ -188,19 +188,6 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                 collectedAmount: collectedAmount,
               );
 
-        final draft = OwnerBookingSheetService.buildManualBookingDraft(
-          stadium: stadium,
-          uid: uid,
-          startTime: startTime,
-          endTime: endTime,
-          customerName: customerName,
-          customerPhone: customerPhone,
-          notes: notes,
-          totalPrice: totalPrice,
-          collectedAmount: collectedAmount,
-          playerCount: _playerCount,
-        );
-
         final res = await OwnerRepository().createManualBookingAtomic(
           ownerId: uid,
           stadiumId: stadium.id,
