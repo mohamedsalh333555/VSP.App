@@ -1,0 +1,3 @@
+-- Official user lifecycle write paths -- 2026-09-26
+-- Production implementation routes registration completion, owner verification
+-- documents and owner onboarding lifecycle writes through authenticated RPCs.
