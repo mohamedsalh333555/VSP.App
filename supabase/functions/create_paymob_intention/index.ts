@@ -65,10 +65,26 @@ serve(async (req: Request) => {
       is_full_payment = false,
       amount_egp,
       user_phone = "",
-      user_name = "Player",
-      user_email = "player@vsp.app",
-
+      user_name = "",
+      user_email = "",
     } = payload;
+
+    const { data: canonicalUser } = await supabase
+      .from("users")
+      .select("name,email,phone")
+      .eq("id", callerUser.id)
+      .maybeSingle();
+
+    const canonicalName = String(canonicalUser?.name || user_name || "Player").trim();
+    const canonicalEmail = String(canonicalUser?.email || callerUser.email || user_email || "").trim();
+    const canonicalPhone = String(canonicalUser?.phone || user_phone || callerUser.phone || "").trim();
+
+    if (!canonicalPhone) {
+      return new Response(
+        JSON.stringify({ error: "Phone number is required for secure Paymob checkout" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!booking_id) {
       return new Response(
@@ -169,28 +185,39 @@ serve(async (req: Request) => {
       );
     }
 
-    // Canonical fee SSOT: VSP 2% + Paymob 2.75% + 3 EGP.
+    // Canonical fee SSOT. Never invent a fallback when the policy is unavailable.
     const { data: feeConfig } = await supabase
       .from("platform_fee_config")
-      .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
+      .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_fixed_fee, paymob_applies_to_electronic")
       .eq("id", 1)
       .maybeSingle();
 
-    const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
-    const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
-    const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
+    if (!feeConfig || feeConfig.paymob_applies_to_electronic !== true) {
+      return new Response(
+        JSON.stringify({ error: "Payment fee policy unavailable. Checkout refused safely." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const vspRate = Number(feeConfig.booking_vsp_rate);
+    const gatewayRate = Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+    const gatewayFixed = Number(feeConfig.booking_paymob_fixed_fee);
+    if (![vspRate, gatewayRate, gatewayFixed].every(Number.isFinite)) {
+      return new Response(
+        JSON.stringify({ error: "Payment fee policy invalid. Checkout refused safely." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const vspFee = Math.round(finalBaseAmount * vspRate * 100) / 100;
     const gatewayFee = Math.round((finalBaseAmount * gatewayRate + gatewayFixed) * 100) / 100;
     const platformFee = Math.round((vspFee + gatewayFee) * 100) / 100;
     const totalAmountEgp = Math.round((finalBaseAmount + platformFee) * 100) / 100;
     const amountInCents = Math.round(totalAmountEgp * 100);
 
-    const safeFirstName = user_name.trim().split(" ")[0] || "Player";
-    const safeLastName = user_name.trim().split(" ").slice(1).join(" ") || "VSP";
-    const rawPhone = user_phone.trim().replace(/[^\d+]/g, "");
-    const safePhone = rawPhone.length > 0
-      ? (rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`)
-      : "+201000000000";
+    const safeFirstName = canonicalName.split(/\s+/)[0] || "Player";
+    const safeLastName = canonicalName.split(/\s+/).slice(1).join(" ") || "VSP";
+    const rawPhone = canonicalPhone.replace(/[^\d+]/g, "");
+    const safePhone = rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`;
 
     const cardIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_CARD");
     const walletIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET");
@@ -211,7 +238,7 @@ serve(async (req: Request) => {
         first_name: safeFirstName,
         last_name: safeLastName,
         phone_number: safePhone,
-        email: user_email.trim() || "customer@vsp.eg",
+        email: canonicalEmail || "customer@vsp.eg",
       },
       special_reference: booking_id,
       redirection_url: "https://vspapp.online/payment-callback",
