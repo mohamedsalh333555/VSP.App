@@ -4,7 +4,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class TeamLeagueMatchDialog extends StatefulWidget {
   final TeamLeagueMatch match;
-  final Future<void> Function(int homeScore, int awayScore) onSubmit;
+  final Future<void> Function(int homeScore, int awayScore, int? homePenalties, int? awayPenalties) onSubmit;
 
   const TeamLeagueMatchDialog({
     super.key,
@@ -19,12 +19,16 @@ class TeamLeagueMatchDialog extends StatefulWidget {
 class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
   final TextEditingController _homeController = TextEditingController(text: '0');
   final TextEditingController _awayController = TextEditingController(text: '0');
+  final TextEditingController _homePenaltiesController = TextEditingController();
+  final TextEditingController _awayPenaltiesController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _homeController.dispose();
     _awayController.dispose();
+    _homePenaltiesController.dispose();
+    _awayPenaltiesController.dispose();
     super.dispose();
   }
 
@@ -40,7 +44,25 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
 
     setState(() => _isLoading = true);
     try {
-      await widget.onSubmit(home, away);
+      final isPlayoff = widget.match.stage == 'playoff';
+    int? homePenalties;
+    int? awayPenalties;
+    if (isPlayoff && home == away) {
+      homePenalties = int.tryParse(_homePenaltiesController.text.trim());
+      awayPenalties = int.tryParse(_awayPenaltiesController.text.trim());
+      if (homePenalties == null || awayPenalties == null || homePenalties < 0 || awayPenalties < 0 || homePenalties == awayPenalties) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('في حالة التعادل يجب تحديد ركلات ترجيح مختلفة لتحديد الفائز')));
+        return;
+      }
+    } else if (!isPlayoff && (homePenaltiesController.text.trim().isNotEmpty || awayPenaltiesController.text.trim().isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ركلات الترجيح غير مسموحة في مباريات الدوري')));
+      return;
+    }
+    if (isPlayoff && home != away && (homePenaltiesController.text.trim().isNotEmpty || awayPenaltiesController.text.trim().isNotEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ركلات الترجيح تستخدم فقط عند التعادل')));
+      return;
+    }
+    await widget.onSubmit(home, away, homePenalties, awayPenalties);
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -184,6 +206,16 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
               ],
             ),
 
+            if (widget.match.stage == 'playoff') ...[
+              const SizedBox(height: VSPSpacing.md),
+              const Text('إذا انتهت المباراة بالتعادل: ركلات الترجيح', textAlign: TextAlign.center, style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(child: TextField(controller: _homePenaltiesController, keyboardType: TextInputType.number, textAlign: TextAlign.center, decoration: const InputDecoration(labelText: 'ركلات المضيف', filled: true, fillColor: VSPColors.surfaceAlt))),
+                const SizedBox(width: 12),
+                Expanded(child: TextField(controller: _awayPenaltiesController, keyboardType: TextInputType.number, textAlign: TextAlign.center, decoration: const InputDecoration(labelText: 'ركلات الضيف', filled: true, fillColor: VSPColors.surfaceAlt))),
+              ]),
+            ],
             const SizedBox(height: VSPSpacing.xl),
 
             Row(
