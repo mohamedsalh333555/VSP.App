@@ -1,0 +1,3 @@
+-- Harden 1v1 paid registration -- 2026-09-26
+-- join_1v1_tournament_atomic requires an already-paid server-created order
+-- before creating a paid player registration.
