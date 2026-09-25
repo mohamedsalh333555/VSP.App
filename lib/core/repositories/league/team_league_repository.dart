@@ -254,6 +254,8 @@ class TeamLeagueRepository {
     required String matchId,
     required int homeScore,
     required int awayScore,
+    int? homePenalties,
+    int? awayPenalties,
   }) async {
     final res = await _supabase.rpc(
       'record_league_match_result',
@@ -261,6 +263,8 @@ class TeamLeagueRepository {
         'p_match_id': matchId,
         'p_home_score': homeScore,
         'p_away_score': awayScore,
+        'p_home_penalties': homePenalties,
+        'p_away_penalties': awayPenalties,
       },
     );
     if (res == null || res['success'] != true) {
