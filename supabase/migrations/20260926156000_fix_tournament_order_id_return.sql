@@ -1,0 +1,3 @@
+-- Fix tournament order ID return -- 2026-09-26
+-- create_tournament_order_atomic now returns the actual inserted row id
+-- using INSERT ... RETURNING instead of an unrelated generated UUID.
