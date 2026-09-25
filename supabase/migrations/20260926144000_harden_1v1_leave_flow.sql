@@ -1,0 +1,1 @@
+-- Prevent direct deletion of paid 1v1 registration -- 2026-09-26
