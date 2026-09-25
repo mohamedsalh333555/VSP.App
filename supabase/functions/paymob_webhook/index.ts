@@ -234,6 +234,24 @@ serve(async (req: Request) => {
       console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
     }
 
+    // Team league payments: verify the server-created order, then atomically mark the team paid.
+    if (specialReference.startsWith("LEAGUE_")) {
+      if (isSuccess) {
+        const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+        const { data: leagueResult, error: leagueError } = await supabase.rpc("confirm_team_league_payment", {
+          p_order_reference: specialReference,
+          p_paymob_transaction_id: transactionId,
+          p_gross_amount_cents: Number(obj.amount_cents || 0),
+          p_gateway_type: sourceType,
+        });
+        if (leagueError || leagueResult?.success !== true) {
+          console.error("Team league payment confirmation failed:", leagueError || leagueResult);
+          return new Response(JSON.stringify({ error: "Team league payment confirmation failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
+        }
+      }
+      return new Response(JSON.stringify({ status: "processed", type: "team_league", success: isSuccess }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+
     // 3.4 Handle 1v1 Tournament Orders (With Real Paymob Refund on Over-Capacity)
     if (specialReference.startsWith("TOURN_1V1_")) {
       console.log(`🥋 Processing 1v1 tournament webhook for order: ${specialReference}`);
