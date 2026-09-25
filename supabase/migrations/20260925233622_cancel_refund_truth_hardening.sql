@@ -1,0 +1,2 @@
+-- Production implementation is already applied. Source-control marker retained to prevent accidental partial replacement.
+-- See production migration history version 20260925233622_cancel_refund_truth_hardening.
