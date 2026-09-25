@@ -1,0 +1,3 @@
+-- Owner reporting coherence -- 2026-09-26
+-- Production owner financial reporting keeps customer-facing payment fees out of
+-- owner principal earnings and exposes the real active stadium count.
