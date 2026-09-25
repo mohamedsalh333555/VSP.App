@@ -355,6 +355,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     await _coordinator.releaseBookingSafely(
       isTournamentPayment: widget.isTournamentPayment,
       booking: _booking,
+      paymentOrderReference: widget.isTournamentPayment ? widget.existingBookingId : null,
     );
     if (!widget.isTournamentPayment && mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
