@@ -1,0 +1,4 @@
+-- Cash booking sequencing -- 2026-09-26
+-- Production authority is the create_booking_atomic function.
+-- This durable migration marker is intentionally kept alongside the full function
+-- implementation deployed in production on the same date.
