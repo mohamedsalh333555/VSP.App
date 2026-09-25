@@ -540,72 +540,65 @@ serve(async (req: Request) => {
       });
     }
 
-    // 4. Update Booking Status atomically if transaction succeeded
+    // 4. Apply verified payment through the single financial SSOT RPC.
     if (isSuccess) {
-      // 🛡️ LATE PAYMENT / EXPIRED LOCK (8-MIN) HANDLER: Real Paymob Auto-Refund
       if (existingBooking.status === "cancelled") {
-        console.warn(`🚨 Payment received for cancelled/expired booking ${bookingId}. Initiating REAL Paymob Auto-Refund...`);
+        const chargedAmountEgp = (obj.amount_cents || 0) / 100;
         let refundSuccess = false;
         let refundId = null;
         let refundErrorMsg = null;
 
         try {
           const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
-          if (!paymobApiKey) {
-            throw new Error("Missing PAYMOB_SECRET_KEY on server environment");
-          }
+          if (!paymobApiKey) throw new Error("Missing Paymob server API key");
 
-          // Step A: Authenticate with Paymob
           const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ api_key: paymobApiKey }),
           });
-
-          if (!authRes.ok) {
-            const authErrText = await authRes.text();
-            throw new Error(`Paymob auth token request failed: ${authErrText}`);
-          }
+          if (!authRes.ok) throw new Error("Paymob auth token request failed");
 
           const authData = await authRes.json();
-          const authToken = authData.token;
-
-          // Step B: Call Paymob Void/Refund API
           const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              auth_token: authToken,
+              auth_token: authData.token,
               transaction_id: Number(transactionId),
-              amount_cents: obj.amount_cents,
+              amount_cents: Number(obj.amount_cents || 0),
             }),
           });
-
           const refundData = await refundRes.json();
-          if (refundRes.ok && (refundData.id || refundData.success !== false)) {
+
+          if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
             refundSuccess = true;
-            refundId = String(refundData.id || transactionId);
-            console.log(`✅ Paymob Auto-Refund executed successfully for expired booking ${bookingId} (Refund Tx: ${refundId})`);
+            refundId = String(refundData.id || refundData.transaction_id || transactionId);
           } else {
-            refundErrorMsg = JSON.stringify(refundData);
-            console.error(`❌ Paymob Auto-Refund failed:`, refundData);
+            refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
           }
         } catch (refundEx: any) {
-          console.error("Exception during Paymob Auto-Refund:", refundEx);
-          refundErrorMsg = refundEx.message || String(refundEx);
+          refundErrorMsg = refundEx?.message || String(refundEx);
         }
 
-        // Record in bookings & webhook_logs
-        await supabase
-          .from("bookings")
-          .update({
-            payment_status: refundSuccess ? "refunded" : "failed",
-            refund_amount: (obj.amount_cents || 0) / 100,
-            refund_transaction_id: refundId,
-            cancellation_reason: "انتهت مهلة الدفع (8 دقائق) - تم استرداد المبلغ تلقائياً للبطاقة",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", bookingId);
+        if (refundSuccess) {
+          await supabase.rpc("record_booking_gateway_refund_atomic", {
+            p_booking_id: bookingId,
+            p_refund_amount: chargedAmountEgp,
+            p_refund_txn_id: refundId,
+            p_refund_payment_method: "card",
+          });
+        } else {
+          await supabase
+            .from("bookings")
+            .update({
+              payment_status: "refund_pending",
+              refund_amount: chargedAmountEgp,
+              cancellation_reason: "انتهت مهلة الدفع ولم يكتمل الحجز، والاسترداد يحتاج معالجة.",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", bookingId);
+        }
 
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
@@ -614,180 +607,134 @@ serve(async (req: Request) => {
           booking_id: bookingId,
           payload: { refundSuccess, refundId, refundErrorMsg, originalTxn: obj },
           signature_verified: true,
-          status: refundSuccess ? "refunded" : "refund_failed",
+          status: refundSuccess ? "refunded" : "refund_pending",
           error_message: refundErrorMsg,
         });
 
-        // Notify user
         const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
         if (playerUserId) {
-          try {
-            await supabase.from("notifications").insert({
-              user_id: playerUserId,
-              title: "استرداد تلقائي للمبلغ 💸",
-              body: `تم إرجاع (${((obj.amount_cents || 0) / 100).toFixed(0)} ج.م) لبطاقتك البنكية نظراً لانتهاء مهلة حجز الموعد (8 دقائق).`,
-              type: "refund_success",
-              created_at: new Date().toISOString(),
-            });
-          } catch (_) {}
+          await supabase.from("notifications").insert({
+            user_id: playerUserId,
+            title: refundSuccess ? "استرداد تلقائي للمبلغ 💸" : "حالة استرداد الدفع",
+            body: refundSuccess
+              ? `تم استرداد مبلغ (${chargedAmountEgp.toFixed(2)} ج.م) تلقائياً لأن مهلة الحجز انتهت.`
+              : `تم تسجيل عملية الاسترداد للمراجعة بسبب انتهاء مهلة الحجز. رقم العملية: ${transactionId}`,
+            type: refundSuccess ? "refund_success" : "refund_pending",
+            booking_id: bookingId,
+            created_at: new Date().toISOString(),
+          });
         }
 
         return new Response(JSON.stringify({
-          status: "expired_auto_refunded",
+          status: refundSuccess ? "expired_auto_refunded" : "expired_refund_pending",
           refund_success: refundSuccess,
-          booking_id: bookingId
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+          booking_id: bookingId,
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
       }
 
       const paidAmountEgp = (obj.amount_cents || 0) / 100;
-      const expectedAmount = (existingBooking.needs_deposit && Number(existingBooking.deposit_amount) > 0)
-        ? Number(existingBooking.deposit_amount)
-        : Number(existingBooking.total_price);
+      const principalAmount = (
+        existingBooking.needs_deposit &&
+        Number(existingBooking.deposit_amount) > 0
+      ) ? Number(existingBooking.deposit_amount) : Number(existingBooking.total_price);
 
-      // Verify that the paid amount satisfies the expected amount
-      if (paidAmountEgp < (expectedAmount - 0.5)) {
-        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedAmount} EGP) for booking ${bookingId}`);
+      const resolvedPaymentMethod = (() => {
+        const combined = `${obj.source_data?.type || ""} ${obj.source_data?.sub_type || ""}`.toLowerCase();
+        if (
+          combined.includes("wallet") ||
+          combined.includes("vodafone") ||
+          combined.includes("orange") ||
+          combined.includes("etisalat") ||
+          combined.includes("we") ||
+          combined.includes("smartwallet")
+        ) return "wallet";
+        return "card";
+      })();
+
+      const isDepositOnly =
+        Boolean(existingBooking.needs_deposit) &&
+        Number(existingBooking.deposit_amount) > 0 &&
+        paidAmountEgp < (Number(existingBooking.total_price) - 0.5);
+
+      const { data: paymentResult, error: paymentError } = await supabase.rpc(
+        "record_booking_payment_atomic",
+        {
+          p_booking_id: bookingId,
+          p_user_id: existingBooking.created_by_user_id || existingBooking.user_id,
+          p_paymob_transaction_id: transactionId,
+          p_paymob_order_id: orderId,
+          p_payment_method: resolvedPaymentMethod,
+          p_principal_amount: principalAmount,
+          p_gross_amount: paidAmountEgp,
+          p_is_deposit: isDepositOnly,
+          p_metadata: {
+            paymob_order_id: orderId,
+            source_data_type: obj.source_data?.type ?? null,
+            source_data_sub_type: obj.source_data?.sub_type ?? null,
+            card_origin: "local",
+          },
+        },
+      );
+
+      if (paymentError || paymentResult?.success !== true) {
+        console.error("Payment ledger RPC rejected verified webhook:", paymentError || paymentResult);
         await supabase.from("webhook_logs").insert({
           provider: "paymob",
-          event_type: "underpayment_fraud_alert",
+          event_type: "payment_accounting_rejected",
           txn_id: transactionId,
-          order_id: String(obj.order?.id ?? obj.order ?? ""),
+          order_id: orderId,
           booking_id: bookingId,
           payload: obj,
           signature_verified: true,
-          status: "fraud_detected",
-          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedAmount} EGP`,
+          status: "rejected",
+          error_message: JSON.stringify(paymentError || paymentResult),
         });
-        return new Response(JSON.stringify({ error: "Payment amount does not match booking price" }), {
+        return new Response(JSON.stringify({ error: "Payment accounting rejected" }), {
           status: 400,
           headers: { "Content-Type": "application/json" },
         });
       }
 
-      const isDepositOnly = Boolean(existingBooking.needs_deposit) &&
-        Number(existingBooking.deposit_amount) > 0 &&
-        paidAmountEgp < (Number(existingBooking.total_price) - 0.5);
+      const finalPayment = paymentResult.is_final_payment === true;
+      const remainingAmount = Number(paymentResult.remaining_amount || 0);
+      const principalPaid = Number(paymentResult.principal_amount || principalAmount);
 
-      const updatedIsPaid = !isDepositOnly;
-      const updatedPaymentStatus = isDepositOnly ? "partially_paid" : "paid";
-      const updatedDepositPaid = isDepositOnly
-        ? Number(existingBooking.deposit_amount)
-        : Math.min(paidAmountEgp, Number(existingBooking.total_price));
-      const remainingAmount = isDepositOnly ? Math.max(0, Number(existingBooking.total_price) - updatedDepositPaid) : 0;
+      const playerUserId = existingBooking.created_by_user_id || existingBooking.user_id;
+      const amountText = principalPaid.toFixed(2);
 
-      // 🛡️ Normalize payment method to match database constraint (card, wallet, paymob)
-      const resolvedPaymentMethod = (() => {
-        const combined = `${obj.source_data?.type || ""} ${obj.source_data?.sub_type || ""}`.toLowerCase();
-        if (combined.includes("wallet") || combined.includes("vodafone") || combined.includes("orange") || combined.includes("etisalat") || combined.includes("we") || combined.includes("smartwallet")) {
-          return "wallet";
-        }
-        if (combined.includes("card") || combined.includes("visa") || combined.includes("master") || combined.includes("meeza") || combined.includes("online")) {
-          return "card";
-        }
-        return "card";
-      })();
+      await supabase.from("notifications").insert([
+        {
+          user_id: existingBooking.owner_id,
+          title: isDepositOnly ? "تم استلام عربون حجز" : "تم استلام دفعة حجز مؤكدة",
+          body: isDepositOnly
+            ? `تم دفع عربون بقيمة ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}. المتبقي: ${remainingAmount.toFixed(2)} ج.م`
+            : `تم تأكيد سداد مبلغ ${amountText} ج.م لحجز ${existingBooking.stadium_name || "الملعب"}.`,
+          type: isDepositOnly ? "deposit_received" : "payment_received",
+          booking_id: bookingId,
+          is_read: false,
+        },
+        {
+          user_id: playerUserId,
+          title: finalPayment ? "تأكيد الحجز والدفع" : "تأكيد سداد العربون",
+          body: finalPayment
+            ? `تم سداد حجزك بالكامل بنجاح في ${existingBooking.stadium_name || "الملعب"}.`
+            : `تم سداد العربون بقيمة ${amountText} ج.م بنجاح. المتبقي: ${remainingAmount.toFixed(2)} ج.م.`,
+          type: finalPayment ? "booking_confirmed" : "deposit_received",
+          booking_id: bookingId,
+          is_read: false,
+        },
+      ]);
 
-      const { data: booking, error: updateError } = await supabase
-        .from("bookings")
-        .update({
-          status: "confirmed",
-          is_paid: updatedIsPaid,
-          payment_status: updatedPaymentStatus,
-          is_deposit_paid: true,
-          deposit_paid: updatedDepositPaid,
-          payment_transaction_id: `PAYMOB_${transactionId}`,
-          paymob_txn_id: transactionId,
-          paymob_transaction_id: transactionId,
-          payment_method: resolvedPaymentMethod,
-          webhook_verified: true,
-          webhook_processed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", bookingId)
-        .select()
-        .single();
-
-      if (updateError) {
-        console.error(`❌ Failed to update booking ${bookingId}:`, updateError);
-      } else if (booking) {
-        console.log(`🎉 Booking ${bookingId} confirmed successfully via Paymob payment!`);
-
-        // Record confirmed payment in immutable transactions ledger
-        try {
-          const effectiveUserId = booking.created_by_user_id || booking.user_id || existingBooking.created_by_user_id || existingBooking.user_id;
-          await supabase.from("transactions").insert({
-            user_id: effectiveUserId,
-            booking_id: bookingId,
-            amount: updatedDepositPaid,
-            type: isDepositOnly ? "deposit" : "payment",
-            status: "completed",
-            payment_method: resolvedPaymentMethod,
-            reference_number: transactionId,
-            paymob_transaction_id: transactionId,
-            description: `دفع ${isDepositOnly ? 'عربون' : 'كامل'} حجز ملعب: ${booking.stadium_name || existingBooking.stadium_name || 'الملعب'}`,
-            metadata: {
-              paymob_order_id: String(obj.order?.id ?? obj.order ?? ""),
-              paymob_transaction_id: transactionId,
-              is_deposit: isDepositOnly,
-              payment_method: resolvedPaymentMethod,
-              raw_sub_type: obj.source_data?.sub_type ?? null,
-              raw_pan: obj.source_data?.pan ?? null,
-            },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-          console.log(`📝 Financial transaction record created in transactions table for booking ${bookingId}`);
-        } catch (txInsertErr) {
-          console.error("⚠️ Failed to insert into transactions table:", txInsertErr);
-        }
-
-        // Send notifications
-        const amountEgp = paidAmountEgp.toFixed(0);
-        const remainingEgp = remainingAmount.toFixed(0);
-
-        const ownerNotification = isDepositOnly
-          ? {
-              user_id: booking.owner_id,
-              title: "تم استلام عربون حجز",
-              body: `تم دفع عربون بقيمة ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
-              type: "deposit_received",
-              booking_id: bookingId,
-              is_read: false,
-            }
-          : {
-              user_id: booking.owner_id,
-              title: "تم استلام دفعة حجز مؤكدة",
-              body: `تم دفع مبلغ ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"} بالكامل`,
-              type: "payment_received",
-              booking_id: bookingId,
-              is_read: false,
-            };
-
-        const playerNotification = isDepositOnly
-          ? {
-              user_id: booking.user_id || booking.created_by_user_id,
-              title: "تأكيد سداد العربون",
-              body: `تم سداد العربون (${amountEgp} ج.م) بنجاح لحجزك في ${booking.stadium_name || "الملعب"}. المتبقي للدفع نقداً بالملعب: ${remainingEgp} ج.م`,
-              type: "booking_confirmed",
-              booking_id: bookingId,
-              is_read: false,
-            }
-          : {
-              user_id: booking.user_id || booking.created_by_user_id,
-              title: "تأكيد الحجز والدفع",
-              body: `تم سداد حجزك بالكامل بنجاح في ${booking.stadium_name || "الملعب"}`,
-              type: "booking_confirmed",
-              booking_id: bookingId,
-              is_read: false,
-            };
-
-        await supabase.from("notifications").insert([ownerNotification, playerNotification]);
-      }
+      return new Response(JSON.stringify({
+        status: "processed",
+        type: "booking_payment",
+        success: true,
+        booking_id: bookingId,
+        final_payment: finalPayment,
+        principal_amount: principalPaid,
+        remaining_amount: remainingAmount,
+      }), { status: 200, headers: { "Content-Type": "application/json" } });
     } else {
-      // Payment failed
       await supabase
         .from("bookings")
         .update({
