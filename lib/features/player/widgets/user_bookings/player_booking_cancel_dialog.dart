@@ -17,7 +17,28 @@ class PlayerBookingCancelDialog {
     // 1. تحديد بيانات وسيلة الدفع والاسترداد
     final paymentMethod = booking.paymentMethod;
 
-    // 2. تحديد قناة الاسترداد والمدة المتوقعة
+    // 2. هل دُفع أي مبلغ إلكتروني فعلاً؟
+    //    - حجز كاش صافي (مفيش عربون أونلاين): مبلغ الاسترداد = صفر
+    //    - حجز هجين (عربون + كاش): الاسترداد = العربون المدفوع أونلاين فقط
+    //    - حجز أونلاين كامل: الاسترداد = المبلغ المدفوع كاملاً
+    final bool isPureCash = paymentMethod.toLowerCase() == 'cash' &&
+        (booking.depositPaid <= 0 && !booking.isDepositPaid);
+
+    final double actualRefundAmount;
+    if (isPureCash) {
+      // كاش صافي — اللاعب ما دفعش حاجة أونلاين
+      actualRefundAmount = 0.0;
+    } else if (booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice) {
+      // هجين — الاسترداد = العربون الإلكتروني فقط
+      actualRefundAmount = booking.depositPaid;
+    } else {
+      // أونلاين كامل — الاسترداد = ما دُفع
+      actualRefundAmount = booking.refundAmount ??
+          (booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice);
+    }
+
+    // 3. تحديد قناة الاسترداد والمدة المتوقعة
+    //    لو كاش صافي — قناة الاسترداد لا تُعرض (مبلغها صفر)
     final refundChannel = switch (paymentMethod.toLowerCase()) {
       'wallet' || 'vodafone_cash' || 'instapay' => RefundChannel.wallet,
       'card' || 'paymob' || 'online'            => RefundChannel.card,
@@ -29,12 +50,13 @@ class PlayerBookingCancelDialog {
       eta: refundChannel == RefundChannel.card
           ? RefundEta.businessDays
           : (refundChannel == RefundChannel.wallet ? RefundEta.minutes : RefundEta.immediate),
-      refundAmount: booking.refundAmount ??
-          (booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice),
+      refundAmount: actualRefundAmount,
+      isPureCashNoDeposit: isPureCash,
     );
 
-    final amountFormatted =
-        '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}';
+    final amountFormatted = isPureCash
+        ? (isArabic ? 'لا يوجد مبلغ مدفوع إلكترونياً' : 'No online payment made')
+        : '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}';
 
     return showDialog<void>(
       context: context,

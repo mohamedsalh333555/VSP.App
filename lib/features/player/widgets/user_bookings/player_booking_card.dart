@@ -275,9 +275,10 @@ class PlayerBookingCard extends StatelessWidget {
                 booking.paymentStatus == 'refund_pending';
 
             // Only show contact support if money was ACTUALLY paid, and payment failed or needs manual refund handling.
-            // Exclude abandoned checkouts where no money was paid!
+            // Exclude abandoned checkouts where no money was paid AND pure-cash bookings with no online deposit!
             final bool isUnconfirmedPayment = !hasRealRefund &&
                 !isRefundPending &&
+                (booking.depositPaid > 0 || booking.isPaid || booking.isDepositPaid) &&
                 (booking.paymentStatus == 'refund_failed' ||
                     (booking.paymentMethod.toLowerCase() != 'cash' &&
                         (booking.depositPaid > 0 || booking.isPaid || booking.isDepositPaid)));

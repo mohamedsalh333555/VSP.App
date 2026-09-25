@@ -6,16 +6,25 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
   final double digitalBalance;
   final bool isAr;
   final VoidCallback onRequestPayout;
+  /// عدد الحجوزات المكتملة (اختياري — يُعرض كشرح للرصيد)
+  final int? completedBookingsCount;
+  /// المسحوب مسبقاً (اختياري — يُعرض كشرح)
+  final double? totalWithdrawn;
 
   const OwnerDigitalBalanceCard({
     super.key,
     required this.digitalBalance,
     required this.isAr,
     required this.onRequestPayout,
+    this.completedBookingsCount,
+    this.totalWithdrawn,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasDetails = (completedBookingsCount != null && completedBookingsCount! > 0) ||
+        (totalWithdrawn != null && totalWithdrawn! > 0);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       padding: const EdgeInsets.all(16),
@@ -53,6 +62,11 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
               ),
             ],
           ),
+          // ✅ سطر توضيحي يشرح مصدر الرصيد لتجنب قلق المالك
+          if (hasDetails) ...{
+            const SizedBox(height: 6),
+            _buildSourceHint(),
+          },
           if (digitalBalance > 0) ...[
             const SizedBox(height: 12),
             GestureDetector(
@@ -74,6 +88,28 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildSourceHint() {
+    final parts = <String>[];
+    if (completedBookingsCount != null && completedBookingsCount! > 0) {
+      parts.add(isAr
+          ? 'من ${completedBookingsCount!} حجز مكتمل'
+          : 'from $completedBookingsCount completed booking${completedBookingsCount! > 1 ? 's' : ''}');
+    }
+    if (totalWithdrawn != null && totalWithdrawn! > 0) {
+      parts.add(isAr
+          ? 'بعد خصم ${totalWithdrawn!.toStringAsFixed(0)} ج.م تم سحبها مسبقاً'
+          : 'after ${totalWithdrawn!.toStringAsFixed(0)} EGP previously withdrawn');
+    }
+    final hint = parts.join(' — ');
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Text(
+        hint,
+        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
       ),
     );
   }
