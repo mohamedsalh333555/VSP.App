@@ -431,11 +431,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       context: context,
       builder: (ctx) => TeamLeagueMatchDialog(
         match: match,
-        onSubmit: (homeScore, awayScore) async {
+        onSubmit: (homeScore, awayScore, homePenalties, awayPenalties) async {
           await _leagueRepo.recordLeagueMatchResult(
             matchId: match.id,
             homeScore: homeScore,
             awayScore: awayScore,
+            homePenalties: homePenalties,
+            awayPenalties: awayPenalties,
           );
           VSPFeedback.triggerSuccess();
           await _loadLeague();
