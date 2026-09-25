@@ -1,0 +1,4 @@
+-- Paid tournament withdrawal refund flow -- 2026-09-26
+-- Production implementation deployed under this migration name. It prepares paid
+-- withdrawal refunds without removing the team, then finalizes removal only after
+-- real Paymob refund success.
