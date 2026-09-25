@@ -69,7 +69,7 @@ class PaymentCheckoutCoordinator {
     _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
       try {
         final booking = await fetchBooking(bookingId);
-        if (booking != null && (booking.status == BookingStatus.confirmed || booking.isPaid)) {
+        if (booking != null && (booking.isPaid || booking.paymentStatus == 'paid')) {
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
