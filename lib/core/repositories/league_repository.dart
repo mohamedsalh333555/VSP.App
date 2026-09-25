@@ -155,6 +155,21 @@ class LeagueRepository {
     }
   }
 
+  /// Cancel only the current pending 1v1 payment order.
+  Future<Map<String, dynamic>> cancel1v1PaymentOrder(String orderReference) async {
+    try {
+      final response = await _supabase.rpc(
+        'cancel_1v1_payment_order_atomic',
+        params: {'p_order_reference': orderReference},
+      );
+      if (response is Map) return Map<String, dynamic>.from(response);
+      return {'success': false, 'error': 'استجابة غير متوقعة من الخادم'};
+    } catch (e) {
+      debugPrint('Error in cancel1v1PaymentOrder: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Atomic leave for 1v1 tournament
   Future<Map<String, dynamic>> leave1v1Tournament(String tournamentId) async {
     try {
