@@ -48,17 +48,17 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
     int? homePenalties;
     int? awayPenalties;
     if (isPlayoff && home == away) {
-      homePenalties = int.tryParse(_homePenaltiesController.text.trim());
-      awayPenalties = int.tryParse(_awayPenaltiesController.text.trim());
+      homePenalties = int.tryParse(__homePenaltiesController.text.trim());
+      awayPenalties = int.tryParse(__awayPenaltiesController.text.trim());
       if (homePenalties == null || awayPenalties == null || homePenalties < 0 || awayPenalties < 0 || homePenalties == awayPenalties) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('في حالة التعادل يجب تحديد ركلات ترجيح مختلفة لتحديد الفائز')));
         return;
       }
-    } else if (!isPlayoff && (homePenaltiesController.text.trim().isNotEmpty || awayPenaltiesController.text.trim().isNotEmpty)) {
+    } else if (!isPlayoff && (_homePenaltiesController.text.trim().isNotEmpty || _awayPenaltiesController.text.trim().isNotEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ركلات الترجيح غير مسموحة في مباريات الدوري')));
       return;
     }
-    if (isPlayoff && home != away && (homePenaltiesController.text.trim().isNotEmpty || awayPenaltiesController.text.trim().isNotEmpty)) {
+    if (isPlayoff && home != away && (_homePenaltiesController.text.trim().isNotEmpty || _awayPenaltiesController.text.trim().isNotEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ركلات الترجيح تستخدم فقط عند التعادل')));
       return;
     }
