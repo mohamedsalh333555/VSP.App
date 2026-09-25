@@ -80,6 +80,25 @@ serve(async (req: Request) => {
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
 
+    // 1v1 tournament payments are backed by a server-created order. Never trust the client amount.
+    if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("TOURN_1V1_")) {
+      const { data: oneVsOneOrder, error: oneVsOneOrderError } = await supabase
+        .from("vsp_1v1_tournament_orders")
+        .select("order_reference, amount, user_id, payment_status")
+        .eq("order_reference", booking_id)
+        .maybeSingle();
+      if (oneVsOneOrderError || !oneVsOneOrder) {
+        return new Response(JSON.stringify({ error: "1v1 tournament payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (oneVsOneOrder.user_id !== callerUser.id) {
+        return new Response(JSON.stringify({ error: "Forbidden: payment order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (oneVsOneOrder.payment_status !== "pending") {
+        return new Response(JSON.stringify({ error: "1v1 tournament payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      finalBaseAmount = Number(oneVsOneOrder.amount) || 0;
+    }
+
     // Team-league payments are backed by a server-created order. Never trust the client amount.
     if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("LEAGUE_")) {
       const { data: leaguePayment, error: leaguePaymentError } = await supabase
