@@ -7,6 +7,7 @@ import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
+import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 
 /// Actions and status badges for challenge bookings when a match has completed.
@@ -284,11 +285,23 @@ class ChallengeResultActions extends StatelessWidget {
                           outcome: agreeOutcome,
                         );
                         if (context.mounted) {
-                          VSPFeedback.showSuccess(
-                            context,
-                            isArabic
-                                ? 'تم تأكيد النتيجة، إنهاء النزاع وتحديث ترتيب الدوري! '
-                                : 'Result confirmed & dispute resolved!',
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: VSPColors.accent,
+                              behavior: SnackBarBehavior.floating,
+                              duration: const Duration(seconds: 6),
+                              content: Text(
+                                isArabic
+                                    ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!'
+                                    : 'Result confirmed & rankings updated!',
+                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                              ),
+                              action: SnackBarAction(
+                                label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
+                                textColor: Colors.black,
+                                onPressed: () => navigateToTeamsStandings(context),
+                              ),
+                            ),
                           );
                         }
                       },
@@ -335,6 +348,57 @@ class ChallengeResultActions extends StatelessWidget {
           ),
         );
       }
+    }
+
+    // 3. Match result confirmed: show action card to view team standing in the leaderboard
+    if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isArabic ? 'تم اعتماد النتيجة رسمياً' : 'Result Officially Confirmed',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic ? 'تم تحديث نقاط وترتيب فريقك في الدوري' : 'Team points & ranking updated',
+                    style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.9), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+              ),
+              icon: const Icon(Iconsax.chart_copy, size: 14),
+              label: Text(
+                isArabic ? 'الترتيب' : 'Standings',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+              ),
+              onPressed: () => navigateToTeamsStandings(context),
+            ),
+          ],
+        ),
+      );
     }
 
     return const SizedBox.shrink();

@@ -12,6 +12,7 @@ class BookingSheetPastPanel extends StatelessWidget {
   final Booking booking;
   final bool isArabic;
   final VoidCallback? onConfirmCashPayment;
+  final VoidCallback? onReportNoShow;
   final bool isSaving;
 
   const BookingSheetPastPanel({
@@ -19,6 +20,7 @@ class BookingSheetPastPanel extends StatelessWidget {
     required this.booking,
     required this.isArabic,
     this.onConfirmCashPayment,
+    this.onReportNoShow,
     this.isSaving = false,
   });
 
@@ -73,9 +75,16 @@ class BookingSheetPastPanel extends StatelessWidget {
             width: double.infinity,
             height: VSPSize.buttonHeight,
             child: ElevatedButton.icon(
-              onPressed: () =>
-                  BookingSheetWhatsAppUtils.launchWhatsAppSupport(booking, isArabic),
-              icon: const Icon(Iconsax.user_remove_copy, size: 18),
+              onPressed: isSaving
+                  ? null
+                  : (onReportNoShow ?? () => BookingSheetWhatsAppUtils.launchWhatsAppSupport(booking, isArabic)),
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
+                    )
+                  : const Icon(Iconsax.user_remove_copy, size: 18),
               label: Text(
                 isArabic
                     ? 'تسجيل عدم حضور اللاعب (No-Show) '

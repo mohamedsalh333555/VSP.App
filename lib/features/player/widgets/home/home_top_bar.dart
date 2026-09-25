@@ -92,6 +92,7 @@ class HomeTopBar extends StatelessWidget {
                     ],
                   ),
                 ),
+                
                 HomeNotificationBadge(userId: auth.currentUser?.uid ?? ''),
               ],
             ),

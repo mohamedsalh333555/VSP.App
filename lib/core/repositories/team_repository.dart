@@ -99,12 +99,17 @@ class TeamRepository {
  final teamId = response['id'].toString();
 
  if (memberUids.isNotEmpty) {
- final List<Map<String, dynamic>> memberRows = memberUids.map((uid) => {
- 'team_id': teamId,
- 'user_id': uid.toString(),
- }).toList();
- await _supabase.from('team_members').insert(memberRows);
- }
+      final validMemberUids = memberUids
+          .where((uid) => !uid.toString().startsWith('guest_'))
+          .toList();
+      if (validMemberUids.isNotEmpty) {
+        final List<Map<String, dynamic>> memberRows = validMemberUids.map((uid) => {
+          'team_id': teamId,
+          'user_id': uid.toString(),
+        }).toList();
+        await _supabase.from('team_members').insert(memberRows);
+      }
+    }
 
   if (memberUids.length > 1) {
   for (int i = 1; i < memberUids.length; i++) {

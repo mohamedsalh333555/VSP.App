@@ -14,6 +14,10 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/repositories/report_repository.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
+import '../../../core/repositories/user_repository.dart';
+import '../../../core/repositories/match_repository.dart';
+import '../../../core/models/user_model.dart';
+import 'chat_screen.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
  final String bookingId;
@@ -29,8 +33,25 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Booking? _booking;
  Stadium? _stadium;
  bool _isJoining = false;
- bool _isActionProcessing = false;
- late final Stream<List<Map<String, dynamic>>> _bookingStream;
+  bool _isActionProcessing = false;
+  final Map<String, UserModel> _joinedUserProfiles = {};
+  late final Stream<List<Map<String, dynamic>>> _bookingStream;
+
+  Future<void> _loadJoinedUsers(List<String> userIds) async {
+    if (userIds.isEmpty) return;
+    try {
+      final users = await UserRepository().getUsersByIds(userIds);
+      if (mounted) {
+        setState(() {
+          for (final u in users) {
+            _joinedUserProfiles[u.uid] = u;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading joined users: $e');
+    }
+  }
 
  @override
  void initState() {
@@ -48,7 +69,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final booking = await bookingProvider.getBookingById(widget.bookingId);
  if (booking != null) {
  _booking = booking;
- _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
+        _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
+        if (booking.joinedUserIds.isNotEmpty) {
+          _loadJoinedUsers(booking.joinedUserIds);
+        }
  }
  } catch (e) {
  debugPrint('Error fetching match details: ');
@@ -204,7 +228,80 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  );
  }
 
- Widget _buildHostSettingsCard(BuildContext context) {
+ Future<void> _onLeaveMatch() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final currentUserId = auth.currentUser?.uid;
+    if (currentUserId == null || _isActionProcessing) return;
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              isArabic ? 'مغادرة المباراة' : 'Leave Match',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد من رغبتك في مغادرة المباراة؟ سيتم إتاحة مكانك للاعبين آخرين.'
+              : 'Are you sure you want to leave this match? Your spot will be made available to other players.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(isArabic ? 'تأكيد المغادرة' : 'Leave'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isActionProcessing = true);
+    try {
+      final success = await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
+      if (mounted) {
+        setState(() => _isActionProcessing = false);
+        if (success) {
+          VSPFeedback.showSuccess(
+            context,
+            isArabic ? 'تمت مغادرة المباراة بنجاح' : 'Successfully left the match',
+          );
+          _fetchMatchDetails();
+        } else {
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'تعذر مغادرة المباراة، يرجى المحاولة مرة أخرى' : 'Failed to leave match',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isActionProcessing = false);
+        VSPFeedback.showError(context, '$e');
+      }
+    }
+  }
+
+  Widget _buildHostSettingsCard(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return Container(
  padding: const EdgeInsets.all(12),
@@ -239,6 +336,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  builder: (context, snapshot) {
  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
  _booking = Booking.fromFirestore(snapshot.data!.first, widget.bookingId);
+      if (_booking != null && _booking!.joinedUserIds.isNotEmpty) {
+        final missing = _booking!.joinedUserIds.where((id) => !_joinedUserProfiles.containsKey(id)).toList();
+        if (missing.isNotEmpty) {
+          _loadJoinedUsers(missing);
+        }
+      }
  }
 
  if (_isLoading) {
@@ -303,7 +406,13 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
  },
  ),
- IconButton(
+ if (alreadyJoined && !isHost)
+              IconButton(
+                icon: const Icon(Iconsax.logout_copy, color: VSPColors.error),
+                tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'مغادرة المباراة' : 'Leave Match',
+                onPressed: _onLeaveMatch,
+              ),
+            IconButton(
  icon: const Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
  onPressed: _onReport,
  ),
@@ -389,9 +498,33 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  _buildDetailRow(Iconsax.location_copy, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
  if (isHost) ...[
- const SizedBox(height: 16),
- _buildHostSettingsCard(context),
- ],
+                    const SizedBox(height: 16),
+                    _buildHostSettingsCard(context),
+                  ] else if (alreadyJoined) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              Localizations.localeOf(context).languageCode == 'ar'
+                                  ? 'أنت منضم لهذه المباراة! استخدم زر المحادثة بالأسفل للتنسيق مع باقي اللاعبين.'
+                                  : 'You are registered for this match! Use the chat button below to coordinate with the team.',
+                              style: const TextStyle(color: VSPColors.accent, fontSize: 13, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
  const Divider(color: VSPColors.divider, height: 40),
  Text(
  AppLocalizations.of(context)!.playersCount(
@@ -404,19 +537,50 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  ),
  const SizedBox(height: VSPSpacing.md),
  ListView.builder(
- shrinkWrap: true,
- physics: const NeverScrollableScrollPhysics(),
- itemCount: _booking!.joinedUserIds.length,
- itemBuilder: (context, index) {
- return ListTile(
- leading: const CircleAvatar(
- backgroundColor: VSPColors.surface,
- child: Icon(Iconsax.user_copy, color: VSPColors.textSecondary),
- ),
- title: Text(AppLocalizations.of(context)!.playerLabel(index + 1), style: const TextStyle(color: Colors.white)),
- trailing: index == 0 ? Text(AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.accent)) : null,
- );
- },
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _booking!.joinedUserIds.length,
+                    itemBuilder: (context, index) {
+                      final uid = _booking!.joinedUserIds[index];
+                      final user = _joinedUserProfiles[uid];
+                      final isUserHost = (uid == _booking!.createdByUserId && uid.isNotEmpty) || (index == 0 && _booking!.createdByUserId.isEmpty);
+                      final displayName = user?.name?.isNotEmpty == true
+                          ? user!.name!
+                          : AppLocalizations.of(context)!.playerLabel(index + 1);
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: VSPColors.surface,
+                          backgroundImage: (user?.profileImageUrl != null && user!.profileImageUrl!.isNotEmpty)
+                              ? CachedNetworkImageProvider(user.profileImageUrl!)
+                              : null,
+                          child: (user?.profileImageUrl == null || user!.profileImageUrl!.isEmpty)
+                              ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20)
+                              : null,
+                        ),
+                        title: Text(
+                          displayName,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: user?.position != null
+                            ? Text(user!.position!, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12))
+                            : null,
+                        trailing: isUserHost
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.accent.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(context)!.host,
+                                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                                ),
+                              )
+                            : null,
+                      );
+                    },
  ),
  const SizedBox(height: 24),
  ],
@@ -426,14 +590,32 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  ],
  ),
  bottomSheet: Container(
- padding: const EdgeInsets.all(VSPSpacing.lg),
- color: VSPColors.background,
- child: PrimaryButton(
- text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.join),
- onPressed: (alreadyJoined || isFull || isHost) ? null : _onJoin,
- isLoading: _isJoining,
- ),
- ),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
+        color: VSPColors.background,
+        child: (alreadyJoined || isHost)
+            ? PrimaryButton(
+                text: Localizations.localeOf(context).languageCode == 'ar'
+                    ? '💬 محادثة وتنسيق المباراة'
+                    : '💬 Match Chat & Coordination',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(booking: _booking!),
+                    ),
+                  );
+                },
+                color: VSPColors.accent,
+                textColor: VSPColors.background,
+              )
+            : PrimaryButton(
+                text: isFull
+                    ? AppLocalizations.of(context)!.matchFull
+                    : AppLocalizations.of(context)!.join,
+                onPressed: isFull ? null : _onJoin,
+                isLoading: _isJoining,
+              ),
+      ),
  );
  },
  );

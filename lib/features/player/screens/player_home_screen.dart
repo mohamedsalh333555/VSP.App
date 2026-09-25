@@ -23,6 +23,13 @@ import 'team_dashboard_screen.dart';
 // المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
 final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
 
+/// دالة تنقل سريعة تأخذ المستخدم مباشرة لتبويب ترتيب الفرق في شاشة الأبطال
+void navigateToTeamsStandings(BuildContext context) {
+  Navigator.of(context).popUntil((route) => route.isFirst);
+  playerHomeScreenKey.currentState?.switchToTab(2);
+  championScreenKey.currentState?.switchToTab(1);
+}
+
 class PlayerHomeScreen extends StatefulWidget {
   const PlayerHomeScreen({super.key});
 

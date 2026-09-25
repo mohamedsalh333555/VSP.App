@@ -76,8 +76,8 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   isArabic
-                      ? 'رقم مقعدك في الجدول: #$myIndex (تم سداد الاشتراك)'
-                      : 'Your seat number: #$myIndex (Entry fee paid)',
+                      ? 'رقم تسجيلك: #$myIndex (تم سداد الاشتراك)'
+                      : 'Registration #$myIndex (Entry fee paid)',
                   style: TextStyle(color: VSPColors.success.withValues(alpha: 0.8), fontSize: 12),
                 ),
               ],

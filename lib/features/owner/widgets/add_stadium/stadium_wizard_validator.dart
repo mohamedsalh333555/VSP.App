@@ -120,13 +120,13 @@ class StadiumWizardValidator {
       final price = double.tryParse(priceText.trim()) ?? 0.0;
       if (deposit <= 0) {
         return isArabic
-            ? 'يرجى إدخال مبلغ عربون صحيح.'
-            : 'Please set a valid deposit amount.';
+            ? 'يرجى إدخال مبلغ عربون صحيح أكبر من الصفر عند تفعيل خيار العربون.'
+            : 'Please enter a valid deposit amount greater than zero when deposit is required.';
       }
-      if (deposit > (price * 0.5)) {
+      if (price > 0 && deposit > (price * 0.5)) {
         return isArabic
             ? 'مبلغ العربون لا يمكن أن يتجاوز 50% من سعر الساعة (${(price * 0.5).toStringAsFixed(0)} ج.م).'
-            : 'Deposit amount cannot exceed 50% of the hourly price (${price * 0.5} EGP).';
+            : 'Deposit amount cannot exceed 50% of the hourly price (${(price * 0.5).toStringAsFixed(0)} EGP).';
       }
     }
 

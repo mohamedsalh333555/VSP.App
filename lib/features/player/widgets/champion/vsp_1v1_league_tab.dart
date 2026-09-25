@@ -19,7 +19,6 @@ import 'league_1v1/league_1v1_roster_list.dart';
 import 'league_1v1/league_1v1_standings_view.dart';
 
 /// 1v1 individual tournament tab on the Champion screen.
-/// Manages active tournament state, Paymob registration, and live podium standings.
 class Vsp1v1LeagueTab extends StatefulWidget {
   final String selectedLocation;
   final ValueChanged<String> onLocationChanged;
@@ -49,7 +48,6 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
   bool _isProcessingPayment = false;
   bool _hasPaid = false;
-  String? _paidOrderRef;
 
   @override
   Widget build(BuildContext context) {
@@ -59,12 +57,10 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     final userGov = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? userGovRaw;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // Fallback prompt if player has no governorate set in profile
     if (userGov.trim().isEmpty) {
       return League1v1NoGovernorateState(isArabic: isArabic);
     }
 
-    // Effective governorate for 1v1: uses widget.selectedLocation (supports curious browsing)
     final effectiveLocation = widget.selectedLocation == 'All' ? userGov : widget.selectedLocation;
     final isBrowsingDifferentGov =
         userGov.isNotEmpty && effectiveLocation.toLowerCase() != userGov.toLowerCase();
@@ -89,10 +85,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                   onReturnToHomeGov: () => widget.onLocationChanged(userGov),
                 ),
               Expanded(
-                child: League1v1NoTournamentState(
-                  locationName: locName,
-                  isArabic: isArabic,
-                ),
+                child: League1v1NoTournamentState(locationName: locName, isArabic: isArabic),
               ),
             ],
           );
@@ -155,7 +148,10 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         final remainingCount = (targetCount - registeredCount).clamp(0, 999);
         final progress = targetCount > 0 ? (registeredCount / targetCount).clamp(0.0, 1.0) : 0.0;
         final isRegistered = currentUserId != null && players.any((p) => p['user_id'] == currentUserId);
-        final myIndex = isRegistered ? players.indexWhere((p) => p['user_id'] == currentUserId) + 1 : null;
+        // FIX 5: رقم تسجيل وليس رقم مقعد — البطولة لم تُرتب بعد
+        final myRegistrationIndex = isRegistered
+            ? players.indexWhere((p) => p['user_id'] == currentUserId) + 1
+            : null;
 
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -163,7 +159,6 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Hero Countdown & Timeline Card
               League1v1HeroCard(
                 tourneyName: tourneyName,
                 governorate: tournament['governorate']?.toString(),
@@ -175,23 +170,17 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 progress: progress,
                 isArabic: isArabic,
               ),
-
               const SizedBox(height: 14),
-
-              // 2. Financial Prize Pool & Entry Fee Transparency Card
               League1v1PrizeCard(
                 entryFee: entryFee,
                 prizePool: prizePool,
                 registeredCount: registeredCount,
                 isArabic: isArabic,
               ),
-
               const SizedBox(height: 14),
-
-              // 3. Interactive Registration Action Card
               League1v1RegistrationActionCard(
                 isRegistered: isRegistered,
-                myIndex: myIndex,
+                myIndex: myRegistrationIndex,
                 isBrowsingDifferentGov: isBrowsingDifferentGov,
                 userGov: userGov,
                 tournamentGov: tournament['governorate'],
@@ -204,17 +193,13 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee),
                 onSwitchToUserGov: () => widget.onLocationChanged(userGov),
               ),
-
               const SizedBox(height: 24),
-
-              // 4. Registered Players Roster Table
               League1v1RosterList(
                 registeredCount: registeredCount,
                 players: players,
                 currentUserId: currentUserId,
                 isArabic: isArabic,
               ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -254,54 +239,42 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     setState(() => _isProcessingPayment = true);
 
     try {
-      // 0. إذا كان اللاعب قد سدد بالفعل، تخطى بوابة الدفع ونفّذ التحقق مباشرة
+      // 0. إذا كان اللاعب قد سدد بالفعل، تخطى بوابة الدفع
       if (_hasPaid) {
         final isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
         if (!mounted) return;
-
         if (isRegistered) {
-          VSPFeedback.showSuccess(
-            context,
-            isArabic
-                ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!'
-                : 'Payment confirmed! You are registered in the tournament.',
-          );
+          VSPFeedback.showSuccess(context,
+              isArabic ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!' : 'Payment confirmed! You are registered.');
           setState(() {});
         } else {
-          VSPFeedback.showError(
-            context,
-            isArabic
-                ? 'تم سداد الرسوم بنجاح (${_paidOrderRef ?? ""})، جاري معالجة تسجيلك عبر الخادم، يرجى التحديث خلال لحظات.'
-                : 'Payment succeeded (${_paidOrderRef ?? ""}), registration is processing, please refresh shortly.',
-          );
+          // FIX 3: Webhook قد يكون متأخراً
+          VSPFeedback.showInfo(context,
+              isArabic
+                  ? 'تم سداد الرسوم بنجاح. جاري تأكيد تسجيلك، ستظهر اسمك في القائمة خلال لحظات.'
+                  : 'Payment successful. Registration is being confirmed — your name will appear shortly.');
         }
         return;
       }
 
-      // 1. Create atomic payment order on database
+      // 1. Create atomic payment order
       final orderRes = await LeagueRepository().create1v1PaymentOrder(tournamentId);
       if (orderRes['success'] != true) {
         if (!mounted) return;
-        VSPFeedback.showError(
-          context,
-          orderRes['error']?.toString() ??
-              (isArabic ? 'فشل إنشاء طلب الاشتراك في البطولة.' : 'Failed to create registration order.'),
-        );
+        VSPFeedback.showError(context,
+            orderRes['error']?.toString() ??
+                (isArabic ? 'فشل إنشاء طلب الاشتراك في البطولة.' : 'Failed to create registration order.'));
         return;
       }
 
       final orderRef = orderRes['order_reference'] as String;
       final orderAmount = (orderRes['amount'] as num?)?.toDouble() ?? entryFee;
 
-      // 2. التحقق من مطابقة المبلغ للرسوم المعروضة (بفارق لا يتجاوز 1 جنيه)
+      // 2. مطابقة المبلغ
       if ((orderAmount - entryFee).abs() > 1.0) {
         if (!mounted) return;
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'مبلغ الاشتراك تغير، يرجى إغلاق الشاشة وإعادة المحاولة.'
-              : 'Entry fee has changed, please close screen and try again.',
-        );
+        VSPFeedback.showError(context,
+            isArabic ? 'مبلغ الاشتراك تغير، يرجى إغلاق الشاشة وإعادة المحاولة.' : 'Entry fee has changed, please retry.');
         return;
       }
 
@@ -309,7 +282,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       final userPhone = auth.userModel?.phone ?? '';
       final userEmail = user.email ?? 'player@vsp.app';
 
-      // 3. Obtain secure Paymob checkout URL via Supabase Edge Function
+      // 3. Get Paymob checkout URL
       final checkoutUrl = await PaymobService.getCheckoutUrlFromServer(
         amountInEgp: orderAmount,
         bookingId: orderRef,
@@ -322,14 +295,12 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       if (!mounted) return;
 
       if (checkoutUrl == null || checkoutUrl.isEmpty) {
-        VSPFeedback.showError(
-          context,
-          isArabic ? 'تعذر فتح بوابة الدفع الآمنة، يرجى المحاولة لاحقاً.' : 'Unable to open secure checkout gateway.',
-        );
+        VSPFeedback.showError(context,
+            isArabic ? 'تعذر فتح بوابة الدفع الآمنة، يرجى المحاولة لاحقاً.' : 'Unable to open secure checkout gateway.');
         return;
       }
 
-      // 4. Open Paymob WebView Screen
+      // 4. Open WebView
       final isPaidSuccess = await Navigator.push<bool>(
         context,
         MaterialPageRoute(
@@ -343,42 +314,45 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
       if (!mounted) return;
 
-      if (isPaidSuccess == true) {
-        _hasPaid = true;
-        _paidOrderRef = orderRef;
+      // FIX 2: أغلق WebView بدون دفع → ألغِ الـ order المعلق
+      if (isPaidSuccess != true) {
+        LeagueRepository().leave1v1Tournament(tournamentId).catchError((_) => <String, dynamic>{});
+        VSPFeedback.showWarning(
+            context, isArabic ? 'تم إلغاء طلب الاشتراك.' : 'Registration request cancelled.');
+        return;
       }
 
-      // 5. Verification Check
-      final isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
+      _hasPaid = true;
+
+      // 5. FIX 3: Retry بعد 3 ثوانٍ لمواجهة تأخر Webhook
+      bool isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
+      if (!isRegistered) {
+        await Future.delayed(const Duration(seconds: 3));
+        if (!mounted) return;
+        isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
+      }
+
       if (!mounted) return;
 
-      if (isPaidSuccess == true || isRegistered) {
-        _hasPaid = true;
-        _paidOrderRef = orderRef;
-        VSPFeedback.showSuccess(
-          context,
-          isArabic
-              ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!'
-              : 'Payment confirmed! You are registered in the tournament.',
-        );
+      if (isRegistered) {
+        VSPFeedback.showSuccess(context,
+            isArabic ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!' : 'Payment confirmed! You are registered.');
         setState(() {});
       } else {
-        VSPFeedback.showError(
-          context,
-          isArabic ? 'لم يتم إتمام الدفع، لم يتم تسجيلك في البطولة.' : 'Payment not completed. You were not registered.',
-        );
+        // FIX 3: Webhook لسه ما وصلش — رسالة تفاؤلية
+        VSPFeedback.showInfo(context,
+            isArabic
+                ? 'تم سداد الرسوم بنجاح. جاري تأكيد تسجيلك، ستظهر اسمك في القائمة خلال لحظات.'
+                : 'Payment successful. Registration is being confirmed — your name will appear shortly.');
+        setState(() {});
       }
     } catch (e) {
       if (!mounted) return;
       debugPrint('Error in _handleJoin1v1: $e');
-      VSPFeedback.showError(
-        context,
-        isArabic ? 'حدث خطأ أثناء معالجة الدفع: $e' : 'Payment error occurred: $e',
-      );
+      VSPFeedback.showError(context,
+          isArabic ? 'حدث خطأ أثناء معالجة الدفع: $e' : 'Payment error occurred: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isProcessingPayment = false);
-      }
+      if (mounted) setState(() => _isProcessingPayment = false);
     }
   }
 }

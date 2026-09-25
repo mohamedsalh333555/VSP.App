@@ -109,8 +109,8 @@ class TournamentMatchCard extends StatelessWidget {
             subtitle: Text(
               match.winnerId != null
                   ? (isAr
-                      ? 'الفائز: $winnerName (${match.homeScore} - ${match.awayScore})'
-                      : 'Winner: $winnerName (${match.homeScore} - ${match.awayScore})')
+                      ? 'الفائز: $winnerName (${match.homeScore ?? 0} - ${match.awayScore ?? 0})${match.homePenalties != null && match.awayPenalties != null ? " [ترجيح ${match.homePenalties} - ${match.awayPenalties}]" : ""}'
+                      : 'Winner: $winnerName (${match.homeScore ?? 0} - ${match.awayScore ?? 0})${match.homePenalties != null && match.awayPenalties != null ? " [Pens ${match.homePenalties} - ${match.awayPenalties}]" : ""}')
                   : (isAr ? 'قيد الانتظار' : 'Pending'),
               style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54),
             ),

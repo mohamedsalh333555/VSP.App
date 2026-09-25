@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -176,13 +177,16 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           throw Exception(isArabic ? "هذا الوقت متداخل مع حجز آخر نشط " : "Time slot overlaps with another booking ");
         }
 
+        final bool isMaintenance = customerName.contains('صيانة') || customerName.contains('Maintenance');
         final booking = widget.slot['booking'] as Booking?;
-        final double totalPrice = OwnerBookingSheetService.calculateBookingPrice(
-          stadium: stadium,
-          durationMinutes: _selectedMinutes,
-          rentBall: booking?.rentBall == true,
-          collectedAmount: collectedAmount,
-        );
+        final double totalPrice = isMaintenance
+            ? 0.0
+            : OwnerBookingSheetService.calculateBookingPrice(
+                stadium: stadium,
+                durationMinutes: _selectedMinutes,
+                rentBall: booking?.rentBall == true,
+                collectedAmount: collectedAmount,
+              );
 
         final draft = OwnerBookingSheetService.buildManualBookingDraft(
           stadium: stadium,
@@ -312,6 +316,93 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         setDeleting: (v) => setState(() => _isDeleting = v),
       );
 
+  Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
+    _nameController.text = isArabic ? 'مغلق للصيانة' : 'Closed for Maintenance';
+    _noteController.text = isArabic ? 'صيانة دورية بالملعب وغير متاح للحجز' : 'Pitch Maintenance';
+    _collectedAmountController.text = '0';
+    _phoneController.clear();
+    await _handleConfirmBooking(l10n, isArabic);
+  }
+
+  Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
+    final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+    final parentCtx = widget.parentContext;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+        title: Text(
+          isArabic ? 'تسجيل عدم حضور اللاعب (No-Show)' : 'Report Player No-Show',
+          style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد من تسجيل عدم حضور اللاعب للمباراة؟\nسيتم إلغاء الحجز وتحديث سجل اللاعب بنقطة عدم حضور.'
+              : 'Are you sure you want to report player absence? The booking will be cancelled and player will receive a no-show warning.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isArabic ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.warning,
+              foregroundColor: Colors.black,
+            ),
+            child: Text(isArabic ? 'تأكيد تسجيل الغياب' : 'Confirm No-Show', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final uid = authProvider.currentUser?.id;
+
+      await OwnerRepository().recordPlayerNoShow(
+        bookingId: booking.id,
+        playerId: booking.createdByUserId.isNotEmpty ? booking.createdByUserId : null,
+        stadiumLat: widget.selectedStadium.lat,
+        stadiumLng: widget.selectedStadium.lng,
+      );
+
+      if (uid != null) {
+        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (parentCtx.mounted) {
+          VSPFeedback.showSuccess(
+            parentCtx,
+            isArabic
+                ? 'تم تسجيل عدم حضور اللاعب بنجاح وإلغاء الحجز'
+                : 'Player no-show recorded and slot cancelled',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء تسجيل عدم الحضور: $e' : 'Failed to report no-show: $e',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -388,6 +479,30 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     ),
                   InputLabel(l10n.timeAndStadium),
                   BookingSheetTimeStadiumCard(formattedTime: formattedSlotTime),
+                  if (!widget.isEdit) ...[
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _isSaving ? null : () => _lockSlotForMaintenance(l10n, isArabic),
+                        icon: const Icon(Iconsax.slash_copy, size: 16, color: VSPColors.warning),
+                        label: Text(
+                          isArabic ? 'قفل الفترة للصيانة (غير متاح للعملاء)' : 'Lock Slot for Maintenance',
+                          style: const TextStyle(
+                            color: VSPColors.warning,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: VSPColors.warning.withValues(alpha: 0.6)),
+                          backgroundColor: VSPColors.warning.withValues(alpha: 0.08),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   InputLabel(isArabic ? "مدة الحجز" : "Booking Duration"),
                   BookingSheetDurationSelector(
@@ -523,6 +638,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               if (booking != null) _handleCancelBooking(booking, l10n, isArabic);
             },
             onConfirmBooking: () => _handleConfirmBooking(l10n, isArabic),
+            onReportNoShow: () {
+              if (booking != null) _handleReportNoShow(booking, isArabic);
+            },
           ),
         ],
       ),

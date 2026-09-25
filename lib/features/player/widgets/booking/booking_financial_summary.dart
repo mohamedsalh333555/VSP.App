@@ -78,7 +78,7 @@ class BookingFinancialSummary extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isArabic ? 'عربون الحجز المطلوبة' : 'Upfront Deposit Required',
+                  isArabic ? 'عربون الحجز المطلوب' : 'Upfront Deposit Required',
                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 Text(
@@ -106,6 +106,31 @@ class BookingFinancialSummary extends StatelessWidget {
       );
     }
 
-    return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.money_tick_copy, color: VSPColors.accent, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'طريقة الدفع: كاش بالكامل عند الحضور للملعب (بدون عربون مسبق)'
+                  : 'Payment: 100% Cash at the pitch (No deposit required)',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

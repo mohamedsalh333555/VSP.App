@@ -56,6 +56,7 @@ class ChampionPodiumItem extends StatelessWidget {
   final Color bgColor;
   final bool isCenter;
   final String? pointsLabel;
+  final bool isMyTeam;
 
   const ChampionPodiumItem({
     super.key,
@@ -68,6 +69,7 @@ class ChampionPodiumItem extends StatelessWidget {
     required this.bgColor,
     this.isCenter = false,
     this.pointsLabel,
+    this.isMyTeam = false,
   });
 
   @override
@@ -77,6 +79,7 @@ class ChampionPodiumItem extends StatelessWidget {
         ? name.trim().split(' ').last.substring(0, 1).toUpperCase()
         : 'V';
     final ptsText = pointsLabel ?? AppLocalizations.of(context)!.pts;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       height: height,
@@ -85,14 +88,16 @@ class ChampionPodiumItem extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
-          color: borderColor.withValues(alpha: isCenter ? 0.9 : 0.4),
-          width: isCenter ? 2 : 1,
+          color: isMyTeam
+              ? VSPColors.accent
+              : borderColor.withValues(alpha: isCenter ? 0.9 : 0.4),
+          width: isMyTeam || isCenter ? 2 : 1,
         ),
-        boxShadow: isCenter
+        boxShadow: (isCenter || isMyTeam)
             ? [
                 VSPShadow.strong,
                 BoxShadow(
-                  color: VSPColors.accent.withValues(alpha: 0.25),
+                  color: VSPColors.accent.withValues(alpha: isMyTeam ? 0.4 : 0.25),
                   blurRadius: 16,
                   spreadRadius: 1,
                   offset: const Offset(0, 4),
@@ -103,8 +108,27 @@ class ChampionPodiumItem extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Top Crown / Medal Icon
-          Icon(badgeIcon, color: borderColor, size: isCenter ? 24 : 18),
+          // Top Crown / Medal Icon & Optional My Team Badge
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(badgeIcon, color: isMyTeam ? VSPColors.accent : borderColor, size: isCenter ? 24 : 18),
+              if (isMyTeam) ...[
+                const SizedBox(height: 2),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: VSPColors.accent,
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
+                  ),
+                  child: Text(
+                    isArabic ? 'فريقك' : 'Your Team',
+                    style: const TextStyle(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            ],
+          ),
 
           // Logo / Initial Avatar
           Container(

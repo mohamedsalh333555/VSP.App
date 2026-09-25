@@ -1,3 +1,4 @@
+import '../../features/player/screens/match_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -229,7 +230,17 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return RepaintBoundary(
-      child: Container(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MatchDetailsScreen(bookingId: widget.booking.id),
+            ),
+          );
+        },
+        child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VSPColors.surface, 
@@ -328,6 +339,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           ],
         ),
       ),
+        ),
     );
   }
 }

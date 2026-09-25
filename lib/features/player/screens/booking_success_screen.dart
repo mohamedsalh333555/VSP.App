@@ -199,6 +199,31 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  : '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP ',
  ),
  ],
+ ] else if (widget.booking.paymentMethod.toLowerCase() == 'cash') ...[
+ const Divider(color: VSPColors.divider, height: 16),
+ Container(
+ margin: const EdgeInsets.only(top: 4),
+ padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+ decoration: BoxDecoration(
+ color: VSPColors.warning.withValues(alpha: 0.15),
+ borderRadius: BorderRadius.circular(VSPRadius.sm),
+ border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+ ),
+ child: Row(
+ children: [
+ const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 16),
+ const SizedBox(width: 8),
+ Expanded(
+ child: Text(
+ isArabic
+ ? 'تنبيه: يلزم سداد كامل المبلغ (${widget.booking.totalPrice.toInt()} ج.م) نقداً عند شباك الملعب قبل النزول.'
+ : 'Notice: Full payment (${widget.booking.totalPrice.toInt()} EGP) must be paid in cash at the pitch before the match.',
+ style: const TextStyle(color: VSPColors.warning, fontSize: 11.5, fontWeight: FontWeight.bold),
+ ),
+ ),
+ ],
+ ),
+ ),
  ],
  if (widget.booking.bookingType == BookingType.challenge) ...[
  const Divider(color: VSPColors.divider, height: 16),

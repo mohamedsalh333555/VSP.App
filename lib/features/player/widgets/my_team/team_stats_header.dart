@@ -4,6 +4,7 @@ import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../screens/player_home_screen.dart';
 
 /// Header section displaying the 1v1 champion banner and team stat metrics (Points, Members, Trophies, Wins).
 class TeamStatsHeader extends StatelessWidget {
@@ -177,8 +178,24 @@ class TeamStatsHeader extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              isArabic ? 'حسناً، فهمت' : 'Got it',
-              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+              isArabic ? 'إغلاق' : 'Close',
+              style: const TextStyle(color: VSPColors.textSecondary),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.accent,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+            icon: const Icon(Iconsax.chart_copy, size: 16),
+            onPressed: () {
+              Navigator.pop(context);
+              navigateToTeamsStandings(context);
+            },
+            label: Text(
+              isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],

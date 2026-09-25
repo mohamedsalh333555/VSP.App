@@ -74,8 +74,11 @@ void showTournamentScoreModal(
 
             return StatefulBuilder(
               builder: (BuildContext modalContext, StateSetter setModalState) {
-                final isKnockoutOrCup =
-                    championship.type == 'Cup' || match.stage == 'knockout' || match.stage == 'preliminary';
+                final isKnockoutOrCup = championship.type.toLowerCase().contains('cup') ||
+                    championship.type.toLowerCase().contains('knockout') ||
+                    match.stage == 'knockout' ||
+                    match.stage == 'preliminary' ||
+                    (match.stage != 'group_stage' && match.stage != 'league');
                 final isCupAndTied = isKnockoutOrCup && homeScore == awayScore;
 
                 if (isCupAndTied) {
@@ -307,6 +310,24 @@ void showTournamentScoreModal(
                       ),
                     ),
 
+                    if (isCupAndTied && selectedWinnerId == null)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: VSPColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
+                          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          isArabic
+                              ? '⚠️ المباراة إقصائية وتعادلت: يرجى إدخال ركلات الترجيح وتحديد الفريق الفائز للمتابعة.'
+                              : '⚠️ Knockout match is tied: Please record penalty score and select advancing winner.',
+                          style: const TextStyle(color: VSPColors.warning, fontSize: 11.5, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     // Confirmation Buttons
                     Container(
                       padding: EdgeInsets.fromLTRB(

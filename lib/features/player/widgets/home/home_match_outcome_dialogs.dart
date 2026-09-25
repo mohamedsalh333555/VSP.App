@@ -5,6 +5,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
+import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 
 /// يعرض نافذة منبثقة لإدخال نتيجة المباراة بعد انتهائها (للكابتن الأول)
@@ -170,9 +171,21 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                         outcome: agreeOutcome,
                       );
                       if (context.mounted) {
-                        VSPFeedback.showSuccess(
-                          context,
-                          isArabic ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري! ' : 'Result confirmed & rankings updated!',
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: VSPColors.accent,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 6),
+                            content: Text(
+                              isArabic ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!' : 'Result confirmed & rankings updated!',
+                              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                            ),
+                            action: SnackBarAction(
+                              label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
+                              textColor: Colors.black,
+                              onPressed: () => navigateToTeamsStandings(context),
+                            ),
+                          ),
                         );
                       }
                     },

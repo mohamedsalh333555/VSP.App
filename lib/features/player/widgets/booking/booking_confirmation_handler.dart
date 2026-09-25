@@ -112,8 +112,15 @@ class BookingConfirmationHandler {
           EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
               stadiumGovRaw.toLowerCase();
 
+      final pGov = playerGovernorate.toLowerCase();
+      final sGov = stadiumGovernorate.toLowerCase();
+      // Allow cross-booking within Greater Cairo metropolitan area (Cairo, Giza, Qalyubia)
+      final isGreaterCairo = (pGov == 'cairo' || pGov == 'giza' || pGov == 'qalyubia') &&
+                             (sGov == 'cairo' || sGov == 'giza' || sGov == 'qalyubia');
+
       if (stadiumGovRaw.isNotEmpty &&
-          playerGovernorate.toLowerCase() != stadiumGovernorate.toLowerCase()) {
+          pGov != sGov &&
+          !isGreaterCairo) {
         final stadiumName = EgyptGovernorates.getLocalizedName(
           EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
               stadiumGovRaw,

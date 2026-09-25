@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/logger_service.dart';
+import '../services/no_show_dispute_service.dart';
 
 class OwnerRepository {
   final SupabaseClient? _client;
@@ -274,5 +275,35 @@ class OwnerRepository {
       'p_owner_id': ownerId,
       'p_refund_deposit': refundDeposit,
     });
+  }
+
+  /// تسجيل عدم حضور اللاعب (No-Show) وتحديث حالة الحجز وسجل اللاعب
+  Future<void> recordPlayerNoShow({
+    required String bookingId,
+    String? playerId,
+    double? stadiumLat,
+    double? stadiumLng,
+  }) async {
+    await _supabase
+        .from('bookings')
+        .update({
+          'status': 'cancelled',
+          'cancellation_reason': 'player_no_show',
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', bookingId);
+
+    if (playerId != null && playerId.isNotEmpty) {
+      try {
+        await NoShowDisputeService.handleNoShowReport(
+          bookingId,
+          playerId,
+          stadiumLat ?? 0.0,
+          stadiumLng ?? 0.0,
+        );
+      } catch (e) {
+        VSPLogger.w('Handled error in handleNoShowReport: $e');
+      }
+    }
   }
 }

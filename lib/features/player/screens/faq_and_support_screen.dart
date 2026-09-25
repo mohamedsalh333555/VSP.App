@@ -202,12 +202,6 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                   : 'Navigate to Tournaments to explore open cups, register your team squad and pay fees online, or compete in 1v1 individual showdowns.',
               ),
               _buildFAQTile(
-                question: isArabic ? 'ما هي وظيفة كابتن VSP الذكي (VSP Copilot)؟' : 'What is VSP Copilot (AI Football Assistant)?',
-                answer: isArabic 
-                  ? 'هو مساعدك الرياضي الذكي المدعوم بالذكاء الاصطناعي، يمكنك محادثته باللهجة الكروية لاقتراح الملاعب المتاحة الليلة، مقارنة الأسعار، ومعرفة المواعيد والبطولات الشاغرة فوراً.'
-                  : 'Your AI football assistant ready to find available nearby pitches, compare rates, and recommend tournament fixtures instantly.',
-              ),
-              _buildFAQTile(
                 question: isArabic ? 'ما هو نظام تصنيف مهارة الفرق وكيف يُحسب الدوري؟' : 'What is team skill ranking and how is the leaderboard calculated?',
                 answer: isArabic 
                   ? 'نظام تصنيف المهارة هو الترتيب الرسمي لفريقك بين كل فرق المحافظة. تزداد النقاط عند الفوز في التحديات والبطولات، ويرتفع موقع فريقك في قائمة المتصدرين.'
