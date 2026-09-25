@@ -146,8 +146,13 @@ class StadiumWizardSubmitService {
         await auth.refreshProfile();
 
         if (!context.mounted) return true;
-        final l10n = AppLocalizations.of(context)!;
-        VSPFeedback.showSuccess(context, l10n.stadiumSubmitSuccess);
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showSuccess(
+          context,
+          stadiumId == null
+              ? (isArabic ? 'تم إرسال بيانات الملعب للمراجعة.' : 'Stadium submitted for review.')
+              : (isArabic ? 'تم إرسال التعديلات للمراجعة.' : 'Changes submitted for review.'),
+        );
         Navigator.pop(context);
         return true;
       }
