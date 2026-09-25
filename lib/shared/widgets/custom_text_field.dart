@@ -20,6 +20,7 @@ class CustomTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onFieldSubmitted;
   final bool? enabled;
+  final bool readOnly;
   final bool autofocus;
   final bool? isValid;
   final bool showLiveValidation;
@@ -41,6 +42,7 @@ class CustomTextField extends StatelessWidget {
     this.onChanged,
     this.onFieldSubmitted,
     this.enabled,
+    this.readOnly = false,
     this.autofocus = false,
     this.isValid,
     this.showLiveValidation = true,
@@ -101,6 +103,7 @@ class CustomTextField extends StatelessWidget {
           onChanged: onChanged,
           onFieldSubmitted: onFieldSubmitted,
           enabled: enabled,
+          readOnly: readOnly,
           autofocus: autofocus,
           style: Theme.of(context).textTheme.bodyLarge,
           decoration: InputDecoration(
