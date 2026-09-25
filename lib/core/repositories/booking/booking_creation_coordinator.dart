@@ -6,7 +6,6 @@ import '../../services/analytics_service.dart';
 import '../../services/logger_service.dart';
 import '../notification_repository.dart';
 import '../team_repository.dart';
-import '../user_repository.dart';
 
 /// Coordinates atomic booking creation via RPC, notifications to owner/opponent, and analytics.
 class BookingCreationCoordinator {
@@ -156,14 +155,11 @@ class BookingCreationCoordinator {
       final team = await _teamRepo.getTeam(draft.opponentTeamId!);
       if (team == null) return;
 
-      final captainPhone = team.captainPhone;
-      if (captainPhone == null || captainPhone.isEmpty) return;
-
-      final captainUser = await _userRepo.getUserByPhone(captainPhone);
-      if (captainUser == null) return;
+      final captainId = team.captainId;
+      if (captainId.isEmpty) return;
 
       await _notificationRepo.sendNotification(
-        captainUser.uid,
+        captainId,
         AppNotification(
           id: '',
           title: 'Challenge Confirmed!',
