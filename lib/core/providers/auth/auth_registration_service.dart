@@ -217,21 +217,10 @@ class AuthRegistrationService {
       }
       updatedAdditional['isOnboardingConfirmed'] = true;
 
-      try {
-        await _supabase.rpc('submit_owner_verification', params: {
-          'p_owner_id': authUser.id,
-          'p_additional_data': updatedAdditional,
-        });
-      } catch (rpcErr) {
-        VSPLogger.w('RPC submit_owner_verification fallback: $rpcErr');
-        await _supabase.from('users').update({
-          'verification_status': verificationStatus,
-          'is_registration_complete': true,
-          'has_stadium': true,
-          'additional_data': updatedAdditional,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', authUser.id);
-      }
+      await _supabase.rpc('submit_owner_verification', params: {
+        'p_owner_id': authUser.id,
+        'p_additional_data': updatedAdditional,
+      });
 
       final updatedModel = currentUserModel.copyWith(
         verificationStatus: verificationStatus,
