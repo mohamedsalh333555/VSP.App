@@ -223,6 +223,20 @@ class TournamentRepository {
   Future<bool> leaveChampionship(String championshipId, String teamId) =>
       registrationCoord.leaveChampionship(championshipId, teamId);
 
+  Future<Map<String, dynamic>> getTournamentPaymentOrderStatus(String orderReference) async {
+    try {
+      final response = await Supabase.instance.client.rpc(
+        'get_tournament_payment_order_status',
+        params: {'p_order_reference': orderReference},
+      );
+      if (response is Map) return Map<String, dynamic>.from(response);
+      return {'success': false, 'error': 'استجابة غير متوقعة من الخادم'};
+    } catch (e) {
+      debugPrint('Error getting tournament payment status: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   Future<bool> removeTournamentTeam(String championshipId, String teamId) =>
       registrationCoord.removeTournamentTeam(championshipId, teamId);
 
