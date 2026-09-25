@@ -67,7 +67,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   Future<void> _resolveActiveCashRestriction() async {
     if (widget.isTournamentPayment || widget.forceFullPayment || _booking == null) return;
-    final userId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    final userId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
     if (userId == null) return;
 
     try {
