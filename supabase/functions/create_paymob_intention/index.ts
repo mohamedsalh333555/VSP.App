@@ -67,7 +67,7 @@ serve(async (req: Request) => {
       user_phone = "",
       user_name = "Player",
       user_email = "player@vsp.app",
-      integration_id,
+
     } = payload;
 
     if (!booking_id) {
@@ -192,8 +192,14 @@ serve(async (req: Request) => {
       ? (rawPhone.startsWith("+") ? rawPhone : `+2${rawPhone}`)
       : "+201000000000";
 
-    const cardIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")) || 5933044;
-    const walletIntegration = Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")) || 5933043;
+    const cardIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_CARD");
+    const walletIntegrationRaw = Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET");
+    const cardIntegration = Number(cardIntegrationRaw);
+    const walletIntegration = Number(walletIntegrationRaw);
+    if (!Number.isInteger(cardIntegration) || !Number.isInteger(walletIntegration) || cardIntegration <= 0 || walletIntegration <= 0) {
+      console.error("Missing or invalid Paymob integration IDs");
+      return new Response(JSON.stringify({ error: "Payment service configuration error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
     const paymentMethods = [cardIntegration, walletIntegration];
 
     // 5. Call Paymob Intention API securely from backend (AFTER ALL SECURITY CHECKS PASS)
@@ -227,7 +233,7 @@ serve(async (req: Request) => {
     if (!intentionRes.ok) {
       console.error("❌ Paymob Intention API Error:", intentionData);
       return new Response(
-        JSON.stringify({ error: "Failed to generate Paymob checkout session", details: intentionData }),
+        JSON.stringify({ error: "Failed to generate Paymob checkout session" }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
