@@ -201,33 +201,20 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           playerCount: _playerCount,
         );
 
-        bool rpcSuccess = false;
-        try {
-          final res = await OwnerRepository().createManualBookingAtomic(
-            ownerId: uid,
-            stadiumId: stadium.id,
-            startTime: startTime,
-            endTime: endTime,
-            customerName: customerName,
-            customerPhone: customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
-            notes: notes.isNotEmpty ? notes : null,
-            totalPrice: totalPrice,
-            collectedAmount: collectedAmount,
-            playerCount: _playerCount,
-          );
-          if (res != null && res['success'] == true) {
-            rpcSuccess = true;
-          }
-        } catch (_) {
-          rpcSuccess = false;
-        }
-
-        if (!rpcSuccess) {
-          final createdBooking = await bookingProvider.createBooking(draft, uid);
-          if (createdBooking == null) {
-            final errMsg = bookingProvider.errorMessage ?? (isArabic ? 'عذراً، فشل حفظ الحجز في قاعدة البيانات' : 'Failed to save booking');
-            throw Exception(errMsg);
-          }
+        final res = await OwnerRepository().createManualBookingAtomic(
+          ownerId: uid,
+          stadiumId: stadium.id,
+          startTime: startTime,
+          endTime: endTime,
+          customerName: customerName,
+          customerPhone: customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
+          notes: notes.isNotEmpty ? notes : null,
+          totalPrice: totalPrice,
+          collectedAmount: collectedAmount,
+          playerCount: _playerCount,
+        );
+        if (res is Map && res['success'] == false) {
+          throw Exception(res['error']?.toString() ?? res['message']?.toString() ?? 'Failed to save booking');
         }
         await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
       } else {
