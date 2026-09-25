@@ -38,32 +38,25 @@ class TeamRepository {
 
  /// تحديث نتائج المباراة ونقاط الـ Elo فقط للمباريات الرسمية
  Future<void> updateMatchResult(String bookingId, String homeTeamId, String awayTeamId, MatchOutcome finalOutcome) async {
- try {
- // 1. التحقق من أصلية ورسمية الفريقين لمنع العبث بالترتيب عبر فرق وهمية
- final bool isHomeOfficial = await checkIsTeamOfficial(homeTeamId);
- final bool isAwayOfficial = await checkIsTeamOfficial(awayTeamId);
-
- final bool isOfficialRankedMatch = isHomeOfficial && isAwayOfficial;
-
- // 2. تحديث حالة الحجز والنتيجة في قاعدة البيانات
- await _supabase.from('bookings').update({
- 'status': BookingStatus.completed.name,
- 'final_outcome': finalOutcome.name,
- 'is_official_match': isOfficialRankedMatch, // تميز الودية من الرسمية
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- }).eq('id', bookingId);
-
- // 3. تحديث نقاط الـ Elo الرسمية فقط إذا كانت المباراة رسمية وليس بين فرق وهمية
- if (isOfficialRankedMatch) {
- debugPrint(' Official Ranked Match confirmed. Elo points calculated via server trigger.');
- } else {
- debugPrint('ℹ Friendly / Unverified match completed. Elo points preserved (No rank impact).');
+   // Legacy compatibility: competitive results must pass the server-side
+   // atomic result workflow. This method no longer mutates bookings directly.
+   try {
+     final response = await _supabase.rpc(
+       'submit_challenge_result_atomic',
+       params: {
+         'p_booking_id': bookingId,
+         'p_team_id': homeTeamId,
+         'p_outcome': finalOutcome.name,
+       },
+     );
+     if (response is Map && response['success'] == false) {
+       throw Exception(response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة');
+     }
+   } catch (e) {
+     debugPrint('Error updating match result through atomic RPC: $e');
+     rethrow;
+   }
  }
- } catch (e) {
- debugPrint('Error updating match result: $e');
- }
- }
-
  Future<Team?> getUserTeam(String userId) async {
  try {
  final response = await _supabase
