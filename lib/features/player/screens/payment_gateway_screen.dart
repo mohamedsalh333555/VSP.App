@@ -54,12 +54,20 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;
   final String _selectedMethod = 'card';
+  PaymobFeePolicy? _feePolicy;
 
   @override
   void initState() {
     super.initState();
     _startCountdownTimer();
+    _loadFeePolicy();
     _createPendingBooking();
+  }
+
+  Future<void> _loadFeePolicy() async {
+    final policy = await PaymobService.fetchFeePolicy();
+    if (!mounted) return;
+    setState(() => _feePolicy = policy);
   }
 
   void _startCountdownTimer() {
@@ -412,7 +420,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final hasDeposit = !widget.forceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
-    final double totalWithFees = PaymobService.calculateTotalAmount(amountToPay);
+    final double? totalWithFees = _feePolicy?.total(amountToPay);
 
     return PopScope(
       canPop: false,
