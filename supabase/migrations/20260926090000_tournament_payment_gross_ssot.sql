@@ -1,0 +1,3 @@
+-- Tournament payment gross SSOT -- 2026-09-26
+-- Production authority is confirm_team_league_payment, which validates
+-- order principal + platform fee + Paymob fee against platform_fee_config.
