@@ -106,8 +106,8 @@ serve(async (req: Request) => {
       const nowMs = Date.now();
       const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
       const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
-      const activePlan = ["basic","pro","free_trial"].includes(String(userProfile?.subscription_plan || "").toLowerCase());
-      if (!activePlan || Math.max(trialMs, subMs) <= nowMs) {
+      const entitlementUntil = Math.max(trialMs, subMs);
+      if (entitlementUntil <= nowMs) {
         return new Response(
           JSON.stringify({
             error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
