@@ -62,7 +62,7 @@ serve(async (req: Request) => {
     const { data: isAllowed, error: rateLimitErr } = await supabase.rpc("check_rate_limit", {
       p_user_id: callerUser.id,
       p_action: "copilot_chat",
-      p_max_requests: 20,
+      p_max_requests: 10,
       p_window_seconds: 60,
     });
 
@@ -95,20 +95,14 @@ serve(async (req: Request) => {
       .eq("id", callerUser.id)
       .maybeSingle();
 
+    const dbRole = String(userProfile?.role || "").toLowerCase().trim();
     const userRole: "player" | "owner" | "admin" =
-      userProfile?.role === "pitch_owner" || userProfile?.role === "owner" ? "owner" : "player";
+      ["admin","super_admin","cofounder","co_founder"].includes(dbRole)
+        ? "admin"
+        : (dbRole === "pitch_owner" || dbRole === "owner" ? "owner" : "player");
 
-    // 5b. Zero-Cost Role Guard (Strict Owner-Only Access)
-    if (userRole !== "owner") {
-      return new Response(
-        JSON.stringify({
-          error: "FORBIDDEN_ROLE",
-          message: "يا كابتن، خدمة المساعد الذكي مخصصة حصرياً لإدارة الملاعب والماليات لأصحاب الملاعب والشركاء.",
-          role: userRole,
-        }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Copilot is available to players and owners. Owner-only operations are
+    // protected again by the capability registry/tool planner and executor.
 
     // 6. Retrieve or Initialize Conversation Session
     let contextSnapshot: Record<string, any> = {};
