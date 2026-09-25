@@ -9,19 +9,14 @@ import '../../../../shared/widgets/primary_button.dart';
 /// Modal dialog/sheet to re-authenticate sensitive payout changes with the real account password.
 /// Protects against field workers or unauthorized persons changing payout info on the owner's phone.
 class OwnerPayoutOtpDialog extends StatefulWidget {
-  final String? phoneNumber;
+  const OwnerPayoutOtpDialog({super.key});
 
-  const OwnerPayoutOtpDialog({
-    super.key,
-    required this.phoneNumber,
-  });
-
-  static Future<bool> show(BuildContext context, {required String? phoneNumber}) async {
+  static Future<bool> show(BuildContext context) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => OwnerPayoutOtpDialog(phoneNumber: phoneNumber),
+      builder: (ctx) => const OwnerPayoutOtpDialog(),
     );
     return result ?? false;
   }
