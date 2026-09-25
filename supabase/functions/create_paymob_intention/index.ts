@@ -79,6 +79,25 @@ serve(async (req: Request) => {
 
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
+
+    // Team-league payments are backed by a server-created order. Never trust the client amount.
+    if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("LEAGUE_")) {
+      const { data: leaguePayment, error: leaguePaymentError } = await supabase
+        .from("team_league_payments")
+        .select("order_reference, amount, user_id, payment_status")
+        .eq("order_reference", booking_id)
+        .maybeSingle();
+      if (leaguePaymentError || !leaguePayment) {
+        return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (leaguePayment.user_id !== callerUser.id) {
+        return new Response(JSON.stringify({ error: "Forbidden: payment order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (leaguePayment.payment_status !== "pending") {
+        return new Response(JSON.stringify({ error: "Team league payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      finalBaseAmount = Number(leaguePayment.amount) || 0;
+    }
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
         .from("bookings")
