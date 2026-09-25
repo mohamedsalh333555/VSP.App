@@ -15,6 +15,7 @@ import 'faq_and_support_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
 import 'profile_subscreens/favorites_screen.dart';
+import 'profile_subscreens/account_settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -405,6 +406,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
  ),
  ),
+ VSPFadeInItem(
+ index: 3,
+ child: VSPMenuItem(
+ icon: Iconsax.setting_2_copy,
+ title: isArabic ? 'إعدادات الحساب' : 'Account Settings',
+ subtitle: isArabic ? 'إدارة إعدادات حسابك وأمانه' : 'Manage your account settings and security',
+ onTap: () => Navigator.push(
+   context,
+   MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
+ ),
+ ),
+ ),
 
  const SizedBox(height: VSPSpacing.lg),
 
@@ -480,17 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  onTap: () => _confirmSignOut(context),
  ),
  ),
- VSPFadeInItem(
- index: 10,
- child: VSPMenuItem(
- icon: Iconsax.trash_copy,
- title: isArabic ? 'حذف الحساب نهائياً' : 'Delete Account',
- subtitle: isArabic ? 'حذف كافة بياناتك وحجوزاتك بشكل دائم' : 'Permanently delete your account',
- isLogout: true,
- onTap: () => _confirmDeleteAccount(context),
- ),
- ),
- 
+
  SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
  ],
  ),
@@ -542,56 +545,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  }
  }
 
- Future<void> _confirmDeleteAccount(BuildContext context) async {
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final confirmed = await showDialog<bool>(
- context: context,
- builder: (ctx) => AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: Row(
- children: [
- const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 22),
- const SizedBox(width: 8),
- Text(
- isAr ? 'حذف الحساب نهائياً؟' : 'Delete Account?',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
- ),
- ],
- ),
- content: Text(
- isAr
- ? 'تحذير: سيتم حذف جميع بياناتك وسجل حجوزاتك بشكل دائم ولا يمكن استرجاع الحساب بعد الحذف.'
- : 'Warning: All your data and booking history will be permanently deleted.',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
- ),
- actions: [
- TextButton(
- onPressed: () => Navigator.pop(ctx, false),
- child: Text(isAr ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
- ),
- ElevatedButton(
- onPressed: () => Navigator.pop(ctx, true),
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
- ),
- child: Text(isAr ? 'تأكيد الحذف' : 'Delete'),
- ),
- ],
- ),
- );
-
- if (confirmed == true && context.mounted) {
- final success = await Provider.of<AuthProvider>(context, listen: false).deleteAccount();
- if (!success && context.mounted) {
- VSPFeedback.showError(
- context,
- isAr ? 'تعذر حذف الحساب، يرجى التواصل مع الدعم الفني.' : 'Failed to delete account, please contact support.',
- );
- }
- }
- }
+}
 }
 
 
