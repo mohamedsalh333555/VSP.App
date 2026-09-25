@@ -153,56 +153,28 @@ class TournamentRegistrationCoordinator {
   /// Atomic team withdrawal from championship.
   Future<bool> leaveChampionship(String championshipId, String teamId) async {
     try {
-      try {
-        await _supabase.rpc('leave_championship_atomic', params: {
-          'p_championship_id': championshipId,
-          'p_team_id': teamId,
-        });
-        debugPrint(
-          'Team $teamId left championship $championshipId via leave_championship_atomic RPC.',
-        );
-        return true;
-      } catch (rpcErr) {
-        debugPrint('leave_championship_atomic RPC fallback notice: $rpcErr');
-        final champDoc = await _supabase
-            .from('championships')
-            .select('joined_teams, paid_teams, status')
-            .eq('id', championshipId)
-            .maybeSingle();
+      final response = await _supabase.functions.invoke(
+        'process_tournament_refund',
+        body: {
+          'championship_id': championshipId,
+          'team_id': teamId,
+          'reason': 'انسحاب الفريق من البطولة',
+        },
+      );
 
-        if (champDoc != null) {
-          final String status = (champDoc['status'] ?? 'open').toString();
-          if (status == 'ongoing' || status == 'completed') {
-            throw Exception('لا يمكن الانسحاب من بطولة جارية أو مكتملة.');
-          }
+      final data = response.data;
+      if (data is Map && data['success'] == true) return true;
 
-          final joinedTeams =
-              List<String>.from(champDoc['joined_teams'] ?? [])..remove(teamId);
-          final paidTeams =
-              List<String>.from(champDoc['paid_teams'] ?? [])..remove(teamId);
-
-          await _supabase.from('championships').update({
-            'joined_teams': joinedTeams,
-            'paid_teams': paidTeams,
-          }).eq('id', championshipId);
-
-          try {
-            await _supabase
-                .from('championship_rosters')
-                .delete()
-                .eq('championship_id', championshipId)
-                .eq('team_id', teamId);
-          } catch (_) {}
-
-          return true;
-        }
-        return false;
-      }
+      final message = data is Map
+          ? (data['message']?.toString() ?? 'تعذر تنفيذ انسحاب الفريق.')
+          : 'تعذر تنفيذ انسحاب الفريق.';
+      throw Exception(message);
     } catch (e) {
       debugPrint('Error in leaveChampionship: $e');
       return false;
     }
   }
+
 
   /// Removes a team from a tournament (by owner or admin).
   Future<bool> removeTournamentTeam(String championshipId, String teamId) async {
@@ -232,31 +204,9 @@ class TournamentRegistrationCoordinator {
     required String teamId,
     required bool isPaid,
   }) async {
-    try {
-      final response = await _supabase
-          .from('championships')
-          .select('paid_teams')
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (response == null) throw 'Championship not found';
-
-      final paidTeams = List<String>.from(response['paid_teams'] ?? []);
-      if (isPaid) {
-        if (!paidTeams.contains(teamId)) {
-          paidTeams.add(teamId);
-        }
-      } else {
-        paidTeams.remove(teamId);
-      }
-
-      await _supabase.from('championships').update({
-        'paid_teams': paidTeams,
-      }).eq('id', championshipId);
-    } catch (e) {
-      debugPrint('Error toggling team payment: $e');
-      rethrow;
-    }
+    throw Exception('لا يمكن تعديل حالة الدفع يدويًا. حالة الدفع تُحدّث تلقائيًا بعد التحقق المالي.');
   }
+
 
   /// Check if 1v1 tournament order was paid.
   Future<bool> is1v1OrderPaid(String orderReference) async {
