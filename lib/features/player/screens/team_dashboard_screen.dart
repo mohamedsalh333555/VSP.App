@@ -13,6 +13,8 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/team_card_hero.dart';
+import '../../../core/repositories/league/team_league_repository.dart';
+import '../widgets/league/team_league_tab.dart';
 import 'player_home_screen.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
@@ -26,6 +28,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   final ScrollController _scrollController = ScrollController();
   late final Stream<List<Booking>> _matchesStream;
+  int _selectedMainTab = 1; // 1 = تجميع افتراضياً
 
   @override
   void initState() {
@@ -44,7 +47,15 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     if (auth.isAuthenticated) {
       final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
-      if (mounted) setState(() => _userTeam = team);
+      if (mounted) {
+        setState(() => _userTeam = team);
+        if (team != null) {
+          final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
+          if (mounted && activeLeague != null && (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
+            setState(() => _selectedMainTab = 0);
+          }
+        }
+      }
     }
   }
 
@@ -77,82 +88,153 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: StreamBuilder<List<Booking>>(
-          stream: _matchesStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Error: ${snapshot.error}',
-                  style: const TextStyle(color: VSPColors.error),
+        child: Column(
+          children: [
+            // Pill Switcher: [ دوري ] [ تجميع ]
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                height: 42,
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(21),
                 ),
-              );
-            }
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
-                itemCount: 5,
-                itemBuilder: (context, index) => const CardSkeleton(),
-              );
-            }
-  
-            final bookings = snapshot.data ?? [];
-  
-            if (bookings.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    Icon(
-                      Iconsax.cup_copy,
-                      color: VSPColors.textPrimary.withValues(alpha: 0.1),
-                      size: 80,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedMainTab = 0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _selectedMainTab == 0 ? VSPColors.accent : Colors.transparent,
+                            borderRadius: BorderRadius.circular(21),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'دوري 🏆',
+                            style: TextStyle(
+                              color: _selectedMainTab == 0 ? Colors.black : VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: VSPSpacing.md),
-                    Text(
-                      AppLocalizations.of(context)!.noMatchesAvailable,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () {
-                        playerHomeScreenKey.currentState?.switchToTab(0);
-                      },
-                      child: Text(
-                        AppLocalizations.of(context)!.hostOne,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: VSPColors.accent,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                          decorationColor: VSPColors.accent,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedMainTab = 1),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _selectedMainTab == 1 ? VSPColors.accent : Colors.transparent,
+                            borderRadius: BorderRadius.circular(21),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            'تجميع ⚽',
+                            style: TextStyle(
+                              color: _selectedMainTab == 1 ? Colors.black : VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              );
-            }
-  
-            return ListView.builder(
-              padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-                  child: PublicMatchCard(
-                    booking: bookings[index],
-                    highlighted:
-                        _userTeam != null &&
-                        bookings[index].bookingType == BookingType.team &&
-                        bookings[index].playerTeamId != null,
-                  ),
-                );
-              },
-            );
-          },
+              ),
+            ),
+
+            Expanded(
+              child: _selectedMainTab == 0
+                  ? TeamLeagueTab(
+                      userTeam: _userTeam,
+                      onTeamCreated: _fetchUserTeam,
+                    )
+                  : _buildGatheringTab(),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildGatheringTab() {
+    return StreamBuilder<List<Booking>>(
+      stream: _matchesStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error: ${snapshot.error}',
+              style: const TextStyle(color: VSPColors.error),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
+            itemCount: 5,
+            itemBuilder: (context, index) => const CardSkeleton(),
+          );
+        }
+
+        final bookings = snapshot.data ?? [];
+
+        if (bookings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Iconsax.cup_copy,
+                  color: VSPColors.textPrimary.withValues(alpha: 0.1),
+                  size: 80,
+                ),
+                const SizedBox(height: VSPSpacing.md),
+                Text(
+                  AppLocalizations.of(context)!.noMatchesAvailable,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () {
+                    playerHomeScreenKey.currentState?.switchToTab(0);
+                  },
+                  child: Text(
+                    AppLocalizations.of(context)!.hostOne,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: VSPColors.accent,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                      decorationColor: VSPColors.accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
+          itemCount: bookings.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+              child: PublicMatchCard(
+                booking: bookings[index],
+                highlighted:
+                    _userTeam != null &&
+                    bookings[index].bookingType == BookingType.team &&
+                    bookings[index].playerTeamId != null,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

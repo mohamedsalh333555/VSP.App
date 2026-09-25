@@ -26,6 +26,7 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../widgets/vsp_1v1_trophy_badge.dart';
 
 class ProfileScreen extends StatefulWidget {
  const ProfileScreen({super.key});
@@ -193,6 +194,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
  if (team != null) {
  return Column(
  children: [
+ // Player Header with 1v1 Trophy Badge
+ Container(
+ margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+ padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 10),
+ decoration: BoxDecoration(
+ color: VSPColors.surface,
+ borderRadius: BorderRadius.circular(VSPRadius.lg),
+ border: Border.all(color: VSPColors.white12),
+ ),
+ child: Row(
+ children: [
+ Container(
+ width: 42,
+ height: 42,
+ decoration: BoxDecoration(
+ shape: BoxShape.circle,
+ border: Border.all(color: VSPColors.accent, width: 1.5),
+ image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
+ ? DecorationImage(
+ image: CachedNetworkImageProvider(userProfileUrl),
+ fit: BoxFit.cover,
+ )
+ : null,
+ ),
+ child: (userProfileUrl == null || userProfileUrl.isEmpty)
+ ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20)
+ : null,
+ ),
+ const SizedBox(width: 12),
+ Expanded(
+ child: Column(
+ crossAxisAlignment: CrossAxisAlignment.start,
+ children: [
+ Row(
+ children: [
+ Flexible(
+ child: Text(
+ userName,
+ style: const TextStyle(
+ fontSize: 16,
+ fontWeight: FontWeight.bold,
+ color: VSPColors.textPrimary,
+ ),
+ overflow: TextOverflow.ellipsis,
+ ),
+ ),
+ if (auth.currentUser?.uid != null) ...[
+ const SizedBox(width: 8),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ ],
+ ],
+ ),
+ const SizedBox(height: 2),
+ Text(
+ l10n.positionLabel(userPosition),
+ style: const TextStyle(
+ fontSize: 12,
+ color: VSPColors.accent,
+ fontWeight: FontWeight.w600,
+ ),
+ ),
+ ],
+ ),
+ ),
+ ],
+ ),
+ ),
  RepaintBoundary(
  key: _teamCardKey,
  child: GestureDetector(
@@ -260,9 +328,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
  : null,
  ),
  const SizedBox(height: VSPSpacing.sm),
- Text(
+ Row(
+ mainAxisAlignment: MainAxisAlignment.center,
+ children: [
+ Flexible(
+ child: Text(
  userName,
  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+ overflow: TextOverflow.ellipsis,
+ ),
+ ),
+ if (auth.currentUser?.uid != null) ...[
+ const SizedBox(width: 8),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ ],
+ ],
  ),
  Text(
  l10n.positionLabel(userPosition),

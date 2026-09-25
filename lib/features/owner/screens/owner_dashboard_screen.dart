@@ -17,6 +17,8 @@ export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/repositories/owner_repository.dart';
 import '../widgets/ledger/owner_payout_dialog.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
@@ -34,6 +36,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 }
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with SingleTickerProviderStateMixin {
+  int _selectedDashboardTab = 0; // 0 = التشغيل اليومي, 1 = التحليلات (Insights)
   String _selectedStadiumFilter = 'all';
   String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
@@ -228,47 +231,117 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     onRenew: () => _showProUpgradeSheet(context),
                   ),
 
-                // 3. المحتوى التشغيلي الموحد للباقتين (Operational Dashboard)
-                // شريط فلاتر الملاعب (يظهر لأصحاب باقة Pro أو عند امتلاك أكثر من ملعب)
-                if (isProOwner && stadiums.length > 1) ...[
-                  OwnerVenueFilterChips(
-                    stadiums: stadiums,
-                    selectedStadiumId: _selectedStadiumFilter,
-                    onStadiumSelected: (id) => setState(() {
-                      _selectedStadiumFilter = id;
-                      _cachedMetrics = null;
-                    }),
-                    isArabic: isArabic,
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // شريط الفلتر الزمني الواضح
-                _buildTimeFilterBar(isArabic),
                 const SizedBox(height: 12),
 
-                // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
-                OwnerOperationalFinanceCard(
-                  availableBalance: availableBalance,
-                  cashThisMonth: metrics.pitchCashRevenue,
-                  onlineThisMonth: metrics.digitalVspBalance,
-                  timePeriod: _selectedTimePeriod,
-                  onOpenLedger: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
-                    );
-                  },
-                  onRequestPayout: () {
-                    OwnerPayoutDialog.show(context, availableBalance, isArabic);
-                  },
-                  isArabic: isArabic,
+                // 3. شريط التبديل بين [ التشغيل اليومي ⚡ ] و [ التحليلات والقرارات 📊 ]
+                Container(
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(21),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedDashboardTab = 0);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
+                              borderRadius: BorderRadius.circular(21),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              isArabic ? 'التشغيل اليومي ⚡' : 'Operations ⚡',
+                              style: TextStyle(
+                                color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedDashboardTab = 1);
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
+                              borderRadius: BorderRadius.circular(21),
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  isArabic ? 'التحليلات الذكية 📊' : 'Insights 📊',
+                                  style: TextStyle(
+                                    color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                if (!isProOwner) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.lock_rounded, size: 13, color: Colors.amber),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // الأقسام الإضافية تظهر فقط للباقة الاحترافية (Pro) بينما باقة الـ 500 ج (التجربة المجانية) مخصصة لمركز مالي صافٍ
-                if (isProOwner) ...[
-                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده)
+                // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
+                if (_selectedDashboardTab == 0) ...[
+                  // شريط فلاتر الملاعب (يظهر لأصحاب باقة Pro عند امتلاك أكثر من ملعب)
+                  if (isProOwner && stadiums.length > 1) ...[
+                    OwnerVenueFilterChips(
+                      stadiums: stadiums,
+                      selectedStadiumId: _selectedStadiumFilter,
+                      onStadiumSelected: (id) => setState(() {
+                        _selectedStadiumFilter = id;
+                        _cachedMetrics = null;
+                      }),
+                      isArabic: isArabic,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // شريط الفلتر الزمني الواضح
+                  _buildTimeFilterBar(isArabic),
+                  const SizedBox(height: 12),
+
+                  // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
+                  OwnerOperationalFinanceCard(
+                    availableBalance: availableBalance,
+                    cashThisMonth: metrics.pitchCashRevenue,
+                    onlineThisMonth: metrics.digitalVspBalance,
+                    timePeriod: _selectedTimePeriod,
+                    onOpenLedger: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+                      );
+                    },
+                    onRequestPayout: () {
+                      OwnerPayoutDialog.show(context, availableBalance, isArabic);
+                    },
+                    isArabic: isArabic,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده) - متاح للباقتين لتشغيل الملاعب
                   OwnerTodayPitchScheduleCard(
                     allBookings: allBookings,
                     stadiums: stadiums,
@@ -287,7 +360,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                   const SizedBox(height: 16),
 
-                  // ج. البطولة القادمة: لا تظهر للمالك إلا بعد اعتماد الإدارة.
+                  // ج. البطولة القادمة: تظهر عند وجود بطولة معتمدة
                   Builder(
                     builder: (context) {
                       final now = DateTime.now();
@@ -386,6 +459,30 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                   // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
                   _buildQuickOperationalActions(context, isArabic),
+                  const SizedBox(height: 32),
+                ]
+                // ── TAB 1: التحليلات والقرارات الذكية (Insights) ──
+                else ...[
+                  if (isProOwner)
+                    OwnerProInsightsView(
+                      allBookings: allBookings,
+                      metrics: metrics,
+                      stadiums: stadiums,
+                      selectedTimePeriod: _selectedTimePeriod,
+                      selectedStadiumFilter: _selectedStadiumFilter,
+                      onTimePeriodChanged: (period) => setState(() {
+                        _selectedTimePeriod = period;
+                        _cachedMetrics = null;
+                      }),
+                      onStadiumFilterChanged: (id) => setState(() {
+                        _selectedStadiumFilter = id;
+                        _cachedMetrics = null;
+                      }),
+                      onNavigateTab: widget.onNavigateTab,
+                      isArabic: isArabic,
+                    )
+                  else
+                    _buildProInsightsLockedTeaser(context, isArabic),
                   const SizedBox(height: 32),
                 ],
               ],
@@ -555,6 +652,152 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProInsightsLockedTeaser(BuildContext context, bool isArabic) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(VSPSpacing.xl),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.amber.withValues(alpha: 0.25),
+                    Colors.amber.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(color: Colors.amber, width: 2),
+              ),
+              child: const Icon(Iconsax.chart_2_copy, color: Colors.amber, size: 32),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            isArabic ? '📊 تحليلات وقرارات الملاعب الذكية' : 'Smart Pitch Insights & Decisions',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            isArabic
+                ? 'ميزة حصرية لمشتركي الباقة الاحترافية (1000 ج.م شهرياً)'
+                : 'Exclusive to 1000 EGP Pro Plan Subscribers',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.amber,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: VSPColors.divider),
+          const SizedBox(height: 8),
+
+          _buildTeaserFeatureRow(
+            icon: Iconsax.status_up_copy,
+            title: isArabic ? 'معدل إشغال الملعب الفعلي' : 'Pitch Occupancy Rate',
+            subtitle: isArabic
+                ? 'حساب نسبة استغلال ساعات الملعب مقارنة بالطاقة القصوى'
+                : 'Compare booked hours vs maximum capacity',
+          ),
+          const SizedBox(height: 10),
+          _buildTeaserFeatureRow(
+            icon: Iconsax.money_remove_copy,
+            title: isArabic ? 'مؤشر «الإيراد الضائع»' : 'Lost Revenue Indicator',
+            subtitle: isArabic
+                ? 'كشف قيمة المبالغ المهدرة من الساعات غير المحجوزة'
+                : 'Track unearned money from idle pitch hours',
+          ),
+          const SizedBox(height: 10),
+          _buildTeaserFeatureRow(
+            icon: Iconsax.card_pos_copy,
+            title: isArabic ? 'تحليل مصادر الدخل الرقمي والكاش' : 'Revenue Breakdown (Digital vs Cash)',
+            subtitle: isArabic
+                ? 'توزيع دقيق ومقارنات أسبوعية وشهرية للأرباح'
+                : 'Detailed cash vs digital tracking and weekly growth',
+          ),
+          const SizedBox(height: 10),
+          _buildTeaserFeatureRow(
+            icon: Iconsax.ranking_copy,
+            title: isArabic ? 'تفضيلات اللاعبين وأنواع الحجوزات' : 'Booking Types & Player Preferences',
+            subtitle: isArabic
+                ? 'معرفة الحصص الأكثر طلباً (تحديات، تجميع، شخصي)'
+                : 'Identify top booking patterns and peak demands',
+          ),
+
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: () => _showProUpgradeSheet(context),
+            icon: const Icon(Icons.star_rounded, color: Colors.black, size: 20),
+            label: Text(
+              isArabic ? 'الترقية للباقة الاحترافية (1000 ج)' : 'Upgrade to Pro Plan (1000 EGP)',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTeaserFeatureRow({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.amber, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

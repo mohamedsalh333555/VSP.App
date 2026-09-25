@@ -402,4 +402,29 @@ class LeagueRepository {
           debugPrint('Handled realtime error in stream1v1RegistrationsCount: $error');
         });
   }
+
+  /// Get total 1v1 championship titles won by a user
+  Future<int> getUser1v1Titles(String userId) async {
+    if (userId.isEmpty) return 0;
+    try {
+      final response = await _supabase
+          .from('vsp_1vs1_players')
+          .select('titles')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (response != null && response['titles'] != null) {
+        return (response['titles'] as num).toInt();
+      }
+
+      final trophies = await _supabase
+          .from('player_trophies')
+          .select('id')
+          .eq('user_id', userId);
+      return (trophies as List).length;
+    } catch (e) {
+      debugPrint('Error getting 1v1 titles for user: $e');
+      return 0;
+    }
+  }
 }
