@@ -197,7 +197,7 @@ class StadiumRepository {
       'ownerIdUrl': ownerIdUrl,
       'lat': lat,
       'lng': lng,
-      'isVerified': true,
+      'isVerified': false,
       'features': features ?? {},
     });
   }
