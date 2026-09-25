@@ -46,7 +46,7 @@ class _OwnerPayoutSettingsCardState extends State<OwnerPayoutSettingsCard> {
           children: [
             Row(
               children: [
-                const Icon(Iconsax.wallet_1_copy, color: VSPColors.accent, size: 20),
+                const Icon(Iconsax.security_card_copy, color: VSPColors.accent, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -66,6 +66,33 @@ class _OwnerPayoutSettingsCardState extends State<OwnerPayoutSettingsCard> {
                   : 'This data is used by VSP Admin to disburse your stadium booking payouts.',
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
             ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.shield_tick_copy, color: VSPColors.accent, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'حماية أمنية: تعديل أرقام التحويل يتطلب تأكيد رمز OTP يُرسل لهاتفك المسجل.'
+                          : 'Security Notice: Changing payout details requires OTP verification.',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             _buildInputLabel(
               context,
@@ -84,11 +111,11 @@ class _OwnerPayoutSettingsCardState extends State<OwnerPayoutSettingsCard> {
             const SizedBox(height: 16),
             _buildInputLabel(
               context,
-              isArabic ? ' رقم المحفظة الإلكترونية (فودافون كاش / اتصالات / أورنج)' : ' Mobile Wallet Number',
+              isArabic ? ' رقم تحويل كاش (فودافون كاش / أورنج / اتصالات / وي كاش)' : ' Cash Transfer Number (Vodafone / Orange / etc.)',
             ),
             CustomTextField(
               controller: widget.vodafoneController,
-              hintText: isArabic ? 'أدخل رقم المحفظة' : 'Enter wallet phone number',
+              hintText: isArabic ? 'أدخل رقم كاش لاستلام الأرباح' : 'Enter cash transfer number',
               keyboardType: TextInputType.phone,
               suffixIcon: widget.vodafoneController.text.isNotEmpty
                   ? IconButton(

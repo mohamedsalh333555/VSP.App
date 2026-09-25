@@ -262,4 +262,17 @@ class OwnerRepository {
         .single();
     return Map<String, dynamic>.from(response);
   }
+
+  /// إلغاء الحجز اليدوي ذرياً مع معالجة العربون في الدفتر المالي
+  Future<dynamic> cancelManualBookingAtomic({
+    required String bookingId,
+    required String ownerId,
+    required bool refundDeposit,
+  }) async {
+    return _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
+      'p_booking_id': bookingId,
+      'p_owner_id': ownerId,
+      'p_refund_deposit': refundDeposit,
+    });
+  }
 }

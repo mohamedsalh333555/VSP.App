@@ -11,19 +11,64 @@ import 'booking_sheet_whatsapp_utils.dart';
 class BookingSheetPastPanel extends StatelessWidget {
   final Booking booking;
   final bool isArabic;
+  final VoidCallback? onConfirmCashPayment;
+  final bool isSaving;
 
   const BookingSheetPastPanel({
     super.key,
     required this.booking,
     required this.isArabic,
+    this.onConfirmCashPayment,
+    this.isSaving = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
+    final isHybrid = booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice;
+    final isPendingCash = !booking.isPaid && (booking.paymentStatus != 'paid');
+
+    final String cashBtnText = isHybrid
+        ? (isArabic
+            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش '
+            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash ')
+        : (isArabic
+            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش '
+            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) ');
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (!booking.isPaid && booking.depositPaid < booking.totalPrice) ...[
+        if (isPendingCash && onConfirmCashPayment != null) ...[
+          SizedBox(
+            width: double.infinity,
+            height: VSPSize.buttonHeight,
+            child: ElevatedButton.icon(
+              onPressed: isSaving ? null : onConfirmCashPayment,
+              icon: isSaving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : const Icon(Iconsax.money_send_copy, size: 18),
+              label: Text(
+                cashBtnText,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (isPendingCash) ...[
           SizedBox(
             width: double.infinity,
             height: VSPSize.buttonHeight,
@@ -110,6 +155,16 @@ class BookingSheetCashPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
+    final isHybrid = booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice;
+    final String cashBtnText = isHybrid
+        ? (isArabic
+            ? 'تأكيد استلام المتبقي (${remainingCash.toInt()} ج.م) كاش بالملعب '
+            : 'Confirm Remaining (${remainingCash.toInt()} EGP) Cash at Pitch ')
+        : (isArabic
+            ? 'تأكيد استلام كامل المبلغ (${booking.totalPrice.toInt()} ج.م) كاش بالملعب '
+            : 'Confirm Full Cash (${booking.totalPrice.toInt()} EGP) at Pitch ');
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -118,11 +173,15 @@ class BookingSheetCashPanel extends StatelessWidget {
           height: VSPSize.buttonHeight,
           child: ElevatedButton.icon(
             onPressed: isSaving ? null : onConfirmCashPayment,
-            icon: const Icon(Iconsax.money_send_copy, size: 18),
+            icon: isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  )
+                : const Icon(Iconsax.money_send_copy, size: 18),
             label: Text(
-              isArabic
-                  ? 'تأكيد استلام الكاش بالملعب '
-                  : 'Confirm Cash Payment at Pitch ',
+              cashBtnText,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             style: ElevatedButton.styleFrom(

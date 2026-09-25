@@ -162,6 +162,34 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       return;
     }
 
+    final paidAmount = _currentPaidAmount;
+    final totalPrice = _totalPrice;
+
+    if (paidAmount > totalPrice) {
+      HapticFeedback.vibrate();
+      VSPFeedback.showError(
+        context,
+        isAr
+            ? 'المبلغ المقبوض (${paidAmount.toInt()} ج.م) لا يمكن أن يتجاوز إجمالي سعر الحجز (${totalPrice.toInt()} ج.م)'
+            : 'Collected amount cannot exceed total booking price',
+      );
+      return;
+    }
+
+    if (rawPhone.isNotEmpty) {
+      final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
+      if (digitsOnly.length < 10) {
+        HapticFeedback.vibrate();
+        VSPFeedback.showError(
+          context,
+          isAr
+              ? 'يرجى إدخال رقم هاتف صحيح (11 رقماً) لإرسال الوصل، أو اترك الحقل فارغاً'
+              : 'Please enter a valid phone number or leave blank',
+        );
+        return;
+      }
+    }
+
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
 
@@ -171,8 +199,6 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       final bookingRef = 'MAN_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       final cleanPhone = rawPhone.isNotEmpty ? PhoneUtils.normalize(rawPhone) : null;
-      final paidAmount = _currentPaidAmount;
-      final totalPrice = _totalPrice;
 
       final response = await OwnerRepository().createManualBookingAtomic(
         ownerId: ownerId,
@@ -226,8 +252,14 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         setState(() => _isSaving = false);
         final err = e.toString().toLowerCase();
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
-        if (err.contains('prevent_double_booking') || err.contains('duplicate') || err.contains('conflict')) {
+        if (err.contains('prevent_double_booking') || err.contains('duplicate') || err.contains('conflict') || err.contains('slot_locked_or_taken')) {
           VSPFeedback.showError(context, isAr ? 'هذا الموعد تم حجزه للتو من لاعب آخر' : 'This slot was just booked by another player');
+        } else if (err.contains('invalid_collected_amount')) {
+          VSPFeedback.showError(context, isAr ? 'المبلغ المحصل غير صالح أو يتجاوز السعر الإجمالي للمباراة' : 'Invalid collected amount');
+        } else if (err.contains('start_time_in_past')) {
+          VSPFeedback.showError(context, isAr ? 'هذا الموعد انقضى وقته بالفعل، يرجى اختيار موعد قادم' : 'Slot time has already passed');
+        } else if (err.contains('unauthorized') || err.contains('owner_mismatch')) {
+          VSPFeedback.showError(context, isAr ? 'غير مصرح لك، يرجى إعادة تسجيل الدخول' : 'Unauthorized operation');
         } else {
           final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
           VSPFeedback.showError(context, cleanMsg.isNotEmpty ? cleanMsg : (isAr ? 'حدث خطأ أثناء حفظ الحجز' : 'Failed to save phone booking'));

@@ -49,11 +49,29 @@ class BookingSheetWhatsAppUtils {
 
     final totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
     final depositPaid = b.depositPaid > 0 ? b.depositPaid : 0.0;
-    final remainingCash = (totalPrice - depositPaid).clamp(0.0, 999999.0);
+    final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid';
+    final remainingCash = isPaidInFull ? 0.0 : (totalPrice - depositPaid).clamp(0.0, 999999.0);
+    final cashCollected = isPaidInFull ? (totalPrice - depositPaid).clamp(0.0, 999999.0) : 0.0;
+
+    final String paymentLines = isArabic
+        ? (isPaidInFull
+            ? (depositPaid > 0
+                ? '*العربون المسدد إلكترونياً:* ${depositPaid.toInt()} ج.م\n*المسدد كاش بالملعب:* ${cashCollected.toInt()} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅'
+                : '*المسدد كاش بالملعب:* ${totalPrice.toInt()} ج.م\n*حالة الحساب:* خالص بالكامل (0 ج.م متبقي) ✅')
+            : (depositPaid > 0
+                ? '*العربون المسدد:* ${depositPaid.toInt()} ج.م\n*المتبقي للتحصيل بالملعب:* ${remainingCash.toInt()} ج.م ⏳'
+                : '*المطلوب تحصيله كاش بالملعب:* ${totalPrice.toInt()} ج.م ⏳'))
+        : (isPaidInFull
+            ? (depositPaid > 0
+                ? '*Online Deposit:* ${depositPaid.toInt()} EGP\n*Cash Paid at Pitch:* ${cashCollected.toInt()} EGP\n*Status:* Paid in Full (0 EGP due) ✅'
+                : '*Cash Paid at Pitch:* ${totalPrice.toInt()} EGP\n*Status:* Paid in Full (0 EGP due) ✅')
+            : (depositPaid > 0
+                ? '*Deposit Paid:* ${depositPaid.toInt()} EGP\n*Remaining Cash Due:* ${remainingCash.toInt()} EGP ⏳'
+                : '*Cash Due at Pitch:* ${totalPrice.toInt()} EGP ⏳'));
 
     final String receiptText = isArabic
         ? '''
-*إيصال حجز إلكتروني رسمي - VSP Sports*
+*إيصال حجز إلكتروني رسمي — VSP Sports*
 ═════════════════════════
 *كود الحجز:* $refCode
 *اسم العميل:* $customerName
@@ -61,8 +79,7 @@ class BookingSheetWhatsAppUtils {
 *التاريخ:* $dateStr
 *التوقيت:* من $startTimeStr إلى $endTimeStr
 *إجمالي المبلغ:* ${totalPrice.toInt()} ج.م
-*العربون المسدد:* ${depositPaid.toInt()} ج.م
-*المتبقي للتحصيل بالملعب:* ${remainingCash.toInt()} ج.م
+$paymentLines
 ═════════════════════════
 *موقع الملعب على الخريطة:*
 https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
@@ -70,7 +87,7 @@ https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 نتمنى لكم مباراة ممتعة.
 '''
         : '''
-*Official Digital Booking Receipt - VSP Sports*
+*Official Digital Booking Receipt — VSP Sports*
 ═════════════════════════
 *Booking Ref:* $refCode
 *Customer Name:* $customerName
@@ -78,8 +95,7 @@ https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 *Date:* $dateStr
 *Time:* $startTimeStr - $endTimeStr
 *Total Price:* ${totalPrice.toInt()} EGP
-*Deposit Paid:* ${depositPaid.toInt()} EGP
-*Remaining Cash Due:* ${remainingCash.toInt()} EGP
+$paymentLines
 ═════════════════════════
 *Location:*
 https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}

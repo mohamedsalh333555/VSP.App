@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
 class OwnerProfileForm extends StatelessWidget {
@@ -80,7 +81,9 @@ class OwnerProfileForm extends StatelessWidget {
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                       Text(
-                        governorate ?? (isArabic ? 'غير محدد' : 'Not set'),
+                        governorate != null && isArabic
+                            ? EgyptGovernorates.getArabicName(governorate!)
+                            : (governorate ?? (isArabic ? 'غير محدد' : 'Not set')),
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],

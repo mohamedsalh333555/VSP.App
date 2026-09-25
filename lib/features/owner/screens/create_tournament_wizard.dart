@@ -390,7 +390,13 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         VSPFeedback.showError(context, result.errorMessage!);
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'Error: $e');
+      if (mounted) {
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isAr ? 'حدث خطأ غير متوقع: $e' : 'Error: $e',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -439,6 +445,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                         onTypeChanged: (type) =>
                             setState(() => _selectedType = type),
                         isEditing: isEditing,
+                        preselectedType: widget.preselectedType,
                       )
                     : _currentStep == 1
                         ? TournamentSystemStep(

@@ -226,6 +226,8 @@ class BookingSheetBottomActions extends StatelessWidget {
       return BookingSheetPastPanel(
         booking: booking!,
         isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        onConfirmCashPayment: onConfirmCashPayment,
+        isSaving: isSaving,
       );
     }
     if (isUpcomingPendingCash && booking != null) {

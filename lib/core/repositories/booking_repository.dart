@@ -227,15 +227,21 @@ class SupabaseBookingRepository implements BookingRepository {
           return false;
         }
 
-        try {
-          await NotificationHandler.notifyPaymentReceived(
-            recipientId: b.ownerId,
-            userName: b.hostName ?? 'لاعب',
-            amount: b.totalPrice,
-            bookingId: bookingId,
-          );
-        } catch (e) {
-          VSPLogger.w('Skip payment notification: $e');
+        final double remainingCash = (b.totalPrice - b.depositPaid).clamp(0.0, 999999.0);
+        final double actualCashPaid = (remainingCash > 0 && b.depositPaid > 0) ? remainingCash : b.totalPrice;
+        final String playerUserId = b.userId;
+
+        if (playerUserId.isNotEmpty && playerUserId != b.ownerId) {
+          try {
+            await NotificationHandler.notifyPaymentReceived(
+              recipientId: playerUserId,
+              userName: b.stadiumName,
+              amount: actualCashPaid,
+              bookingId: bookingId,
+            );
+          } catch (e) {
+            VSPLogger.w('Skip player payment notification: $e');
+          }
         }
       }
       return true;

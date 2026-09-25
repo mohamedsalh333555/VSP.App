@@ -12,6 +12,7 @@ class VSPQuickBookingReceiptFormatter {
  required DateTime endTime,
  required double totalPrice,
  double depositPaid = 0.0,
+ bool isCashConfirmed = false,
  String? googleMapsUrl,
  String? stadiumPhone,
  bool isArabic = true,
@@ -21,16 +22,24 @@ class VSPQuickBookingReceiptFormatter {
  final remainingAmount = (totalPrice - depositPaid).clamp(0.0, 999999.0);
 
  final mapsLine = (googleMapsUrl != null && googleMapsUrl.isNotEmpty)
- ? (isArabic ? ' *موقع الملعب على الخريطة:* $googleMapsUrl\n' : ' *Location Map:* $googleMapsUrl\n')
+ ? (isArabic ? '📍 *موقع الملعب على الخريطة:* $googleMapsUrl\n' : '📍 *Location Map:* $googleMapsUrl\n')
  : '';
 
  final phoneLine = (stadiumPhone != null && stadiumPhone.isNotEmpty)
- ? (isArabic ? ' *هاتف الملعب للإستفسار:* $stadiumPhone\n' : ' *Stadium Phone:* $stadiumPhone\n')
+ ? (isArabic ? '📞 *هاتف الملعب للإستفسار:* $stadiumPhone\n' : '📞 *Stadium Phone:* $stadiumPhone\n')
  : '';
 
  String paymentStatus;
- if (depositPaid >= totalPrice && totalPrice > 0) {
- paymentStatus = isArabic ? 'مدفوع بالكامل ' : 'Paid in full ';
+ if (isCashConfirmed) {
+ if (depositPaid > 0 && depositPaid < totalPrice) {
+ paymentStatus = isArabic
+ ? 'مدفوع بالكامل (عربون: ${depositPaid.toInt()} ج.م + كاش: ${(totalPrice - depositPaid).toInt()} ج.م)'
+ : 'Paid in full (Deposit: ${depositPaid.toInt()} EGP + Cash: ${(totalPrice - depositPaid).toInt()} EGP)';
+ } else {
+ paymentStatus = isArabic ? 'مدفوع بالكامل نقداً بالملعب' : 'Paid in full cash at pitch';
+ }
+ } else if (depositPaid >= totalPrice && totalPrice > 0) {
+ paymentStatus = isArabic ? 'مدفوع بالكامل إلكترونياً' : 'Paid in full online';
  } else if (depositPaid > 0) {
  paymentStatus = isArabic
  ? 'عربون مسدد: ${depositPaid.toInt()} ج.م (المتبقي: ${remainingAmount.toInt()} ج.م عند الحضور)'

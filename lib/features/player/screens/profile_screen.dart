@@ -103,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  itemBuilder: (context, index) {
  final gov = governorates[index];
  final String displayGovName = isArabic 
- ? (gov == 'Aswan' ? 'أسوان' : (gov == 'Cairo' ? 'القاهرة' : gov))
+ ? EgyptGovernorates.getArabicName(gov)
  : gov;
  final isSelected = currentGov == gov || currentGov == displayGovName;
 
@@ -337,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  final govName = auth.userModel?.governorate ?? (isArabic ? 'أسوان' : 'Aswan');
  final displayGov = isArabic
- ? (govName == 'Aswan' ? 'أسوان' : (govName == 'Cairo' ? 'القاهرة' : govName))
+ ? EgyptGovernorates.getArabicName(govName)
  : govName;
 
  return VSPMenuItem(
@@ -397,9 +397,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
  title: l10n.logout,
  subtitle: l10n.signOutAccount,
  isLogout: true,
- onTap: () async {
- await Provider.of<AuthProvider>(context, listen: false).signOut();
- },
+ onTap: () => _confirmSignOut(context),
+ ),
+ ),
+ VSPFadeInItem(
+ index: 10,
+ child: VSPMenuItem(
+ icon: Iconsax.trash_copy,
+ title: isArabic ? 'حذف الحساب نهائياً' : 'Delete Account',
+ subtitle: isArabic ? 'حذف كافة بياناتك وحجوزاتك بشكل دائم' : 'Permanently delete your account',
+ isLogout: true,
+ onTap: () => _confirmDeleteAccount(context),
  ),
  ),
  
@@ -409,6 +417,100 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  ),
  );
+ }
+
+ Future<void> _confirmSignOut(BuildContext context) async {
+ final isAr = Localizations.localeOf(context).languageCode == 'ar';
+ final confirmed = await showDialog<bool>(
+ context: context,
+ builder: (ctx) => AlertDialog(
+ backgroundColor: VSPColors.surface,
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+ title: Row(
+ children: [
+ const Icon(Iconsax.logout_copy, color: VSPColors.error, size: 22),
+ const SizedBox(width: 8),
+ Text(
+ isAr ? 'تسجيل الخروج' : 'Sign Out',
+ style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+ ),
+ ],
+ ),
+ content: Text(
+ isAr ? 'هل أنت متأكد من رغبتك في تسجيل الخروج من حسابك؟' : 'Are you sure you want to sign out?',
+ style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+ ),
+ actions: [
+ TextButton(
+ onPressed: () => Navigator.pop(ctx, false),
+ child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+ ),
+ ElevatedButton(
+ onPressed: () => Navigator.pop(ctx, true),
+ style: ElevatedButton.styleFrom(
+ backgroundColor: VSPColors.error,
+ foregroundColor: Colors.white,
+ ),
+ child: Text(isAr ? 'تسجيل الخروج' : 'Log Out'),
+ ),
+ ],
+ ),
+ );
+
+ if (confirmed == true && context.mounted) {
+ await Provider.of<AuthProvider>(context, listen: false).signOut();
+ }
+ }
+
+ Future<void> _confirmDeleteAccount(BuildContext context) async {
+ final isAr = Localizations.localeOf(context).languageCode == 'ar';
+ final confirmed = await showDialog<bool>(
+ context: context,
+ builder: (ctx) => AlertDialog(
+ backgroundColor: VSPColors.surface,
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+ title: Row(
+ children: [
+ const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 22),
+ const SizedBox(width: 8),
+ Text(
+ isAr ? 'حذف الحساب نهائياً؟' : 'Delete Account?',
+ style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+ ),
+ ],
+ ),
+ content: Text(
+ isAr
+ ? 'تحذير: سيتم حذف جميع بياناتك وسجل حجوزاتك بشكل دائم ولا يمكن استرجاع الحساب بعد الحذف.'
+ : 'Warning: All your data and booking history will be permanently deleted.',
+ style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
+ ),
+ actions: [
+ TextButton(
+ onPressed: () => Navigator.pop(ctx, false),
+ child: Text(isAr ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+ ),
+ ElevatedButton(
+ onPressed: () => Navigator.pop(ctx, true),
+ style: ElevatedButton.styleFrom(
+ backgroundColor: VSPColors.error,
+ foregroundColor: Colors.white,
+ ),
+ child: Text(isAr ? 'تأكيد الحذف' : 'Delete'),
+ ),
+ ],
+ ),
+ );
+
+ if (confirmed == true && context.mounted) {
+ final success = await Provider.of<AuthProvider>(context, listen: false).deleteAccount();
+ if (!success && context.mounted) {
+ VSPFeedback.showError(
+ context,
+ isAr ? 'تعذر حذف الحساب، يرجى التواصل مع الدعم الفني.' : 'Failed to delete account, please contact support.',
+ );
+ }
+ }
  }
 }
 

@@ -29,6 +29,40 @@ class EgyptGovernorates {
     'Suez',
   ];
 
+  /// Returns the standard Arabic name for a given Egyptian governorate.
+  static String getArabicName(String gov) {
+    const map = {
+      'Cairo': 'القاهرة',
+      'Giza': 'الجيزة',
+      'Alexandria': 'الإسكندرية',
+      'Dakahlia': 'الدقهلية',
+      'Red Sea': 'البحر الأحمر',
+      'Beheira': 'البحيرة',
+      'Faiyum': 'الفيوم',
+      'Gharbia': 'الغربية',
+      'Ismailia': 'الإسماعيلية',
+      'Monufia': 'المنوفية',
+      'Qalyubia': 'القليوبية',
+      'Sharqia': 'الشرقية',
+      'Suez': 'السويس',
+      'Aswan': 'أسوان',
+      'Asyut': 'أسيوط',
+      'Beni Suef': 'بني سويف',
+      'Port Said': 'بورسعيد',
+      'Damietta': 'دمياط',
+      'Kafr El Sheikh': 'كفر الشيخ',
+      'Matrouh': 'مطروح',
+      'Minya': 'المنيا',
+      'Qena': 'قنا',
+      'Sohag': 'سوهاج',
+      'South Sinai': 'جنوب سيناء',
+      'North Sinai': 'شمال سيناء',
+      'Luxor': 'الأقصر',
+      'New Valley': 'الوادي الجديد',
+    };
+    return map[gov] ?? gov;
+  }
+
   static const Map<String, (double, double)> governorateCoordinates = {
     'Cairo': (30.0444, 31.2357),
     'Giza': (30.0131, 31.2089),

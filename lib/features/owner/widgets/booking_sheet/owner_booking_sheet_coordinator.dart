@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/repositories/owner_repository.dart';
+import '../../../../core/services/notification_handler.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -49,6 +50,22 @@ class OwnerBookingSheetCoordinator {
       }
 
       final isAlreadyConfirmed = rpcRes is Map && rpcRes['already_confirmed'] == true;
+
+      if (!isAlreadyConfirmed) {
+        final double remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
+        final double actualCashPaid = (remainingCash > 0 && booking.depositPaid > 0) ? remainingCash : totalPrice;
+        final String playerUserId = booking.userId;
+        if (playerUserId.isNotEmpty && playerUserId != uid) {
+          try {
+            await NotificationHandler.notifyPaymentReceived(
+              recipientId: playerUserId,
+              userName: selectedStadium.name,
+              amount: actualCashPaid,
+              bookingId: booking.id,
+            );
+          } catch (_) {}
+        }
+      }
 
       if (context.mounted) {
         VSPFeedback.showSuccess(
@@ -130,7 +147,7 @@ class OwnerBookingSheetCoordinator {
     }
   }
 
-  /// Cancels booking after user confirmation.
+  /// Cancels booking after user confirmation, with deposit reconciliation for manual bookings.
   static Future<void> cancelBooking({
     required BuildContext context,
     required BuildContext parentContext,
@@ -140,6 +157,66 @@ class OwnerBookingSheetCoordinator {
     required ValueSetter<bool> setDeleting,
   }) async {
     final nav = Navigator.of(context);
+    final isManual = (booking.paymentTransactionId?.contains('MANUAL') ?? false) ||
+        booking.bookingType == BookingType.personal;
+
+    // If manual booking with a deposit, prompt the owner for deposit reconciliation:
+    if (isManual && booking.depositPaid > 0) {
+      final decision = await BookingSheetCancelDialog.showManualDepositOptions(
+        context: context,
+        depositAmount: booking.depositPaid,
+        isArabic: isArabic,
+      );
+
+      if (decision == ManualBookingCancelDecision.abort) {
+        return;
+      }
+
+      if (!context.mounted || !parentContext.mounted) return;
+      setDeleting(true);
+      try {
+        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
+        final uid = auth.currentUser?.id ?? booking.ownerId;
+        final bool refund = decision == ManualBookingCancelDecision.refund;
+
+        final res = await OwnerRepository().cancelManualBookingAtomic(
+          bookingId: booking.id,
+          ownerId: uid,
+          refundDeposit: refund,
+        );
+
+        if (res is Map && res['success'] == false) {
+          throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
+        }
+
+        if (context.mounted) {
+          VSPFeedback.showSuccess(
+            context,
+            refund
+                ? (isArabic
+                    ? 'تم إلغاء الحجز ورد العربون (${booking.depositPaid.toInt()} ج.م) وتسجيل الاسترداد في الدفتر.'
+                    : 'Booking cancelled & deposit refund recorded.')
+                : (isArabic
+                    ? 'تم إلغاء الحجز وتثبيت العربون كشرط جزائي لصالحك.'
+                    : 'Booking cancelled & deposit retained as penalty.'),
+          );
+        }
+
+        if (parentContext.mounted) {
+          await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
+        }
+      } finally {
+        setDeleting(false);
+      }
+      if (context.mounted) nav.pop();
+      return;
+    }
+
+    // Default cancellation flow (for online bookings or manual with 0 deposit):
     final confirm = await BookingSheetCancelDialog.show(
       context: context,
       title: l10n.cancelBooking,
@@ -152,22 +229,41 @@ class OwnerBookingSheetCoordinator {
       setDeleting(true);
       if (!parentContext.mounted) return;
       try {
-        final success = await Provider.of<BookingProvider>(parentContext, listen: false).cancelBooking(booking.id);
-        if (!context.mounted) return;
-        if (!success) {
-          final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
-          VSPFeedback.showError(
-            context,
-            err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ' : 'Failed to cancel booking '),
+        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
+        final uid = auth.currentUser?.id ?? booking.ownerId;
+
+        if (isManual) {
+          final res = await OwnerRepository().cancelManualBookingAtomic(
+            bookingId: booking.id,
+            ownerId: uid,
+            refundDeposit: false,
           );
-          return;
+          if (res is Map && res['success'] == false) {
+            throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
+          }
+        } else {
+          final success = await Provider.of<BookingProvider>(parentContext, listen: false).cancelBooking(booking.id);
+          if (!context.mounted) return;
+          if (!success) {
+            final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
+            VSPFeedback.showError(
+              context,
+              err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ' : 'Failed to cancel booking '),
+            );
+            return;
+          }
         }
-        if (!parentContext.mounted) return;
-        final uid = Provider.of<AuthProvider>(parentContext, listen: false).currentUser?.uid;
-        if (uid != null) {
+
+        if (parentContext.mounted) {
           await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
         }
-      } catch (_) {}
+      } catch (e) {
+        if (context.mounted) {
+          VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
+        }
+      } finally {
+        setDeleting(false);
+      }
       if (context.mounted) nav.pop();
     }
   }

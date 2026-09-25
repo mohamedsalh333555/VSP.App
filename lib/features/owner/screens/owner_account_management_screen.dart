@@ -9,6 +9,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/account/owner_avatar_header.dart';
 import '../widgets/account/owner_delete_account_card.dart';
+import '../widgets/account/owner_payout_otp_dialog.dart';
 import '../widgets/account/owner_payout_settings_card.dart';
 import '../widgets/account/owner_profile_form.dart';
 import '../widgets/account/owner_stadiums_carousel.dart';
@@ -95,10 +96,37 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       VSPFeedback.showError(
         context,
         isArabic
-            ? 'خطأ: لا يمكن مسح أو ترك جميع وسائل التسوية المالية فارغة! \nيجب إدخال وسيلة تحصيل واحدة على الأقل (إنستا باي، محفظة إلكترونية، أو حساب بنكي) لاستلام أرباحك.'
-            : 'Error: Payout methods cannot all be empty! Please provide at least one method (InstaPay, Mobile Wallet, or Bank IBAN).',
+            ? 'خطأ: لا يمكن مسح أو ترك جميع وسائل استلام الأرباح فارغة! \nيجب إدخال وسيلة تحصيل واحدة على الأقل (إنستا باي، كاش، أو حساب بنكي) لاستلام أرباحك.'
+            : 'Error: Payout methods cannot all be empty! Please provide at least one method (InstaPay, Cash Transfer, or Bank IBAN).',
       );
       return;
+    }
+
+    // Verify OTP if payout methods changed (to protect against staff altering transfer numbers)
+    final origInstapay = (authProvider.userModel?.p2pInstapay ?? '').trim();
+    final origVodafone = (authProvider.userModel?.p2pVodafone ?? '').trim();
+    final origBank = (authProvider.userModel?.p2pBank ?? '').trim();
+
+    final hasPayoutChanged = (instapay != origInstapay) ||
+        (vodafone != origVodafone) ||
+        (bank != origBank);
+
+    if (hasPayoutChanged) {
+      final verified = await OwnerPayoutOtpDialog.show(
+        context,
+        phoneNumber: authProvider.userModel?.phone ?? phone,
+      );
+      if (!verified) {
+        if (mounted) {
+          VSPFeedback.showWarning(
+            context,
+            isArabic
+                ? 'تم إلغاء التعديل: لم يتم التحقق من رمز الأمان OTP، ولم يتم تعديل بيانات التحويل.'
+                : 'Update cancelled: OTP was not verified.',
+          );
+        }
+        return;
+      }
     }
 
     setState(() => _isLoading = true);

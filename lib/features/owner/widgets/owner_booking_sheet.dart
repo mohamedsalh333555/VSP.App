@@ -416,6 +416,92 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     customerNameLabel: l10n.customerName,
                     internalNotesLabel: l10n.internalNotes,
                   ),
+                  if (booking != null && booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isArabic ? 'تفاصيل الحساب المالي' : 'Financial Breakdown',
+                                style: const TextStyle(
+                                  color: VSPColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: (booking.isPaid || booking.paymentStatus == 'paid')
+                                      ? VSPColors.success.withValues(alpha: 0.15)
+                                      : VSPColors.warning.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                                ),
+                                child: Text(
+                                  (booking.isPaid || booking.paymentStatus == 'paid')
+                                      ? (isArabic ? 'خالص بالكامل' : 'Paid in Full')
+                                      : (isArabic ? 'متبقي كاش بالملعب' : 'Cash Due'),
+                                  style: TextStyle(
+                                    color: (booking.isPaid || booking.paymentStatus == 'paid')
+                                        ? VSPColors.success
+                                        : VSPColors.warning,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isArabic ? 'العربون المسدد إلكترونياً (في محفظتك):' : 'Online Deposit (In Balance):',
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              ),
+                              Text(
+                                '${booking.depositPaid.toInt()} ج.م',
+                                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isArabic ? 'المتبقي للتحصيل نقداً بالملعب:' : 'Remaining Cash Due:',
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              ),
+                              Text(
+                                (booking.isPaid || booking.paymentStatus == 'paid')
+                                    ? (isArabic ? '0 ج.م (تم التحصيل)' : '0 EGP (Collected)')
+                                    : '${(booking.totalPrice - booking.depositPaid).toInt()} ج.م',
+                                style: TextStyle(
+                                  color: (booking.isPaid || booking.paymentStatus == 'paid')
+                                      ? VSPColors.success
+                                      : VSPColors.warning,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                 ],
               ),

@@ -205,7 +205,11 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       });
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, 'Error: $e');
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isAr ? 'حدث خطأ أثناء تعديل حالة الدفع: $e' : 'Error: $e',
+        );
       }
     }
   }

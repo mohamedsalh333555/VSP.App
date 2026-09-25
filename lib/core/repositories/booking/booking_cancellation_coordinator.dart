@@ -45,12 +45,20 @@ class BookingCancellationCoordinator {
       final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
 
       if (isManual) {
-        await _supabase.from('bookings').update({
-          'status': BookingStatus.cancelled.name,
-          'cancellation_reason': 'Owner cancelled manual walk-in slot',
-          'cancelled_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', bookingId);
+        try {
+          await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
+            'p_booking_id': bookingId,
+            'p_owner_id': booking.ownerId,
+            'p_refund_deposit': false,
+          });
+        } catch (_) {
+          await _supabase.from('bookings').update({
+            'status': BookingStatus.cancelled.name,
+            'cancellation_reason': 'Owner cancelled manual walk-in slot',
+            'cancelled_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', bookingId);
+        }
       } else {
         final bool isPaidOnline = booking.isPaid || booking.isDepositPaid || booking.paymentStatus == 'paid';
         if (isPaidOnline && (booking.depositPaid > 0 || booking.totalPrice > 0)) {

@@ -87,6 +87,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       ),
     );
 
+    final double actualDeposit = (booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice)
+        ? booking.depositPaid
+        : 0.0;
     final receiptText = VSPQuickBookingReceiptFormatter.buildReceiptMessage(
       stadiumName: booking.stadiumName,
       bookingRef: booking.id.length >= 8 ? booking.id.substring(0, 8).toUpperCase() : booking.id,
@@ -94,7 +97,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       startTime: booking.startTime.toLocal(),
       endTime: booking.endTime.toLocal(),
       totalPrice: booking.totalPrice,
-      depositPaid: booking.totalPrice, // بعد التأكيد يعتبر مسدداً بالكامل
+      depositPaid: actualDeposit,
+      isCashConfirmed: true,
       googleMapsUrl: stadium.googleMapsUrl,
       stadiumPhone: stadium.phone,
       isArabic: widget.isArabic,

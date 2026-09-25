@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../utils/app_date_formatter.dart';
 import '../team_repository.dart';
+import 'tournament_stats_coordinator.dart';
 
 /// Coordinates match results reporting, score updates, schedule conflict checks, and round batch scheduling.
 class TournamentMatchCoordinator {
@@ -46,6 +47,17 @@ class TournamentMatchCoordinator {
           response['match_index'] ?? response['matchIndex'] ?? 0;
       final String championshipId =
           response['championship_id'] ?? response['championshipId'] ?? '';
+      final String? matchStage = response['stage']?.toString();
+      final int matchRoundIndex = response['round_index'] ?? response['roundIndex'] ?? -1;
+
+      // Automatically assign scheduled_time to current time if match wasn't pre-scheduled
+      if (response['scheduled_time'] == null) {
+        try {
+          await _supabase.from('tournament_matches').update({
+            'scheduled_time': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', matchId);
+        } catch (_) {}
+      }
 
       bool rpcHandled = false;
       try {
@@ -118,60 +130,96 @@ class TournamentMatchCoordinator {
         }
       }
 
-      // ── Final Match Check: Crown the Champion ONLY when there is no next match (Final Round) ──
-      if (nextMatchId == null && winnerId != null) {
+      // ── Final Match Check: Crown the Champion ONLY when it is a true final match (not group or league) ──
+      final bool isGroupStage = matchStage == 'group_stage' || matchRoundIndex == 99;
+      final bool isLeagueStage = matchStage == 'league';
+
+      if (nextMatchId == null && winnerId != null && !isGroupStage && !isLeagueStage) {
         final champRes = await _supabase
-              .from('championships')
-              .select('champion_team_id')
-              .eq('id', championshipId)
-              .maybeSingle();
+            .from('championships')
+            .select('champion_team_id')
+            .eq('id', championshipId)
+            .maybeSingle();
 
-          final existingChamp = champRes?['champion_team_id'];
-          if (existingChamp != null && existingChamp.toString().isNotEmpty) {
-            // Already crowned champion — prevent double crowning
-            return;
-          }
+        final existingChamp = champRes?['champion_team_id'];
+        if (existingChamp != null && existingChamp.toString().isNotEmpty) {
+          // Already crowned champion — prevent double crowning
+          return;
+        }
 
-          try {
-            await _supabase.rpc(
-              'crown_tournament_champion_atomic',
-              params: {
-                'p_championship_id': championshipId,
-                'p_champion_team_id': winnerId,
-                'p_champion_team_name': winnerName ?? '',
-              },
-            );
-          } catch (rpcErr) {
-            debugPrint('crown_tournament_champion_atomic fallback: $rpcErr');
-            await _supabase.from('championships').update({
-              'status': 'completed',
-              'champion_team_id': winnerId,
-              'champion_team_name': winnerName,
-            }).eq('id', championshipId);
+        try {
+          await _supabase.rpc(
+            'crown_tournament_champion_atomic',
+            params: {
+              'p_championship_id': championshipId,
+              'p_champion_team_id': winnerId,
+              'p_champion_team_name': winnerName ?? '',
+            },
+          );
+        } catch (rpcErr) {
+          debugPrint('crown_tournament_champion_atomic fallback: $rpcErr');
+          await _supabase.from('championships').update({
+            'status': 'completed',
+            'champion_team_id': winnerId,
+            'champion_team_name': winnerName,
+          }).eq('id', championshipId);
 
-            final team = await _teamRepo.getTeam(winnerId);
-            if (team != null) {
-              final badges = List<String>.from(team.unlockedBadges);
-              if (!badges.contains('cup_winner')) {
-                badges.add('cup_winner');
-              }
-              await _supabase.from('teams').update({
-                'championships_won': team.championshipsWon + 1,
-                'unlocked_badges': badges,
-              }).eq('id', winnerId);
+          final team = await _teamRepo.getTeam(winnerId);
+          if (team != null) {
+            final badges = List<String>.from(team.unlockedBadges);
+            if (!badges.contains('cup_winner')) {
+              badges.add('cup_winner');
             }
-          }
-
-          // Trigger celebration callback if provided
-          if (_onChampionCrowned != null) {
-            await _onChampionCrowned(winnerId);
+            await _supabase.from('teams').update({
+              'championships_won': team.championshipsWon + 1,
+              'unlocked_badges': badges,
+            }).eq('id', winnerId);
           }
         }
-      } catch (e) {
-        debugPrint('Error updating tournament match score: $e');
-        rethrow;
+
+        // Trigger celebration callback if provided
+        if (_onChampionCrowned != null) {
+          await _onChampionCrowned(winnerId);
+        }
+      } else if (isLeagueStage) {
+        // In a league, check if all fixtures have been completed to crown the table leader
+        try {
+          final pendingMatches = await _supabase
+              .from('tournament_matches')
+              .select('id')
+              .eq('championship_id', championshipId)
+              .eq('is_completed', false)
+              .limit(1);
+
+          if ((pendingMatches as List).isEmpty) {
+            final statsCoord = TournamentStatsCoordinator(client: _client);
+            final standings = await statsCoord.getChampionshipStandings(championshipId);
+            if (standings.isNotEmpty) {
+              final topTeam = standings.first;
+              final topTeamId = topTeam['team_id']?.toString();
+              final topTeamName = topTeam['team_name']?.toString() ?? '';
+              if (topTeamId != null && topTeamId.isNotEmpty) {
+                await _supabase.from('championships').update({
+                  'status': 'completed',
+                  'champion_team_id': topTeamId,
+                  'champion_team_name': topTeamName,
+                }).eq('id', championshipId);
+
+                if (_onChampionCrowned != null) {
+                  await _onChampionCrowned(topTeamId);
+                }
+              }
+            }
+          }
+        } catch (leagueErr) {
+          debugPrint('Error evaluating league completion: $leagueErr');
+        }
       }
+    } catch (e) {
+      debugPrint('Error updating tournament match score: $e');
+      rethrow;
     }
+  }
 
   /// Update scheduled time for a single match.
   Future<void> updateMatchScheduledTime({

@@ -3,7 +3,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
-import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'tournament_score_modal.dart';
@@ -126,13 +125,6 @@ class TournamentMatchCard extends StatelessWidget {
                       size: 18,
                     ),
                     onPressed: () {
-                      if (!hasSchedule) {
-                        VSPFeedback.showError(
-                          context,
-                          isAr ? 'يجب تحديد موعد المباراة أولاً!' : 'Match must be scheduled first!',
-                        );
-                        return;
-                      }
                       showTournamentScoreModal(
                         context,
                         match: match,

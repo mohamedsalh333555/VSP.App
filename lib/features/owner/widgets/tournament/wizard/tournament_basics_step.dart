@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
 
-class TournamentBasicsStep extends StatelessWidget {
+class TournamentBasicsStep extends StatefulWidget {
   final TextEditingController nameController;
   final String selectedSport;
   final List<String> availableSports;
@@ -12,6 +12,7 @@ class TournamentBasicsStep extends StatelessWidget {
   final String selectedType;
   final ValueChanged<String> onTypeChanged;
   final bool isEditing;
+  final String? preselectedType;
 
   const TournamentBasicsStep({
     super.key,
@@ -23,7 +24,46 @@ class TournamentBasicsStep extends StatelessWidget {
     required this.selectedType,
     required this.onTypeChanged,
     required this.isEditing,
+    this.preselectedType,
   });
+
+  @override
+  State<TournamentBasicsStep> createState() => _TournamentBasicsStepState();
+}
+
+class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
+  late bool _showAllFormats;
+
+  @override
+  void initState() {
+    super.initState();
+    // Collapse full format selector if user already preselected format or is editing
+    _showAllFormats = widget.preselectedType == null && !widget.isEditing;
+  }
+
+  IconData _getFormatIcon(String type) {
+    switch (type) {
+      case 'League':
+        return Iconsax.award_copy;
+      case 'GroupsAndKnockout':
+        return Iconsax.security_safe_copy;
+      case 'Cup':
+      default:
+        return Iconsax.cup_copy;
+    }
+  }
+
+  String _getFormatTitle(String type, bool isAr) {
+    switch (type) {
+      case 'League':
+        return isAr ? 'دوري نقاط كامل' : 'Full League';
+      case 'GroupsAndKnockout':
+        return isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout';
+      case 'Cup':
+      default:
+        return isAr ? 'خروج المغلوب (كأس)' : 'Knockout (Cup)';
+    }
+  }
 
   Widget _buildFormatOptionCard({
     required String type,
@@ -32,9 +72,9 @@ class TournamentBasicsStep extends StatelessWidget {
     required IconData icon,
     required bool isAr,
   }) {
-    final isSelected = selectedType == type;
+    final isSelected = widget.selectedType == type;
     return InkWell(
-      onTap: () => onTypeChanged(type),
+      onTap: () => widget.onTypeChanged(type),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -207,41 +247,102 @@ class TournamentBasicsStep extends StatelessWidget {
       key: const ValueKey('step1'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. اختيار نظام البطولة (أول شيء في الصفحة)
-        Text(
-          isAr ? 'اختر نظام البطولة ' : 'Choose Tournament Format ',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 12),
+        // 1. نظام البطولة (مختصر وأنيق إذا كان محدداً مسبقاً)
+        if (!_showAllFormats) ...[
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(_getFormatIcon(widget.selectedType), color: VSPColors.accent, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr ? 'نظام البطولة المختار' : 'Selected Format',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _getFormatTitle(widget.selectedType, isAr),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => setState(() => _showAllFormats = true),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: VSPColors.accent,
+                  ),
+                  child: Text(
+                    isAr ? 'تغيير' : 'Change',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isAr ? 'اختر نظام البطولة' : 'Choose Tournament Format',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              if (widget.preselectedType != null || widget.isEditing)
+                GestureDetector(
+                  onTap: () => setState(() => _showAllFormats = false),
+                  child: Text(
+                    isAr ? 'إخفاء' : 'Hide',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
 
-        // خروج المغلوب (Cup)
-        _buildFormatOptionCard(
-          type: 'Cup',
-          title: isAr ? 'خروج المغلوب' : 'Knockout',
-          subtitle: isAr ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
-          icon: Iconsax.cup_copy,
-          isAr: isAr,
-        ),
-        const SizedBox(height: 10),
+          // خروج المغلوب (Cup)
+          _buildFormatOptionCard(
+            type: 'Cup',
+            title: isAr ? 'خروج المغلوب' : 'Knockout',
+            subtitle: isAr ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
+            icon: Iconsax.cup_copy,
+            isAr: isAr,
+          ),
+          const SizedBox(height: 10),
 
-        // دوري كامل (League)
-        _buildFormatOptionCard(
-          type: 'League',
-          title: isAr ? 'دوري نقاط كامل' : 'Full League',
-          subtitle: isAr ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
-          icon: Iconsax.award_copy,
-          isAr: isAr,
-        ),
-        const SizedBox(height: 10),
+          // دوري كامل (League)
+          _buildFormatOptionCard(
+            type: 'League',
+            title: isAr ? 'دوري نقاط كامل' : 'Full League',
+            subtitle: isAr ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
+            icon: Iconsax.award_copy,
+            isAr: isAr,
+          ),
+          const SizedBox(height: 10),
 
-        // مجموعات وتصفيات (Groups + Knockout)
-        _buildFormatOptionCard(
-          type: 'GroupsAndKnockout',
-          title: isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout',
-          subtitle: isAr ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
-          icon: Iconsax.security_safe_copy,
-          isAr: isAr,
-        ),
+          // مجموعات وتصفيات (Groups + Knockout)
+          _buildFormatOptionCard(
+            type: 'GroupsAndKnockout',
+            title: isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout',
+            subtitle: isAr ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
+            icon: Iconsax.security_safe_copy,
+            isAr: isAr,
+          ),
+        ],
 
         const SizedBox(height: 24),
         const Divider(color: VSPColors.divider, height: 1),
@@ -251,19 +352,19 @@ class TournamentBasicsStep extends StatelessWidget {
         _buildLabel(context, isAr ? 'اسم البطولة' : 'Tournament Name'),
         _buildTextField(
           context,
-          nameController,
+          widget.nameController,
           hint: isAr ? 'مثال: كأس الأبطال' : 'e.g. Star Cup',
-          autofocus: !isEditing,
+          autofocus: !widget.isEditing,
         ),
         const SizedBox(height: VSPSpacing.md),
 
         _buildLabel(context, isAr ? 'نوع الرياضة' : 'Sport Type'),
         _buildDropdown(
           context,
-          availableSports,
-          selectedSport,
+          widget.availableSports,
+          widget.selectedSport,
           (v) {
-            if (v != null) onSportChanged(v);
+            if (v != null) widget.onSportChanged(v);
           },
         ),
         const SizedBox(height: VSPSpacing.md),
@@ -271,7 +372,7 @@ class TournamentBasicsStep extends StatelessWidget {
         _buildLabel(context, isAr ? 'رسوم الاشتراك (ج.م)' : 'Entry Fee (EGP)'),
         _buildTextField(
           context,
-          feeController,
+          widget.feeController,
           hint: isAr ? 'أدخل رسوم الاشتراك (مثال: 300)' : 'Enter entry fee (e.g. 300)',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
