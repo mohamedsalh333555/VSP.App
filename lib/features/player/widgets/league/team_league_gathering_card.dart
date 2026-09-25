@@ -10,12 +10,14 @@ class TeamLeagueGatheringCard extends StatelessWidget {
   final TeamLeagueData league;
   final VoidCallback onRefresh;
   final VoidCallback? onCancelLeague;
+  final VoidCallback? onPayFee;
 
   const TeamLeagueGatheringCard({
     super.key,
     required this.league,
     required this.onRefresh,
     this.onCancelLeague,
+    this.onPayFee,
   });
 
   @override
@@ -212,6 +214,34 @@ class TeamLeagueGatheringCard extends StatelessWidget {
           ),
 
           const SizedBox(height: VSPSpacing.lg),
+
+          if (onPayFee != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+              ),
+              child: const Text(
+                'رسوم فريقك 30 جنيه. أكمل الدفع لتأكيد مشاركتك في الدوري.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: onPayFee,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: VSPColors.background,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+              ),
+              child: const Text('دفع رسوم الدوري — 30 جنيه', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
 
           // Code & Share Section
           Container(
