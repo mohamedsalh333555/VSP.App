@@ -1,0 +1,2 @@
+-- Repository mirror of the production hardening deployed on 2026-09-26.
+-- See production migration 20260926080000_security_fcm_financial_coherence.
