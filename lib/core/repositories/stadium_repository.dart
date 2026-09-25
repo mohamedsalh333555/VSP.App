@@ -275,54 +275,19 @@ class StadiumRepository {
     }
   }
 
-  // Stadium Deletion Safeguard (Checks active bookings, reviews cleanup, hard/soft delete)
+  // Stadium deletion is server-authoritative and always preserves operational history.
   Future<bool> deleteStadium(String stadiumId) async {
-    final now = DateTime.now().toUtc();
-    final startOfTodayUtc = DateTime.utc(now.year, now.month, now.day).toIso8601String();
-
-    // Business Rule: Block deletion if active bookings exist today or in the future
-    final activeBookingsCheck = await _supabase
-        .from('bookings')
-        .select('id')
-        .eq('stadium_id', stadiumId)
-        .neq('status', 'cancelled')
-        .gte('start_time', startOfTodayUtc);
-
-    if ((activeBookingsCheck as List).isNotEmpty) {
-      throw Exception('active_bookings_exist');
-    }
-
-    // Clean up optional records (reviews)
     try {
-      await _supabase.from('reviews').delete().eq('stadium_id', stadiumId);
+      final result = await _supabase.rpc(
+        'delete_stadium_for_owner',
+        params: {'p_stadium_id': stadiumId},
+      );
+      return result is Map && result['success'] == true;
     } catch (e) {
-      VSPLogger.w('Pre-delete cleanup warning: $e');
-    }
-
-    try {
-      // 1. Attempt Hard Delete (Permanent DB Removal)
-      await _supabase.from('stadiums').delete().eq('id', stadiumId);
-      return true;
-    } catch (e) {
-      VSPLogger.w('Hard delete failed (e.g. FK RESTRICT due to bookings). Falling back to soft-delete: $e');
-      try {
-        // 2. Fallback Soft-Delete if DB foreign key constraint prevents hard delete
-        await _supabase
-            .from('stadiums')
-            .update({
-              'is_deleted_by_owner': true,
-              'is_verified': false,
-              'is_blocked': true,
-            })
-            .eq('id', stadiumId);
-        return true;
-      } catch (softErr) {
-        VSPLogger.e('Error during stadium soft deletion fallback', softErr);
-        return false;
-      }
+      VSPLogger.e('Error deleting stadium', e);
+      rethrow;
     }
   }
-
   /// Check if owner still has active non-deleted stadiums
   Future<bool> checkOwnerHasRemainingStadiums(String ownerId) async {
     try {
