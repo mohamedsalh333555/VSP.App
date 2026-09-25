@@ -234,6 +234,63 @@ serve(async (req: Request) => {
       console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
     }
 
+    // Strict gross-amount validation for all tournament orders.
+    const validateTournamentGross = async (
+      orderTable: string,
+      reference: string,
+      gatewayType: string,
+    ) => {
+      const { data: order, error: orderError } = await supabase
+        .from(orderTable)
+        .select("amount, payment_status")
+        .eq("order_reference", reference)
+        .maybeSingle();
+
+      if (orderError || !order) {
+        return { ok: false, reason: "payment_order_not_found" };
+      }
+      if (order.payment_status !== "pending") {
+        return { ok: false, reason: "payment_order_not_pending" };
+      }
+
+      const { data: feeConfig, error: feeError } = await supabase
+        .from("platform_fee_config")
+        .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee, paymob_applies_to_electronic")
+        .eq("id", 1)
+        .maybeSingle();
+
+      if (feeError || !feeConfig || feeConfig.paymob_applies_to_electronic !== true) {
+        return { ok: false, reason: "fee_policy_unavailable" };
+      }
+
+      const principal = Number(order.amount || 0);
+      const vspRate = Number(feeConfig.booking_vsp_rate);
+      const defaultGatewayRate = Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+      const walletGatewayRate = Number(feeConfig.booking_paymob_wallet_rate ?? defaultGatewayRate);
+      const gatewayRate = /wallet|vodafone|orange|etisalat|we|smartwallet/i.test(gatewayType)
+        ? walletGatewayRate
+        : defaultGatewayRate;
+      const fixedFee = Number(feeConfig.booking_paymob_fixed_fee);
+      const paidCents = Math.round(Number(obj.amount_cents || 0));
+
+      if (![principal, vspRate, gatewayRate, fixedFee].every(Number.isFinite) || paidCents <= 0) {
+        return { ok: false, reason: "invalid_payment_amount" };
+      }
+
+      const expectedCents = Math.round(
+        (principal + Math.round(principal * vspRate * 100) / 100
+          + Math.round((principal * gatewayRate + fixedFee) * 100) / 100) * 100
+      );
+
+      return {
+        ok: paidCents === expectedCents,
+        reason: paidCents === expectedCents ? null : "gross_amount_mismatch",
+        principal,
+        expectedCents,
+        paidCents,
+      };
+    };
+
     // Team league payments: verify the server-created order, then atomically mark the team paid.
     if (specialReference.startsWith("LEAGUE_")) {
       if (isSuccess) {
@@ -250,6 +307,18 @@ serve(async (req: Request) => {
         }
       }
       return new Response(JSON.stringify({ status: "processed", type: "team_league", success: isSuccess }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
+
+    // 3.4 Handle 1v1 Tournament Orders (With Real Paymob Refund on Over-Capacity)
+    if (specialReference.startsWith("TOURN_1V1_") && isSuccess) {
+      const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+      const amountCheck = await validateTournamentGross("vsp_1v1_tournament_orders", specialReference, sourceType);
+      if (!amountCheck.ok) {
+        console.error("Rejected 1v1 webhook gross mismatch:", specialReference, amountCheck);
+        return new Response(JSON.stringify({ error: "Invalid tournament payment amount" }), {
+          status: 400, headers: { "Content-Type": "application/json" }
+        });
+      }
     }
 
     // 3.4 Handle 1v1 Tournament Orders (With Real Paymob Refund on Over-Capacity)
@@ -358,6 +427,18 @@ serve(async (req: Request) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    // 3.5 Handle Team Tournament Orders
+    if (specialReference.startsWith("TOURN_") && !specialReference.startsWith("TOURN_1V1_") && isSuccess) {
+      const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
+      const amountCheck = await validateTournamentGross("tournament_orders", specialReference, sourceType);
+      if (!amountCheck.ok) {
+        console.error("Rejected team tournament webhook gross mismatch:", specialReference, amountCheck);
+        return new Response(JSON.stringify({ error: "Invalid tournament payment amount" }), {
+          status: 400, headers: { "Content-Type": "application/json" }
+        });
+      }
     }
 
     // 3.5 Handle Team Tournament Orders
