@@ -82,53 +82,15 @@ class TeamRepository {
  }
 
  Future<String?> createTeam(Map<String, dynamic> data) async {
- try {
- final List memberUids = List.from(data['memberUids'] ?? []);
- if (memberUids.length > 12) {
- throw Exception("تنبيه: عذراً، اكتمل الحد الأقصى لأعضاء الفريق (12 لاعباً كحد أقصى).");
+  final memberUids = List<String>.from((data['memberUids'] as List? ?? []).map((e) => e.toString()).where((e) => !e.startsWith('guest_')));
+  final pgData = TeamPayloadBuilder.buildCreatePayload(data);
+  final response = await _supabase.rpc('create_team_atomic', params: {
+    'p_data': pgData,
+    'p_member_uids': memberUids,
+  });
+  if (response is Map && response['success'] == true) return response['team_id']?.toString();
+  throw Exception(response is Map ? response['error'] ?? 'فشل إنشاء الفريق' : 'فشل إنشاء الفريق');
  }
-
- final pgData = TeamPayloadBuilder.buildCreatePayload(data);
-
- final response = await _supabase
- .from('teams')
- .insert(pgData)
- .select('id')
- .single();
- 
- final teamId = response['id'].toString();
-
- if (memberUids.isNotEmpty) {
-      final validMemberUids = memberUids
-          .where((uid) => !uid.toString().startsWith('guest_'))
-          .toList();
-      if (validMemberUids.isNotEmpty) {
-        final List<Map<String, dynamic>> memberRows = validMemberUids.map((uid) => {
-          'team_id': teamId,
-          'user_id': uid.toString(),
-        }).toList();
-        await _supabase.from('team_members').insert(memberRows);
-      }
-    }
-
-  if (memberUids.length > 1) {
-  for (int i = 1; i < memberUids.length; i++) {
-  _rosterCoordinator.sendJoinNotification(memberUids[i].toString());
-  }
-  }
-
- return teamId;
- } on PostgrestException catch (e) {
- if (e.code == '23505' || e.message.contains('unique') || e.message.contains('duplicate')) {
- throw Exception("اسم الفريق مستخدم بالفعل، يرجى اختيار اسم آخر.");
- }
- rethrow;
- } catch (e) {
- debugPrint('Error creating team: $e');
- rethrow;
- }
- }
-
  Future<Team?> getTeam(String id) async {
  try {
  final response = await _supabase
@@ -267,60 +229,18 @@ class TeamRepository {
 
  Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
   try {
-  final pgData = TeamPayloadBuilder.buildUpdatePayload(data);
-
- if (pgData.isEmpty) return true;
-
- await _supabase.from('teams').update(pgData).eq('id', teamId);
- return true;
- } catch (e) {
- debugPrint('Error updating team: $e');
- return false;
- }
+    final pgData = TeamPayloadBuilder.buildUpdatePayload(data);
+    if (pgData.isEmpty) return true;
+    final response = await _supabase.rpc('update_team_atomic', params: {'p_team_id': teamId, 'p_data': pgData});
+    return response is Map && response['success'] == true;
+  } catch (e) { debugPrint('Error updating team: $e'); return false; }
  }
 
  Future<bool> deleteTeam(String teamId) async {
- try {
- final champs = await _supabase
- .from('championships')
- .select('id')
- .contains('joined_teams', [teamId])
- .inFilter('status', ['open', 'ongoing']);
- if ((champs as List).isNotEmpty) throw Exception('team_in_tournament');
-
- final bookings1 = await _supabase
- .from('bookings')
- .select('end_time')
- .eq('status', 'confirmed')
- .eq('player_team_id', teamId);
-
- final bookings2 = await _supabase
- .from('bookings')
- .select('end_time')
- .eq('status', 'confirmed')
- .eq('opponent_team_id', teamId);
-
- bool hasActiveMatch = false;
- for (var doc in [...bookings1 as List, ...bookings2 as List]) {
- final endTime = DateTime.parse(doc['end_time']);
- if (endTime.isAfter(DateTime.now())) {
- hasActiveMatch = true;
- break;
+  final response = await _supabase.rpc('delete_team_atomic', params: {'p_team_id': teamId});
+  if (response is Map && response['success'] == true) return true;
+  throw Exception(response is Map ? response['error'] ?? 'فشل حذف الفريق' : 'فشل حذف الفريق');
  }
- }
-
- if (hasActiveMatch) {
- throw Exception('active_match_or_tournament_error');
- }
-
- await _supabase.from('team_members').delete().eq('team_id', teamId);
- await _supabase.from('teams').delete().eq('id', teamId);
- return true;
- } catch (e) {
- rethrow;
- }
- }
-
  Future<bool> has1v1Champion(String teamId) async {
  try {
  final response = await _supabase.rpc(
