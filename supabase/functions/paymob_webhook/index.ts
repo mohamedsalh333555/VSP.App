@@ -249,6 +249,9 @@ serve(async (req: Request) => {
       if (orderError || !order) {
         return { ok: false, reason: "payment_order_not_found" };
       }
+      if (order.payment_status === "paid") {
+        return { ok: true, alreadyProcessed: true };
+      }
       if (order.payment_status !== "pending") {
         return { ok: false, reason: "payment_order_not_pending" };
       }
@@ -336,6 +339,10 @@ serve(async (req: Request) => {
 
         if (tournErr) {
           console.error("❌ Failed to confirm 1v1 tournament order via RPC:", tournErr);
+          return new Response(JSON.stringify({ error: "1v1 tournament payment confirmation failed" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         } else if (tournResult?.needs_refund === true) {
           // 🛡️ OVER-CAPACITY DETECTED: Real Paymob Refund API call FIRST
           console.warn(`🚨 Capacity exceeded for 1v1 order ${specialReference}. Initiating REAL Paymob Refund API call...`);
@@ -456,6 +463,10 @@ serve(async (req: Request) => {
 
         if (tournErr) {
           console.error("Failed to confirm tournament order via RPC:", tournErr);
+          return new Response(JSON.stringify({ error: "Tournament payment confirmation failed" }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
         } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
           // OVER-CAPACITY DETECTED: refund the exact gross amount charged to the payer.
           console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
