@@ -48,8 +48,8 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
     int? homePenalties;
     int? awayPenalties;
     if (isPlayoff && home == away) {
-      homePenalties = int.tryParse(__homePenaltiesController.text.trim());
-      awayPenalties = int.tryParse(__awayPenaltiesController.text.trim());
+      homePenalties = int.tryParse(_homePenaltiesController.text.trim());
+      awayPenalties = int.tryParse(_awayPenaltiesController.text.trim());
       if (homePenalties == null || awayPenalties == null || homePenalties < 0 || awayPenalties < 0 || homePenalties == awayPenalties) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('في حالة التعادل يجب تحديد ركلات ترجيح مختلفة لتحديد الفائز')));
         return;
