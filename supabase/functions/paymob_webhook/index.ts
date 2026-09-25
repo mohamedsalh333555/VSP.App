@@ -274,6 +274,23 @@ serve(async (req: Request) => {
           let refundSuccess = false;
           let refundId = null;
           let refundErrorMsg = null;
+          // Use the exact gross amount charged by Paymob when available.
+          // If the webhook omits it, rebuild the same server-side gross used by checkout.
+          let amountCents = Math.round(Number(obj.amount_cents || 0));
+          if (amountCents <= 0) {
+            const { data: feeConfig } = await supabase
+              .from("platform_fee_config")
+              .select("booking_vsp_rate, booking_paymob_local_rate, booking_paymob_fixed_fee")
+              .eq("id", 1)
+              .maybeSingle();
+            const principal = Number(tournResult?.amount || 0);
+            const vspRate = Number(feeConfig?.booking_vsp_rate ?? 0.02);
+            const gatewayRate = Number(feeConfig?.booking_paymob_local_rate ?? 0.0275);
+            const gatewayFixed = Number(feeConfig?.booking_paymob_fixed_fee ?? 3);
+            const vspFee = Math.round(principal * vspRate * 100) / 100;
+            const gatewayFee = Math.round((principal * gatewayRate + gatewayFixed) * 100) / 100;
+            amountCents = Math.round((principal + vspFee + gatewayFee) * 100);
+          }
 
           try {
             const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
@@ -299,7 +316,6 @@ serve(async (req: Request) => {
             // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
             // Refund the exact gross amount Paymob actually charged, including VSP/gateway fees.
             // This is authoritative for the external refund and avoids under-refunding the payer.
-            const amountCents = Math.round(Number(obj.amount_cents || 0));
             const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
