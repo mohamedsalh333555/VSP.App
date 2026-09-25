@@ -296,10 +296,11 @@ class AuthProfileService {
       try {
         await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
       } catch (rpcErr) {
-        final fallbackRes = await _auth.deleteAccount(uid);
-        if (fallbackRes['success'] != true) {
-          return (success: false, error: fallbackRes['message']?.toString() ?? 'فشل حذف الحساب');
-        }
+        VSPLogger.e('Secure account deletion RPC failed; no partial deletion performed', rpcErr);
+        return (
+          success: false,
+          error: 'تعذر حذف الحساب بأمان الآن. لم يتم حذف أي جزء من الحساب. حاول مرة أخرى لاحقاً أو تواصل مع الدعم.',
+        );
       }
 
       return (success: true, error: null);
