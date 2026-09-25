@@ -1,0 +1,2 @@
+-- Canonical admin policy coherence -- 2026-09-26
+-- Production policy state was applied under this migration name.
