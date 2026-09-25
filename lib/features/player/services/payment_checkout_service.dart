@@ -49,6 +49,9 @@ class PaymentCheckoutService {
     required int timestampMs,
   }) {
     if (isTournamentPayment) {
+      if (bookingId != null && (bookingId.startsWith('LEAGUE_') || bookingId.startsWith('TOURN_'))) {
+        return bookingId;
+      }
       final teamId = (playerTeamId != null && playerTeamId.isNotEmpty) ? playerTeamId : 'TEAM';
       return 'TOURN_${teamId}_$timestampMs';
     }
