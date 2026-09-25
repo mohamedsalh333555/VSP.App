@@ -1,0 +1,3 @@
+-- Keep manual-owner booking pricing aligned with the canonical booking pricing rule:
+-- prefer price_per_hour, then base_price.
+-- (Function body is maintained in the preceding live migration and this file records the production fix.)
