@@ -102,12 +102,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (!_paymentCompleted && _booking != null && mounted) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.uid;
-          if (userId != null && PaymentCheckoutService.shouldCleanupStaleBookings(
-            isTournamentPayment: widget.isTournamentPayment,
+          if (widget.isTournamentPayment) {
+            await _coordinator.releaseBookingSafely(
+              isTournamentPayment: true,
+              booking: _booking,
+              paymentOrderReference: widget.existingBookingId,
+            );
+          } else if (userId != null && PaymentCheckoutService.shouldCleanupStaleBookings(
+            isTournamentPayment: false,
             existingBookingId: widget.existingBookingId,
           )) {
             await _coordinator.cleanupStaleBookings(
-              isTournamentPayment: widget.isTournamentPayment,
+              isTournamentPayment: false,
               userId: userId,
               stadiumId: widget.bookingDraft.stadiumId,
             );
