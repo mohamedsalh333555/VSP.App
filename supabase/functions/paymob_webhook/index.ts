@@ -725,10 +725,6 @@ serve(async (req: Request) => {
       }
 
       const paidAmountEgp = (obj.amount_cents || 0) / 100;
-      const principalAmount = (
-        existingBooking.needs_deposit &&
-        Number(existingBooking.deposit_amount) > 0
-      ) ? Number(existingBooking.deposit_amount) : Number(existingBooking.total_price);
 
       const resolvedPaymentMethod = (() => {
         const combined = `${obj.source_data?.type || ""} ${obj.source_data?.sub_type || ""}`.toLowerCase();
@@ -743,10 +739,64 @@ serve(async (req: Request) => {
         return "card";
       })();
 
-      const isDepositOnly =
+      const { data: priorPayments } = await supabase
+        .from("transactions")
+        .select("amount, metadata")
+        .eq("booking_id", bookingId)
+        .in("type", ["payment", "deposit"])
+        .eq("status", "completed");
+
+      const collectedBefore = Math.round(
+        (priorPayments || []).reduce((sum: number, tx: any) => sum + Number(tx.amount || 0), 0) * 100
+      ) / 100;
+      const remainingBefore = Math.max(
+        0,
+        Math.round((Number(existingBooking.total_price || 0) - collectedBefore) * 100) / 100
+      );
+
+      const { data: feeConfigForBooking } = await supabase
+        .from("platform_fee_config")
+        .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_wallet_rate, booking_paymob_fixed_fee")
+        .eq("id", 1)
+        .maybeSingle();
+
+      const vspRateForBooking = Number(feeConfigForBooking?.booking_vsp_rate);
+      const cardRateForBooking = Number(
+        feeConfigForBooking?.booking_paymob_local_rate ?? feeConfigForBooking?.booking_paymob_rate
+      );
+      const walletRateForBooking = Number(
+        feeConfigForBooking?.booking_paymob_wallet_rate ?? cardRateForBooking
+      );
+      const gatewayRateForBooking =
+        resolvedPaymentMethod === "wallet" ? walletRateForBooking : cardRateForBooking;
+      const fixedFeeForBooking = Number(feeConfigForBooking?.booking_paymob_fixed_fee);
+
+      const expectedGrossForPrincipal = (principal: number) => {
+        const vspFee = Math.round(principal * vspRateForBooking * 100) / 100;
+        const gatewayFee = Math.round((principal * gatewayRateForBooking + fixedFeeForBooking) * 100) / 100;
+        return Math.round((principal + vspFee + gatewayFee) * 100) / 100;
+      };
+
+      const principalCandidates: number[] = [];
+      if (remainingBefore > 0) principalCandidates.push(remainingBefore);
+      if (
+        collectedBefore <= 0.01 &&
         Boolean(existingBooking.needs_deposit) &&
-        Number(existingBooking.deposit_amount) > 0 &&
-        paidAmountEgp < (Number(existingBooking.total_price) - 0.5);
+        Number(existingBooking.deposit_amount || 0) > 0
+      ) {
+        principalCandidates.push(Math.min(
+          remainingBefore,
+          Math.round(Number(existingBooking.deposit_amount) * 100) / 100
+        ));
+      }
+
+      const uniqueCandidates = [...new Set(principalCandidates.map((n) => Math.round(n * 100) / 100))];
+      const principalAmount =
+        uniqueCandidates.find((candidate) =>
+          Math.abs(expectedGrossForPrincipal(candidate) - paidAmountEgp) <= 0.01
+        ) ?? remainingBefore;
+
+      const isDepositOnly = principalAmount < remainingBefore - 0.01;
 
       const { data: paymentResult, error: paymentError } = await supabase.rpc(
         "record_booking_payment_atomic",
