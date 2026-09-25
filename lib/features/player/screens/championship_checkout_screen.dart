@@ -41,17 +41,25 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   bool _isLoadingMembers = true;
   bool _isSubmitting = false;
   bool _hasPaid = false;
+  PaymobFeePolicy? _feePolicy;
 
   @override
   void initState() {
     super.initState();
     _loadTeamMembers();
+    _loadFeePolicy();
   }
 
   @override
   void dispose() {
     _guestController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadFeePolicy() async {
+    final policy = await PaymobService.fetchFeePolicy();
+    if (!mounted) return;
+    setState(() => _feePolicy = policy);
   }
 
   Future<void> _loadTeamMembers() async {
@@ -190,6 +198,19 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       }
 
       if (entryFee > 0) {
+        final order = await TournamentRepository().createTournamentOrder(
+          championshipId: widget.championship.id,
+          teamId: widget.team.id,
+          amount: entryFee,
+          playerIds: _selectedPlayerIds,
+          guestNames: _offlineGuestNames,
+        );
+
+        final orderReference = order?['order_reference']?.toString();
+        if (orderReference == null || orderReference.isEmpty) {
+          throw Exception('تعذر إنشاء طلب الدفع الآمن للبطولة.');
+        }
+
         final draft = BookingDraft(
           stadiumId: '00000000-0000-0000-0000-000000000000',
           stadiumName: 'بطولة: ${widget.championship.name}',
@@ -219,18 +240,18 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                 bookingDraft: draft,
                 forceFullPayment: true,
                 isTournamentPayment: true,
+                existingBookingId: orderReference,
               ),
             ),
           );
 
           if (paymentResult == true && mounted) {
             _hasPaid = true;
-            await _executeJoinChampionship();
+            await _finalizePaidTournamentRoster();
           }
           return;
         }
       }
-
       await _executeJoinChampionship();
     } catch (e) {
       if (mounted) {
@@ -245,25 +266,42 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     }
   }
 
-  Future<void> _executeJoinChampionship() async {
-    final entryFee = widget.championship.entryFee;
-    // DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
+  Future<void> _finalizePaidTournamentRoster() async {
+    final rosterSaved = await TournamentRepository().updateSingleTeamRoster(
+      championshipId: widget.championship.id,
+      teamId: widget.team.id,
+      playerIds: _selectedPlayerIds,
+      guestNames: _offlineGuestNames,
+    );
 
+    if (!rosterSaved) {
+      throw Exception('تم الدفع وتسجيل الفريق، لكن تعذر حفظ كشف اللاعبين. يمكنك تحديث الكشف من صفحة البطولة.');
+    }
+
+    if (mounted) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم الاشتراك في البطولة بنجاح!' : 'Joined tournament successfully!',
+      );
+      Navigator.pop(context, true);
+    }
+  }
+
+  Future<void> _executeJoinChampionship() async {
     final success = await TournamentRepository().joinChampionship(
       widget.championship.id,
       widget.team.id,
       selectedPlayerIds: _selectedPlayerIds,
       offlineGuestNames: _offlineGuestNames,
-      isPaid: true,
-      totalPaidAmount: totalCheckoutPrice,
+      isPaid: false,
     );
 
     if (success && mounted) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showSuccess(
         context,
-        isArabic ? 'تم الاشتراك في البطولة بنجاح! ' : 'Joined tournament successfully! ',
+        isArabic ? 'تم الاشتراك في البطولة بنجاح!' : 'Joined tournament successfully!',
       );
       Navigator.pop(context, true);
     } else if (mounted) {
@@ -276,6 +314,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -291,8 +330,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
 
     final entryFee = widget.championship.entryFee;
-    final serviceFee = PaymobService.calculateServiceFee(entryFee);
-    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
+    final serviceFee = _feePolicy?.serviceFee(entryFee) ?? 0.0;
+    final totalCheckoutPrice = _feePolicy?.total(entryFee) ?? entryFee;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
