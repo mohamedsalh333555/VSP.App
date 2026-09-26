@@ -11,6 +11,7 @@ import '../../../data/models.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../../../core/services/paymob_service.dart';
+import '../../../core/repositories/league_repository.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
 import '../widgets/payment/payment_cancel_dialog.dart';
@@ -63,27 +64,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _startCountdownTimer();
     _loadFeePolicy();
     _createPendingBooking();
-  }
-
-  Future<void> _resolveActiveCashRestriction() async {
-    if (widget.isTournamentPayment || widget.forceFullPayment || _booking == null) return;
-    final userId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
-    if (userId == null) return;
-
-    try {
-      final rows = await SupabaseBookingRepository().getUserBookingsDirectly(userId);
-      final hasPriorActiveCash = rows.any((b) =>
-          b.id != _booking!.id &&
-          b.paymentMethod.toLowerCase() == 'cash' &&
-          (b.status == BookingStatus.pending || b.status == BookingStatus.confirmed) &&
-          b.endTime.isAfter(DateTime.now()));
-      if (!mounted) return;
-      if (hasPriorActiveCash) {
-        setState(() => _serverForcedFullPayment = true);
-      }
-    } catch (_) {
-      // Server-side create_booking_atomic remains the final authority.
-    }
   }
 
   Future<void> _loadFeePolicy() async {
@@ -163,8 +143,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         _booking = booking;
         _isLoading = false;
       });
-      await _resolveActiveCashRestriction();
-
       if (booking != null) {
         _initBookingRealtimeListener(booking.id);
       } else if (!widget.isTournamentPayment) {
@@ -316,7 +294,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             // The server-side order status is the financial source of truth.
             _coordinator.startTournamentOrderPolling(
               orderReference: orderReference,
-              fetchStatus: (ref) => TournamentRepository().getTournamentPaymentOrderStatus(ref),
+              fetchStatus: (ref) => LeagueRepository().is1v1OrderPaid(ref),
               onPaid: (_) {
                 if (!mounted || _paymentCompleted) return;
                 _paymentCompleted = true;
