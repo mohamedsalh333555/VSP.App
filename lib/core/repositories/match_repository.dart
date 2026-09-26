@@ -63,7 +63,6 @@ class MatchRepository {
  .where((b) {
  final totalCapacity = b.totalFieldCapacity;
  final hasSpace = b.currentPlayers < totalCapacity;
- final uid = _supabase.auth.currentUser?.id;
  return b.endTime.isAfter(now) && hasSpace;
  })
  .toList();
@@ -97,7 +96,6 @@ class MatchRepository {
  final totalCapacity = b.totalFieldCapacity;
  final hasSpace = b.currentPlayers < totalCapacity;
  
- final uid = _supabase.auth.currentUser?.id;
  return isNotExpired && isConfirmed && isFuture && hasSpace;
  })
  .toList();
