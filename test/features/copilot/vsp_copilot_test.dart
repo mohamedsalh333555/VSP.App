@@ -69,7 +69,7 @@ void main() {
   });
 
   group('VspCopilotSheet Widget Tests', () {
-    testWidgets('Renders header, quick prompt, and handles sending messages', (tester) async {
+    testWidgets('Renders header and conversational input', (tester) async {
       final mockService = MockVspCopilotService((query) {
         if (query.contains('دور لي على ملاعب')) {
           return CopilotMessage.assistant(
@@ -101,6 +101,8 @@ void main() {
 
       // Verify header and initial greeting
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      // Quick prompts are intentionally not rendered; Copilot starts conversationally.\n      expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);\n      expect(find.byType(TextField), findsOneWidget);\n    });
+      // Quick prompts are intentionally not rendered; Copilot starts conversationally.
+      expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);\n    });
   });
 }
