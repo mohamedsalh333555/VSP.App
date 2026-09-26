@@ -25,9 +25,6 @@ class BookingReconciliationService {
         _teamRepository = teamRepository;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
-  NotificationRepository get _notificationRepo => _notificationRepository ?? NotificationRepository();
-  UserRepository get _userRepo => _userRepository ?? UserRepository();
-  TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
 
   /// Submits match outcome and optional stadium rating review.
   Future<bool> submitMatchResult({
