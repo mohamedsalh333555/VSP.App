@@ -56,7 +56,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   BuildContext? _verificationModalContext;
   final String _selectedMethod = 'card';
   PaymobFeePolicy? _feePolicy;
-  bool _serverForcedFullPayment = false;
 
   @override
   void initState() {
@@ -244,7 +243,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userEmail = user?.email ?? 'player@vsp.app';
 
     final isFullPayment = widget.forceFullPayment ||
-        _serverForcedFullPayment ||
         !widget.bookingDraft.needsDeposit ||
         widget.bookingDraft.depositPaid <= 0;
 
@@ -471,7 +469,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
-    final effectiveForceFullPayment = widget.forceFullPayment || _serverForcedFullPayment;
+    final effectiveForceFullPayment = widget.forceFullPayment;
     final hasDeposit = !effectiveForceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
     final double? totalWithFees = _feePolicy?.total(amountToPay);
