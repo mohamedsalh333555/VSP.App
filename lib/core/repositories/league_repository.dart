@@ -170,6 +170,23 @@ class LeagueRepository {
     }
   }
 
+  /// Server-side payment status for a 1v1 order. Never trusts the WebView result.
+  Future<bool> is1v1OrderPaid(String orderReference) async {
+    if (orderReference.isEmpty) return false;
+    try {
+      final row = await _supabase
+          .from('vsp_1v1_tournament_orders')
+          .select('payment_status')
+          .eq('order_reference', orderReference)
+          .eq('user_id', _supabase.auth.currentUser?.id ?? '')
+          .maybeSingle();
+      return row?['payment_status']?.toString().toLowerCase() == 'paid';
+    } catch (e) {
+      debugPrint('Error checking 1v1 order status: $e');
+      return false;
+    }
+  }
+
   /// Atomic leave for 1v1 tournament
   Future<Map<String, dynamic>> leave1v1Tournament(String tournamentId) async {
     try {
