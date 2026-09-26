@@ -113,26 +113,22 @@ class MatchRepository {
  Future<bool> joinPublicMatch(String bookingId, String userId) async {
  try {
  // Public Matchmaking: Atomic RPC Database Lock & Time-Conflict check
- await _supabase.rpc('request_join_public_match', params: {
+ final joinResult = await _supabase.rpc('request_join_public_match', params: {
  'p_booking_id': bookingId,
  'p_user_id': userId,
  });
 
- // Retrieve final details for notifications
+ // Only non-sensitive match data is read from the public feed.
  final finalDoc = await _supabase
  .from('booking_public_feed')
- .select()
+ .select('stadium_name, current_players, total_field_capacity')
  .eq('id', bookingId)
  .single();
 
- final hostId = finalDoc['created_by_user_id'] ?? finalDoc['owner_id'] ?? '';
+ final hostId = joinResult is Map ? (joinResult['host_user_id']?.toString() ?? '') : '';
  final stadiumName = finalDoc['stadium_name'] ?? 'Match';
- final finalCurrent = finalDoc['current_players'] ?? 0;
- final ppt = finalDoc['players_per_team'] ?? finalDoc['playersPerTeam'];
- final totalCapacity = finalDoc['total_field_capacity'] ?? finalDoc['totalFieldCapacity'] ?? ((ppt != null) ? ppt * 2 : (finalDoc['max_players'] != null ? finalDoc['max_players'] * 2 : 10));
- final participantIds = List<String>.from(
- (finalDoc['joined_user_ids'] as List?)?.map((e) => e.toString()) ?? []
- );
+ final finalCurrent = (finalDoc['current_players'] as num?)?.toInt() ?? 0;
+ final totalCapacity = (finalDoc['total_field_capacity'] as num?)?.toInt() ?? 10;
 
  String joiningUserName = 'A player';
  try {
@@ -155,17 +151,8 @@ class MatchRepository {
  VSPLogger.w('FCM notifyPlayerJoinedMatch failed: $fcmError');
  }
 
- try {
- if (finalCurrent >= totalCapacity) {
- await NotificationHandler.notifyMatchIsFull(
- playerIds: participantIds,
- stadiumName: stadiumName,
- bookingId: bookingId,
- );
- }
- } catch (fcmError) {
- VSPLogger.w('FCM notifyMatchIsFull failed: $fcmError');
- }
+ // Participant identifiers are intentionally not exposed through the public feed.
+ // The host receives the join notification; full-match fan-out is handled by later event work.
 
  AnalyticsService.logMatchJoined(bookingId, 'public');
  return true;
