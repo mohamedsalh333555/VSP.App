@@ -294,12 +294,35 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             // The server-side order status is the financial source of truth.
             _coordinator.startTournamentOrderPolling(
               orderReference: orderReference,
-              fetchStatus: (ref) async => {'paid': await LeagueRepository().is1v1OrderPaid(ref)},
+              fetchStatus: (ref) async {
+                final paid = await LeagueRepository().is1v1OrderPaid(ref);
+                return {
+                  'success': true,
+                  'payment_status': paid ? 'paid' : 'pending',
+                };
+              },
               onPaid: (_) {
                 if (!mounted || _paymentCompleted) return;
                 _paymentCompleted = true;
                 _coordinator.cancelAllTimers();
                 Navigator.pop(context, true);
+              },
+            );
+            _coordinator.startWebhookTimeout(
+              timeout: const Duration(seconds: 90),
+              onTimeout: () {
+                if (!mounted || _paymentCompleted) return;
+                _coordinator.cancelAllTimers();
+                setState(() {
+                  _isAwaitingWebhook = false;
+                  _isLoading = false;
+                });
+                VSPFeedback.showInfo(
+                  context,
+                  isArabic
+                      ? 'الدفع ما زال قيد التحقق. لا تعيد الدفع الآن؛ سيتم اعتماد العملية بعد وصول تأكيد الخادم.'
+                      : 'Payment is still being verified. Do not pay again; the registration will complete after server confirmation.',
+                );
               },
             );
             return;
