@@ -95,8 +95,8 @@ export function planClarification(
       return {
         needsClarification: true,
         type: "ambiguous_time",
-        question: `عايز تحجز الساعة ${displayH} بالليل، مظبوط كده؟`,
-        quickReplies: ["أيوه بالليل", "الصبح"],
+        question: `الساعة ${displayH} تقصدها الصبح ولا بالليل؟`,
+        quickReplies: ["الصبح", "بالليل"],
         reason: "time_period_unconfirmed",
       };
     }
