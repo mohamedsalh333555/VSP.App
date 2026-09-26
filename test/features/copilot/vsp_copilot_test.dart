@@ -101,20 +101,6 @@ void main() {
 
       // Verify header and initial greeting
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
-      expect(find.text('دور لي على ملاعب فاضية النهاردة'), findsOneWidget);
-      expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);
-
-      // Tap the single quick prompt chip
-      await tester.tap(find.text('دور لي على ملاعب فاضية النهاردة'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Verify message sent and response received with stadium card
-      expect(find.text('دور لي على ملاعب فاضية النهاردة'), findsNWidgets(2)); // in chip & in user bubble
-      expect(find.text('لقيتلك أفضل الملاعب في القاهرة:'), findsOneWidget);
-      expect(find.text('ملعب النجوم'), findsOneWidget);
-      expect(find.text('300 ج.م/ساعة'), findsOneWidget);
-      expect(find.text('4.9'), findsOneWidget);
-    });
+      // Quick prompts are intentionally not rendered; Copilot starts conversationally.\n      expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);\n      expect(find.byType(TextField), findsOneWidget);\n    });
   });
 }
