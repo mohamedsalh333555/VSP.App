@@ -28,11 +28,6 @@ class PaymentCheckoutService {
     return totalPrice;
   }
 
-  /// Calculates the final total amount including any gateway processing fees.
-  static double calculateTotalAmountWithFees(double baseAmount) {
-    return PaymobService.calculateTotalAmount(baseAmount);
-  }
-
   /// Returns the corresponding Paymob integration ID based on selected payment method.
   static String getIntegrationId(String method) {
     if (method == 'wallet') {
