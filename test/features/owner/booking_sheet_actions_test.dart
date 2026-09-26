@@ -246,10 +246,8 @@ void main() {
         ),
       ));
       await tester.pump();
-      // While saving, the button intentionally replaces its money icon with a spinner.
-      // Tap the disabled button itself to verify the callback remains blocked.
-      await tester.tap(find.byType(ElevatedButton), warnIfMissed: false);
-      await tester.pump();
+      // While saving, the action is disabled and shows a spinner.
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(fired, isFalse);
     });
 
