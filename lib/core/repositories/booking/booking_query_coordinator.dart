@@ -206,42 +206,13 @@ class BookingQueryCoordinator {
     }
   }
 
-  /// Real-time stream of stadium bookings for booking sheet schedule.
+  /// Polls the scoped stadium-slot RPC so public users never receive private booking fields.
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) async* {
-    final direct = await fetchStadiumBookingsDirectly(stadiumId, date);
-    if (direct.isNotEmpty) yield direct;
-
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 2));
-
-    yield* _supabase
-        .from('bookings')
-        .stream(primaryKey: ['id'])
-        .eq('stadium_id', stadiumId)
-        .map((list) {
-          return list
-              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) {
-                if (b.status == BookingStatus.cancelled) return false;
-                if (b.status == BookingStatus.pending) {
-                  final isExpired = BookingDomainRules.isPendingBookingExpired(b.createdAt, DateTime.now());
-                  if (isExpired) return false;
-                }
-                return b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
-                    b.startTime.isBefore(endOfDay);
-              })
-              .toList();
-        })
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
-            sink.add(refreshed);
-          },
-        )
-        .handleError((error) {
-          VSPLogger.w('Handled realtime error in getBookingsForStadium: $error');
-        });
+    while (true) {
+      final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
+      yield refreshed;
+      await Future<void>.delayed(const Duration(seconds: 10));
+    }
   }
 
   /// Fetches unpaid confirmed bookings for player.
