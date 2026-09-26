@@ -317,10 +317,11 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       // FIX 2: أغلق WebView بدون دفع → ألغِ الـ order المعلق
       if (isPaidSuccess != true) {
         await LeagueRepository().cancel1v1PaymentOrder(orderRef);
+        if (!mounted) return;
         VSPFeedback.showWarning(
             context, isArabic ? 'تم إلغاء طلب الاشتراك.' : 'Registration request cancelled.');
         return;
-      }
+      
 
       // Browser/WebView success is not proof of payment. Confirm the server order first.
       final serverPaid = await LeagueRepository().is1v1OrderPaid(orderRef);
