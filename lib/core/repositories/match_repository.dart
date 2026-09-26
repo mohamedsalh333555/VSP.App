@@ -122,8 +122,6 @@ class MatchRepository {
 
  final hostId = joinResult is Map ? (joinResult['host_user_id']?.toString() ?? '') : '';
  final stadiumName = finalDoc['stadium_name'] ?? 'Match';
- final finalCurrent = (finalDoc['current_players'] as num?)?.toInt() ?? 0;
- final totalCapacity = (finalDoc['total_field_capacity'] as num?)?.toInt() ?? 10;
 
  String joiningUserName = 'A player';
  try {
