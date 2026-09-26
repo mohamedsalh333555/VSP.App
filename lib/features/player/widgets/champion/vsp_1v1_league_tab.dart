@@ -321,7 +321,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         VSPFeedback.showWarning(
             context, isArabic ? 'تم إلغاء طلب الاشتراك.' : 'Registration request cancelled.');
         return;
-      
+      }
 
       // Browser/WebView success is not proof of payment. Confirm the server order first.
       final serverPaid = await LeagueRepository().is1v1OrderPaid(orderRef);
