@@ -27,7 +27,6 @@ class BookingCreationCoordinator {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   NotificationRepository get _notificationRepo => _notificationRepository ?? NotificationRepository();
-  UserRepository get 
   TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
 
   /// Converts domain [BookingType] to database string representation.
