@@ -300,7 +300,7 @@ class MatchRepository {
  .from('booking_public_feed')
  .select()
  .eq('is_private', false)
- .inFilter('status', ['confirmed', 'upcoming'])
+ .inFilter('status', ['confirmed'])
  .gte('end_time', cutoffIso)
  .order('start_time', ascending: true)
  .range(offset, offset + limit - 1);
@@ -310,7 +310,7 @@ class MatchRepository {
  .where((b) {
  final isFuture = b.endTime.isAfter(now);
  final hasSpace = b.currentPlayers < b.totalFieldCapacity;
-  return isFuture && (hasSpace || isParticipant);
+  return isFuture && hasSpace;
  }).toList();
 
  return {
