@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../repositories/notification_repository.dart';
 import '../../services/logger_service.dart';
-import '../../utils/phone_utils.dart';
 
 /// Coordinator handling team member roster queries, additions, removals, and notifications.
 class TeamRosterCoordinator {
