@@ -103,6 +103,7 @@ void main() {
       expect(find.text('كابتن VSP الذكي'), findsOneWidget);
       // Quick prompts are intentionally not rendered; Copilot starts conversationally.
       expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);
-      expect(find.byType(TextField), findsOneWidget);\n    });
+      expect(find.byType(TextField), findsOneWidget);
+    });
   });
 }
