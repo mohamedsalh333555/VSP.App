@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/logger_service.dart';
-import 'booking_domain_rules.dart';
+
 
 /// Handles read queries, direct REST fetches, and real-time streams for bookings.
 class BookingQueryCoordinator {
