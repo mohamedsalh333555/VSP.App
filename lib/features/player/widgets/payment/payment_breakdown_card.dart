@@ -24,8 +24,12 @@ class PaymentBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double serviceFee = PaymobService.calculateServiceFee(amountToPay);
-    final double totalWithFees = PaymobService.calculateTotalAmount(amountToPay);
+    return FutureBuilder<PaymobFeePolicy?>(
+      future: PaymobService.fetchFeePolicy(),
+      builder: (context, snapshot) {
+        final policy = snapshot.data;
+        final double serviceFee = policy?.serviceFee(amountToPay) ?? 0;
+        final double totalWithFees = policy?.total(amountToPay) ?? amountToPay;
 
     final String displayStadiumName =
         (bookingDraft.stadiumName.trim().isEmpty || bookingDraft.stadiumName.trim() == 'Mo')
@@ -104,6 +108,8 @@ class PaymentBreakdownCard extends StatelessWidget {
           ],
         ],
       ),
+        );
+      },
     );
   }
 
