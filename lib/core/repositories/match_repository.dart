@@ -16,7 +16,7 @@ class MatchRepository {
  // Get all matches (Live stream)
  Stream<List<Map<String, dynamic>>> getMatches() {
  return _supabase
- .from('bookings')
+ .from('booking_public_feed')
  .stream(primaryKey: ['id'])
  .timeout(
  const Duration(seconds: 10),
@@ -50,7 +50,7 @@ class MatchRepository {
  // 1. جلب أولي سريع ومفلتر على مستوى قاعدة البيانات (Server-side Filtered REST Query)
  try {
  final response = await _supabase
- .from('bookings')
+ .from('booking_public_feed')
  .select()
  .eq('is_private', false)
  .inFilter('status', ['confirmed', 'upcoming'])
@@ -76,7 +76,7 @@ class MatchRepository {
 
  // 2. التسمع اللحظي للتحديثات (Realtime Stream)
  yield* _supabase
- .from('bookings')
+ .from('booking_public_feed')
  .stream(primaryKey: ['id'])
  .eq('is_private', false)
  .order('start_time', ascending: true)
@@ -120,7 +120,7 @@ class MatchRepository {
 
  // Retrieve final details for notifications
  final finalDoc = await _supabase
- .from('bookings')
+ .from('booking_public_feed')
  .select()
  .eq('id', bookingId)
  .single();
@@ -203,8 +203,8 @@ class MatchRepository {
  Future<bool> leavePublicMatch(String bookingId, String userId) async {
  try {
  final doc = await _supabase
- .from('bookings')
- .select('created_by_user_id, owner_id, stadium_name')
+ .from('booking_public_feed')
+ .select('id, stadium_name, host_name')
  .eq('id', bookingId)
  .maybeSingle();
 
@@ -252,8 +252,8 @@ class MatchRepository {
  Future<bool> removeParticipantFromPublicMatch(String bookingId, String userId) async {
  try {
  final doc = await _supabase
- .from('bookings')
- .select('stadium_name')
+ .from('booking_public_feed')
+ .select('id, stadium_name')
  .eq('id', bookingId)
  .maybeSingle();
 
@@ -315,7 +315,7 @@ class MatchRepository {
  
  // الفلترة تتم الآن على مستوى الخادم أولاً قبل التقسيم الصفحي
  final response = await _supabase
- .from('bookings')
+ .from('booking_public_feed')
  .select()
  .eq('is_private', false)
  .inFilter('status', ['confirmed', 'upcoming'])
