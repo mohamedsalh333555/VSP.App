@@ -12,7 +12,6 @@ import '../user_repository.dart';
 class BookingCreationCoordinator {
   final SupabaseClient? _client;
   final NotificationRepository? _notificationRepository;
-  final UserRepository? _userRepository;
   final TeamRepository? _teamRepository;
 
   BookingCreationCoordinator({
@@ -22,7 +21,6 @@ class BookingCreationCoordinator {
     TeamRepository? teamRepository,
   })  : _client = client,
         _notificationRepository = notificationRepository,
-        _userRepository = userRepository,
         _teamRepository = teamRepository;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
