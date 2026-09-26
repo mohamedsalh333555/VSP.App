@@ -294,7 +294,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             // The server-side order status is the financial source of truth.
             _coordinator.startTournamentOrderPolling(
               orderReference: orderReference,
-              fetchStatus: (ref) => LeagueRepository().is1v1OrderPaid(ref),
+              fetchStatus: (ref) async => {'paid': await LeagueRepository().is1v1OrderPaid(ref)},
               onPaid: (_) {
                 if (!mounted || _paymentCompleted) return;
                 _paymentCompleted = true;
