@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/logger_service.dart';
-import 'booking_domain_rules.dart';
 
 /// Coordinates booking rescheduling, manual booking updates, emergency closures, and locking mechanisms.
 class BookingScheduleCoordinator {
@@ -103,10 +102,6 @@ class BookingScheduleCoordinator {
     required String stadiumId,
   }) async {
     try {
-      final tenMinutesAgo = DateTime.now()
-          .subtract(const Duration(minutes: 10))
-          .toUtc()
-          .toIso8601String();
 
       await _supabase.rpc('cleanup_stale_pending_bookings_atomic', params: {
         'p_user_id': userId,
