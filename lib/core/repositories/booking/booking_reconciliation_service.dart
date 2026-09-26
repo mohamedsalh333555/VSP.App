@@ -141,5 +141,4 @@ class BookingReconciliationService {
     // Post-match nudges are emitted by the trusted server scheduler.
     return;
   }
-  }
 }
