@@ -6,6 +6,7 @@ import '../../services/analytics_service.dart';
 import '../../services/logger_service.dart';
 import '../notification_repository.dart';
 import '../team_repository.dart';
+import '../user_repository.dart';
 
 /// Coordinates atomic booking creation via RPC, notifications to owner/opponent, and analytics.
 class BookingCreationCoordinator {
