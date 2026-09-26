@@ -2,23 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../services/logger_service.dart';
-import '../notification_repository.dart';
-import '../team_repository.dart';
-import '../user_repository.dart';
 import 'booking_domain_rules.dart';
 
 /// Handles match result submissions, ratings, and background reconciliation cron operations.
 class BookingReconciliationService {
   final SupabaseClient? _client;
-  final NotificationRepository? _notificationRepository;
-  final UserRepository? _userRepository;
-  final TeamRepository? _teamRepository;
 
   BookingReconciliationService({
     SupabaseClient? client,
-    NotificationRepository? notificationRepository,
-    UserRepository? userRepository,
-    TeamRepository? teamRepository,
   })  : _client = client,
         _notificationRepository = notificationRepository,
         _userRepository = userRepository,
