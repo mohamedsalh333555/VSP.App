@@ -322,9 +322,18 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         return;
       }
 
+      // Browser/WebView success is not proof of payment. Confirm the server order first.
+      final serverPaid = await LeagueRepository().is1v1OrderPaid(orderRef);
+      if (!mounted) return;
+      if (!serverPaid) {
+        VSPFeedback.showWarning(
+            context, isArabic ? 'الدفع قيد التحقق. سيتم تسجيلك بعد تأكيد العملية.' : 'Payment is being verified. Registration will complete after confirmation.');
+        return;
+      }
+
       _hasPaid = true;
 
-      // 5. FIX 3: Retry بعد 3 ثوانٍ لمواجهة تأخر Webhook
+      // Retry بعد 3 ثوانٍ لمواجهة تأخر التسجيل بعد تأكيد الدفع.
       bool isRegistered = await LeagueRepository().isUserRegisteredIn1v1(tournamentId, user.uid);
       if (!isRegistered) {
         await Future.delayed(const Duration(seconds: 3));
