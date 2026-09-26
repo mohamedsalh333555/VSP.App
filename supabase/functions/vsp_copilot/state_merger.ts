@@ -207,18 +207,13 @@ export function mergeState(
   // 6. Time Updates
   if (Array.isArray(semanticOutput.entities.times) && semanticOutput.entities.times.length > 0) {
     const newTimes: TimeEntity[] = semanticOutput.entities.times.map(t => {
-      // Egyptian football pitch default: 5..11 PM if ambiguous
+      // Never guess AM/PM for an ambiguous Egyptian time.
+      // The planner must ask for clarification when the period is unknown/ambiguous.
       let hourNum = Number(t.time.split(":")[0]);
       let period = t.period;
       let certainty = t.period_certainty;
 
-      if (period === "unknown") {
-        if (hourNum >= 5 && hourNum <= 11) {
-          hourNum += 12;
-          period = "pm";
-          certainty = "inferred";
-        }
-      } else if (period === "pm" && hourNum < 12) {
+      if (period === "pm" && hourNum < 12) {
         hourNum += 12;
       } else if (period === "am" && hourNum === 12) {
         hourNum = 0;
