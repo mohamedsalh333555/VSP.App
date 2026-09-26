@@ -233,7 +233,7 @@ export function mergeState(
       next.times = newTimes;
       timeChanged = true;
       // If time was explicitly confirmed or inferred
-      const hasAmbiguous = newTimes.some(t => t.period_certainty === "ambiguous");
+      const hasAmbiguous = newTimes.some(t => t.period_certainty !== "explicit" || t.period === "unknown");
       next.time_period_confirmed = !hasAmbiguous;
     }
   } else if (semanticOutput.entities.time_range) {
