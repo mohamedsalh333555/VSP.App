@@ -477,6 +477,18 @@ export function validateAndNormalizeSemanticOutput(raw: any, rawInputText: strin
         }))
     : [];
 
+  // Egyptian weekday phrases can be context-dependent ("الجمعة دي" vs "الجمعة الجاية").
+  // For a booking action, do not silently choose a week when the user did not provide a calendar date.
+  const fridayAmbiguous = /الجمعة\s*(دي|ده|الجاي[ةه]?|القادم[ةه]?|الجاية|القادمة)/u.test(rawInputText)
+    && entities.date?.type !== "iso_date";
+  if (fridayAmbiguous && !ambiguities.some(a => a.type === "date")) {
+    ambiguities.push({
+      type: "date",
+      description: "تقصد الجمعة دي ولا الجمعة الجاية؟",
+      options: ["الجمعة دي", "الجمعة الجاية"],
+    });
+  }
+
   const conf = raw.confirmation && typeof raw.confirmation === "object" ? raw.confirmation : {};
   const confirmation: SemanticConfirmation = {
     meaning: ["none", "requested", "accepted", "rejected", "ambiguous"].includes(conf.meaning)
