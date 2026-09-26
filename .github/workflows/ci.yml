@@ -12,6 +12,29 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare Firebase Android config
+        run: |
+          mkdir -p android/app
+          cat > android/app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "860837572098",
+              "project_id": "vsp-app-103b1",
+              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+                "android_client_info": {
+                  "package_name": "app.vsp.sports"
+                }
+              },
+              "api_key": [{
+                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
+              }]
+            }]
+          }
+          EOF
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.8'
