@@ -323,12 +323,26 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         return;
       }
 
-      // Browser/WebView success is not proof of payment. Confirm the server order first.
-      final serverPaid = await LeagueRepository().is1v1OrderPaid(orderRef);
-      if (!mounted) return;
+      // Browser/WebView success is not proof of payment.
+      // Give the Paymob webhook a bounded window to reach the server.
+      bool serverPaid = false;
+      for (var attempt = 0; attempt < 12; attempt++) {
+        serverPaid = await LeagueRepository().is1v1OrderPaid(orderRef);
+        if (!mounted) return;
+        if (serverPaid) break;
+        if (attempt < 11) {
+          await Future.delayed(const Duration(seconds: 5));
+          if (!mounted) return;
+        }
+      }
+
       if (!serverPaid) {
-        VSPFeedback.showWarning(
-            context, isArabic ? 'الدفع قيد التحقق. سيتم تسجيلك بعد تأكيد العملية.' : 'Payment is being verified. Registration will complete after confirmation.');
+        VSPFeedback.showInfo(
+          context,
+          isArabic
+              ? 'تمت العودة من بوابة الدفع، لكن تأكيد العملية ما زال قيد المعالجة. لن يتم تسجيلك قبل تأكيد الدفع من الخادم.'
+              : 'Payment was returned from the gateway, but server confirmation is still pending. Registration will complete only after payment is verified.',
+        );
         return;
       }
 
