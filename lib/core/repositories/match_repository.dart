@@ -53,7 +53,7 @@ class MatchRepository {
  .from('booking_public_feed')
  .select()
  .eq('is_private', false)
- .inFilter('status', ['confirmed', 'upcoming'])
+ .inFilter('status', ['confirmed'])
  .gte('end_time', cutoffIso)
  .order('start_time', ascending: true)
  .limit(50);
@@ -64,8 +64,7 @@ class MatchRepository {
  final totalCapacity = b.totalFieldCapacity;
  final hasSpace = b.currentPlayers < totalCapacity;
  final uid = _supabase.auth.currentUser?.id;
- final isParticipant = uid != null && b.joinedUserIds.contains(uid);
- return b.endTime.isAfter(now) && (hasSpace || isParticipant);
+ return b.endTime.isAfter(now) && hasSpace;
  })
  .toList();
 
@@ -92,16 +91,14 @@ class MatchRepository {
  .map((data) => Booking.fromFirestore(data, data['id'].toString()))
  .where((b) {
  final isNotExpired = b.endTime.isAfter(currentCutoff);
- final isConfirmed = b.status == BookingStatus.confirmed || 
- b.status == BookingStatus.upcoming;
+ final isConfirmed = b.status == BookingStatus.confirmed;
  final isFuture = b.endTime.isAfter(currentNow);
  
  final totalCapacity = b.totalFieldCapacity;
  final hasSpace = b.currentPlayers < totalCapacity;
  
  final uid = _supabase.auth.currentUser?.id;
- final isParticipant = uid != null && b.joinedUserIds.contains(uid);
- return isNotExpired && isConfirmed && isFuture && (hasSpace || isParticipant);
+ return isNotExpired && isConfirmed && isFuture && hasSpace;
  })
  .toList();
  })
@@ -315,9 +312,7 @@ class MatchRepository {
  .where((b) {
  final isFuture = b.endTime.isAfter(now);
  final hasSpace = b.currentPlayers < b.totalFieldCapacity;
- final uid = _supabase.auth.currentUser?.id;
- final isParticipant = uid != null && b.joinedUserIds.contains(uid);
- return isFuture && (hasSpace || isParticipant);
+  return isFuture && (hasSpace || isParticipant);
  }).toList();
 
  return {
