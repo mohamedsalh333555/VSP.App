@@ -184,29 +184,21 @@ class BookingQueryCoordinator {
         });
   }
 
-  /// Direct REST query fetching bookings for a pitch on a specific calendar day.
+  /// Direct REST query fetching only non-sensitive booking slot data.
   Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) async {
     try {
       final startOfDay = DateTime(date.year, date.month, date.day);
       final endOfDay = startOfDay.add(const Duration(days: 2));
-
-      final response = await _supabase
-          .from('bookings')
-          .select()
-          .eq('stadium_id', stadiumId)
-          .gte('start_time', startOfDay.toIso8601String())
-          .lt('start_time', endOfDay.toIso8601String());
-
+      final response = await _supabase.rpc('get_stadium_booking_slots', params: {
+        'p_stadium_id': stadiumId,
+        'p_start_time': startOfDay.toUtc().toIso8601String(),
+        'p_end_time': endOfDay.toUtc().toIso8601String(),
+      });
       return (response as List)
-          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .where((b) {
-            if (b.status == BookingStatus.cancelled) return false;
-            if (b.status == BookingStatus.pending) {
-              final isExpired = BookingDomainRules.isPendingBookingExpired(b.createdAt, DateTime.now());
-              if (isExpired) return false;
-            }
-            return true;
-          })
+          .map((data) => Booking.fromFirestore(
+                Map<String, dynamic>.from(data),
+                data['id'].toString(),
+              ))
           .toList();
     } catch (e) {
       VSPLogger.w('fetchStadiumBookingsDirectly notice: $e');
