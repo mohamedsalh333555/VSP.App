@@ -138,12 +138,12 @@ class OwnerProfileScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isVerified
                             ? VSPColors.accent.withValues(alpha: 0.12)
-                            : Colors.orange.withValues(alpha: 0.12),
+                            : VSPColors.surfaceAlt,
                         borderRadius: BorderRadius.circular(VSPRadius.full),
                         border: Border.all(
                           color: isVerified
                               ? VSPColors.accent.withValues(alpha: 0.3)
-                              : Colors.orange.withValues(alpha: 0.3),
+                              : VSPColors.divider,
                         ),
                       ),
                       child: Row(
@@ -152,7 +152,7 @@ class OwnerProfileScreen extends StatelessWidget {
                           Icon(
                             isVerified ? Iconsax.verify_copy : Iconsax.clock_copy,
                             size: 11,
-                            color: isVerified ? VSPColors.accent : Colors.orange,
+                            color: isVerified ? VSPColors.accent : VSPColors.textSecondary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -162,7 +162,7 @@ class OwnerProfileScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: isVerified ? VSPColors.accent : Colors.orange,
+                              color: isVerified ? VSPColors.accent : VSPColors.textSecondary,
                             ),
                           ),
                         ],

@@ -65,8 +65,11 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
     super.initState();
     _selectedDate = DateTime.now().add(const Duration(days: 1));
     _selectedMatchDuration = widget.championship.matchDuration;
-    _durationOptions = TournamentRoundScheduleCalculator.calculateDurationOptions(widget.championship.matchDuration);
-    _availableDaysOptions = TournamentRoundScheduleCalculator.calculateAvailableDaysOptions(widget.matches.length);
+    final rawDays = TournamentRoundScheduleCalculator.calculateAvailableDaysOptions(widget.matches.length);
+    _availableDaysOptions = rawDays.where((d) => d > 0).toList();
+    if (_availableDaysOptions.isEmpty) {
+      _availableDaysOptions = [1];
+    }
   }
 
   @override
@@ -134,7 +137,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
           Row(
             children: _availableDaysOptions.map((d) {
               final isSelected = _daysCount == d;
-              final mPerD = (widget.matches.length / d).ceil();
+              final mPerD = d > 0 ? (widget.matches.length / d).ceil() : widget.matches.length;
 
               String title = isArabic
                   ? (d == 1 ? 'يوم واحد' : (d == 2 ? 'يومان' : '4 أيام'))

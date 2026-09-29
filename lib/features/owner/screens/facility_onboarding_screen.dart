@@ -59,6 +59,21 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     await FacilityUpgradeBottomSheet.show(context, isAr: isAr, user: user);
   }
 
+  double _calculateOnboardingProgress(Stadium? stadium) {
+    if (stadium == null) return 0.0;
+    final steps = [
+      stadium.name.trim().isNotEmpty,
+      stadium.images.isNotEmpty || stadium.imageUrl.isNotEmpty,
+      stadium.openingTime.trim().isNotEmpty,
+      stadium.pricePerHour > 0,
+      stadium.location.trim().isNotEmpty || stadium.address.trim().isNotEmpty,
+      (stadium.contractUrl != null && stadium.contractUrl!.isNotEmpty) ||
+          (stadium.ownerIdUrl != null && stadium.ownerIdUrl!.isNotEmpty),
+    ];
+    final completed = steps.where((s) => s).length;
+    return steps.isEmpty ? 0.0 : (completed / steps.length).clamp(0.0, 1.0);
+  }
+
  @override
  Widget build(BuildContext context) {
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -151,6 +166,11 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  );
  }
 
+        final double onboardingProgress = stadiums.isNotEmpty
+            ? _calculateOnboardingProgress(stadiums.first)
+            : 0.0;
+        final int progressPct = (onboardingProgress * 100).toInt();
+
  return SingleChildScrollView(
  physics: const BouncingScrollPhysics(),
  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -202,9 +222,9 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  color: VSPColors.accent.withValues(alpha: 0.2),
  borderRadius: BorderRadius.circular(10),
  ),
- child: const Text(
- '65% ',
- style: TextStyle(
+ child: Text(
+ '$progressPct% ',
+ style: const TextStyle(
  color: VSPColors.accent,
  fontSize: 12,
  fontWeight: FontWeight.w900,
@@ -216,18 +236,18 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  const SizedBox(height: 10),
  ClipRRect(
  borderRadius: BorderRadius.circular(4),
- child: const LinearProgressIndicator(
- value: 0.65,
+ child: LinearProgressIndicator(
+ value: onboardingProgress,
  minHeight: 6,
  backgroundColor: VSPColors.surfaceAlt,
- valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
+ valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
  ),
  ),
  const SizedBox(height: 8),
  Text(
  isAr
- ? 'أحسنت! قطعنا 65% من الإعداد. تابع رفع الوثائق لتصل لـ 100% وتفعل شارة المالك الموثوق '
- : '65% complete! Finish uploading documents to reach 100% and earn your Verified Badge ',
+ ? 'أحسنت! قطعنا $progressPct% من الإعداد. تابع رفع الوثائق لتصل لـ 100% وتفعل شارة المالك الموثوق '
+ : '$progressPct% complete! Finish uploading documents to reach 100% and earn your Verified Badge ',
  style: const TextStyle(
  color: VSPColors.textSecondary,
  fontSize: 11,

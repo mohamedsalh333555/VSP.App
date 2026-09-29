@@ -153,9 +153,8 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  shouldLoop: false,
  colors: const [
  VSPColors.accent,
- Colors.yellow,
  Colors.white,
- Colors.blue,
+ VSPColors.accentGlow,
  ],
  ),
  ),

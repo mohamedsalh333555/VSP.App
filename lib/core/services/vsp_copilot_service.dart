@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/models.dart';
 import '../models/copilot_message.dart';
 
 /// Exception thrown when user or client exceeds the 10 requests / 60 seconds rate limit.
@@ -56,6 +57,17 @@ class VspCopilotService {
 
   // Multi-Turn Memory Cache for local test runs
   static final Map<String, Map<String, dynamic>> _conversationContexts = {};
+
+  /// Builds the grounding system prompt for VSP Copilot.
+  /// If [ownerStadiums] is provided, it grounds the AI in real database stadiums.
+  /// Otherwise, it instructs the assistant to reference dynamic owner stadium rates from Supabase.
+  static Future<String> buildSystemPrompt({List<Stadium>? ownerStadiums}) async {
+    if (ownerStadiums != null && ownerStadiums.isNotEmpty) {
+      final catalog = ownerStadiums.map((s) => '• ${s.name}: ${s.pricePerHour.toInt()} ج.م/ساعة (${s.location})').join('\n');
+      return 'أنت المساعد الذكي VSP Copilot لملاعب كرة القدم.\nبيانات ملاعب المالك الحالية في قاعدة البيانات:\n$catalog\nاعتمد فقط على هذه الأسعار والمواعيد.';
+    }
+    return 'أنت المساعد الذكي VSP Copilot لملاعب كرة القدم.\nتنبيه أمان: راجع أسعار المالك الحقيقية في قاعدة البيانات وتجنب أي أسعار افتراضية.';
+  }
 
   // Curated stadium database for tests & offline verification (Zero-hallucination real mock catalog)
   static const List<CopilotStadiumSummary> _curatedStadiums = [

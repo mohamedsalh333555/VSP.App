@@ -101,7 +101,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            isArabic ? 'الباقة الاحترافية: حتى 3 ملاعب كاملة (1000 ج.م/شهر)' : 'Pro Plan: Up to 3 Stadiums (1000 EGP/mo)',
+                            isArabic ? 'الباقة الاحترافية: تشغيل وإدارة متعددة الملاعب (حتى 3 ملاعب)' : 'Pro Plan: Multi-stadium operation (Up to 3 stadiums)',
                             style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 12.5),
                           ),
                         ),

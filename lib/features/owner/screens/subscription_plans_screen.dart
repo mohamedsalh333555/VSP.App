@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/user_model.dart';
@@ -21,11 +22,28 @@ class SubscriptionPlansScreen extends StatefulWidget {
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Timer? _timer;
   Duration _remainingTime = Duration.zero;
+  List<Map<String, dynamic>> _plans = [];
 
   @override
   void initState() {
     super.initState();
     _startCountdown();
+    _fetchPlans();
+  }
+
+  Future<void> _fetchPlans() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('subscription_plans')
+          .select()
+          .eq('is_active', true)
+          .order('display_order', ascending: true);
+      if (mounted) {
+        setState(() {
+          _plans = List<Map<String, dynamic>>.from(res);
+        });
+      }
+    } catch (_) {}
   }
 
   void _startCountdown() {
@@ -71,6 +89,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final bool isTrialOrBasic = userModel?.isInActiveTrial == true ||
         (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true);
 
+    final basicPlan = _plans.firstWhere(
+      (p) => p['code'] == 'basic',
+      orElse: () => {'monthly_price': 500, 'max_stadiums': 1},
+    );
+    final proPlan = _plans.firstWhere(
+      (p) => p['code'] == 'pro',
+      orElse: () => {'monthly_price': 1000, 'max_stadiums': 3},
+    );
+
+    final int basicPrice = (num.tryParse(basicPlan['monthly_price']?.toString() ?? '500') ?? 500).toInt();
+    final int proPrice = (num.tryParse(proPlan['monthly_price']?.toString() ?? '1000') ?? 1000).toInt();
+    final int basicMaxStadiums = (basicPlan['max_stadiums'] as num?)?.toInt() ?? 1;
+    final int proMaxStadiums = (proPlan['max_stadiums'] as num?)?.toInt() ?? 3;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -104,9 +136,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isTrialOrBasic && userModel?.isInActiveTrial == true
                   ? (isArabic ? '0 ج.م' : '0 EGP')
-                  : (isArabic ? '500 ج.م' : '500 EGP'),
+                  : (isArabic ? '$basicPrice ج.م' : '$basicPrice EGP'),
               periodText: isTrialOrBasic && userModel?.isInActiveTrial == true
-                  ? (isArabic ? 'مجاناً حالياً (500 ج.م شهرياً بعد انتهاء التجربة)' : 'Free now (500 EGP/mo after trial)')
+                  ? (isArabic ? 'مجاناً حالياً ($basicPrice ج.م شهرياً بعد انتهاء التجربة)' : 'Free now ($basicPrice EGP/mo after trial)')
                   : (isArabic ? 'شهرياً' : 'Monthly'),
               badgeText: isArabic ? 'أول سنة مجاناً' : 'First Year Free',
               badgeColor: VSPColors.accent,
@@ -116,12 +148,14 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   ? (isArabic ? 'باقتك الحالية (فترة تجريبية مجانية)' : 'Current Plan (Free Trial)')
                   : (isArabic ? 'ابدأ مجاناً (أول سنة)' : 'Start Free (1st Year)'),
               features: [
-                isArabic ? 'تشغيل وإدارة ملعب واحد فقط (1)' : 'Full operation for 1 stadium only',
+                isArabic
+                    ? 'تشغيل وإدارة حتى $basicMaxStadiums ${basicMaxStadiums == 1 ? 'ملعب واحد فقط' : 'ملاعب'}'
+                    : 'Full operation for up to $basicMaxStadiums ${basicMaxStadiums == 1 ? 'stadium only' : 'stadiums'}',
                 isArabic ? 'استقبال الحجوزات النقدية والأونلاين ومنع التضارب' : 'Accept Cash & Online bookings with conflict prevention',
                 isArabic ? 'فترة تجريبية مجانية سنة كاملة لتقييم المنظومة' : 'Full 1-year free evaluation period',
                 isArabic ? 'تنظيم وإدارة البطولات والكؤوس لجميع الفرق مجاناً' : 'Free Tournament creation & cup management',
               ],
-              onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
+              onSelect: () => _contactAdminForUpgrade(context, 'Basic ($basicPrice EGP)', isArabic),
               isArabic: isArabic,
             ),
 
@@ -130,7 +164,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             // ── 3. الباقة الاحترافية (Pro Plan) ──
             _buildPlanCard(
               title: isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
-              priceText: isArabic ? '1000 ج.م' : '1000 EGP',
+              priceText: isArabic ? '$proPrice ج.م' : '$proPrice EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               badgeText: isArabic ? 'الأكثر اختياراً' : 'Most Popular',
               badgeColor: VSPColors.proAccent,
@@ -141,13 +175,15 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   : (isArabic ? 'ترقية للباقة الاحترافية' : 'Upgrade to Pro Plan'),
               features: [
                 isArabic ? 'مساعد الذكاء الاصطناعي VSP Copilot لتحليل الأداء وتوقع الحجوزات' : 'VSP AI Copilot for smart pitch management & insights',
-                isArabic ? 'تشغيل وإدارة حتى 3 ملاعب كاملة' : 'Operate up to 3 stadiums at full capacity',
+                isArabic
+                    ? 'تشغيل وإدارة حتى $proMaxStadiums ملاعب كاملة'
+                    : 'Operate up to $proMaxStadiums stadiums at full capacity',
                 isArabic ? 'أولوية الظهور في نتائج البحث للاعبين بالمحافظة' : 'Priority search boost in governorate results',
                 isArabic ? 'إرسال وصل الحجز الرسمي للعملاء عبر واتساب تلقائياً' : 'Automated WhatsApp digital booking receipts',
                 isArabic ? 'تصدير السجل المالي والتقارير المحاسبية بضغطة زر' : '1-Click financial ledger & reports export',
                 isArabic ? 'دعم فني وتثبيت تشغيلي ذو أولوية على مدار الساعة' : '24/7 Priority support & operational stability',
               ],
-              onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
+              onSelect: () => _contactAdminForUpgrade(context, 'Pro ($proPrice EGP)', isArabic),
               isArabic: isArabic,
             ),
 

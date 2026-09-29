@@ -249,7 +249,9 @@ class TournamentMatchCoordinator {
     try {
       if (matches.isEmpty) return false;
       final int totalMatches = matches.length;
+      if (daysCount <= 0) return false;
       final int matchesPerDay = (totalMatches / daysCount).ceil();
+      if (matchesPerDay <= 0) return false;
 
       for (int i = 0; i < totalMatches; i++) {
         final match = matches[i];

@@ -374,6 +374,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
                 isFullyPaid: _isFullyPaid,
                 isPartiallyPaid: _isPartiallyPaid,
                 remainingBalance: _remainingBalance,
+                minDepositAmount: widget.stadium.depositAmount > 0 ? widget.stadium.depositAmount : null,
                 onSelectQuickAmount: _setPaidAmount,
               ),
               const SizedBox(height: 20),

@@ -100,16 +100,21 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
           const SizedBox(height: 12),
 
           // ─── Description ───
-          Text(
-            isAr
-                ? 'فترتك الحالية تتيح تشغيل ملعب واحد فقط (1).\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية (1000 ج.م / شهرياً).'
-                : 'Your current plan allows 1 stadium only.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan (1000 EGP/month).',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: VSPColors.textSecondary,
-              fontSize: 13,
-              height: 1.5,
-            ),
+          Builder(
+            builder: (context) {
+              final int currentMax = user.maxStadiums;
+              return Text(
+                isAr
+                    ? 'باقتك الحالية تتيح تشغيل حتى $currentMax ${currentMax == 1 ? 'ملعب واحد فقط' : 'ملاعب'}.\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية.'
+                    : 'Your current plan allows operating up to $currentMax ${currentMax == 1 ? 'stadium only' : 'stadiums'}.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 20),
 

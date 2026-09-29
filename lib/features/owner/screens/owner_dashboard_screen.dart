@@ -13,6 +13,9 @@ import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../models/dashboard_analytics.dart';
+import '../../../models/dashboard_filter.dart';
 export '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/utils/owner_financial_calculator.dart';
 import '../../../core/repositories/owner_repository.dart';
@@ -103,6 +106,63 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     }
   }
 
+  DashboardFilter _currentFilter = DashboardFilter.today();
+  DashboardAnalytics _dashboardAnalytics = const DashboardAnalytics();
+  bool _isLoadingAnalytics = false;
+  String? _analyticsError;
+
+  Future<void> _loadDashboardAnalytics({String? ownerId, DashboardFilter? filter}) async {
+    final uid = ownerId ?? Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (uid == null) return;
+    final activeFilter = filter ?? _currentFilter;
+
+    if (mounted) {
+      setState(() {
+        _isLoadingAnalytics = true;
+        _analyticsError = null;
+      });
+    }
+
+    try {
+      final response = await Supabase.instance.client.rpc(
+        'get_owner_dashboard_analytics',
+        params: {
+          'p_owner_id': uid,
+          'p_start_date': activeFilter.startDate.toIso8601String(),
+          'p_end_date': activeFilter.endDate.toIso8601String(),
+          'p_court_id': activeFilter.courtId,
+        },
+      );
+
+      final analytics = DashboardAnalytics.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
+
+      // تحقق من تطابق الأرقام في development mode
+      assert(
+        analytics.revenue.isConsistent,
+        'Revenue inconsistency: total=${analytics.revenue.total}, '
+        'cash=${analytics.revenue.cash}, online=${analytics.revenue.online}',
+      );
+
+      if (mounted) {
+        setState(() {
+          _dashboardAnalytics = analytics;
+          _currentFilter = activeFilter;
+          _isLoadingAnalytics = false;
+        });
+      }
+    } catch (e) {
+      VSPLogger.w('Failed to load dashboard analytics: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingAnalytics = false;
+          _analyticsError = 'تعذر تحميل البيانات، تحقق من الاتصال وحاول مجدداً';
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +171,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       final uid = auth.currentUser?.id;
       if (uid != null) {
         _fetchFinancialSummary(uid);
+        _loadDashboardAnalytics(ownerId: uid);
         Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
         _champSubscription = TournamentRepository()
@@ -192,6 +253,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             }
             await Future.wait([
               _fetchFinancialSummary(uid),
+              _loadDashboardAnalytics(ownerId: uid, filter: _currentFilter),
               _fetchOwnerChampionships(uid),
               if (context.mounted)
                 Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true),
@@ -204,6 +266,38 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_isLoadingAnalytics) ...[
+                  const LinearProgressIndicator(
+                    minHeight: 2,
+                    backgroundColor: Colors.transparent,
+                    valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                if (_analyticsError != null) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 14, color: VSPColors.error),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _analyticsError!,
+                            style: const TextStyle(color: VSPColors.error, fontSize: 11.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 // 1. الهيدر الموحد وشارة الباقة
                 OwnerDashboardHeader(
                   auth: auth,
@@ -239,8 +333,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     isArabic: isArabic,
                     onRenew: () => _showProUpgradeSheet(context),
                   ),
-
-                const SizedBox(height: 12),
 
                 // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
@@ -318,10 +410,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     OwnerVenueFilterChips(
                       stadiums: stadiums,
                       selectedStadiumId: _selectedStadiumFilter,
-                      onStadiumSelected: (id) => setState(() {
-                        _selectedStadiumFilter = id;
-                        _cachedMetrics = null;
-                      }),
+                      onStadiumSelected: (id) {
+                        setState(() {
+                          _selectedStadiumFilter = id;
+                          _cachedMetrics = null;
+                          _currentFilter = _currentFilter.copyWith(courtId: id != 'all' ? id : null);
+                        });
+                        _loadDashboardAnalytics(filter: _currentFilter);
+                      },
                       isArabic: isArabic,
                     ),
                     const SizedBox(height: 12),
@@ -334,9 +430,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
-                    cashThisMonth: metrics.pitchCashRevenue,
-                    onlineThisMonth: metrics.digitalVspBalance,
+                    cashThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
+                        ? _dashboardAnalytics.revenue.cash
+                        : metrics.pitchCashRevenue,
+                    onlineThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
+                        ? _dashboardAnalytics.revenue.online
+                        : metrics.digitalVspBalance,
                     timePeriod: _selectedTimePeriod,
+                    periodLabel: _currentFilter.periodLabel,
                     onOpenLedger: () {
                       Navigator.push(
                         context,
@@ -468,7 +569,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                   // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
                   _buildQuickOperationalActions(context, isArabic),
-                  const SizedBox(height: 32),
+                  SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
                 ]
                 // ── TAB 1: التحليلات والقرارات الذكية (Insights) ──
                 else ...[
@@ -479,20 +580,56 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       stadiums: stadiums,
                       selectedTimePeriod: _selectedTimePeriod,
                       selectedStadiumFilter: _selectedStadiumFilter,
-                      onTimePeriodChanged: (period) => setState(() {
-                        _selectedTimePeriod = period;
-                        _cachedMetrics = null;
-                      }),
-                      onStadiumFilterChanged: (id) => setState(() {
-                        _selectedStadiumFilter = id;
-                        _cachedMetrics = null;
-                      }),
+                      analytics: _dashboardAnalytics,
+                      dashboardFilter: _currentFilter,
+                      onCustomRangeSelected: (start, end) {
+                        final filter = DashboardFilter.custom(start, end).copyWith(
+                          courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                        );
+                        setState(() {
+                          _selectedTimePeriod = 'custom';
+                          _currentFilter = filter;
+                          _cachedMetrics = null;
+                        });
+                        _loadDashboardAnalytics(filter: filter);
+                      },
+                      onTimePeriodChanged: (period) {
+                        DashboardFilter filter;
+                        if (period == 'yesterday') {
+                          filter = DashboardFilter.yesterday();
+                        } else if (period == 'week' || period == 'thisWeek') {
+                          filter = DashboardFilter.thisWeek();
+                        } else if (period == 'month' || period == 'thisMonth') {
+                          filter = DashboardFilter.thisMonth();
+                        } else if (period == 'year' || period == 'thisYear') {
+                          filter = DashboardFilter.thisYear();
+                        } else {
+                          filter = DashboardFilter.today();
+                        }
+                        filter = filter.copyWith(
+                          courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                        );
+                        setState(() {
+                          _selectedTimePeriod = period;
+                          _currentFilter = filter;
+                          _cachedMetrics = null;
+                        });
+                        _loadDashboardAnalytics(filter: filter);
+                      },
+                      onStadiumFilterChanged: (id) {
+                        setState(() {
+                          _selectedStadiumFilter = id;
+                          _cachedMetrics = null;
+                          _currentFilter = _currentFilter.copyWith(courtId: id != 'all' ? id : null);
+                        });
+                        _loadDashboardAnalytics(filter: _currentFilter);
+                      },
                       onNavigateTab: widget.onNavigateTab,
                       isArabic: isArabic,
                     )
                   else
                     _buildProInsightsLockedTeaser(context, isArabic),
-                  const SizedBox(height: 32),
+                  SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
                 ],
               ],
             ),
@@ -503,12 +640,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   Widget _buildTimeFilterBar(bool isArabic) {
-    final periods = [
-      {'key': 'today', 'labelAr': 'اليوم', 'labelEn': 'Today'},
-      {'key': 'week', 'labelAr': 'هذا الأسبوع', 'labelEn': 'This Week'},
-      {'key': 'month', 'labelAr': 'هذا الشهر', 'labelEn': 'This Month'},
-      {'key': 'all', 'labelAr': 'الكل', 'labelEn': 'All Time'},
-    ];
+    final periods = DashboardFilter.getOptionsForLanguage(isArabic).map((p) {
+      if (p['key'] == 'custom' && _selectedTimePeriod == 'custom') {
+        return {
+          'key': 'custom',
+          'labelAr': _currentFilter.periodLabel,
+          'labelEn': _currentFilter.periodLabel,
+        };
+      }
+      return p;
+    }).toList();
 
     return Container(
       height: 38,
@@ -524,12 +665,63 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
           final label = isArabic ? p['labelAr']! : p['labelEn']!;
 
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
               HapticFeedback.selectionClick();
+              if (p['key'] == 'custom') {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2024),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  locale: isArabic ? const Locale('ar') : const Locale('en'),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.dark(
+                          primary: VSPColors.accent,
+                          onPrimary: Colors.black,
+                          surface: VSPColors.surface,
+                          onSurface: VSPColors.textPrimary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (picked != null) {
+                  final filter = DashboardFilter.custom(picked.start, picked.end).copyWith(
+                    courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                  );
+                  setState(() {
+                    _selectedTimePeriod = 'custom';
+                    _currentFilter = filter;
+                    _cachedMetrics = null;
+                  });
+                  _loadDashboardAnalytics(filter: filter);
+                }
+                return;
+              }
+
+              DashboardFilter filter;
+              if (p['key'] == 'yesterday') {
+                filter = DashboardFilter.yesterday();
+              } else if (p['key'] == 'week') {
+                filter = DashboardFilter.thisWeek();
+              } else if (p['key'] == 'month') {
+                filter = DashboardFilter.thisMonth();
+              } else if (p['key'] == 'year') {
+                filter = DashboardFilter.thisYear();
+              } else {
+                filter = DashboardFilter.today();
+              }
+              filter = filter.copyWith(
+                courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+              );
               setState(() {
                 _selectedTimePeriod = p['key']!;
+                _currentFilter = filter;
                 _cachedMetrics = null;
               });
+              _loadDashboardAnalytics(filter: filter);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../../data/models.dart';
+import '../../../../../models/dashboard_filter.dart';
 import '../../../screens/owner_bookings_screen.dart';
 
 /// Top filters row for Pro Insights: Venue Dropdown and Time Period Dropdown side-by-side.
@@ -12,6 +13,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
   final List<Stadium> stadiums;
   final ValueChanged<String> onStadiumFilterChanged;
   final ValueChanged<String> onTimePeriodChanged;
+  final void Function(DateTime start, DateTime end)? onCustomRangeSelected;
   final bool isArabic;
 
   const InsightsTopFiltersRow({
@@ -21,18 +23,13 @@ class InsightsTopFiltersRow extends StatelessWidget {
     required this.stadiums,
     required this.onStadiumFilterChanged,
     required this.onTimePeriodChanged,
+    this.onCustomRangeSelected,
     required this.isArabic,
   });
 
   @override
   Widget build(BuildContext context) {
-    final periodOptions = [
-      {'key': 'today', 'label': isArabic ? 'اليوم' : 'Today'},
-      {'key': 'yesterday', 'label': isArabic ? 'أمس' : 'Yesterday'},
-      {'key': 'week', 'label': isArabic ? 'الأسبوع' : 'This Week'},
-      {'key': 'month', 'label': isArabic ? 'الشهر' : 'This Month'},
-      {'key': 'all', 'label': isArabic ? 'الكل' : 'All Time'},
-    ];
+    final periodOptions = DashboardFilter.getOptionsForLanguage(isArabic);
 
     return Row(
       children: [
@@ -170,9 +167,37 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     ),
                   );
                 }).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    HapticFeedback.selectionClick();
+                onChanged: (val) async {
+                  if (val == null) return;
+                  HapticFeedback.selectionClick();
+                  if (val == 'custom') {
+                    final picked = await showDateRangePicker(
+                      context: context,
+                      firstDate: DateTime(2024),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                      locale: isArabic ? const Locale('ar') : const Locale('en'),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.dark(
+                              primary: VSPColors.accent,
+                              onPrimary: Colors.black,
+                              surface: VSPColors.surface,
+                              onSurface: VSPColors.textPrimary,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      if (onCustomRangeSelected != null) {
+                        onCustomRangeSelected!(picked.start, picked.end);
+                      } else {
+                        onTimePeriodChanged('custom');
+                      }
+                    }
+                  } else {
                     onTimePeriodChanged(val);
                   }
                 },

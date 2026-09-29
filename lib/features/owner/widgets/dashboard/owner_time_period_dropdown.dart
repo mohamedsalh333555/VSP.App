@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../models/dashboard_filter.dart';
 
 class OwnerTimePeriodDropdown extends StatelessWidget {
   final String selectedTimePeriod;
@@ -23,13 +24,10 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
       fontWeight: FontWeight.w700,
     );
 
-    final periods = [
-      {'key': 'today', 'label': isArabic ? 'اليوم' : 'Today'},
-      {'key': 'yesterday', 'label': isArabic ? 'أمس' : 'Yesterday'},
-      {'key': 'week', 'label': isArabic ? 'الأسبوع' : 'This Week'},
-      {'key': 'month', 'label': isArabic ? 'الشهر' : 'This Month'},
-      {'key': 'all', 'label': isArabic ? 'الكل' : 'All Time'},
-    ];
+    final periods = DashboardFilter.getOptionsForLanguage(isArabic);
+    final activeValue = periods.any((p) => p['key'] == selectedTimePeriod)
+        ? selectedTimePeriod
+        : (periods.isNotEmpty ? periods.first['key'] : 'today');
 
     return Container(
       height: 32,
@@ -41,7 +39,7 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: selectedTimePeriod,
+          value: activeValue,
           dropdownColor: VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(VSPRadius.card),
           icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 13),

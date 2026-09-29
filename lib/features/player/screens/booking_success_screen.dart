@@ -104,7 +104,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  },
  child: Scaffold(
  backgroundColor: Colors.black.withValues(alpha: 0.85),
- body: Stack(
+ body: SafeArea(
+ child: Stack(
  alignment: Alignment.topCenter,
  children: [
  // Main Content Centered
@@ -389,6 +390,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  ),
  ),
  ],
+ ),
  ),
  ),
  );

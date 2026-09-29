@@ -10,6 +10,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double cashThisMonth;
   final double onlineThisMonth;
   final String timePeriod;
+  final String? periodLabel;
   final VoidCallback onOpenLedger;
   final VoidCallback onRequestPayout;
   final bool isArabic;
@@ -20,6 +21,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required this.cashThisMonth,
     required this.onlineThisMonth,
     this.timePeriod = 'today',
+    this.periodLabel,
     required this.onOpenLedger,
     required this.onRequestPayout,
     required this.isArabic,
@@ -180,15 +182,24 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             builder: (context) {
               String cashLabel;
               String onlineLabel;
-              if (timePeriod == 'today') {
+              if (periodLabel != null && periodLabel!.isNotEmpty) {
+                cashLabel = isArabic ? 'كاش $periodLabel' : 'Cash ($periodLabel)';
+                onlineLabel = isArabic ? 'أونلاين $periodLabel' : 'Online ($periodLabel)';
+              } else if (timePeriod == 'today') {
                 cashLabel = isArabic ? 'كاش اليوم' : 'Cash Today';
                 onlineLabel = isArabic ? 'أونلاين اليوم' : 'Online Today';
-              } else if (timePeriod == 'week') {
+              } else if (timePeriod == 'yesterday') {
+                cashLabel = isArabic ? 'كاش أمس' : 'Cash Yesterday';
+                onlineLabel = isArabic ? 'أونلاين أمس' : 'Online Yesterday';
+              } else if (timePeriod == 'week' || timePeriod == 'thisWeek') {
                 cashLabel = isArabic ? 'كاش هذا الأسبوع' : 'Cash This Week';
                 onlineLabel = isArabic ? 'أونلاين هذا الأسبوع' : 'Online This Week';
-              } else if (timePeriod == 'month') {
+              } else if (timePeriod == 'month' || timePeriod == 'thisMonth') {
                 cashLabel = isArabic ? 'كاش هذا الشهر' : 'Cash This Month';
                 onlineLabel = isArabic ? 'أونلاين هذا الشهر' : 'Online This Month';
+              } else if (timePeriod == 'year' || timePeriod == 'thisYear') {
+                cashLabel = isArabic ? 'كاش هذا العام' : 'Cash This Year';
+                onlineLabel = isArabic ? 'أونلاين هذا العام' : 'Online This Year';
               } else {
                 cashLabel = isArabic ? 'إجمالي الكاش' : 'Total Cash';
                 onlineLabel = isArabic ? 'إجمالي الأونلاين' : 'Total Online';

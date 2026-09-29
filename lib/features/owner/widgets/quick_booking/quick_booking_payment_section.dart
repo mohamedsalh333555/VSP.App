@@ -11,6 +11,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
   final bool isPartiallyPaid;
   final double remainingBalance;
   final ValueChanged<double> onSelectQuickAmount;
+  final double? minDepositAmount;
 
   const QuickBookingPaymentSection({
     super.key,
@@ -21,6 +22,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
     required this.isPartiallyPaid,
     required this.remainingBalance,
     required this.onSelectQuickAmount,
+    this.minDepositAmount,
   });
 
   Widget _buildQuickAmountChip({
@@ -88,33 +90,42 @@ class QuickBookingPaymentSection extends StatelessWidget {
         const SizedBox(height: 8),
 
         // Quick Amount Selection Chips
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            _buildQuickAmountChip(
-              label: isAr ? '0 (كاش عند الحضور)' : '0 (Cash on Arrival)',
-              amount: 0,
-              isSelected: currentPaidAmount == 0,
-            ),
-            if (totalPrice >= 100)
-              _buildQuickAmountChip(
-                label: isAr ? '50 ج.م' : '50 EGP',
-                amount: 50,
-                isSelected: currentPaidAmount == 50,
-              ),
-            if (totalPrice >= 200)
-              _buildQuickAmountChip(
-                label: isAr ? '100 ج.م' : '100 EGP',
-                amount: 100,
-                isSelected: currentPaidAmount == 100,
-              ),
-            _buildQuickAmountChip(
-              label: '${isAr ? "دفع كامل" : "Full"}: ${totalPrice.toInt()} ${isAr ? "ج" : ""}',
-              amount: totalPrice,
-              isSelected: currentPaidAmount == totalPrice,
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final double deposit = (minDepositAmount != null && minDepositAmount! > 0)
+                ? minDepositAmount!
+                : (totalPrice >= 100 ? (totalPrice * 0.25).roundToDouble() : 0.0);
+            final double halfAmount = (totalPrice >= 100) ? (totalPrice * 0.5).roundToDouble() : 0.0;
+
+            return Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _buildQuickAmountChip(
+                  label: isAr ? '0 (كاش عند الحضور)' : '0 (Cash on Arrival)',
+                  amount: 0,
+                  isSelected: currentPaidAmount == 0,
+                ),
+                if (deposit > 0 && deposit < totalPrice)
+                  _buildQuickAmountChip(
+                    label: isAr ? '${deposit.toInt()} ج.م (عربون)' : '${deposit.toInt()} EGP (Deposit)',
+                    amount: deposit,
+                    isSelected: currentPaidAmount == deposit,
+                  ),
+                if (halfAmount > 0 && halfAmount != deposit && halfAmount < totalPrice)
+                  _buildQuickAmountChip(
+                    label: isAr ? '${halfAmount.toInt()} ج.م (نصف المبلغ)' : '${halfAmount.toInt()} EGP (Half)',
+                    amount: halfAmount,
+                    isSelected: currentPaidAmount == halfAmount,
+                  ),
+                _buildQuickAmountChip(
+                  label: '${isAr ? "دفع كامل" : "Full"}: ${totalPrice.toInt()} ${isAr ? "ج" : ""}',
+                  amount: totalPrice,
+                  isSelected: currentPaidAmount == totalPrice,
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 8),
 

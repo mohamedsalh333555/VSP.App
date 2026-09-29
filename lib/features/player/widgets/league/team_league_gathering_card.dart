@@ -24,7 +24,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final joined = league.teams.length;
     final total = league.maxTeams;
-    final progress = joined / total;
+    final progress = total > 0 ? (joined / total).clamp(0.0, 1.0) : 0.0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

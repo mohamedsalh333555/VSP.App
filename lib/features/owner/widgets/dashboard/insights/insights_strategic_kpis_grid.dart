@@ -14,6 +14,8 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
   final double totalHoursBookedToday;
   final double totalAvailableHours;
   final double averageBookingPrice;
+  final String periodLabel;
+  final String? occupancyDisplay;
   final bool isArabic;
 
   const InsightsStrategicKpisGrid({
@@ -26,6 +28,8 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
     required this.totalHoursBookedToday,
     required this.totalAvailableHours,
     required this.averageBookingPrice,
+    this.periodLabel = 'اليوم',
+    this.occupancyDisplay,
     required this.isArabic,
   });
 
@@ -165,6 +169,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
     required String value,
     required String label,
     required String subtext,
+    Widget? extraBadge,
     VoidCallback? onTap,
   }) {
     return Material(
@@ -208,18 +213,30 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                    color: VSPColors.textPrimary,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ).merge(VSPTypography.numericStyle),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        value,
+                        style: const TextStyle(
+                          color: VSPColors.textPrimary,
+                          fontSize: 21,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
+                        ).merge(VSPTypography.numericStyle),
+                      ),
+                    ),
+                  ),
+                  if (extraBadge != null) ...[
+                    const SizedBox(width: 4),
+                    extraBadge,
+                  ],
+                ],
               ),
               const SizedBox(height: 2),
               Text(
@@ -250,29 +267,34 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveOccupancy = occupancyDisplay ??
+        (occupancyRate < 1 && occupancyRate > 0
+            ? '${occupancyRate.toStringAsFixed(1)}%'
+            : '${occupancyRate.toStringAsFixed(0)}%');
+
     return Column(
       children: [
-        // Row 1: Bookings Today + Lost Potential
+        // Row 1: Bookings + Lost Potential
         Row(
           children: [
             Expanded(
               child: _buildFramedKpiCard(
                 icon: Iconsax.calendar_1_copy,
                 value: '$totalBookingsToday',
-                label: isArabic ? 'حجوزات اليوم' : 'Bookings Today',
+                label: isArabic ? 'حجوزات $periodLabel' : 'Bookings ($periodLabel)',
                 subtext: isArabic
                     ? '$onlinePaidCount أونلاين • ${totalBookingsToday - onlinePaidCount} كاش'
                     : '$onlinePaidCount online • ${totalBookingsToday - onlinePaidCount} cash',
                 onTap: () => showKpiExplanationSheet(
                   context,
-                  title: isArabic ? 'حجوزات اليوم' : 'Bookings Today',
+                  title: isArabic ? 'حجوزات $periodLabel' : 'Bookings ($periodLabel)',
                   value: isArabic
                       ? '$totalBookingsToday حجز ($onlinePaidCount أونلاين • ${totalBookingsToday - onlinePaidCount} كاش)'
                       : '$totalBookingsToday bookings ($onlinePaidCount online • ${totalBookingsToday - onlinePaidCount} cash)',
                   icon: Iconsax.calendar_1_copy,
                   explanation: isArabic
-                      ? 'يمثل إجمالي عدد الحجوزات المؤكدة لملعبك خلال ساعات اليوم، مع تصنيف فوري للحجوزات المدفوعة إلكترونياً (أونلاين) والحجوزات النقدية (كاش) لتسهيل مراجعة الخزينة.'
-                      : 'Represents the total confirmed bookings for your venue today, with a breakdown between digital online payments and cash collections.',
+                      ? 'يمثل إجمالي عدد الحجوزات المؤكدة لملعبك خلال فترة ($periodLabel)، مع تصنيف فوري للحجوزات المدفوعة إلكترونياً (أونلاين) والحجوزات النقدية (كاش) لتسهيل مراجعة الخزينة.'
+                      : 'Represents the total confirmed bookings for your venue during ($periodLabel), with a breakdown between digital online payments and cash collections.',
                   isArabic: isArabic,
                 ),
               ),
@@ -284,18 +306,18 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 value: '${lostRevenue.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
                 label: isArabic ? 'الإيراد غير المستغل' : 'Lost Potential',
                 subtext: isArabic
-                    ? '${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة'
+                    ? '${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة $periodLabel'
                     : '${unbookedHours.toStringAsFixed(1)} unbooked hrs',
                 onTap: () => showKpiExplanationSheet(
                   context,
                   title: isArabic ? 'الإيراد غير المستغل' : 'Lost Potential Revenue',
                   value: isArabic
-                      ? '${lostRevenue.toStringAsFixed(0)} ج.م (${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة اليوم)'
-                      : '${lostRevenue.toStringAsFixed(0)} EGP (${unbookedHours.toStringAsFixed(1)} unbooked hrs today)',
+                      ? '${lostRevenue.toStringAsFixed(0)} ج.م (${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة $periodLabel)'
+                      : '${lostRevenue.toStringAsFixed(0)} EGP (${unbookedHours.toStringAsFixed(1)} unbooked hrs)',
                   icon: Iconsax.moneys_copy,
                   explanation: isArabic
-                      ? 'القيمة المالية التقديرية للساعات الشاغرة التي لم تُحجز اليوم حتى الآن بناءً على سعر الساعة للملعب. يوضح لك هذا الرقم الإيراد المفقود الذي كان بإمكانك تحقيقه إذا عمل الملعب بكامل طاقته.'
-                      : 'The estimated financial value of unbooked hours today based on your hourly pitch rate. Shows the missed revenue opportunity.',
+                      ? 'القيمة المالية التقديرية للساعات الشاغرة التي لم تُحجز في ($periodLabel) بناءً على سعر الساعة للملعب. يوضح لك هذا الرقم الإيراد المفقود الذي كان بإمكانك تحقيقه إذا عمل الملعب بكامل طاقته.'
+                      : 'The estimated financial value of unbooked hours during ($periodLabel) based on your hourly pitch rate. Shows the missed revenue opportunity.',
                   isArabic: isArabic,
                 ),
               ),
@@ -310,7 +332,13 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
             Expanded(
               child: _buildFramedKpiCard(
                 icon: Iconsax.chart_square_copy,
-                value: '${occupancyRate.toStringAsFixed(0)}%',
+                value: effectiveOccupancy,
+                extraBadge: (occupancyRate > 0 && occupancyRate < 1)
+                    ? Text(
+                        isArabic ? '(أقل من 1%)' : '(<1%)',
+                        style: const TextStyle(fontSize: 10, color: VSPColors.textMuted, fontWeight: FontWeight.bold),
+                      )
+                    : null,
                 label: isArabic ? 'نسبة الإشغال الفعلية' : 'Actual Occupancy',
                 subtext: isArabic
                     ? '${totalHoursBookedToday.toStringAsFixed(1)} من ${totalAvailableHours.toStringAsFixed(0)} ساعة'
@@ -319,12 +347,12 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                   context,
                   title: isArabic ? 'نسبة الإشغال الفعلية' : 'Actual Occupancy Rate',
                   value: isArabic
-                      ? '${occupancyRate.toStringAsFixed(0)}% (${totalHoursBookedToday.toStringAsFixed(1)} من ${totalAvailableHours.toStringAsFixed(0)} ساعة متاحة)'
-                      : '${occupancyRate.toStringAsFixed(0)}% (${totalHoursBookedToday.toStringAsFixed(1)} of ${totalAvailableHours.toStringAsFixed(0)} available hrs)',
+                      ? '$effectiveOccupancy (${totalHoursBookedToday.toStringAsFixed(1)} من ${totalAvailableHours.toStringAsFixed(0)} ساعة متاحة)'
+                      : '$effectiveOccupancy (${totalHoursBookedToday.toStringAsFixed(1)} of ${totalAvailableHours.toStringAsFixed(0)} available hrs)',
                   icon: Iconsax.chart_square_copy,
                   explanation: isArabic
-                      ? 'النسبة المئوية لعدد الساعات المحجوزة بالفعل اليوم مقارنة بإجمالي عدد الساعات التشغيلية المتاحة في الملعب خلال 24 ساعة.'
-                      : 'The percentage of operational hours actually booked today compared to the total available hours.',
+                      ? 'النسبة المئوية لعدد الساعات المحجوزة بالفعل في ($periodLabel) مقارنة بإجمالي عدد الساعات التشغيلية المتاحة في الملعب.'
+                      : 'The percentage of operational hours actually booked during ($periodLabel) compared to the total available hours.',
                   isArabic: isArabic,
                 ),
               ),
@@ -335,7 +363,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 icon: Iconsax.ticket_copy,
                 value: '${averageBookingPrice.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
                 label: isArabic ? 'متوسط سعر الحجز' : 'Avg. Ticket Price',
-                subtext: isArabic ? 'لكل حجز مسجل اليوم' : 'per registered booking',
+                subtext: isArabic ? 'لكل حجز مسجل $periodLabel' : 'per registered booking',
                 onTap: () => showKpiExplanationSheet(
                   context,
                   title: isArabic ? 'متوسط سعر الحجز' : 'Average Booking Price',
@@ -344,8 +372,8 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       : '${averageBookingPrice.toStringAsFixed(0)} EGP per registered booking',
                   icon: Iconsax.ticket_copy,
                   explanation: isArabic
-                      ? 'متوسط الإيراد الناتج عن كل حجز تم تسجيله اليوم، ويتم حسابه بقسمة إجمالي إيرادات اليوم على عدد الحجوزات.'
-                      : 'The average revenue generated per booking today, calculated by dividing total daily revenue by total bookings count.',
+                      ? 'متوسط الإيراد الناتج عن كل حجز تم تسجيله في ($periodLabel)، ويتم حسابه بقسمة إجمالي إيرادات الفترة على عدد الحجوزات.'
+                      : 'The average revenue generated per booking during ($periodLabel), calculated by dividing total period revenue by total bookings count.',
                   isArabic: isArabic,
                 ),
               ),

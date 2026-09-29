@@ -30,8 +30,8 @@ class VSPColors {
   static const warning = Color(0xFFF59E0B);
   static const info = Color(0xFF3B82F6);
   static const Color whatsApp = Color(0xFF25D366);
-  static const Color proAccent = Color(0xFFD4AF37); // Metallic Gold
-  static const Color proAccentSoft = Color(0x1FD4AF37); // 12% Tint
+  static const Color proAccent = accent; // Unified to Neon Green (#9FDF02)
+  static const Color proAccentSoft = accentSoft; // 12% Neon Green Tint
 
   // Aliased to clean surface tokens to completely eliminate legacy muddy olive tints
   static const cardGreen = surfaceAlt;

@@ -11,7 +11,11 @@ class AuthOtpService {
   /// Mock verification code sender (e.g. for development or testing).
   Future<({bool success, String? error})> sendVerificationCode(AuthRegistrationFormState form) async {
     await Future.delayed(const Duration(seconds: 1));
-    form.verificationCode = '123456';
+    assert(() {
+      // TEST ONLY — يُحذف تلقائياً في release build
+      form.verificationCode = '123456';
+      return true;
+    }());
     return (success: true, error: null);
   }
 

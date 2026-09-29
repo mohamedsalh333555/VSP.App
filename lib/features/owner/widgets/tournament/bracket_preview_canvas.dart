@@ -33,7 +33,7 @@ class BracketPreviewCanvas extends StatelessWidget {
             final int roundIdx = entry.key;
             final List<Map<String, String>> roundMatches = entry.value;
             final int matchCount = roundMatches.length;
-            final double slotHeight = totalBracketHeight / matchCount;
+            final double slotHeight = matchCount > 0 ? totalBracketHeight / matchCount : 80.0;
 
             final String roundLabel = roundIdx == 0 && numOpeningMatches > 0
                 ? 'جولة تمهيدية'
