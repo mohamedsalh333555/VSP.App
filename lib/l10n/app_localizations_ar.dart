@@ -12,7 +12,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get welcomeTitle => 'مرحبا بكم في VSP';
 
   @override
-  String get welcomeSubtitle => 'احجز ملعبك بسهولة وانضم للفرق';
+  String get welcomeSubtitle => 'ملعبك في ثوانٍ — مباراتك في انتظارك';
 
   @override
   String get iAmPlayer => 'أنا لاعب';
@@ -416,7 +416,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get history => 'السابقة';
 
   @override
-  String get noBookings => 'لا توجد حجوزات بعد';
+  String get noBookings => 'جاهز لأول مباراة؟';
 
   @override
   String get noBookingsSubtitle =>
@@ -486,10 +486,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cancelBookingConfirm =>
-      'هل أنت متأكد من إلغاء هذا الحجز؟ لا يمكن التراجع عن هذا الإجراء.';
+      'هل تريد إلغاء الحجز؟ سيعود المبلغ كاملاً إذا كان موعد المباراة بعد أكثر من 8 ساعات من الآن.';
 
   @override
-  String get keepBooking => 'الإبقاء على الحجز';
+  String get keepBooking => 'لأ، أريد اللعب!';
 
   @override
   String get cancelling => 'جاري إلغاء الحجز...';

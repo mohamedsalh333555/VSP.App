@@ -303,11 +303,11 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
+              backgroundColor: VSPColors.whatsApp,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(VSPRadius.md),
+                borderRadius: BorderRadius.circular(VSPRadius.button),
               ),
             ),
           ),

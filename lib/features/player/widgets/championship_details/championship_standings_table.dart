@@ -73,7 +73,7 @@ class ChampionshipStandingsSection extends StatelessWidget {
         if (rows.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
             child: Center(
               child: Text(
                 isArabic ? 'لا توجد مباريات مسجلة بعد' : 'No recorded matches yet',

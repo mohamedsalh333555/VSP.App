@@ -93,15 +93,15 @@ class OwnerTodayPitchScheduleCard extends StatelessWidget {
         booking.paymentStatus == 'paid';
 
     final Color dotColor = isPending
-        ? const Color(0xFFF59E0B) // برتقالي هادئ للمنتظر
-        : (isConfirmed ? VSPColors.accent : const Color(0xFF71717A));
+        ? VSPColors.warning // برتقالي هادئ للمنتظر
+        : (isConfirmed ? VSPColors.accent : VSPColors.textMuted);
 
     final String statusLabel = isPending
         ? (isArabic ? 'في انتظار الدفع' : 'Awaiting Payment')
         : (isConfirmed ? (isArabic ? 'مؤكد' : 'Confirmed') : (isArabic ? 'غير مؤكد' : 'Unconfirmed'));
 
     final Color statusColor = isPending
-        ? const Color(0xFFF59E0B)
+        ? VSPColors.warning
         : VSPColors.textSecondary;
 
     // استخراج الاسم وتوقيت الحجز
@@ -212,7 +212,7 @@ class OwnerTodayPitchScheduleCard extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF71717A),
+                  color: VSPColors.textMuted,
                   shape: BoxShape.circle,
                 ),
               ),

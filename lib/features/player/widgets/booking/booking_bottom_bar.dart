@@ -84,7 +84,7 @@ class BookingBottomBar extends StatelessWidget {
                     value: isPrivate,
                     activeColor: Colors.black,
                     activeTrackColor: VSPColors.accent,
-                    inactiveThumbColor: Colors.grey,
+                    inactiveThumbColor: VSPColors.textMuted,
                     inactiveTrackColor: VSPColors.surfaceAlt,
                     trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                     onChanged: (val) {
@@ -229,7 +229,7 @@ class BookingBottomBar extends StatelessWidget {
                         shape: BoxShape.circle,
                         color: isBallRented ? VSPColors.accent : Colors.transparent,
                         border: Border.all(
-                          color: isBallRented ? VSPColors.accent : Colors.grey.shade600,
+                          color: isBallRented ? VSPColors.accent : VSPColors.textMuted,
                           width: 1.5,
                         ),
                       ),
@@ -268,7 +268,7 @@ class BookingBottomBar extends StatelessWidget {
                       Text(
                         '${totalPrice.toInt()} ${isArabic ? "ج.م" : "eg"}',
                         style: TextStyle(
-                          color: isSlotSelected ? VSPColors.accent : Colors.white,
+                          color: isSlotSelected ? VSPColors.accent : VSPColors.textPrimary,
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
@@ -299,11 +299,11 @@ class BookingBottomBar extends StatelessWidget {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSlotSelected ? VSPColors.accent : VSPColors.surfaceAlt,
-                      foregroundColor: isSlotSelected ? Colors.black : Colors.grey.shade500,
+                      foregroundColor: isSlotSelected ? Colors.black : VSPColors.textMuted,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        borderRadius: BorderRadius.circular(VSPRadius.button),
                       ),
                       overlayColor: VSPStates.pressedOverlay(),
                     ),
@@ -319,7 +319,7 @@ class BookingBottomBar extends StatelessWidget {
                                 ? (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation')
                                 : (isArabic ? 'اختر الوقت أولاً' : 'Select Time'),
                             style: TextStyle(
-                              color: isSlotSelected ? Colors.black : Colors.grey.shade400,
+                              color: isSlotSelected ? Colors.black : VSPColors.textMuted,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),

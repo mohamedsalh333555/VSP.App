@@ -139,45 +139,69 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
         }
 
         final matches = snapshot.data ?? [];
-        if (matches.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
+        final isLoading = snapshot.connectionState == ConnectionState.waiting && matches.isEmpty;
 
         return Column(
           children: [
             HomeSectionHeader(
               title: AppLocalizations.of(context)!.joinMatches,
-              onSeeAll: () => widget.onNavigate(1),
+              onSeeAll: matches.isNotEmpty ? () => widget.onNavigate(1) : null,
             ),
             const SizedBox(height: 8),
             SizedBox(
               height: 240,
-              child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
+              child: isLoading
                   ? ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: 3,
                       itemBuilder: (_, __) => const CardSkeleton(),
                     )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: matches.length,
-                      itemBuilder: (context, i) => Align(
-                        alignment: Alignment.topCenter,
-                        child: Container(
-                          width: 320,
-                          margin: const EdgeInsets.only(right: 6),
-                          child: PublicMatchCard(booking: matches[i]),
+                  : matches.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
+                              const SizedBox(height: 10),
+                              Text(
+                                'لا توجد مباريات مفتوحة حالياً',
+                                style: TextStyle(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.7),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'احجز ملعبك وافتح مباراة للجميع!',
+                                style: TextStyle(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.45),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: matches.length,
+                          itemBuilder: (context, i) => Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              width: 320,
+                              margin: const EdgeInsets.only(right: 6),
+                              child: PublicMatchCard(booking: matches[i]),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
             ),
           ],
         );
       },
     );
   }
+
 }
 
 /// قسم البطولات المتاحة في الصفحة الرئيسية
@@ -204,43 +228,69 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
       stream: _championshipsStream,
       builder: (context, snapshot) {
         final championships = snapshot.data ?? [];
-        if (championships.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
-          return const SizedBox.shrink();
-        }
+        final isLoading = snapshot.connectionState == ConnectionState.waiting && championships.isEmpty;
 
         return Column(
           children: [
             HomeSectionHeader(
               title: AppLocalizations.of(context)!.joinChampionships,
-              onSeeAll: () => widget.onNavigate(2, arguments: {'initialTab': 0}),
+              onSeeAll: championships.isNotEmpty
+                  ? () => widget.onNavigate(2, arguments: {'initialTab': 0})
+                  : null,
             ),
             const SizedBox(height: 8),
             SizedBox(
               height: 250,
-              child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
+              child: isLoading
                   ? ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: 3,
                       itemBuilder: (_, __) => const CardSkeleton(),
                     )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: championships.length,
-                      itemBuilder: (context, i) => Align(
-                        alignment: Alignment.topCenter,
-                        child: Container(
-                          width: 320,
-                          margin: const EdgeInsets.only(right: 6),
-                          child: ChampionshipCard(championship: championships[i]),
+                  : championships.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
+                              const SizedBox(height: 10),
+                              Text(
+                                'لا توجد بطولات متاحة حالياً',
+                                style: TextStyle(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.7),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'ترقب قريباً — البطولة القادمة في الطريق!',
+                                style: TextStyle(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.45),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: championships.length,
+                          itemBuilder: (context, i) => Align(
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              width: 320,
+                              margin: const EdgeInsets.only(right: 6),
+                              child: ChampionshipCard(championship: championships[i]),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
             ),
           ],
         );
       },
     );
   }
+
 }

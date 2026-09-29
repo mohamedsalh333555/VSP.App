@@ -72,7 +72,7 @@ class ChatDialogs {
                 }
               }
             },
-            child: Text(isArabic ? 'إرسال البلاغ' : 'Submit Report', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'إرسال البلاغ' : 'Submit Report', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -142,7 +142,7 @@ class ChatDialogs {
                 VSPFeedback.showSuccess(context, isArabic ? 'تم حذف المحادثة.' : 'Conversation deleted.');
               }
             },
-            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

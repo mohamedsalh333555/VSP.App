@@ -74,8 +74,11 @@ class BookingConfirmationHandler {
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-    // Mandatory anti-manipulation location check: the player must be physically
-    // located in the same Egyptian governorate as the selected stadium.
+    // Smart location check: determines whether cash booking is eligible
+    // or if the player must confirm via online payment/deposit (to protect venues against no-shows).
+    bool isCrossGovernorate = false;
+    String? crossGovMessage;
+
     try {
       final (position, resolvedGovernorate) =
           await LocationService().getThrottledLocation(force: true);
@@ -83,76 +86,48 @@ class BookingConfirmationHandler {
 
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (resolvedGovernorate == 'mock_location_detected') {
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'لا يمكن إتمام الحجز باستخدام موقع وهمي. فعّل الموقع الحقيقي على جهازك.'
-              : 'Booking cannot continue with a mock location. Please enable your real device location.',
-        );
-        onLoadingChanged(false);
-        return;
-      }
+        isCrossGovernorate = true;
+        crossGovMessage = isArabic
+            ? 'تم رصد موقع غير دقيق. لتأكيد الحجز بأمان يا كابتن، يرجى السداد الإلكتروني أو العربون.'
+            : 'Inaccurate location detected. Please confirm via electronic payment or deposit.';
+      } else if (position == null || resolvedGovernorate == null || resolvedGovernorate.trim().isEmpty) {
+        isCrossGovernorate = true;
+        crossGovMessage = isArabic
+            ? 'تعذر التحقق من موقعك بدقة. يمكنك تأكيد حجزك فوراً بالسداد الإلكتروني أو دفع العربون يا كابتن.'
+            : 'Could not verify exact location. You can confirm via electronic payment or deposit.';
+      } else {
+        final stadiumGovRaw = stadium.governorate?.trim() ?? '';
+        final playerGovernorate =
+            EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
+                resolvedGovernorate.trim().toLowerCase();
+        final stadiumGovernorate =
+            EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
+                stadiumGovRaw.toLowerCase();
 
-      if (position == null || resolvedGovernorate == null || resolvedGovernorate.trim().isEmpty) {
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'لا يمكن إتمام الحجز بدون تحديد موقعك الفعلي. فعّل صلاحية الموقع وحاول مرة أخرى.'
-              : 'Booking requires your current location. Please enable location permission and try again.',
-        );
-        onLoadingChanged(false);
-        return;
-      }
+        final pGov = playerGovernorate.toLowerCase();
+        final sGov = stadiumGovernorate.toLowerCase();
+        // Allow cross-booking within Greater Cairo metropolitan area (Cairo, Giza, Qalyubia)
+        final isGreaterCairo = (pGov == 'cairo' || pGov == 'giza' || pGov == 'qalyubia') &&
+                               (sGov == 'cairo' || sGov == 'giza' || sGov == 'qalyubia');
 
-      final stadiumGovRaw = stadium.governorate?.trim() ?? '';
-      final playerGovernorate =
-          EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
-              resolvedGovernorate.trim().toLowerCase();
-      final stadiumGovernorate =
-          EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
-              stadiumGovRaw.toLowerCase();
-
-      final pGov = playerGovernorate.toLowerCase();
-      final sGov = stadiumGovernorate.toLowerCase();
-      // Allow cross-booking within Greater Cairo metropolitan area (Cairo, Giza, Qalyubia)
-      final isGreaterCairo = (pGov == 'cairo' || pGov == 'giza' || pGov == 'qalyubia') &&
-                             (sGov == 'cairo' || sGov == 'giza' || sGov == 'qalyubia');
-
-      if (stadiumGovRaw.isNotEmpty &&
-          pGov != sGov &&
-          !isGreaterCairo) {
-        final stadiumName = EgyptGovernorates.getLocalizedName(
-          EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ??
-              stadiumGovRaw,
-          isArabic,
-        );
-        final playerName = EgyptGovernorates.getLocalizedName(
-          EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ??
-              resolvedGovernorate,
-          isArabic,
-        );
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'لا يمكن إتمام الحجز لأنك موجود حالياً في محافظة $playerName بينما الملعب موجود في $stadiumName. يجب أن تكون داخل نفس المحافظة لإتمام الحجز.'
-              : 'Booking is unavailable because you are currently in $playerName while this stadium is in $stadiumName. You must be in the same governorate to book.',
-        );
-        onLoadingChanged(false);
-        return;
+        if (stadiumGovRaw.isNotEmpty && pGov != sGov && !isGreaterCairo) {
+          isCrossGovernorate = true;
+          final stadiumName = EgyptGovernorates.getLocalizedName(
+            EgyptGovernorates.resolveGoogleName(stadiumGovRaw) ?? stadiumGovRaw,
+            isArabic,
+          );
+          final playerName = EgyptGovernorates.getLocalizedName(
+            EgyptGovernorates.resolveGoogleName(resolvedGovernorate) ?? resolvedGovernorate,
+            isArabic,
+          );
+          crossGovMessage = isArabic
+              ? 'أهلاً بك يا كابتن! نظراً لوجودك في محافظة $playerName والملعب في $stadiumName، الحجز النقدي متاح فقط للمتواجدين داخل المحافظة لحماية مواعيد الملعب. تقدر تأكد حجزك دلوقتي فوراً بالدفع الإلكتروني أو العربون.'
+              : 'Notice: Cash booking is reserved for in-governorate players ($playerName vs $stadiumName). You can confirm instantly via online payment or deposit.';
+        }
       }
     } catch (e) {
-      VSPLogger.w('Mandatory location validation failed closed: $e');
-      if (context.mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'تعذر التحقق من موقعك الحالي. فعّل GPS وحاول مرة أخرى.'
-              : 'Unable to verify your current location. Please enable GPS and try again.',
-        );
-      }
-      onLoadingChanged(false);
-      return;
+      VSPLogger.w('Location verification fallback to online-preferred: $e');
+      isCrossGovernorate = true;
     }
 
     // ── Pre-confirmation double-check ────────────────────────────────────────
@@ -343,6 +318,8 @@ class BookingConfirmationHandler {
       currentUserModel: currentUserModel,
       bookingProvider: bookingProvider,
       nav: nav,
+      isCrossGovernorate: isCrossGovernorate,
+      crossGovMessage: crossGovMessage,
     );
   }
 }

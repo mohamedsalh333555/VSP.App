@@ -158,7 +158,19 @@ class AppRouter {
  }
  return const Scaffold(
  backgroundColor: VSPColors.background,
- body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+ body: Center(
+   child: Column(
+     mainAxisSize: MainAxisSize.min,
+     children: [
+       CircularProgressIndicator(color: VSPColors.accent),
+       SizedBox(height: 16),
+       Text(
+         'جاري تحميل تفاصيل البطولة...',
+         style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+       ),
+     ],
+   ),
+ ),
  );
  },
  );

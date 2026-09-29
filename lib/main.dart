@@ -44,22 +44,22 @@ class _StartupFailureApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: Scaffold(
+      home: const Scaffold(
         backgroundColor: VSPColors.background,
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(VSPSpacing.xl),
+            padding: EdgeInsets.all(VSPSpacing.xl),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Iconsax.warning_2_copy, size: 72, color: VSPColors.error),
-                const SizedBox(height: VSPSpacing.lg),
-                const Text('VSP cannot connect to its backend.',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                Icon(Iconsax.warning_2_copy, size: 72, color: VSPColors.error),
+                SizedBox(height: VSPSpacing.lg),
+                Text('تعذّر الاتصال بـ VSP.',
+                  style: TextStyle(color: VSPColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center),
-                const SizedBox(height: VSPSpacing.sm),
-                Text('Please check your connection and try again.\\n$message',
-                  style: const TextStyle(color: VSPColors.textSecondary),
+                SizedBox(height: VSPSpacing.sm),
+                Text('تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
+                  style: TextStyle(color: VSPColors.textSecondary),
                   textAlign: TextAlign.center),
               ],
             ),

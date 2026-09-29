@@ -52,20 +52,20 @@ class CheckoutGuestPlayersSection extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.12),
+              color: VSPColors.warning.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 18),
+                const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     isArabic
                         ? 'متبقي [${minPlayers - totalCount}] لاعبين لاكتمال نصاب الفريق '
                         : '[${minPlayers - totalCount}] more players needed to complete squad ',
-                    style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
               ],

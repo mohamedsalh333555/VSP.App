@@ -9,7 +9,7 @@ class RateLimitException implements Exception {
   final int statusCode;
 
   const RateLimitException([
-    this.message = 'تم تجاوز الحد المسموح: 10 طلبات في الدقيقة (Rate limit exceeded: 429).',
+    this.message = 'أرسلت كتير في وقت قصير. استنّى دقيقة وحاول تاني.',
     this.statusCode = 429,
   ]);
 

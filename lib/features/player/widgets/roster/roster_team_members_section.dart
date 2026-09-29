@@ -112,13 +112,14 @@ class RosterTeamMembersSection extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
+                            color: VSPColors.proAccentSoft,
+                            borderRadius: BorderRadius.circular(VSPRadius.chip),
+                            border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.3)),
                           ),
                           child: Text(
                             isArabic ? 'كابتن ' : 'Captain ',
                             style: const TextStyle(
-                              color: Colors.amber,
+                              color: VSPColors.proAccent,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),

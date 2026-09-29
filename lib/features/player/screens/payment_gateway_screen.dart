@@ -101,7 +101,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
-              isArabic ? 'انتهت مهلة حجز الوقت (8 دقائق).' : 'Booking reservation timeout (8 mins).',
+              isArabic ? 'الموعد تحرّر مؤقتاً. لا تقلق — يمكنك حجزه مجدداً إذا كان متاحاً!' : 'Slot released. No worries — you can book it again if still available!',
             );
             Navigator.pop(context);
           }

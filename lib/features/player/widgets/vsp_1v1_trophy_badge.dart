@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/repositories/league_repository.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 
 /// Pure UI trophy badge widget displaying 1v1 championships won.
 /// If titles <= 0, renders nothing (SizedBox.shrink()).
@@ -26,17 +27,17 @@ class Vsp1v1TrophyBadge extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFD700).withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.medalGold.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(VSPRadius.chip),
         border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: 0.7),
+          color: VSPColors.medalGold.withValues(alpha: 0.7),
           width: 1,
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: const Color(0xFFFFD700),
+          color: VSPColors.medalGold,
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,

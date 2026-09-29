@@ -154,18 +154,18 @@ class StadiumCard extends StatelessWidget {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
  decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.2),
+ color: VSPColors.warning.withValues(alpha: 0.15),
  borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: Colors.amber, width: 1),
+ border: Border.all(color: VSPColors.warning.withValues(alpha: 0.6), width: 1),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
- const Icon(Iconsax.clock_copy, color: Colors.amber, size: 12),
+ const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 12),
  const SizedBox(width: 4),
  Text(
  Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة ' : 'Under Review ',
- style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+ style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
  ),
  ],
  ),

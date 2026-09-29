@@ -45,7 +45,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
               child: Text(
                 '$totalPlayers / 12',
                 style: TextStyle(
-                  color: isValidRoster ? VSPColors.accent : Colors.redAccent,
+                  color: isValidRoster ? VSPColors.accent : VSPColors.error,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
@@ -119,7 +119,7 @@ class TournamentManualTeamRosterSection extends StatelessWidget {
                 ? ' يجب إضافة ${5 - totalPlayers} لاعبين إضافيين لتشغيل كشف الفريق'
                 : ' Add ${5 - totalPlayers} more players',
             style: const TextStyle(
-              color: Colors.redAccent,
+              color: VSPColors.error,
               fontSize: 11,
               fontWeight: FontWeight.bold,
             ),

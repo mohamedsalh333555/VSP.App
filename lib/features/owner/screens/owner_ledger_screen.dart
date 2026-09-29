@@ -1,7 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/owner_repository.dart';
@@ -57,24 +60,53 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
       }
 
       final StringBuffer csv = StringBuffer();
-      csv.writeln('Date,Transaction_ID,Type,Amount_EGP,Payment_Method');
+      // Add UTF-8 BOM so Excel opens Arabic correctly without garbled characters
+      csv.write('\uFEFF');
+      csv.writeln(isAr
+          ? 'التاريخ,رقم المعاملة,النوع,المبلغ (ج.م),طريقة الدفع'
+          : 'Date,Transaction_ID,Type,Amount_EGP,Payment_Method');
 
       for (final tx in transactions) {
         final dateStr = tx['created_at'] != null
             ? DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(tx['created_at'].toString()))
             : '';
         final id = tx['id']?.toString() ?? '';
-        final type = tx['type']?.toString() ?? 'cash';
+        final rawType = tx['type']?.toString() ?? 'cash';
+        final type = isAr
+            ? (rawType == 'payment'
+                ? 'سداد حجز'
+                : rawType == 'deposit'
+                    ? 'عربون'
+                    : rawType == 'refund'
+                        ? 'استرداد'
+                        : rawType == 'payout'
+                            ? 'سحب أرباح'
+                            : rawType)
+            : rawType;
         final amount = tx['amount'] ?? 0;
-        final method = tx['payment_method'] ?? type;
+        final rawMethod = tx['payment_method'] ?? rawType;
+        final method = isAr
+            ? (rawMethod == 'cash'
+                ? 'نقدي'
+                : rawMethod == 'wallet'
+                    ? 'محفظة إلكترونية'
+                    : rawMethod == 'card'
+                        ? 'بطاقة بنكية'
+                        : rawMethod)
+            : rawMethod;
 
         csv.writeln('"$dateStr","$id","$type","$amount","$method"');
       }
 
-      final String csvText = csv.toString();
+      final tempDir = await getTemporaryDirectory();
+      final dateStamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
+      final filePath = '${tempDir.path}/vsp_ledger_$dateStamp.csv';
+      final file = File(filePath);
+      await file.writeAsString(csv.toString(), encoding: utf8);
+
       await SharePlus.instance.share(
         ShareParams(
-          text: csvText,
+          files: [XFile(filePath, mimeType: 'text/csv')],
           subject: isAr ? "كشف الحساب المالي للمنشأة" : "Facility Financial Ledger",
         ),
       );

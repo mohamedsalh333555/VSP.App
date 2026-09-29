@@ -132,17 +132,17 @@ class TeamLeagueFixturesView extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.15),
+                      color: VSPColors.accentSoft,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Iconsax.tick_circle_copy, size: 12, color: Colors.green),
+                        Icon(Iconsax.tick_circle_copy, size: 12, color: VSPColors.accent),
                         SizedBox(width: 4),
                         Text(
                           'تم الحجز',
-                          style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),

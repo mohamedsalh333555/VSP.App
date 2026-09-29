@@ -64,21 +64,21 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
     return Container(
       padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.15),
+        color: VSPColors.warning.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: Colors.amber, width: 1),
+        border: Border.all(color: VSPColors.warning, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.clock_copy, color: Colors.amber, size: 20),
+              const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isArabic ? ' اقتراح من المالك بنقل موعد المباراة:' : ' Pitch owner proposed a new match time:',
-                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
               ),
             ],
@@ -86,7 +86,7 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
           const SizedBox(height: 6),
           Text(
             '${isArabic ? "الموعد المقترح: " : "Proposed time: "}${AppDateFormatter.formatDayMonth(widget.booking.proposedStartTime!, Localizations.localeOf(context).languageCode)} • ${AppDateFormatter.formatTime(widget.booking.proposedStartTime!, Localizations.localeOf(context).languageCode)}',
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
           if (_isLoading)
@@ -94,7 +94,7 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
               child: SizedBox(
                 height: 28,
                 width: 28,
-                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.amber),
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: VSPColors.warning),
               ),
             )
           else

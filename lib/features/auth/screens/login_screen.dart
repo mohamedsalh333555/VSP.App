@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  VSPFeedback.showError(
  context,
- isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور ' : 'Please enter email and password ',
+ isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور' : 'Please enter email and password',
  );
  return;
  }
@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
  if (mounted) {
  HapticFeedback.vibrate();
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final fallbackMsg = isAr ? 'فشل تسجيل الدخول، يرجى التأكد من صحة البريد وكلمة المرور' : 'Login failed. Please check your credentials';
+ final fallbackMsg = isAr ? 'البريد أو كلمة المرور غير صحيحة — جرّب مرة أخرى أو اضغط "نسيت كلمة المرور"' : 'Email or password is incorrect — try again or tap "Forgot password"';
  VSPFeedback.showError(context, authProvider.errorMessage ?? fallbackMsg);
  }
  }

@@ -21,6 +21,8 @@ void showBookingPaymentMethodSheet({
   required UserModel currentUserModel,
   required BookingProvider bookingProvider,
   required NavigatorState nav,
+  bool isCrossGovernorate = false,
+  String? crossGovMessage,
 }) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
@@ -125,10 +127,10 @@ void showBookingPaymentMethodSheet({
                     const Divider(color: VSPColors.divider),
                     // خيار 2: دفع العربون فقط أونلاين
                     ListTile(
-                      leading: const Icon(Iconsax.lock_copy, color: Colors.amber),
+                      leading: const Icon(Iconsax.lock_copy, color: VSPColors.warning),
                       title: Text(
                         isArabic ? 'دفع العربون فقط أونلاين' : 'Pay Deposit Only Online',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         isArabic
@@ -195,18 +197,41 @@ void showBookingPaymentMethodSheet({
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                             )
-                          : const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
+                          : Icon(
+                              Iconsax.money_3_copy,
+                              color: isCrossGovernorate ? VSPColors.textSecondary : VSPColors.warning,
+                            ),
                       title: Text(
                         isArabic ? 'دفع نقدي بالكامل في الملعب' : 'Pay Full Cash at Pitch',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: isCrossGovernorate ? VSPColors.textSecondary : Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       subtitle: Text(
-                        isArabic ? 'سداد المبلغ كاملاً للمسؤول عند الحضور' : 'Pay total amount in cash upon arrival',
+                        isCrossGovernorate
+                            ? (isArabic
+                                ? 'متاح فقط للاعبين داخل محافظة الملعب (متاح إلكترونياً)'
+                                : 'Available only within venue governorate (pay online)')
+                            : (isArabic
+                                ? 'سداد المبلغ كاملاً لمسؤول الملعب عند الحضور'
+                                : 'Pay total amount to stadium manager upon arrival'),
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       onTap: isNavigating
                           ? null
                           : () async {
+                              if (isCrossGovernorate) {
+                                HapticFeedback.lightImpact();
+                                VSPFeedback.showInfo(
+                                  sheetContext,
+                                  crossGovMessage ??
+                                      (isArabic
+                                          ? 'الحجز النقدي متاح فقط للمتواجدين داخل نفس محافظة الملعب يا كابتن. تقدر تأكد حجزك دلوقتي فوراً بالدفع الإلكتروني أو العربون.'
+                                          : 'Cash bookings are available for in-governorate players only. Please pay online to confirm.'),
+                                );
+                                return;
+                              }
                               HapticFeedback.mediumImpact();
                               setSheetState(() => isNavigating = true);
                               try {

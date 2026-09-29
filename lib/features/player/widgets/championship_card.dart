@@ -151,7 +151,7 @@ class ChampionshipCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
+                  color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -270,7 +270,7 @@ class ChampionshipCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: isClosed ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.accent,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(VSPRadius.button),
                       border: isClosed ? Border.all(color: VSPColors.accent, width: 1.5) : null,
                     ),
                     child: Center(

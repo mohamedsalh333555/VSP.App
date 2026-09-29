@@ -247,7 +247,7 @@ class TeamAchievementsSection extends StatelessWidget {
                         ? (isArabic ? 'تم التحقيق ' : 'Unlocked ')
                         : (isArabic ? 'قيد التقدم ($progress)' : 'In Progress ($progress)'),
                     style: TextStyle(
-                      color: isUnlocked ? VSPColors.accent : Colors.amber,
+                      color: isUnlocked ? VSPColors.accent : VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),

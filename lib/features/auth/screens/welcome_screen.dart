@@ -152,8 +152,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             )
                           : const SizedBox(width: 38, height: 38),
 
-                      // Language switch button
-                      const WelcomeLanguageButton(),
+            // Language switch button + Skip button
+              Row(
+                children: [
+                  const WelcomeLanguageButton(),
+                  if (_currentPage < 2) ...[
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => _pageController.animateToPage(
+                        2,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: VSPColors.textSecondary.withValues(alpha: 0.7),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'تخطي',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
                     ],
                   ),
                 ),

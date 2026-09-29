@@ -63,16 +63,30 @@ class PaymentCountdownHeader extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: VSPColors.accent,
+                    color: remainingSeconds <= 60 ? VSPColors.error : VSPColors.accent,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
-                  child: Text(
-                    formatCountdown(remainingSeconds),
-                    style: VSPTypography.numericStyle.copyWith(
-                      color: Colors.black,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        formatCountdown(remainingSeconds),
+                        style: VSPTypography.numericStyle.copyWith(
+                          color: Colors.black,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'دقيقة',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

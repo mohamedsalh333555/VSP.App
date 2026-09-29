@@ -28,17 +28,17 @@ class TeamLeagueStandingsView extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFFFD700).withValues(alpha: 0.25),
+                  VSPColors.medalGold.withValues(alpha: 0.25),
                   const Color(0xFFB8860B).withValues(alpha: 0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(VSPRadius.xl),
-              border: Border.all(color: const Color(0xFFFFD700), width: 2),
+              border: Border.all(color: VSPColors.medalGold, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                  color: VSPColors.medalGold.withValues(alpha: 0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -49,7 +49,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFFD700),
+                    color: VSPColors.medalGold,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Iconsax.cup_copy, color: Colors.black, size: 36),
@@ -58,7 +58,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                 const Text(
                   '🏆 بطل الدوري',
                   style: TextStyle(
-                    color: Color(0xFFFFD700),
+                    color: VSPColors.medalGold,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     letterSpacing: 1.1,
@@ -232,14 +232,14 @@ class TeamLeagueStandingsView extends StatelessWidget {
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: isFirst
-                                  ? const Color(0xFFFFD700)
+                                  ? VSPColors.medalGold
                                   : VSPColors.surfaceAlt,
                               shape: BoxShape.circle,
                             ),
                             child: Text(
                               '${index + 1}',
                               style: TextStyle(
-                                color: isFirst ? Colors.black : Colors.white,
+                                color: isFirst ? Colors.black : VSPColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11,
                               ),
@@ -311,10 +311,10 @@ class TeamLeagueStandingsView extends StatelessWidget {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: item.goalDifference > 0
-                                    ? Colors.green
+                                    ? VSPColors.accent
                                     : item.goalDifference < 0
-                                        ? Colors.red
-                                        : Colors.white,
+                                        ? VSPColors.error
+                                        : VSPColors.textPrimary,
                                 fontSize: 11,
                               ),
                             ),
