@@ -218,7 +218,7 @@ class OwnerVerificationBanner extends StatelessWidget {
   }
 }
 
-/// تنبيه انتهاء الاشتراك
+/// تنبيه انتهاء الاشتراك بعد استنفاد مهلة السماح
 class OwnerSubscriptionExpiredAlert extends StatelessWidget {
   final bool isArabic;
   final VoidCallback onRenew;
@@ -252,8 +252,8 @@ class OwnerSubscriptionExpiredAlert extends StatelessWidget {
           Expanded(
             child: Text(
               isArabic
-                  ? 'انتهت صلاحية الاشتراك. يرجى التجديد لتفعيل الحجوزات.'
-                  : 'Subscription expired. Renew now to activate bookings.',
+                  ? 'انتهت صلاحية الاشتراك ومهلة السماح. تم إيقاف استقبال الحجوزات مؤقتاً لحين التجديد.'
+                  : 'Subscription and grace period expired. Bookings paused until renewal.',
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
@@ -277,7 +277,99 @@ class OwnerSubscriptionExpiredAlert extends StatelessWidget {
   }
 }
 
-/// بنر العد التنازلي للتجربة المجانية (يظهر فقط في آخر 10 أيام: اليوم 51 إلى 60)
+/// بنر مهلة السماح (3 أيام بعد انتهاء السنة المجانية أو الاشتراك) لضمان استقرار العمليات
+class OwnerGracePeriodAlert extends StatelessWidget {
+  final int remainingHours;
+  final bool isArabic;
+  final VoidCallback onRenew;
+
+  const OwnerGracePeriodAlert({
+    super.key,
+    required this.remainingHours,
+    required this.isArabic,
+    required this.onRenew,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final int days = remainingHours ~/ 24;
+    final int hours = remainingHours % 24;
+    final String timeText = days > 0
+        ? (isArabic ? '$days يوم و $hours ساعة' : '$days d $hours h')
+        : (isArabic ? '$hours ساعة' : '$hours hours');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: VSPColors.warning.withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Iconsax.timer_pause_copy,
+            color: VSPColors.warning,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isArabic
+                      ? 'مهلة سماح: متبقي $timeText'
+                      : 'Grace Period: $timeText left',
+                  style: const TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isArabic
+                      ? 'يرجى تجديد الاشتراك لضمان استمرار ظهور ملعبك للاعبين.'
+                      : 'Renew subscription to keep your stadium visible to players.',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onRenew,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: VSPColors.warning,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+              ),
+              child: Text(
+                isArabic ? 'تجديد' : 'Renew',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// بنر العد التنازلي للتجربة المجانية (يظهر في آخر 10 أيام من السنة المجانية)
 class OwnerTrialEndingSoonAlert extends StatelessWidget {
   final int remainingDays;
   final bool isArabic;

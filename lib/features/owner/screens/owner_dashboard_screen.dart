@@ -225,7 +225,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     onUpgrade: () => _showProUpgradeSheet(context),
                   ),
 
-                // 2.2 تنبيه انتهاء الاشتراك إن وجد (بعد اليوم 60)
+                // 2.2 تنبيه مهلة السماح (3 أيام بعد انتهاء السنة المجانية أو الاشتراك)
+                if (userModel != null && userModel.isInGracePeriod)
+                  OwnerGracePeriodAlert(
+                    remainingHours: userModel.remainingGraceHours,
+                    isArabic: isArabic,
+                    onRenew: () => _showProUpgradeSheet(context),
+                  ),
+
+                // 2.3 تنبيه انتهاء الاشتراك بعد استنفاد مهلة السماح
                 if (userModel != null && isExpired)
                   OwnerSubscriptionExpiredAlert(
                     isArabic: isArabic,

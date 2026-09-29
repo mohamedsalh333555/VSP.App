@@ -156,12 +156,18 @@ class OwnerProInsightsView extends StatelessWidget {
         ? ((periodRevenue - previousRevenue) / previousRevenue) * 100
         : (periodRevenue > 0 ? 100.0 : 0.0);
 
-    // حساب الطاقة الاستيعابية القصوى للملعب للفترة المحددة
-    final int activePitchCount = selectedStadiumFilter != 'all' ? 1 : (stadiums.isNotEmpty ? stadiums.length : 1);
+    // حساب الطاقة الاستيعابية القصوى للملعب للفترة المحددة (مع استبعاد الملاعب الخاضعة للصيانة)
+    final List<Stadium> targetStadiums = selectedStadiumFilter != 'all'
+        ? stadiums.where((s) => s.id == selectedStadiumFilter).toList()
+        : stadiums;
+    final int operationalPitchCount = targetStadiums.where((s) => !s.isUnderMaintenance).length;
+    final int activePitchCount = targetStadiums.isEmpty ? 1 : operationalPitchCount;
     final double totalAvailableHours = activePitchCount * 16.0 * totalAvailableHoursFactor;
-    final double pitchHourlyRate = stadiums.isNotEmpty && stadiums.first.pricePerHour > 0
-        ? stadiums.first.pricePerHour
-        : (periodRevenue > 0 && periodBookings.isNotEmpty ? (periodRevenue / periodBookings.length) : 300.0);
+    final double pitchHourlyRate = targetStadiums.isNotEmpty && targetStadiums.first.pricePerHour > 0
+        ? targetStadiums.first.pricePerHour
+        : (stadiums.isNotEmpty && stadiums.first.pricePerHour > 0
+            ? stadiums.first.pricePerHour
+            : (periodRevenue > 0 && periodBookings.isNotEmpty ? (periodRevenue / periodBookings.length) : 300.0));
     final double maxCapacityRevenue = totalAvailableHours * pitchHourlyRate;
     final double ringProgress = maxCapacityRevenue > 0
         ? (periodRevenue / maxCapacityRevenue).clamp(0.0, 1.0)

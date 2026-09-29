@@ -85,6 +85,29 @@ class UserModel {
       (subscriptionExpiresAt != null &&
        DateTime.now().isBefore(subscriptionExpiresAt!));
 
+  /// مهلة سماح 3 أيام بعد انتهاء السنة المجانية أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
+  bool get isInGracePeriod {
+    if (hasActiveSubscription) return false;
+    final trialEnds = effectiveTrialEndsAt;
+    if (trialEnds != null && subscriptionExpiresAt == null) {
+      final now = DateTime.now();
+      return now.isAfter(trialEnds) && now.isBefore(trialEnds.add(const Duration(days: 3)));
+    }
+    final subExpires = subscriptionExpiresAt;
+    if (subExpires != null) {
+      final now = DateTime.now();
+      return now.isAfter(subExpires) && now.isBefore(subExpires.add(const Duration(days: 3)));
+    }
+    return false;
+  }
+
+  int get remainingGraceHours {
+    final deadline = subscriptionExpiresAt?.add(const Duration(days: 3)) ??
+        effectiveTrialEndsAt?.add(const Duration(days: 3));
+    if (deadline == null) return 0;
+    return deadline.difference(DateTime.now()).inHours.clamp(0, 72);
+  }
+
   bool get isPro => isProPlan || subscriptionPlan == 'pro';
 
   bool get isProPlan =>
@@ -99,11 +122,11 @@ class UserModel {
       subscriptionExpiresAt != null &&
       DateTime.now().isBefore(subscriptionExpiresAt!);
 
-  bool get isPlanExpired => !hasActiveSubscription;
+  bool get isPlanExpired => !hasActiveSubscription && !isInGracePeriod;
 
   int get maxStadiums {
     if (isProPlan) return 3;
-    if (isBasicOrHigher || isInActiveTrial) return 1;
+    if (isBasicOrHigher || isInActiveTrial || isInGracePeriod) return 1;
     return 0;
   }
 

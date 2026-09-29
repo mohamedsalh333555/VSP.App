@@ -159,7 +159,11 @@ class StadiumWizardSubmitService {
       return false;
     } catch (e) {
       if (context.mounted) {
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);
+        final rawMsg = e.toString().replaceFirst('Exception: ', '').trim();
+        final errorMsg = rawMsg.isNotEmpty && (rawMsg.contains('باقتك') || rawMsg.contains('الحد الأقصى'))
+            ? rawMsg
+            : AppLocalizations.of(context)!.stadiumSaveFailed;
+        VSPFeedback.showError(context, errorMsg);
       }
       return false;
     }

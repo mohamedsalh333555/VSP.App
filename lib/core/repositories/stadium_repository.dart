@@ -112,13 +112,19 @@ class StadiumRepository {
                 .eq('is_deleted_by_owner', false);
             final currentCount = (existingStadiums as List).length;
             if (currentCount >= userModel.maxStadiums) {
-              throw Exception(
-                  'وصلت للحد الأقصى للملاعب في باقتك الحالية (${userModel.maxStadiums} ملعب). يرجى الترقية لإضافة ملاعب أخرى.'
-              );
+              if (userModel.maxStadiums <= 1) {
+                throw Exception(
+                    'باقتك الحالية تدعم ملعباً واحداً فقط. يرجى الترقية للباقة الاحترافية (PRO) لإضافة حتى 3 ملاعب.'
+                );
+              } else {
+                throw Exception(
+                    'وصلت للحد الأقصى للملاعب في باقتك الحالية (${userModel.maxStadiums} ملاعب).'
+                );
+              }
             }
           }
         } catch (e) {
-          if (e.toString().contains('الحد الأقصى')) rethrow;
+          if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) rethrow;
           VSPLogger.w('Skip stadium count validation error: $e');
         }
       }
@@ -134,6 +140,9 @@ class StadiumRepository {
       VSPLogger.i(' Stadium successfully added to Supabase: ${response['id']}');
       return response['id']?.toString();
     } catch (e, stack) {
+      if (e.toString().contains('باقتك') || e.toString().contains('الحد الأقصى')) {
+        rethrow;
+      }
       VSPLogger.e(' CRITICAL ERROR IN addStadium', e, stack);
       return null;
     }
