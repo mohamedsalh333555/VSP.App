@@ -40,11 +40,11 @@ serve(async (req: Request) => {
     // Verify if caller is internal worker or service_role
     let isServiceRole = (token === serviceKey);
     if (!isServiceRole) {
-      // Check against internal_function_secrets for DB trigger / cron callers
+      // Check against internal_function_secrets for DB trigger / cron callers (strictly refund_worker)
       const { data: secretRows } = await adminClient
         .from("internal_function_secrets")
         .select("secret")
-        .in("name", ["fcm_push", "service_role", "refund_worker"]);
+        .in("name", ["refund_worker", "service_role"]);
       if (secretRows && secretRows.some((r: any) => r.secret === token)) {
         isServiceRole = true;
       }
@@ -208,7 +208,9 @@ serve(async (req: Request) => {
               refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
             }
           } catch (e: any) {
-            refundError = e?.message || String(e);
+            const errStr = e?.message || String(e);
+            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
+            refundError = isTimeout ? `NETWORK_TIMEOUT_PENDING_GATEWAY_VERIFICATION: ${errStr}` : errStr;
           }
         }
 

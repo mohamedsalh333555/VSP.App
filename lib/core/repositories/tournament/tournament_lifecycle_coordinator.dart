@@ -238,7 +238,11 @@ class TournamentLifecycleCoordinator {
         throw Exception(res['error']?.toString() ?? 'Failed to crown champion');
       }
 
-      await sendCelebrationNotifications(winningTeamId);
+      try {
+        await sendCelebrationNotifications(winningTeamId);
+      } catch (notifErr) {
+        debugPrint('Celebration notification side-effect failed, but DB crowning was already successful: $notifErr');
+      }
     } catch (e) {
       debugPrint('Error crowning champion: $e');
       throw 'Failed to crown champion';

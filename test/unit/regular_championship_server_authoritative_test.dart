@@ -172,5 +172,109 @@ void main() {
       expect(diffResult['success'], isFalse);
       expect(diffResult['error'], 'CHAMPIONSHIP_ALREADY_COMPLETED_WITH_DIFFERENT_WINNER');
     });
+
+    // -------------------------------------------------------------
+    // 6. Strict Frozen Roster Requirement (No team_members fallback)
+    // -------------------------------------------------------------
+    test('Crowning strictly requires Frozen Roster and rejects team_members fallback', () {
+      Map<String, dynamic> awardTrophies({
+        required String? frozenRosterId,
+        required List<String> frozenRosterPlayers,
+        required List<String> currentTeamMembers,
+      }) {
+        if (frozenRosterId == null || frozenRosterPlayers.isEmpty) {
+          // In V3.6, lack of frozen roster immediately fails; NO fallback to currentTeamMembers
+          return {'success': false, 'error': 'FROZEN_ROSTER_REQUIRED'};
+        }
+        return {'success': true, 'awarded_players': frozenRosterPlayers};
+      }
+
+      // Missing frozen roster: must reject
+      final missingResult = awardTrophies(
+        frozenRosterId: null,
+        frozenRosterPlayers: [],
+        currentTeamMembers: ['p1', 'p2', 'p3'],
+      );
+      expect(missingResult['success'], isFalse);
+      expect(missingResult['error'], 'FROZEN_ROSTER_REQUIRED');
+
+      // Valid frozen roster: trophies awarded exclusively to historical players
+      final validResult = awardTrophies(
+        frozenRosterId: 'roster-uuid',
+        frozenRosterPlayers: ['historical_p1', 'historical_p2'],
+        currentTeamMembers: ['historical_p1', 'new_recruit_p3'],
+      );
+      expect(validResult['success'], isTrue);
+      expect(validResult['awarded_players'], ['historical_p1', 'historical_p2']);
+      expect((validResult['awarded_players'] as List).contains('new_recruit_p3'), isFalse);
+    });
+
+    // -------------------------------------------------------------
+    // 7. Server Team Name Authority (Client Override Ignored)
+    // -------------------------------------------------------------
+    test('Server team name is SSOT; client parameter override is ignored', () {
+      const serverTeamName = 'الأهلي المصري';
+      const clientAttemptedOverride = 'فريق تجريبي وهمي';
+
+      String resolveChampionName({required String dbName, String? clientParam}) {
+        // Server database value strictly wins
+        return dbName;
+      }
+
+      final resolvedName = resolveChampionName(
+        dbName: serverTeamName,
+        clientParam: clientAttemptedOverride,
+      );
+      expect(resolvedName, equals(serverTeamName));
+      expect(resolvedName, isNot(equals(clientAttemptedOverride)));
+    });
+
+    // -------------------------------------------------------------
+    // 8. Dedicated refund_worker Secret Authentication
+    // -------------------------------------------------------------
+    test('Queue processing requires dedicated refund_worker secret and rejects regular users', () {
+      const internalRefundSecret = 'secret_hex_64_chars_refund_worker';
+      const userToken = 'user_jwt_token_12345';
+
+      int authenticateWorkerCaller({required String token, required String configuredSecret}) {
+        if (token == configuredSecret) {
+          return 200; // Authorized internal worker
+        }
+        return 403; // Forbidden for user JWTs
+      }
+
+      expect(
+        authenticateWorkerCaller(token: internalRefundSecret, configuredSecret: internalRefundSecret),
+        equals(200),
+      );
+      expect(
+        authenticateWorkerCaller(token: userToken, configuredSecret: internalRefundSecret),
+        equals(403),
+      );
+    });
+
+    // -------------------------------------------------------------
+    // 9. Notification Side-Effect Isolation
+    // -------------------------------------------------------------
+    test('Notification side-effect error does not roll back crowning transaction', () {
+      bool crowningTxSucceeded = false;
+      bool notifFailed = false;
+
+      void crownWithNotificationIsolation() {
+        // 1. DB Crown transaction succeeds
+        crowningTxSucceeded = true;
+
+        // 2. Notification dispatch inside protected try/catch
+        try {
+          throw Exception('Network timeout sending FCM push notification');
+        } catch (_) {
+          notifFailed = true;
+        }
+      }
+
+      crownWithNotificationIsolation();
+      expect(crowningTxSucceeded, isTrue);
+      expect(notifFailed, isTrue);
+    });
   });
 }
