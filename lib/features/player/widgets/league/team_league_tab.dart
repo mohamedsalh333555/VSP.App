@@ -36,7 +36,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   TeamLeagueData? _leagueData;
   String _leaguePaymentStatus = 'not_created';
   double _configuredFee = 30.0;
-  int _selectedSubTab = 0; // 0 = المباريات, 1 = الترتيب
+  int _selectedSubTab = 0; // 0 = جدول المباريات, 1 = تفاصيل الدوري
 
   @override
   void initState() {
@@ -96,15 +96,26 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         championshipId: league.id,
         teamId: team.id,
       );
+      if (payment['prepaid_by_creator'] == true) {
+        VSPFeedback.triggerSuccess();
+        await _loadLeague();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('رسوم مشاركة الفريق: مدفوعة')),
+          );
+        }
+        return;
+      }
       final reference = payment['payment_reference']?.toString();
+      final amount = (payment['amount'] as num?)?.toDouble() ?? 30.0;
       if (reference == null || reference.isEmpty) throw Exception('تعذر إنشاء عملية الدفع');
-      await _openLeaguePayment(reference);
+      await _openLeaguePayment(paymentReference: reference, amount: amount);
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
     }
   }
 
-  Future<void> _openLeaguePayment(String paymentReference) async {
+  Future<void> _openLeaguePayment({required String paymentReference, required double amount}) async {
     final team = widget.userTeam;
     if (team == null) return;
     final now = DateTime.now();
@@ -116,7 +127,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           forceFullPayment: true,
           bookingDraft: BookingDraft(
             stadiumId: 'league_fee',
-            stadiumName: 'دوري: رسوم الاشتراك',
+            stadiumName: 'دوري: رسوم مشاركة الفرق',
             ownerId: '',
             startTime: now,
             endTime: now.add(const Duration(hours: 1)),
@@ -125,7 +136,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
             playerTeamName: team.name,
             isPrivate: true,
             rentBall: false,
-            totalPrice: 30,
+            totalPrice: amount,
             currency: 'EGP',
             needsDeposit: false,
           ),
@@ -145,7 +156,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               orderReference: paymentReference,
               teamId: team.id,
               teamName: team.name,
-              initialTournamentName: _leagueData?.name ?? 'دوري الـ 4 فرق',
+              initialTournamentName: _leagueData?.name ?? 'دوري الفرق',
             ),
           ),
         );
@@ -154,11 +165,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     }
   }
 
+  // Section 3, 4, 5: Create League Multi-Step Flow
   void _showCreateLeagueDialog() {
     final nameController = TextEditingController(
       text: widget.userTeam != null ? 'دوري ${widget.userTeam!.name}' : '',
     );
-    bool isSubmitting = false;
+    int selectedMaxTeams = 4;
+    int selectedIntervalDays = 7;
 
     showModalBottomSheet(
       context: context,
@@ -176,127 +189,392 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
             color: VSPColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Row(
-                children: [
-                  Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
-                  SizedBox(width: 8),
-                  Text(
-                    'إنشاء دوري لفريقك',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'سيتم فتح الدوري ودعوة 3 فرق منافسة للمشاركة في 3 جولات.',
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: nameController,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                decoration: InputDecoration(
-                  labelText: 'اسم الدوري',
-                  labelStyle: const TextStyle(color: VSPColors.textSecondary),
-                  filled: true,
-                  fillColor: VSPColors.surfaceAlt,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Fee clarification badge
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Row(
                   children: [
-                    Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'رسوم الاشتراك: 30 جنيه لكل فريق (تنظيم الدوري والترتيب للمنصة).\nحجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين عند الحجز.',
-                        style: TextStyle(
-                          color: VSPColors.accent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                          height: 1.4,
-                        ),
+                    Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      'إنشاء دوري',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        final name = nameController.text.trim();
-                        if (name.isEmpty) return;
-
-                        setSheetState(() => isSubmitting = true);
-                        try {
-                          final result = await _leagueRepo.createTeamLeague(
-                            teamId: widget.userTeam!.id,
-                            leagueName: name,
-                          );
-                          final paymentReference = result['payment_reference']?.toString();
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (paymentReference != null && paymentReference.isNotEmpty) {
-                            await _openLeaguePayment(paymentReference);
-                          } else {
-                            await _loadLeague();
-                          }
-                        } catch (e) {
-                          setSheetState(() => isSubmitting = false);
-                          if (ctx.mounted) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text('خطأ: $e')),
-                            );
-                          }
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VSPColors.accent,
-                  foregroundColor: VSPColors.background,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                // 1. League Name
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    labelText: 'اسم الدوري',
+                    hintText: 'اكتب اسم الدوري',
+                    hintStyle: const TextStyle(color: VSPColors.textSecondary),
+                    labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                    filled: true,
+                    fillColor: VSPColors.surfaceAlt,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                   ),
                 ),
-                child: isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                      )
-                    : const Text(
-                        'تأكيد وإنشاء الدوري (30 ج)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                const SizedBox(height: 16),
+
+                // 2. Number of Teams (4 to 8 Stepper / Selector)
+                const Text(
+                  'عدد الفرق المشاركة:',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [4, 5, 6, 7, 8].map((n) {
+                    final isSel = selectedMaxTeams == n;
+                    return InkWell(
+                      onTap: () => setSheetState(() => selectedMaxTeams = n),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      child: Container(
+                        width: 50,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSel ? VSPColors.accent : VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: isSel ? VSPColors.accent : VSPColors.divider),
+                        ),
+                        child: Text(
+                          '$n',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isSel ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
-              ),
-            ],
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // 3. League System Uneditable Card (Single Round Robin)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 16),
+                          SizedBox(width: 6),
+                          Text(
+                            'نظام الدوري: دوري — دور واحد',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'كل فريق يواجه كل فريق مرة واحدة (دوري خاص بدون ذهاب وإياب).',
+                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 4. Match Scheduling Interval
+                const Text(
+                  'الفترة بين المباريات:',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'VSP يحدد يوم المباراة حسب الفترة التي تختارها، والفرق تحدد الملعب والساعة.',
+                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [3, 5, 7, 10, 14].map((d) {
+                    final isSel = selectedIntervalDays == d;
+                    return InkWell(
+                      onTap: () => setSheetState(() => selectedIntervalDays = d),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSel ? VSPColors.accent : VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: isSel ? VSPColors.accent : VSPColors.divider),
+                        ),
+                        child: Text(
+                          'كل $d أيام',
+                          style: TextStyle(
+                            color: isSel ? Colors.black : Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 20),
+
+                // Next Button -> Shows Payment Options Sheet
+                ElevatedButton(
+                  onPressed: () {
+                    final name = nameController.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('يرجى كتابة اسم الدوري')),
+                      );
+                      return;
+                    }
+                    Navigator.pop(ctx);
+                    _showPaymentOptionsSheet(
+                      leagueName: name,
+                      maxTeams: selectedMaxTeams,
+                      intervalDays: selectedIntervalDays,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  ),
+                  child: const Text('متابعة إلى خيارات الدفع', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // Section 4: Payment Options Bottom Sheet
+  void _showPaymentOptionsSheet({
+    required String leagueName,
+    required int maxTeams,
+    required int intervalDays,
+  }) {
+    String selectedPayOption = 'my_team'; // 'my_team', 'all', 'custom'
+    int customPaidCount = 2;
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (pCtx) => StatefulBuilder(
+        builder: (context, setPSheetState) {
+          final feePerTeam = _configuredFee;
+          final totalForTeam = feePerTeam;
+          final totalForAll = maxTeams * feePerTeam;
+          final totalForCustom = customPaidCount * feePerTeam;
+
+          return Container(
+            padding: EdgeInsets.only(
+              top: 24,
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            decoration: const BoxDecoration(
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'طريقة دفع رسوم الدوري',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'رسوم مشاركة الفريق: 30 جنيه للفريق الواحد',
+                    style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // OPTION A: Pay for your team only
+                  _buildPaymentOptionCard(
+                    title: 'ادفع لفريقك',
+                    subtitle: '30 جنيه — رسوم مشاركة فريقك',
+                    costText: '${totalForTeam.toStringAsFixed(0)} جنيه',
+                    isSelected: selectedPayOption == 'my_team',
+                    onTap: () => setPSheetState(() => selectedPayOption = 'my_team'),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // OPTION B: Pay for the whole league
+                  _buildPaymentOptionCard(
+                    title: 'ادفع للدوري كله',
+                    subtitle: 'ادفع رسوم جميع الفرق ($maxTeams فرق × 30 جنيه)',
+                    costText: '${totalForAll.toStringAsFixed(0)} جنيه',
+                    isSelected: selectedPayOption == 'all',
+                    onTap: () => setPSheetState(() => selectedPayOption = 'all'),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // OPTION C: Pay for a custom number of teams
+                  _buildPaymentOptionCard(
+                    title: 'ادفع لعدد محدد من الفرق',
+                    subtitle: '$customPaidCount فرق × 30 جنيه = ${totalForCustom.toStringAsFixed(0)} جنيه',
+                    costText: '${totalForCustom.toStringAsFixed(0)} جنيه',
+                    isSelected: selectedPayOption == 'custom',
+                    onTap: () => setPSheetState(() => selectedPayOption = 'custom'),
+                  ),
+
+                  // Custom Count Stepper if Option C selected
+                  if (selectedPayOption == 'custom') ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('عدد الفرق التي ستدفع عنها:', style: TextStyle(color: Colors.white, fontSize: 13)),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Iconsax.minus_cirlce_copy, color: VSPColors.accent),
+                                onPressed: customPaidCount > 1
+                                    ? () => setPSheetState(() => customPaidCount--)
+                                    : null,
+                              ),
+                              Text('$customPaidCount', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              IconButton(
+                                icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent),
+                                onPressed: customPaidCount < maxTeams
+                                    ? () => setPSheetState(() => customPaidCount++)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 20),
+
+                  // Submit Payment and Create League
+                  ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            setPSheetState(() => isSubmitting = true);
+                            try {
+                              final result = await _leagueRepo.createTeamLeague(
+                                teamId: widget.userTeam!.id,
+                                leagueName: leagueName,
+                                maxTeams: maxTeams,
+                                intervalDays: intervalDays,
+                                payOption: selectedPayOption,
+                                customPaidCount: customPaidCount,
+                              );
+                              final ref = result['payment_reference']?.toString();
+                              final amount = (result['amount'] as num?)?.toDouble() ?? 30.0;
+                              if (pCtx.mounted) Navigator.pop(pCtx);
+                              if (ref != null && ref.isNotEmpty) {
+                                await _openLeaguePayment(paymentReference: ref, amount: amount);
+                              } else {
+                                await _loadLeague();
+                              }
+                            } catch (e) {
+                              setPSheetState(() => isSubmitting = false);
+                              if (pCtx.mounted) {
+                                ScaffoldMessenger.of(pCtx).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : Text(
+                            selectedPayOption == 'my_team'
+                                ? 'ادفع ${totalForTeam.toStringAsFixed(0)} جنيه'
+                                : selectedPayOption == 'all'
+                                    ? 'ادفع ${totalForAll.toStringAsFixed(0)} جنيه'
+                                    : 'ادفع ${totalForCustom.toStringAsFixed(0)} جنيه',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPaymentOptionCard({
+    required String title,
+    required String subtitle,
+    required String costText,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(VSPRadius.md),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: isSelected ? VSPColors.accent : VSPColors.divider,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Iconsax.tick_circle_copy : Iconsax.record_copy,
+              color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5)),
+                ],
+              ),
+            ),
+            Text(costText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
+          ],
         ),
       ),
     );
@@ -319,17 +597,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'الانضمام لدوري',
+                  'الانضمام لدوري عبر دعوة / كود',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'أدخل كود الدوري للانضمام والمنافسة مع الفرق',
+                  'الدوري خاص، أدخل كود الدوري للانضمام',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
@@ -339,19 +613,17 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   controller: codeController,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'كود الدوري',
+                    labelText: 'كود أو معرف الدوري',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary),
                     filled: true,
                     fillColor: VSPColors.surfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                   ),
                 ),
 
                 const SizedBox(height: 12),
                 const Text(
-                  'رسوم الاشتراك: 30 جنيه لكل فريق',
+                  'رسوم مشاركة الفريق: 30 جنيه للفريق الواحد',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
@@ -378,25 +650,33 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                 final code = codeController.text.trim();
                                 if (code.isEmpty) return;
 
+                                final messenger = ScaffoldMessenger.of(context);
                                 setDialogState(() => isSubmitting = true);
                                 try {
                                   final result = await _leagueRepo.joinTeamLeague(
                                     championshipId: code,
                                     teamId: widget.userTeam!.id,
                                   );
-                                  final paymentReference = result['payment_reference']?.toString();
                                   if (ctx.mounted) Navigator.pop(ctx);
+                                  if (result['prepaid_by_creator'] == true) {
+                                    VSPFeedback.triggerSuccess();
+                                    await _loadLeague();
+                                    messenger.showSnackBar(
+                                      const SnackBar(content: Text('رسوم مشاركة الفريق: مدفوعة')),
+                                    );
+                                    return;
+                                  }
+                                  final paymentReference = result['payment_reference']?.toString();
+                                  final amount = (result['amount'] as num?)?.toDouble() ?? 30.0;
                                   if (paymentReference != null && paymentReference.isNotEmpty) {
-                                    await _openLeaguePayment(paymentReference);
+                                    await _openLeaguePayment(paymentReference: paymentReference, amount: amount);
                                   } else {
                                     await _loadLeague();
                                   }
                                 } catch (e) {
                                   setDialogState(() => isSubmitting = false);
                                   if (ctx.mounted) {
-                                    ScaffoldMessenger.of(ctx).showSnackBar(
-                                      SnackBar(content: Text('خطأ: $e')),
-                                    );
+                                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('خطأ: $e')));
                                   }
                                 }
                               },
@@ -405,11 +685,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           foregroundColor: VSPColors.background,
                         ),
                         child: isSubmitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                              )
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                             : const Text('انضمام', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -454,7 +730,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'اختر ملعب لمباراة: ${match.homeTeamName} vs ${match.awayTeamName}',
+                    'اختر ملعب لمباراة: ${match.homeTeamName} × ${match.awayTeamName}',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -520,18 +796,40 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     );
   }
 
+  // Section 10: Non-numerical Result Submission
   void _onRecordScore(TeamLeagueMatch match) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => TeamLeagueMatchDialog(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TeamLeagueMatchResultSheet(
         match: match,
-        onSubmit: (homeScore, awayScore, homePenalties, awayPenalties) async {
-          await _leagueRepo.recordLeagueMatchResult(
+        userTeamId: widget.userTeam!.id,
+        onSubmitResult: (result) async {
+          await _leagueRepo.submitMatchResult(
             matchId: match.id,
-            homeScore: homeScore,
-            awayScore: awayScore,
-            homePenalties: homePenalties,
-            awayPenalties: awayPenalties,
+            teamId: widget.userTeam!.id,
+            result: result,
+          );
+          VSPFeedback.triggerSuccess();
+          await _loadLeague();
+        },
+      ),
+    );
+  }
+
+  // Section 17: Creator Dispute Resolution
+  void _onResolveDispute(TeamLeagueMatch match) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => TeamLeagueDisputeResolutionSheet(
+        match: match,
+        onResolveDispute: (resolution) async {
+          await _leagueRepo.resolveDispute(
+            matchId: match.id,
+            resolution: resolution,
           );
           VSPFeedback.triggerSuccess();
           await _loadLeague();
@@ -584,28 +882,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Iconsax.people_copy,
-                size: 72,
-                color: VSPColors.accent.withValues(alpha: 0.3),
-              ),
+              Icon(Iconsax.people_copy, size: 72, color: VSPColors.accent.withValues(alpha: 0.3)),
               const SizedBox(height: VSPSpacing.md),
-              const Text(
-                'ليس لديك فريق حالياً',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
+              const Text('ليس لديك فريق حالياً', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 6),
               const Text(
                 'الدوري يتطلب وجود فريق للمشاركة والمنافسة على اللقب.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: VSPColors.textSecondary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: VSPSpacing.xl),
               ElevatedButton(
@@ -633,9 +917,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
     // 2. Loading state
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: VSPColors.accent),
-      );
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
     }
 
     final league = _leagueData;
@@ -659,7 +941,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       );
     }
 
-    // 4. Gathering state (1-3 teams)
+    // 4. Gathering state (1 to N-1 teams)
     if (league.status == 'open') {
       return RefreshIndicator(
         onRefresh: _loadLeague,
@@ -679,21 +961,22 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       );
     }
 
-    // 5. Ongoing or Completed League (Fixtures + Standings)
+    // 5. Ongoing or Completed League (Section 7: Exactly 2 tabs: [ جدول المباريات ] [ تفاصيل الدوري ])
     return RefreshIndicator(
       onRefresh: _loadLeague,
       color: VSPColors.accent,
       backgroundColor: VSPColors.surface,
       child: Column(
         children: [
-          // Sub-pill switcher: [ المباريات (6) ] [ جدول الترتيب ]
+          // Sub-pill switcher: Exactly two tabs (Section 7)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Container(
-              height: 40,
+              height: 42,
               decoration: BoxDecoration(
                 color: VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(21),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
               ),
               child: Row(
                 children: [
@@ -703,11 +986,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: _selectedSubTab == 0 ? VSPColors.accent : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(21),
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'المباريات (${league.matches.length})',
+                          'جدول المباريات',
                           style: TextStyle(
                             color: _selectedSubTab == 0 ? Colors.black : VSPColors.textSecondary,
                             fontWeight: FontWeight.bold,
@@ -723,11 +1006,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: _selectedSubTab == 1 ? VSPColors.accent : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(21),
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'جدول الترتيب 🏆',
+                          'تفاصيل الدوري',
                           style: TextStyle(
                             color: _selectedSubTab == 1 ? Colors.black : VSPColors.textSecondary,
                             fontWeight: FontWeight.bold,
@@ -748,10 +1031,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 ? TeamLeagueFixturesView(
                     matches: league.matches,
                     userTeamId: widget.userTeam!.id,
+                    isCreator: league.isCreator,
                     onBookMatch: _onBookMatch,
                     onRecordScore: _onRecordScore,
+                    onResolveDispute: _onResolveDispute,
                   )
-                : TeamLeagueStandingsView(
+                : TeamLeagueDetailsView(
                     league: league,
                     userTeamId: widget.userTeam!.id,
                   ),

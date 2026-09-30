@@ -3,11 +3,16 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
-class TeamLeagueStandingsView extends StatelessWidget {
+/// Tab 2: "تفاصيل الدوري"
+/// Contains:
+/// 1. معلومات الدوري (League Info)
+/// 2. الفرق المشاركة (Participating Teams)
+/// 3. جدول الدوري (Standings Table without goals)
+class TeamLeagueDetailsView extends StatelessWidget {
   final TeamLeagueData league;
   final String userTeamId;
 
-  const TeamLeagueStandingsView({
+  const TeamLeagueDetailsView({
     super.key,
     required this.league,
     required this.userTeamId,
@@ -16,13 +21,14 @@ class TeamLeagueStandingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final standings = league.standings;
-    final championName = league.championTeamName;
+    final isCompleted = league.status == 'completed';
+    final topTeam = standings.isNotEmpty ? standings.first : null;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        // 🏆 Champion Podium Banner
-        if (championName != null && championName.isNotEmpty) ...[
+        // 🏆 Top Team / Leader Banner (if completed or underway with leader)
+        if (isCompleted && topTeam != null) ...[
           Container(
             padding: const EdgeInsets.all(VSPSpacing.lg),
             decoration: BoxDecoration(
@@ -36,37 +42,22 @@ class TeamLeagueStandingsView extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(VSPRadius.xl),
               border: Border.all(color: VSPColors.medalGold, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: VSPColors.medalGold.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    color: VSPColors.medalGold,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Iconsax.cup_copy, color: Colors.black, size: 36),
-                ),
-                const SizedBox(height: 10),
+                const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 36),
+                const SizedBox(height: 8),
                 const Text(
-                  '🏆 بطل الدوري',
+                  'انتهى الدوري — المتصدر',
                   style: TextStyle(
                     color: VSPColors.medalGold,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    letterSpacing: 1.1,
+                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  championName,
+                  topTeam.teamName,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -74,21 +65,148 @@ class TeamLeagueStandingsView extends StatelessWidget {
                     fontSize: 22,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'مبروك التتويج بلقب الدوري المصغر!',
-                  style: TextStyle(
-                    color: VSPColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'المركز الأول برصيد ${topTeam.points} نقاط',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: VSPSpacing.lg),
+          const SizedBox(height: VSPSpacing.md),
         ],
 
-        // Standings Table Card
+        // 1. League Info Card
+        Container(
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            border: Border.all(color: VSPColors.borderLight),
+          ),
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    league.name,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text('خاص', style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildInfoRow('نظام الدوري', 'دوري — دور واحد'),
+              _buildInfoRow('المحافظة', league.governorate ?? 'القاهرة'),
+              _buildInfoRow('عدد الفرق', '${league.joinedTeamsCount} / ${league.maxTeams} فرق'),
+              _buildInfoRow('الفترة بين المباريات', 'كل ${league.matchIntervalDays} أيام'),
+              _buildInfoRow(
+                'حالة الدوري',
+                league.status == 'completed'
+                    ? 'انتهى الدوري'
+                    : league.status == 'ongoing'
+                        ? 'جاري المنافسات'
+                        : 'مرحلة تجميع الفرق',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VSPSpacing.md),
+
+        // 2. Participating Teams Card
+        Container(
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            border: Border.all(color: VSPColors.borderLight),
+          ),
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'الفرق المشاركة (${league.teams.length})',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              const Divider(color: VSPColors.divider, height: 20),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: league.teams.length,
+                separatorBuilder: (_, __) => const Divider(color: VSPColors.surfaceAlt, height: 12),
+                itemBuilder: (context, idx) {
+                  final t = league.teams[idx];
+                  final isMyTeam = t.id == userTeamId;
+                  return Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: isMyTeam ? VSPColors.accent : VSPColors.divider),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${idx + 1}',
+                            style: TextStyle(
+                              color: isMyTeam ? VSPColors.accent : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          t.name,
+                          style: TextStyle(
+                            color: isMyTeam ? VSPColors.accent : Colors.white,
+                            fontWeight: isMyTeam ? FontWeight.bold : FontWeight.normal,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'رسوم مشاركة الفريق: مدفوعة',
+                          style: TextStyle(color: Color(0xFF10B981), fontSize: 10.5, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: VSPSpacing.md),
+
+        // 3. Standings Table Card (Section 28 & 29: No Goals, Win=3, Draw=1, Loss=0)
         Container(
           decoration: BoxDecoration(
             color: VSPColors.surface,
@@ -104,7 +222,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                   Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
                   SizedBox(width: 8),
                   Text(
-                    'جدول ترتيب الدوري',
+                    'جدول الدوري',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -115,14 +233,14 @@ class TeamLeagueStandingsView extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               const Text(
-                'حساب النقاط: (فوز = 3 نقاط | تعادل = 1 نقطة | خسارة = 0)',
+                'الفوز = 3 نقاط | التعادل = 1 نقطة | الخسارة = 0',
                 style: TextStyle(color: VSPColors.textSecondary, fontSize: 11),
               ),
               const Divider(color: VSPColors.divider, height: 20),
 
-              // Header Row
+              // Header Row: الترتيب | الفريق | لعب | فاز | تعادل | خسر | النقاط
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                 decoration: BoxDecoration(
                   color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(6),
@@ -154,28 +272,21 @@ class TeamLeagueStandingsView extends StatelessWidget {
                     ),
                     Expanded(
                       child: Text(
-                        'ف',
+                        'فاز',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'ت',
+                        'تعادل',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'خ',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '+/-',
+                        'خسر',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
@@ -183,7 +294,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: Text(
-                        'نقاط',
+                        'النقاط',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
@@ -199,7 +310,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'لا توجد بيانات ترتيب حالياً',
+                      'لا توجد مباريات مكتملة في جدول الترتيب حتى الآن',
                       style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     ),
                   ),
@@ -209,7 +320,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: standings.length,
-                  separatorBuilder: (_, __) => const Divider(color: VSPColors.surfaceAlt, height: 12),
+                  separatorBuilder: (_, __) => const Divider(color: VSPColors.surfaceAlt, height: 10),
                   itemBuilder: (context, index) {
                     final item = standings[index];
                     final isUserTeam = item.teamId == userTeamId;
@@ -237,7 +348,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Text(
-                              '${index + 1}',
+                              '${item.rank}',
                               style: TextStyle(
                                 color: isFirst ? Colors.black : VSPColors.textPrimary,
                                 fontWeight: FontWeight.bold,
@@ -258,7 +369,7 @@ class TeamLeagueStandingsView extends StatelessWidget {
                                     style: TextStyle(
                                       color: isUserTeam ? VSPColors.accent : Colors.white,
                                       fontWeight: isUserTeam ? FontWeight.bold : FontWeight.w500,
-                                      fontSize: 12,
+                                      fontSize: 12.5,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -304,21 +415,6 @@ class TeamLeagueStandingsView extends StatelessWidget {
                               style: const TextStyle(color: Colors.white, fontSize: 12),
                             ),
                           ),
-                          // GD
-                          Expanded(
-                            child: Text(
-                              item.goalDifference > 0 ? '+${item.goalDifference}' : '${item.goalDifference}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: item.goalDifference > 0
-                                    ? VSPColors.accent
-                                    : item.goalDifference < 0
-                                        ? VSPColors.error
-                                        : VSPColors.textPrimary,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
                           // Points
                           Expanded(
                             flex: 2,
@@ -350,4 +446,20 @@ class TeamLeagueStandingsView extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
+      ),
+    );
+  }
 }
+
+// Backward compatibility alias for any existing imports
+typedef TeamLeagueStandingsView = TeamLeagueDetailsView;

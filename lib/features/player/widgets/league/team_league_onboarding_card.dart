@@ -60,7 +60,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.md),
           const Text(
-            '🏆 ابدأ دوري فريقك',
+            '🏆 دوري الفرق الخاص',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -70,7 +70,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'اجمع 4 فرق وشوف مين بطل الدوري',
+            'أنشئ دوري خاص لفريقك وادعُ من 4 إلى 8 فرق للمنافسة',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: VSPColors.textSecondary,
@@ -82,33 +82,33 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           // League Features Pills
           _buildFeatureRow(
             icon: Iconsax.people_copy,
-            title: '4 فرق متنافسة',
-            subtitle: 'دوري مصغر حماسي بين 4 فرق فقط',
+            title: '4 إلى 8 فرق متنافسة',
+            subtitle: 'دوري خاص: دور واحد، كل فريق يواجه الآخر مرة واحدة',
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.calendar_1_copy,
-            title: '3 جولات (6 مباريات)',
-            subtitle: 'كل فريق يلعب 3 مباريات، مباراة كل أسبوع',
+            title: 'جدولة منتظمة للمباريات',
+            subtitle: 'VSP يحدد يوم المباراة والفرق تختار الساعة والملعب',
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.wallet_copy,
-            title: '${entryFee.toStringAsFixed(0)} جنيه رسوم تنظيم لكل فريق',
-            subtitle: 'رسوم تنظيم الدوري وجدول الترتيب للمنصة',
+            title: 'رسوم مشاركة الفريق: ${entryFee.toStringAsFixed(0)} جنيه',
+            subtitle: '30 جنيه للفريق الواحد (رسوم مشاركة الفريق)',
             highlight: true,
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
-            icon: Iconsax.location_copy,
-            title: 'إيجار الملاعب مناصفة',
-            subtitle: 'حجز الملعب لكل مباراة يتم بالتناصف بين الفريقين',
+            icon: Iconsax.judge_copy,
+            title: 'منظومة حسم النتائج',
+            subtitle: 'تسجيل سهل (فوز - تعادل - خسارة) بدون أهداف عددية',
           ),
 
           const SizedBox(height: VSPSpacing.xl),
 
           PrimaryButton(
-            text: 'إنشاء دوري لفريقك (${entryFee.toStringAsFixed(0)} ج)',
+            text: 'إنشاء دوري',
             onPressed: onCreateLeague,
           ),
 
@@ -118,7 +118,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
             onPressed: onJoinLeague,
             icon: const Icon(Iconsax.login_copy, size: 18),
             label: const Text(
-              'الانضمام لدوري موجود بكود',
+              'الانضمام لدوري عبر دعوة / كود',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: OutlinedButton.styleFrom(
