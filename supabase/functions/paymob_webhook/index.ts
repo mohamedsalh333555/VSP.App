@@ -329,11 +329,13 @@ serve(async (req: Request) => {
       console.log(`🥋 Processing 1v1 tournament webhook for order: ${specialReference}`);
       if (isSuccess) {
         // Step 1: Atomic confirmation & capacity check (with row lock)
+        const actualGrossAmount = Math.round(Number(obj.amount_cents || 0)) / 100.0;
         const { data: tournResult, error: tournErr } = await supabase.rpc(
           "confirm_1v1_payment_atomic",
           {
             p_order_reference: specialReference,
             p_paymob_transaction_id: transactionId,
+            p_gross_amount: actualGrossAmount > 0 ? actualGrossAmount : undefined,
           }
         );
 

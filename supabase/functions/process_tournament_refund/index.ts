@@ -511,15 +511,15 @@ serve(async (req: Request) => {
         // 1. Data Integrity Assertion
         const { data: payment, error: paymentErr } = await adminClient
           .from("team_league_payments")
-          .select("id, order_reference, amount, payment_status")
+          .select("id, order_reference, amount, gross_amount, payment_status")
           .eq("id", item.payment_id)
           .single();
 
-        const paymentAmount = Number(payment?.amount ?? 0);
+        const paymentGross = Number(payment?.gross_amount ?? payment?.amount ?? 0);
         const queueAmount = Number(item.amount);
 
-        if (paymentErr || !payment || Math.abs(paymentAmount - queueAmount) > 0.01) {
-          const reason = `Amount integrity mismatch: payment=${paymentAmount} vs queue=${queueAmount}`;
+        if (paymentErr || !payment || Math.abs(paymentGross - queueAmount) > 0.01) {
+          const reason = `Amount integrity mismatch: payment=${paymentGross} vs queue=${queueAmount}`;
           console.error(`Team League Item ${item.id} failed integrity check:`, reason);
           const nowIso = new Date().toISOString();
 
@@ -625,6 +625,7 @@ serve(async (req: Request) => {
             metadata: {
               paymob_refund_id: refundId,
               amount: queueAmount,
+              gross_amount: paymentGross,
               completed_at: nowIso,
             },
             updated_at: nowIso,
