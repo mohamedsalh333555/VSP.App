@@ -257,40 +257,12 @@ class LeagueRepository {
         }
 
         if (tournament == null) {
-          final globalResponse = await _supabase
-              .from('vsp_1vs1_players')
-              .select('*')
-              .order('total_points', ascending: false)
-              .limit(50);
-          final globalList = globalResponse as List<dynamic>;
-          if (globalList.isNotEmpty) {
-            final List<VSP1v1Player> players = [];
-            for (int i = 0; i < globalList.length; i++) {
-              final data = globalList[i];
-              final tackles = (data['tackles'] ?? 0) as int;
-              final goals = (data['goals'] ?? 0) as int;
-              final skills = (data['skill_points'] ?? data['skills'] ?? 0) as int;
-              final total = (data['total_points'] ?? (tackles + goals + skills)) as int;
-              players.add(VSP1v1Player(
-                id: data['id'].toString(),
-                name: data['name'] ?? data['player_name'] ?? 'لاعب',
-                avatarUrl: data['avatar_url'] ?? '',
-                totalPoints: total,
-                skillPoints: skills,
-                goals: goals,
-                tackles: tackles,
-                titles: (data['titles'] ?? (i == 0 ? 1 : 0)) as int,
-                rank: i + 1,
-                trend: data['trend'] ?? (i == 0 ? 'up' : 'stable'),
-                roundReached: data['round_reached']?.toString(),
-              ));
-            }
-            if (!controller.isClosed) controller.add(players);
-            return;
-          }
+          // No current 1v1 tournament means no current tournament ranking.
+          // Never fall back to legacy global ranking data.
           if (!controller.isClosed) controller.add([]);
           return;
         }
+
 
         final response = await _supabase
             .from('vsp_1v1_tournament_players')
@@ -299,6 +271,27 @@ class LeagueRepository {
             .order('total_points', ascending: false);
 
         final rawList = response as List<dynamic>;
+        final userIds = rawList
+            .map((row) => row['user_id']?.toString())
+            .where((id) => id != null && id.isNotEmpty)
+            .cast<String>()
+            .toSet()
+            .toList();
+
+        final Map<String, int> titleCounts = {};
+        if (userIds.isNotEmpty) {
+          final trophies = await _supabase
+              .from('player_trophies')
+              .select('user_id')
+              .inFilter('user_id', userIds);
+          for (final trophy in (trophies as List<dynamic>)) {
+            final uid = trophy['user_id']?.toString();
+            if (uid != null && uid.isNotEmpty) {
+              titleCounts[uid] = (titleCounts[uid] ?? 0) + 1;
+            }
+          }
+        }
+
         final List<VSP1v1Player> players = [];
         for (int i = 0; i < rawList.length; i++) {
           final data = rawList[i];
@@ -306,7 +299,8 @@ class LeagueRepository {
           final goals = (data['goals'] ?? 0) as int;
           final skills = (data['skills'] ?? data['skill_points'] ?? 0) as int;
           final totalPoints = (data['total_points'] ?? (tackles + goals + skills)) as int;
-          final isTop = (i == 0);
+          final userId = data['user_id']?.toString() ?? '';
+
           players.add(VSP1v1Player(
             id: data['id'].toString(),
             name: data['player_name'] ?? data['name'] ?? 'لاعب',
@@ -315,9 +309,9 @@ class LeagueRepository {
             skillPoints: skills,
             goals: goals,
             tackles: tackles,
-            titles: (data['titles'] != null) ? (data['titles'] as int) : (isTop ? 1 : 0),
+            titles: titleCounts[userId] ?? 0,
             rank: i + 1,
-            trend: isTop ? 'up' : (data['trend'] ?? 'stable'),
+            trend: data['trend'] ?? 'stable',
             roundReached: data['round_reached']?.toString(),
           ));
         }
