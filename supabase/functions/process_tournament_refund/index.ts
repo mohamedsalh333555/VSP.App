@@ -234,6 +234,20 @@ serve(async (req: Request) => {
             updated_at: nowIso,
           }).eq("id", item.registration_id);
 
+          // 🛡️ Ledger Coherence: Close transaction to completed
+          await adminClient.from("transactions").update({
+            status: "completed",
+            metadata: {
+              paymob_refund_id: refundId,
+              amount: queueAmount,
+              gross_amount: orderGross,
+              completed_at: nowIso,
+            },
+            updated_at: nowIso,
+          }).eq("championship_id", item.championship_id)
+            .eq("type", "refund_request")
+            .eq("paymob_transaction_id", item.paymob_transaction_id);
+
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
@@ -260,6 +274,18 @@ serve(async (req: Request) => {
               payment_status: "refund_failed_manual_review",
               updated_at: nowIso,
             }).eq("id", item.registration_id);
+
+            // 🛡️ Ledger Coherence: Transition transaction to failed_manual_review
+            await adminClient.from("transactions").update({
+              status: "failed_manual_review",
+              metadata: {
+                failure_reason: refundError,
+                failed_at: nowIso,
+              },
+              updated_at: nowIso,
+            }).eq("championship_id", item.championship_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id);
           } else {
             // Transient failure before dispatch: return to pending state for lease recovery
             await adminClient.from("cancellation_refund_queue").update({
@@ -317,6 +343,17 @@ serve(async (req: Request) => {
             payment_status: "refund_failed_manual_review",
             updated_at: nowIso,
           }).eq("id", item.order_id);
+
+          await adminClient.from("transactions").update({
+            status: "failed_manual_review",
+            metadata: {
+              failure_reason: reason,
+              failed_at: nowIso,
+            },
+            updated_at: nowIso,
+          }).eq("user_id", item.user_id)
+            .eq("type", "refund_request")
+            .eq("paymob_transaction_id", item.paymob_transaction_id);
 
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: false, error: reason });
           continue;
@@ -396,6 +433,20 @@ serve(async (req: Request) => {
             updated_at: nowIso,
           }).eq("tournament_id", item.tournament_id).eq("user_id", item.user_id);
 
+          // 🛡️ Gate 3: Close transaction to completed with metadata
+          await adminClient.from("transactions").update({
+            status: "completed",
+            metadata: {
+              paymob_refund_id: refundId,
+              amount: queueAmount,
+              gross_amount: orderGross,
+              completed_at: nowIso,
+            },
+            updated_at: nowIso,
+          }).eq("user_id", item.user_id)
+            .eq("type", "refund_request")
+            .eq("paymob_transaction_id", item.paymob_transaction_id);
+
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, refund_id: refundId });
         } else {
           console.error(`1v1 Refund failed for queue item ${item.id}:`, refundError);
@@ -415,6 +466,18 @@ serve(async (req: Request) => {
               payment_status: "refund_failed_manual_review",
               updated_at: nowIso,
             }).eq("id", item.order_id);
+
+            // 🛡️ Close transaction to failed_manual_review (never pending forever)
+            await adminClient.from("transactions").update({
+              status: "failed_manual_review",
+              metadata: {
+                failure_reason: refundError,
+                failed_at: nowIso,
+              },
+              updated_at: nowIso,
+            }).eq("user_id", item.user_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id);
           } else {
             await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
               status: "pending",
@@ -425,6 +488,190 @@ serve(async (req: Request) => {
           }
 
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: false, error: refundError });
+        }
+      }
+
+      // ------------------------------------------------------------
+      // Team League Cancellation Refund Queue Processing (SSOT)
+      // ------------------------------------------------------------
+      while (true) {
+        const { data: claimLeague, error: claimLeagueErr } = await adminClient.rpc("claim_next_team_league_cancellation_refund_atomic");
+        if (claimLeagueErr) {
+          console.error("Error claiming team league refund item:", claimLeagueErr);
+          break;
+        }
+
+        if (!claimLeague || !claimLeague.found || !claimLeague.refund) {
+          break; // Team league queue is empty or no claimable items
+        }
+
+        const item = claimLeague.refund;
+        processedCount++;
+
+        // 1. Data Integrity Assertion
+        const { data: payment, error: paymentErr } = await adminClient
+          .from("team_league_payments")
+          .select("id, order_reference, amount, payment_status")
+          .eq("id", item.payment_id)
+          .single();
+
+        const paymentAmount = Number(payment?.amount ?? 0);
+        const queueAmount = Number(item.amount);
+
+        if (paymentErr || !payment || Math.abs(paymentAmount - queueAmount) > 0.01) {
+          const reason = `Amount integrity mismatch: payment=${paymentAmount} vs queue=${queueAmount}`;
+          console.error(`Team League Item ${item.id} failed integrity check:`, reason);
+          const nowIso = new Date().toISOString();
+
+          await adminClient.from("team_league_cancellation_refund_queue").update({
+            status: "failed_manual_review",
+            failure_reason: reason,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("team_league_payments").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.payment_id);
+
+          await adminClient.from("transactions").update({
+            status: "failed_manual_review",
+            metadata: {
+              failure_reason: reason,
+              failed_at: nowIso,
+            },
+            updated_at: nowIso,
+          }).eq("championship_id", item.championship_id)
+            .eq("type", "refund_request")
+            .eq("paymob_transaction_id", item.paymob_transaction_id);
+
+          results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: false, error: reason });
+          continue;
+        }
+
+        // 2. Prevent Double Refund: If already marked refunded, complete immediately
+        if (payment.payment_status === "refunded") {
+          const nowIso = new Date().toISOString();
+          await adminClient.from("team_league_cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, note: "already_refunded" });
+          continue;
+        }
+
+        // 3. Call Paymob Refund API
+        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
+        const refundAmtCents = Math.round(queueAmount * 100);
+
+        let refundSuccess = false;
+        let refundError: string | null = null;
+        let refundId: string | null = null;
+
+        if (!txnId || refundAmtCents <= 0) {
+          refundError = "Invalid transaction ID or zero amount";
+        } else {
+          try {
+            const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                auth_token: paymobToken,
+                transaction_id: Number(txnId),
+                amount_cents: refundAmtCents,
+              }),
+            });
+            const refundData = await refundRes.json();
+            const msgLower = JSON.stringify(refundData).toLowerCase();
+
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+              refundSuccess = true;
+              refundId = String(refundData.id || refundData.transaction_id || "");
+            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
+              refundSuccess = true;
+              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else {
+              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+            }
+          } catch (e: any) {
+            const errStr = e?.message || String(e);
+            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
+            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+          }
+        }
+
+        const nowIso = new Date().toISOString();
+
+        if (refundSuccess) {
+          await adminClient.from("team_league_cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("team_league_payments").update({
+            payment_status: "refunded",
+            updated_at: nowIso,
+          }).eq("id", item.payment_id);
+
+          // 🛡️ Close transaction to completed with full metadata
+          await adminClient.from("transactions").update({
+            status: "completed",
+            metadata: {
+              paymob_refund_id: refundId,
+              amount: queueAmount,
+              completed_at: nowIso,
+            },
+            updated_at: nowIso,
+          }).eq("championship_id", item.championship_id)
+            .eq("type", "refund_request")
+            .eq("paymob_transaction_id", item.paymob_transaction_id);
+
+          results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, refund_id: refundId });
+        } else {
+          console.error(`Team League Refund failed for queue item ${item.id}:`, refundError);
+          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+
+          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+            await adminClient.from("team_league_cancellation_refund_queue").update({
+              status: "failed_manual_review",
+              failure_reason: isAmbiguousTimeout 
+                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
+                : refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
+
+            await adminClient.from("team_league_payments").update({
+              payment_status: "refund_failed_manual_review",
+              updated_at: nowIso,
+            }).eq("id", item.payment_id);
+
+            await adminClient.from("transactions").update({
+              status: "failed_manual_review",
+              metadata: {
+                failure_reason: refundError,
+                failed_at: nowIso,
+              },
+              updated_at: nowIso,
+            }).eq("championship_id", item.championship_id)
+              .eq("type", "refund_request")
+              .eq("paymob_transaction_id", item.paymob_transaction_id);
+          } else {
+            await adminClient.from("team_league_cancellation_refund_queue").update({
+              status: "pending",
+              failure_reason: refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
+          }
+
+          results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: false, error: refundError });
         }
       }
 
