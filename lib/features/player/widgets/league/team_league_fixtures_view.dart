@@ -52,16 +52,16 @@ class TeamLeagueFixturesView extends StatelessWidget {
 
     final sortedRounds = roundMap.keys.toList()..sort();
 
-    // Check if creator has disputed matches that need action
-    final disputedMatches = matches.where((m) => m.isDisputed).toList();
+    // Check if creator has matches that need review/confirmation (awaiting confirmation or dispute)
+    final pendingCreatorMatches = matches.where((m) => m.isDisputed || m.isAwaitingConfirmation).toList();
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
         // 🚨 Section for Creator when action is needed: "يحتاج تدخلك"
-        if (isCreator && disputedMatches.isNotEmpty) ...[
-          _buildCreatorDisputeHeader(disputedMatches.length),
-          ...disputedMatches.map((m) => _buildDisputedCreatorCard(context, m)),
+        if (isCreator && pendingCreatorMatches.isNotEmpty) ...[
+          _buildCreatorReviewHeader(pendingCreatorMatches.length),
+          ...pendingCreatorMatches.map((m) => _buildCreatorReviewCard(context, m)),
           const SizedBox(height: VSPSpacing.md),
           const Divider(color: VSPColors.divider, height: 24),
         ],
@@ -82,7 +82,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
     );
   }
 
-  Widget _buildCreatorDisputeHeader(int count) {
+  Widget _buildCreatorReviewHeader(int count) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -93,11 +93,11 @@ class TeamLeagueFixturesView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.danger_copy, color: Colors.amber, size: 20),
+          const Icon(Iconsax.judge_copy, color: Colors.amber, size: 20),
           const SizedBox(width: 8),
           const Text(
-            'يحتاج تدخلك',
-            style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 14),
+            'مباريات بانتظار اعتمادك (منشئ الدوري)',
+            style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
           ),
           const Spacer(),
           Container(
@@ -116,14 +116,18 @@ class TeamLeagueFixturesView extends StatelessWidget {
     );
   }
 
-  Widget _buildDisputedCreatorCard(BuildContext context, TeamLeagueMatch match) {
+  Widget _buildCreatorReviewCard(BuildContext context, TeamLeagueMatch match) {
+    final isConflict = match.isDisputed;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.amber, width: 1.5),
+        border: Border.all(
+          color: isConflict ? Colors.amber : VSPColors.accent,
+          width: 1.5,
+        ),
       ),
       child: Column(
         children: [
@@ -137,19 +141,28 @@ class TeamLeagueFixturesView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.2),
+                  color: (isConflict ? Colors.amber : VSPColors.accent).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text('تحتاج مراجعة', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
+                child: Text(
+                  isConflict ? 'اختلاف نتيجتين' : 'بانتظار الاعتماد',
+                  style: TextStyle(
+                    color: isConflict ? Colors.amber : VSPColors.accent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          const Align(
+          Align(
             alignment: AlignmentDirectional.centerStart,
             child: Text(
-              'الفريقان سجلا نتيجتين مختلفتين.',
-              style: TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
+              isConflict
+                  ? 'الفريقان سجلا نتيجتين مختلفتين ويحتاج تدخلك لحسم النتيجة.'
+                  : 'الفريقان سجلا النتيجة بتطابق، اضغط للاعتماد النهائي وبدء عداد الـ 15 دقيقة.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
             ),
           ),
           const SizedBox(height: 12),
@@ -158,12 +171,15 @@ class TeamLeagueFixturesView extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => onResolveDispute(match),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
+                backgroundColor: isConflict ? Colors.amber : VSPColors.accent,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
               icon: const Icon(Iconsax.judge_copy, size: 18),
-              label: const Text('مراجعة النتيجة', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                isConflict ? 'مراجعة النزاع وحسم النتيجة' : 'اعتماد نتيجة المباراة',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
@@ -379,6 +395,17 @@ class TeamLeagueFixturesView extends StatelessWidget {
   }
 
   Widget _buildMatchStatusBadge(TeamLeagueMatch match, bool hasBooking) {
+    if (match.isLocked) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFF10B981), width: 0.5),
+        ),
+        child: const Text('نتيجة معتمدة 🔒', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+      );
+    }
     if (match.isConfirmed) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -386,7 +413,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
           color: const Color(0xFF10B981).withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('النتيجة مؤكدة', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('معتمدة (مهلة تعديل ⏱️)', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     if (match.isDisputed) {
@@ -396,17 +423,27 @@ class TeamLeagueFixturesView extends StatelessWidget {
           color: Colors.amber.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('تحتاج مراجعة', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('اختلاف بالنتيجة', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
-    if (match.resultStatus == 'result_one_side') {
+    if (match.isAwaitingConfirmation) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: VSPColors.accent.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: const Text('بانتظار الاعتماد', style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
+      );
+    }
+    if (match.isAwaitingSubmissions) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
           color: VSPColors.info.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('النتيجة قيد التأكيد', style: TextStyle(color: VSPColors.info, fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('بانتظار الطرف الآخر', style: TextStyle(color: VSPColors.info, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     if (hasBooking) {
@@ -432,7 +469,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
         color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Text('لم يتم الحجز', style: TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+      child: const Text('مجدولة', style: TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
     );
   }
 
@@ -443,23 +480,29 @@ class TeamLeagueFixturesView extends StatelessWidget {
     required bool hasBooking,
     required bool isPastMatchTime,
   }) {
-    // 1. If Disputed:
-    if (match.isDisputed) {
-      if (isCreator) {
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () => onResolveDispute(match),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-            ),
-            icon: const Icon(Iconsax.judge_copy, size: 16),
-            label: const Text('مراجعة النتيجة (منظم الدوري)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+    // 1. If Creator Action Needed (Dispute or Awaiting Confirmation):
+    if (isCreator && (match.isDisputed || match.isAwaitingConfirmation)) {
+      final isConflict = match.isDisputed;
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => onResolveDispute(match),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isConflict ? Colors.amber : VSPColors.accent,
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
-        );
-      }
+          icon: const Icon(Iconsax.judge_copy, size: 16),
+          label: Text(
+            isConflict ? 'مراجعة النزاع (منشئ الدوري)' : 'اعتماد النتيجة (منشئ الدوري)',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    // 2. If Disputed (non-creator view):
+    if (match.isDisputed) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -469,34 +512,55 @@ class TeamLeagueFixturesView extends StatelessWidget {
           borderRadius: BorderRadius.circular(VSPRadius.md),
         ),
         child: const Text(
-          'النتيجة قيد المراجعة من منظم الدوري',
+          'النتيجة قيد المراجعة من منشئ الدوري',
           style: TextStyle(color: Colors.amber, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
       );
     }
 
-    // 2. If Confirmed:
+    // 3. If Awaiting Confirmation (non-creator view):
+    if (match.isAwaitingConfirmation) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: VSPColors.accent.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+        ),
+        child: const Text(
+          'سجل الفريقان النتيجة - بانتظار اعتماد منشئ الدوري',
+          style: TextStyle(color: VSPColors.accent, fontSize: 12.5, fontWeight: FontWeight.bold),
+        ),
+      );
+    }
+
+    // 4. If Confirmed:
     if (match.isConfirmed) {
-      // Within 15-minute correction window:
-      if (!match.isLocked && isUserMatch) {
+      if (!match.isLocked && isCreator) {
         return SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
-            onPressed: () => onRecordScore(match),
+            onPressed: () => onResolveDispute(match),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: VSPColors.accent),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             icon: const Icon(Iconsax.edit_2_copy, size: 16, color: VSPColors.accent),
-            label: const Text('تعديل النتيجة (خلال 15 دقيقة)', style: TextStyle(color: VSPColors.accent, fontSize: 12)),
+            label: const Text('تعديل النتيجة (مهلة 15 دقيقة)', style: TextStyle(color: VSPColors.accent, fontSize: 12)),
           ),
         );
       }
       return const SizedBox.shrink();
     }
 
-    // 3. If user submitted and waiting for opponent:
+    // 5. If user submitted and waiting for opponent:
     if (isUserMatch && match.myTeamSubmission != null && match.opponentTeamSubmission == null) {
+      final subText = match.myTeamSubmission == 'win' 
+          ? 'فوز' 
+          : match.myTeamSubmission == 'draw' 
+              ? 'تعادل' 
+              : 'خسارة';
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -505,15 +569,15 @@ class TeamLeagueFixturesView extends StatelessWidget {
           color: VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(VSPRadius.md),
         ),
-        child: const Text(
-          'في انتظار تأكيد الفريق الآخر',
-          style: TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
+        child: Text(
+          'تم تسجيل نتيجتك ($subText) - بانتظار الفريق الآخر',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
         ),
       );
     }
 
-    // 4. If Match is past scheduled time and user hasn't submitted result yet:
-    if (isUserMatch && isPastMatchTime) {
+    // 6. If user hasn't submitted yet:
+    if (isUserMatch && match.myTeamSubmission == null) {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -524,7 +588,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
           icon: const Icon(Iconsax.tick_circle_copy, size: 16),
-          label: const Text('إضافة النتيجة', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          label: const Text('تسجيل نتيجة فريقك', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ),
       );
     }

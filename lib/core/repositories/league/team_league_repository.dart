@@ -51,6 +51,8 @@ class TeamLeagueMatch {
   final DateTime? disputeCreatedAt;
   final String? myTeamSubmission; // 'win', 'draw', 'loss'
   final String? opponentTeamSubmission;
+  final String? homeSubmission;
+  final String? awaySubmission;
 
   TeamLeagueMatch({
     required this.id,
@@ -79,16 +81,20 @@ class TeamLeagueMatch {
     this.disputeCreatedAt,
     this.myTeamSubmission,
     this.opponentTeamSubmission,
+    this.homeSubmission,
+    this.awaySubmission,
   });
+
+  bool get isScheduled => resultStatus == 'scheduled';
+  bool get isAwaitingSubmissions => resultStatus == 'awaiting_submissions';
+  bool get isAwaitingConfirmation => resultStatus == 'awaiting_confirmation';
+  bool get isDisputed => resultStatus == 'disputed';
+  bool get isConfirmed => resultStatus == 'confirmed' || resultStatus == 'locked';
 
   bool get isLocked =>
       resultStatus == 'locked' ||
       (resultConfirmedAt != null &&
           DateTime.now().isAfter(resultConfirmedAt!.add(const Duration(minutes: 15))));
-
-  bool get isDisputed => resultStatus == 'disputed';
-
-  bool get isConfirmed => resultStatus == 'confirmed' || resultStatus == 'locked';
 
   int get roundIndex => weekNumber;
 
@@ -113,7 +119,7 @@ class TeamLeagueMatch {
       winnerId: json['winner_id']?.toString(),
       winnerName: json['winner_name']?.toString(),
       confirmedOutcome: json['confirmed_outcome']?.toString(),
-      resultStatus: json['result_status']?.toString() ?? 'pending',
+      resultStatus: json['result_status']?.toString() ?? 'scheduled',
       scheduledTime: json['scheduled_time'] != null
           ? DateTime.tryParse(json['scheduled_time'].toString())?.toLocal()
           : null,
@@ -122,7 +128,7 @@ class TeamLeagueMatch {
           : null,
       stadiumName: json['stadium_name']?.toString(),
       bookingId: json['booking_id']?.toString(),
-      status: json['status']?.toString() ?? 'pending',
+      status: json['status']?.toString() ?? 'scheduled',
       isCompleted: json['is_completed'] == true,
       resultConfirmedAt: json['result_confirmed_at'] != null
           ? DateTime.tryParse(json['result_confirmed_at'].toString())?.toLocal()
@@ -135,6 +141,8 @@ class TeamLeagueMatch {
           : null,
       myTeamSubmission: json['my_team_submission']?.toString(),
       opponentTeamSubmission: json['opponent_team_submission']?.toString(),
+      homeSubmission: json['home_submission']?.toString(),
+      awaySubmission: json['away_submission']?.toString(),
     );
   }
 }
@@ -365,23 +373,29 @@ class TeamLeagueRepository {
     return Map<String, dynamic>.from(res as Map);
   }
 
-  /// League Creator resolves dispute ('home_win', 'draw', 'away_win')
-  Future<Map<String, dynamic>> resolveDispute({
+  /// League Creator confirms or resolves match outcome ('home_win', 'draw', 'away_win')
+  Future<Map<String, dynamic>> confirmMatchResult({
     required String matchId,
-    required String resolution, // 'home_win', 'draw', 'away_win'
+    required String outcome, // 'home_win', 'draw', 'away_win'
   }) async {
     final res = await _supabase.rpc(
-      'resolve_team_league_dispute',
+      'confirm_team_league_match_result',
       params: {
         'p_match_id': matchId,
-        'p_resolution': resolution,
+        'p_outcome': outcome,
       },
     );
     if (res == null || res['success'] != true) {
-      throw Exception(res?['message'] ?? 'فشل اعتماد نتيجة النزاع');
+      throw Exception(res?['message'] ?? 'فشل اعتماد نتيجة المباراة');
     }
     return Map<String, dynamic>.from(res as Map);
   }
+
+  /// Backward compatible alias for resolveDispute
+  Future<Map<String, dynamic>> resolveDispute({
+    required String matchId,
+    required String resolution,
+  }) => confirmMatchResult(matchId: matchId, outcome: resolution);
 
   /// Links a pitch booking to a league match
   Future<void> linkLeagueMatchBooking({

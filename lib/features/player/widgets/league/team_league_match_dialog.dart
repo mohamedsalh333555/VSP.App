@@ -252,11 +252,18 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
   String? _selectedResolution; // 'home_win', 'draw', 'away_win'
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // If the match already has a suggested confirmedOutcome (e.g. matching submissions), preselect it
+    _selectedResolution = widget.match.confirmedOutcome;
+  }
+
   String _formatResultText(String? result) {
     if (result == 'win') return 'فوز 🟢';
     if (result == 'draw') return 'تعادل 🟡';
     if (result == 'loss') return 'خسارة 🔴';
-    return 'لم يسجل';
+    return 'لم يسجل بعد';
   }
 
   Future<void> _confirmAndResolve() async {
@@ -355,7 +362,11 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
             decoration: BoxDecoration(
               color: VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: widget.match.isDisputed 
+                    ? Colors.redAccent.withValues(alpha: 0.4) 
+                    : VSPColors.accent.withValues(alpha: 0.4),
+              ),
             ),
             child: Column(
               children: [
@@ -364,7 +375,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                   children: [
                     Text(widget.match.homeTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     Text(
-                      'سجل: ${_formatResultText(widget.match.myTeamSubmission ?? widget.match.opponentTeamSubmission)}',
+                      'سجل: ${_formatResultText(widget.match.homeSubmission)}',
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -375,7 +386,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                   children: [
                     Text(widget.match.awayTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     Text(
-                      'سجل: ${_formatResultText(widget.match.opponentTeamSubmission ?? widget.match.myTeamSubmission)}',
+                      'سجل: ${_formatResultText(widget.match.awaySubmission)}',
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
                     ),
                   ],
