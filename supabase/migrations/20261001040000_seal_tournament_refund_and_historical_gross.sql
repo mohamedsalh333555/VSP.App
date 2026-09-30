@@ -378,14 +378,15 @@ BEGIN
 END;
 $function$;
 
--- 9. Drop the old 2-argument overload of confirm_1v1_payment_atomic
+-- 9. Drop previous overloads of confirm_1v1_payment_atomic
 DROP FUNCTION IF EXISTS public.confirm_1v1_payment_atomic(text, text);
+DROP FUNCTION IF EXISTS public.confirm_1v1_payment_atomic(text, text, numeric);
 
--- 10. Update confirm_1v1_payment_atomic to strictly handle gross amount
+-- 10. Update confirm_1v1_payment_atomic with mandatory gross_amount and service_role-only auth
 CREATE OR REPLACE FUNCTION public.confirm_1v1_payment_atomic(
     p_order_reference text, 
     p_paymob_transaction_id text, 
-    p_gross_amount numeric DEFAULT NULL::numeric
+    p_gross_amount numeric
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -393,59 +394,23 @@ SECURITY DEFINER
 SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
-    v_caller_role TEXT;
     v_order RECORD;
     v_champ RECORD;
     v_current_count INT;
     v_user RECORD;
     v_now TIMESTAMPTZ := timezone('utc'::text, now());
     v_gross NUMERIC;
-    v_fee RECORD;
-    v_calculated_gross NUMERIC;
 BEGIN
+    -- Strict authorization: strictly service_role or postgres internal caller ONLY
     IF (COALESCE(auth.role(), '') != 'service_role' AND current_user != 'postgres') THEN
-        SELECT role INTO v_caller_role FROM public.users WHERE id = auth.uid();
-        IF (COALESCE(v_caller_role, '') NOT IN ('admin', 'co_founder')) THEN
-            RETURN jsonb_build_object('success', false, 'error', 'غير مصرح: يتم تأكيد الطلبات عبر الـ Webhook فقط.');
-        END IF;
+        RETURN jsonb_build_object('success', false, 'error', 'غير مصرح: يتم تأكيد الطلبات عبر الـ Webhook فقط.');
     END IF;
 
-    SELECT * INTO v_order 
-    FROM public.vsp_1v1_tournament_orders 
-    WHERE order_reference = p_order_reference 
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-        RETURN jsonb_build_object('success', false, 'error', 'طلب الدفع غير موجود.');
+    -- Strict actual gross validation: mandatory from gateway
+    IF p_gross_amount IS NULL OR p_gross_amount <= 0 THEN
+        RAISE EXCEPTION 'مبلغ الدفع الإجمالي الفعلي مطلوب';
     END IF;
-
-    IF v_order.payment_status = 'paid' THEN
-        RETURN jsonb_build_object('success', true, 'already_confirmed', true, 'message', 'تم تأكيد الطلب مسبقاً.');
-    END IF;
-
-    SELECT * INTO v_champ 
-    FROM public.vsp_1v1_tournaments 
-    WHERE id = v_order.tournament_id 
-    FOR UPDATE;
-
-    IF NOT FOUND THEN
-        RETURN jsonb_build_object('success', false, 'error', 'البطولة المرتبطة بالطلب غير موجودة.');
-    END IF;
-
-    IF p_gross_amount IS NOT NULL AND p_gross_amount > 0 THEN
-        v_gross := round(p_gross_amount, 2);
-    ELSE
-        SELECT booking_vsp_rate, booking_paymob_local_rate, booking_paymob_rate, booking_paymob_fixed_fee
-        INTO v_fee
-        FROM public.platform_fee_config
-        WHERE id = 1;
-        
-        v_calculated_gross := v_order.amount 
-          + round(v_order.amount * COALESCE(v_fee.booking_vsp_rate, 0.02), 2)
-          + round(v_order.amount * COALESCE(v_fee.booking_paymob_local_rate, v_fee.booking_paymob_rate, 0.0275), 2)
-          + COALESCE(v_fee.booking_paymob_fixed_fee, 3);
-        v_gross := round(v_calculated_gross, 2);
-    END IF;
+    v_gross := round(p_gross_amount, 2);
 
     SELECT COUNT(*) INTO v_current_count 
     FROM public.vsp_1v1_tournament_players 
@@ -568,3 +533,27 @@ BEGIN
     );
 END;
 $function$;
+
+-- 11. Strictly revoke EXECUTE from PUBLIC, anon, authenticated and restrict to service_role, postgres
+REVOKE ALL ON FUNCTION public.confirm_1v1_payment_atomic(text, text, numeric) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.confirm_1v1_payment_atomic(text, text, numeric) TO service_role, postgres;
+
+-- 12. Register migration in supabase_migrations.schema_migrations
+INSERT INTO supabase_migrations.schema_migrations (version, name, statements)
+VALUES (
+  '20261001040000',
+  'seal_tournament_refund_and_historical_gross',
+  ARRAY[
+    'CREATE TABLE IF NOT EXISTS public.vsp_1v1_cancellation_refund_queue',
+    'CREATE TABLE IF NOT EXISTS public.team_league_cancellation_refund_queue',
+    'ALTER TABLE public.team_league_payments ADD COLUMN IF NOT EXISTS gross_amount NUMERIC',
+    'CREATE TRIGGER trg_team_league_cancellation_refund_queue_worker AFTER INSERT ON public.team_league_cancellation_refund_queue FOR EACH ROW',
+    'CREATE OR REPLACE FUNCTION public.confirm_team_league_payment',
+    'CREATE OR REPLACE FUNCTION public.cancel_team_league',
+    'CREATE OR REPLACE FUNCTION public.confirm_1v1_payment_atomic'
+  ]::text[]
+)
+ON CONFLICT (version) DO UPDATE 
+SET name = EXCLUDED.name,
+    statements = EXCLUDED.statements;
+

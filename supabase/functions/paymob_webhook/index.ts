@@ -330,12 +330,19 @@ serve(async (req: Request) => {
       if (isSuccess) {
         // Step 1: Atomic confirmation & capacity check (with row lock)
         const actualGrossAmount = Math.round(Number(obj.amount_cents || 0)) / 100.0;
+        if (actualGrossAmount <= 0) {
+          console.error("❌ Rejected 1v1 webhook: zero or invalid gross amount:", specialReference, obj.amount_cents);
+          return new Response(JSON.stringify({ error: "Invalid payment amount in webhook" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
         const { data: tournResult, error: tournErr } = await supabase.rpc(
           "confirm_1v1_payment_atomic",
           {
             p_order_reference: specialReference,
             p_paymob_transaction_id: transactionId,
-            p_gross_amount: actualGrossAmount > 0 ? actualGrossAmount : undefined,
+            p_gross_amount: actualGrossAmount,
           }
         );
 
