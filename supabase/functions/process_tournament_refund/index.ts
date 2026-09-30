@@ -37,14 +37,14 @@ serve(async (req: Request) => {
 
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Verify if caller is internal worker or service_role
+    // Verify if caller is internal worker using dedicated refund_worker secret
     let isServiceRole = (token === serviceKey);
     if (!isServiceRole) {
-      // Check against internal_function_secrets for DB trigger / cron callers (strictly refund_worker)
+      // Check strictly against internal_function_secrets for refund_worker
       const { data: secretRows } = await adminClient
         .from("internal_function_secrets")
         .select("secret")
-        .in("name", ["refund_worker", "service_role"]);
+        .eq("name", "refund_worker");
       if (secretRows && secretRows.some((r: any) => r.secret === token)) {
         isServiceRole = true;
       }
@@ -210,7 +210,7 @@ serve(async (req: Request) => {
           } catch (e: any) {
             const errStr = e?.message || String(e);
             const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
-            refundError = isTimeout ? `NETWORK_TIMEOUT_PENDING_GATEWAY_VERIFICATION: ${errStr}` : errStr;
+            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
           }
         }
 
@@ -237,10 +237,16 @@ serve(async (req: Request) => {
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
-          if (item.retry_count >= 3) {
+          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+
+          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+            // Escalate to manual review immediately on ambiguous timeout or max retries
+            // to strictly protect against double refund!
             await adminClient.from("cancellation_refund_queue").update({
               status: "failed_manual_review",
-              failure_reason: refundError,
+              failure_reason: isAmbiguousTimeout 
+                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
+                : refundError,
               locked_until: null,
               updated_at: nowIso,
             }).eq("id", item.id);
@@ -255,7 +261,7 @@ serve(async (req: Request) => {
               updated_at: nowIso,
             }).eq("id", item.registration_id);
           } else {
-            // Transient failure: return to pending state for lease recovery or next cron cycle
+            // Transient failure before dispatch: return to pending state for lease recovery
             await adminClient.from("cancellation_refund_queue").update({
               status: "pending",
               failure_reason: refundError,

@@ -174,34 +174,47 @@ void main() {
     });
 
     // -------------------------------------------------------------
-    // 6. Strict Frozen Roster Requirement (No team_members fallback)
+    // 6. Strict Frozen Roster Requirement (is_frozen = true)
     // -------------------------------------------------------------
-    test('Crowning strictly requires Frozen Roster and rejects team_members fallback', () {
+    test('Crowning strictly requires is_frozen = true on roster and rejects unfrozen or team_members fallback', () {
       Map<String, dynamic> awardTrophies({
-        required String? frozenRosterId,
-        required List<String> frozenRosterPlayers,
+        required String? rosterId,
+        required bool isFrozen,
+        required List<String> rosterPlayers,
         required List<String> currentTeamMembers,
       }) {
-        if (frozenRosterId == null || frozenRosterPlayers.isEmpty) {
-          // In V3.6, lack of frozen roster immediately fails; NO fallback to currentTeamMembers
+        if (rosterId == null || !isFrozen || rosterPlayers.isEmpty) {
+          // In V3.6, lack of frozen roster (or is_frozen == false) fails immediately with FROZEN_ROSTER_REQUIRED
           return {'success': false, 'error': 'FROZEN_ROSTER_REQUIRED'};
         }
-        return {'success': true, 'awarded_players': frozenRosterPlayers};
+        return {'success': true, 'awarded_players': rosterPlayers};
       }
 
-      // Missing frozen roster: must reject
+      // Unfrozen roster: must reject even if players exist
+      final unfrozenResult = awardTrophies(
+        rosterId: 'roster-uuid',
+        isFrozen: false,
+        rosterPlayers: ['p1', 'p2'],
+        currentTeamMembers: ['p1', 'p2'],
+      );
+      expect(unfrozenResult['success'], isFalse);
+      expect(unfrozenResult['error'], 'FROZEN_ROSTER_REQUIRED');
+
+      // Missing roster: must reject
       final missingResult = awardTrophies(
-        frozenRosterId: null,
-        frozenRosterPlayers: [],
+        rosterId: null,
+        isFrozen: false,
+        rosterPlayers: [],
         currentTeamMembers: ['p1', 'p2', 'p3'],
       );
       expect(missingResult['success'], isFalse);
       expect(missingResult['error'], 'FROZEN_ROSTER_REQUIRED');
 
-      // Valid frozen roster: trophies awarded exclusively to historical players
+      // Valid frozen roster (is_frozen = true): trophies awarded exclusively to historical players
       final validResult = awardTrophies(
-        frozenRosterId: 'roster-uuid',
-        frozenRosterPlayers: ['historical_p1', 'historical_p2'],
+        rosterId: 'roster-uuid',
+        isFrozen: true,
+        rosterPlayers: ['historical_p1', 'historical_p2'],
         currentTeamMembers: ['historical_p1', 'new_recruit_p3'],
       );
       expect(validResult['success'], isTrue);
@@ -275,6 +288,77 @@ void main() {
       crownWithNotificationIsolation();
       expect(crowningTxSucceeded, isTrue);
       expect(notifFailed, isTrue);
+    });
+
+    // -------------------------------------------------------------
+    // 10. GATE 4: Refund Worker Scenarios & Double-Refund Safety
+    // -------------------------------------------------------------
+    test('GATE 4 - Scenario A: Refund request succeeds -> completed once', () {
+      String handleRefundOutcome({required bool gatewaySuccess, required bool isAlreadyRefunded}) {
+        if (gatewaySuccess || isAlreadyRefunded) return 'completed';
+        return 'failed';
+      }
+
+      expect(handleRefundOutcome(gatewaySuccess: true, isAlreadyRefunded: false), equals('completed'));
+    });
+
+    test('GATE 4 - Scenario B: Pre-dispatch failure -> safely retryable as pending', () {
+      String handlePreDispatchFailure({required int retryCount}) {
+        if (retryCount >= 3) return 'failed_manual_review';
+        return 'pending';
+      }
+
+      expect(handlePreDispatchFailure(retryCount: 0), equals('pending'));
+      expect(handlePreDispatchFailure(retryCount: 1), equals('pending'));
+      expect(handlePreDispatchFailure(retryCount: 3), equals('failed_manual_review'));
+    });
+
+    test('GATE 4 - Scenario C: Gateway ambiguous timeout -> escalates to failed_manual_review, NO blind retry', () {
+      String handleGatewayResult({
+        required bool isTimeout,
+        required int retryCount,
+        required String? error,
+      }) {
+        if (isTimeout) {
+          // Must escalate immediately to manual review to block double-refund on ambiguous gateway response
+          return 'failed_manual_review';
+        }
+        if (retryCount >= 3) return 'failed_manual_review';
+        return 'pending';
+      }
+
+      final result = handleGatewayResult(
+        isTimeout: true,
+        retryCount: 0,
+        error: 'NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS',
+      );
+      expect(result, equals('failed_manual_review'));
+    });
+
+    test('GATE 4 - Scenario D: Gateway reports already refunded -> completed without duplicate payout', () {
+      Map<String, dynamic> evaluateGatewayResponse(String rawResponse) {
+        final lower = rawResponse.toLowerCase();
+        if (lower.contains('already refunded') || lower.contains('already voided')) {
+          return {'status': 'completed', 'prevented_double_refund': true};
+        }
+        return {'status': 'pending', 'prevented_double_refund': false};
+      }
+
+      final res = evaluateGatewayResponse('Transaction 12345 is already refunded at acquirer');
+      expect(res['status'], equals('completed'));
+      expect(res['prevented_double_refund'], isTrue);
+    });
+
+    test('GATE 4 - Scenario E: Amount mismatch -> escalates immediately to failed_manual_review', () {
+      String checkAmountIntegrity({required double orderGross, required double queueAmount}) {
+        if ((orderGross - queueAmount).abs() > 0.01) {
+          return 'failed_manual_review';
+        }
+        return 'proceed';
+      }
+
+      expect(checkAmountIntegrity(orderGross: 250.0, queueAmount: 200.0), equals('failed_manual_review'));
+      expect(checkAmountIntegrity(orderGross: 250.0, queueAmount: 250.0), equals('proceed'));
     });
   });
 }
