@@ -163,6 +163,15 @@ class TournamentRepository {
   Future<void> crownChampionCelebration(String teamId) =>
       lifecycleCoord.sendCelebrationNotifications(teamId);
 
+  Future<Map<String, dynamic>> getChampionshipActions(String championshipId) =>
+      lifecycleCoord.getChampionshipActions(championshipId);
+
+  Future<Map<String, dynamic>> cancelChampionship(
+    String championshipId, {
+    String reason = 'owner_initiated',
+  }) =>
+      lifecycleCoord.cancelChampionship(championshipId, reason: reason);
+
   Future<bool> deleteChampionship(String championshipId) =>
       lifecycleCoord.deleteChampionship(championshipId);
 

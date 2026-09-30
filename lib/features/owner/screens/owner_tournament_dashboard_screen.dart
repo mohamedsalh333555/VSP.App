@@ -21,6 +21,7 @@ import '../widgets/tournament/tournament_manual_team_sheet.dart';
 import '../widgets/tournament/tournament_overview_card.dart';
 import '../widgets/tournament/tournament_prize_delivery_dialog.dart';
 import '../widgets/tournament/tournament_team_card.dart';
+import 'create_tournament_wizard.dart';
 
 class OwnerTournamentDashboardScreen extends StatefulWidget {
   final Championship championship;
@@ -214,8 +215,133 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     }
   }
 
+  Future<void> _handleEditTournament() async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLoading = true);
+    final actions = await TournamentRepository().getChampionshipActions(_currentChampionship.id);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (actions['can_edit'] != true && actions['can_edit_basic_info'] != true) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'لا يمكن تعديل هذه البطولة في حالتها الحالية.' : 'Tournament cannot be edited in its current state.',
+      );
+      return;
+    }
+
+    CreateTournamentWizard.open(
+      context,
+      tournament: _currentChampionship,
+    );
+  }
+
+  Future<void> _handleCancelTournament() async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLoading = true);
+    final actions = await TournamentRepository().getChampionshipActions(_currentChampionship.id);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (actions['can_cancel'] != true) {
+      final reason = actions['reason']?.toString() ?? '';
+      String msg;
+      if (reason == 'fixtures_generated' || reason == 'competition_in_progress') {
+        msg = isAr
+            ? 'لا يمكن إلغاء البطولة بعد إنشاء جدول المباريات أو انطلاقها.'
+            : 'Cannot cancel tournament after fixtures are generated or competition started.';
+      } else if (reason == 'already_cancelled') {
+        msg = isAr ? 'البطولة ملغاة بالفعل.' : 'Tournament is already cancelled.';
+      } else if (reason == 'competition_completed') {
+        msg = isAr ? 'البطولة مكتملة بالفعل.' : 'Tournament is already completed.';
+      } else {
+        msg = isAr ? 'لا يمكن إلغاء البطولة في حالتها الحالية.' : 'Cannot cancel tournament in current state.';
+      }
+      VSPFeedback.showError(context, msg);
+      return;
+    }
+
+    final confirmed = await TournamentDashboardDialogs.showCancelTournamentConfirmation(
+      context,
+      tournamentName: _currentChampionship.name,
+      teamsCount: actions['teams_count'] is int ? actions['teams_count'] as int : _currentChampionship.joinedTeams.length,
+      paidTeamsCount: actions['payments_count'] is int ? actions['payments_count'] as int : _currentChampionship.paidTeams.length,
+      isTeamLeague: _currentChampionship.templateType == 'team_league',
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+    try {
+      await TournamentRepository().cancelChampionship(_currentChampionship.id);
+      if (mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          isAr ? 'تم إلغاء البطولة بنجاح.' : 'Tournament cancelled successfully.',
+        );
+        setState(() {
+          _currentChampionship = _currentChampionship.copyWith(status: 'cancelled');
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleDeleteTournament() async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isLoading = true);
+    final actions = await TournamentRepository().getChampionshipActions(_currentChampionship.id);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (actions['can_delete'] != true) {
+      final msg = isAr
+          ? 'لا يمكن حذف البطولة لوجود فرق مسجلة أو مباريات. يمكنك استخدام خيار "إلغاء البطولة" بدلاً من ذلك.'
+          : 'Cannot delete tournament with registered teams or matches. Use "Cancel Tournament" instead.';
+      VSPFeedback.showError(context, msg);
+      return;
+    }
+
+    final confirmed = await TournamentDashboardDialogs.showDeleteTournamentConfirmation(
+      context,
+      tournamentName: _currentChampionship.name,
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final ok = await TournamentRepository().deleteChampionship(_currentChampionship.id);
+      if (ok && mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          isAr ? 'تم حذف البطولة نهائياً.' : 'Tournament permanently deleted.',
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.id ?? auth.userModel?.uid;
+    final isAdmin = auth.userModel?.role == 'admin' ||
+        auth.userModel?.role == 'co_founder' ||
+        auth.userModel?.role == 'super_admin';
+    final isOwnerOrAdmin = (uid != null && uid == _currentChampionship.ownerId) || isAdmin;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -256,6 +382,59 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               );
             },
           ),
+          if (isOwnerOrAdmin)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, color: VSPColors.textPrimary),
+              color: VSPColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+              onSelected: (action) {
+                if (action == 'edit') _handleEditTournament();
+                if (action == 'cancel') _handleCancelTournament();
+                if (action == 'delete') _handleDeleteTournament();
+              },
+              itemBuilder: (ctx) {
+                final isAr = Localizations.localeOf(ctx).languageCode == 'ar';
+                final status = _currentChampionship.status.toLowerCase();
+                final isCancelled = status == 'cancelled';
+                final isCompleted = status == 'completed' || status == 'finished';
+
+                return [
+                  if (!isCompleted && !isCancelled)
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.edit_2_copy, color: VSPColors.accent, size: 18),
+                          const SizedBox(width: 8),
+                          Text(isAr ? 'تعديل البطولة' : 'Edit Tournament', style: const TextStyle(color: VSPColors.textPrimary)),
+                        ],
+                      ),
+                    ),
+                  if (!isCancelled && !isCompleted)
+                    PopupMenuItem(
+                      value: 'cancel',
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.close_circle_copy, color: VSPColors.warning, size: 18),
+                          const SizedBox(width: 8),
+                          Text(isAr ? 'إلغاء البطولة' : 'Cancel Tournament', style: const TextStyle(color: VSPColors.warning)),
+                        ],
+                      ),
+                    ),
+                  if (status == 'open' && _currentChampionship.joinedTeams.isEmpty)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
+                          const SizedBox(width: 8),
+                          Text(isAr ? 'حذف البطولة' : 'Delete Tournament', style: const TextStyle(color: VSPColors.error)),
+                        ],
+                      ),
+                    ),
+                ];
+              },
+            ),
         ],
       ),
       body: Column(

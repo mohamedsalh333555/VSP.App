@@ -121,31 +121,96 @@ class TournamentLifecycleCoordinator {
     }
   }
 
-  /// Updates championship fields with sanitized payload.
+  /// Returns server-authoritative policy: what actions are allowed for this championship.
+  /// All UI surfaces MUST call this before showing edit/cancel/delete controls.
+  Future<Map<String, dynamic>> getChampionshipActions(String championshipId) async {
+    try {
+      final res = await _supabase.rpc(
+        'get_championship_actions',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'can_edit': false, 'can_delete': false, 'can_cancel': false, 'reason': 'rpc_error'};
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching championship actions', e, stack);
+      return {'can_edit': false, 'can_delete': false, 'can_cancel': false, 'reason': 'error'};
+    }
+  }
+
+  /// Updates championship fields — routes through update_championship_atomic (server-enforced).
+  /// Server strips any fields not allowed in the current state.
   Future<bool> updateChampionship(String id, Map<String, dynamic> data) async {
     try {
       final pgData = TournamentPayloadBuilder.buildUpdatePayload(data);
-      if (pgData.isEmpty) return true;
-      await _supabase.from('championships').update(pgData).eq('id', id);
-      return true;
-    } catch (e) {
-      debugPrint('Error updating championship: $e');
+      final payload = pgData.isNotEmpty ? pgData : data;
+      final res = await _supabase.rpc(
+        'update_championship_atomic',
+        params: {
+          'p_championship_id': id,
+          'p_updates': payload,
+        },
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        VSPLogger.i('Championship $id updated: ${res['updated_fields']}');
+        return true;
+      }
+      VSPLogger.w('update_championship_atomic returned unexpected: $res');
+      return false;
+    } catch (e, stack) {
+      VSPLogger.e('Error updating championship', e, stack);
       return false;
     }
   }
 
-  /// Update championship status directly (e.g. 'open', 'ongoing', 'completed').
+  /// Transitions championship status — used for admin/system operations (ongoing, completed).
+  /// For owner-initiated cancel: use cancelChampionship() instead.
   Future<void> updateChampionshipStatus(
     String championshipId,
     String status,
   ) async {
     try {
+      // Admin status transitions (e.g. open→ongoing when fixtures generated)
+      // These go through admin_update_championship_status_atomic when available
+      final res = await _supabase.rpc(
+        'admin_update_championship_status_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_status': status,
+        },
+      ).maybeSingle();
+      if (res == null || res['success'] == true) return;
+    } catch (_) {
+      // Fallback for non-admin status transitions (e.g. ongoing after fixture generation)
       await _supabase
           .from('championships')
-          .update({'status': status})
+          .update({'status': status, 'updated_at': DateTime.now().toUtc().toIso8601String()})
           .eq('id', championshipId);
-    } catch (e) {
-      debugPrint('Error updating championship status: $e');
+    }
+  }
+
+  /// Owner-initiated championship cancellation (routes through cancel_championship_atomic).
+  /// For Team League: automatically delegates to cancel_team_league (with payment handling).
+  Future<Map<String, dynamic>> cancelChampionship(
+    String championshipId, {
+    String reason = 'owner_initiated',
+  }) async {
+    try {
+      final res = await _supabase.rpc(
+        'cancel_championship_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_reason': reason,
+        },
+      );
+      if (res != null && res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      throw Exception('Unexpected cancel response');
+    } catch (e, stack) {
+      VSPLogger.e('Error cancelling championship', e, stack);
+      rethrow;
     }
   }
 
@@ -208,57 +273,25 @@ class TournamentLifecycleCoordinator {
     }
   }
 
-  /// Deletes championship and cleans up all associated rosters and matches.
+  /// Hard-deletes championship — routes through delete_championship_atomic (server-enforced).
+  /// Server BLOCKS delete if: teams joined, matches exist, or payments made.
+  /// Only allowed for empty open championships.
   Future<bool> deleteChampionship(String championshipId) async {
     try {
-      try {
-        final rosters = await _supabase
-            .from('championship_rosters')
-            .select('id')
-            .eq('championship_id', championshipId);
-        final rosterIds =
-            (rosters as List).map((r) => r['id'].toString()).toList();
-        if (rosterIds.isNotEmpty) {
-          try {
-            await _supabase
-                .from('championship_roster_players')
-                .delete()
-                .inFilter('roster_id', rosterIds);
-          } catch (_) {}
-          try {
-            await _supabase
-                .from('championship_roster_guests')
-                .delete()
-                .inFilter('roster_id', rosterIds);
-          } catch (_) {}
-        }
-        await _supabase
-            .from('championship_rosters')
-            .delete()
-            .eq('championship_id', championshipId);
-      } catch (rosterErr) {
-        debugPrint('Championship rosters cleanup notice: $rosterErr');
+      final res = await _supabase.rpc(
+        'delete_championship_atomic',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        VSPLogger.i('Championship $championshipId permanently deleted.');
+        return true;
       }
-
-      try {
-        await _supabase
-            .from('tournament_matches')
-            .delete()
-            .eq('championship_id', championshipId);
-      } catch (matchErr) {
-        debugPrint('Tournament matches cleanup notice: $matchErr');
-      }
-
-      await _supabase
-          .from('championships')
-          .delete()
-          .eq('id', championshipId);
-
-      debugPrint('Championship $championshipId deleted successfully.');
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting championship: $e');
+      VSPLogger.w('delete_championship_atomic unexpected: $res');
       return false;
+    } catch (e, stack) {
+      VSPLogger.e('Error deleting championship', e, stack);
+      // Surface the server error message to the caller (BLOCKED_BY_STATE etc.)
+      rethrow;
     }
   }
 

@@ -121,4 +121,75 @@ void main() {
     await tester.tap(find.byType(TournamentDashboardBottomBar));
     await tester.pump();
   });
+
+  testWidgets('TournamentDashboardDialogs.showCancelTournamentConfirmation displays warning and refund alert', (tester) async {
+    bool? result;
+
+    await tester.pumpWidget(
+      buildTestApp(
+        Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () async {
+              result = await TournamentDashboardDialogs.showCancelTournamentConfirmation(
+                context,
+                tournamentName: 'Ramadan Cup',
+                teamsCount: 4,
+                paidTeamsCount: 2,
+                isTeamLeague: false,
+              );
+            },
+            child: const Text('Open Cancel Dialog'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Cancel Dialog'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.textContaining('Ramadan Cup'), findsOneWidget);
+    expect(find.textContaining('2'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Confirm Cancel'), findsOneWidget);
+
+    await tester.tap(find.text('Confirm Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(result, isTrue);
+  });
+
+  testWidgets('TournamentDashboardDialogs.showDeleteTournamentConfirmation displays delete dialog', (tester) async {
+    bool? result;
+
+    await tester.pumpWidget(
+      buildTestApp(
+        Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () async {
+              result = await TournamentDashboardDialogs.showDeleteTournamentConfirmation(
+                context,
+                tournamentName: 'Empty Cup',
+              );
+            },
+            child: const Text('Open Delete Dialog'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Delete Dialog'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.textContaining('Empty Cup'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(result, isTrue);
+  });
 }
+
