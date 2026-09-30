@@ -62,15 +62,16 @@ class TournamentRegistrationCoordinator {
         }
       }
 
-      // Atomic server function to bypass RLS restrictions
+      // Atomic server function to enforce Phase Engine and zero-trust entry
       final rpcRes = await _supabase.rpc('join_championship_atomic', params: {
         'p_championship_id': championshipId,
         'p_team_id': teamId,
-        'p_is_paid': isPaid,
+        'p_player_ids': selectedPlayerIds,
+        'p_guest_names': offlineGuestNames,
       });
 
       if (rpcRes is Map && rpcRes['success'] == false) {
-        throw Exception(rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
+        throw Exception(rpcRes['error']?.toString() ?? rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
       }
 
       // Save team roster
@@ -108,9 +109,10 @@ class TournamentRegistrationCoordinator {
   Future<Map<String, dynamic>?> createTournamentOrder({
     required String championshipId,
     required String teamId,
-    required double amount,
+    double? amount,
     List<String> playerIds = const [],
     List<String> guestNames = const [],
+    String? idempotencyKey,
   }) async {
     try {
       final res = await _supabase.rpc('create_tournament_order_atomic', params: {
@@ -118,7 +120,7 @@ class TournamentRegistrationCoordinator {
         'p_team_id': teamId,
         'p_player_ids': playerIds,
         'p_guest_names': guestNames,
-        'p_amount': amount,
+        if (idempotencyKey != null) 'p_idempotency_key': idempotencyKey,
       });
       if (res is Map && res['success'] == true) {
         return Map<String, dynamic>.from(res);

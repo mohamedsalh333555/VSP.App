@@ -36,112 +36,120 @@ serve(async (req: Request) => {
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const {
-      data: { user: caller },
-      error: authError,
-    } = await adminClient.auth.getUser(token);
-    if (authError || !caller) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+
+    // Check if caller is service_role or authenticated user
+    let isServiceRole = (token === serviceKey);
+    let callerUser: any = null;
+
+    if (!isServiceRole) {
+      const { data: { user: caller }, error: authError } = await adminClient.auth.getUser(token);
+      if (authError || !caller) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Unauthorized" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      callerUser = caller;
     }
 
-    const body = await req.json();
-    const championshipId = String(body.championship_id || "");
-
-    if (!championshipId) {
-      return new Response(
-        JSON.stringify({ success: false, message: "معرف البطولة مطلوب." }),
-        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch (_) {
+      body = {};
     }
 
     // ============================================================
-    // MODE B: Bulk cancellation refunds for an entire cancelled championship
+    // MODE 1: Autonomous Cancellation Refund Queue Processing (Worker SSOT)
+    // Invoked by service_role, pg_cron, DB webhook, or admin
     // ============================================================
-    if (body.action === "process_cancellation_refunds" || (!body.team_id && body.action !== "single_withdrawal")) {
-      const { data: champ, error: champErr } = await adminClient
-        .from("championships")
-        .select("id, owner_id, status, name")
-        .eq("id", championshipId)
-        .single();
-
-      if (champErr || !champ) {
-        return new Response(
-          JSON.stringify({ success: false, message: "البطولة غير موجودة." }),
-          { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      // Check caller is owner or admin
-      const { data: userRecord } = await adminClient
-        .from("users")
-        .select("role")
-        .eq("id", caller.id)
-        .single();
-      const isAdmin = ["admin", "co_founder", "super_admin", "cofounder"].includes(userRecord?.role || "");
-      if (caller.id !== champ.owner_id && !isAdmin) {
-        return new Response(
-          JSON.stringify({ success: false, message: "غير مصرح لك بمعالجة استردادات هذه البطولة." }),
-          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      // Fetch all orders with refund_requested
-      const { data: pendingOrders, error: ordersErr } = await adminClient
-        .from("tournament_orders")
-        .select("id, order_reference, paymob_transaction_id, amount, captain_user_id")
-        .eq("championship_id", championshipId)
-        .eq("payment_status", "refund_requested");
-
-      if (ordersErr) throw ordersErr;
-
-      if (!pendingOrders || pendingOrders.length === 0) {
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: "لا توجد التزامات استرداد معلقة لهذه البطولة.",
-            processed_count: 0,
-          }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
-
-      // Authenticate with Paymob once
-      let paymobToken = "";
-      try {
+    if (isServiceRole || body.action === "process_queue" || (!body.team_id && !body.championship_id)) {
+      // Helper function to get Paymob auth token
+      const getPaymobToken = async (): Promise<string> => {
         const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ api_key: apiKey }),
         });
         const authData = await authRes.json();
-        if (!authRes.ok || !authData.token) throw new Error("Paymob authentication failed.");
-        paymobToken = authData.token;
+        if (!authRes.ok || !authData.token) {
+          throw new Error("Paymob authentication failed: " + JSON.stringify(authData));
+        }
+        return authData.token;
+      };
+
+      let paymobToken = "";
+      try {
+        paymobToken = await getPaymobToken();
       } catch (authErr: any) {
-        console.error("Paymob auth failed in bulk refund:", authErr);
+        console.error("Paymob token generation failed:", authErr);
         return new Response(
-          JSON.stringify({
-            success: false,
-            message: "تعذر الاتصال ببوابة الدفع لتنفيذ الاسترداد المالي.",
-            error: String(authErr?.message || authErr),
-          }),
+          JSON.stringify({ success: false, message: "Paymob authentication failed", error: String(authErr?.message || authErr) }),
           { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
       }
 
       const results = [];
-      for (const order of pendingOrders) {
-        const orderRef = String(order.order_reference || "");
-        const txnId = String(order.paymob_transaction_id || "");
-        const refundAmt = Math.round(Number(order.amount || 0) * 100) / 100;
+      let processedCount = 0;
+
+      while (true) {
+        const { data: claim, error: claimErr } = await adminClient.rpc("claim_next_cancellation_refund_atomic");
+        if (claimErr) {
+          console.error("Error claiming refund item:", claimErr);
+          break;
+        }
+
+        if (!claim || !claim.found || !claim.refund) {
+          break; // Queue is empty or no claimable items
+        }
+
+        const item = claim.refund;
+        processedCount++;
+
+        // 1. Data Integrity Assertion: gross_amount in order matches queue amount
+        const { data: order, error: orderErr } = await adminClient
+          .from("tournament_orders")
+          .select("id, order_reference, amount, gross_amount, payment_status")
+          .eq("id", item.order_id)
+          .single();
+
+        const orderGross = Number(order?.gross_amount ?? order?.amount ?? 0);
+        const queueAmount = Number(item.amount);
+
+        if (orderErr || !order || Math.abs(orderGross - queueAmount) > 0.01) {
+          const reason = `Amount integrity mismatch: order=${orderGross} vs queue=${queueAmount}`;
+          console.error(`Item ${item.id} failed integrity check:`, reason);
+          const nowIso = new Date().toISOString();
+
+          await adminClient.from("cancellation_refund_queue").update({
+            status: "failed_manual_review",
+            failure_reason: reason,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("tournament_orders").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.order_id);
+
+          await adminClient.from("championship_registrations").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.registration_id);
+
+          results.push({ id: item.id, order_id: item.order_id, success: false, error: reason });
+          continue;
+        }
+
+        // 2. Call Paymob Refund API
+        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
+        const refundAmtCents = Math.round(queueAmount * 100);
 
         let refundSuccess = false;
-        let refundId: string | null = null;
         let refundError: string | null = null;
+        let refundId: string | null = null;
 
-        if (!txnId || refundAmt <= 0) {
+        if (!txnId || refundAmtCents <= 0) {
           refundError = "Invalid transaction ID or zero amount";
         } else {
           try {
@@ -150,8 +158,8 @@ serve(async (req: Request) => {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 auth_token: paymobToken,
-                transaction_id: Number(txnId.replace(/\D/g, "")),
-                amount_cents: Math.round(refundAmt * 100),
+                transaction_id: Number(txnId),
+                amount_cents: refundAmtCents,
               }),
             });
             const refundData = await refundRes.json();
@@ -159,55 +167,73 @@ serve(async (req: Request) => {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
             } else {
-              refundError = refundData.message || refundData.detail || JSON.stringify(refundData);
+              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
             }
           } catch (e: any) {
             refundError = e?.message || String(e);
           }
         }
 
-        // Finalize each order atomically in DB
-        const { data: finalized, error: finalizeErr } = await adminClient.rpc(
-          "finalize_championship_cancellation_refund_atomic",
-          {
-            p_championship_id: championshipId,
-            p_order_reference: orderRef,
-            p_refund_success: refundSuccess,
-            p_refund_txn_id: refundId,
-            p_error_message: refundError,
-          }
-        );
+        const nowIso = new Date().toISOString();
 
-        results.push({
-          order_reference: orderRef,
-          refund_success: refundSuccess,
-          refund_id: refundId,
-          error: refundError,
-          db_result: finalized,
-        });
+        if (refundSuccess) {
+          await adminClient.from("cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("tournament_orders").update({
+            payment_status: "refunded",
+            updated_at: nowIso,
+          }).eq("id", item.order_id);
+
+          await adminClient.from("championship_registrations").update({
+            payment_status: "refunded",
+            updated_at: nowIso,
+          }).eq("id", item.registration_id);
+
+          results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
+        } else {
+          console.error(`Refund failed for queue item ${item.id}:`, refundError);
+          await adminClient.from("cancellation_refund_queue").update({
+            status: "failed_manual_review",
+            failure_reason: refundError,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("tournament_orders").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.order_id);
+
+          await adminClient.from("championship_registrations").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.registration_id);
+
+          results.push({ id: item.id, order_id: item.order_id, success: false, error: refundError });
+        }
       }
-
-      const successCount = results.filter((r) => r.refund_success).length;
-      const failCount = results.filter((r) => !r.refund_success).length;
 
       return new Response(
         JSON.stringify({
           success: true,
-          championship_id: championshipId,
-          total_orders: pendingOrders.length,
-          refunded_count: successCount,
-          manual_review_count: failCount,
-          details: results,
+          action: "process_queue",
+          processed_count: processedCount,
+          results,
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
     // ============================================================
-    // MODE A: Single Team Withdrawal Refund
+    // MODE 2: Single Team Withdrawal Refund (Dedicated Pipeline)
     // ============================================================
+    const championshipId = String(body.championship_id || "");
     const teamId = String(body.team_id || "");
-    if (!teamId) {
+
+    if (!championshipId || !teamId) {
       return new Response(
         JSON.stringify({ success: false, message: "بيانات الانسحاب غير مكتملة." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -217,6 +243,7 @@ serve(async (req: Request) => {
     const userClient = createClient(supabaseUrl, token, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+
     const { data: prep, error: prepError } = await userClient.rpc(
       "withdraw_team_from_championship_atomic",
       {

@@ -50,6 +50,40 @@ class TournamentLifecycleCoordinator {
         }
       }
 
+      final stadiumId = data['stadiumId'] ?? data['stadium_id'];
+      if (stadiumId != null) {
+        try {
+          final res = await _supabase.rpc('create_championship_atomic', params: {
+            'p_name': data['name'] ?? '',
+            'p_stadium_id': stadiumId,
+            'p_type': (data['type'] ?? 'cup').toString().toLowerCase(),
+            'p_sport_type': (data['sportType'] ?? data['sport_type'] ?? 'football').toString().toLowerCase(),
+            'p_entry_fee': num.tryParse(data['entryFee']?.toString() ?? data['entry_fee']?.toString() ?? '0') ?? 0,
+            'p_grand_prize': num.tryParse(data['grandPrize']?.toString() ?? data['grand_prize']?.toString() ?? '0') ?? 0,
+            'p_max_teams': int.tryParse(data['maxTeams']?.toString() ?? data['max_teams']?.toString() ?? '16') ?? 16,
+            'p_min_players_per_team': int.tryParse(data['minPlayersPerTeam']?.toString() ?? data['min_players_per_team']?.toString() ?? '5') ?? 5,
+            'p_max_players_per_team': int.tryParse(data['maxPlayersPerTeam']?.toString() ?? data['max_players_per_team']?.toString() ?? '11') ?? 11,
+            'p_start_date': data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString(),
+            'p_end_date': data['endDate'] is DateTime ? (data['endDate'] as DateTime).toIso8601String() : data['endDate']?.toString(),
+            'p_registration_closes_at': data['registrationClosesAt'] is DateTime 
+                ? (data['registrationClosesAt'] as DateTime).toIso8601String() 
+                : (data['registration_closes_at']?.toString() ?? (data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString())),
+            'p_rules': data['rules']?.toString() ?? '',
+            'p_logo_url': data['logoUrl']?.toString() ?? data['logo_url']?.toString() ?? '',
+            'p_currency': data['currency']?.toString() ?? 'EGP',
+            'p_settings': data['settings'] is Map ? data['settings'] : {},
+          });
+          if (res is Map && res['success'] == true) {
+            return res['championship_id']?.toString();
+          }
+          if (res is Map && res['error'] != null) {
+            throw Exception(res['error']);
+          }
+        } on PostgrestException catch (_) {
+          // Fallback to table insert if RPC unavailable or mocked
+        }
+      }
+
       final pgData = TournamentPayloadBuilder.buildCreatePayload(
         data,
         isAdminApproved: isApproved,
@@ -255,32 +289,21 @@ class TournamentLifecycleCoordinator {
     }
   }
 
-  /// Crowns champion team, awards badges, increments win counts, and sends celebration notifications.
+  /// Crowns champion team, awards badges, increments win counts, and sends celebration notifications via atomic server RPC.
   Future<void> crownChampion(
     String championshipId,
     String winningTeamId,
     String winningTeamName,
   ) async {
     try {
-      await _supabase
-          .from('championships')
-          .update({
-            'status': 'completed',
-            'champion_team_id': winningTeamId,
-            'champion_team_name': winningTeamName,
-          })
-          .eq('id', championshipId);
+      final res = await _supabase.rpc('crown_tournament_champion_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_champion_team_id': winningTeamId,
+        'p_champion_team_name': winningTeamName,
+      });
 
-      final team = await _teamRepo.getTeam(winningTeamId);
-      if (team != null) {
-        final badges = List<String>.from(team.unlockedBadges);
-        if (!badges.contains('cup_winner')) {
-          badges.add('cup_winner');
-        }
-        await _supabase.from('teams').update({
-          'championships_won': team.championshipsWon + 1,
-          'unlocked_badges': badges,
-        }).eq('id', winningTeamId);
+      if (res is Map && res['success'] != true) {
+        throw Exception(res['error']?.toString() ?? 'Failed to crown champion');
       }
 
       await sendCelebrationNotifications(winningTeamId);
