@@ -27,7 +27,7 @@ class BookingCreationCoordinator {
   NotificationRepository get _notificationRepo => _notificationRepository ?? NotificationRepository();
   TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
 
-  /// Converts domain [BookingType] to database string representation.
+  /// Converts domain [BookingType] to canonical database string (SSOT: personal | open_join | challenge).
   static String dbBookingType(BookingType type) {
     switch (type) {
       case BookingType.openJoin:
@@ -35,9 +35,7 @@ class BookingCreationCoordinator {
       case BookingType.challenge:
         return 'challenge';
       case BookingType.team:
-        return 'team';
       case BookingType.matchup:
-        return 'matchup';
       case BookingType.personal:
         return 'personal';
     }
@@ -73,6 +71,12 @@ class BookingCreationCoordinator {
         'p_player_team_name': draft.playerTeamName,
         'p_opponent_team_id': draft.opponentTeamId,
         'p_opponent_team_name': draft.opponentTeamName,
+        // Server persists the host's real player count for open_join
+        'p_initial_players': (draft.bookingType == BookingType.openJoin)
+            ? draft.currentPlayers
+            : 1,
+
+        'p_total_capacity': draft.totalFieldCapacity,
       });
 
       if (rpcResult is Map && rpcResult['success'] == false) {
@@ -104,12 +108,18 @@ class BookingCreationCoordinator {
       final created = await getBookingById(bookingId);
       if (created == null) throw Exception('تعذر جلب تفاصيل الحجز بعد الإنشاء.');
 
-      if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
-        sendChallengeNotification(draft);
-      }
+      // Only notify owner when booking is actually confirmed (cash = immediate confirm; online = wait for webhook)
       if (created.status == BookingStatus.confirmed || draft.paymentMethod == 'cash') {
         sendOwnerNotification(draft, created.id);
+        // For challenge: also notify opponent team captain — only after confirmation
+        // NOTE: challenge bookings via create_challenge_booking_atomic handle this separately
+        // This path only fires for legacy challenge flow or cash challenges
+        if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
+          sendChallengeConfirmedNotification(draft, created.id);
+        }
       }
+      // For online challenge bookings: notification is sent by the webhook after payment succeeds
+      // Do NOT send 'Challenge Confirmed' here for pending online payments
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
       VSPLogger.i('Atomic booking created: ${created.id}');
@@ -146,8 +156,9 @@ class BookingCreationCoordinator {
     }
   }
 
-  /// Sends challenge notification to opponent team captain.
-  Future<void> sendChallengeNotification(BookingDraft draft) async {
+  /// Sends challenge CONFIRMED notification to opponent captain.
+  /// Only called AFTER booking is actually confirmed (cash or post-payment webhook).
+  Future<void> sendChallengeConfirmedNotification(BookingDraft draft, String bookingId) async {
     try {
       if (draft.opponentTeamId == null) return;
       final team = await _teamRepo.getTeam(draft.opponentTeamId!);
@@ -156,19 +167,21 @@ class BookingCreationCoordinator {
       final captainId = team.captainId;
       if (captainId.isEmpty) return;
 
+      final dateStr = DateFormat('d MMM', 'ar').format(draft.startTime);
       await _notificationRepo.sendNotification(
         captainId,
         AppNotification(
           id: '',
-          title: 'Challenge Confirmed!',
-          body: 'You are playing against ${draft.playerTeamName ?? "another team"} at ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)}.',
-          type: 'info',
+          title: 'تم تأكيد مباراة تحدي!',
+          body: '${draft.playerTeamName ?? "فريق"} × ${draft.opponentTeamName ?? "فريقك"} في ${draft.stadiumName} — $dateStr.',
+          type: 'challenge_confirmed',
+          bookingId: bookingId,
           createdAt: DateTime.now(),
         ),
       );
       AnalyticsService.logChallengeSent(draft.playerTeamId ?? 'unknown', draft.opponentTeamId!);
     } catch (e) {
-      VSPLogger.e('Error sending challenge notification', e);
+      VSPLogger.e('Error sending challenge confirmed notification', e);
     }
   }
 }
