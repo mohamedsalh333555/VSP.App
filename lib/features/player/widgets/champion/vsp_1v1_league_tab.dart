@@ -10,6 +10,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/paymob_web_view_screen.dart';
+import '../../screens/tournament_registration_success_screen.dart';
 import 'champion_podium_components.dart';
 import 'league_1v1/league_1v1_empty_states.dart';
 import 'league_1v1/league_1v1_hero_card.dart';
@@ -358,12 +359,21 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
       if (!mounted) return;
 
-      if (isRegistered) {
-        VSPFeedback.showSuccess(context,
-            isArabic ? 'تم تأكيد الدفع وتسجيلك في البطولة بنجاح!' : 'Payment confirmed! You are registered.');
+      if (isRegistered || serverPaid) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TournamentRegistrationSuccessScreen(
+              tournamentType: '1v1',
+              tournamentId: tournamentId,
+              orderReference: orderRef,
+              userId: user.uid,
+            ),
+          ),
+        );
         setState(() {});
       } else {
-        // FIX 3: Webhook لسه ما وصلش — رسالة تفاؤلية
+        // Webhook لسه ما وصلش — رسالة تفاؤلية
         VSPFeedback.showInfo(context,
             isArabic
                 ? 'تم سداد الرسوم بنجاح. جاري تأكيد تسجيلك، ستظهر اسمك في القائمة خلال لحظات.'

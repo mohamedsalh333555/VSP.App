@@ -92,9 +92,15 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.wallet_copy,
-            title: '30 جنيه رسوم لكل فريق',
-            subtitle: 'رسوم اشتراك الفريق بالكامل',
+            title: '30 جنيه رسوم تنظيم لكل فريق',
+            subtitle: 'رسوم تنظيم الدوري وجدول الترتيب للمنصة',
             highlight: true,
+          ),
+          const SizedBox(height: 10),
+          _buildFeatureRow(
+            icon: Iconsax.location_copy,
+            title: 'إيجار الملاعب مناصفة',
+            subtitle: 'حجز الملعب لكل مباراة يتم بالتناصف بين الفريقين',
           ),
 
           const SizedBox(height: VSPSpacing.xl),

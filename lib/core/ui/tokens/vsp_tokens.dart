@@ -155,6 +155,7 @@ class VSPGlass {
 class VSPTypography {
   static const TextStyle numericStyle = TextStyle(
     fontFamily: 'Poppins',
+    fontFamilyFallback: ['Tajawal', 'sans-serif'],
     fontFeatures: [FontFeature.tabularFigures()],
   );
 }

@@ -17,6 +17,7 @@ import '../widgets/championship_checkout/checkout_guest_players_section.dart';
 import '../widgets/championship_checkout/checkout_squad_requirement_card.dart';
 import '../widgets/championship_checkout/checkout_team_members_list.dart';
 import 'payment_gateway_screen.dart';
+import 'tournament_registration_success_screen.dart';
 
 class ChampionshipCheckoutScreen extends StatefulWidget {
   final Championship championship;
@@ -299,15 +300,21 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     }
 
     if (mounted) {
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      VSPFeedback.showSuccess(
+      Navigator.pushReplacement(
         context,
-        isArabic ? 'تم الاشتراك في البطولة بنجاح!' : 'Joined tournament successfully!',
+        MaterialPageRoute(
+          builder: (_) => TournamentRegistrationSuccessScreen(
+            tournamentType: 'championship',
+            tournamentId: widget.championship.id,
+            orderReference: orderReference,
+            teamId: widget.team.id,
+            teamName: widget.team.name,
+            initialTournamentName: widget.championship.name,
+          ),
+        ),
       );
-      Navigator.pop(context, true);
     }
   }
-
 
   Future<void> _executeJoinChampionship() async {
     final success = await TournamentRepository().joinChampionship(
@@ -319,12 +326,18 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     );
 
     if (success && mounted) {
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      VSPFeedback.showSuccess(
+      Navigator.pushReplacement(
         context,
-        isArabic ? 'تم الاشتراك في البطولة بنجاح!' : 'Joined tournament successfully!',
+        MaterialPageRoute(
+          builder: (_) => TournamentRegistrationSuccessScreen(
+            tournamentType: 'championship',
+            tournamentId: widget.championship.id,
+            teamId: widget.team.id,
+            teamName: widget.team.name,
+            initialTournamentName: widget.championship.name,
+          ),
+        ),
       );
-      Navigator.pop(context, true);
     } else if (mounted) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showError(

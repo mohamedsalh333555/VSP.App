@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'vsp_feedback.dart';
 
 class VSPLauncherUtils {
-  /// فتح محادثة واتساب بشكل موحد وآمن
+  /// فتح محادثة واتساب أو مشاركة النص بشكل موحد وآمن
   static Future<void> openWhatsApp(
     BuildContext context, {
     required String phone,
@@ -15,24 +16,24 @@ class VSPLauncherUtils {
         : cleanPhone;
 
     final encodedMessage = Uri.encodeComponent(message);
-    final url = Uri.parse('https://wa.me/$fullPhone?text=$encodedMessage');
+    final url = fullPhone.isEmpty
+        ? Uri.parse('https://api.whatsapp.com/send?text=$encodedMessage')
+        : Uri.parse('https://wa.me/$fullPhone?text=$encodedMessage');
 
     try {
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
-        if (context.mounted) {
-          VSPFeedback.showError(
-            context,
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? 'تعذر فتح تطبيق واتساب. يرجى التأكد من تثبيته.'
-                : 'Could not launch WhatsApp.',
-          );
-        }
+        // إذا تعذر فتح تطبيق واتساب مباشرة، نستخدم نافذة المشاركة العامة للنظام
+        await Share.share(message);
       }
     } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(context, 'خطأ في فتح الرابط: $e');
+      try {
+        await Share.share(message);
+      } catch (shareErr) {
+        if (context.mounted) {
+          VSPFeedback.showError(context, 'خطأ في فتح الرابط: $e');
+        }
       }
     }
   }

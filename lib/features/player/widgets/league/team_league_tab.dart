@@ -8,6 +8,7 @@ import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_confirmation_screen.dart';
 import '../../screens/payment_gateway_screen.dart';
+import '../../screens/tournament_registration_success_screen.dart';
 import '../create_team_sheet.dart';
 import 'team_league_fixtures_view.dart';
 import 'team_league_gathering_card.dart';
@@ -130,7 +131,22 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       ),
     );
     if (mounted) {
-      if (result == true) VSPFeedback.triggerSuccess();
+      if (result == true) {
+        VSPFeedback.triggerSuccess();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TournamentRegistrationSuccessScreen(
+              tournamentType: 'team_league',
+              tournamentId: _leagueData?.id ?? '',
+              orderReference: paymentReference,
+              teamId: team.id,
+              teamName: team.name,
+              initialTournamentName: _leagueData?.name ?? 'دوري الـ 4 فرق',
+            ),
+          ),
+        );
+      }
       await _loadLeague();
     }
   }
@@ -207,16 +223,18 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'رسوم الاشتراك: 30 جنيه لكل فريق.',
+                        'رسوم الاشتراك: 30 جنيه لكل فريق (تنظيم الدوري والترتيب للمنصة).\nحجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين عند الحجز.',
                         style: TextStyle(
                           color: VSPColors.accent,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12.5,
+                          height: 1.4,
                         ),
                       ),
                     ),
@@ -525,7 +543,10 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       builder: (ctx) => AlertDialog(
         backgroundColor: VSPColors.surface,
         title: const Text('إلغاء الدوري', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text('هل أنت متأكد من إلغاء هذا الدوري وحذفه؟', style: TextStyle(color: VSPColors.textSecondary)),
+        content: const Text(
+          'هل أنت متأكد من إلغاء هذا الدوري؟ سيتم رفع طلب استرداد رسمي عبر باي موب لأي رسوم تم سدادها لإعادتها إلى وسيلة الدفع الأصلية.',
+          style: TextStyle(color: VSPColors.textSecondary, height: 1.4),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('تراجع')),
           ElevatedButton(

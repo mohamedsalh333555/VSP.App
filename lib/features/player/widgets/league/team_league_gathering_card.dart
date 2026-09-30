@@ -225,7 +225,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                 border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
               ),
               child: const Text(
-                'رسوم فريقك 30 جنيه. أكمل الدفع لتأكيد مشاركتك في الدوري.',
+                'رسوم تنظيم الدوري 30 جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
@@ -239,7 +239,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
-              child: const Text('دفع رسوم الدوري — 30 جنيه', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('دفع رسوم تنظيم الدوري — 30 جنيه', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
 
@@ -292,7 +292,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               final shareText = '''
 🏆 دعوة للمشاركة في ${league.name} على تطبيق VSP!
 اجمع فريقك ونافس 4 فرق على لقب الدوري (3 جولات).
-رسوم الاشتراك: 30 جنيه لكل فريق فقط.
+رسوم تنظيم المنصة: 30 جنيه لكل فريق فقط.
+(حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين).
 كود الانضمام: ${league.id}
 ''';
               SharingService().shareText(shareText);

@@ -302,46 +302,63 @@ class TeamLeagueFixturesView extends StatelessWidget {
             // Action Buttons
             if (!isCompleted) ...[
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  if (!hasBooking && isUserMatch)
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => onBookMatch(match),
-                        icon: const Icon(Iconsax.calendar_add_copy, size: 16),
-                        label: const Text(
-                          'حجز موعد المباراة',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.accent,
-                          foregroundColor: VSPColors.background,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
+              if (!hasBooking) ...[
+                if (isUserMatch)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => onBookMatch(match),
+                      icon: const Icon(Iconsax.calendar_add_copy, size: 16),
+                      label: const Text(
+                        'حجز موعد وملعب المباراة (مناصفة)',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: VSPColors.background,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)),
                       ),
                     ),
-                  if (!hasBooking && isUserMatch) const SizedBox(width: 8),
-
-                  // Record score button
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => onRecordScore(match),
-                      icon: const Icon(Iconsax.edit_2_copy, size: 14),
-                      label: const Text(
-                        'تسجيل النتيجة',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: VSPColors.accent,
-                        side: const BorderSide(color: VSPColors.accent),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
+                  )
+                else
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                    child: const Text(
+                      'في انتظار قيام أحد الفريقين بحجز موعد المباراة',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
                     ),
                   ),
-                ],
-              ),
+              ] else ...[
+                // When booked: clarify official score confirmation
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: VSPColors.accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 16),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'تُعتمد نتيجة المباراة رسمياً عبر إدارة الملعب فور انتهاء وقت الحجز.',
+                          style: TextStyle(color: VSPColors.textPrimary, fontSize: 11.5, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ],
         ),
