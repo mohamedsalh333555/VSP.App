@@ -86,228 +86,47 @@ class TournamentFixtureCoordinator {
 
   /// Generates knockout fixtures (supports BYE logic and power-of-two expansion).
   Future<void> generateFixtures(String championshipId) async {
-    try {
-      // 1. First attempt atomic server-side generation
-      try {
-        final rpcRes = await _supabase.rpc(
-          'generate_tournament_bracket_atomic',
-          params: {'p_championship_id': championshipId},
-        );
-        if (rpcRes is Map && rpcRes['success'] == true) {
-          VSPLogger.i(
-            'Tournament Fixtures generated via atomic server function: $rpcRes',
-          );
-          sendDrawNotifications(championshipId);
-          return;
-        }
-      } catch (atomicErr) {
-        VSPLogger.w(
-          'generate_tournament_bracket_atomic fallback to client generator: $atomicErr',
-        );
-      }
-
-      final champDoc = await _supabase
-          .from('championships')
-          .select()
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champDoc == null) throw Exception('البطولة لا توجد.');
-
-      final bool isPaidTourney = (champDoc['entry_fee'] != null &&
-          (champDoc['entry_fee'] as num) > 0);
-      final List<String> teamIds = isPaidTourney
-          ? List<String>.from(champDoc['paid_teams'] ?? [])
-          : List<String>.from(
-              champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
-      final int totalTeams = teamIds.length;
-      if (totalTeams < 2) {
-        throw Exception(
-          isPaidTourney
-              ? 'يجب وجود فريقين مسددين لرسوم الاشتراك على الأقل لبدء البطولة.'
-              : 'يجب وجود فريقين على الأقل لبدء البطولة.',
-        );
-      }
-
-
-      final int configuredMaxTeams =
-          champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;
-      final int bracketCapacity =
-          TournamentBracketEngine.computeBracketCapacity(
-        totalTeams,
-        configuredMaxTeams,
+    final rpcRes = await _supabase.rpc(
+      'generate_tournament_bracket_atomic',
+      params: {'p_championship_id': championshipId},
+    );
+    if (rpcRes is! Map || rpcRes['success'] != true) {
+      throw Exception(
+        rpcRes is Map
+            ? (rpcRes['error'] ?? rpcRes['message'] ?? 'فشل توليد قرعة البطولة')
+            : 'فشل توليد قرعة البطولة',
       );
-
-      final teams = await _fetchTeams(teamIds);
-      final teamMap = {for (var t in teams) t.id: t.name};
-
-      final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
-      final List<String?> slots = List.generate(bracketCapacity, (index) {
-        return index < shuffledIds.length ? shuffledIds[index] : null;
-      });
-
-      // Delegate all bracket computation to the pure engine
-      final allMatchesToInsert = TournamentBracketEngine.buildKnockoutMatchList(
-        championshipId: championshipId,
-        bracketCapacity: bracketCapacity,
-        slots: slots,
-        teamMap: teamMap,
-      );
-      if (allMatchesToInsert.isNotEmpty) {
-        await _supabase.from('tournament_matches').insert(allMatchesToInsert);
-      }
-
-      await _supabase.rpc(
-        'transition_championship_status_atomic',
-        params: {
-          'p_championship_id': championshipId,
-          'p_new_status': 'ongoing',
-        },
-      );
-
-      sendDrawNotifications(championshipId);
-
-      debugPrint(
-        'Tournament Fixtures generated successfully with BYE logic for $championshipId ($totalTeams teams)',
-      );
-    } catch (e) {
-      debugPrint('Error generating fixtures: $e');
-      rethrow;
     }
+    await sendDrawNotifications(championshipId);
   }
 
-  /// Generates round-robin league fixtures.
+  /// Generates round-robin league fixtures through the server-authoritative RPC.
   Future<void> generateLeagueFixtures(String championshipId) async {
-    try {
-      try {
-        await _supabase.rpc(
-          'prepare_tournament_bracket',
-          params: {'p_championship_id': championshipId},
-        );
-      } catch (e) {
-        debugPrint('prepare_tournament_bracket RPC notice: $e');
-        try {
-          await _supabase
-              .from('tournament_matches')
-              .delete()
-              .eq('championship_id', championshipId);
-        } catch (_) {}
-      }
-
-      final champDoc = await _supabase
-          .from('championships')
-          .select()
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champDoc == null) throw Exception('البطولة غير موجودة');
-
-      final List<String> teamIds = (champDoc['joined_teams'] as List? ??
-              champDoc['joinedTeams'] as List?)
-          ?.map((e) => e.toString())
-          .toList() ??
-          [];
-      if (teamIds.length < 2) throw Exception('يجب وجود فريقين على الأقل لإنشاء الدوري');
-
-      final teams = await _fetchTeams(teamIds);
-      final teamMap = {for (var t in teams) t.id: t.name};
-      final isTwoLegs =
-          champDoc['is_two_legs'] == true || champDoc['isTwoLegs'] == true;
-
-      // Delegate league fixture generation to the pure engine
-      final matchesToInsert = TournamentBracketEngine.buildLeagueMatchList(
-        championshipId: championshipId,
-        teamIds: teamIds,
-        teamMap: teamMap,
-        isTwoLegs: isTwoLegs,
+    final rpcRes = await _supabase.rpc(
+      'generate_regular_league_fixtures_atomic',
+      params: {'p_championship_id': championshipId},
+    );
+    if (rpcRes is! Map || rpcRes['success'] != true) {
+      throw Exception(
+        rpcRes is Map
+            ? (rpcRes['error'] ?? rpcRes['message'] ?? 'فشل توليد مباريات الدوري')
+            : 'فشل توليد مباريات الدوري',
       );
-
-      if (matchesToInsert.isNotEmpty) {
-        await _supabase.from('tournament_matches').insert(matchesToInsert);
-      }
-
-      await _supabase.rpc(
-        'transition_championship_status_atomic',
-        params: {
-          'p_championship_id': championshipId,
-          'p_new_status': 'ongoing',
-        },
-      );
-      debugPrint(
-        'League Fixtures generated successfully (${matchesToInsert.length} matches)',
-      );
-    } catch (e) {
-      debugPrint('Error generating league fixtures: $e');
-      rethrow;
     }
   }
 
-  /// Generates group stage fixtures.
+  /// Generates group-stage fixtures through the server-authoritative RPC.
   Future<void> generateGroupsFixtures(String championshipId) async {
-    try {
-      try {
-        await _supabase.rpc(
-          'prepare_tournament_bracket',
-          params: {'p_championship_id': championshipId},
-        );
-      } catch (e) {
-        debugPrint('prepare_tournament_bracket RPC notice: $e');
-        try {
-          await _supabase
-              .from('tournament_matches')
-              .delete()
-              .eq('championship_id', championshipId);
-        } catch (_) {}
-      }
-
-      final champDoc = await _supabase
-          .from('championships')
-          .select()
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champDoc == null) throw Exception('البطولة غير موجودة');
-
-      final List<String> teamIds = (champDoc['joined_teams'] as List? ??
-              champDoc['joinedTeams'] as List?)
-          ?.map((e) => e.toString())
-          .toList() ??
-          [];
-      final int numGroups = int.tryParse(
-            (champDoc['number_of_groups'] ?? champDoc['numberOfGroups'] ?? 2)
-                .toString(),
-          ) ??
-          2;
-
-      if (teamIds.length < numGroups * 2) {
-        throw Exception(
-          'عدد الفرق غير كافٍ لتقسيمهم على $numGroups مجموعات',
-        );
-      }
-
-      final teams = await _fetchTeams(teamIds);
-      final teamMap = {for (var t in teams) t.id: t.name};
-
-      // Delegate group fixture generation to the pure engine
-      final matchesToInsert = TournamentBracketEngine.buildGroupMatchList(
-        championshipId: championshipId,
-        teamIds: teamIds,
-        teamMap: teamMap,
-        numGroups: numGroups,
+    final rpcRes = await _supabase.rpc(
+      'generate_regular_group_fixtures_atomic',
+      params: {'p_championship_id': championshipId},
+    );
+    if (rpcRes is! Map || rpcRes['success'] != true) {
+      throw Exception(
+        rpcRes is Map
+            ? (rpcRes['error'] ?? rpcRes['message'] ?? 'فشل توليد مباريات المجموعات')
+            : 'فشل توليد مباريات المجموعات',
       );
-
-      if (matchesToInsert.isNotEmpty) {
-        await _supabase.from('tournament_matches').insert(matchesToInsert);
-      }
-
-      await _supabase.rpc(
-        'transition_championship_status_atomic',
-        params: {
-          'p_championship_id': championshipId,
-          'p_new_status': 'ongoing',
-        },
-      );
-      debugPrint('Group Stage Fixtures generated successfully');
-    } catch (e) {
-      debugPrint('Error generating groups fixtures: $e');
-      rethrow;
     }
   }
 
@@ -319,4 +138,3 @@ class TournamentFixtureCoordinator {
   Future<void> sendDrawNotifications(String championshipId) =>
       _notifier.sendDrawNotifications(championshipId);
 }
-
