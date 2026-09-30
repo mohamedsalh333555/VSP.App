@@ -72,7 +72,74 @@ class MockSupabaseHttpClient extends http.BaseClient {
     } else if (method == 'POST') {
       if (request is http.Request) {
         final data = jsonDecode(request.body);
-        if (path.contains('tournament_matches')) {
+        if (path.contains('rpc/generate_tournament_bracket_atomic')) {
+          final champId = data['p_championship_id'];
+          final m1 = {
+            'id': 'm1',
+            'championship_id': champId,
+            'home_team_id': 't1',
+            'home_team_name': 'Team A',
+            'away_team_id': 't2',
+            'away_team_name': 'Team B',
+            'round_index': 1,
+            'match_index': 0,
+            'is_completed': false,
+            'next_match_id': 'm3',
+          };
+          final m2 = {
+            'id': 'm2',
+            'championship_id': champId,
+            'home_team_id': 't3',
+            'home_team_name': 'Team C',
+            'away_team_id': 't4',
+            'away_team_name': 'Team D',
+            'round_index': 1,
+            'match_index': 1,
+            'is_completed': false,
+            'next_match_id': 'm3',
+          };
+          final m3 = {
+            'id': 'm3',
+            'championship_id': champId,
+            'home_team_id': null,
+            'home_team_name': null,
+            'away_team_id': null,
+            'away_team_name': null,
+            'round_index': 0,
+            'match_index': 0,
+            'is_completed': false,
+            'next_match_id': null,
+          };
+          db['tournament_matches']!.addAll([m1, m2, m3]);
+          responseBody = jsonEncode({'success': true, 'generated_matches': 3});
+        } else if (path.contains('rpc/record_match_result_and_advance_atomic')) {
+          final matchId = data['p_match_id'];
+          final match = db['tournament_matches']!.firstWhere((m) => m['id'] == matchId, orElse: () => {});
+          if (match.isNotEmpty) {
+            match['home_score'] = data['p_home_score'];
+            match['away_score'] = data['p_away_score'];
+            match['winner_id'] = data['p_winner_id'];
+            match['winner_name'] = data['p_winner_name'];
+            match['status'] = 'completed';
+            match['is_completed'] = true;
+            if (match['next_match_id'] != null && data['p_winner_id'] != null) {
+              final nextMatch = db['tournament_matches']!.firstWhere((m) => m['id'] == match['next_match_id'], orElse: () => {});
+              if (nextMatch.isNotEmpty) {
+                final slot = (match['match_index'] ?? 0) % 2 == 0 ? 'home' : 'away';
+                nextMatch['${slot}_team_id'] = data['p_winner_id'];
+                nextMatch['${slot}_team_name'] = data['p_winner_name'];
+              }
+            }
+          }
+          responseBody = jsonEncode({'success': true, 'match_id': matchId});
+        } else if (path.contains('rpc/crown_tournament_champion_atomic')) {
+          final champId = data['p_championship_id'];
+          final champ = db['championships']!.firstWhere((c) => c['id'] == champId, orElse: () => {});
+          if (champ.isNotEmpty) {
+            champ['champion_team_id'] = data['p_champion_team_id'];
+          }
+          responseBody = jsonEncode({'success': true});
+        } else if (path.contains('tournament_matches')) {
           if (data is List) {
             db['tournament_matches']!.addAll(List<Map<String, dynamic>>.from(data));
           } else {

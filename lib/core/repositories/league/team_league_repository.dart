@@ -398,3 +398,34 @@ class TeamLeagueRepository {
   }) => confirmMatchResult(matchId: matchId, outcome: resolution);
 
   /// Links a pitch booking to a league match
+  Future<void> linkLeagueMatchBooking({
+    required String matchId,
+    required String bookingId,
+    DateTime? scheduledTime,
+    String? stadiumName,
+  }) async {
+    final res = await _supabase.rpc(
+      'link_league_match_booking',
+      params: {
+        'p_match_id': matchId,
+        'p_booking_id': bookingId,
+        'p_scheduled_time': scheduledTime?.toUtc().toIso8601String(),
+        'p_stadium_name': stadiumName,
+      },
+    );
+    if (res == null || res['success'] != true) {
+      throw Exception(res?['message'] ?? 'فشل ربط الحجز بالمباراة');
+    }
+  }
+
+  /// Cancels an open (unstarted) team league
+  Future<void> cancelTeamLeague(String championshipId) async {
+    final res = await _supabase.rpc(
+      'cancel_team_league',
+      params: {'p_championship_id': championshipId.trim()},
+    );
+    if (res == null || res['success'] != true) {
+      throw Exception(res?['message'] ?? 'فشل إلغاء الدوري');
+    }
+  }
+}

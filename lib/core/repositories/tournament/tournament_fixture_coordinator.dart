@@ -1,9 +1,5 @@
-import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
-import '../../services/logger_service.dart';
-import 'tournament_bracket_engine.dart';
 import 'tournament_draw_notifier.dart';
 import 'tournament_group_advancer.dart';
 import 'tournament_stats_coordinator.dart';
@@ -44,45 +40,6 @@ class TournamentFixtureCoordinator {
         client: _client,
         statsCoordinator: _statsCoord,
       );
-
-  Future<List<Team>> _fetchTeams(List<String> ids) async {
-    if (_getTeamsByIds != null) return _getTeamsByIds(ids);
-    if (ids.isEmpty) return [];
-    try {
-      final response = await _supabase
-          .from('teams')
-          .select('*, team_members(user_id, users(profile_image_url))')
-          .inFilter('id', ids);
-
-      final List<Team> teams = [];
-      for (final doc in (response as List)) {
-        final teamId = doc['id'].toString();
-        final membersList = doc['team_members'] as List? ?? [];
-        final List<String> memberUids = [];
-        final List<String> playerImages = [];
-
-        for (var m in membersList) {
-          final uid = m['user_id']?.toString();
-          if (uid != null) memberUids.add(uid);
-          final userMap = m['users'];
-          if (userMap is Map && userMap['profile_image_url'] != null) {
-            playerImages.add(userMap['profile_image_url'].toString());
-          }
-        }
-
-        final data = Map<String, dynamic>.from(doc);
-        data['memberUids'] = memberUids;
-        data['playerImages'] = playerImages;
-        data['playersCount'] = memberUids.length;
-
-        teams.add(Team.fromFirestore(data, teamId));
-      }
-      return teams;
-    } catch (e) {
-      debugPrint('Error getting teams by IDs: $e');
-      return [];
-    }
-  }
 
   /// Generates knockout fixtures (supports BYE logic and power-of-two expansion).
   Future<void> generateFixtures(String championshipId) async {

@@ -274,6 +274,160 @@ serve(async (req: Request) => {
         }
       }
 
+      // ------------------------------------------------------------
+      // 1v1 Cancellation Refund Queue Processing (SSOT)
+      // ------------------------------------------------------------
+      while (true) {
+        const { data: claim1v1, error: claim1v1Err } = await adminClient.rpc("claim_next_1v1_cancellation_refund_atomic");
+        if (claim1v1Err) {
+          console.error("Error claiming 1v1 refund item:", claim1v1Err);
+          break;
+        }
+
+        if (!claim1v1 || !claim1v1.found || !claim1v1.refund) {
+          break; // 1v1 queue is empty or no claimable items
+        }
+
+        const item = claim1v1.refund;
+        processedCount++;
+
+        // 1. Data Integrity Assertion: gross_amount in order matches queue amount
+        const { data: order, error: orderErr } = await adminClient
+          .from("vsp_1v1_tournament_orders")
+          .select("id, order_reference, amount, gross_amount, payment_status")
+          .eq("id", item.order_id)
+          .single();
+
+        const orderGross = Number(order?.gross_amount ?? order?.amount ?? 0);
+        const queueAmount = Number(item.amount);
+
+        if (orderErr || !order || Math.abs(orderGross - queueAmount) > 0.01) {
+          const reason = `Amount integrity mismatch: order=${orderGross} vs queue=${queueAmount}`;
+          console.error(`1v1 Item ${item.id} failed integrity check:`, reason);
+          const nowIso = new Date().toISOString();
+
+          await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
+            status: "failed_manual_review",
+            failure_reason: reason,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("vsp_1v1_tournament_orders").update({
+            payment_status: "refund_failed_manual_review",
+            updated_at: nowIso,
+          }).eq("id", item.order_id);
+
+          results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: false, error: reason });
+          continue;
+        }
+
+        // 2. Prevent Double Refund: If already marked refunded, complete immediately
+        if (order.payment_status === "refunded") {
+          const nowIso = new Date().toISOString();
+          await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, note: "already_refunded" });
+          continue;
+        }
+
+        // 3. Call Paymob Refund API
+        const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
+        const refundAmtCents = Math.round(queueAmount * 100);
+
+        let refundSuccess = false;
+        let refundError: string | null = null;
+        let refundId: string | null = null;
+
+        if (!txnId || refundAmtCents <= 0) {
+          refundError = "Invalid transaction ID or zero amount";
+        } else {
+          try {
+            const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                auth_token: paymobToken,
+                transaction_id: Number(txnId),
+                amount_cents: refundAmtCents,
+              }),
+            });
+            const refundData = await refundRes.json();
+            const msgLower = JSON.stringify(refundData).toLowerCase();
+
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+              refundSuccess = true;
+              refundId = String(refundData.id || refundData.transaction_id || "");
+            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
+              refundSuccess = true;
+              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
+            } else {
+              refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
+            }
+          } catch (e: any) {
+            const errStr = e?.message || String(e);
+            const isTimeout = errStr.toLowerCase().includes("timeout") || errStr.toLowerCase().includes("abort");
+            refundError = isTimeout ? `NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS: ${errStr}` : errStr;
+          }
+        }
+
+        const nowIso = new Date().toISOString();
+
+        if (refundSuccess) {
+          await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          await adminClient.from("vsp_1v1_tournament_orders").update({
+            payment_status: "refunded",
+            updated_at: nowIso,
+          }).eq("id", item.order_id);
+
+          await adminClient.from("vsp_1v1_tournament_players").update({
+            payment_status: "refunded",
+            updated_at: nowIso,
+          }).eq("tournament_id", item.tournament_id).eq("user_id", item.user_id);
+
+          results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, refund_id: refundId });
+        } else {
+          console.error(`1v1 Refund failed for queue item ${item.id}:`, refundError);
+          const isAmbiguousTimeout = refundError?.includes("NETWORK_TIMEOUT_AMBIGUOUS_GATEWAY_STATUS");
+
+          if (item.retry_count >= 3 || isAmbiguousTimeout) {
+            await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
+              status: "failed_manual_review",
+              failure_reason: isAmbiguousTimeout 
+                ? `GATEWAY_VERIFICATION_REQUIRED_BEFORE_RETRY: ${refundError}` 
+                : refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
+
+            await adminClient.from("vsp_1v1_tournament_orders").update({
+              payment_status: "refund_failed_manual_review",
+              updated_at: nowIso,
+            }).eq("id", item.order_id);
+          } else {
+            await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
+              status: "pending",
+              failure_reason: refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
+          }
+
+          results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: false, error: refundError });
+        }
+      }
+
       return new Response(
         JSON.stringify({
           success: true,

@@ -358,3 +358,5 @@ class TournamentLifecycleCoordinator {
       VSPLogger.e('Error withdrawing team from championship', e, s);
       rethrow;
     }
+  }
+}
