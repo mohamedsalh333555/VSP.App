@@ -29,127 +29,59 @@ class TournamentLifecycleCoordinator {
   /// Creates a new championship in Supabase with role checking and schema-compliant payload.
   Future<String?> createChampionship(Map<String, dynamic> data) async {
     try {
-      final currentUserId = _supabase.auth.currentUser?.id;
-      bool isApproved = false;
-      if (currentUserId != null) {
-        try {
-          final userDoc = await _supabase
-              .from('users')
-              .select('role')
-              .eq('id', currentUserId)
-              .maybeSingle();
-          final userRole = userDoc?['role']?.toString().toLowerCase();
-          if (userRole == 'admin' ||
-              userRole == 'co_founder' ||
-              userRole == 'super_admin' ||
-              userRole == 'cofounder') {
-            isApproved = true;
-          }
-        } catch (_) {
-          isApproved = false;
-        }
-      }
-
       final stadiumId = data['stadiumId'] ?? data['stadium_id'];
-      if (stadiumId != null) {
-        try {
-          final res = await _supabase.rpc('create_championship_atomic', params: {
-            'p_name': data['name'] ?? '',
-            'p_stadium_id': stadiumId,
-            'p_type': (data['type'] ?? 'cup').toString().toLowerCase(),
-            'p_sport_type': (data['sportType'] ?? data['sport_type'] ?? 'football').toString().toLowerCase(),
-            'p_entry_fee': num.tryParse(data['entryFee']?.toString() ?? data['entry_fee']?.toString() ?? '0') ?? 0,
-            'p_grand_prize': num.tryParse(data['grandPrize']?.toString() ?? data['grand_prize']?.toString() ?? '0') ?? 0,
-            'p_max_teams': int.tryParse(data['maxTeams']?.toString() ?? data['max_teams']?.toString() ?? '16') ?? 16,
-            'p_min_players_per_team': int.tryParse(data['minPlayersPerTeam']?.toString() ?? data['min_players_per_team']?.toString() ?? '5') ?? 5,
-            'p_max_players_per_team': int.tryParse(data['maxPlayersPerTeam']?.toString() ?? data['max_players_per_team']?.toString() ?? '11') ?? 11,
-            'p_start_date': data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString(),
-            'p_end_date': data['endDate'] is DateTime ? (data['endDate'] as DateTime).toIso8601String() : data['endDate']?.toString(),
-            'p_registration_closes_at': data['registrationClosesAt'] is DateTime 
-                ? (data['registrationClosesAt'] as DateTime).toIso8601String() 
-                : (data['registration_closes_at']?.toString() ?? (data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString())),
-            'p_rules': data['rules']?.toString() ?? '',
-            'p_logo_url': data['logoUrl']?.toString() ?? data['logo_url']?.toString() ?? '',
-            'p_currency': data['currency']?.toString() ?? 'EGP',
-            'p_settings': data['settings'] is Map ? data['settings'] : {},
-          });
-          if (res is Map && res['success'] == true) {
-            return res['championship_id']?.toString();
-          }
-          if (res is Map && res['error'] != null) {
-            throw Exception(res['error']);
-          }
-        } on PostgrestException catch (_) {
-          // Fallback to table insert if RPC unavailable or mocked
-        }
+      if (stadiumId == null) {
+        throw Exception('يجب تحديد الملعب لإنشاء البطولة.');
       }
 
-      final pgData = TournamentPayloadBuilder.buildCreatePayload(
-        data,
-        isAdminApproved: isApproved,
-        fallbackOwnerId: currentUserId ?? '',
-      );
+      final res = await _supabase.rpc('create_championship_atomic', params: {
+        'p_name': data['name'] ?? '',
+        'p_stadium_id': stadiumId,
+        'p_type': (data['type'] ?? 'cup').toString().toLowerCase(),
+        'p_sport_type': (data['sportType'] ?? data['sport_type'] ?? 'football').toString().toLowerCase(),
+        'p_entry_fee': num.tryParse(data['entryFee']?.toString() ?? data['entry_fee']?.toString() ?? '0') ?? 0,
+        'p_grand_prize': num.tryParse(data['grandPrize']?.toString() ?? data['grand_prize']?.toString() ?? '0') ?? 0,
+        'p_max_teams': int.tryParse(data['maxTeams']?.toString() ?? data['max_teams']?.toString() ?? '16') ?? 16,
+        'p_min_players_per_team': int.tryParse(data['minPlayersPerTeam']?.toString() ?? data['min_players_per_team']?.toString() ?? '5') ?? 5,
+        'p_max_players_per_team': int.tryParse(data['maxPlayersPerTeam']?.toString() ?? data['max_players_per_team']?.toString() ?? '11') ?? 11,
+        'p_start_date': data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString(),
+        'p_end_date': data['endDate'] is DateTime ? (data['endDate'] as DateTime).toIso8601String() : data['endDate']?.toString(),
+        'p_registration_closes_at': data['registrationClosesAt'] is DateTime 
+            ? (data['registrationClosesAt'] as DateTime).toIso8601String() 
+            : (data['registration_closes_at']?.toString() ?? (data['startDate'] is DateTime ? (data['startDate'] as DateTime).toIso8601String() : data['startDate']?.toString())),
+        'p_rules': data['rules']?.toString() ?? '',
+        'p_logo_url': data['logoUrl']?.toString() ?? data['logo_url']?.toString() ?? '',
+        'p_currency': data['currency']?.toString() ?? 'EGP',
+        'p_settings': data['settings'] is Map ? data['settings'] : {},
+      });
 
-      try {
-        final response = await _supabase
-            .from('championships')
-            .insert(pgData)
-            .select('id')
-            .single();
-        return response['id']?.toString();
-      } on PostgrestException catch (pe) {
-        if (pe.message.contains('championships_type_check')) {
-          pgData['type'] = 'cup';
-          final response = await _supabase
-              .from('championships')
-              .insert(pgData)
-              .select('id')
-              .single();
-          return response['id']?.toString();
-        }
-        rethrow;
+      if (res is Map && res['success'] == true) {
+        return res['championship_id']?.toString();
       }
+      final errorMsg = res is Map ? (res['error'] ?? res['message'])?.toString() : 'Failed to create championship';
+      throw Exception(errorMsg ?? 'Failed to create championship');
     } catch (e, stack) {
       VSPLogger.e('Error creating championship', e, stack);
       rethrow;
     }
   }
 
-  /// Activates and publishes a championship for owner.
+  /// Activates and publishes a championship for owner via atomic status transition.
   Future<bool> activateChampionship(String championshipId) async {
     try {
-      final currentUserId = _supabase.auth.currentUser?.id;
-      bool isApproved = false;
-      if (currentUserId != null) {
-        try {
-          final userDoc = await _supabase
-              .from('users')
-              .select('role')
-              .eq('id', currentUserId)
-              .maybeSingle();
-          final userRole = userDoc?['role']?.toString().toLowerCase();
-          if (userRole == 'admin' ||
-              userRole == 'co_founder' ||
-              userRole == 'super_admin' ||
-              userRole == 'cofounder') {
-            isApproved = true;
-          }
-        } catch (_) {}
+      final res = await _supabase.rpc(
+        'transition_championship_status_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_new_status': 'open',
+        },
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        VSPLogger.i('Championship $championshipId activated successfully.');
+        return true;
       }
-
-      final updateMap = <String, dynamic>{
-        'status': 'open',
-        'creation_fee_paid': true,
-      };
-      if (isApproved) {
-        updateMap['is_approved'] = true;
-      }
-      await _supabase
-          .from('championships')
-          .update(updateMap)
-          .eq('id', championshipId);
-      VSPLogger.i('Championship $championshipId activated successfully.');
-      return true;
+      final msg = res is Map ? (res['error'] ?? res['message'])?.toString() : 'Failed to activate championship';
+      throw Exception(msg ?? 'Failed to activate championship');
     } catch (e, stack) {
       VSPLogger.e('Error activating championship', e, stack);
       return false;
@@ -364,8 +296,6 @@ class TournamentLifecycleCoordinator {
     String championshipId, {
     String? notes,
   }) async {
-    final auth = _supabase.auth.currentUser;
-    final now = DateTime.now().toUtc().toIso8601String();
     try {
       final res = await _supabase.rpc(
         'mark_championship_prize_delivered_atomic',
@@ -374,29 +304,13 @@ class TournamentLifecycleCoordinator {
           'p_notes': notes,
         },
       );
-      if (res != null && res is Map) {
+      if (res != null && res is Map && res['success'] == true) {
         return Map<String, dynamic>.from(res);
       }
-    } catch (e) {
-      VSPLogger.w('mark_championship_prize_delivered_atomic RPC fallback: $e');
-    }
-
-    // Direct fallback update to guarantee successful recording in championships
-    try {
-      await _supabase.from('championships').update({
-        'prize_delivered': true,
-        'prize_delivered_at': now,
-        'prize_delivered_by': auth?.id ?? 'owner',
-        'prize_delivery_notes': notes ?? '',
-        'updated_at': now,
-      }).eq('id', championshipId);
-
-      return {
-        'success': true,
-        'message': 'Prize delivery recorded successfully',
-      };
-    } catch (fallbackError, s) {
-      VSPLogger.e('Error marking championship prize delivered fallback', fallbackError, s);
+      final msg = res is Map ? (res['error'] ?? res['message'])?.toString() : 'Failed to mark prize delivered';
+      throw Exception(msg ?? 'Failed to mark prize delivered');
+    } catch (e, s) {
+      VSPLogger.e('Error marking championship prize delivered', e, s);
       rethrow;
     }
   }
@@ -411,48 +325,10 @@ class TournamentLifecycleCoordinator {
       if (res != null && res is Map) {
         return Map<String, dynamic>.from(res);
       }
-    } catch (e) {
-      VSPLogger.w('get_tournament_financial_summary RPC fallback: $e');
-    }
-
-    // Direct computation fallback
-    try {
-      final champ = await _supabase
-          .from('championships')
-          .select('entry_fee, grand_prize, paid_teams, joined_teams')
-          .eq('id', championshipId)
-          .maybeSingle();
-
-      if (champ == null) {
-        return {
-          'total_collected': 0.0,
-          'grand_prize': 0.0,
-          'net_profit': 0.0,
-          'paid_teams_count': 0,
-        };
-      }
-
-      final double entryFee = double.tryParse((champ['entry_fee'] ?? 0).toString()) ?? 0.0;
-      final double grandPrize = double.tryParse((champ['grand_prize'] ?? 0).toString()) ?? 0.0;
-      final List paidTeams = (champ['paid_teams'] as List?) ?? [];
-      final int paidCount = paidTeams.length;
-      final double totalCollected = paidCount * entryFee;
-      final double netProfit = totalCollected - grandPrize;
-
-      return {
-        'total_collected': totalCollected,
-        'grand_prize': grandPrize,
-        'net_profit': netProfit,
-        'paid_teams_count': paidCount,
-      };
-    } catch (err, s) {
-      VSPLogger.e('Error computing financial summary fallback', err, s);
-      return {
-        'total_collected': 0.0,
-        'grand_prize': 0.0,
-        'net_profit': 0.0,
-        'paid_teams_count': 0,
-      };
+      throw Exception('Failed to get tournament financial summary');
+    } catch (e, s) {
+      VSPLogger.e('Error retrieving tournament financial summary', e, s);
+      rethrow;
     }
   }
 
@@ -469,32 +345,13 @@ class TournamentLifecycleCoordinator {
           'p_team_id': teamId,
         },
       );
-      if (res != null && res is Map) {
+      if (res != null && res is Map && res['success'] == true) {
         return Map<String, dynamic>.from(res);
       }
-    } catch (e) {
-      VSPLogger.w('withdraw_team_from_championship_atomic fallback: $e');
-    }
-
-    // Fallback: direct team removal
-    try {
-      final champ = await _supabase
-          .from('championships')
-          .select('joined_teams, paid_teams')
-          .eq('id', championshipId)
-          .maybeSingle();
-
-      if (champ != null) {
-        final List<String> joined = List<String>.from(champ['joined_teams'] ?? [])..remove(teamId);
-        final List<String> paid = List<String>.from(champ['paid_teams'] ?? [])..remove(teamId);
-        await _supabase.from('championships').update({
-          'joined_teams': joined,
-          'paid_teams': paid,
-        }).eq('id', championshipId);
-      }
-      return {'success': true, 'message': 'تم سحب الفريق بنجاح'};
-    } catch (err, s) {
-      VSPLogger.e('Error withdrawing team fallback', err, s);
+      final msg = res is Map ? (res['error'] ?? res['message'])?.toString() : 'Failed to withdraw team';
+      throw Exception(msg ?? 'Failed to withdraw team');
+    } catch (e, s) {
+      VSPLogger.e('Error withdrawing team from championship', e, s);
       rethrow;
     }
   }

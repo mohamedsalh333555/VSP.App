@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -293,10 +294,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _coordinator.startTournamentOrderPolling(
               orderReference: orderReference,
               fetchStatus: (ref) async {
-                final paid = await LeagueRepository().is1v1OrderPaid(ref);
+                if (ref.startsWith('TOURN_1V1_')) {
+                  final paid = await LeagueRepository().is1v1OrderPaid(ref);
+                  return {
+                    'success': true,
+                    'payment_status': paid ? 'paid' : 'pending',
+                  };
+                }
+                final res = await Supabase.instance.client
+                    .from('tournament_orders')
+                    .select('payment_status')
+                    .eq('order_reference', ref)
+                    .maybeSingle();
+                final status = res?['payment_status']?.toString() ?? 'pending';
                 return {
                   'success': true,
-                  'payment_status': paid ? 'paid' : 'pending',
+                  'payment_status': status,
                 };
               },
               onPaid: (_) {

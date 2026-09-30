@@ -208,14 +208,15 @@ class TournamentRepository {
   Future<Map<String, dynamic>?> createTournamentOrder({
     required String championshipId,
     required String teamId,
-    required double amount,
+    double? amount,
+    String? idempotencyKey,
     List<String> playerIds = const [],
     List<String> guestNames = const [],
   }) =>
       registrationCoord.createTournamentOrder(
         championshipId: championshipId,
         teamId: teamId,
-        amount: amount,
+        idempotencyKey: idempotencyKey,
         playerIds: playerIds,
         guestNames: guestNames,
       );
@@ -257,9 +258,6 @@ class TournamentRepository {
 
   Future<bool> removeTournamentTeam(String championshipId, String teamId) =>
       registrationCoord.removeTournamentTeam(championshipId, teamId);
-
-  Future<bool> is1v1OrderPaid(String orderReference) =>
-      registrationCoord.is1v1OrderPaid(orderReference);
 
   // ==================== ROSTERS ====================
 

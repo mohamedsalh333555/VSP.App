@@ -5,7 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../core/repositories/tournament_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/league_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
@@ -116,7 +117,16 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
     }
     try {
       if (widget.bookingId!.startsWith('TOURN_1V1_')) {
-        return await TournamentRepository().is1v1OrderPaid(widget.bookingId!);
+        return await LeagueRepository().is1v1OrderPaid(widget.bookingId!);
+      }
+
+      if (widget.bookingId!.startsWith('TOURN_')) {
+        final res = await Supabase.instance.client
+            .from('tournament_orders')
+            .select('payment_status')
+            .eq('order_reference', widget.bookingId!)
+            .maybeSingle();
+        return res != null && res['payment_status'] == 'paid';
       }
 
       final booking = await SupabaseBookingRepository().getBookingById(widget.bookingId!);

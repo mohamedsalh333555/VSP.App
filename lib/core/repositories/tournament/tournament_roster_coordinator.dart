@@ -199,7 +199,7 @@ class TournamentRosterCoordinator {
     return {'player_ids': <String>[], 'guest_names': <String>[]};
   }
 
-  /// Update single team roster (player_ids & guest_names) in a championship.
+  /// Update single team roster (player_ids & guest_names) in a championship via atomic RPC.
   Future<bool> updateSingleTeamRoster({
     required String championshipId,
     required String teamId,
@@ -207,79 +207,39 @@ class TournamentRosterCoordinator {
     required List<String> guestNames,
   }) async {
     try {
-      final existing = await _supabase
-          .from('championship_rosters')
-          .select('id')
-          .eq('championship_id', championshipId)
-          .eq('team_id', teamId)
-          .maybeSingle();
+      final res = await _supabase.rpc('update_championship_roster_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+        'p_player_ids': playerIds,
+        'p_guest_names': guestNames,
+      });
 
-      String rosterId;
-      final payload = {
-        'championship_id': championshipId,
-        'team_id': teamId,
-        'guest_names': guestNames,
-      };
-
-      if (existing != null) {
-        rosterId = existing['id'].toString();
-        await _supabase
-            .from('championship_rosters')
-            .update(payload)
-            .eq('id', rosterId);
-      } else {
-        final inserted = await _supabase
-            .from('championship_rosters')
-            .insert(payload)
-            .select('id')
-            .single();
-        rosterId = inserted['id'].toString();
+      if (res is Map && res['success'] == true) {
+        debugPrint('Tournament roster updated atomically for team $teamId');
+        return true;
       }
-
-      // Separate player_ids into championship_roster_players table
-      try {
-        await _supabase
-            .from('championship_roster_players')
-            .delete()
-            .eq('roster_id', rosterId);
-
-        if (playerIds.isNotEmpty) {
-          final rosterPlayerRows = playerIds
-              .map((pId) => {
-                    'roster_id': rosterId,
-                    'player_id': pId,
-                  })
-              .toList();
-
-          await _supabase
-              .from('championship_roster_players')
-              .insert(rosterPlayerRows);
-        }
-      } catch (err) {
-        debugPrint('championship_roster_players sync notice: $err');
-      }
-
-      debugPrint('Tournament roster updated successfully for team $teamId');
-      return true;
+      final err = res is Map ? res['error']?.toString() : 'Failed to update roster';
+      debugPrint('update_championship_roster_atomic rejected: $err');
+      return false;
     } catch (e) {
       debugPrint('Error updating tournament roster: $e');
       return false;
     }
   }
 
-  /// Insert championship roster.
+  /// Insert championship roster via atomic RPC.
   Future<void> insertChampionshipRoster({
     required String championshipId,
     required String teamId,
     required List<String> guestNames,
     List<String> playerIds = const [],
   }) async {
-    await _supabase.from('championship_rosters').insert({
-      'championship_id': championshipId,
-      'team_id': teamId,
-      'player_ids': playerIds,
-      'guest_names': guestNames,
-    });
+    await updateSingleTeamRoster(
+      championshipId: championshipId,
+      teamId: teamId,
+      playerIds: playerIds,
+      guestNames: guestNames,
+    );
   }
 
   /// Check for duplicate players or guests across other teams in the same championship.

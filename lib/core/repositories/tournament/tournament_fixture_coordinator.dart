@@ -156,10 +156,13 @@ class TournamentFixtureCoordinator {
         await _supabase.from('tournament_matches').insert(allMatchesToInsert);
       }
 
-      await _supabase
-          .from('championships')
-          .update({'status': 'ongoing'})
-          .eq('id', championshipId);
+      await _supabase.rpc(
+        'transition_championship_status_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_new_status': 'ongoing',
+        },
+      );
 
       sendDrawNotifications(championshipId);
 
@@ -221,10 +224,13 @@ class TournamentFixtureCoordinator {
         await _supabase.from('tournament_matches').insert(matchesToInsert);
       }
 
-      await _supabase
-          .from('championships')
-          .update({'status': 'ongoing'})
-          .eq('id', championshipId);
+      await _supabase.rpc(
+        'transition_championship_status_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_new_status': 'ongoing',
+        },
+      );
       debugPrint(
         'League Fixtures generated successfully (${matchesToInsert.length} matches)',
       );
@@ -291,10 +297,13 @@ class TournamentFixtureCoordinator {
         await _supabase.from('tournament_matches').insert(matchesToInsert);
       }
 
-      await _supabase
-          .from('championships')
-          .update({'status': 'ongoing'})
-          .eq('id', championshipId);
+      await _supabase.rpc(
+        'transition_championship_status_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_new_status': 'ongoing',
+        },
+      );
       debugPrint('Group Stage Fixtures generated successfully');
     } catch (e) {
       debugPrint('Error generating groups fixtures: $e');

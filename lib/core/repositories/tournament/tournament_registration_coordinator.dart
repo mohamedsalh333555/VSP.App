@@ -21,7 +21,7 @@ class TournamentRegistrationCoordinator {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
-  TournamentRosterCoordinator get _rosterCoord =>
+  TournamentRosterCoordinator get rosterCoord =>
       _rosterCoordinator ?? TournamentRosterCoordinator(client: _client, teamRepository: _teamRepo);
 
   /// Registers a team into a championship with atomic RPC and roster syncing.
@@ -62,7 +62,7 @@ class TournamentRegistrationCoordinator {
         }
       }
 
-      // Atomic server function to enforce Phase Engine and zero-trust entry
+      // Atomic server function to enforce Phase Engine, capacity, membership, roster, and zero-trust entry
       final rpcRes = await _supabase.rpc('join_championship_atomic', params: {
         'p_championship_id': championshipId,
         'p_team_id': teamId,
@@ -70,20 +70,9 @@ class TournamentRegistrationCoordinator {
         'p_guest_names': offlineGuestNames,
       });
 
-      if (rpcRes is Map && rpcRes['success'] == false) {
-        throw Exception(rpcRes['error']?.toString() ?? rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
-      }
-
-      // Save team roster
-      try {
-        await _rosterCoord.updateSingleTeamRoster(
-          championshipId: championshipId,
-          teamId: teamId,
-          playerIds: selectedPlayerIds,
-          guestNames: offlineGuestNames,
-        );
-      } catch (rosterErr) {
-        debugPrint('Roster sync notice: $rosterErr');
+      if (rpcRes is! Map || rpcRes['success'] != true) {
+        final err = rpcRes is Map ? (rpcRes['error'] ?? rpcRes['message'])?.toString() : 'فشل الانضمام للبطولة.';
+        throw Exception(err ?? 'فشل الانضمام للبطولة.');
       }
 
       // Alert championship owner
@@ -109,18 +98,18 @@ class TournamentRegistrationCoordinator {
   Future<Map<String, dynamic>?> createTournamentOrder({
     required String championshipId,
     required String teamId,
-    double? amount,
     List<String> playerIds = const [],
     List<String> guestNames = const [],
     String? idempotencyKey,
   }) async {
     try {
+      final key = idempotencyKey ?? 'ord_idem_${championshipId}_${teamId}_${DateTime.now().millisecondsSinceEpoch}';
       final res = await _supabase.rpc('create_tournament_order_atomic', params: {
         'p_championship_id': championshipId,
         'p_team_id': teamId,
         'p_player_ids': playerIds,
         'p_guest_names': guestNames,
-        if (idempotencyKey != null) 'p_idempotency_key': idempotencyKey,
+        'p_idempotency_key': key,
       });
       if (res is Map && res['success'] == true) {
         return Map<String, dynamic>.from(res);
@@ -202,18 +191,5 @@ class TournamentRegistrationCoordinator {
 
 
 
-  /// Check if 1v1 tournament order was paid.
-  Future<bool> is1v1OrderPaid(String orderReference) async {
-    try {
-      final res = await _supabase
-          .from('vsp_1v1_tournament_orders')
-          .select('payment_status')
-          .eq('order_reference', orderReference)
-          .maybeSingle();
-      return res != null && res['payment_status'] == 'paid';
-    } catch (e) {
-      debugPrint('Error checking 1v1 order paid status: $e');
-      return false;
-    }
-  }
+
 }

@@ -20,7 +20,7 @@ class TournamentMatchCoordinator {
         _onChampionCrowned = onChampionCrowned;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
-  TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
+  TeamRepository get teamRepo => _teamRepository ?? TeamRepository();
 
   /// Updates score for a tournament match, advances winner to next bracket slot, or crowns champion if final.
   Future<void> updateTournamentMatchScore({
@@ -147,34 +147,17 @@ class TournamentMatchCoordinator {
           return;
         }
 
-        try {
-          await _supabase.rpc(
-            'crown_tournament_champion_atomic',
-            params: {
-              'p_championship_id': championshipId,
-              'p_champion_team_id': winnerId,
-              'p_champion_team_name': winnerName ?? '',
-            },
-          );
-        } catch (rpcErr) {
-          debugPrint('crown_tournament_champion_atomic fallback: $rpcErr');
-          await _supabase.from('championships').update({
-            'status': 'completed',
-            'champion_team_id': winnerId,
-            'champion_team_name': winnerName,
-          }).eq('id', championshipId);
-
-          final team = await _teamRepo.getTeam(winnerId);
-          if (team != null) {
-            final badges = List<String>.from(team.unlockedBadges);
-            if (!badges.contains('cup_winner')) {
-              badges.add('cup_winner');
-            }
-            await _supabase.from('teams').update({
-              'championships_won': team.championshipsWon + 1,
-              'unlocked_badges': badges,
-            }).eq('id', winnerId);
-          }
+        final crownRes = await _supabase.rpc(
+          'crown_tournament_champion_atomic',
+          params: {
+            'p_championship_id': championshipId,
+            'p_champion_team_id': winnerId,
+            'p_champion_team_name': winnerName ?? '',
+          },
+        );
+        if (crownRes is! Map || crownRes['success'] != true) {
+          final err = crownRes is Map ? crownRes['error']?.toString() : 'Failed to crown champion';
+          debugPrint('crown_tournament_champion_atomic notice: $err');
         }
 
         // Trigger celebration callback if provided
@@ -199,11 +182,14 @@ class TournamentMatchCoordinator {
               final topTeamId = topTeam['team_id']?.toString();
               final topTeamName = topTeam['team_name']?.toString() ?? '';
               if (topTeamId != null && topTeamId.isNotEmpty) {
-                await _supabase.from('championships').update({
-                  'status': 'completed',
-                  'champion_team_id': topTeamId,
-                  'champion_team_name': topTeamName,
-                }).eq('id', championshipId);
+                await _supabase.rpc(
+                  'crown_tournament_champion_atomic',
+                  params: {
+                    'p_championship_id': championshipId,
+                    'p_champion_team_id': topTeamId,
+                    'p_champion_team_name': topTeamName,
+                  },
+                );
 
                 if (_onChampionCrowned != null) {
                   await _onChampionCrowned(topTeamId);

@@ -37,10 +37,20 @@ serve(async (req: Request) => {
 
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Check if caller is service_role or authenticated user
+    // Verify if caller is internal worker or service_role
     let isServiceRole = (token === serviceKey);
-    let callerUser: any = null;
+    if (!isServiceRole) {
+      // Check against internal_function_secrets for DB trigger / cron callers
+      const { data: secretRows } = await adminClient
+        .from("internal_function_secrets")
+        .select("secret")
+        .in("name", ["fcm_push", "service_role", "refund_worker"]);
+      if (secretRows && secretRows.some((r: any) => r.secret === token)) {
+        isServiceRole = true;
+      }
+    }
 
+    let callerUser: any = null;
     if (!isServiceRole) {
       const { data: { user: caller }, error: authError } = await adminClient.auth.getUser(token);
       if (authError || !caller) {
@@ -61,9 +71,16 @@ serve(async (req: Request) => {
 
     // ============================================================
     // MODE 1: Autonomous Cancellation Refund Queue Processing (Worker SSOT)
-    // Invoked by service_role, pg_cron, DB webhook, or admin
+    // Strictly restricted to Internal Worker / Server Secret Callers
     // ============================================================
-    if (isServiceRole || body.action === "process_queue" || (!body.team_id && !body.championship_id)) {
+    if (body.action === "process_queue" || (!body.team_id && !body.championship_id)) {
+      if (!isServiceRole) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Forbidden: process_queue is restricted to server internal workers." }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+
       // Helper function to get Paymob auth token
       const getPaymobToken = async (): Promise<string> => {
         const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
@@ -124,6 +141,7 @@ serve(async (req: Request) => {
           await adminClient.from("cancellation_refund_queue").update({
             status: "failed_manual_review",
             failure_reason: reason,
+            locked_until: null,
             updated_at: nowIso,
           }).eq("id", item.id);
 
@@ -141,7 +159,21 @@ serve(async (req: Request) => {
           continue;
         }
 
-        // 2. Call Paymob Refund API
+        // 2. Prevent Double Refund: If already marked refunded, complete immediately
+        if (order.payment_status === "refunded") {
+          const nowIso = new Date().toISOString();
+          await adminClient.from("cancellation_refund_queue").update({
+            status: "completed",
+            processed_at: nowIso,
+            locked_until: null,
+            updated_at: nowIso,
+          }).eq("id", item.id);
+
+          results.push({ id: item.id, order_id: item.order_id, success: true, note: "already_refunded" });
+          continue;
+        }
+
+        // 3. Call Paymob Refund API
         const txnId = String(item.paymob_transaction_id || "").replace(/\D/g, "");
         const refundAmtCents = Math.round(queueAmount * 100);
 
@@ -163,9 +195,15 @@ serve(async (req: Request) => {
               }),
             });
             const refundData = await refundRes.json();
+            const msgLower = JSON.stringify(refundData).toLowerCase();
+
             if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
               refundSuccess = true;
               refundId = String(refundData.id || refundData.transaction_id || "");
+            } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
+              // Double refund prevention: Paymob indicates already refunded
+              refundSuccess = true;
+              refundId = "ALREADY_REFUNDED_AT_GATEWAY";
             } else {
               refundError = String(refundData.message || refundData.detail || JSON.stringify(refundData));
             }
@@ -180,6 +218,7 @@ serve(async (req: Request) => {
           await adminClient.from("cancellation_refund_queue").update({
             status: "completed",
             processed_at: nowIso,
+            locked_until: null,
             updated_at: nowIso,
           }).eq("id", item.id);
 
@@ -196,21 +235,32 @@ serve(async (req: Request) => {
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
-          await adminClient.from("cancellation_refund_queue").update({
-            status: "failed_manual_review",
-            failure_reason: refundError,
-            updated_at: nowIso,
-          }).eq("id", item.id);
+          if (item.retry_count >= 3) {
+            await adminClient.from("cancellation_refund_queue").update({
+              status: "failed_manual_review",
+              failure_reason: refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
 
-          await adminClient.from("tournament_orders").update({
-            payment_status: "refund_failed_manual_review",
-            updated_at: nowIso,
-          }).eq("id", item.order_id);
+            await adminClient.from("tournament_orders").update({
+              payment_status: "refund_failed_manual_review",
+              updated_at: nowIso,
+            }).eq("id", item.order_id);
 
-          await adminClient.from("championship_registrations").update({
-            payment_status: "refund_failed_manual_review",
-            updated_at: nowIso,
-          }).eq("id", item.registration_id);
+            await adminClient.from("championship_registrations").update({
+              payment_status: "refund_failed_manual_review",
+              updated_at: nowIso,
+            }).eq("id", item.registration_id);
+          } else {
+            // Transient failure: return to pending state for lease recovery or next cron cycle
+            await adminClient.from("cancellation_refund_queue").update({
+              status: "pending",
+              failure_reason: refundError,
+              locked_until: null,
+              updated_at: nowIso,
+            }).eq("id", item.id);
+          }
 
           results.push({ id: item.id, order_id: item.order_id, success: false, error: refundError });
         }
@@ -304,9 +354,14 @@ serve(async (req: Request) => {
         }),
       });
       const refundData = await refundRes.json();
+      const msgLower = JSON.stringify(refundData).toLowerCase();
+
       if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
         refundSuccess = true;
         refundId = String(refundData.id || refundData.transaction_id || "");
+      } else if (msgLower.includes("already refunded") || msgLower.includes("already voided")) {
+        refundSuccess = true;
+        refundId = "ALREADY_REFUNDED_AT_GATEWAY";
       } else {
         refundError = refundData.message || refundData.detail || JSON.stringify(refundData);
       }

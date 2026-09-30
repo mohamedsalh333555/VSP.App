@@ -199,10 +199,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       }
 
       if (entryFee > 0) {
+        final idempotencyKey = 'idem_champ_${widget.championship.id}_${widget.team.id}_${DateTime.now().millisecondsSinceEpoch}';
         final order = await TournamentRepository().createTournamentOrder(
           championshipId: widget.championship.id,
           teamId: widget.team.id,
-          amount: entryFee,
+          idempotencyKey: idempotencyKey,
           playerIds: _selectedPlayerIds,
           guestNames: _offlineGuestNames,
         );
