@@ -43,6 +43,8 @@ class CreateTournamentWizard extends StatefulWidget {
 class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   int _currentStep = 0;
   bool _isLoading = false;
+  List<String>? _editableFields;
+  bool _isFetchingPolicy = false;
 
   // Step 1: Basics
   final _nameController = TextEditingController();
@@ -64,6 +66,25 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   List<String> _availableSports = ['Football'];
   StreamSubscription? _stadiumSubscription;
+
+  Future<void> _fetchChampionshipPolicy() async {
+    if (widget.tournament == null) return;
+    setState(() => _isFetchingPolicy = true);
+    try {
+      final actions = await TournamentRepository().getChampionshipActions(widget.tournament!.id);
+      if (mounted) {
+        setState(() {
+          final ef = actions['editable_fields'];
+          if (ef is List) {
+            _editableFields = ef.map((e) => e.toString()).toList();
+          }
+          _isFetchingPolicy = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isFetchingPolicy = false);
+    }
+  }
 
   String _getDraftPrefix() {
     try {
@@ -170,6 +191,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     super.initState();
     _loadOwnerSports();
     if (widget.tournament != null) {
+      _fetchChampionshipPolicy();
       final t = widget.tournament!;
       _nameController.text = t.name;
       _selectedSport = t.sportType;
@@ -423,6 +445,15 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         children: [
           // Step Indicator
           TournamentStepIndicator(currentStep: _currentStep),
+          if (isEditing && _isFetchingPolicy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+              child: LinearProgressIndicator(
+                color: VSPColors.accent,
+                backgroundColor: VSPColors.surface,
+                minHeight: 2,
+              ),
+            ),
           const SizedBox(height: VSPSpacing.md),
 
           // Step Content
@@ -446,6 +477,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                             setState(() => _selectedType = type),
                         isEditing: isEditing,
                         preselectedType: widget.preselectedType,
+                        editableFields: _editableFields,
                       )
                     : _currentStep == 1
                         ? TournamentSystemStep(
@@ -462,6 +494,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                             isTwoLegs: _isTwoLegs,
                             onTwoLegsChanged: (v) =>
                                 setState(() => _isTwoLegs = v),
+                            isEditing: isEditing,
+                            editableFields: _editableFields,
                           )
                         : TournamentSchedulingStep(
                             startDate: _startDate,
@@ -470,6 +504,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                             onSelectEndDate: () => _selectDate(false),
                             durationController: _durationController,
                             prizeController: _prizeController,
+                            isEditing: isEditing,
+                            editableFields: _editableFields,
                           ),
               ),
             ),

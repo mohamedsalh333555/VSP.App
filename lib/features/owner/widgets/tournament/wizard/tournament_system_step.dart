@@ -13,6 +13,8 @@ class TournamentSystemStep extends StatelessWidget {
   final ValueChanged<int> onQualifyingChanged;
   final bool isTwoLegs;
   final ValueChanged<bool> onTwoLegsChanged;
+  final bool isEditing;
+  final List<String>? editableFields;
 
   const TournamentSystemStep({
     super.key,
@@ -25,7 +27,12 @@ class TournamentSystemStep extends StatelessWidget {
     required this.onQualifyingChanged,
     required this.isTwoLegs,
     required this.onTwoLegsChanged,
+    this.isEditing = false,
+    this.editableFields,
   });
+
+  bool get _isStructureEditable =>
+      !isEditing || editableFields == null || editableFields!.contains('max_teams');
 
   Widget _buildLabel(BuildContext context, String text) {
     return Padding(
@@ -34,26 +41,42 @@ class TournamentSystemStep extends StatelessWidget {
     );
   }
 
-  Widget _buildDropdown(BuildContext context, List<String> items, String value, Function(String?) onChanged) {
+  Widget _buildDropdown(
+    BuildContext context,
+    List<String> items,
+    String value,
+    Function(String?) onChanged, {
+    bool enabled = true,
+  }) {
     return Container(
       height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
+        border: Border.all(
+          color: enabled ? VSPColors.divider : VSPColors.divider.withValues(alpha: 0.4),
+          width: 0.5,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
+          icon: Icon(
+            enabled ? Iconsax.arrow_down_1_copy : Iconsax.lock_copy,
+            color: enabled ? VSPColors.accent : VSPColors.textSecondary,
+            size: 16,
+          ),
           isExpanded: true,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: enabled ? Colors.white : VSPColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
           items: items.map((item) {
             return DropdownMenuItem(value: item, child: Text(item));
           }).toList(),
-          onChanged: onChanged,
+          onChanged: enabled ? onChanged : null,
         ),
       ),
     );
@@ -67,6 +90,35 @@ class TournamentSystemStep extends StatelessWidget {
       key: const ValueKey('step2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (!_isStructureEditable) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Iconsax.lock_1_copy, color: Colors.amber, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isArabic
+                        ? 'إعدادات النظام وهيكل البطولة مقفولة: لا يمكن تعديل عدد الفرق أو نظام المجموعات بعد بدء التسجيل لحماية عدالة المنافسة.'
+                        : 'Format settings are locked: Number of teams and group structure cannot be changed after registration starts.',
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         Text(
           isArabic ? 'إعدادات وقواعد البطولة ' : 'Tournament Rules & Format ',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -81,6 +133,7 @@ class TournamentSystemStep extends StatelessWidget {
           (v) {
             if (v != null) onTeamsChanged(v);
           },
+          enabled: _isStructureEditable,
         ),
         const SizedBox(height: 16),
 
@@ -94,6 +147,7 @@ class TournamentSystemStep extends StatelessWidget {
             (v) {
               if (v != null) onGroupsChanged(int.parse(v));
             },
+            enabled: _isStructureEditable,
           ),
           const SizedBox(height: 12),
           _buildLabel(context, isArabic ? 'المتأهلين من كل مجموعة:' : 'Qualifiers per Group:'),
@@ -104,6 +158,7 @@ class TournamentSystemStep extends StatelessWidget {
             (v) {
               if (v != null) onQualifyingChanged(int.parse(v));
             },
+            enabled: _isStructureEditable,
           ),
           const SizedBox(height: 12),
         ],
@@ -114,11 +169,14 @@ class TournamentSystemStep extends StatelessWidget {
             children: [
               Text(
                 isArabic ? 'ذهاب وإياب' : 'Home & Away',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: _isStructureEditable ? Colors.white : VSPColors.textSecondary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Switch.adaptive(
                 value: isTwoLegs,
-                onChanged: onTwoLegsChanged,
+                onChanged: _isStructureEditable ? onTwoLegsChanged : null,
                 activeColor: VSPColors.accent,
               ),
             ],

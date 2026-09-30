@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
@@ -140,7 +141,7 @@ class TournamentLifecycleCoordinator {
   }
 
   /// Updates championship fields — routes through update_championship_atomic (server-enforced).
-  /// Server strips any fields not allowed in the current state.
+  /// Server rejects explicitly if no allowed fields are modified.
   Future<bool> updateChampionship(String id, Map<String, dynamic> data) async {
     try {
       final pgData = TournamentPayloadBuilder.buildUpdatePayload(data);
@@ -156,42 +157,46 @@ class TournamentLifecycleCoordinator {
         VSPLogger.i('Championship $id updated: ${res['updated_fields']}');
         return true;
       }
-      VSPLogger.w('update_championship_atomic returned unexpected: $res');
-      return false;
+      final msg = res is Map
+          ? (res['message']?.toString() ?? res['code']?.toString() ?? 'Update blocked')
+          : 'Update failed';
+      VSPLogger.w('update_championship_atomic rejected: $res');
+      throw Exception(msg);
     } catch (e, stack) {
       VSPLogger.e('Error updating championship', e, stack);
-      return false;
+      rethrow;
     }
   }
 
-  /// Transitions championship status — used for admin/system operations (ongoing, completed).
-  /// For owner-initiated cancel: use cancelChampionship() instead.
+  /// Transitions championship status atomically via transition_championship_status_atomic.
+  /// Zero direct table updates or backdoors.
   Future<void> updateChampionshipStatus(
     String championshipId,
     String status,
   ) async {
     try {
-      // Admin status transitions (e.g. open→ongoing when fixtures generated)
-      // These go through admin_update_championship_status_atomic when available
       final res = await _supabase.rpc(
-        'admin_update_championship_status_atomic',
+        'transition_championship_status_atomic',
         params: {
           'p_championship_id': championshipId,
-          'p_status': status,
+          'p_new_status': status,
         },
-      ).maybeSingle();
-      if (res == null || res['success'] == true) return;
-    } catch (_) {
-      // Fallback for non-admin status transitions (e.g. ongoing after fixture generation)
-      await _supabase
-          .from('championships')
-          .update({'status': status, 'updated_at': DateTime.now().toUtc().toIso8601String()})
-          .eq('id', championshipId);
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        VSPLogger.i('Championship $championshipId transitioned to $status');
+        return;
+      }
+      throw Exception(
+        res is Map ? res['message']?.toString() : 'Failed to transition championship status',
+      );
+    } catch (e, stack) {
+      VSPLogger.e('Error transitioning championship status to $status', e, stack);
+      rethrow;
     }
   }
 
   /// Owner-initiated championship cancellation (routes through cancel_championship_atomic).
-  /// For Team League: automatically delegates to cancel_team_league (with payment handling).
+  /// Creates official refund obligations atomically in DB, then triggers async Paymob processing.
   Future<Map<String, dynamic>> cancelChampionship(
     String championshipId, {
     String reason = 'owner_initiated',
@@ -204,10 +209,32 @@ class TournamentLifecycleCoordinator {
           'p_reason': reason,
         },
       );
-      if (res != null && res is Map) {
-        return Map<String, dynamic>.from(res);
+      if (res != null && res is Map && res['success'] == true) {
+        final resultMap = Map<String, dynamic>.from(res);
+        final obligationsCount = res['refund_obligations_count'] as int? ?? 0;
+
+        // Async execution of refund obligations via Edge Function without blocking
+        if (obligationsCount > 0) {
+          unawaited(
+            _supabase.functions.invoke(
+              'process_tournament_refund',
+              body: {
+                'championship_id': championshipId,
+                'action': 'process_cancellation_refunds',
+              },
+            ).then((fnRes) {
+              VSPLogger.i('Async cancellation refunds processed for $championshipId: ${fnRes.data}');
+            }).catchError((err, st) {
+              VSPLogger.e('Async cancellation refund invocation failed for $championshipId', err, st);
+            }),
+          );
+        }
+
+        return resultMap;
       }
-      throw Exception('Unexpected cancel response');
+      throw Exception(
+        res is Map ? res['message']?.toString() : 'Cancellation failed',
+      );
     } catch (e, stack) {
       VSPLogger.e('Error cancelling championship', e, stack);
       rethrow;

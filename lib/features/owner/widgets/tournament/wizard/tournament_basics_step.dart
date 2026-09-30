@@ -13,6 +13,7 @@ class TournamentBasicsStep extends StatefulWidget {
   final ValueChanged<String> onTypeChanged;
   final bool isEditing;
   final String? preselectedType;
+  final List<String>? editableFields;
 
   const TournamentBasicsStep({
     super.key,
@@ -25,6 +26,7 @@ class TournamentBasicsStep extends StatefulWidget {
     required this.onTypeChanged,
     required this.isEditing,
     this.preselectedType,
+    this.editableFields,
   });
 
   @override
@@ -33,6 +35,15 @@ class TournamentBasicsStep extends StatefulWidget {
 
 class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
   late bool _showAllFormats;
+
+  bool get _isNameEditable =>
+      !widget.isEditing || widget.editableFields == null || widget.editableFields!.contains('name');
+  bool get _isSportEditable =>
+      !widget.isEditing || widget.editableFields == null || widget.editableFields!.contains('sport_type');
+  bool get _isFeeEditable =>
+      !widget.isEditing || widget.editableFields == null || widget.editableFields!.contains('entry_fee');
+  bool get _isTypeEditable =>
+      !widget.isEditing || widget.editableFields == null || widget.editableFields!.contains('type');
 
   @override
   void initState() {
@@ -152,11 +163,13 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
     List<TextInputFormatter>? inputFormatters,
     bool autofocus = false,
     String? suffixText,
+    bool enabled = true,
   }) {
     return SizedBox(
       height: VSPSize.inputHeight,
       child: TextField(
         controller: controller,
+        enabled: enabled,
         keyboardType: keyboardType,
         textDirection: (keyboardType == TextInputType.phone ||
                 keyboardType == TextInputType.number ||
@@ -166,18 +179,28 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
         inputFormatters: inputFormatters,
         autofocus: autofocus,
         cursorColor: VSPColors.accent,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: enabled ? Colors.white : VSPColors.textSecondary,
+          fontWeight: FontWeight.bold,
+        ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: VSPColors.surface,
+          fillColor: enabled ? VSPColors.surface : VSPColors.surfaceAlt,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           counterText: '',
           isDense: true,
           hintText: hint,
           hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+          prefixIcon: !enabled
+              ? const Icon(Icons.lock_outline_rounded, color: VSPColors.warning, size: 16)
+              : null,
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
             borderSide: const BorderSide(color: VSPColors.divider, width: 0.5),
+          ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            borderSide: BorderSide(color: VSPColors.warning.withValues(alpha: 0.3), width: 0.5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -189,7 +212,11 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Text(
                       suffixText,
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                      style: TextStyle(
+                        color: enabled ? VSPColors.accent : VSPColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 )
@@ -199,21 +226,36 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
     );
   }
 
-  Widget _buildDropdown(BuildContext context, List<String> items, String value, Function(String?) onChanged) {
+  Widget _buildDropdown(
+    BuildContext context,
+    List<String> items,
+    String value,
+    Function(String?) onChanged, {
+    bool enabled = true,
+  }) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    return Container(
-      height: VSPSize.inputHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : (items.isNotEmpty ? items.first : null),
-          dropdownColor: VSPColors.surface,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
+    return IgnorePointer(
+      ignoring: !enabled,
+      child: Container(
+        height: VSPSize.inputHeight,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: enabled ? VSPColors.surface : VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(
+            color: enabled ? VSPColors.divider : VSPColors.warning.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: items.contains(value) ? value : (items.isNotEmpty ? items.first : null),
+            dropdownColor: VSPColors.surface,
+            icon: Icon(
+              enabled ? Iconsax.arrow_down_1_copy : Icons.lock_outline_rounded,
+              color: enabled ? VSPColors.accent : VSPColors.warning,
+              size: 16,
+            ),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
           items: items.map((item) {
@@ -236,8 +278,9 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
           onChanged: onChanged,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -280,17 +323,23 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
                     ],
                   ),
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _showAllFormats = true),
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    foregroundColor: VSPColors.accent,
+                if (_isTypeEditable)
+                  TextButton(
+                    onPressed: () => setState(() => _showAllFormats = true),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: VSPColors.accent,
+                    ),
+                    child: Text(
+                      isAr ? 'تغيير' : 'Change',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Icon(Icons.lock_outline_rounded, color: VSPColors.warning, size: 18),
                   ),
-                  child: Text(
-                    isAr ? 'تغيير' : 'Change',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
               ],
             ),
           ),
@@ -355,6 +404,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
           widget.nameController,
           hint: isAr ? 'مثال: كأس الأبطال' : 'e.g. Star Cup',
           autofocus: !widget.isEditing,
+          enabled: _isNameEditable,
         ),
         const SizedBox(height: VSPSpacing.md),
 
@@ -366,6 +416,7 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
           (v) {
             if (v != null) widget.onSportChanged(v);
           },
+          enabled: _isSportEditable,
         ),
         const SizedBox(height: VSPSpacing.md),
 
@@ -377,7 +428,16 @@ class _TournamentBasicsStepState extends State<TournamentBasicsStep> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           suffixText: isAr ? 'ج.م' : 'EGP',
+          enabled: _isFeeEditable,
         ),
+        if (!_isFeeEditable)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 4, left: 4),
+            child: Text(
+              isAr ? 'الرسوم مقفولة بعد بدء تسجيل الفرق' : 'Entry fee is locked after registration starts',
+              style: const TextStyle(color: VSPColors.warning, fontSize: 11),
+            ),
+          ),
         const SizedBox(height: 40),
       ],
     );
