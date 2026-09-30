@@ -196,6 +196,23 @@ class TeamLeagueRepository {
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
 
+  /// Fetches configured entry fee for 4-team league from league_settings table
+  Future<double> getTeamLeagueEntryFee() async {
+    try {
+      final res = await _supabase
+          .from('league_settings')
+          .select('setting_value')
+          .eq('setting_key', 'team_league_entry_fee')
+          .maybeSingle();
+      if (res != null && res['setting_value'] != null) {
+        return double.tryParse(res['setting_value'].toString()) ?? 30.0;
+      }
+    } catch (e) {
+      debugPrint('Notice getting team league entry fee: $e');
+    }
+    return 30.0;
+  }
+
   /// Fetches the active 4-team league for a given team
   Future<TeamLeagueData?> getTeamActiveLeague(String teamId) async {
     try {

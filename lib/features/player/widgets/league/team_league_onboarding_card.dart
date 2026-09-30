@@ -4,11 +4,13 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
 
 class TeamLeagueOnboardingCard extends StatelessWidget {
+  final double entryFee;
   final VoidCallback onCreateLeague;
   final VoidCallback onJoinLeague;
 
   const TeamLeagueOnboardingCard({
     super.key,
+    this.entryFee = 30.0,
     required this.onCreateLeague,
     required this.onJoinLeague,
   });
@@ -92,7 +94,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.wallet_copy,
-            title: '30 جنيه رسوم تنظيم لكل فريق',
+            title: '${entryFee.toStringAsFixed(0)} جنيه رسوم تنظيم لكل فريق',
             subtitle: 'رسوم تنظيم الدوري وجدول الترتيب للمنصة',
             highlight: true,
           ),
@@ -106,7 +108,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           const SizedBox(height: VSPSpacing.xl),
 
           PrimaryButton(
-            text: 'إنشاء دوري لفريقك (30 ج)',
+            text: 'إنشاء دوري لفريقك (${entryFee.toStringAsFixed(0)} ج)',
             onPressed: onCreateLeague,
           ),
 

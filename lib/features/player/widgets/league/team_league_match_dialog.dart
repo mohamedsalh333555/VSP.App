@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -68,6 +70,65 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('خطأ أثناء حفظ النتيجة: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleForfeit(bool homeForfeited) async {
+    final forfeitedTeamName = homeForfeited ? widget.match.homeTeamName : widget.match.awayTeamName;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: const Text('تأكيد عدم حضور الفريق', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        content: Text(
+          'سيتم احتساب الفريق ($forfeitedTeamName) خاسراً بنتيجة 3-0 لعدم الحضور للمباراة.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('إلغاء', style: TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('تأكيد الانسحاب 3-0', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final homeScore = homeForfeited ? 0 : 3;
+    final awayScore = homeForfeited ? 3 : 0;
+    final forfeitTeamId = homeForfeited ? widget.match.homeTeamId : widget.match.awayTeamId;
+
+    setState(() => _isLoading = true);
+    try {
+      await widget.onSubmit(homeScore, awayScore, null, null);
+
+      try {
+        await Supabase.instance.client
+            .from('tournament_matches')
+            .update({
+              'is_forfeit': true,
+              'forfeit_team_id': forfeitTeamId,
+            })
+            .eq('id', widget.match.id);
+      } catch (e) {
+        debugPrint('Notice saving forfeit flag: $e');
+      }
+
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('خطأ أثناء تسجيل الانسحاب: $e')),
         );
       }
     } finally {
@@ -216,7 +277,56 @@ class _TeamLeagueMatchDialogState extends State<TeamLeagueMatchDialog> {
                 Expanded(child: TextField(controller: _awayPenaltiesController, keyboardType: TextInputType.number, textAlign: TextAlign.center, decoration: const InputDecoration(labelText: 'ركلات الضيف', filled: true, fillColor: VSPColors.surfaceAlt))),
               ]),
             ],
-            const SizedBox(height: VSPSpacing.xl),
+            OutlinedButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: VSPColors.surface,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.lg)),
+                        ),
+                        builder: (bCtx) => SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('تحديد الفريق الغائب / المنسحب', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                                const SizedBox(height: 12),
+                                ListTile(
+                                  leading: const Icon(Iconsax.close_circle_copy, color: Colors.redAccent),
+                                  title: Text(widget.match.homeTeamName, style: const TextStyle(color: Colors.white)),
+                                  subtitle: const Text('تسجيل غياب واحتسابه خاسراً 0-3', style: TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    _handleForfeit(true);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Iconsax.close_circle_copy, color: Colors.redAccent),
+                                  title: Text(widget.match.awayTeamName, style: const TextStyle(color: Colors.white)),
+                                  subtitle: const Text('تسجيل غياب واحتسابه خاسراً 0-3', style: TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                                  onTap: () {
+                                    Navigator.pop(bCtx);
+                                    _handleForfeit(false);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Iconsax.close_circle_copy, size: 16, color: Colors.redAccent),
+              label: const Text('الفريق لم يحضر / انسحاب 🚫', style: TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.4)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+            const SizedBox(height: VSPSpacing.md),
 
             Row(
               children: [

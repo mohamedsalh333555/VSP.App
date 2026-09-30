@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
@@ -103,6 +104,40 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 userGov: userGov,
                 isArabic: isArabic,
                 onReturnToHomeGov: () => widget.onLocationChanged(userGov),
+              ),
+            if (isCompleted &&
+                tournament['prize_delivery_details'] != null &&
+                tournament['prize_delivery_details'].toString().trim().isNotEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.cup_copy, color: Colors.amber, size: 22),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic ? '🏆 موعد ومكان تسليم الجائزة للبطل' : '🏆 Champion Prize Handover',
+                            style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            tournament['prize_delivery_details'].toString(),
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             Expanded(
               child: isCompleted

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -47,6 +48,8 @@ void showTournamentScoreModal(
   int homePenalties = match.homePenalties ?? 0;
   int awayPenalties = match.awayPenalties ?? 0;
   String? selectedWinnerId = match.winnerId;
+  final bool isEditing = match.winnerId != null;
+  final TextEditingController reasonController = TextEditingController();
   bool isSubmitting = false;
 
   showModalBottomSheet(
@@ -93,7 +96,8 @@ void showTournamentScoreModal(
                   selectedWinnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
                 }
 
-                final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
+                final bool isReasonValid = !isEditing || reasonController.text.trim().isNotEmpty;
+                final bool isValidToSubmit = (!isCupAndTied || selectedWinnerId != null) && isReasonValid;
 
                 final homeGoals = goalDetails
                     .where((g) => (g.teamId == match.homeTeamId && !g.isOwnGoal) || (g.teamId == match.awayTeamId && g.isOwnGoal))
@@ -328,6 +332,41 @@ void showTournamentScoreModal(
                           textAlign: TextAlign.center,
                         ),
                       ),
+
+                    if (isEditing)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isArabic ? '✏️ سبب تعديل النتيجة (إلزامي للتوثيق):' : '✏️ Edit Reason (Required):',
+                              style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 6),
+                            TextField(
+                              controller: reasonController,
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: isArabic
+                                    ? 'مثال: تصحيح خطأ كتابي في نتيجة المباراة'
+                                    : 'e.g. Corrected typo in recorded score',
+                                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onChanged: (_) => setModalState(() {}),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Confirmation Buttons
                     Container(
                       padding: EdgeInsets.fromLTRB(
@@ -379,6 +418,30 @@ void showTournamentScoreModal(
                                           winnerName: finalWinnerName,
                                           goalDetails: goalDetails,
                                         );
+
+                                        if (isEditing) {
+                                          try {
+                                            final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+                                            if (currentUserId != null) {
+                                              await Supabase.instance.client.from('match_score_edits').insert({
+                                                'match_id': match.id,
+                                                'championship_id': championship.id,
+                                                'old_score_home': match.homeScore,
+                                                'old_score_away': match.awayScore,
+                                                'old_penalties_home': match.homePenalties,
+                                                'old_penalties_away': match.awayPenalties,
+                                                'new_score_home': homeScore,
+                                                'new_score_away': awayScore,
+                                                'new_penalties_home': isCupAndTied ? homePenalties : null,
+                                                'new_penalties_away': isCupAndTied ? awayPenalties : null,
+                                                'edited_by': currentUserId,
+                                                'edit_reason': reasonController.text.trim(),
+                                              });
+                                            }
+                                          } catch (auditErr) {
+                                            debugPrint('Notice recording score edit audit: $auditErr');
+                                          }
+                                        }
 
                                         if (sheetContext.mounted) {
                                           Navigator.pop(sheetContext);

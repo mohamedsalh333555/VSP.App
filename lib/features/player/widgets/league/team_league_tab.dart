@@ -35,6 +35,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   bool _isLoading = true;
   TeamLeagueData? _leagueData;
   String _leaguePaymentStatus = 'not_created';
+  double _configuredFee = 30.0;
   int _selectedSubTab = 0; // 0 = المباريات, 1 = الترتيب
 
   @override
@@ -60,6 +61,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     if (mounted) setState(() => _isLoading = true);
     try {
       final data = await _leagueRepo.getTeamActiveLeague(widget.userTeam!.id);
+      final fee = await _leagueRepo.getTeamLeagueEntryFee();
       var paymentStatus = 'not_created';
       if (data != null) {
         try {
@@ -74,6 +76,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         setState(() {
           _leagueData = data;
           _leaguePaymentStatus = paymentStatus;
+          _configuredFee = fee;
           _isLoading = false;
         });
       }
@@ -647,6 +650,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             TeamLeagueOnboardingCard(
+              entryFee: _configuredFee,
               onCreateLeague: _showCreateLeagueDialog,
               onJoinLeague: _showJoinLeagueDialog,
             ),
