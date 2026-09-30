@@ -39,7 +39,7 @@ class TeamLeagueMatch {
   final String? winnerId;
   final String? winnerName;
   final String? confirmedOutcome;
-  final String resultStatus; // Supabase SSOT: 'scheduled', 'awaiting_submissions', 'awaiting_confirmation', 'disputed', 'confirmed', 'locked'
+  final String resultStatus; // 'pending', 'awaiting_result', 'result_one_side', 'confirmed', 'disputed', 'locked'
   final DateTime? scheduledTime;
   final DateTime? matchDay;
   final String? stadiumName;
