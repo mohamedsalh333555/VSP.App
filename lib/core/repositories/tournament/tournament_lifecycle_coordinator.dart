@@ -37,7 +37,7 @@ class TournamentLifecycleCoordinator {
       final res = await _supabase.rpc('create_championship_atomic', params: {
         'p_name': data['name'] ?? '',
         'p_stadium_id': stadiumId,
-        'p_type': (data['type'] ?? 'cup').toString().toLowerCase(),
+        'p_type': TournamentPayloadBuilder.normalizeType((data['type'] ?? 'cup').toString()),
         'p_sport_type': (data['sportType'] ?? data['sport_type'] ?? 'football').toString().toLowerCase(),
         'p_entry_fee': num.tryParse(data['entryFee']?.toString() ?? data['entry_fee']?.toString() ?? '0') ?? 0,
         'p_grand_prize': num.tryParse(data['grandPrize']?.toString() ?? data['grand_prize']?.toString() ?? '0') ?? 0,
@@ -358,5 +358,3 @@ class TournamentLifecycleCoordinator {
       VSPLogger.e('Error withdrawing team from championship', e, s);
       rethrow;
     }
-  }
-}
