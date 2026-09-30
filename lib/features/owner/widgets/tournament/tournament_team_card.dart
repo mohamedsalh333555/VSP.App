@@ -10,14 +10,12 @@ import '../../../../data/models.dart';
 class TournamentTeamCard extends StatelessWidget {
   final Team team;
   final bool isPaid;
-  final VoidCallback onTogglePayment;
   final VoidCallback onDelete;
 
   const TournamentTeamCard({
     super.key,
     required this.team,
     required this.isPaid,
-    required this.onTogglePayment,
     required this.onDelete,
   });
 
@@ -71,7 +69,14 @@ class TournamentTeamCard extends StatelessWidget {
           ),
 
           GestureDetector(
-            onTap: onTogglePayment,
+            onTap: () {
+              VSPFeedback.showInfo(
+                context,
+                isArabic
+                    ? 'حالة السداد تُحدّث تلقائيًا بعد إتمام الدفع الإلكتروني الرسمي.'
+                    : 'Payment status updates automatically upon electronic confirmation.',
+              );
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

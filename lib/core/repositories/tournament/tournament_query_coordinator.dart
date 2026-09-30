@@ -357,4 +357,21 @@ class TournamentQueryCoordinator {
           VSPLogger.w('Handled realtime error in championship stream: $e');
         });
   }
+
+  /// Fetches the server-authoritative public state DTO for a championship.
+  Future<Map<String, dynamic>> fetchChampionshipPublicState(String championshipId) async {
+    try {
+      final res = await _supabase.rpc(
+        'get_championship_public_state',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'success': false, 'error': 'invalid_response'};
+    } catch (e, s) {
+      VSPLogger.e('Error calling get_championship_public_state', e, s);
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }

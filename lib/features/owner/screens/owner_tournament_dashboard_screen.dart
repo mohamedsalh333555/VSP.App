@@ -152,23 +152,19 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       if (shouldForceStart != true) return;
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = true);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     try {
-      if (_currentChampionship.type == 'League') {
-        await TournamentRepository().generateLeagueFixtures(_currentChampionship.id);
-      } else if (_currentChampionship.type == 'GroupsAndKnockout') {
-        await TournamentRepository().generateGroupsFixtures(_currentChampionship.id);
-      } else {
-        await TournamentRepository().generateFixtures(_currentChampionship.id);
-      }
-
-      await TournamentRepository().updateChampionshipStatus(
-        _currentChampionship.id,
-        'ongoing',
-      );
+      await TournamentRepository().startChampionship(_currentChampionship.id);
 
       if (mounted) {
-        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.drawGeneratedSuccess);
+        VSPFeedback.showSuccess(
+          context,
+          isAr
+              ? 'تم إغلاق التسجيل وتوليد القرعة بنجاح! راجع جدول المباريات ثم اضغط بدء المنافسة.'
+              : 'Registration locked and draw generated successfully!',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -179,39 +175,64 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     }
   }
 
-  Future<void> _togglePaymentStatus(String teamId) async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid ?? auth.userModel?.uid;
+  Future<void> _handleActivateCompetition() async {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    if (uid != _currentChampionship.ownerId && auth.userModel?.role != 'admin' && auth.userModel?.role != 'co_founder') {
-      VSPFeedback.showError(context, isAr ? 'ليس لديك صلاحية تعديل هذه البطولة' : 'Unauthorized to edit this tournament');
-      return;
-    }
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(Iconsax.play_circle_copy, color: VSPColors.accent, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              isAr ? 'بدء المنافسة رسميًا' : 'Kickoff Competition',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Text(
+          isAr
+              ? 'ستبدأ البطولة رسميًا الآن ولن يمكن تعديل الفرق أو القوائم بعد هذه الخطوة. هل تريد المتابعة؟'
+              : 'The tournament will officially begin now and rosters will be locked. Do you want to proceed?',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.accent,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+            ),
+            child: Text(isAr ? 'تأكيد الانطلاق' : 'Confirm Kickoff', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
 
-    final isPaid = _currentChampionship.paidTeams.contains(teamId);
+    if (confirm != true || !mounted) return;
+
+    setState(() => _isLoading = true);
     try {
-      await TournamentRepository().toggleTeamPayment(
-        championshipId: _currentChampionship.id,
-        teamId: teamId,
-        isPaid: !isPaid,
-      );
-      setState(() {
-        final updatedList = List<String>.from(_currentChampionship.paidTeams);
-        if (isPaid) {
-          updatedList.remove(teamId);
-        } else {
-          updatedList.add(teamId);
-        }
-        _currentChampionship = _currentChampionship.copyWith(paidTeams: updatedList);
-      });
-    } catch (e) {
+      await TournamentRepository().activateCompetition(_currentChampionship.id);
       if (mounted) {
-        final isAr = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
+        VSPFeedback.showSuccess(
           context,
-          isAr ? 'حدث خطأ أثناء تعديل حالة الدفع: $e' : 'Error: $e',
+          isAr ? 'انطلقت البطولة رسميًا! بالتوفيق لجميع الفرق.' : 'Tournament competition is now ongoing!',
         );
       }
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -528,7 +549,6 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                       return TournamentTeamCard(
                         team: team,
                         isPaid: isPaid,
-                        onTogglePayment: () => _togglePaymentStatus(team.id),
                         onDelete: () {
                           showDeleteTeamConfirmationDialog(
                             context,
@@ -554,6 +574,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             championship: _currentChampionship,
             isLoading: _isLoading,
             onStartTournament: _handleStartTournament,
+            onActivateCompetition: _handleActivateCompetition,
           ),
         ],
       ),

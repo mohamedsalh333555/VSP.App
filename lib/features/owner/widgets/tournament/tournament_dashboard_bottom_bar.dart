@@ -11,18 +11,22 @@ class TournamentDashboardBottomBar extends StatelessWidget {
   final Championship championship;
   final bool isLoading;
   final VoidCallback onStartTournament;
+  final VoidCallback? onActivateCompetition;
 
   const TournamentDashboardBottomBar({
     super.key,
     required this.championship,
     required this.isLoading,
     required this.onStartTournament,
+    this.onActivateCompetition,
   });
 
   @override
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final l10n = AppLocalizations.of(context)!;
+    final isLocked = championship.registrationLockedAt != null;
+    final isDrawReady = championship.status == 'open' && isLocked;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -38,15 +42,39 @@ class TournamentDashboardBottomBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (championship.status == 'open')
+          if (championship.status == 'open' && !isLocked)
             PrimaryButton(
-              text: l10n.generateDrawStart,
+              text: isAr ? 'إغلاق التسجيل وإنشاء القرعة' : 'Lock Registration & Generate Draw',
               isLoading: isLoading,
               onPressed: onStartTournament,
             ),
+          if (isDrawReady) ...[
+            PrimaryButton(
+              text: isAr ? 'بدء المنافسة' : 'Kickoff Competition',
+              isLoading: isLoading,
+              onPressed: onActivateCompetition ?? () {},
+            ),
+            const SizedBox(height: 8),
+            PrimaryButton(
+              text: isAr ? 'مراجعة جدول المباريات' : 'Review Match Fixtures',
+              color: VSPColors.accent.withValues(alpha: 0.1),
+              textColor: VSPColors.accent,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TournamentBracketsScreen(
+                      championship: championship,
+                      isOwner: true,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
           if (championship.status != 'open')
             PrimaryButton(
-              text: l10n.viewBrackets.toUpperCase(),
+              text: isAr ? 'إدارة المباريات وجدول البطولة' : l10n.viewBrackets.toUpperCase(),
               color: VSPColors.accent.withValues(alpha: 0.1),
               textColor: VSPColors.accent,
               onPressed: () {

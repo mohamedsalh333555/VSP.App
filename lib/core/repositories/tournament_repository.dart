@@ -246,19 +246,17 @@ class TournamentRepository {
     }
   }
 
+  Future<Map<String, dynamic>> startChampionship(String championshipId) =>
+      lifecycleCoord.startChampionship(championshipId);
+
+  Future<Map<String, dynamic>> activateCompetition(String championshipId) =>
+      lifecycleCoord.activateCompetition(championshipId);
+
+  Future<Map<String, dynamic>> fetchChampionshipPublicState(String championshipId) =>
+      queryCoord.fetchChampionshipPublicState(championshipId);
+
   Future<bool> removeTournamentTeam(String championshipId, String teamId) =>
       registrationCoord.removeTournamentTeam(championshipId, teamId);
-
-  Future<void> toggleTeamPayment({
-    required String championshipId,
-    required String teamId,
-    required bool isPaid,
-  }) =>
-      registrationCoord.toggleTeamPayment(
-        championshipId: championshipId,
-        teamId: teamId,
-        isPaid: isPaid,
-      );
 
   Future<bool> is1v1OrderPaid(String orderReference) =>
       registrationCoord.is1v1OrderPaid(orderReference);

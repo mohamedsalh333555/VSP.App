@@ -210,33 +210,47 @@ class TournamentLifecycleCoordinator {
         },
       );
       if (res != null && res is Map && res['success'] == true) {
-        final resultMap = Map<String, dynamic>.from(res);
-        final obligationsCount = res['refund_obligations_count'] as int? ?? 0;
-
-        // Async execution of refund obligations via Edge Function without blocking
-        if (obligationsCount > 0) {
-          unawaited(
-            _supabase.functions.invoke(
-              'process_tournament_refund',
-              body: {
-                'championship_id': championshipId,
-                'action': 'process_cancellation_refunds',
-              },
-            ).then((fnRes) {
-              VSPLogger.i('Async cancellation refunds processed for $championshipId: ${fnRes.data}');
-            }).catchError((err, st) {
-              VSPLogger.e('Async cancellation refund invocation failed for $championshipId', err, st);
-            }),
-          );
-        }
-
-        return resultMap;
+        return Map<String, dynamic>.from(res);
       }
       throw Exception(
-        res is Map ? res['message']?.toString() : 'Cancellation failed',
+        res is Map ? (res['error'] ?? res['message'])?.toString() : 'Cancellation failed',
       );
     } catch (e, stack) {
       VSPLogger.e('Error cancelling championship', e, stack);
+      rethrow;
+    }
+  }
+
+  /// Locks registration, cancels unpaid teams, and generates draw (transitions to draw_ready)
+  Future<Map<String, dynamic>> startChampionship(String championshipId) async {
+    try {
+      final res = await _supabase.rpc(
+        'start_championship_atomic',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        return Map<String, dynamic>.from(res);
+      }
+      throw Exception(res is Map ? res['error']?.toString() : 'Failed to start championship');
+    } catch (e, stack) {
+      VSPLogger.e('Error in startChampionship', e, stack);
+      rethrow;
+    }
+  }
+
+  /// Activates competition kickoff (transitions from draw_ready to ongoing)
+  Future<Map<String, dynamic>> activateCompetition(String championshipId) async {
+    try {
+      final res = await _supabase.rpc(
+        'activate_championship_competition_atomic',
+        params: {'p_championship_id': championshipId},
+      );
+      if (res != null && res is Map && res['success'] == true) {
+        return Map<String, dynamic>.from(res);
+      }
+      throw Exception(res is Map ? res['error']?.toString() : 'Failed to activate competition');
+    } catch (e, stack) {
+      VSPLogger.e('Error in activateCompetition', e, stack);
       rethrow;
     }
   }

@@ -175,7 +175,7 @@ void main() {
         print('  💳 دفع إلكتروني ناجح: ${team.name} دفع $orderAmount ج.م (مرجع: $orderRef)');
       }
 
-      // سداد الفرق الـ 4 النقدية وتأكيد المالك لاستلامها بالملعب (toggleTeamPayment)
+      // سداد الفرق الـ 4 وتأكيد استلام السداد في الدفتر المالي
       for (int i = 4; i < 8; i++) {
         final team = registeredTeams[i];
         final orderAmount = championship.entryFee;

@@ -198,14 +198,6 @@ class TournamentRegistrationCoordinator {
     }
   }
 
-  /// Toggle a team's paid status in a championship.
-  Future<void> toggleTeamPayment({
-    required String championshipId,
-    required String teamId,
-    required bool isPaid,
-  }) async {
-    throw Exception('لا يمكن تعديل حالة الدفع يدويًا. حالة الدفع تُحدّث تلقائيًا بعد التحقق المالي.');
-  }
 
 
   /// Check if 1v1 tournament order was paid.
