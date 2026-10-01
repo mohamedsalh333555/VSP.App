@@ -45,6 +45,7 @@ DECLARE
   v_new_code_id            uuid;
   v_existing_id            uuid;
   v_existing_status        text;
+  v_existing_user_id       uuid;
   v_clean_code             text;
   v_now                    timestamptz := timezone('utc', now());
 BEGIN

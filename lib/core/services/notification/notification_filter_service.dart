@@ -41,9 +41,12 @@ class NotificationFilterService {
       case 'match_reminder':
         return 'notif_match_reminders';
       case 'challenge':
+      case 'challenge_confirmed':
       case 'challenge_accepted':
       case 'challenge_declined':
         return 'notif_challenge_results';
+      case 'join_request_declined':
+        return 'notif_match_reminders';
       default:
         return null;
     }

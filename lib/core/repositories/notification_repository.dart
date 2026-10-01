@@ -100,25 +100,4 @@ class NotificationRepository {
         .eq('user_id', userId)
         .map((list) => list.where((item) => item['is_read'] == false).length);
   }
-
-  Future<void> respondToChallenge(String userId, String notificationId, String bookingId, bool accept) async {
-    try {
-      await markNotificationAsRead(userId, notificationId);
-
-      final result = await _supabase.rpc(
-        'respond_to_challenge_atomic',
-        params: {
-          'p_booking_id': bookingId,
-          'p_accept': accept,
-        },
-      );
-
-      if (result is Map && result['success'] != true) {
-        throw Exception(result['error'] ?? 'CHALLENGE_RESPONSE_FAILED');
-      }
-    } catch (e) {
-      debugPrint('Error responding to challenge: $e');
-      rethrow;
-    }
-  }
 }

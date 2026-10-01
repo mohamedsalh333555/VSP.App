@@ -128,57 +128,41 @@ class NotificationHandler {
     }
   }
 
+  /// Notify player that their open join request was declined by host
+  static Future<void> notifyJoinRequestRejected({
+    required String playerId,
+    required String stadiumName,
+  }) async {
+    final notif = AppNotification(
+      id: '',
+      title: 'Join Request Declined',
+      body: 'Your request to join the match at $stadiumName was declined.',
+      type: 'join_request_declined',
+      createdAt: DateTime.now(),
+    );
+    await _notificationRepo.sendNotification(playerId, notif);
+  }
+
   // --------------------------------------------------------------------------
-  // 3. CHALLENGES
+  // 3. CHALLENGES (Code-driven instant confirmation SSOT)
   // --------------------------------------------------------------------------
 
-  /// Notify opponent team captain about a new challenge
-  static Future<void> notifyChallengeReceived({
+  /// Notify opponent team captain that a challenge match has been confirmed
+  static Future<void> notifyChallengeConfirmed({
     required String opponentCaptainId,
     required String challengerTeamName,
+    required String stadiumName,
     required String bookingId,
   }) async {
     final notif = AppNotification(
       id: '',
-      title: 'New Challenge Request! ',
-      body: '$challengerTeamName has challenged your team to a match!',
-      type: 'challenge',
+      title: 'مباراة تحدي جديدة! ⚔️',
+      body: 'تم تثبيت مباراة تحدي بين فريقك وفريق $challengerTeamName في ملعب $stadiumName!',
+      type: 'challenge_confirmed',
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
     await _notificationRepo.sendNotification(opponentCaptainId, notif);
-  }
-
-  /// Notify challenger that their challenge was accepted
-  static Future<void> notifyChallengeAccepted({
-    required String challengerCaptainId,
-    required String opponentTeamName,
-    required String bookingId,
-  }) async {
-    final notif = AppNotification(
-      id: '',
-      title: 'Challenge Accepted! ',
-      body: '$opponentTeamName accepted your challenge. Prepare for glory!',
-      type: 'booking_confirmed',
-      bookingId: bookingId,
-      createdAt: DateTime.now(),
-    );
-    await _notificationRepo.sendNotification(challengerCaptainId, notif);
-  }
-
-  /// Notify challenger that their challenge was declined
-  static Future<void> notifyChallengeDeclined({
-    required String challengerCaptainId,
-    required String opponentTeamName,
-  }) async {
-    final notif = AppNotification(
-      id: '',
-      title: 'Challenge Declined ',
-      body: '$opponentTeamName declined your challenge.',
-      type: 'challenge_declined',
-      createdAt: DateTime.now(),
-    );
-    await _notificationRepo.sendNotification(challengerCaptainId, notif);
   }
 
   // --------------------------------------------------------------------------

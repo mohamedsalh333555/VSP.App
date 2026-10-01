@@ -194,6 +194,21 @@ class PlayerBookingCard extends StatelessWidget {
                             ],
                           ],
                         ),
+                        if (booking.isChallenge &&
+                            ((booking.playerTeamName != null && booking.playerTeamName!.isNotEmpty) ||
+                             (booking.opponentTeamName != null && booking.opponentTeamName!.isNotEmpty))) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            '${booking.playerTeamName ?? (isArabic ? "فريقنا" : "Our Team")} VS ${booking.opponentTeamName ?? (isArabic ? "الخصم" : "Opponent")}',
+                            style: const TextStyle(
+                              color: VSPColors.accent,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),

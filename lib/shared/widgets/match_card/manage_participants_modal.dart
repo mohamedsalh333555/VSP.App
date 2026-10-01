@@ -103,9 +103,9 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      await NotificationHandler.notifyChallengeDeclined(
-        challengerCaptainId: userId,
-        opponentTeamName: widget.booking.playerTeamName ?? widget.booking.stadiumName,
+      await NotificationHandler.notifyJoinRequestRejected(
+        playerId: userId,
+        stadiumName: widget.booking.stadiumName,
       );
       _fetchUsers();
     } catch (e) {

@@ -129,6 +129,10 @@ class PendingBookingCard extends StatelessWidget {
                       isPaid: false,
                       isPrivate: pendingBooking.isPrivate,
                       rentBall: pendingBooking.rentBall,
+                      playerTeamId: pendingBooking.playerTeamId,
+                      playerTeamName: pendingBooking.playerTeamName,
+                      opponentTeamId: pendingBooking.opponentTeamId,
+                      opponentTeamName: pendingBooking.opponentTeamName,
                     );
                     Navigator.push(
                       context,
