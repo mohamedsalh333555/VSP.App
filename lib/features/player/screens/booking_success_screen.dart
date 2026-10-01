@@ -88,9 +88,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  ? widget.booking.id.substring(0, 8).toUpperCase() 
  : widget.booking.id.toUpperCase();
 
+ final isDeposit = widget.booking.paymentStatus == 'partially_paid' ||
+     (widget.booking.depositPaid > 0 && widget.booking.depositPaid < widget.booking.totalPrice);
+
  final paymentMethodText = widget.booking.paymentMethod.toLowerCase() == 'cash'
  ? (isArabic ? 'دفع نقداً' : 'Cash')
- : (isArabic ? 'دفع إلكتروني' : 'Online Payment');
+ : isDeposit
+     ? (isArabic ? 'دفع عربون إلكتروني' : 'Online Deposit')
+     : (isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment');
 
  final formattedPriceAndPayment = isArabic
  ? '${widget.booking.totalPrice.toInt()} ج.م • $paymentMethodText'
@@ -198,6 +203,30 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  isArabic 
  ? '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م ' 
  : '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP ',
+ ),
+ const Divider(color: VSPColors.divider, height: 16),
+ Container(
+ margin: const EdgeInsets.only(top: 4),
+ padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+ decoration: BoxDecoration(
+ color: VSPColors.accent.withValues(alpha: 0.12),
+ borderRadius: BorderRadius.circular(VSPRadius.sm),
+ border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+ ),
+ child: Row(
+ children: [
+ const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 16),
+ const SizedBox(width: 8),
+ Expanded(
+ child: Text(
+ isArabic
+ ? 'تنبيه: تم سداد العربون فقط. يرجى سداد المبلغ المتبقي (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م) نقداً عند شباك الملعب.'
+ : 'Notice: Deposit only paid. Please pay the remaining balance (${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP) in cash at the pitch.',
+ style: const TextStyle(color: VSPColors.accent, fontSize: 11.5, fontWeight: FontWeight.bold),
+ ),
+ ),
+ ],
+ ),
  ),
  ],
  ] else if (widget.booking.paymentMethod.toLowerCase() == 'cash') ...[

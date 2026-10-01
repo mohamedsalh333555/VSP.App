@@ -17,13 +17,18 @@ class BookingQueryCoordinator {
     final direct = await getUserBookingsDirectly(userId);
     if (direct.isNotEmpty) yield direct;
 
+    final lowerUserId = userId.trim().toLowerCase();
+
     yield* _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('created_by_user_id', userId)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) =>
+                  b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                  b.userId.trim().toLowerCase() == lowerUserId ||
+                  b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId))
               .toList();
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
@@ -53,11 +58,13 @@ class BookingQueryCoordinator {
           .order('start_time', ascending: false)
           .limit(100);
 
+      final lowerUserId = userId.trim().toLowerCase();
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) =>
-              b.userId.trim().toLowerCase() == userId.trim().toLowerCase() ||
-              b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
+              b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+              b.userId.trim().toLowerCase() == lowerUserId ||
+              b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId))
           .toList();
       VSPLogger.i('getUserBookingsDirectly returned ${bookings.length} bookings');
       return bookings;
@@ -140,10 +147,10 @@ class BookingQueryCoordinator {
   /// Real-time stream of upcoming confirmed bookings for a player.
   Stream<List<Booking>> getUpcomingBookings(String userId) {
     final now = DateTime.now();
+    final lowerUserId = userId.trim().toLowerCase();
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('created_by_user_id', userId)
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) => sink.add([]),
@@ -151,7 +158,12 @@ class BookingQueryCoordinator {
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) => b.status == BookingStatus.confirmed && b.startTime.isAfter(now))
+              .where((b) {
+                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                    b.userId.trim().toLowerCase() == lowerUserId ||
+                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+                return isParticipant && b.status == BookingStatus.confirmed && b.startTime.isAfter(now);
+              })
               .toList();
           bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
           return bookings;
@@ -163,10 +175,10 @@ class BookingQueryCoordinator {
 
   /// Real-time stream of completed bookings history.
   Stream<List<Booking>> getBookingHistory(String userId) {
+    final lowerUserId = userId.trim().toLowerCase();
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('created_by_user_id', userId)
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) => sink.add([]),
@@ -174,7 +186,12 @@ class BookingQueryCoordinator {
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) => b.status == BookingStatus.completed)
+              .where((b) {
+                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                    b.userId.trim().toLowerCase() == lowerUserId ||
+                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+                return isParticipant && b.status == BookingStatus.completed;
+              })
               .toList();
           bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
           return bookings;

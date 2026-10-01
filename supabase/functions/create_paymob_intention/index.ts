@@ -156,7 +156,7 @@ serve(async (req: Request) => {
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
         .from("bookings")
-        .select("id, total_price, deposit_amount, needs_deposit, created_by_user_id, user_id, status")
+        .select("id, stadium_id, start_time, end_time, total_price, deposit_amount, needs_deposit, created_by_user_id, user_id, status, locked_until")
         .eq("id", booking_id)
         .maybeSingle();
 
@@ -167,11 +167,37 @@ serve(async (req: Request) => {
         );
       }
 
-      // Check if booking is already confirmed/paid
-      if (booking.status === "confirmed") {
+      // Check if booking is in pending state (only pending bookings can enter checkout)
+      if (booking.status !== "pending") {
         return new Response(
-          JSON.stringify({ error: "Booking is already confirmed and paid" }),
+          JSON.stringify({ error: `Booking cannot be paid because status is ${booking.status}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 🔒 Server-Side Lock Check: Reject checkout if locked_until has expired
+      if (!booking.locked_until || new Date(booking.locked_until).getTime() < Date.now()) {
+        return new Response(
+          JSON.stringify({ error: "Booking lock has expired. Please select the slot again." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // 🔒 Race Condition Protection: Verify slot was not confirmed by another player
+      const { data: conflictingBookings, error: conflictErr } = await supabase
+        .from("bookings")
+        .select("id")
+        .eq("stadium_id", booking.stadium_id)
+        .eq("status", "confirmed")
+        .neq("id", booking.id)
+        .lt("start_time", booking.end_time)
+        .gt("end_time", booking.start_time)
+        .limit(1);
+
+      if (!conflictErr && conflictingBookings && conflictingBookings.length > 0) {
+        return new Response(
+          JSON.stringify({ error: "Slot is no longer available as another booking was confirmed." }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 

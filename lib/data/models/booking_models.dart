@@ -1,4 +1,4 @@
-export 'booking_enums.dart';
+﻿export 'booking_enums.dart';
 export 'booking_draft.dart';
 export 'booking_mapper.dart';
 export 'refund_info.dart';
@@ -301,6 +301,9 @@ class Booking {
  String? binanceId,
  String? paymentSource,
  String? paymentReconcileState,
+  String? cancellationReason,
+  String? notes,
+  String? playerPhone,
  }) {
  return Booking(
  id: id ?? this.id,
@@ -347,13 +350,12 @@ class Booking {
  binanceId: binanceId ?? this.binanceId,
  paymentSource: paymentSource ?? this.paymentSource,
  paymentReconcileState: paymentReconcileState ?? this.paymentReconcileState,
+  cancellationReason: cancellationReason ?? this.cancellationReason,
+  notes: notes ?? this.notes,
+  playerPhone: playerPhone ?? this.playerPhone,
  );
  }
 
- /// Check if booking is upcoming
- bool get isUpcoming => 
- status == BookingStatus.confirmed && 
- startTime.isAfter(DateTime.now());
 
  /// Check if booking is completed
  bool get isCompleted => status == BookingStatus.completed;
@@ -381,15 +383,24 @@ class Booking {
   // =========================================================================
 
   /// الحالة المالية الموحدة للحجز (Single Source of Truth)
+  /// Canonical Payment States: unpaid, partially_paid, fully_paid, refunded, refund_pending, refund_failed
   String get effectivePaymentState {
     if (paymentReconcileState != null && paymentReconcileState!.isNotEmpty) {
       return paymentReconcileState!;
     }
-    if (paymentStatus == 'refunded') return 'refunded';
-    if (isPaid || paymentStatus == 'paid') return 'fully_paid';
-    if (depositPaid > 0 && depositPaid < totalPrice) return 'partially_paid';
+    final ps = paymentStatus.toLowerCase().trim();
+    if (ps == 'refund_failed') return 'refund_failed';
+    if (ps == 'refund_pending') return 'refund_pending';
+    if (ps == 'refunded') return 'refunded';
+    if (isPaid || ps == 'paid' || ps == 'fully_paid') return 'fully_paid';
+    if (ps == 'partially_paid' || (depositPaid > 0 && depositPaid < totalPrice)) return 'partially_paid';
     return 'unpaid';
   }
+
+  /// حالة Upcoming مشتقة وليست حالة قاعدة بيانات مستقلة
+  /// (Derived view state: confirmed + start_time > now)
+  bool get isUpcoming =>
+      status == BookingStatus.confirmed && startTime.isAfter(DateTime.now());
 
   /// مصدر الدفع الموحد للحجز
   String get effectivePaymentSource {
