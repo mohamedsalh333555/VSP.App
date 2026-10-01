@@ -39,6 +39,7 @@ void main() {
       double totalPrice = 300,
       String createdByUserId = 'test-user-id',
       String paymentStatus = 'pending',
+      String paymentMethod = 'cash',
       bool isPaid = false,
       bool isDepositPaid = false,
       double depositPaid = 0.0,
@@ -60,7 +61,7 @@ void main() {
         isPrivate: false,
         rentBall: false,
         totalPrice: totalPrice,
-        paymentMethod: 'cash',
+        paymentMethod: paymentMethod,
         status: status,
         createdByUserId: createdByUserId,
         createdAt: now,
@@ -1047,6 +1048,258 @@ void main() {
 
       final restored = BookingDraft.fromMap(map);
       expect(restored.idempotencyKey, equals('uuid-idem-key-12345'));
+    });
+
+    // 34. Expiration SSOT: pending & challenge pending transitions strictly to expired + unpaid
+    test('34. Expiration SSOT: pending & challenge pending strictly resolve to expired + unpaid', () {
+      final pendingRegular = makeBooking(
+        id: 'bk-exp-reg',
+        startTime: now.add(const Duration(hours: 1)),
+        endTime: now.add(const Duration(hours: 2)),
+        status: BookingStatus.expired,
+        paymentStatus: 'unpaid',
+        paymentMethod: 'paymob',
+        isPaid: false,
+      );
+      expect(pendingRegular.status, equals(BookingStatus.expired));
+      expect(pendingRegular.effectivePaymentState, equals('unpaid'));
+      expect(pendingRegular.isMatrixValid, isTrue);
+
+      final challengePending = makeBooking(
+        id: 'bk-exp-chl',
+        bookingType: BookingType.challenge,
+        startTime: now.add(const Duration(hours: 1)),
+        endTime: now.add(const Duration(hours: 2)),
+        status: BookingStatus.expired,
+        paymentStatus: 'unpaid',
+        paymentMethod: 'cash',
+        isPaid: false,
+      );
+      expect(challengePending.status, equals(BookingStatus.expired));
+      expect(challengePending.effectivePaymentState, equals('unpaid'));
+      expect(challengePending.isMatrixValid, isTrue);
+
+      // Verify that expired with paid/partially_paid/refund_* states is strictly illegal
+      for (final invalidState in ['partially_paid', 'fully_paid', 'refund_pending', 'refunded', 'refund_failed']) {
+        final isValid = BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.expired,
+          paymentState: invalidState,
+          paymentMethod: 'cash',
+        );
+        expect(isValid, isFalse, reason: 'Expired booking cannot have payment state $invalidState');
+      }
+    });
+
+    // 35. SSOT Matrix: Booking Status × Payment State × Payment Method Enforcement
+    test('35. SSOT Matrix: Booking Status x Payment State x Payment Method exact rules', () {
+      // confirmed + unpaid + cash => ALLOWED (pitch collection pending)
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.confirmed,
+          paymentState: 'unpaid',
+          paymentMethod: 'cash',
+        ),
+        isTrue,
+      );
+
+      // confirmed + unpaid + paymob => FORBIDDEN (cannot confirm unpaid online booking)
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.confirmed,
+          paymentState: 'unpaid',
+          paymentMethod: 'paymob',
+        ),
+        isFalse,
+      );
+
+      // pending + unpaid + paymob => ALLOWED (waiting for checkout)
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.pending,
+          paymentState: 'unpaid',
+          paymentMethod: 'paymob',
+        ),
+        isTrue,
+      );
+
+      // pending + fully_paid => FORBIDDEN (if paid, must be promoted to confirmed)
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.pending,
+          paymentState: 'fully_paid',
+          paymentMethod: 'paymob',
+        ),
+        isFalse,
+      );
+
+      // expired + unpaid => ALLOWED
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.expired,
+          paymentState: 'unpaid',
+          paymentMethod: 'paymob',
+        ),
+        isTrue,
+      );
+
+      // expired + partially_paid => FORBIDDEN
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.expired,
+          paymentState: 'partially_paid',
+          paymentMethod: 'paymob',
+        ),
+        isFalse,
+      );
+
+      // expired + fully_paid => FORBIDDEN
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.expired,
+          paymentState: 'fully_paid',
+          paymentMethod: 'cash',
+        ),
+        isFalse,
+      );
+
+      // cancelled + refund_pending => ALLOWED
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.cancelled,
+          paymentState: 'refund_pending',
+          paymentMethod: 'paymob',
+        ),
+        isTrue,
+      );
+
+      // cancelled + refunded => ALLOWED
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.cancelled,
+          paymentState: 'refunded',
+          paymentMethod: 'paymob',
+        ),
+        isTrue,
+      );
+
+      // cancelled + refund_failed => ALLOWED
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.cancelled,
+          paymentState: 'refund_failed',
+          paymentMethod: 'paymob',
+        ),
+        isTrue,
+      );
+
+      // cancelled + unpaid => ALLOWED
+      expect(
+        BookingPaymentMatrix.isValidCombination(
+          status: BookingStatus.cancelled,
+          paymentState: 'unpaid',
+          paymentMethod: 'cash',
+        ),
+        isTrue,
+      );
+    });
+
+    // 36. Financial Amount Semantics: Explicit separation of paid, deposit, cash collected, and remaining
+    test('36. Financial Amount Semantics: Full online, full cash, cash deposit, and online deposit + cash remainder', () {
+      // 1. Full online payment (paymob, totalPrice = 300, depositPaid = 0, isPaid = true)
+      final fullOnline = makeBooking(
+        id: 'bk-amt-online',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        totalPrice: 300,
+        depositPaid: 0,
+        isPaid: true,
+        paymentStatus: 'paid',
+        paymentMethod: 'paymob',
+      );
+      expect(fullOnline.isDigital, isTrue);
+      expect(fullOnline.digitalAmountPaid, equals(300.0));
+      expect(fullOnline.pitchCashCollected, equals(0.0));
+      expect(fullOnline.totalAmountPaid, equals(300.0));
+      expect(fullOnline.collectedAmount, equals(300.0), reason: 'Full online payment must reflect 300.0 collected, NOT 0.0 depositPaid');
+      expect(fullOnline.actualDepositPaid, equals(0.0));
+      expect(fullOnline.remainingAmount, equals(0.0));
+      expect(fullOnline.pendingReceivable, equals(0.0));
+
+      // 2. Full cash payment (cash, totalPrice = 250, depositPaid = 0, isPaid = true)
+      final fullCash = makeBooking(
+        id: 'bk-amt-cash',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        totalPrice: 250,
+        depositPaid: 0,
+        isPaid: true,
+        paymentStatus: 'paid',
+        paymentMethod: 'cash',
+      );
+      expect(fullCash.isCash, isTrue);
+      expect(fullCash.digitalAmountPaid, equals(0.0));
+      expect(fullCash.pitchCashCollected, equals(250.0));
+      expect(fullCash.totalAmountPaid, equals(250.0));
+      expect(fullCash.collectedAmount, equals(250.0));
+      expect(fullCash.actualDepositPaid, equals(0.0));
+      expect(fullCash.remainingAmount, equals(0.0));
+
+      // 3. Cash partial payment (cash, totalPrice = 200, depositPaid = 50, isPaid = false, partially_paid)
+      final partialCash = makeBooking(
+        id: 'bk-amt-cash-part',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        totalPrice: 200,
+        depositPaid: 50,
+        isPaid: false,
+        paymentStatus: 'partially_paid',
+        paymentMethod: 'cash',
+      );
+      expect(partialCash.isCash, isTrue);
+      expect(partialCash.digitalAmountPaid, equals(0.0));
+      expect(partialCash.pitchCashCollected, equals(50.0));
+      expect(partialCash.totalAmountPaid, equals(50.0));
+      expect(partialCash.collectedAmount, equals(50.0));
+      expect(partialCash.actualDepositPaid, equals(50.0));
+      expect(partialCash.remainingAmount, equals(150.0));
+      expect(partialCash.pendingReceivable, equals(150.0));
+
+      // 4. Online deposit + pitch cash remainder (paymob, totalPrice = 300, depositPaid = 100)
+      // Step A: Deposit paid online
+      final onlineDeposit = makeBooking(
+        id: 'bk-amt-online-dep',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        totalPrice: 300,
+        depositPaid: 100,
+        isPaid: false,
+        paymentStatus: 'partially_paid',
+        paymentMethod: 'paymob',
+      );
+      expect(onlineDeposit.isDigital, isTrue);
+      expect(onlineDeposit.digitalAmountPaid, equals(100.0));
+      expect(onlineDeposit.pitchCashCollected, equals(0.0));
+      expect(onlineDeposit.totalAmountPaid, equals(100.0));
+      expect(onlineDeposit.collectedAmount, equals(100.0));
+      expect(onlineDeposit.actualDepositPaid, equals(100.0));
+      expect(onlineDeposit.remainingAmount, equals(200.0));
+      expect(onlineDeposit.pendingReceivable, equals(200.0));
+
+      // Step B: Remaining 200 EGP collected in cash at the pitch
+      final settledAtPitch = onlineDeposit.copyWith(
+        isPaid: true,
+        paymentStatus: 'paid',
+      );
+      expect(settledAtPitch.digitalAmountPaid, equals(100.0));
+      expect(settledAtPitch.pitchCashCollected, equals(200.0));
+      expect(settledAtPitch.totalAmountPaid, equals(300.0));
+      expect(settledAtPitch.collectedAmount, equals(300.0));
+      expect(settledAtPitch.remainingAmount, equals(0.0));
+      expect(settledAtPitch.pendingReceivable, equals(0.0));
     });
   });
 }

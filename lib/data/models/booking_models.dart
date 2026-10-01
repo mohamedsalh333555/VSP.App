@@ -484,18 +484,85 @@ class Booking {
     return 0.0;
   }
 
-  /// إجمالي المبلغ المحصل (عربون أو كامل) - Manual Cash / Domain abstraction
-  double get collectedAmount => depositPaid;
+  /// إجمالي المبلغ المدفوع / المحصل فعلياً عبر كل القنوات (أونلاين + كاش)
+  double get totalAmountPaid => digitalAmountPaid + pitchCashCollected;
 
-  /// المبلغ المتبقي غير المحصل - Manual Cash / Domain abstraction
+  /// اسم بديل متوافق لـ totalAmountPaid
+  double get actualPaidAmount => totalAmountPaid;
+
+  /// إجمالي المبلغ المحصل (عربون أو كامل أو أونلاين)
+  double get totalCollectedAmount => totalAmountPaid;
+
+  /// المبلغ المحصل فعلياً (بدلاً من الاقتصار على depositPaid)
+  double get collectedAmount => totalAmountPaid;
+
+  /// العربون المدفوع فعلياً (إن كان الحجز دفع عربوناً فقط أقل من الإجمالي)
+  double get actualDepositPaid =>
+      (depositPaid > 0 && depositPaid < (totalPrice > 0 ? totalPrice : 999999.0))
+          ? depositPaid
+          : 0.0;
+
+  /// المبلغ المتبقي غير المحصل
   double get remainingAmount =>
-      isPaid ? 0.0 : (totalPrice - depositPaid > 0 ? totalPrice - depositPaid : 0.0);
+      isPaid ? 0.0 : (totalPrice - totalAmountPaid).clamp(0.0, 999999.0);
 
   /// المتبقي المعلق الذي لم يُحصّل بعد
-  double get pendingReceivable {
-    final effectiveTotal = totalPrice > 0 ? totalPrice : depositPaid;
-    final totalCollected = digitalAmountPaid + pitchCashCollected;
-    return (effectiveTotal - totalCollected).clamp(0.0, 999999.0);
+  double get pendingReceivable =>
+      isPaid ? 0.0 : (totalPrice - totalAmountPaid).clamp(0.0, 999999.0);
+
+  /// هل تركيبة حالة الحجز والحالة المالية ووسيلة الدفع متوافقة مع مصفوفة SSOT؟
+  bool get isMatrixValid => BookingPaymentMatrix.isValidCombination(
+        status: status,
+        paymentState: effectivePaymentState,
+        paymentMethod: paymentMethod,
+        paymentSource: paymentSource,
+      );
+}
+
+/// مصفوفة توافق حالة الحجز مع الحالة المالية ووسيلة الدفع (SSOT Booking × Payment Matrix)
+class BookingPaymentMatrix {
+  static bool isValidCombination({
+    required BookingStatus status,
+    required String paymentState,
+    required String paymentMethod,
+    String? paymentSource,
+  }) {
+    final method = paymentMethod.toLowerCase().trim();
+    final source = (paymentSource ?? '').toLowerCase().trim();
+    final isCash = method == 'cash' || source == 'cash' || method.contains('كاش');
+    final isOnline = method == 'paymob' ||
+        method == 'card' ||
+        method == 'wallet' ||
+        method == 'online' ||
+        method == 'visa' ||
+        method == 'mastercard' ||
+        method == 'meeza' ||
+        source == 'paymob';
+
+    switch (status) {
+      case BookingStatus.pending:
+        // pending can ONLY be unpaid
+        return paymentState == 'unpaid';
+      case BookingStatus.confirmed:
+      case BookingStatus.upcoming:
+        // confirmed + unpaid is ONLY permitted for cash payments (pitch settlement)
+        if (paymentState == 'unpaid') {
+          return isCash && !isOnline;
+        }
+        return paymentState == 'partially_paid' || paymentState == 'fully_paid';
+      case BookingStatus.completed:
+        return paymentState == 'unpaid' ||
+            paymentState == 'partially_paid' ||
+            paymentState == 'fully_paid';
+      case BookingStatus.cancelled:
+        return paymentState == 'unpaid' ||
+            paymentState == 'refund_pending' ||
+            paymentState == 'refunded' ||
+            paymentState == 'refund_failed';
+      case BookingStatus.expired:
+        // expired can ONLY be unpaid
+        return paymentState == 'unpaid';
+    }
   }
 }
 

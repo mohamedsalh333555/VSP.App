@@ -122,7 +122,14 @@ BEGIN
             USING ERRCODE = 'P0005', DETAIL = 'BOOKING_PAYMENT_MATRIX_VIOLATION';
         END IF;
       ELSIF NEW.status = 'confirmed' THEN
-        IF NEW.payment_reconcile_state NOT IN ('unpaid', 'partially_paid', 'fully_paid') THEN
+        -- Cash bookings can be confirmed while unpaid (awaiting pitch payment)
+        -- Online bookings (paymob, card, wallet, online) CANNOT be confirmed while unpaid
+        IF NEW.payment_reconcile_state = 'unpaid' THEN
+          IF NEW.payment_source = 'paymob' OR lower(coalesce(NEW.payment_method, '')) IN ('paymob', 'card', 'wallet', 'online', 'visa', 'mastercard', 'meeza') THEN
+            RAISE EXCEPTION 'ILLEGAL_MATRIX_COMBINATION: Online booking with payment method "%" cannot be confirmed while unpaid', NEW.payment_method
+              USING ERRCODE = 'P0005', DETAIL = 'ONLINE_BOOKING_CANNOT_BE_CONFIRMED_UNPAID';
+          END IF;
+        ELSIF NEW.payment_reconcile_state NOT IN ('partially_paid', 'fully_paid') THEN
           RAISE EXCEPTION 'ILLEGAL_MATRIX_COMBINATION: status "confirmed" cannot have payment state "%"', NEW.payment_reconcile_state
             USING ERRCODE = 'P0005', DETAIL = 'BOOKING_PAYMENT_MATRIX_VIOLATION';
         END IF;
@@ -199,6 +206,7 @@ BEGIN
   UPDATE public.bookings
   SET
     status = 'expired',
+    payment_status = 'unpaid',
     challenge_status = 'expired',
     updated_at = NOW(),
     notes = COALESCE(notes, '') || E'\n[SYSTEM: Challenge expired automatically]'
