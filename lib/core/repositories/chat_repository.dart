@@ -104,10 +104,13 @@ class ChatRepository {
 
   Future<void> editMessage(String messageId, String newText) async {
     try {
-      await _supabase.from('chat_messages').update({
-        'text': newText,
-        'is_edited': true,
-      }).eq('id', messageId);
+      final res = await _supabase.rpc('edit_chat_message_atomic', params: {
+        'p_message_id': messageId,
+        'p_new_text': newText,
+      });
+      if (res is Map && res['success'] == false) {
+        throw Exception(res['error']?.toString() ?? 'Failed to edit message');
+      }
     } catch (e) {
       VSPLogger.e('Error editing message', e);
       rethrow;
@@ -116,26 +119,10 @@ class ChatRepository {
 
   Future<void> markMessagesAsRead(String conversationId, String userId) async {
     try {
-      await _supabase
-          .from('chat_messages')
-          .update({'is_read': true})
-          .or('conversation_id.eq.$conversationId,booking_id.eq.$conversationId')
-          .neq('sender_id', userId)
-          .eq('is_read', false);
-
-      final conv = await _supabase
-          .from('conversations')
-          .select('unread_counts')
-          .eq('id', conversationId)
-          .maybeSingle();
-
-      if (conv != null) {
-        final Map<String, dynamic> unreadCounts = Map<String, dynamic>.from(conv['unread_counts'] ?? {});
-        unreadCounts[userId] = 0;
-        await _supabase.from('conversations').update({
-          'unread_counts': unreadCounts,
-        }).eq('id', conversationId);
-      }
+      await _supabase.rpc('mark_chat_messages_as_read', params: {
+        'p_conversation_id': conversationId,
+        'p_user_id': userId,
+      });
     } catch (e) {
       VSPLogger.e('Error marking messages as read', e);
     }
@@ -144,8 +131,8 @@ class ChatRepository {
   Future<void> deleteConversationForUser(String conversationId, String userId, {String? contactId}) async {
     if (userId.isEmpty) return;
     try {
-      await _supabase.rpc('delete_chat_for_user_atomic', params: {
-        'p_booking_id': conversationId,
+      await _supabase.rpc('delete_chat_for_user', params: {
+        'p_conversation_id': conversationId,
         'p_user_id': userId,
       });
     } catch (e) {

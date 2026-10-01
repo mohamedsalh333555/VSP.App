@@ -388,22 +388,9 @@ class LeagueRepository {
     }
   }
 
+  @Deprecated('Legacy 1v1 direct registration is discontinued. Register via the official paid championship flow.')
   Future<bool> registerFor1v1(String userId) async {
-    try {
-      final currentCount = await get1v1RegistrationsCount();
-      if (currentCount >= 32) {
-        throw Exception('roster_full_32');
-      }
-
-      await _supabase.from('vsp_1v1_registrations').insert({
-        'user_id': userId,
-        'status': 'pending',
-      });
-      return true;
-    } catch (e) {
-      debugPrint('Error registering for 1v1: $e');
-      rethrow;
-    }
+    throw UnsupportedError('Direct 1v1 registration is deprecated. Use official paid championship flow.');
   }
 
   Stream<int> stream1v1RegistrationsCount() async* {
