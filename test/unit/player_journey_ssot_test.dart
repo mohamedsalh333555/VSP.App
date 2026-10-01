@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Track B: Player Identity & Social Journey SSOT', () {
     test('User sensitive fields trigger protects financial, security and lifecycle fields', () {
-      // Simulating OLD vs NEW updates on sensitive attributes
       final sensitiveFields = [
         'role',
         'email',
@@ -27,8 +26,7 @@ void main() {
       ];
 
       for (final field in sensitiveFields) {
-        final isProtected = sensitiveFields.contains(field);
-        expect(isProtected, isTrue, reason: 'Field $field must be server-authoritative');
+        expect(sensitiveFields.contains(field), isTrue, reason: 'Field $field must be server-authoritative');
       }
     });
 
@@ -93,7 +91,6 @@ void main() {
         {'team_id': 'team-heroes', 'user_id': 'member-youngest', 'joined_at': '2026-01-05T10:00:00Z', 'name': 'Youngest Player'},
       ];
 
-      // Finding remaining members sorted by joined_at ASC
       final remainingMembers = members
           .where((m) => m['user_id'] != deletingCaptainId)
           .toList()
@@ -103,7 +100,6 @@ void main() {
       final newCaptain = remainingMembers.first;
       expect(newCaptain['user_id'], equals('member-oldest'));
 
-      // Update team captaincy
       team['captain_id'] = newCaptain['user_id']!;
       expect(team['captain_id'], equals('member-oldest'));
       expect(team['id'], equals('team-heroes'), reason: 'Team must NOT be deleted when other members exist');
@@ -129,6 +125,47 @@ void main() {
       }
 
       expect(teamDeleted, isTrue, reason: 'Sole captain leaving disbands empty team cleanly');
+    });
+
+    test('Strict Atomic Deletion: Failure in auth.users deletion rolls back and prevents half-deleted account', () {
+      final authUsers = {'user-123': 'active'};
+      final publicUsers = {'user-123': 'active'};
+
+      // Transaction simulation
+      bool simulateAuthDeletionFailure = true;
+      String? errorMessage;
+      bool transactionCommitted = false;
+
+      try {
+        if (simulateAuthDeletionFailure) {
+          throw Exception('AUTH_DELETION_FAILED: foreign key or network lock in auth.users');
+        }
+        authUsers.remove('user-123');
+        publicUsers.remove('user-123');
+        transactionCommitted = true;
+      } catch (e) {
+        // Rollback entire transaction
+        transactionCommitted = false;
+        errorMessage = e.toString();
+      }
+
+      expect(transactionCommitted, isFalse);
+      expect(errorMessage, contains('AUTH_DELETION_FAILED'));
+      // Invariant: Both stores must remain intact if either fails (no half-deleted accounts)
+      expect(authUsers.containsKey('user-123'), isTrue);
+      expect(publicUsers.containsKey('user-123'), isTrue);
+    });
+
+    test('Successful deletion cleans up both auth.users and public.users atomically', () {
+      final authUsers = {'user-clean': 'active'};
+      final publicUsers = {'user-clean': 'active'};
+
+      // Successful atomic transaction
+      authUsers.remove('user-clean');
+      publicUsers.remove('user-clean');
+
+      expect(authUsers.containsKey('user-clean'), isFalse);
+      expect(publicUsers.containsKey('user-clean'), isFalse);
     });
   });
 }

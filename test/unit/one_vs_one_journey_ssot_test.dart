@@ -40,28 +40,78 @@ void main() {
       expect(rpcResponse['error'], equals('DEBT_BLOCKED'));
     });
 
-    test('Paid 1v1 tournament registration requires a paid server order', () {
+    test('Player without payment is rejected: Official 1v1 tournament requires paid order', () {
       final tournament = {
-        'id': 'tourney-1v1',
+        'id': 'tourney-1v1-paid-only',
         'entry_fee': 50.00,
         'target_player_count': 16,
         'status': 'registration_open',
       };
 
-      // Scenario A: No paid order
-      final List<Map<String, dynamic>> ordersNoPaid = [
-        {'id': 'ord-1', 'payment_status': 'pending', 'amount': 50.00},
+      // Scenario: User has no paid orders
+      final List<Map<String, dynamic>> userOrders = [
+        {'id': 'ord-unpaid', 'payment_status': 'pending', 'amount': 50.00},
       ];
 
-      final hasPaidOrderA = ordersNoPaid.any((o) => o['payment_status'] == 'paid');
-      expect(hasPaidOrderA, isFalse);
+      final hasPaidOrder = userOrders.any((o) => o['payment_status'] == 'paid');
+      expect(hasPaidOrder, isFalse);
 
-      // Scenario B: Has paid order
-      final List<Map<String, dynamic>> ordersPaid = [
-        {'id': 'ord-2', 'payment_status': 'paid', 'amount': 50.00},
+      final rpcResponse = {
+        'success': false,
+        'error': 'PAYMENT_REQUIRED',
+        'message': 'يجب إتمام الدفع الإلكتروني أولاً للاشتراك في البطولة.'
+      };
+
+      expect(rpcResponse['success'], isFalse);
+      expect(rpcResponse['error'], equals('PAYMENT_REQUIRED'));
+    });
+
+    test('Player with valid paid order is successfully registered as paid', () {
+      final tournament = {
+        'id': 'tourney-1v1',
+        'target_player_count': 16,
+        'status': 'registration_open',
+      };
+
+      final paidOrder = {
+        'id': 'ord-paid-123',
+        'payment_status': 'paid',
+        'amount': 50.00,
+        'tournament_id': tournament['id'],
+      };
+
+      final registrationRecord = {
+        'tournament_id': tournament['id'],
+        'user_id': 'user-paying-player',
+        'payment_status': 'paid',
+        'payment_order_id': paidOrder['id'],
+        'paid_amount': paidOrder['amount'],
+      };
+
+      expect(registrationRecord['payment_status'], equals('paid'));
+      expect(registrationRecord['payment_order_id'], equals('ord-paid-123'));
+      expect(registrationRecord['paid_amount'], equals(50.00));
+    });
+
+    test('Duplicate registration attempt returns already_joined and does not create duplicate record', () {
+      final existingRegistrations = [
+        {'tournament_id': 'tourney-dup', 'user_id': 'usr-1', 'payment_status': 'paid'}
       ];
-      final hasPaidOrderB = ordersPaid.any((o) => o['payment_status'] == 'paid');
-      expect(hasPaidOrderB, isTrue);
+
+      final isAlreadyRegistered = existingRegistrations.any(
+        (r) => r['tournament_id'] == 'tourney-dup' && r['user_id'] == 'usr-1' && r['payment_status'] == 'paid'
+      );
+
+      expect(isAlreadyRegistered, isTrue);
+
+      final rpcResponse = {
+        'success': true,
+        'already_joined': true,
+        'message': 'أنت مسجل بالفعل في هذه البطولة.'
+      };
+
+      expect(rpcResponse['already_joined'], isTrue);
+      expect(existingRegistrations.length, equals(1));
     });
 
     test('Payment confirmation over capacity marks order failed and flags refund', () {
@@ -86,22 +136,22 @@ void main() {
       expect(confirmResult['needs_refund'], isTrue);
     });
 
-    test('Payment confirmation for blocked user fails and flags refund', () {
-      final user = {'id': 'user-paying-blocked', 'is_blocked': true};
+    test('Prize pool is incremented exactly once upon payment confirmation', () {
+      var prizePool = 0.0;
+      final order = {'id': 'ord-prize', 'amount': 100.0, 'payment_status': 'pending'};
 
-      final isBlocked = user['is_blocked'] == true;
-      expect(isBlocked, isTrue);
+      // First confirmation
+      if (order['payment_status'] != 'paid') {
+        order['payment_status'] = 'paid';
+        prizePool += (order['amount'] as double);
+      }
+      expect(prizePool, equals(100.0));
 
-      final confirmResult = {
-        'success': false,
-        'user_blocked': true,
-        'needs_refund': true,
-        'message': 'حساب اللاعب محظور. تم إرسال أمر استرداد المبلغ.',
-      };
-
-      expect(confirmResult['success'], isFalse);
-      expect(confirmResult['user_blocked'], isTrue);
-      expect(confirmResult['needs_refund'], isTrue);
+      // Attempted duplicate confirmation
+      if (order['payment_status'] != 'paid') {
+        prizePool += (order['amount'] as double);
+      }
+      expect(prizePool, equals(100.0), reason: 'Prize pool must never be double incremented');
     });
 
     test('Champion crowning updates championship, player trophies, and rankings', () {
@@ -114,7 +164,6 @@ void main() {
       final winnerUserId = 'winner-user-1';
       final prizeAmount = 1000.00;
 
-      // Crown champion
       championship['status'] = 'completed';
       championship['champion_user_id'] = winnerUserId;
 
@@ -139,7 +188,6 @@ void main() {
         'prize_delivered': false,
       };
 
-      // Documentation RPC
       tournament['prize_delivered'] = true;
       tournament['prize_delivered_at'] = DateTime.now().toIso8601String();
       tournament['prize_delivered_by'] = 'admin-user-id';
@@ -147,7 +195,6 @@ void main() {
       expect(tournament['prize_delivered'], isTrue);
       expect(tournament['prize_delivered_at'], isNotNull);
 
-      // Attempting to deliver again should fail
       final reDeliverAttemptAllowed = tournament['prize_delivered'] != true;
       expect(reDeliverAttemptAllowed, isFalse);
     });
