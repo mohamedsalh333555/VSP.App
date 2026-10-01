@@ -432,11 +432,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
                     cashThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
-                        ? _dashboardAnalytics.revenue.cash
+                        ? _dashboardAnalytics.revenue.realizedCash
                         : metrics.pitchCashRevenue,
                     onlineThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
-                        ? _dashboardAnalytics.revenue.online
+                        ? _dashboardAnalytics.revenue.realizedOnline
                         : metrics.digitalVspBalance,
+                    upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                     timePeriod: _selectedTimePeriod,
                     periodLabel: _currentFilter.periodLabel,
                     onOpenLedger: () {

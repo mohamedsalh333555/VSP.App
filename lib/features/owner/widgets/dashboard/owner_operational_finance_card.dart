@@ -9,6 +9,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double availableBalance;
   final double cashThisMonth;
   final double onlineThisMonth;
+  final double upcomingValue;
   final String timePeriod;
   final String? periodLabel;
   final VoidCallback onOpenLedger;
@@ -20,6 +21,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required this.availableBalance,
     required this.cashThisMonth,
     required this.onlineThisMonth,
+    this.upcomingValue = 0.0,
     this.timePeriod = 'today',
     this.periodLabel,
     required this.onOpenLedger,
@@ -177,96 +179,147 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
           const Divider(color: VSPColors.divider, height: 1, thickness: 1),
           const SizedBox(height: 14),
 
-          // ── السطر السفلي: كاش وأونلاين الفترة الزمنية المحددة ──
+          // ── السطر السفلي: كاش محصّل وأونلاين محقق للفترة المحددة ──
           Builder(
             builder: (context) {
               String cashLabel;
               String onlineLabel;
               if (periodLabel != null && periodLabel!.isNotEmpty) {
-                cashLabel = isArabic ? 'كاش $periodLabel' : 'Cash ($periodLabel)';
-                onlineLabel = isArabic ? 'أونلاين $periodLabel' : 'Online ($periodLabel)';
+                cashLabel = isArabic ? 'كاش محصّل ($periodLabel)' : 'Cash Collected ($periodLabel)';
+                onlineLabel = isArabic ? 'أونلاين محقق ($periodLabel)' : 'Online Realized ($periodLabel)';
               } else if (timePeriod == 'today') {
-                cashLabel = isArabic ? 'كاش اليوم' : 'Cash Today';
-                onlineLabel = isArabic ? 'أونلاين اليوم' : 'Online Today';
+                cashLabel = isArabic ? 'كاش محصّل اليوم' : 'Cash Collected Today';
+                onlineLabel = isArabic ? 'أونلاين محقق اليوم' : 'Online Realized Today';
               } else if (timePeriod == 'yesterday') {
-                cashLabel = isArabic ? 'كاش أمس' : 'Cash Yesterday';
-                onlineLabel = isArabic ? 'أونلاين أمس' : 'Online Yesterday';
+                cashLabel = isArabic ? 'كاش محصّل أمس' : 'Cash Collected Yesterday';
+                onlineLabel = isArabic ? 'أونلاين محقق أمس' : 'Online Realized Yesterday';
               } else if (timePeriod == 'week' || timePeriod == 'thisWeek') {
-                cashLabel = isArabic ? 'كاش هذا الأسبوع' : 'Cash This Week';
-                onlineLabel = isArabic ? 'أونلاين هذا الأسبوع' : 'Online This Week';
+                cashLabel = isArabic ? 'كاش محصّل هذا الأسبوع' : 'Cash Collected This Week';
+                onlineLabel = isArabic ? 'أونلاين محقق هذا الأسبوع' : 'Online Realized This Week';
               } else if (timePeriod == 'month' || timePeriod == 'thisMonth') {
-                cashLabel = isArabic ? 'كاش هذا الشهر' : 'Cash This Month';
-                onlineLabel = isArabic ? 'أونلاين هذا الشهر' : 'Online This Month';
+                cashLabel = isArabic ? 'كاش محصّل هذا الشهر' : 'Cash Collected This Month';
+                onlineLabel = isArabic ? 'أونلاين محقق هذا الشهر' : 'Online Realized This Month';
               } else if (timePeriod == 'year' || timePeriod == 'thisYear') {
-                cashLabel = isArabic ? 'كاش هذا العام' : 'Cash This Year';
-                onlineLabel = isArabic ? 'أونلاين هذا العام' : 'Online This Year';
+                cashLabel = isArabic ? 'كاش محصّل هذا العام' : 'Cash Collected This Year';
+                onlineLabel = isArabic ? 'أونلاين محقق هذا العام' : 'Online Realized This Year';
               } else {
-                cashLabel = isArabic ? 'إجمالي الكاش' : 'Total Cash';
-                onlineLabel = isArabic ? 'إجمالي الأونلاين' : 'Total Online';
+                cashLabel = isArabic ? 'إجمالي الكاش المحصّل' : 'Total Cash Collected';
+                onlineLabel = isArabic ? 'إجمالي الأونلاين المحقق' : 'Total Online Realized';
               }
 
-              return Row(
+              return Column(
                 children: [
-                  // كاش الفترة
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          cashLabel,
-                          style: const TextStyle(
-                            color: VSPColors.textSecondary,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                          ),
+                  Row(
+                    children: [
+                      // كاش محصّل
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cashLabel,
+                              style: const TextStyle(
+                                color: VSPColors.textSecondary,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${cashThisMonth.toStringAsFixed(0)} $currencyLabel',
+                              style: const TextStyle(
+                                color: VSPColors.textPrimary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${cashThisMonth.toStringAsFixed(0)} $currencyLabel',
-                          style: const TextStyle(
-                            color: VSPColors.textPrimary,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
-                          ),
+                      ),
+
+                      Container(
+                        width: 1,
+                        height: 28,
+                        color: VSPColors.divider,
+                      ),
+                      const SizedBox(width: 16),
+
+                      // أونلاين محقق
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              onlineLabel,
+                              style: const TextStyle(
+                                color: VSPColors.textSecondary,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${onlineThisMonth.toStringAsFixed(0)} $currencyLabel',
+                              style: const TextStyle(
+                                color: VSPColors.textPrimary,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
 
-                  Container(
-                    width: 1,
-                    height: 28,
-                    color: VSPColors.divider,
-                  ),
-                  const SizedBox(width: 16),
-
-                  // أونلاين الفترة
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          onlineLabel,
-                          style: const TextStyle(
-                            color: VSPColors.textSecondary,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                          ),
+                  // عرض قيمة الحجوزات القادمة المؤكدة بشكل منفصل كـ operational metric
+                  if (upcomingValue > 0) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(VSPRadius.sm),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          width: 0.8,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${onlineThisMonth.toStringAsFixed(0)} $currencyLabel',
-                          style: const TextStyle(
-                            color: VSPColors.textPrimary,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.3,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Iconsax.calendar_tick_copy,
+                                size: 13,
+                                color: VSPColors.textSecondary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isArabic ? 'قيمة الحجوزات القادمة المؤكدة' : 'Upcoming Confirmed Bookings',
+                                style: const TextStyle(
+                                  color: VSPColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          Text(
+                            '${upcomingValue.toStringAsFixed(0)} $currencyLabel',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               );
             },

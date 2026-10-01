@@ -284,23 +284,23 @@ void main() {
   });
 
   group('Owner Journey SSOT - Free Trial Semantic Plan Invariance', () {
-    int resolveTrialDays({
+    int? resolveTrialDaysStrict({
       required Map<String, int> activePlans,
       String authoritativePlanCode = 'basic',
-      int defaultFallback = 365,
     }) {
-      return activePlans[authoritativePlanCode] ?? defaultFallback;
+      // Fail closed: if basic is missing or inactive, return null (never invent 365)
+      return activePlans[authoritativePlanCode];
     }
 
     test('Changing unrelated plan trial duration does NOT alter owner trial duration', () {
       // Base state: basic=365, pro=365
       final plansBefore = {'basic': 365, 'pro': 365};
-      expect(resolveTrialDays(activePlans: plansBefore), equals(365));
+      expect(resolveTrialDaysStrict(activePlans: plansBefore), equals(365));
 
       // Unrelated plan changed: pro changed to 14 days or 30 days
       final plansAfterProChanged = {'basic': 365, 'pro': 14};
       expect(
-        resolveTrialDays(activePlans: plansAfterProChanged),
+        resolveTrialDaysStrict(activePlans: plansAfterProChanged),
         equals(365),
         reason: 'Owner trial duration must strictly read basic plan, unaffected by pro plan changes',
       );
@@ -308,9 +308,21 @@ void main() {
       // Enterprise plan added with 90 days
       final plansWithEnterprise = {'basic': 365, 'pro': 14, 'enterprise': 90};
       expect(
-        resolveTrialDays(activePlans: plansWithEnterprise),
+        resolveTrialDaysStrict(activePlans: plansWithEnterprise),
         equals(365),
         reason: 'Enterprise plan presence must not alter basic owner free trial duration',
+      );
+    });
+
+    test('Missing basic plan configuration fails closed and does not invent 365 days', () {
+      final emptyPlans = <String, int>{};
+      expect(resolveTrialDaysStrict(activePlans: emptyPlans), isNull);
+
+      final plansWithoutBasic = {'pro': 14, 'enterprise': 90};
+      expect(
+        resolveTrialDaysStrict(activePlans: plansWithoutBasic),
+        isNull,
+        reason: 'Missing basic plan must fail closed without inventing fallback duration',
       );
     });
   });
