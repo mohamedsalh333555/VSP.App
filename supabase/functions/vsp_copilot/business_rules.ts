@@ -7,11 +7,39 @@ import type { SemanticConfirmation } from "./semantic_schema.ts";
 export { isToolAllowedForRole, getAllowedToolsForRole, getCapabilityByTool, CAPABILITY_REGISTRY } from "./capability_registry.ts";
 
 export function isRouteAllowedForRole(role: string | undefined | null, route: string): boolean {
+  if (!route || typeof route !== "string") return false;
+  const clean = route.trim();
   const normRole = (role || "").toLowerCase().trim();
-  if (normRole === "owner" || normRole === "pitch_owner") {
-    return ["/dashboard", "/bookings", "/ledger", "/profile", "/settings", "/add-stadium", "/subscription-plans"].some(r => route.startsWith(r));
+  const canonicalRole = (normRole === "pitch_owner" || normRole === "owner") ? "owner" : normRole;
+
+  if (canonicalRole === "owner") {
+    const ownerAllowed = [
+      "/dashboard",
+      "/bookings",
+      "/ledger",
+      "/profile",
+      "/settings",
+      "/add-stadium",
+      "/subscription-plans",
+    ];
+    return ownerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
   }
-  return ["/player", "/tournaments", "/1v1", "/my-team", "/bookings", "/profile", "/settings", "/checkout"].some(r => route.startsWith(r));
+
+  if (canonicalRole === "player") {
+    const playerAllowed = [
+      "/player",
+      "/tournaments",
+      "/1v1",
+      "/my-team",
+      "/bookings",
+      "/profile",
+      "/settings",
+      "/checkout",
+    ];
+    return playerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
+  }
+
+  return false;
 }
 
 // Egyptian Timezone (Africa/Cairo) Date Calculations

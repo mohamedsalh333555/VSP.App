@@ -170,20 +170,26 @@ serve(async (req: Request) => {
       contextSnapshot = newConv.context_snapshot || {};
     }
 
-    // 7. Load Recent Message History (Latest 6 messages in chronological order)
+    // 7. Load Recent Message History (Ordered by message_sequence when available, falling back to created_at)
     const { data: priorMessages } = await supabase
       .from("copilot_messages")
-      .select("role, content, ui_metadata")
+      .select("role, content, ui_metadata, message_sequence, created_at")
       .eq("conversation_id", conversationId)
+      .order("message_sequence", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(10);
 
-    const recentHistory: Array<{ role: string; content: string }> = (priorMessages || [])
-      .reverse()
-      .map((m: any) => ({
-        role: m.role,
-        content: m.content,
-      }));
+    const sortedMessages = (priorMessages || []).slice().sort((a: any, b: any) => {
+      if (typeof a.message_sequence === "number" && typeof b.message_sequence === "number") {
+        return a.message_sequence - b.message_sequence;
+      }
+      return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime();
+    });
+
+    const recentHistory: Array<{ role: string; content: string }> = sortedMessages.map((m: any) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
     // 8. Hydrate Conversation State
     const currentState = hydrateConversationState(contextSnapshot, userRole);

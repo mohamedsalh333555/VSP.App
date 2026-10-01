@@ -3,6 +3,7 @@
 
 import type { ConversationState, VisibleEntity } from "./conversation_state.ts";
 import { isToolAllowedForRole } from "./capability_registry.ts";
+import { isRouteAllowedForRole } from "./business_rules.ts";
 import {
   executeViewUserBookingsWorkflow,
   executeViewUpcomingBookingWorkflow,
@@ -493,7 +494,15 @@ export async function executeGuardedTool(
 
     // 8. executeAppAction
     if (toolName === "executeAppAction") {
-      const route = (args.route || "/bookings").toString().trim();
+      const route = (args.route !== undefined && args.route !== null) ? args.route.toString().trim() : "/bookings";
+      if (!route || !isRouteAllowedForRole(state.user_role, route)) {
+        return {
+          status: "AUTH_ERROR",
+          tool_name: toolName,
+          data: { route },
+          error_message: "هذا المسار غير مصرح به لهذا الدور.",
+        };
+      }
       return {
         status: "SUCCESS",
         tool_name: toolName,

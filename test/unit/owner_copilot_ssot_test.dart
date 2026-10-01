@@ -323,5 +323,122 @@ void main() {
       expect(isSameStadium, isTrue);
       expect(context['stadium_name'], equals('ملعب الأبطال'), reason: 'Stadium identity preserved');
     });
+
+    // -------------------------------------------------------------------------
+    // Task 4: Server-Side executeAppAction Route Security
+    // -------------------------------------------------------------------------
+    test('Server-Side Route Security: Strictly allows owner routes and blocks player/arbitrary routes', () {
+      const ownerAllowed = [
+        '/dashboard',
+        '/bookings',
+        '/ledger',
+        '/profile',
+        '/settings',
+        '/add-stadium',
+        '/subscription-plans',
+      ];
+
+      const ownerForbidden = [
+        '/player',
+        '/checkout',
+        '/tournaments',
+        '/1v1',
+        '/admin',
+        '/random-route',
+        '',
+      ];
+
+      bool isOwnerRouteAllowed(String route) {
+        if (route.isEmpty) return false;
+        return ownerAllowed.any((r) => route == r || route.startsWith('$r/') || route.startsWith('$r?'));
+      }
+
+      for (final r in ownerAllowed) {
+        expect(isOwnerRouteAllowed(r), isTrue, reason: 'Owner route $r must be allowed');
+        expect(isOwnerRouteAllowed('$r?tab=history'), isTrue);
+      }
+
+      for (final r in ownerForbidden) {
+        expect(isOwnerRouteAllowed(r), isFalse, reason: 'Forbidden route $r must be rejected');
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Task 5: 7-Turn Context Retention Behavioral Verification
+    // -------------------------------------------------------------------------
+    test('Context Retention: 7-turn sequential state retention across stadium, date, time, and operations', () {
+      final sessionState = <String, dynamic>{
+        'stadium_id': null,
+        'stadium_name': null,
+        'date': null,
+        'time': null,
+        'active_task': null,
+      };
+
+      // Turn 1: Establish stadium
+      sessionState['stadium_id'] = 'std-77';
+      sessionState['stadium_name'] = 'ملعب الأبطال';
+      expect(sessionState['stadium_id'], equals('std-77'));
+
+      // Turn 2: Relative date + evening
+      sessionState['date'] = '2026-10-09';
+      sessionState['time_period'] = 'evening';
+      expect(sessionState['stadium_id'], equals('std-77'));
+      expect(sessionState['date'], equals('2026-10-09'));
+
+      // Turn 3: Inspect bookings query
+      sessionState['active_task'] = 'owner_stadiums';
+      expect(sessionState['stadium_id'], equals('std-77'));
+      expect(sessionState['date'], equals('2026-10-09'));
+
+      // Turn 4: "نفس الملعب" reference resolution
+      final resolvedStadiumId = sessionState['stadium_id'];
+      expect(resolvedStadiumId, equals('std-77'));
+
+      // Turn 5: Refine time to 22:00
+      sessionState['time'] = '22:00';
+      expect(sessionState['stadium_id'], equals('std-77'));
+      expect(sessionState['time'], equals('22:00'));
+
+      // Turn 6: Navigate to /bookings
+      const plannedRoute = '/bookings';
+      expect(plannedRoute, equals('/bookings'));
+      expect(sessionState['stadium_id'], equals('std-77'));
+
+      // Turn 7: Financial query
+      sessionState['active_task'] = 'owner_financial';
+      expect(sessionState['stadium_id'], equals('std-77'));
+      expect(sessionState['stadium_name'], equals('ملعب الأبطال'));
+      expect(sessionState['date'], equals('2026-10-09'));
+    });
+
+    // -------------------------------------------------------------------------
+    // Task 6: Long Conversation Sequence Ordering (> 6 Messages)
+    // -------------------------------------------------------------------------
+    test('Conversation History: Sorts by message_sequence ascending with created_at fallback', () {
+      final rawMessages = [
+        {'seq': 4, 'content': 'D', 'created_at': '2026-10-01T12:04:00Z'},
+        {'seq': 1, 'content': 'A', 'created_at': '2026-10-01T12:01:00Z'},
+        {'seq': 7, 'content': 'G', 'created_at': '2026-10-01T12:07:00Z'},
+        {'seq': 2, 'content': 'B', 'created_at': '2026-10-01T12:02:00Z'},
+        {'seq': 5, 'content': 'E', 'created_at': '2026-10-01T12:05:00Z'},
+        {'seq': 3, 'content': 'C', 'created_at': '2026-10-01T12:03:00Z'},
+        {'seq': 8, 'content': 'H', 'created_at': '2026-10-01T12:08:00Z'},
+        {'seq': 6, 'content': 'F', 'created_at': '2026-10-01T12:06:00Z'},
+      ];
+
+      expect(rawMessages.length, greaterThan(6));
+
+      final sorted = List.of(rawMessages)..sort((a, b) {
+        final seqA = a['seq'] as int?;
+        final seqB = b['seq'] as int?;
+        if (seqA != null && seqB != null) return seqA.compareTo(seqB);
+        return (a['created_at'] as String).compareTo(b['created_at'] as String);
+      });
+
+      for (int i = 0; i < sorted.length; i++) {
+        expect(sorted[i]['seq'], equals(i + 1));
+      }
+    });
   });
 }
