@@ -46,7 +46,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       if (typeId == 'Challenge Match') {
         if (uid != null) {
           final team = await TeamRepository().getUserTeam(uid);
-          if (team == null || team.currentPlayers < 5) {
+          if (team == null) {
             if (!mounted) return;
             final created = await showModalBottomSheet<bool>(
               context: context,

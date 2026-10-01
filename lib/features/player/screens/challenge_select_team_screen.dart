@@ -514,8 +514,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  ),
  decoration: InputDecoration(
  hintText: Localizations.localeOf(context).languageCode == 'ar'
- ? 'أدخل الكود (مثال: CH8X2M)'
- : 'Enter code (e.g. CH8X2M)',
+ ? 'أدخل الكود (مثال: VSP-7K9A2)'
+ : 'Enter code (e.g. VSP-7K9A2)',
  hintStyle: TextStyle(
  color: VSPColors.textSecondary.withValues(alpha: 0.5),
  fontSize: 12,
@@ -707,31 +707,31 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
  return;
  }
 
+ if (_appliedChallengeCode == null || _appliedChallengeCode!.isEmpty) {
+   if (_challengeCodeController.text.trim().isNotEmpty) {
+     await _handleLookupCode();
+   }
+   if (_appliedChallengeCode == null || _appliedChallengeCode!.isEmpty) {
+     if (context.mounted) {
+       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+       VSPFeedback.showInfo(
+         context,
+         isArabic
+              ? 'يرجى إدخال والتحقق من كود التحدي الخاص بفريق ${_selectedTeam!.name} للمتابعة يا كابتن.'
+              : 'Please enter and verify the challenge code for ${_selectedTeam!.name} to continue.',
+       );
+     }
+     return;
+   }
+ }
+
+ if (!context.mounted) return;
+
  final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
  final uid = auth.currentUser?.uid;
  if (uid != null) {
  final team = await TeamRepository().getUserTeam(uid);
  if (team != null) {
- // Official challenges require both teams to have at least 5 registered players.
- if (team.memberUids.length < 5 || _selectedTeam!.memberUids.length < 5) {
-   if (context.mounted) {
-     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-     final incompleteTeam = team.memberUids.length < 5
-         ? team.name
-         : _selectedTeam!.name;
-     ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(
-         content: Text(
-           isArabic
-               ? 'لا يمكن بدء التحدي. فريق $incompleteTeam لديه أقل من 5 لاعبين.'
-               : 'Challenge cannot start. Team $incompleteTeam has fewer than 5 players.',
-         ),
-         backgroundColor: VSPColors.error,
-       ),
-     );
-   }
-   return;
- }
  if (!ChallengeTeamService.isFairPlayEligible(team)) {
  if (context.mounted) {
  ScaffoldMessenger.of(context).showSnackBar(
