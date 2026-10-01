@@ -101,4 +101,5 @@ jobs:
             --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
             --dart-define=GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}
       - name: Print release version
-        run: echo "Shorebird release: ${{ steps.shorebird-release.outputs.release-version }}"
+        run: |
+          echo "Shorebird release: ${{ steps.shorebird-release.outputs.release-version }}"

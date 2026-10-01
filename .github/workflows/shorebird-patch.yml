@@ -114,4 +114,5 @@ jobs:
             --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}
             --dart-define=GOOGLE_IOS_CLIENT_ID=${{ secrets.GOOGLE_IOS_CLIENT_ID }}
       - name: Print patch number
-        run: echo "Shorebird patch: ${{ steps.shorebird-patch.outputs.patch-number }}"
+        run: |
+          echo "Shorebird patch: ${{ steps.shorebird-patch.outputs.patch-number }}"
