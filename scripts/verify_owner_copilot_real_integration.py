@@ -302,13 +302,27 @@ assert status == 200
 assert res.get("message"), "Availability reply must be present"
 print("  ✅ E: Availability inquiries successfully routed to database slot calculator")
 
+def fetch_conversation_db_state(conversation_id):
+    """Fetch conversation row and context_snapshot directly from Supabase DB via REST API with service role key."""
+    url = f"{SUPABASE_URL}/rest/v1/copilot_conversations?id=eq.{conversation_id}&select=id,user_id,title,context_snapshot,created_at,updated_at"
+    req = urllib.request.Request(
+        url,
+        headers={
+            "apikey": SERVICE_ROLE_KEY,
+            "Authorization": f"Bearer {SERVICE_ROLE_KEY}",
+            "Content-Type": "application/json"
+        }
+    )
+    res = urllib.request.urlopen(req)
+    rows = json.loads(res.read().decode("utf-8"))
+    return rows[0] if rows else None
+
 # -----------------------------------------------------------------------------
 # F & G — Context Retention & History Ordering across 6+ turns
 # -----------------------------------------------------------------------------
 print("\n>>> [Test F & G] Multi-Turn Context Retention (6+ Turns) with 'نفس الملعب'...")
 print("  [Rate Limit] Waiting 62s to reset the rate-limit window before 7-turn block...")
 time.sleep(62)
-conv_id = f"test-conv-{int(time.time())}"
 
 turns = [
     ("Turn 1 (Stadium)", "أنا عايز أتابع جدول ملعب الصداقة الجديدة"),
@@ -320,25 +334,64 @@ turns = [
     ("Turn 7 (Reference 'نفس الملعب')", "طب احجز لي أو شوف لي السبت في نفس الملعب"),
 ]
 
+active_conv_id = None
 replies_collected = []
 for turn_label, user_msg in turns:
     time.sleep(1.2)  # Respect rate limit window
-    status, res = call_copilot(owner_token, user_msg, conversation_id=conv_id)
+    status, res = call_copilot(owner_token, user_msg, conversation_id=active_conv_id)
+    assert status == 200, f"Turn {turn_label} failed with status {status}: {res}"
+    if not active_conv_id:
+        active_conv_id = res.get("conversation_id")
+        print(f"  Initialized active conversation ID: {active_conv_id}")
     msg = res.get('message') or ""
     replies_collected.append(msg)
     msg_preview = msg[:80]
     print(f"  [{turn_label}] -> Status: {status} | Reply: {msg_preview}...")
-    assert status == 200, f"Turn {turn_label} failed with status {status}: {res}"
     assert msg, f"Turn {turn_label} must produce a non-empty reply"
 
 # Proof of F & G: All 7 turns completed without rate-limit (429) and with non-empty responses.
-# Check that any reply across the 7 turns engaged with the stadium/booking context (not just fallback).
 all_replies_text = " ".join(replies_collected)
-# At least one reply must be relevant — not ALL replies can be identical boilerplate greetings
 unique_replies = set(r[:60] for r in replies_collected if r)
 assert len(unique_replies) >= 2, \
     "All 7 turns returned identical responses — context retention is not functioning!"
-print("  ✅ F & G: 7-Turn conversation completed successfully — all turns 200 OK, diverse context-aware responses confirmed")
+
+# Deep DB Verification of context_snapshot in copilot_conversations table
+print("  Fetching conversation record and context_snapshot directly from Supabase DB...")
+db_record = fetch_conversation_db_state(active_conv_id)
+assert db_record is not None, f"Conversation {active_conv_id} not found in DB!"
+snap = db_record.get("context_snapshot") or {}
+conv_state = snap.get("conversation_state") or {}
+task_state = snap.get("task_state") or {}
+
+# 1. Assert stadium_id is 34af8a1c-3f83-4154-bdbc-b88d113c1b04
+stadium_id = (conv_state.get("stadium") or {}).get("id") or task_state.get("stadium_id") or snap.get("last_stadium_id")
+print(f"  [DB Verification] Persisted stadium_id: {stadium_id}")
+assert stadium_id == "34af8a1c-3f83-4154-bdbc-b88d113c1b04", f"Expected stadium_id 34af8a1c-3f83-4154-bdbc-b88d113c1b04, got {stadium_id}"
+
+# 2. Assert stadium_name contains 'الصداقة'
+stadium_name = (conv_state.get("stadium") or {}).get("name") or task_state.get("stadium_name") or snap.get("last_stadium_name")
+print(f"  [DB Verification] Persisted stadium_name: {stadium_name}")
+assert stadium_name and "الصداقة" in stadium_name, f"Expected stadium_name containing 'الصداقة', got {stadium_name}"
+
+# 3. Assert Date is captured
+date_val = (conv_state.get("date") or {}).get("value") or task_state.get("date") or snap.get("last_date")
+print(f"  [DB Verification] Persisted date: {date_val}")
+assert date_val is not None, "Date must be persisted in context_snapshot"
+
+# 4. Assert Time / Time Range is captured
+time_range = conv_state.get("time_range") or task_state.get("time_window")
+times = conv_state.get("times") or task_state.get("preferred_times")
+print(f"  [DB Verification] Persisted time_range: {time_range}, times: {times}")
+assert time_range is not None or (times and len(times) > 0), "Time range or times must be persisted in context_snapshot"
+
+# 5. Assert Active Task is set
+active_task = conv_state.get("active_task") or task_state.get("intent")
+print(f"  [DB Verification] Persisted active_task: {active_task}")
+assert active_task in ["booking", "owner_stadiums", "availability", "schedule", "stadium_search", "self_service"], f"Expected valid active_task, got {active_task}"
+
+# 6. Co-reference 'نفس الملعب' validation
+assert stadium_id == "34af8a1c-3f83-4154-bdbc-b88d113c1b04", "Co-reference 'نفس الملعب' must retain identical stadium ID in DB"
+print("  ✅ F & G: 7-Turn conversation completed successfully — all turns 200 OK, DB context_snapshot verified (stadium_id, stadium_name, date, time, active_task, and 'نفس الملعب' retention)")
 
 # -----------------------------------------------------------------------------
 # H — Accuracy & Zero Hallucinated Operational Data

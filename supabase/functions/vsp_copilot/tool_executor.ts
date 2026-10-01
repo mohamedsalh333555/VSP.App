@@ -316,6 +316,13 @@ export async function executeGuardedTool(
         },
         quick_replies: hasSlots ? ["أيوه، أكد الحجز", "تغيير الميعاد"] : ["شوف يوم تاني", "شوف ملعب تاني"],
         updated_state: {
+          stadium: {
+            id: targetStadium.id,
+            name: targetStadium.name,
+            status: "known" as const,
+            provenance: (state.stadium.provenance || "explicit_user") as any,
+            price_per_hour: targetStadium.price_per_hour,
+          },
           pending_confirmation: proposal,
           last_verified_availability: {
             stadium_id: targetStadium.id,
@@ -561,6 +568,23 @@ export async function executeGuardedTool(
         ownerBookings = bList || [];
       }
 
+      const matchedStadium = (ownerStadiums && ownerStadiums.length === 1)
+        ? ownerStadiums[0]
+        : (state.stadium?.name && ownerStadiums
+            ? ownerStadiums.find((s: any) => s.name?.includes(state.stadium.name!) || state.stadium.name!.includes(s.name))
+            : null);
+
+      const updatedStateObj: any = {};
+      if (matchedStadium) {
+        updatedStateObj.stadium = {
+          id: matchedStadium.id,
+          name: matchedStadium.name,
+          price_per_hour: matchedStadium.price_per_hour,
+          status: "known" as const,
+          provenance: state.stadium?.name ? "explicit_user" : "inferred_single",
+        };
+      }
+
       return {
         status: "SUCCESS",
         tool_name: toolName,
@@ -574,6 +598,7 @@ export async function executeGuardedTool(
           route: "/bookings",
           label: "فتح جدول الحجوزات 📅",
         },
+        updated_state: Object.keys(updatedStateObj).length > 0 ? updatedStateObj : undefined,
       };
     }
 

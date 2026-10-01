@@ -118,12 +118,23 @@ export function planToolExecution(
     };
   }
 
-  // 4. Self-Service Booking Inspection ("اين حجزي", "امتى حجزي الجاي")
+  // 4. Booking Inspection (Owner Stadiums/Bookings for Owners, Self-Service for Players)
   const isBookingInspect =
     semanticOutput.domain === "self_service" ||
     (semanticOutput.object === "booking" && semanticOutput.action === "inspect");
 
   if (isBookingInspect) {
+    if (role === "owner") {
+      return {
+        action: "EXECUTE_TOOL",
+        toolName: "getOwnerStadiumsAndBookings",
+        toolArgs: {
+          stadium_name: semanticOutput.entities.stadium?.name || state.stadium?.name,
+          query_type: "all",
+        },
+      };
+    }
+
     if (!isToolAllowedForRole(role, "getUserBookingsAndRefunds")) {
       return {
         action: "RESPOND_DIRECTLY",
@@ -208,9 +219,18 @@ export function planToolExecution(
     };
   }
 
-  // 7. Booking Creation: Check Stadium Availability when slots are complete
-  if (state.active_task === "booking" && (semanticOutput.action === "create" || semanticOutput.action === "resume")) {
-    if (state.date.value && (state.times.length > 0 || state.time_range)) {
+  // 7. Booking Creation & Availability Checking: Check Stadium Availability when slots or inquiries are active
+  const isOwnerOps = semanticOutput.domain === "owner_operations" || semanticOutput.intent === "owner_operations";
+  const isAvailabilityInquiry =
+    !isOwnerOps &&
+    (
+      semanticOutput.intent === "availability" ||
+      (semanticOutput.action === "inspect" && (semanticOutput.object === "stadium" || semanticOutput.object === "slot")) ||
+      (state.active_task === "booking" && (semanticOutput.action === "create" || semanticOutput.action === "resume" || semanticOutput.speech_act === "question" || semanticOutput.speech_act === "inform"))
+    );
+
+  if (!isOwnerOps && (isAvailabilityInquiry || (state.active_task === "booking" && (state.times.length > 0 || state.time_range)))) {
+    if (state.date.value && (state.times.length > 0 || state.time_range || isAvailabilityInquiry)) {
       if (state.location_scope === "nearby" && !state.stadium.id) {
         return {
           action: "EXECUTE_TOOL",
