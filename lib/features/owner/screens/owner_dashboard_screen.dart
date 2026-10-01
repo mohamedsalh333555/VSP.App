@@ -12,6 +12,7 @@ import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';
+import 'add_stadium_wizard.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../models/dashboard_analytics.dart';
@@ -451,23 +452,26 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                   const SizedBox(height: 16),
 
-                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة (ملعبك النهارده) - متاح للباقتين لتشغيل الملاعب
-                  OwnerTodayPitchScheduleCard(
-                    allBookings: allBookings,
-                    stadiums: stadiums,
-                    selectedStadiumFilter: _selectedStadiumFilter,
-                    isArabic: isArabic,
-                    onNavigateToBookings: () {
-                      if (widget.onNavigateTab != null) {
-                        widget.onNavigateTab!(3);
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
-                        );
-                      }
-                    },
-                  ),
+                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
+                  if (stadiums.isEmpty)
+                    _buildNoStadiumsPrompt(context, isArabic)
+                  else
+                    OwnerTodayPitchScheduleCard(
+                      allBookings: allBookings,
+                      stadiums: stadiums,
+                      selectedStadiumFilter: _selectedStadiumFilter,
+                      isArabic: isArabic,
+                      onNavigateToBookings: () {
+                        if (widget.onNavigateTab != null) {
+                          widget.onNavigateTab!(3);
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                          );
+                        }
+                      },
+                    ),
                   const SizedBox(height: 16),
 
                   // ج. البطولة القادمة: تظهر عند وجود بطولة معتمدة
@@ -1000,6 +1004,81 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoStadiumsPrompt(BuildContext context, bool isArabic) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Iconsax.building_3_copy,
+              size: 32,
+              color: VSPColors.accent,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isArabic ? 'ابدأ بتسجيل ملعبك الأول' : 'Add Your First Stadium',
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isArabic
+                ? 'أضف بيانات الملعب ومواعيد العمل لتتمكن من استقبال الحجوزات وإدارتها بكل سهولة.'
+                : 'Add stadium details and operating hours to start receiving and managing bookings.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+                );
+              },
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                isArabic ? 'إضافة ملعب الآن' : 'Add Stadium Now',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                ),
+              ),
             ),
           ),
         ],

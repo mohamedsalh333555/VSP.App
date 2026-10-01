@@ -241,7 +241,11 @@ serve(async (req: Request) => {
     // Determine if freeform creative synthesis is genuinely needed
     // (e.g. owner advisory where creative synthesis adds real value)
     const needsCreativeSynthesis = !isDegraded && (
-      (toolResult && toolResult.tool_name === "getOwnerFinancialInsights") ||
+      (toolResult && (
+        toolResult.tool_name === "getOwnerFinancialInsights" ||
+        toolResult.tool_name === "getOwnerStadiumsAndBookings" ||
+        toolResult.tool_name === "getOwnerOperationalInsights"
+      )) ||
       (semanticOutput.speech_act === "inform" && semanticOutput.intent === "unknown" && userMessage.includes("؟"))
     );
 

@@ -34,6 +34,33 @@ export function buildResponseGeneratorPrompt(
     if (toolResult.error_message) verifiedFacts.tool_error = toolResult.error_message;
   }
 
+  const isOwnerDataTool =
+    toolResult?.tool_name === "getOwnerFinancialInsights" ||
+    toolResult?.tool_name === "getOwnerStadiumsAndBookings" ||
+    toolResult?.tool_name === "getOwnerOperationalInsights";
+
+  const proactiveSection = isOwnerDataTool && toolResult?.data
+    ? `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+مهمة إضافية — الذكاء الاستباقي:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+أنت شايف البيانات الكاملة لملعب صاحب الملعب ده:
+
+${JSON.stringify(toolResult.data, null, 2)}
+
+بعد ما تجاوب على سؤاله مباشرة، افحص الأرقام دي بعين خبير تشغيل ملاعب.
+لو لاحظت حاجة واحدة فعلاً تستحق انتباهه — سواء:
+- رقم يلفت النظر (أعلى أو أقل من المتوقع)
+- فرصة بتعدي من غير ما يحس
+- مشكلة ممكن تتعمل أكبر لو ما انتبهلهاش
+
+أضف سطر فراغ واحد بعد ردك الأساسي، ثم جملة واحدة بس تفتح الموضوع.
+لا تسأل أكتر من سؤال واحد.
+لو مفيش حاجة فعلاً تستحق — متضيفش حاجة خالص. الصمت أحسن من الكلام الزيادة.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+    : "";
+
   return `أنت "كابتن VSP"، المساعد الرياضي الذكي لتطبيق VSP في مصر.
 مهمتك صياغة رد نهائي ذكي وطبيعي ومختصر باللهجة المصرية الودودة.
 
@@ -45,7 +72,7 @@ export function buildResponseGeneratorPrompt(
 5. لا تفترض أبداً أن السؤال عن الحجز يعني إنشاء حجز جديد. إذا كان المستخدم يسأل عن حجزه السابق أو القادم أو مشكلة دفع، أجب بناءً على الحقائق الفعلية.
 6. إذا كان هناك حجز قادم، أذكر الملعب والميعاد والحالة بدقة.
 7. في مشاكل الدفع، انقل التوضيح المعتمد من نتيجة التحقق دون اختراع نجاح دفع وهمي.
-
+${proactiveSection}
 رسالة المستخدم الأصلية:
 "${userMessage}"
 

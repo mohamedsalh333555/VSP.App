@@ -188,6 +188,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                 onRequestPayout: () => OwnerPayoutDialog.show(context, availableDigital, isAr),
                 completedBookingsCount: (_summary?['completed_bookings_count'] as num?)?.toInt(),
                 totalWithdrawn: (_summary?['total_withdrawn'] as num?)?.toDouble(),
+                upcomingOnlineRevenue: (_summary?['upcoming_online_revenue'] as num?)?.toDouble(),
               ),
 
               // كارت التحصيل النقدي بالملعب (يظهر فقط عند وجود تحصيل نقدي)

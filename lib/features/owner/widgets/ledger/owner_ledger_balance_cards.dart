@@ -10,6 +10,8 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
   final int? completedBookingsCount;
   /// المسحوب مسبقاً (اختياري — يُعرض كشرح)
   final double? totalWithdrawn;
+  /// أرباح مباريات قادمة مؤكدة (غير متاحة للسحب حتى اكتمال المباراة)
+  final double? upcomingOnlineRevenue;
 
   const OwnerDigitalBalanceCard({
     super.key,
@@ -18,6 +20,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
     required this.onRequestPayout,
     this.completedBookingsCount,
     this.totalWithdrawn,
+    this.upcomingOnlineRevenue,
   });
 
   @override
@@ -67,6 +70,31 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
             const SizedBox(height: 6),
             _buildSourceHint(),
           },
+          if (upcomingOnlineRevenue != null && upcomingOnlineRevenue! > 0) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time_rounded, size: 14, color: VSPColors.textSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'مباريات قادمة مؤكدة: ${upcomingOnlineRevenue!.toStringAsFixed(0)} ج.م (تتاح للسحب بعد انتهاء موعد اللعب)'
+                          : 'Upcoming confirmed: ${upcomingOnlineRevenue!.toStringAsFixed(0)} EGP (available after match)',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (digitalBalance > 0) ...[
             const SizedBox(height: 12),
             GestureDetector(
