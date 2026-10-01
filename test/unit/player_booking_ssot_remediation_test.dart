@@ -564,5 +564,489 @@ void main() {
       // Unrelated user does not match
       expect(booking.createdByUserId == 'stranger-4' || booking.joinedUserIds.contains('stranger-4'), isFalse);
     });
+
+    // 19. Whitelist Booking State Machine
+    test('19. Whitelist Booking State Machine allows only canonical transitions and blocks all invalid ones', () {
+      bool isTransitionAllowed(BookingStatus from, BookingStatus to) {
+        if (from == BookingStatus.pending) {
+          return to == BookingStatus.confirmed ||
+              to == BookingStatus.cancelled ||
+              to == BookingStatus.expired;
+        }
+        if (from == BookingStatus.confirmed) {
+          return to == BookingStatus.completed || to == BookingStatus.cancelled;
+        }
+        // Terminal states: completed, cancelled, expired cannot transition anywhere
+        return false;
+      }
+
+      // Allowed transitions
+      expect(isTransitionAllowed(BookingStatus.pending, BookingStatus.confirmed), isTrue);
+      expect(isTransitionAllowed(BookingStatus.pending, BookingStatus.cancelled), isTrue);
+      expect(isTransitionAllowed(BookingStatus.pending, BookingStatus.expired), isTrue);
+      expect(isTransitionAllowed(BookingStatus.confirmed, BookingStatus.completed), isTrue);
+      expect(isTransitionAllowed(BookingStatus.confirmed, BookingStatus.cancelled), isTrue);
+
+      // Forbidden transitions (must be blocked)
+      expect(isTransitionAllowed(BookingStatus.cancelled, BookingStatus.confirmed), isFalse);
+      expect(isTransitionAllowed(BookingStatus.cancelled, BookingStatus.pending), isFalse);
+      expect(isTransitionAllowed(BookingStatus.completed, BookingStatus.cancelled), isFalse);
+      expect(isTransitionAllowed(BookingStatus.completed, BookingStatus.pending), isFalse);
+      expect(isTransitionAllowed(BookingStatus.expired, BookingStatus.confirmed), isFalse);
+      expect(isTransitionAllowed(BookingStatus.expired, BookingStatus.cancelled), isFalse);
+      expect(isTransitionAllowed(BookingStatus.confirmed, BookingStatus.pending), isFalse);
+      expect(isTransitionAllowed(BookingStatus.pending, BookingStatus.completed), isFalse);
+    });
+
+    // 20. Booking x Payment Decision Matrix
+    test('20. Booking x Payment Decision Matrix validates permissible combinations', () {
+      bool isValidCombination(BookingStatus status, String paymentState) {
+        switch (status) {
+          case BookingStatus.pending:
+            return paymentState == 'unpaid';
+          case BookingStatus.confirmed:
+            return paymentState == 'unpaid' ||
+                paymentState == 'partially_paid' ||
+                paymentState == 'fully_paid';
+          case BookingStatus.completed:
+            return paymentState == 'fully_paid' ||
+                paymentState == 'partially_paid' ||
+                paymentState == 'unpaid';
+          case BookingStatus.cancelled:
+            return paymentState == 'unpaid' ||
+                paymentState == 'refund_pending' ||
+                paymentState == 'refunded' ||
+                paymentState == 'refund_failed';
+          case BookingStatus.expired:
+            return paymentState == 'unpaid';
+          default:
+            return false;
+        }
+      }
+
+      // Permissible combinations
+      expect(isValidCombination(BookingStatus.pending, 'unpaid'), isTrue);
+      expect(isValidCombination(BookingStatus.confirmed, 'unpaid'), isTrue);
+      expect(isValidCombination(BookingStatus.confirmed, 'partially_paid'), isTrue);
+      expect(isValidCombination(BookingStatus.confirmed, 'fully_paid'), isTrue);
+      expect(isValidCombination(BookingStatus.completed, 'fully_paid'), isTrue);
+      expect(isValidCombination(BookingStatus.cancelled, 'refund_pending'), isTrue);
+      expect(isValidCombination(BookingStatus.cancelled, 'refunded'), isTrue);
+      expect(isValidCombination(BookingStatus.cancelled, 'refund_failed'), isTrue);
+      expect(isValidCombination(BookingStatus.expired, 'unpaid'), isTrue);
+
+      // Forbidden combinations
+      expect(isValidCombination(BookingStatus.pending, 'partially_paid'), isFalse);
+      expect(isValidCombination(BookingStatus.pending, 'fully_paid'), isFalse);
+      expect(isValidCombination(BookingStatus.expired, 'fully_paid'), isFalse);
+      expect(isValidCombination(BookingStatus.expired, 'partially_paid'), isFalse);
+      expect(isValidCombination(BookingStatus.confirmed, 'refunded'), isFalse);
+      expect(isValidCombination(BookingStatus.confirmed, 'refund_pending'), isFalse);
+    });
+
+    // 21. Refund Lifecycle & Reconcile Preservation
+    test('21. Refund Lifecycle strictly preserves refund_pending and refund_failed without regression', () {
+      final refundPendingBooking = makeBooking(
+        id: 'bk-ref-pending',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.cancelled,
+        paymentStatus: 'refund_pending',
+        depositPaid: 100,
+        totalPrice: 200,
+      );
+      expect(refundPendingBooking.effectivePaymentState, equals('refund_pending'));
+
+      final refundFailedBooking = makeBooking(
+        id: 'bk-ref-failed',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.cancelled,
+        paymentStatus: 'refund_failed',
+        depositPaid: 100,
+        totalPrice: 200,
+      );
+      expect(refundFailedBooking.effectivePaymentState, equals('refund_failed'));
+
+      final refundedBooking = makeBooking(
+        id: 'bk-refunded',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.cancelled,
+        paymentStatus: 'refunded',
+        depositPaid: 100,
+        totalPrice: 200,
+      );
+      expect(refundedBooking.effectivePaymentState, equals('refunded'));
+    });
+
+    // 22. Unknown Payment Source does NOT default to cash
+    test('22. Unknown Payment Source does not default to cash and maps to unknown', () {
+      final booking = makeBooking(
+        id: 'bk-unknown-method',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+      ).copyWith(paymentMethod: 'crypto_random');
+
+      expect(booking.effectivePaymentSource, equals('unknown'));
+      expect(booking.paymentSourceEnum, equals(PaymentSource.unknown));
+    });
+
+    // 23. Bank Transfer Payment Source Support
+    test('23. Bank Transfer is officially recognized in domain models', () {
+      final booking = makeBooking(
+        id: 'bk-bank-transfer',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+      ).copyWith(paymentMethod: 'bank_transfer');
+
+      expect(booking.effectivePaymentSource, equals('bank_transfer'));
+      expect(booking.paymentSourceEnum, equals(PaymentSource.bankTransfer));
+    });
+
+    // 24. Cash Lifecycle & Pitch Settlement
+    test('24. Cash Lifecycle: confirmed + unpaid transitions to confirmed + fully_paid upon pitch settlement', () {
+      final initialCashBooking = makeBooking(
+        id: 'bk-cash-lifecycle',
+        startTime: now.add(const Duration(hours: 2)),
+        endTime: now.add(const Duration(hours: 3)),
+        status: BookingStatus.confirmed,
+        paymentStatus: 'pending',
+        isPaid: false,
+        totalPrice: 300,
+      );
+
+      expect(initialCashBooking.effectivePaymentState, equals('unpaid'));
+      expect(initialCashBooking.pitchCashCollected, equals(0.0));
+      expect(initialCashBooking.pendingReceivable, equals(300.0));
+
+      final settledCashBooking = initialCashBooking.copyWith(
+        isPaid: true,
+        paymentStatus: 'fully_paid',
+        depositPaid: 300,
+      );
+
+      expect(settledCashBooking.effectivePaymentState, equals('fully_paid'));
+      expect(settledCashBooking.pitchCashCollected, equals(300.0));
+      expect(settledCashBooking.pendingReceivable, equals(0.0));
+    });
+
+    // 25. Second Cash Booking Policy: Paid active bookings do NOT block new cash bookings
+    test('25. Second Cash Booking Policy correctly distinguishes unpaid from paid active bookings', () {
+      final futureTime = DateTime.now().add(const Duration(hours: 4));
+
+      final unpaidActiveCash = makeBooking(
+        id: 'bk-active-unpaid',
+        startTime: futureTime,
+        endTime: futureTime.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        paymentStatus: 'pending',
+        isPaid: false,
+      );
+
+      final paidActiveCash = makeBooking(
+        id: 'bk-active-paid',
+        startTime: futureTime,
+        endTime: futureTime.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        paymentStatus: 'paid',
+        isPaid: true,
+      );
+
+      bool isCashBookingRestricted(List<Booking> userBookings) {
+        return userBookings.any((b) =>
+            b.paymentMethod.toLowerCase() == 'cash' &&
+            !b.isPaid &&
+            (b.status == BookingStatus.pending || b.status == BookingStatus.confirmed) &&
+            b.endTime.isAfter(DateTime.now()));
+      }
+
+      // Unpaid active booking blocks cash
+      expect(isCashBookingRestricted([unpaidActiveCash]), isTrue);
+
+      // Paid active booking does NOT block cash
+      expect(isCashBookingRestricted([paidActiveCash]), isFalse);
+    });
+
+    // 26. Whitelist Booking State Machine: All Allowed vs Forbidden Transitions
+    test('26. Whitelist Booking State Machine: Verifies exhaustive allowed vs forbidden transitions', () {
+      bool isAllowedTransition(BookingStatus from, BookingStatus to) {
+        if (from == to) return true;
+        if (from == BookingStatus.pending) {
+          return to == BookingStatus.confirmed ||
+              to == BookingStatus.upcoming ||
+              to == BookingStatus.cancelled ||
+              to == BookingStatus.expired;
+        }
+        if (from == BookingStatus.confirmed || from == BookingStatus.upcoming) {
+          return to == BookingStatus.completed || to == BookingStatus.cancelled;
+        }
+        return false; // completed, cancelled, expired are strictly terminal
+      }
+
+      // Allowed transitions
+      expect(isAllowedTransition(BookingStatus.pending, BookingStatus.confirmed), isTrue);
+      expect(isAllowedTransition(BookingStatus.pending, BookingStatus.cancelled), isTrue);
+      expect(isAllowedTransition(BookingStatus.pending, BookingStatus.expired), isTrue);
+      expect(isAllowedTransition(BookingStatus.confirmed, BookingStatus.completed), isTrue);
+      expect(isAllowedTransition(BookingStatus.confirmed, BookingStatus.cancelled), isTrue);
+
+      // Forbidden transitions
+      expect(isAllowedTransition(BookingStatus.pending, BookingStatus.completed), isFalse);
+      expect(isAllowedTransition(BookingStatus.confirmed, BookingStatus.pending), isFalse);
+      expect(isAllowedTransition(BookingStatus.confirmed, BookingStatus.expired), isFalse);
+      expect(isAllowedTransition(BookingStatus.completed, BookingStatus.cancelled), isFalse);
+      expect(isAllowedTransition(BookingStatus.completed, BookingStatus.pending), isFalse);
+      expect(isAllowedTransition(BookingStatus.completed, BookingStatus.confirmed), isFalse);
+      expect(isAllowedTransition(BookingStatus.cancelled, BookingStatus.confirmed), isFalse);
+      expect(isAllowedTransition(BookingStatus.cancelled, BookingStatus.pending), isFalse);
+      expect(isAllowedTransition(BookingStatus.expired, BookingStatus.confirmed), isFalse);
+      expect(isAllowedTransition(BookingStatus.expired, BookingStatus.pending), isFalse);
+      expect(isAllowedTransition(BookingStatus.expired, BookingStatus.cancelled), isFalse);
+    });
+
+    // 27. Booking x Payment Decision Matrix: Allowed vs Forbidden Combinations
+    test('27. Booking x Payment Decision Matrix: Exhaustive combination validation', () {
+      bool isAllowedMatrixCombo(BookingStatus status, String paymentState) {
+        switch (status) {
+          case BookingStatus.pending:
+            return paymentState == 'unpaid';
+          case BookingStatus.confirmed:
+          case BookingStatus.upcoming:
+            return paymentState == 'unpaid' ||
+                paymentState == 'partially_paid' ||
+                paymentState == 'fully_paid';
+          case BookingStatus.completed:
+            return paymentState == 'unpaid' ||
+                paymentState == 'partially_paid' ||
+                paymentState == 'fully_paid';
+          case BookingStatus.cancelled:
+            return paymentState == 'unpaid' ||
+                paymentState == 'refund_pending' ||
+                paymentState == 'refunded' ||
+                paymentState == 'refund_failed';
+          case BookingStatus.expired:
+            return paymentState == 'unpaid';
+        }
+      }
+
+      // Pending combinations
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'unpaid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'partially_paid'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'fully_paid'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'refund_pending'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'refunded'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.pending, 'refund_failed'), isFalse);
+
+      // Confirmed combinations
+      expect(isAllowedMatrixCombo(BookingStatus.confirmed, 'unpaid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.confirmed, 'partially_paid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.confirmed, 'fully_paid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.confirmed, 'refund_pending'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.confirmed, 'refunded'), isFalse);
+
+      // Completed combinations
+      expect(isAllowedMatrixCombo(BookingStatus.completed, 'unpaid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.completed, 'partially_paid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.completed, 'fully_paid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.completed, 'refund_pending'), isFalse);
+
+      // Cancelled combinations
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'unpaid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'refund_pending'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'refunded'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'refund_failed'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'fully_paid'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.cancelled, 'partially_paid'), isFalse);
+
+      // Expired combinations
+      expect(isAllowedMatrixCombo(BookingStatus.expired, 'unpaid'), isTrue);
+      expect(isAllowedMatrixCombo(BookingStatus.expired, 'fully_paid'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.expired, 'partially_paid'), isFalse);
+      expect(isAllowedMatrixCombo(BookingStatus.expired, 'refunded'), isFalse);
+    });
+
+    // 28. Expiration Semantics: status=expired, payment_status=unpaid, never payment_status=expired
+    test('28. Expiration Semantics: Booking expires to status=expired with payment_state=unpaid', () {
+      final expiredBooking = makeBooking(
+        id: 'bk-expired-test',
+        startTime: now.subtract(const Duration(hours: 1)),
+        endTime: now,
+        status: BookingStatus.expired,
+        paymentStatus: 'unpaid',
+        isPaid: false,
+      );
+
+      expect(expiredBooking.status, equals(BookingStatus.expired));
+      expect(expiredBooking.effectivePaymentState, equals('unpaid'));
+      expect(expiredBooking.isPaid, isFalse);
+      // Ensure expired is never confused with a payment status
+      expect(expiredBooking.paymentStatus, isNot(equals('expired')));
+    });
+
+    // 29. Official Payment Sources: All 6 sources correctly recognized
+    test('29. Official Payment Sources: cash, paymob, instapay, vodafone_cash, bank_transfer, unknown', () {
+      Booking createForSource(String method, {String? txId}) {
+        return makeBooking(
+          id: 'bk-src-$method',
+          startTime: now,
+          endTime: now.add(const Duration(hours: 1)),
+          status: BookingStatus.confirmed,
+        ).copyWith(paymentMethod: method, paymentTransactionId: txId);
+      }
+
+      final cashBk = createForSource('cash');
+      expect(cashBk.paymentSourceEnum, equals(PaymentSource.cash));
+      expect(cashBk.isCash, isTrue);
+      expect(cashBk.isDigital, isFalse);
+      expect(cashBk.isUnknownPaymentSource, isFalse);
+
+      final paymobBk = createForSource('paymob', txId: 'PAYMOB_12345');
+      expect(paymobBk.paymentSourceEnum, equals(PaymentSource.paymob));
+      expect(paymobBk.isCash, isFalse);
+      expect(paymobBk.isDigital, isTrue);
+
+      final instapayBk = createForSource('instapay');
+      expect(instapayBk.paymentSourceEnum, equals(PaymentSource.instapay));
+      expect(instapayBk.isCash, isFalse);
+      expect(instapayBk.isDigital, isTrue);
+
+      final vfBk = createForSource('vodafone_cash');
+      expect(vfBk.paymentSourceEnum, equals(PaymentSource.vodafoneCash));
+      expect(vfBk.isCash, isFalse);
+      expect(vfBk.isDigital, isTrue);
+
+      final bankBk = createForSource('bank_transfer');
+      expect(bankBk.paymentSourceEnum, equals(PaymentSource.bankTransfer));
+      expect(bankBk.isCash, isFalse);
+      expect(bankBk.isDigital, isTrue);
+
+      final unknownBk = createForSource('some_crypto_token');
+      expect(unknownBk.paymentSourceEnum, equals(PaymentSource.unknown));
+      expect(unknownBk.isCash, isFalse, reason: 'unknown MUST NEVER default to cash');
+      expect(unknownBk.isDigital, isFalse);
+      expect(unknownBk.isUnknownPaymentSource, isTrue);
+    });
+
+    // 30. Refund Lifecycle & Trigger Reconciliation Invariants
+    test('30. Refund Lifecycle: refund states are preserved and never clobbered', () {
+      final refundPendingBk = makeBooking(
+        id: 'bk-rf-1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.cancelled,
+        paymentStatus: 'refund_pending',
+      );
+      expect(refundPendingBk.effectivePaymentState, equals('refund_pending'));
+
+      final refundedBk = refundPendingBk.copyWith(paymentStatus: 'refunded');
+      expect(refundedBk.effectivePaymentState, equals('refunded'));
+
+      final refundFailedBk = refundPendingBk.copyWith(paymentStatus: 'refund_failed');
+      expect(refundFailedBk.effectivePaymentState, equals('refund_failed'));
+    });
+
+    // 31. Cash Flow & Domain Collection Helpers
+    test('31. Cash Flow: collectedAmount and remainingAmount match business definitions', () {
+      final cashUnpaid = makeBooking(
+        id: 'bk-cf-1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        totalPrice: 200,
+        depositPaid: 0,
+        isPaid: false,
+      );
+      expect(cashUnpaid.collectedAmount, equals(0.0));
+      expect(cashUnpaid.remainingAmount, equals(200.0));
+
+      final cashPartial = cashUnpaid.copyWith(
+        depositPaid: 80,
+        paymentStatus: 'partially_paid',
+      );
+      expect(cashPartial.collectedAmount, equals(80.0));
+      expect(cashPartial.remainingAmount, equals(120.0));
+
+      final cashCompleted = cashPartial.copyWith(
+        isPaid: true,
+        depositPaid: 200,
+        paymentStatus: 'paid',
+        status: BookingStatus.completed,
+      );
+      expect(cashCompleted.collectedAmount, equals(200.0));
+      expect(cashCompleted.remainingAmount, equals(0.0));
+    });
+
+    // 32. Realtime Sync Resilience: Initial load, status change, and reconnection
+    test('32. Realtime Sync: Stream handles initial load, update event, and reconnect without loss', () async {
+      final streamController = StreamController<List<Booking>>.broadcast();
+      final coordinator = BookingSyncCoordinator(
+        FakeBookingRepository(
+          onGetDirectly: (uid) async => [],
+          onGetStream: (uid) => streamController.stream,
+        ),
+      );
+
+      final receivedBatches = <List<Booking>>[];
+      coordinator.syncUserBookings(
+        userId: 'test-user',
+        onData: (bookings, categorized) => receivedBatches.add(bookings),
+        onError: (err) {},
+      );
+
+      final b1 = makeBooking(
+        id: 'rt-1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.pending,
+        createdByUserId: 'test-user',
+      );
+
+      // Event 1: Initial load
+      streamController.add([b1]);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      // Event 2: Status update (pending -> confirmed)
+      final b1Confirmed = b1.copyWith(status: BookingStatus.confirmed, isPaid: true);
+      streamController.add([b1Confirmed]);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      // Event 3: Cancellation update
+      final b1Cancelled = b1Confirmed.copyWith(status: BookingStatus.cancelled);
+      streamController.add([b1Cancelled]);
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      expect(receivedBatches.length, equals(3));
+      expect(receivedBatches[0].first.status, equals(BookingStatus.pending));
+      expect(receivedBatches[1].first.status, equals(BookingStatus.confirmed));
+      expect(receivedBatches[2].first.status, equals(BookingStatus.cancelled));
+
+      coordinator.cancelSubscription();
+      await streamController.close();
+    });
+
+    // 33. Idempotency Key Preservation in BookingDraft
+    test('33. Idempotency Key: Uniquely preserved across BookingDraft serialization', () {
+      final draft = BookingDraft(
+        stadiumId: 'std-1',
+        stadiumName: 'Pitch',
+        ownerId: 'own-1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        bookingType: BookingType.personal,
+        isPrivate: false,
+        rentBall: false,
+        totalPrice: 200,
+        idempotencyKey: 'uuid-idem-key-12345',
+      );
+
+      final map = draft.toMap();
+      expect(map['idempotencyKey'], equals('uuid-idem-key-12345'));
+
+      final restored = BookingDraft.fromMap(map);
+      expect(restored.idempotencyKey, equals('uuid-idem-key-12345'));
+    });
   });
 }

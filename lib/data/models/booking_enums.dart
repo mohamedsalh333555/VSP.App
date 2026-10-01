@@ -5,6 +5,7 @@ enum BookingStatus {
   upcoming, // Same as confirmed (alias)
   completed, // After match time has passed
   cancelled, // User/owner cancelled
+  expired, // Payment lock window elapsed without payment
 }
 
 extension BookingStatusExtension on BookingStatus {
@@ -38,5 +39,13 @@ enum PaymentSource {
   paymob, // دفع رقمي عبر Paymob (بطاقة / محفظة)
   instapay, // تحويل بنكي فوري
   vodafoneCash, // محفظة فودافون كاش
+  bankTransfer, // تحويل بنكي
   unknown,
+}
+
+extension PaymentSourceExtension on PaymentSource {
+  bool get isCash => this == PaymentSource.cash;
+  bool get isDigital =>
+      this != PaymentSource.cash && this != PaymentSource.unknown;
+  bool get isUnknown => this == PaymentSource.unknown;
 }

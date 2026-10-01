@@ -1,4 +1,4 @@
-﻿export 'booking_enums.dart';
+export 'booking_enums.dart';
 export 'booking_draft.dart';
 export 'booking_mapper.dart';
 export 'refund_info.dart';
@@ -412,6 +412,7 @@ class Booking {
     if (m == 'cash' || tx.startsWith('MANUAL') || m.contains('كاش')) return 'cash';
     if (m.contains('instapay') || instapay != null) return 'instapay';
     if (m.contains('vodafone') || vodafoneCash != null) return 'vodafone_cash';
+    if (m.contains('bank_transfer') || m.contains('bank') || m.contains('تحويل')) return 'bank_transfer';
     if (m.contains('paymob') ||
         m.contains('card') ||
         m.contains('visa') ||
@@ -421,7 +422,7 @@ class Booking {
         tx.startsWith('PAYMOB')) {
       return 'paymob';
     }
-    return 'cash';
+    return 'unknown';
   }
 
   /// تصنيف وسيلة الدفع كـ Enum
@@ -431,11 +432,18 @@ class Booking {
     if (s == 'paymob') return PaymentSource.paymob;
     if (s == 'instapay') return PaymentSource.instapay;
     if (s == 'vodafone_cash') return PaymentSource.vodafoneCash;
+    if (s == 'bank_transfer') return PaymentSource.bankTransfer;
     return PaymentSource.unknown;
   }
 
-  /// هل الحجز رقمي أونلاين أم نقدي بالملعب؟
-  bool get isDigital => effectivePaymentSource != 'cash';
+  /// هل الحجز نقدي بالملعب؟
+  bool get isCash => paymentSourceEnum.isCash;
+
+  /// هل الحجز رقمي أونلاين؟ (لا يشمل unknown ولا cash)
+  bool get isDigital => paymentSourceEnum.isDigital;
+
+  /// هل وسيلة الدفع غير معروفة؟
+  bool get isUnknownPaymentSource => paymentSourceEnum.isUnknown;
 
   /// المبلغ المسدد فعلياً إلكترونياً (يدخل في المحفظة الإلكترونية القابلة للسحب)
   double get digitalAmountPaid {
@@ -455,15 +463,7 @@ class Booking {
 
   /// الكاش المستلم فعلياً باليد في الملعب
   double get pitchCashCollected {
-    if (isDigital) {
-      // إذا كان الحجز أونلاين ولكن تم دفع عربون فقط، وتم تحصيل الباقي كاش بالملعب
-      if (effectivePaymentState == 'fully_paid') {
-        final total = totalPrice > 0 ? totalPrice : depositPaid;
-        final onlinePart = depositPaid > 0 ? depositPaid : total;
-        return (total - onlinePart).clamp(0.0, 999999.0);
-      }
-      return 0.0;
-    } else {
+    if (isCash) {
       // حجز كاش بالكامل
       if (effectivePaymentState == 'fully_paid') {
         return totalPrice > 0 ? totalPrice : depositPaid;
@@ -472,8 +472,24 @@ class Booking {
         return depositPaid > 0 ? depositPaid : 0.0;
       }
       return 0.0;
+    } else if (isDigital) {
+      // إذا كان الحجز أونلاين ولكن تم دفع عربون فقط، وتم تحصيل الباقي كاش بالملعب
+      if (effectivePaymentState == 'fully_paid') {
+        final total = totalPrice > 0 ? totalPrice : depositPaid;
+        final onlinePart = depositPaid > 0 ? depositPaid : total;
+        return (total - onlinePart).clamp(0.0, 999999.0);
+      }
+      return 0.0;
     }
+    return 0.0;
   }
+
+  /// إجمالي المبلغ المحصل (عربون أو كامل) - Manual Cash / Domain abstraction
+  double get collectedAmount => depositPaid;
+
+  /// المبلغ المتبقي غير المحصل - Manual Cash / Domain abstraction
+  double get remainingAmount =>
+      isPaid ? 0.0 : (totalPrice - depositPaid > 0 ? totalPrice - depositPaid : 0.0);
 
   /// المتبقي المعلق الذي لم يُحصّل بعد
   double get pendingReceivable {

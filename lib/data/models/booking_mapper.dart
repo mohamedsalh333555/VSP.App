@@ -378,6 +378,7 @@ class BookingMapper {
     if (method.contains('paymob') || method.contains('card') || method.contains('online')) return 'paymob';
     if (method.contains('instapay')) return 'instapay';
     if (method.contains('vodafone')) return 'vodafone_cash';
+    if (method.contains('bank_transfer') || method.contains('bank') || method.contains('تحويل')) return 'bank_transfer';
     return null;
   }
 }

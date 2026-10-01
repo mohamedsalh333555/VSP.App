@@ -286,6 +286,7 @@ class BookingConfirmationHandler {
 
     final hasActiveCashBooking = existingUserBookings.any((b) =>
         b.paymentMethod.toLowerCase() == 'cash' &&
+        !b.isPaid &&
         (b.status == BookingStatus.pending || b.status == BookingStatus.confirmed) &&
         b.endTime.isAfter(DateTime.now()));
 
