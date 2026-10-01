@@ -4,23 +4,27 @@
 --   Targeted SSOT Remediation for Regular Championship / Tournament Journey:
 --   1. Server-Authoritative Match Result (record_match_result_and_advance_atomic):
 --      - Rejects negative scores.
---      - Requires valid winner for knockout/cup matches.
---      - Requires non-null, non-tied penalties for tied knockout matches.
+--      - Correct League vs Knockout detection using format & stage.
+--      - Allows valid draws in league and group matches (no penalties or winner required).
+--      - Strictly requires decisive penalties and winner for tied knockout matches.
 --      - Rejects winner not participating in the match or score/winner mismatch.
 --      - Persists authoritative status = 'completed', is_completed = true, result_status = 'confirmed'.
 --   2. Standings SSOT (get_championship_standings):
 --      - Strictly counts only authoritative completed results (result_status IN ('confirmed', 'locked')).
 --      - Excludes disputed / unconfirmed results.
+--      - Corrects away-team goals_against projection (goals_against = home_score).
+--      - Excludes knockout stage matches from league and group standings aggregations.
 --   3. Champion SSOT (crown_tournament_champion_atomic):
---      - Locates actual final match (round_index = 0 AND next_match_id IS NULL) for bracketed tournaments.
---      - Requires final match to be completed with authoritative result (status = 'completed', result_status IN ('confirmed', 'locked')).
---      - Requires final_match.winner_id == p_champion_team_id.
---      - For non-bracketed (league), requires all matches completed and team is 1st in standings.
---      - Preserves frozen-roster requirement, server team name as SSOT, and idempotent same-champion behavior.
+--      - For League: requires all league matches completed & confirmed; crowns actual table leader.
+--        Never mistakes a round 0 league fixture for a bracket final.
+--      - For Knockout: locates actual bracket final match and requires winner to match crowned team.
+--      - Distributes trophies to player_trophies for frozen roster members.
+--      - Updates team statistics and badges.
 --   4. Completion Guard (transition_championship_status_atomic):
 --      - ongoing -> completed strictly blocked unless:
 --        a) champion is already crowned (champion_team_id IS NOT NULL).
---        b) all matches are completed (no matches with status != 'completed').
+--        b) all matches are completed (status = 'completed') AND result_status IN ('confirmed', 'locked').
+--   5. Reconciles migration history into supabase_migrations.schema_migrations.
 -- ==============================================================================
 
 -- 1. record_match_result_and_advance_atomic
@@ -48,6 +52,11 @@ DECLARE
     v_expected_winner_id UUID;
     v_effective_winner_id UUID := p_winner_id;
     v_effective_winner_name TEXT := p_winner_name;
+    v_next_match RECORD;
+    v_next_home_id UUID;
+    v_next_home_name TEXT;
+    v_next_away_id UUID;
+    v_next_away_name TEXT;
 BEGIN
     -- 1. Reject negative scores
     IF p_home_score < 0 OR p_away_score < 0 THEN
@@ -85,20 +94,28 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'INCOMPLETE_MATCH: Both teams must be assigned before recording score');
     END IF;
 
-    -- Determine if knockout match
-    v_is_knockout := (
-        v_match.next_match_id IS NOT NULL OR 
-        v_match.stage IN ('knockout', 'cup', 'round_of_16', 'quarter_final', 'semi_final', 'final') OR 
-        COALESCE(v_champ.type, '') = 'cup' OR 
-        (v_match.round_index = 0 AND v_match.group_name IS NULL)
-    );
+    -- Authoritative League vs Knockout determination
+    IF v_match.stage = 'league' OR COALESCE(v_champ.type, '') = 'league' THEN
+        v_is_knockout := false;
+    ELSIF v_match.stage = 'group_stage' OR v_match.group_name IS NOT NULL THEN
+        v_is_knockout := false;
+    ELSE
+        -- Knockout stage match
+        v_is_knockout := (
+            v_match.next_match_id IS NOT NULL OR 
+            v_match.stage IN ('knockout', 'cup', 'round_of_16', 'quarter_final', 'semi_final', 'final') OR 
+            COALESCE(v_champ.type, '') IN ('cup', 'knockout')
+        );
+    END IF;
 
     -- 4. Validate winner vs scores
     IF p_home_score != p_away_score THEN
         IF p_home_score > p_away_score THEN
             v_expected_winner_id := v_match.home_team_id;
+            v_effective_winner_name := v_match.home_team_name;
         ELSE
             v_expected_winner_id := v_match.away_team_id;
+            v_effective_winner_name := v_match.away_team_name;
         END IF;
 
         IF p_winner_id IS NOT NULL AND p_winner_id != v_expected_winner_id THEN
@@ -117,8 +134,10 @@ BEGIN
 
             IF p_home_penalties > p_away_penalties THEN
                 v_expected_winner_id := v_match.home_team_id;
+                v_effective_winner_name := v_match.home_team_name;
             ELSE
                 v_expected_winner_id := v_match.away_team_id;
+                v_effective_winner_name := v_match.away_team_name;
             END IF;
 
             IF p_winner_id IS NOT NULL AND p_winner_id != v_expected_winner_id THEN
@@ -126,60 +145,74 @@ BEGIN
             END IF;
             v_effective_winner_id := v_expected_winner_id;
         ELSE
-            -- Group stage / round-robin draw
+            -- Group stage / League draw: no penalties, no winner
+            IF p_winner_id IS NOT NULL THEN
+                RETURN jsonb_build_object('success', false, 'error', 'WINNER_MISMATCH: Draws in league or group matches cannot have a winner');
+            END IF;
             v_effective_winner_id := NULL;
             v_effective_winner_name := NULL;
         END IF;
     END IF;
 
-    -- Winner must be one of the two participating teams
+    -- Winner must be one of the two participating teams if not a draw
     IF v_effective_winner_id IS NOT NULL AND v_effective_winner_id NOT IN (v_match.home_team_id, v_match.away_team_id) THEN
         RETURN jsonb_build_object('success', false, 'error', 'INVALID_WINNER: Winner must be one of the participating teams');
     END IF;
 
-    -- Knockout matches require a winner
+    -- Knockout matches require a decisive winner
     IF v_is_knockout AND v_effective_winner_id IS NULL THEN
-        RETURN jsonb_build_object('success', false, 'error', 'WINNER_REQUIRED: Knockout match requires a decisive winner');
+        RETURN jsonb_build_object('success', false, 'error', 'KNOCKOUT_REQUIRES_WINNER: Knockout matches cannot end without a winner');
     END IF;
 
-    -- Resolve winner name if missing
-    IF v_effective_winner_id IS NOT NULL AND (v_effective_winner_name IS NULL OR v_effective_winner_name = '') THEN
-        IF v_effective_winner_id = v_match.home_team_id AND v_match.home_team_name IS NOT NULL THEN
+    -- If winner name is null but we have a winner id, resolve name
+    IF v_effective_winner_id IS NOT NULL AND v_effective_winner_name IS NULL THEN
+        IF v_effective_winner_id = v_match.home_team_id THEN
             v_effective_winner_name := v_match.home_team_name;
-        ELSIF v_effective_winner_id = v_match.away_team_id AND v_match.away_team_name IS NOT NULL THEN
+        ELSIF v_effective_winner_id = v_match.away_team_id THEN
             v_effective_winner_name := v_match.away_team_name;
         ELSE
             SELECT name INTO v_effective_winner_name FROM public.teams WHERE id = v_effective_winner_id;
         END IF;
     END IF;
 
-    -- 5. Persist authoritative result
+    -- 5. Update match row to authoritative completed & confirmed status
     UPDATE public.tournament_matches
-    SET 
-        home_score = p_home_score,
+    SET home_score = p_home_score,
         away_score = p_away_score,
-        home_penalties = p_home_penalties,
-        away_penalties = p_away_penalties,
+        home_penalties = CASE WHEN v_is_knockout THEN p_home_penalties ELSE NULL END,
+        away_penalties = CASE WHEN v_is_knockout THEN p_away_penalties ELSE NULL END,
         winner_id = v_effective_winner_id,
+        winner_name = v_effective_winner_name,
+        goal_details = COALESCE(p_goal_details, '[]'::jsonb),
         status = 'completed',
         is_completed = true,
         result_status = 'confirmed',
-        goal_details = COALESCE(p_goal_details, '[]'::jsonb),
+        result_confirmed_at = COALESCE(result_confirmed_at, v_now),
         updated_at = v_now
     WHERE id = p_match_id;
 
-    -- 6. Advance winner to next match if applicable
-    IF v_match.next_match_id IS NOT NULL AND v_effective_winner_id IS NOT NULL THEN
-        IF (v_match.match_index % 2 = 0) THEN
+    -- 6. Advance winner if next_match_id is set (Knockout progression)
+    IF v_is_knockout AND v_match.next_match_id IS NOT NULL AND v_effective_winner_id IS NOT NULL THEN
+        SELECT * INTO v_next_match FROM public.tournament_matches WHERE id = v_match.next_match_id FOR UPDATE;
+        IF FOUND THEN
+            -- Deterministic slot placement based on match_index parity
+            IF (v_match.match_index % 2) = 0 THEN
+                v_next_home_id := v_effective_winner_id;
+                v_next_home_name := v_effective_winner_name;
+                v_next_away_id := v_next_match.away_team_id;
+                v_next_away_name := v_next_match.away_team_name;
+            ELSE
+                v_next_home_id := v_next_match.home_team_id;
+                v_next_home_name := v_next_match.home_team_name;
+                v_next_away_id := v_effective_winner_id;
+                v_next_away_name := v_effective_winner_name;
+            END IF;
+
             UPDATE public.tournament_matches
-            SET home_team_id = v_effective_winner_id,
-                home_team_name = v_effective_winner_name,
-                updated_at = v_now
-            WHERE id = v_match.next_match_id;
-        ELSE
-            UPDATE public.tournament_matches
-            SET away_team_id = v_effective_winner_id,
-                away_team_name = v_effective_winner_name,
+            SET home_team_id = v_next_home_id,
+                home_team_name = v_next_home_name,
+                away_team_id = v_next_away_id,
+                away_team_name = v_next_away_name,
                 updated_at = v_now
             WHERE id = v_match.next_match_id;
         END IF;
@@ -188,9 +221,10 @@ BEGIN
     RETURN jsonb_build_object(
         'success', true,
         'match_id', p_match_id,
-        'winner_id', v_effective_winner_id,
         'status', 'completed',
-        'result_status', 'confirmed'
+        'result_status', 'confirmed',
+        'winner_id', v_effective_winner_id,
+        'winner_name', v_effective_winner_name
     );
 END;
 $$;
@@ -205,17 +239,43 @@ CREATE OR REPLACE FUNCTION public.get_championship_standings(p_championship_id u
  SECURITY DEFINER
  SET search_path TO 'public', 'pg_temp'
 AS $function$
+DECLARE
+  v_champ_type TEXT;
 BEGIN
+  SELECT type INTO v_champ_type FROM public.championships WHERE id = p_championship_id;
+
   RETURN QUERY
-  WITH group_teams AS (
+  WITH eligible_matches AS (
+    SELECT m.*
+    FROM public.tournament_matches m
+    WHERE m.championship_id = p_championship_id
+      AND m.status = 'completed'
+      AND m.result_status IN ('confirmed', 'locked')
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+      AND (
+        -- If specific group requested, strictly group_stage and matching group_name
+        (p_group_name IS NOT NULL AND m.stage = 'group_stage' AND m.group_name = p_group_name)
+        OR
+        -- If no group requested and championship is a league, strictly league matches
+        (p_group_name IS NULL AND (m.stage = 'league' OR (m.stage IS NULL AND v_champ_type = 'league')))
+        OR
+        -- If no group requested and championship has group_stage matches
+        (p_group_name IS NULL AND m.stage = 'group_stage')
+      )
+  ),
+  group_teams AS (
     SELECT DISTINCT
       t.id AS t_id,
       t.name AS t_name
     FROM public.tournament_matches m
     JOIN public.teams t ON (t.id = m.home_team_id OR t.id = m.away_team_id)
     WHERE m.championship_id = p_championship_id
-      AND (p_group_name IS NULL OR m.group_name = p_group_name)
-      AND (m.stage = 'group_stage' OR m.stage = 'league')
+      AND (
+        (p_group_name IS NOT NULL AND m.stage = 'group_stage' AND m.group_name = p_group_name)
+        OR
+        (p_group_name IS NULL AND (m.stage IN ('group_stage', 'league') OR (m.stage IS NULL AND v_champ_type = 'league')))
+      )
     
     UNION
     
@@ -226,6 +286,7 @@ BEGIN
       AND p_group_name IS NULL
   ),
   match_results AS (
+    -- Home team perspective
     SELECT
       m.home_team_id AS t_id,
       1 AS p,
@@ -239,16 +300,11 @@ BEGIN
         WHEN m.home_score = m.away_score THEN 1
         ELSE 0
       END AS pts
-    FROM public.tournament_matches m
-    WHERE m.championship_id = p_championship_id
-      AND m.home_score IS NOT NULL
-      AND m.away_score IS NOT NULL
-      AND m.status = 'completed'
-      AND COALESCE(m.result_status, 'confirmed') IN ('confirmed', 'locked')
-      AND (p_group_name IS NULL OR m.group_name = p_group_name)
+    FROM eligible_matches m
 
     UNION ALL
 
+    -- Away team perspective
     SELECT
       m.away_team_id AS t_id,
       1 AS p,
@@ -256,19 +312,13 @@ BEGIN
       CASE WHEN m.away_score = m.home_score THEN 1 ELSE 0 END AS d,
       CASE WHEN m.away_score < m.home_score THEN 1 ELSE 0 END AS l,
       COALESCE(m.away_score, 0) AS gf,
-      COALESCE(m.away_score, 0) AS ga,
+      COALESCE(m.home_score, 0) AS ga, -- Corrected: Away team goals against = home score!
       CASE
         WHEN m.away_score > m.home_score THEN 3
         WHEN m.away_score = m.home_score THEN 1
         ELSE 0
       END AS pts
-    FROM public.tournament_matches m
-    WHERE m.championship_id = p_championship_id
-      AND m.home_score IS NOT NULL
-      AND m.away_score IS NOT NULL
-      AND m.status = 'completed'
-      AND COALESCE(m.result_status, 'confirmed') IN ('confirmed', 'locked')
-      AND (p_group_name IS NULL OR m.group_name = p_group_name)
+    FROM eligible_matches m
   )
   SELECT
     gt.t_id AS team_id,
@@ -288,14 +338,14 @@ BEGIN
 END;
 $function$;
 
-GRANT EXECUTE ON FUNCTION public.get_championship_standings(uuid, text) TO authenticated, service_role, anon;
+GRANT EXECUTE ON FUNCTION public.get_championship_standings(UUID, TEXT) TO authenticated, anon, service_role;
 
 
 -- 3. crown_tournament_champion_atomic
 CREATE OR REPLACE FUNCTION public.crown_tournament_champion_atomic(
-  p_championship_id UUID,
-  p_champion_team_id UUID,
-  p_champion_team_name TEXT DEFAULT NULL
+    p_championship_id UUID,
+    p_champion_team_id UUID,
+    p_champion_team_name TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -304,46 +354,57 @@ SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_champ RECORD;
-  v_role TEXT;
+  v_is_owner BOOLEAN;
+  v_is_admin BOOLEAN;
+  v_caller_role TEXT;
+  v_now TIMESTAMPTZ := timezone('utc'::text, now());
   v_team_name TEXT;
   v_prize NUMERIC;
   v_trophy_title TEXT;
-  v_now TIMESTAMPTZ := timezone('utc', now());
-  v_member RECORD;
   v_roster_id UUID;
-  v_is_frozen BOOLEAN := false;
+  v_is_frozen BOOLEAN;
+  v_member RECORD;
   v_awarded INT := 0;
   v_final_match RECORD;
   v_top_league_team_id UUID;
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'error', 'AUTH_REQUIRED');
-  END IF;
+  -- 1. Lock and fetch championship
+  SELECT * INTO v_champ
+  FROM public.championships
+  WHERE id = p_championship_id
+  FOR UPDATE;
 
-  SELECT * INTO v_champ FROM public.championships WHERE id = p_championship_id FOR UPDATE;
   IF NOT FOUND THEN
     RETURN jsonb_build_object('success', false, 'error', 'championship_not_found');
   END IF;
 
-  SELECT role INTO v_role FROM public.users WHERE id = auth.uid();
-  IF v_champ.owner_id IS DISTINCT FROM auth.uid() AND coalesce(v_role, '') NOT IN ('admin', 'co_founder', 'cofounder', 'super_admin') THEN
-    RETURN jsonb_build_object('success', false, 'error', 'UNAUTHORIZED');
+  -- Idempotency check: if already completed with this exact champion, return success
+  IF v_champ.status = 'completed' AND v_champ.champion_team_id = p_champion_team_id THEN
+    RETURN jsonb_build_object(
+      'success', true,
+      'champion_team_id', v_champ.champion_team_id,
+      'champion_team_name', v_champ.champion_team_name,
+      'message', 'already_crowned'
+    );
   END IF;
 
-  -- 1. Immutable Champion Check: Once completed, champion CANNOT be changed
-  IF v_champ.status = 'completed' THEN
-    IF v_champ.champion_team_id = p_champion_team_id THEN
-      RETURN jsonb_build_object('success', true, 'already_crowned', true, 'champion_team_id', p_champion_team_id);
-    ELSE
-      RETURN jsonb_build_object('success', false, 'error', 'championship_already_completed_with_different_champion');
+  IF v_champ.status = 'completed' AND v_champ.champion_team_id IS DISTINCT FROM p_champion_team_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'ALREADY_COMPLETED: Championship is already completed with a different champion');
+  END IF;
+
+  -- Authorization check
+  IF (COALESCE(auth.role(), '') != 'service_role') THEN
+    v_is_owner := (v_champ.owner_id IS NOT DISTINCT FROM auth.uid());
+    IF NOT v_is_owner THEN
+      SELECT role INTO v_caller_role FROM public.users WHERE id = auth.uid();
+      v_is_admin := (COALESCE(v_caller_role, '') IN ('admin', 'co_founder', 'cofounder', 'super_admin'));
+      IF NOT v_is_admin THEN
+        RETURN jsonb_build_object('success', false, 'error', 'Unauthorized: Only championship owner or admin can crown tournament champion');
+      END IF;
     END IF;
   END IF;
 
-  IF v_champ.status != 'ongoing' THEN
-    RETURN jsonb_build_object('success', false, 'error', 'championship_not_ongoing');
-  END IF;
-
-  -- 2. Team Must Be Confirmed
+  -- 2. Verify team registered and paid/confirmed
   IF NOT EXISTS (
     SELECT 1 FROM public.championship_registrations
     WHERE championship_id = p_championship_id
@@ -353,39 +414,67 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'champion_team_not_confirmed');
   END IF;
 
-  -- 3. Verify Final Match Result / Standings SSOT
-  -- Find final match if one exists (knockout / cup / groups bracket)
-  SELECT * INTO v_final_match
-  FROM public.tournament_matches
-  WHERE championship_id = p_championship_id
-    AND round_index = 0
-    AND next_match_id IS NULL
-  LIMIT 1;
-
-  IF FOUND THEN
-    -- Final match exists: must be completed, authoritative, and winner must match champion!
-    IF v_final_match.status != 'completed' OR COALESCE(v_final_match.result_status, 'confirmed') NOT IN ('confirmed', 'locked') THEN
-      RETURN jsonb_build_object('success', false, 'error', 'FINAL_MATCH_NOT_COMPLETED: Final match must be completed before crowning');
-    END IF;
-    IF v_final_match.winner_id IS NULL OR v_final_match.winner_id != p_champion_team_id THEN
-      RETURN jsonb_build_object('success', false, 'error', 'CHAMPION_IS_NOT_FINAL_WINNER: Crowned team must be the winner of the final match');
-    END IF;
-  ELSE
-    -- If no bracket final match (round-robin league), verify all matches are completed and team is 1st in standings
+  -- 3. Verify Championship Structure and Winner SSOT
+  IF COALESCE(v_champ.type, '') = 'league' OR NOT EXISTS (
+    SELECT 1 FROM public.tournament_matches
+    WHERE championship_id = p_championship_id
+      AND stage IN ('knockout', 'cup', 'round_of_16', 'quarter_final', 'semi_final', 'final')
+  ) THEN
+    -- =========================================================
+    -- REGULAR LEAGUE / ROUND-ROBIN CHAMPIONSHIP
+    -- =========================================================
+    -- A League has NO bracket final match!
+    -- 1. All league matches must be completed and authoritative (confirmed/locked)
     IF EXISTS (
       SELECT 1 FROM public.tournament_matches
       WHERE championship_id = p_championship_id
-        AND status != 'completed'
+        AND (status != 'completed' OR COALESCE(result_status, '') NOT IN ('confirmed', 'locked'))
     ) THEN
-      RETURN jsonb_build_object('success', false, 'error', 'MATCHES_NOT_COMPLETED: All league matches must be completed before crowning');
+      RETURN jsonb_build_object('success', false, 'error', 'MATCHES_NOT_COMPLETED: All league matches must be completed and confirmed before crowning');
     END IF;
 
-    SELECT team_id INTO v_top_league_team_id
-    FROM public.get_championship_standings(p_championship_id)
+    -- 2. Determine champion from authoritative standings (1st place)
+    SELECT s.team_id INTO v_top_league_team_id
+    FROM public.get_championship_standings(p_championship_id, NULL) s
     LIMIT 1;
 
-    IF v_top_league_team_id IS DISTINCT FROM p_champion_team_id THEN
+    IF v_top_league_team_id IS NULL OR v_top_league_team_id != p_champion_team_id THEN
       RETURN jsonb_build_object('success', false, 'error', 'CHAMPION_MUST_BE_LEAGUE_LEADER: Champion must finish 1st in league standings');
+    END IF;
+
+  ELSE
+    -- =========================================================
+    -- KNOCKOUT / CUP / GROUPS+KNOCKOUT CHAMPIONSHIP
+    -- =========================================================
+    -- Must find the ACTUAL knockout final match
+    SELECT * INTO v_final_match
+    FROM public.tournament_matches
+    WHERE championship_id = p_championship_id
+      AND round_index = 0
+      AND next_match_id IS NULL
+      AND stage IN ('final', 'knockout', 'cup')
+    ORDER BY id
+    LIMIT 1;
+
+    IF NOT FOUND THEN
+      SELECT * INTO v_final_match
+      FROM public.tournament_matches
+      WHERE championship_id = p_championship_id
+        AND stage = 'final'
+      LIMIT 1;
+    END IF;
+
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('success', false, 'error', 'FINAL_MATCH_NOT_FOUND: No final match found for knockout tournament');
+    END IF;
+
+    -- Final match must be completed, authoritative, and winner must match champion
+    IF v_final_match.status != 'completed' OR COALESCE(v_final_match.result_status, '') NOT IN ('confirmed', 'locked') THEN
+      RETURN jsonb_build_object('success', false, 'error', 'FINAL_MATCH_NOT_COMPLETED: Final match must be completed and confirmed before crowning');
+    END IF;
+
+    IF v_final_match.winner_id IS NULL OR v_final_match.winner_id != p_champion_team_id THEN
+      RETURN jsonb_build_object('success', false, 'error', 'CHAMPION_IS_NOT_FINAL_WINNER: Crowned team must be the winner of the final match');
     END IF;
   END IF;
 
@@ -459,34 +548,44 @@ GRANT EXECUTE ON FUNCTION public.crown_tournament_champion_atomic(UUID, UUID, TE
 
 -- 4. transition_championship_status_atomic
 CREATE OR REPLACE FUNCTION public.transition_championship_status_atomic(
-  p_championship_id uuid,
-  p_new_status      text
+    p_championship_id UUID,
+    p_new_status TEXT
 )
-RETURNS jsonb
+RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public', 'pg_temp'
+SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_champ         RECORD;
-  v_user_id       UUID := auth.uid();
-  v_is_owner      BOOLEAN;
-  v_is_admin      BOOLEAN;
-  v_matches_count INT := 0;
+  v_champ RECORD;
+  v_is_owner BOOLEAN;
+  v_is_admin BOOLEAN;
+  v_caller_role TEXT;
+  v_matches_count INT;
 BEGIN
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
+  -- Validate target status value
+  IF p_new_status NOT IN ('open', 'ongoing', 'completed', 'cancelled') THEN
+    RAISE EXCEPTION 'INVALID_STATUS: Invalid championship status %', p_new_status;
   END IF;
 
-  SELECT * INTO v_champ FROM public.championships WHERE id = p_championship_id FOR UPDATE;
+  -- Lock and fetch championship
+  SELECT * INTO v_champ
+  FROM public.championships
+  WHERE id = p_championship_id
+  FOR UPDATE;
+
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Championship not found';
   END IF;
 
-  v_is_owner := (v_champ.owner_id = v_user_id);
-  SELECT EXISTS(
-    SELECT 1 FROM public.users
-    WHERE id = v_user_id AND role IN ('admin','co_founder','super_admin','cofounder')
+  -- Authorization check
+  v_is_owner := (v_champ.owner_id IS NOT DISTINCT FROM auth.uid());
+  SELECT (
+    COALESCE(auth.role(), '') = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid() AND role IN ('admin', 'co_founder', 'cofounder', 'super_admin')
+    )
   ) INTO v_is_admin;
 
   IF NOT v_is_owner AND NOT v_is_admin THEN
@@ -513,7 +612,7 @@ BEGIN
     END IF;
 
   -- ongoing -> completed: STRICT COMPLETION GUARD
-  -- Cannot complete without crowning a champion and completing all matches
+  -- Cannot complete without crowning a champion and completing & confirming all matches
   ELSIF v_champ.status = 'ongoing' AND p_new_status = 'completed' THEN
     IF v_champ.champion_team_id IS NULL THEN
       RAISE EXCEPTION 'BLOCKED_BY_STATE: Cannot transition to completed without crowning champion via crown_tournament_champion_atomic';
@@ -522,9 +621,9 @@ BEGIN
     IF EXISTS (
       SELECT 1 FROM public.tournament_matches
       WHERE championship_id = p_championship_id
-        AND status != 'completed'
+        AND (status != 'completed' OR COALESCE(result_status, '') NOT IN ('confirmed', 'locked'))
     ) THEN
-      RAISE EXCEPTION 'BLOCKED_BY_STATE: Cannot transition to completed while there are uncompleted matches';
+      RAISE EXCEPTION 'BLOCKED_BY_STATE: Cannot transition to completed while there are uncompleted or unconfirmed matches';
     END IF;
 
   ELSE
@@ -533,12 +632,22 @@ BEGIN
   END IF;
 
   UPDATE public.championships
-  SET status     = p_new_status,
-      updated_at = now()
+  SET status = p_new_status,
+      updated_at = timezone('utc'::text, now())
   WHERE id = p_championship_id;
 
-  RETURN jsonb_build_object('success', true, 'status', p_new_status);
+  RETURN jsonb_build_object(
+    'success', true,
+    'championship_id', p_championship_id,
+    'previous_status', v_champ.status,
+    'new_status', p_new_status
+  );
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.transition_championship_status_atomic(uuid, text) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.transition_championship_status_atomic(UUID, TEXT) TO authenticated, service_role;
+
+-- 5. Reconcile migration history into supabase_migrations.schema_migrations
+INSERT INTO supabase_migrations.schema_migrations (version, name, statements)
+VALUES ('20261002020000', 'tournament_journey_targeted_ssot_remediation', ARRAY['tournament_journey_targeted_ssot_remediation'])
+ON CONFLICT (version) DO NOTHING;

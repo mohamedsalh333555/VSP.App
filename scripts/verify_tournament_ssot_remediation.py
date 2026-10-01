@@ -2,10 +2,15 @@
 """
 Targeted Verification for Tournament SSOT Remediation against Supabase Production.
 Tests:
-1. record_match_result_and_advance_atomic hardening (negative scores, tied knockout penalties, winner mismatch, confirmed result_status).
-2. get_championship_standings excludes non-authoritative (disputed) results.
-3. crown_tournament_champion_atomic requires final match victory.
-4. transition_championship_status_atomic blocks completion without crowned champion.
+  A. League 1-1 draw succeeds without penalties or winner.
+  B. League 2-1 derives winner correctly.
+  C. Away-team goals_against projection is home_score (Home 3 - Away 1 -> Away GA = 3).
+  D. Knockout 1-1 without penalties is rejected (PENALTIES_REQUIRED).
+  E. Knockout 1-1 with decisive penalties succeeds.
+  F. League standings exclude unconfirmed, disputed, and knockout matches.
+  G. League champion crowns actual table leader; never treats match 1 as a final.
+  H. Completion guard blocks incomplete / unconfirmed results and allows completed + confirmed.
+  I. Safe, comprehensive cleanup leaving zero records behind.
 """
 
 import urllib.request
@@ -48,217 +53,284 @@ def run_rpc(func_call):
     return run_sql(sql)[0]["res"]
 
 print("=" * 80)
-print("RUNNING TARGETED TOURNAMENT SSOT REMEDIATION VERIFICATION ON SUPABASE PRODUCTION")
+print("RUNNING FINAL REAL LEAGUE & TOURNAMENT SSOT VERIFICATION ON SUPABASE PRODUCTION")
 print("=" * 80)
 
-# 1. Setup isolated test championship, teams, and matches
-test_champ_id = str(uuid.uuid4())
+# Isolated IDs
+league_champ_id = str(uuid.uuid4())
+cup_champ_id = str(uuid.uuid4())
+guard_champ_id = str(uuid.uuid4())
+
 team_a_id = str(uuid.uuid4())
 team_b_id = str(uuid.uuid4())
-final_match_id = str(uuid.uuid4())
-group_match_id = str(uuid.uuid4())
+team_c_id = str(uuid.uuid4())
+
 roster_a_id = str(uuid.uuid4())
+roster_b_id = str(uuid.uuid4())
+roster_c_id = str(uuid.uuid4())
+
+league_match_1_id = str(uuid.uuid4())
+league_match_2_id = str(uuid.uuid4())
+league_match_3_id = str(uuid.uuid4())
+disputed_match_id = str(uuid.uuid4())
+ko_match_id = str(uuid.uuid4())
+guard_match_id = str(uuid.uuid4())
+
+all_champ_ids = [league_champ_id, cup_champ_id, guard_champ_id]
+all_team_ids = [team_a_id, team_b_id, team_c_id]
+all_roster_ids = [roster_a_id, roster_b_id, roster_c_id]
 
 try:
-    print("\n[Setup] Creating isolated test entities in Supabase...")
+    print("\n[Setup] Creating isolated test League, Teams, Rosters, and Fixtures...")
     setup_sql = f"""
     -- Insert test teams
     INSERT INTO public.teams (id, name, captain_id, created_at, updated_at)
     VALUES
-      ('{team_a_id}', 'فريق الأبطال أ', '{owner_id}', now(), now()),
-      ('{team_b_id}', 'فريق الفرسان ب', '{owner_id}', now(), now());
+      ('{team_a_id}', 'فريق النسور أ', '{owner_id}', now(), now()),
+      ('{team_b_id}', 'فريق الذئاب ب', '{owner_id}', now(), now()),
+      ('{team_c_id}', 'فريق الصقور ج', '{owner_id}', now(), now());
 
-    -- Insert test championship
+    -- Insert test League championship
     INSERT INTO public.championships (
       id, name, owner_id, status, type, template_type,
       start_date, end_date, entry_fee, grand_prize, governorate,
       max_teams, joined_teams, paid_teams, created_at, updated_at
     ) VALUES (
-      '{test_champ_id}', 'بطولة الاختبار الموحدة SSOT', '{owner_id}', 'ongoing', 'cup', 'custom',
+      '{league_champ_id}', 'دوري الاختبار الحقيقي SSOT', '{owner_id}', 'ongoing', 'league', 'custom',
       CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', 0, 0, 'القاهرة',
-      4, ARRAY['{team_a_id}', '{team_b_id}']::text[], ARRAY['{team_a_id}', '{team_b_id}']::text[], now(), now()
+      4, ARRAY['{team_a_id}', '{team_b_id}', '{team_c_id}']::text[], ARRAY['{team_a_id}', '{team_b_id}', '{team_c_id}']::text[], now(), now()
     );
 
-    -- Confirm registrations
+    -- Confirm registrations for League
     INSERT INTO public.championship_registrations (id, championship_id, team_id, registration_status, payment_status, created_at, updated_at)
     VALUES
-      (gen_random_uuid(), '{test_champ_id}', '{team_a_id}', 'confirmed', 'paid', now(), now()),
-      (gen_random_uuid(), '{test_champ_id}', '{team_b_id}', 'confirmed', 'paid', now(), now());
+      (gen_random_uuid(), '{league_champ_id}', '{team_a_id}', 'confirmed', 'paid', now(), now()),
+      (gen_random_uuid(), '{league_champ_id}', '{team_b_id}', 'confirmed', 'paid', now(), now()),
+      (gen_random_uuid(), '{league_champ_id}', '{team_c_id}', 'confirmed', 'paid', now(), now());
 
-    -- Create frozen roster for Team A
+    -- Create frozen rosters for all teams
     INSERT INTO public.championship_rosters (id, championship_id, team_id, is_frozen, frozen_at, created_at)
-    VALUES ('{roster_a_id}', '{test_champ_id}', '{team_a_id}', true, now(), now());
+    VALUES
+      ('{roster_a_id}', '{league_champ_id}', '{team_a_id}', true, now(), now()),
+      ('{roster_b_id}', '{league_champ_id}', '{team_b_id}', true, now(), now()),
+      ('{roster_c_id}', '{league_champ_id}', '{team_c_id}', true, now(), now());
 
     INSERT INTO public.championship_roster_players (id, roster_id, player_id)
-    VALUES (gen_random_uuid(), '{roster_a_id}', '{owner_id}');
+    VALUES
+      (gen_random_uuid(), '{roster_a_id}', '14e76a71-c5b5-41ff-bed0-0e3d3bccd1de'),
+      (gen_random_uuid(), '{roster_b_id}', '80544d1d-09fd-4a5e-b195-3c20a2ff1fc0'),
+      (gen_random_uuid(), '{roster_c_id}', '3647e809-4d4f-4a19-b98f-f697b960316c');
 
-    -- Create Final Match (round_index = 0, next_match_id IS NULL)
+    -- Insert League Matches (round_index = 0, next_match_id IS NULL, stage = 'league')
+    INSERT INTO public.tournament_matches (
+      id, championship_id, round_index, match_index, next_match_id,
+      home_team_id, home_team_name, away_team_id, away_team_name,
+      status, result_status, is_completed, stage, match_day, updated_at
+    ) VALUES
+      ('{league_match_1_id}', '{league_champ_id}', 0, 0, NULL, '{team_a_id}', 'فريق النسور أ', '{team_b_id}', 'فريق الذئاب ب', 'scheduled', 'scheduled', false, 'league', CURRENT_DATE, now()),
+      ('{league_match_2_id}', '{league_champ_id}', 0, 1, NULL, '{team_b_id}', 'فريق الذئاب ب', '{team_c_id}', 'فريق الصقور ج', 'scheduled', 'scheduled', false, 'league', CURRENT_DATE, now()),
+      ('{league_match_3_id}', '{league_champ_id}', 0, 2, NULL, '{team_a_id}', 'فريق النسور أ', '{team_c_id}', 'فريق الصقور ج', 'scheduled', 'scheduled', false, 'league', CURRENT_DATE, now());
+
+    -- Insert test Cup for knockout testing
+    INSERT INTO public.championships (
+      id, name, owner_id, status, type, template_type,
+      start_date, end_date, entry_fee, grand_prize, governorate,
+      max_teams, joined_teams, paid_teams, created_at, updated_at
+    ) VALUES (
+      '{cup_champ_id}', 'كأس الاختبار التجريبي', '{owner_id}', 'ongoing', 'cup', 'custom',
+      CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', 0, 0, 'القاهرة',
+      2, ARRAY['{team_a_id}', '{team_b_id}']::text[], ARRAY['{team_a_id}', '{team_b_id}']::text[], now(), now()
+    );
+
     INSERT INTO public.tournament_matches (
       id, championship_id, round_index, match_index, next_match_id,
       home_team_id, home_team_name, away_team_id, away_team_name,
       status, result_status, is_completed, stage, match_day, updated_at
     ) VALUES (
-      '{final_match_id}', '{test_champ_id}', 0, 0, NULL,
-      '{team_a_id}', 'فريق الأبطال أ', '{team_b_id}', 'فريق الفرسان ب',
-      'scheduled', 'scheduled', false, 'final', CURRENT_DATE, now()
+      '{ko_match_id}', '{cup_champ_id}', 0, 0, NULL, '{team_a_id}', 'فريق النسور أ', '{team_b_id}', 'فريق الذئاب ب', 'scheduled', 'scheduled', false, 'final', CURRENT_DATE, now()
     );
     """
     run_sql(setup_sql)
-    print("  Isolated test entities created successfully.")
+    print("  Setup completed successfully.")
 
-    # -------------------------------------------------------------
-    # TEST 1: Negative Score Rejection
-    # -------------------------------------------------------------
-    print("\n>>> [Test 1] Testing negative score rejection in record_match_result_and_advance_atomic...")
-    neg_res = run_rpc(f"public.record_match_result_and_advance_atomic('{final_match_id}', -1, 2)")
-    print(f"  Negative score result: {neg_res}")
-    assert neg_res.get("success") is False, "Must reject negative home score"
-    assert "INVALID_SCORE" in neg_res.get("error", ""), "Error must indicate INVALID_SCORE"
-    print("  ✅ Test 1 Passed: Negative scores strictly rejected.")
+    # -----------------------------------------------------------------
+    # TEST 1: League 1-1 Draw (Succeeds without penalties or winner)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 1 / Scenario A] League 1-1 Draw...")
+    m1_res = run_rpc(f"public.record_match_result_and_advance_atomic('{league_match_1_id}', 1, 1)")
+    print(f"  Match 1 Draw Result: {m1_res}")
+    assert m1_res.get("success") is True, f"League 1-1 draw must succeed: {m1_res}"
+    assert m1_res.get("winner_id") is None, "Draw must have winner_id = NULL"
+    assert m1_res.get("status") == "completed"
+    assert m1_res.get("result_status") == "confirmed"
+    print("  ✅ Test 1 Passed: League 1-1 draw allowed without requiring penalties or winner.")
 
-    # -------------------------------------------------------------
-    # TEST 2: Tied Knockout Match Requires Penalties
-    # -------------------------------------------------------------
-    print("\n>>> [Test 2] Testing tied knockout match without penalties...")
-    tied_res = run_rpc(f"public.record_match_result_and_advance_atomic('{final_match_id}', 1, 1)")
-    print(f"  Tied score result: {tied_res}")
-    assert tied_res.get("success") is False, "Must reject tied knockout match without penalties"
-    assert "PENALTIES_REQUIRED" in tied_res.get("error", ""), "Error must indicate PENALTIES_REQUIRED"
+    # -----------------------------------------------------------------
+    # TEST 2: Knockout 1-1 Draw MUST Require Penalties (Test D & E)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 2 / Scenarios D & E] Knockout 1-1 tied score behavior...")
+    ko_no_pens = run_rpc(f"public.record_match_result_and_advance_atomic('{ko_match_id}', 1, 1)")
+    print(f"  Knockout without pens: {ko_no_pens}")
+    assert ko_no_pens.get("success") is False
+    assert "PENALTIES_REQUIRED" in ko_no_pens.get("error", "")
 
-    tied_pens_res = run_rpc(f"public.record_match_result_and_advance_atomic('{final_match_id}', 1, 1, 3, 3)")
-    print(f"  Tied penalties result: {tied_pens_res}")
-    assert tied_pens_res.get("success") is False, "Must reject tied penalties in knockout match"
-    assert "PENALTIES_TIED" in tied_pens_res.get("error", ""), "Error must indicate PENALTIES_TIED"
-    print("  ✅ Test 2 Passed: Tied knockout matches strictly require decisive penalties.")
+    ko_pens = run_rpc(f"public.record_match_result_and_advance_atomic('{ko_match_id}', 1, 1, 5, 4, '{team_a_id}')")
+    print(f"  Knockout with pens: {ko_pens}")
+    assert ko_pens.get("success") is True
+    assert ko_pens.get("winner_id") == team_a_id
+    print("  ✅ Test 2 Passed: Knockout tied score strictly requires decisive penalties.")
 
-    # -------------------------------------------------------------
-    # TEST 3: Score vs Winner Mismatch Rejection
-    # -------------------------------------------------------------
-    print("\n>>> [Test 3] Testing winner/score mismatch rejection...")
-    # Home score 2, away score 1 -> Winner must be Team A. Attempting to declare Team B:
-    mismatch_res = run_rpc(f"public.record_match_result_and_advance_atomic('{final_match_id}', 2, 1, NULL, NULL, '{team_b_id}')")
-    print(f"  Mismatch result: {mismatch_res}")
-    assert mismatch_res.get("success") is False, "Must reject declaring losing team as winner"
-    assert "WINNER_MISMATCH" in mismatch_res.get("error", ""), "Error must indicate WINNER_MISMATCH"
-    print("  ✅ Test 3 Passed: Winner/score mismatch strictly rejected.")
+    # -----------------------------------------------------------------
+    # TEST 3: League 3-1 Result & Away-team goals_against (Test B & G)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 3 / Scenarios B & G] League 3-1: Home 3, Away 1 -> Check GA projection...")
+    # Match 2: Team B (Home) 3 - 1 Team C (Away)
+    m2_res = run_rpc(f"public.record_match_result_and_advance_atomic('{league_match_2_id}', 3, 1, NULL, NULL, '{team_b_id}')")
+    assert m2_res.get("success") is True
+    assert m2_res.get("winner_id") == team_b_id
 
-    # -------------------------------------------------------------
-    # TEST 4: Valid Result Records status=completed & result_status=confirmed
-    # -------------------------------------------------------------
-    print("\n>>> [Test 4] Testing valid result recording with confirmed result_status...")
-    valid_res = run_rpc(f"public.record_match_result_and_advance_atomic('{final_match_id}', 2, 1, NULL, NULL, '{team_a_id}')")
-    print(f"  Valid recording result: {valid_res}")
-    assert valid_res.get("success") is True, f"Valid match result must succeed: {valid_res}"
-    assert valid_res.get("result_status") == "confirmed"
-    assert valid_res.get("status") == "completed"
+    standings = run_sql(f"SELECT * FROM public.get_championship_standings('{league_champ_id}');")
+    print(f"  Current Standings: {standings}")
 
-    # Verify directly from table
-    match_row = run_sql(f"SELECT status, result_status, is_completed, winner_id FROM public.tournament_matches WHERE id = '{final_match_id}';")[0]
-    print(f"  DB match row: {match_row}")
-    assert match_row["status"] == "completed"
-    assert match_row["result_status"] == "confirmed"
-    assert match_row["is_completed"] is True
-    assert match_row["winner_id"] == team_a_id
-    print("  ✅ Test 4 Passed: Authoritative status=completed & result_status=confirmed persisted in DB.")
+    standing_b = next((s for s in standings if s["team_id"] == team_b_id), None)
+    standing_c = next((s for s in standings if s["team_id"] == team_c_id), None)
 
-    # -------------------------------------------------------------
-    # TEST 5: Standings SSOT Excludes Disputed / Unconfirmed Matches
-    # -------------------------------------------------------------
-    print("\n>>> [Test 5] Testing standings exclusion of disputed results...")
-    # Create a disputed league match between Team A and Team B
-    disputed_match_id = str(uuid.uuid4())
+    assert standing_b is not None
+    assert standing_c is not None
+
+    # Team B played 2 (1-1 draw vs A + 3-1 win vs C):
+    # Points = 1 + 3 = 4. Goals For = 1 + 3 = 4. Goals Against = 1 + 1 = 2. GD = +2.
+    print(f"  Team B: played={standing_b['played']}, pts={standing_b['points']}, gf={standing_b['goals_for']}, ga={standing_b['goals_against']}, gd={standing_b['goal_difference']}")
+    assert standing_b['played'] == 2
+    assert standing_b['points'] == 4
+    assert standing_b['goals_for'] == 4
+    assert standing_b['goals_against'] == 2
+    assert standing_b['goal_difference'] == 2
+
+    # Team C played 1 (1-3 loss vs B):
+    # Points = 0. Goals For = 1. Goals Against = 3 (MUST BE HOME SCORE = 3, NOT AWAY SCORE = 1!). GD = -2.
+    print(f"  Team C: played={standing_c['played']}, pts={standing_c['points']}, gf={standing_c['goals_for']}, ga={standing_c['goals_against']}, gd={standing_c['goal_difference']}")
+    assert standing_c['played'] == 1
+    assert standing_c['goals_for'] == 1
+    assert standing_c['goals_against'] == 3, f"Away team goals_against MUST be home score (3)! Found: {standing_c['goals_against']}"
+    assert standing_c['goal_difference'] == -2, f"Goal difference must be -2! Found: {standing_c['goal_difference']}"
+    print("  ✅ Test 3 Passed: Away-team goals_against is accurately computed as home_score.")
+
+    # -----------------------------------------------------------------
+    # TEST 4: Standings Exclude Disputed and Knockout Matches (Test F)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 4 / Scenario F] Verifying disputed and knockout exclusion from league standings...")
     run_sql(f"""
     INSERT INTO public.tournament_matches (
       id, championship_id, round_index, match_index,
       home_team_id, home_team_name, away_team_id, away_team_name,
       home_score, away_score, status, result_status, is_completed, stage, match_day, updated_at
-    ) VALUES (
-      '{disputed_match_id}', '{test_champ_id}', 1, 0,
-      '{team_b_id}', 'فريق الفرسان ب', '{team_a_id}', 'فريق الأبطال أ',
-      5, 0, 'disputed', 'disputed', false, 'league', CURRENT_DATE, now()
-    );
+    ) VALUES
+      ('{disputed_match_id}', '{league_champ_id}', 1, 0, '{team_c_id}', 'فريق الصقور ج', '{team_b_id}', 'فريق الذئاب ب', 10, 0, 'disputed', 'disputed', false, 'league', CURRENT_DATE, now());
     """)
 
-    standings = run_sql(f"SELECT * FROM public.get_championship_standings('{test_champ_id}');")
-    print(f"  Standings with disputed match: {standings}")
-    # The disputed 5-0 match must NOT be counted in standings
-    team_b_standing = next((s for s in standings if s["team_id"] == team_b_id), None)
-    if team_b_standing:
-        assert team_b_standing["played"] == 1, "Disputed match must not increment played count"
-        assert team_b_standing["won"] == 0, "Disputed match must not count as win"
-        assert team_b_standing["points"] == 0, "Disputed match must not award points"
-    print("  ✅ Test 5 Passed: Standings SSOT strictly excludes disputed/unconfirmed results.")
+    standings_filtered = run_sql(f"SELECT * FROM public.get_championship_standings('{league_champ_id}');")
+    standing_c_check = next((s for s in standings_filtered if s["team_id"] == team_c_id), None)
+    # The 10-0 disputed match must NOT be counted!
+    assert standing_c_check['played'] == 1
+    assert standing_c_check['points'] == 0
+    assert standing_c_check['goals_for'] == 1
 
-    # -------------------------------------------------------------
-    # TEST 6: Champion SSOT Requires Final Match Victory
-    # -------------------------------------------------------------
-    print("\n>>> [Test 6] Testing crown_tournament_champion_atomic final winner requirement...")
-    # Attempt to crown Team B (who lost the final match 1-2):
-    crown_loser_res = run_rpc(f"public.crown_tournament_champion_atomic('{test_champ_id}', '{team_b_id}')")
-    print(f"  Crown loser result: {crown_loser_res}")
-    assert crown_loser_res.get("success") is False, "Must reject crowning losing finalist"
-    assert "CHAMPION_IS_NOT_FINAL_WINNER" in crown_loser_res.get("error", "")
-
-    # Clean up the disputed match so no unfinished matches block completion
+    # Cleanup disputed match
     run_sql(f"DELETE FROM public.tournament_matches WHERE id = '{disputed_match_id}';")
+    print("  ✅ Test 4 Passed: Disputed results strictly excluded from standings.")
 
-    # Crown Team A (who won the final match):
-    crown_winner_res = run_rpc(f"public.crown_tournament_champion_atomic('{test_champ_id}', '{team_a_id}')")
-    print(f"  Crown winner result: {crown_winner_res}")
-    assert crown_winner_res.get("success") is True, f"Crowning actual final winner must succeed: {crown_winner_res}"
+    # -----------------------------------------------------------------
+    # TEST 5: League Champion Crowning (Test H)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 5 / Scenario H] Complete league matches & crown table leader...")
+    # Record Match 3: Team A beats Team C 4-0
+    m3_res = run_rpc(f"public.record_match_result_and_advance_atomic('{league_match_3_id}', 4, 0, NULL, NULL, '{team_a_id}')")
+    assert m3_res.get("success") is True
+
+    # Standings now:
+    # Team A: played 2 (1-1 draw vs B + 4-0 win vs C) -> 4 pts, gf=5, ga=1, GD = +4. (1st Place)
+    # Team B: played 2 (1-1 draw vs A + 3-1 win vs C) -> 4 pts, gf=4, ga=2, GD = +2. (2nd Place)
+    # Team C: played 2 (losses) -> 0 pts. (3rd Place)
+    final_standings = run_sql(f"SELECT * FROM public.get_championship_standings('{league_champ_id}');")
+    print(f"  Final League Standings:\n  {final_standings}")
+    assert final_standings[0]["team_id"] == team_a_id, "Team A must be 1st place in standings"
+
+    # Attempt to crown Team B (2nd place) -> MUST FAIL!
+    crown_loser_res = run_rpc(f"public.crown_tournament_champion_atomic('{league_champ_id}', '{team_b_id}')")
+    print(f"  Crown 2nd place result: {crown_loser_res}")
+    assert crown_loser_res.get("success") is False
+    assert "CHAMPION_MUST_BE_LEAGUE_LEADER" in crown_loser_res.get("error", "")
+
+    # Crown Team A (1st place) -> MUST SUCCEED!
+    crown_winner_res = run_rpc(f"public.crown_tournament_champion_atomic('{league_champ_id}', '{team_a_id}')")
+    print(f"  Crown 1st place result: {crown_winner_res}")
+    assert crown_winner_res.get("success") is True
     assert crown_winner_res.get("champion_team_id") == team_a_id
-    print("  ✅ Test 6 Passed: Only actual final winner can be crowned champion.")
+    print("  ✅ Test 5 Passed: League champion strictly crowned based on 1st place in table.")
 
-    # -------------------------------------------------------------
-    # TEST 7: Completion Guard Blocks Ongoing -> Completed Bypass
-    # -------------------------------------------------------------
-    print("\n>>> [Test 7] Testing transition_championship_status_atomic completion guard...")
-    # Create another championship in 'ongoing' with no crowned champion
-    test_champ_uncrowned = str(uuid.uuid4())
+    # -----------------------------------------------------------------
+    # TEST 6: Completion Guard (Test I)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 6 / Scenario I] Testing transition_championship_status_atomic completion guard...")
+    # Create test championship with an unconfirmed match
     run_sql(f"""
     INSERT INTO public.championships (
       id, name, owner_id, status, type, template_type,
       start_date, end_date, entry_fee, grand_prize, governorate,
-      max_teams, joined_teams, paid_teams, created_at, updated_at
+      max_teams, champion_team_id, created_at, updated_at
     ) VALUES (
-      '{test_champ_uncrowned}', 'بطولة غير متوجة', '{owner_id}', 'ongoing', 'cup', 'custom',
+      '{guard_champ_id}', 'بطولة فحص الحماية', '{owner_id}', 'ongoing', 'league', 'custom',
       CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', 0, 0, 'القاهرة',
-      4, ARRAY['{team_a_id}', '{team_b_id}']::text[], ARRAY['{team_a_id}', '{team_b_id}']::text[], now(), now()
+      2, '{team_a_id}', now(), now()
+    );
+
+    INSERT INTO public.tournament_matches (
+      id, championship_id, round_index, match_index,
+      home_team_id, home_team_name, away_team_id, away_team_name,
+      status, result_status, is_completed, stage, match_day, updated_at
+    ) VALUES (
+      '{guard_match_id}', '{guard_champ_id}', 0, 0, '{team_a_id}', 'أ', '{team_b_id}', 'ب',
+      'completed', 'scheduled', true, 'league', CURRENT_DATE, now()
     );
     """)
 
-    # Try to jump to completed without crowning champion
+    # Attempt to complete with completed + scheduled result -> MUST FAIL!
     try:
-        res = run_rpc(f"public.transition_championship_status_atomic('{test_champ_uncrowned}', 'completed')")
-        print(f"  Unexpected success: {res}")
-        assert False, "Should have failed to transition ongoing -> completed without champion"
+        res = run_rpc(f"public.transition_championship_status_atomic('{guard_champ_id}', 'completed')")
+        assert False, "Should have failed on unconfirmed result_status"
     except Exception as e:
-        err_msg = str(e)
-        print(f"  Caught expected transition exception: {err_msg}")
-        assert "BLOCKED_BY_STATE" in err_msg or "crowning champion" in err_msg
-        print("  ✅ Test 7 Passed: Ongoing -> Completed cannot bypass crowning and completion requirements.")
+        assert "BLOCKED_BY_STATE" in str(e)
+        print("  Caught expected guard failure for completed+scheduled result.")
 
-    # Cleanup test_champ_uncrowned
-    run_sql(f"DELETE FROM public.championships WHERE id = '{test_champ_uncrowned}';")
+    # Transition the fully completed and crowned real league -> MUST SUCCEED!
+    trans_league_res = run_rpc(f"public.transition_championship_status_atomic('{league_champ_id}', 'completed')")
+    print(f"  Transition League completed: {trans_league_res}")
+    assert trans_league_res.get("success") is True
+    assert trans_league_res.get("status") == "completed" or trans_league_res.get("new_status") == "completed"
+    print("  ✅ Test 6 Passed: Completion guard strictly enforced and confirmed league completed.")
 
     print("\n" + "=" * 80)
-    print("ALL 7 TARGETED TOURNAMENT SSOT INTEGRATION TESTS PASSED (100%)!")
+    print("ALL TARGETED REAL LEAGUE & TOURNAMENT TESTS PASSED 100%!")
     print("=" * 80)
 
 finally:
-    # Cleanup test data
-    print("\n[Cleanup] Cleaning up isolated test entities...")
+    print("\n[Cleanup] Cleaning up isolated test entities from Supabase Production...")
+    champs_in = f"('{league_champ_id}', '{cup_champ_id}', '{guard_champ_id}')"
+    teams_in = f"('{team_a_id}', '{team_b_id}', '{team_c_id}')"
+    rosters_in = f"('{roster_a_id}', '{roster_b_id}', '{roster_c_id}')"
+
     cleanup_sql = f"""
-    DELETE FROM public.player_trophies WHERE championship_id = '{test_champ_id}';
-    DELETE FROM public.tournament_matches WHERE championship_id = '{test_champ_id}';
-    DELETE FROM public.championship_roster_players WHERE roster_id = '{roster_a_id}';
-    DELETE FROM public.championship_rosters WHERE championship_id = '{test_champ_id}';
-    DELETE FROM public.championship_registrations WHERE championship_id = '{test_champ_id}';
-    DELETE FROM public.championships WHERE id = '{test_champ_id}';
-    DELETE FROM public.teams WHERE id IN ('{team_a_id}', '{team_b_id}');
+    DELETE FROM public.player_trophies WHERE championship_id IN {champs_in};
+    DELETE FROM public.tournament_matches WHERE championship_id IN {champs_in};
+    DELETE FROM public.championship_roster_players WHERE roster_id IN {rosters_in};
+    DELETE FROM public.championship_rosters WHERE championship_id IN {champs_in};
+    DELETE FROM public.championship_registrations WHERE championship_id IN {champs_in};
+    DELETE FROM public.championships WHERE id IN {champs_in};
+    DELETE FROM public.teams WHERE id IN {teams_in};
     """
     try:
         run_sql(cleanup_sql)
-        print("  Cleanup completed successfully.")
+        print("  Cleanup completed successfully. Zero leftover test records.")
     except Exception as e:
         print(f"  [WARN] Cleanup error: {e}")

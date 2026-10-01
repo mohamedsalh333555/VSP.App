@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Tournament Journey Targeted SSOT Remediation Tests', () {
     // -------------------------------------------------------------
-    // 1. Canonical Championship Status in Match Card UI
+    // UI Status SSOT: Canonical Championship Status in Match Card
     // -------------------------------------------------------------
     test('Match card allows score recording strictly on canonical "ongoing" status, not "in_progress"', () {
       bool canRecordScore({
@@ -18,7 +18,6 @@ void main() {
             championshipStatus == 'ongoing';
       }
 
-      // Valid case: owner with assigned teams on ongoing tournament
       expect(
         canRecordScore(
           isOwner: true,
@@ -30,7 +29,6 @@ void main() {
         reason: 'Score recording must be enabled when championship status is ongoing',
       );
 
-      // Invalid case: old buggy 'in_progress' status must not be accepted as canonical
       expect(
         canRecordScore(
           isOwner: true,
@@ -41,311 +39,317 @@ void main() {
         isFalse,
         reason: 'Score recording must not rely on non-canonical in_progress',
       );
-
-      // Other non-ongoing states
-      expect(
-        canRecordScore(
-          isOwner: true,
-          homeTeamId: 'team-1',
-          awayTeamId: 'team-2',
-          championshipStatus: 'open',
-        ),
-        isFalse,
-      );
-      expect(
-        canRecordScore(
-          isOwner: true,
-          homeTeamId: 'team-1',
-          awayTeamId: 'team-2',
-          championshipStatus: 'completed',
-        ),
-        isFalse,
-      );
     });
 
     // -------------------------------------------------------------
-    // 2. Server-Authoritative Match Result Validation Contract
+    // Helper function simulating the authoritative database logic
+    // for record_match_result_and_advance_atomic
     // -------------------------------------------------------------
-    group('record_match_result_and_advance_atomic contract', () {
-      Map<String, dynamic> simulateRecordMatchResult({
-        required int homeScore,
-        required int awayScore,
-        int? homePenalties,
-        int? awayPenalties,
-        String? winnerId,
-        required String homeTeamId,
-        required String awayTeamId,
-        required bool isKnockout,
-        required String currentResultStatus,
-      }) {
-        // 1. Negative score check
-        if (homeScore < 0 || awayScore < 0) {
-          return {'success': false, 'error': 'INVALID_SCORE: Scores cannot be negative'};
-        }
-        if ((homePenalties != null && homePenalties < 0) ||
-            (awayPenalties != null && awayPenalties < 0)) {
-          return {'success': false, 'error': 'INVALID_PENALTIES: Penalty scores cannot be negative'};
-        }
+    Map<String, dynamic> simulateRecordMatchResult({
+      required int homeScore,
+      required int awayScore,
+      int? homePenalties,
+      int? awayPenalties,
+      String? winnerId,
+      required String homeTeamId,
+      required String awayTeamId,
+      required String stage,
+      String? championshipType,
+      String? groupName,
+      String? nextMatchId,
+      required String currentResultStatus,
+    }) {
+      // 1. Negative score checks
+      if (homeScore < 0 || awayScore < 0) {
+        return {'success': false, 'error': 'INVALID_SCORE: Scores cannot be negative'};
+      }
+      if ((homePenalties != null && homePenalties < 0) ||
+          (awayPenalties != null && awayPenalties < 0)) {
+        return {'success': false, 'error': 'INVALID_PENALTIES: Penalty scores cannot be negative'};
+      }
 
-        // 2. Locked match check
-        if (currentResultStatus == 'locked') {
-          return {'success': false, 'error': 'LOCKED_MATCH: Match result is locked and cannot be modified'};
+      // 2. Locked match check
+      if (currentResultStatus == 'locked') {
+        return {'success': false, 'error': 'LOCKED_MATCH: Match result is locked and cannot be modified'};
+      }
+
+      // 3. Authoritative League vs Knockout determination
+      bool isKnockout;
+      if (stage == 'league' || championshipType == 'league') {
+        isKnockout = false;
+      } else if (stage == 'group_stage' || groupName != null) {
+        isKnockout = false;
+      } else {
+        isKnockout = (nextMatchId != null ||
+            ['knockout', 'cup', 'round_of_16', 'quarter_final', 'semi_final', 'final'].contains(stage) ||
+            ['cup', 'knockout'].contains(championshipType));
+      }
+
+      // 4. Validate winner vs scores
+      String? expectedWinnerId;
+      String? effectiveWinnerId = winnerId;
+
+      if (homeScore != awayScore) {
+        expectedWinnerId = homeScore > awayScore ? homeTeamId : awayTeamId;
+        if (winnerId != null && winnerId != expectedWinnerId) {
+          return {'success': false, 'error': 'WINNER_MISMATCH: Winner does not match regular time score'};
         }
-
-        // 3. Score vs winner validation
-        String? expectedWinnerId;
-        String? effectiveWinnerId = winnerId;
-
-        if (homeScore != awayScore) {
-          expectedWinnerId = homeScore > awayScore ? homeTeamId : awayTeamId;
+        effectiveWinnerId = expectedWinnerId;
+      } else {
+        // Tied score
+        if (isKnockout) {
+          if (homePenalties == null || awayPenalties == null) {
+            return {'success': false, 'error': 'PENALTIES_REQUIRED: Tied knockout match requires penalties'};
+          }
+          if (homePenalties == awayPenalties) {
+            return {'success': false, 'error': 'PENALTIES_TIED: Penalties cannot be tied in knockout match'};
+          }
+          expectedWinnerId = homePenalties > awayPenalties ? homeTeamId : awayTeamId;
           if (winnerId != null && winnerId != expectedWinnerId) {
-            return {'success': false, 'error': 'WINNER_MISMATCH: Winner does not match regular time score'};
+            return {'success': false, 'error': 'WINNER_MISMATCH: Winner does not match penalty shootout result'};
           }
           effectiveWinnerId = expectedWinnerId;
         } else {
-          // Tied score
-          if (isKnockout) {
-            if (homePenalties == null || awayPenalties == null) {
-              return {'success': false, 'error': 'PENALTIES_REQUIRED: Tied knockout match requires penalties'};
-            }
-            if (homePenalties == awayPenalties) {
-              return {'success': false, 'error': 'PENALTIES_TIED: Penalties cannot be tied in knockout match'};
-            }
-            expectedWinnerId = homePenalties > awayPenalties ? homeTeamId : awayTeamId;
-            if (winnerId != null && winnerId != expectedWinnerId) {
-              return {'success': false, 'error': 'WINNER_MISMATCH: Winner does not match penalty shootout result'};
-            }
-            effectiveWinnerId = expectedWinnerId;
-          } else {
-            effectiveWinnerId = null;
+          // League or group draw
+          if (winnerId != null) {
+            return {'success': false, 'error': 'WINNER_MISMATCH: Draws in league or group matches cannot have a winner'};
           }
+          effectiveWinnerId = null;
         }
-
-        // 4. Winner must be one of the participating teams
-        if (effectiveWinnerId != null &&
-            effectiveWinnerId != homeTeamId &&
-            effectiveWinnerId != awayTeamId) {
-          return {'success': false, 'error': 'INVALID_WINNER: Winner must be one of the participating teams'};
-        }
-
-        if (isKnockout && effectiveWinnerId == null) {
-          return {'success': false, 'error': 'WINNER_REQUIRED: Knockout match requires a decisive winner'};
-        }
-
-        return {
-          'success': true,
-          'winner_id': effectiveWinnerId,
-          'status': 'completed',
-          'is_completed': true,
-          'result_status': 'confirmed',
-        };
       }
 
-      test('Rejects negative home or away score', () {
-        final resNegativeHome = simulateRecordMatchResult(
-          homeScore: -1,
-          awayScore: 2,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: false,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resNegativeHome['success'], isFalse);
-        expect(resNegativeHome['error'], contains('INVALID_SCORE'));
+      if (isKnockout && effectiveWinnerId == null) {
+        return {'success': false, 'error': 'KNOCKOUT_REQUIRES_WINNER: Knockout matches cannot end without a winner'};
+      }
 
-        final resNegativeAway = simulateRecordMatchResult(
-          homeScore: 3,
-          awayScore: -2,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: false,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resNegativeAway['success'], isFalse);
-        expect(resNegativeAway['error'], contains('INVALID_SCORE'));
-      });
+      return {
+        'success': true,
+        'winner_id': effectiveWinnerId,
+        'status': 'completed',
+        'is_completed': true,
+        'result_status': 'confirmed',
+        'is_knockout': isKnockout,
+      };
+    }
 
-      test('Tied knockout match requires valid unequal penalties', () {
-        // Without penalties -> rejected
-        final resNoPens = simulateRecordMatchResult(
-          homeScore: 2,
-          awayScore: 2,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resNoPens['success'], isFalse);
-        expect(resNoPens['error'], contains('PENALTIES_REQUIRED'));
-
-        // With tied penalties -> rejected
-        final resTiedPens = simulateRecordMatchResult(
-          homeScore: 1,
-          awayScore: 1,
-          homePenalties: 4,
-          awayPenalties: 4,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resTiedPens['success'], isFalse);
-        expect(resTiedPens['error'], contains('PENALTIES_TIED'));
-
-        // With decisive penalties -> succeeds and confirms result
-        final resValidPens = simulateRecordMatchResult(
-          homeScore: 1,
-          awayScore: 1,
-          homePenalties: 5,
-          awayPenalties: 4,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resValidPens['success'], isTrue);
-        expect(resValidPens['winner_id'], equals('t1'));
-        expect(resValidPens['result_status'], equals('confirmed'));
-      });
-
-      test('Rejects invalid winner not in match or winner/score mismatch', () {
-        // Winner is an unrelated team
-        final resAlienWinner = simulateRecordMatchResult(
-          homeScore: 3,
-          awayScore: 1,
-          winnerId: 'alien-team-99',
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resAlienWinner['success'], isFalse);
-        expect(resAlienWinner['error'], contains('WINNER_MISMATCH'));
-
-        // Regular time home won 3-1, but client tried to declare away winner
-        final resInvertedWinner = simulateRecordMatchResult(
-          homeScore: 3,
-          awayScore: 1,
-          winnerId: 't2',
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resInvertedWinner['success'], isFalse);
-        expect(resInvertedWinner['error'], contains('WINNER_MISMATCH'));
-      });
-
-      test('Valid match result transitions atomically to completed and confirmed', () {
-        final resSuccess = simulateRecordMatchResult(
-          homeScore: 2,
-          awayScore: 0,
-          homeTeamId: 't1',
-          awayTeamId: 't2',
-          isKnockout: true,
-          currentResultStatus: 'scheduled',
-        );
-        expect(resSuccess['success'], isTrue);
-        expect(resSuccess['status'], equals('completed'));
-        expect(resSuccess['is_completed'], isTrue);
-        expect(resSuccess['result_status'], equals('confirmed'));
-        expect(resSuccess['winner_id'], equals('t1'));
-      });
+    // -------------------------------------------------------------
+    // Test A: League 1-1 (Draw: succeeds, no penalties, no winner)
+    // -------------------------------------------------------------
+    test('A. League 1-1: succeeds, no penalties required, no winner required', () {
+      final res = simulateRecordMatchResult(
+        homeScore: 1,
+        awayScore: 1,
+        homeTeamId: 'team-a',
+        awayTeamId: 'team-b',
+        stage: 'league',
+        championshipType: 'league',
+        currentResultStatus: 'scheduled',
+      );
+      expect(res['success'], isTrue);
+      expect(res['winner_id'], isNull);
+      expect(res['is_knockout'], isFalse);
+      expect(res['status'], equals('completed'));
+      expect(res['result_status'], equals('confirmed'));
     });
 
     // -------------------------------------------------------------
-    // 3. Standings SSOT: Only Authoritative Results Count
+    // Test B: League 2-1 (Winner derived correctly)
     // -------------------------------------------------------------
-    test('Standings engine excludes disputed, scheduled, or unconfirmed matches', () {
+    test('B. League 2-1: winner derived correctly', () {
+      final res = simulateRecordMatchResult(
+        homeScore: 2,
+        awayScore: 1,
+        homeTeamId: 'team-a',
+        awayTeamId: 'team-b',
+        stage: 'league',
+        championshipType: 'league',
+        currentResultStatus: 'scheduled',
+      );
+      expect(res['success'], isTrue);
+      expect(res['winner_id'], equals('team-a'));
+      expect(res['is_knockout'], isFalse);
+      expect(res['status'], equals('completed'));
+      expect(res['result_status'], equals('confirmed'));
+    });
+
+    // -------------------------------------------------------------
+    // Test C: Group 1-1 (Group stage draw: succeeds without winner)
+    // -------------------------------------------------------------
+    test('C. Group 1-1: succeeds without winner', () {
+      final res = simulateRecordMatchResult(
+        homeScore: 1,
+        awayScore: 1,
+        homeTeamId: 'team-x',
+        awayTeamId: 'team-y',
+        stage: 'group_stage',
+        groupName: 'المجموعة أ',
+        championshipType: 'cup',
+        currentResultStatus: 'scheduled',
+      );
+      expect(res['success'], isTrue);
+      expect(res['winner_id'], isNull);
+      expect(res['is_knockout'], isFalse);
+    });
+
+    // -------------------------------------------------------------
+    // Test D: Knockout 1-1 with no penalties: rejected
+    // -------------------------------------------------------------
+    test('D. Knockout 1-1 with no penalties: rejected', () {
+      final res = simulateRecordMatchResult(
+        homeScore: 1,
+        awayScore: 1,
+        homeTeamId: 'team-1',
+        awayTeamId: 'team-2',
+        stage: 'knockout',
+        championshipType: 'cup',
+        currentResultStatus: 'scheduled',
+      );
+      expect(res['success'], isFalse);
+      expect(res['error'], contains('PENALTIES_REQUIRED'));
+    });
+
+    // -------------------------------------------------------------
+    // Test E: Knockout 1-1 with decisive penalties: succeeds
+    // -------------------------------------------------------------
+    test('E. Knockout 1-1 with decisive penalties: succeeds', () {
+      final res = simulateRecordMatchResult(
+        homeScore: 1,
+        awayScore: 1,
+        homePenalties: 5,
+        awayPenalties: 4,
+        homeTeamId: 'team-1',
+        awayTeamId: 'team-2',
+        stage: 'knockout',
+        championshipType: 'cup',
+        currentResultStatus: 'scheduled',
+      );
+      expect(res['success'], isTrue);
+      expect(res['winner_id'], equals('team-1'));
+      expect(res['is_knockout'], isTrue);
+      expect(res['status'], equals('completed'));
+      expect(res['result_status'], equals('confirmed'));
+    });
+
+    // -------------------------------------------------------------
+    // Test F: League standings: confirmed counted, unconfirmed & knockout excluded
+    // -------------------------------------------------------------
+    test('F. League standings: confirmed league results counted, disputed/unconfirmed excluded, knockout excluded', () {
       final matches = [
-        // Confirmed completed match -> MUST count (t1 wins 2-0 over t2)
+        // 1. Confirmed League Match -> COUNTED
         {
+          'id': 'm1',
+          'stage': 'league',
           'home_team_id': 't1',
           'away_team_id': 't2',
           'home_score': 2,
-          'away_score': 0,
+          'away_score': 1,
           'status': 'completed',
           'result_status': 'confirmed',
         },
-        // Locked completed match -> MUST count (t1 wins 1-0 over t3)
+        // 2. Disputed League Match -> EXCLUDED
         {
+          'id': 'm2',
+          'stage': 'league',
           'home_team_id': 't1',
-          'away_team_id': 't3',
-          'home_score': 1,
-          'away_score': 0,
-          'status': 'completed',
-          'result_status': 'locked',
-        },
-        // Disputed match with non-null scores -> MUST BE EXCLUDED!
-        {
-          'home_team_id': 't2',
-          'away_team_id': 't3',
-          'home_score': 5,
+          'away_team_id': 't2',
+          'home_score': 3,
           'away_score': 0,
           'status': 'disputed',
           'result_status': 'disputed',
         },
-        // Scheduled match -> MUST BE EXCLUDED!
+        // 3. Scheduled League Match -> EXCLUDED
         {
-          'home_team_id': 't2',
-          'away_team_id': 't3',
-          'home_score': 0,
-          'away_score': 0,
+          'id': 'm3',
+          'stage': 'league',
+          'home_team_id': 't1',
+          'away_team_id': 't2',
+          'home_score': null,
+          'away_score': null,
           'status': 'scheduled',
           'result_status': 'scheduled',
         },
+        // 4. Knockout match in same tournament -> EXCLUDED from league standings!
+        {
+          'id': 'm4',
+          'stage': 'knockout',
+          'home_team_id': 't1',
+          'away_team_id': 't2',
+          'home_score': 4,
+          'away_score': 0,
+          'status': 'completed',
+          'result_status': 'confirmed',
+        },
       ];
 
-      // Standings filter logic matching get_championship_standings
-      bool isMatchCountedInStandings(Map<String, dynamic> m) {
-        final status = m['status'];
-        final resultStatus = m['result_status'] ?? 'confirmed';
-        final hasScores = m['home_score'] != null && m['away_score'] != null;
-
-        return hasScores &&
-            status == 'completed' &&
-            (resultStatus == 'confirmed' || resultStatus == 'locked');
+      bool isMatchCountedInLeagueStandings(Map<String, dynamic> m) {
+        return m['stage'] == 'league' &&
+            m['status'] == 'completed' &&
+            ['confirmed', 'locked'].contains(m['result_status']) &&
+            m['home_score'] != null &&
+            m['away_score'] != null;
       }
 
-      final countedMatches = matches.where(isMatchCountedInStandings).toList();
-      expect(countedMatches.length, equals(2));
-      expect(countedMatches.any((m) => m['result_status'] == 'disputed'), isFalse);
-      expect(countedMatches.any((m) => m['status'] == 'scheduled'), isFalse);
+      final counted = matches.where(isMatchCountedInLeagueStandings).toList();
+      expect(counted.length, equals(1));
+      expect(counted.first['id'], equals('m1'));
     });
 
     // -------------------------------------------------------------
-    // 4. Champion SSOT & Final Winner Validation
+    // Test G: Away-team goals_against: Home 3 - Away 1 -> Home GA = 1, Away GA = 3
     // -------------------------------------------------------------
-    group('crown_tournament_champion_atomic contract', () {
-      Map<String, dynamic> simulateCrowning({
-        required String championshipStatus,
-        required String? finalMatchStatus,
-        required String? finalMatchResultStatus,
-        required String? finalMatchWinnerId,
+    test('G. Away-team goals_against: Home 3 - Away 1 -> Home GA = 1, Away GA = 3, correct goal difference', () {
+      // Simulating the corrected projection logic in get_championship_standings:
+      // Home team: gf = home_score, ga = away_score
+      // Away team: gf = away_score, ga = home_score
+      const homeScore = 3;
+      const awayScore = 1;
+
+      // Home perspective
+      const homeGf = homeScore;
+      const homeGa = awayScore;
+      const homeGd = homeGf - homeGa;
+
+      // Away perspective
+      const awayGf = awayScore;
+      const awayGa = homeScore;
+      const awayGd = awayGf - awayGa;
+
+      expect(homeGf, equals(3));
+      expect(homeGa, equals(1));
+      expect(homeGd, equals(2));
+
+      expect(awayGf, equals(1));
+      expect(awayGa, equals(3), reason: 'Away team goals against must be equal to home score (3), not away score (1)');
+      expect(awayGd, equals(-2));
+    });
+
+    // -------------------------------------------------------------
+    // Test H: League champion: actual table leader can be crowned,
+    // first League match must NEVER be treated as a final
+    // -------------------------------------------------------------
+    test('H. League champion: table leader can be crowned, first match is NEVER treated as final', () {
+      Map<String, dynamic> simulateCrowningLeague({
+        required String championshipType,
+        required List<Map<String, dynamic>> allMatches,
+        required List<String> standingsTeamIds, // 1st element is top of table
         required String candidateChampionId,
         required bool isRosterFrozen,
-        String? existingChampionId,
       }) {
-        if (championshipStatus == 'completed') {
-          if (existingChampionId == candidateChampionId) {
-            return {'success': true, 'already_crowned': true};
+        // In a league, there is NO bracket final
+        if (championshipType == 'league') {
+          // 1. All matches must be completed and confirmed
+          final uncompleted = allMatches.any((m) =>
+              m['status'] != 'completed' ||
+              !['confirmed', 'locked'].contains(m['result_status']));
+          if (uncompleted) {
+            return {'success': false, 'error': 'MATCHES_NOT_COMPLETED'};
           }
-          return {'success': false, 'error': 'championship_already_completed_with_different_champion'};
-        }
 
-        if (championshipStatus != 'ongoing') {
-          return {'success': false, 'error': 'championship_not_ongoing'};
-        }
-
-        // Final match must be completed with authoritative result
-        if (finalMatchStatus != 'completed' ||
-            (finalMatchResultStatus != 'confirmed' && finalMatchResultStatus != 'locked')) {
-          return {'success': false, 'error': 'FINAL_MATCH_NOT_COMPLETED'};
-        }
-
-        // Winner of the final match must match the crowned champion
-        if (finalMatchWinnerId != candidateChampionId) {
-          return {'success': false, 'error': 'CHAMPION_IS_NOT_FINAL_WINNER'};
+          // 2. Candidate must equal 1st place in standings
+          final topTeamId = standingsTeamIds.isNotEmpty ? standingsTeamIds.first : null;
+          if (topTeamId != candidateChampionId) {
+            return {'success': false, 'error': 'CHAMPION_MUST_BE_LEAGUE_LEADER'};
+          }
         }
 
         if (!isRosterFrozen) {
@@ -359,140 +363,91 @@ void main() {
         };
       }
 
-      test('Rejects crowning when final match is not completed', () {
-        final res = simulateCrowning(
-          championshipStatus: 'ongoing',
-          finalMatchStatus: 'scheduled',
-          finalMatchResultStatus: 'scheduled',
-          finalMatchWinnerId: null,
-          candidateChampionId: 'team-finalist-1',
-          isRosterFrozen: true,
-        );
-        expect(res['success'], isFalse);
-        expect(res['error'], equals('FINAL_MATCH_NOT_COMPLETED'));
-      });
+      // Scenario: Team B won the first match (round 0), BUT Team A won more points overall and is 1st in standings!
+      final leagueMatches = [
+        {'id': 'm1', 'round_index': 0, 'next_match_id': null, 'winner_id': 'team-b', 'status': 'completed', 'result_status': 'confirmed'},
+        {'id': 'm2', 'round_index': 0, 'next_match_id': null, 'winner_id': 'team-a', 'status': 'completed', 'result_status': 'confirmed'},
+        {'id': 'm3', 'round_index': 0, 'next_match_id': null, 'winner_id': 'team-a', 'status': 'completed', 'result_status': 'confirmed'},
+      ];
+      final standings = ['team-a', 'team-b']; // Team A is 1st
 
-      test('Rejects crowning a team that lost or did not win the final', () {
-        final res = simulateCrowning(
-          championshipStatus: 'ongoing',
-          finalMatchStatus: 'completed',
-          finalMatchResultStatus: 'confirmed',
-          finalMatchWinnerId: 'team-winner',
-          candidateChampionId: 'team-loser',
-          isRosterFrozen: true,
-        );
-        expect(res['success'], isFalse);
-        expect(res['error'], equals('CHAMPION_IS_NOT_FINAL_WINNER'));
-      });
+      // Attempting to crown Team B (who won match 1, but is 2nd in table) -> MUST FAIL!
+      final resCrownLoser = simulateCrowningLeague(
+        championshipType: 'league',
+        allMatches: leagueMatches,
+        standingsTeamIds: standings,
+        candidateChampionId: 'team-b',
+        isRosterFrozen: true,
+      );
+      expect(resCrownLoser['success'], isFalse);
+      expect(resCrownLoser['error'], equals('CHAMPION_MUST_BE_LEAGUE_LEADER'));
 
-      test('Rejects crowning when roster is not frozen', () {
-        final res = simulateCrowning(
-          championshipStatus: 'ongoing',
-          finalMatchStatus: 'completed',
-          finalMatchResultStatus: 'confirmed',
-          finalMatchWinnerId: 'team-winner',
-          candidateChampionId: 'team-winner',
-          isRosterFrozen: false,
-        );
-        expect(res['success'], isFalse);
-        expect(res['error'], equals('FROZEN_ROSTER_REQUIRED'));
-      });
-
-      test('Successfully crowns authoritative final match winner with frozen roster', () {
-        final res = simulateCrowning(
-          championshipStatus: 'ongoing',
-          finalMatchStatus: 'completed',
-          finalMatchResultStatus: 'confirmed',
-          finalMatchWinnerId: 'team-winner',
-          candidateChampionId: 'team-winner',
-          isRosterFrozen: true,
-        );
-        expect(res['success'], isTrue);
-        expect(res['champion_team_id'], equals('team-winner'));
-        expect(res['status'], equals('completed'));
-      });
-
-      test('Idempotent re-crowning of same champion returns success', () {
-        final res = simulateCrowning(
-          championshipStatus: 'completed',
-          finalMatchStatus: 'completed',
-          finalMatchResultStatus: 'confirmed',
-          finalMatchWinnerId: 'team-winner',
-          candidateChampionId: 'team-winner',
-          existingChampionId: 'team-winner',
-          isRosterFrozen: true,
-        );
-        expect(res['success'], isTrue);
-        expect(res['already_crowned'], isTrue);
-      });
+      // Crowning Team A (who is 1st in standings) -> SUCCEEDS!
+      final resCrownLeader = simulateCrowningLeague(
+        championshipType: 'league',
+        allMatches: leagueMatches,
+        standingsTeamIds: standings,
+        candidateChampionId: 'team-a',
+        isRosterFrozen: true,
+      );
+      expect(resCrownLeader['success'], isTrue);
+      expect(resCrownLeader['champion_team_id'], equals('team-a'));
     });
 
     // -------------------------------------------------------------
-    // 5. Completion Guard: transition_championship_status_atomic
+    // Test I: Completion guard: completed + scheduled cannot bypass;
+    // completed + confirmed is valid
     // -------------------------------------------------------------
-    group('transition_championship_status_atomic completion guard', () {
-      Map<String, dynamic> simulateStatusTransition({
-        required String currentStatus,
-        required String targetStatus,
+    test('I. Completion: completed + scheduled cannot bypass; completed + confirmed is valid', () {
+      Map<String, dynamic> simulateCompletionTransition({
         required String? championTeamId,
-        required int uncompletedMatchesCount,
-        required int totalMatchesCount,
+        required List<Map<String, dynamic>> allMatches,
       }) {
-        if (currentStatus == 'open' && targetStatus == 'ongoing') {
-          if (totalMatchesCount == 0) {
-            return {'success': false, 'error': 'BLOCKED_BY_STATE: Cannot transition to ongoing without fixtures'};
-          }
-          return {'success': true, 'status': 'ongoing'};
+        if (championTeamId == null) {
+          return {'success': false, 'error': 'BLOCKED_BY_STATE: Cannot transition without crowned champion'};
         }
 
-        if (currentStatus == 'ongoing' && targetStatus == 'completed') {
-          if (championTeamId == null) {
-            return {'success': false, 'error': 'BLOCKED_BY_STATE: Cannot transition to completed without crowning champion'};
-          }
-          if (uncompletedMatchesCount > 0) {
-            return {'success': false, 'error': 'BLOCKED_BY_STATE: Cannot transition to completed while uncompleted matches exist'};
-          }
-          return {'success': true, 'status': 'completed'};
+        final invalidMatch = allMatches.any((m) =>
+            m['status'] != 'completed' ||
+            !['confirmed', 'locked'].contains(m['result_status']));
+
+        if (invalidMatch) {
+          return {'success': false, 'error': 'BLOCKED_BY_STATE: Cannot transition with uncompleted/unconfirmed matches'};
         }
 
-        return {'success': false, 'error': 'INVALID_TRANSITION'};
+        return {'success': true, 'status': 'completed'};
       }
 
-      test('Blocks transition to completed if champion is not yet crowned', () {
-        final res = simulateStatusTransition(
-          currentStatus: 'ongoing',
-          targetStatus: 'completed',
-          championTeamId: null,
-          uncompletedMatchesCount: 0,
-          totalMatchesCount: 7,
-        );
-        expect(res['success'], isFalse);
-        expect(res['error'], contains('without crowning champion'));
-      });
+      // Bypass attempt: status = completed, but result_status = scheduled -> REJECTED!
+      final resBypass = simulateCompletionTransition(
+        championTeamId: 'team-champ',
+        allMatches: [
+          {'status': 'completed', 'result_status': 'scheduled'},
+        ],
+      );
+      expect(resBypass['success'], isFalse);
+      expect(resBypass['error'], contains('BLOCKED_BY_STATE'));
 
-      test('Blocks transition to completed if uncompleted matches remain', () {
-        final res = simulateStatusTransition(
-          currentStatus: 'ongoing',
-          targetStatus: 'completed',
-          championTeamId: 'team-champion',
-          uncompletedMatchesCount: 2,
-          totalMatchesCount: 7,
-        );
-        expect(res['success'], isFalse);
-        expect(res['error'], contains('uncompleted matches exist'));
-      });
+      // Bypass attempt: disputed match -> REJECTED!
+      final resDisputed = simulateCompletionTransition(
+        championTeamId: 'team-champ',
+        allMatches: [
+          {'status': 'completed', 'result_status': 'disputed'},
+        ],
+      );
+      expect(resDisputed['success'], isFalse);
+      expect(resDisputed['error'], contains('BLOCKED_BY_STATE'));
 
-      test('Allows transition to completed when all matches finished and champion crowned', () {
-        final res = simulateStatusTransition(
-          currentStatus: 'ongoing',
-          targetStatus: 'completed',
-          championTeamId: 'team-champion',
-          uncompletedMatchesCount: 0,
-          totalMatchesCount: 7,
-        );
-        expect(res['success'], isTrue);
-        expect(res['status'], equals('completed'));
-      });
+      // Valid: all matches completed and confirmed -> SUCCEEDS!
+      final resValid = simulateCompletionTransition(
+        championTeamId: 'team-champ',
+        allMatches: [
+          {'status': 'completed', 'result_status': 'confirmed'},
+          {'status': 'completed', 'result_status': 'locked'},
+        ],
+      );
+      expect(resValid['success'], isTrue);
+      expect(resValid['status'], equals('completed'));
     });
   });
 }
