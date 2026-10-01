@@ -102,35 +102,34 @@ export const GEMINI_SEMANTIC_RESPONSE_SCHEMA = {
     domain: {
       type: "STRING",
       enum: [
-        "booking", "self_service", "payment", "stadium", "tournament", "challenge",
-        "owner_operations", "general", "unknown"
+        "booking", "owner_operations", "financials", "stadium", "general", "unsupported", "unknown"
       ],
     },
     object: {
       type: "STRING",
       enum: [
-        "booking", "payment", "stadium", "slot", "tournament", "bot", "bot_identity", "match", "unknown"
+        "booking", "financials", "stadium", "slot", "bot", "bot_identity", "unsupported", "unknown"
       ],
     },
     action: {
       type: "STRING",
       enum: [
-        "create", "search", "inspect", "modify", "cancel", "reconcile", "resume", "confirm", "answer", "none"
+        "create", "search", "inspect", "modify", "cancel", "resume", "confirm", "answer", "none"
       ],
     },
     sub_action: {
       type: "STRING",
       enum: [
-        "upcoming", "recent", "details", "reconcile_missing", "explain_status", "identity", "parked_task", "none"
+        "upcoming", "recent", "details", "availability", "explain_status", "identity", "parked_task", "none"
       ],
     },
     relation: {
       type: "STRING",
-      enum: ["payment_for_booking", "contextual_booking", "none"],
+      enum: ["contextual_booking", "none"],
     },
     scope: {
       type: "STRING",
-      enum: ["user_owned", "public", "stadium_owned", "none"],
+      enum: ["owner_owned", "public", "stadium_owned", "none"],
     },
     semantic_status: {
       type: "STRING",
@@ -316,20 +315,19 @@ export function validateAndNormalizeSemanticOutput(raw: any, rawInputText: strin
   const operation = opList.includes(raw.operation) ? raw.operation : "none";
 
   const domainList = [
-    "booking", "self_service", "payment", "stadium", "tournament", "challenge",
-    "owner_operations", "general", "unknown"
+    "booking", "owner_operations", "financials", "stadium", "general", "unsupported", "unknown"
   ];
   const objectList = [
-    "booking", "payment", "stadium", "slot", "tournament", "bot", "bot_identity", "match", "unknown"
+    "booking", "financials", "stadium", "slot", "bot", "bot_identity", "unsupported", "unknown"
   ];
   const actionList = [
-    "create", "search", "inspect", "modify", "cancel", "reconcile", "resume", "confirm", "answer", "none"
+    "create", "search", "inspect", "modify", "cancel", "resume", "confirm", "answer", "none"
   ];
   const subActionList = [
-    "upcoming", "recent", "details", "reconcile_missing", "explain_status", "identity", "parked_task", "none"
+    "upcoming", "recent", "details", "availability", "explain_status", "identity", "parked_task", "none"
   ];
-  const relationList = ["payment_for_booking", "contextual_booking", "none"];
-  const scopeList = ["user_owned", "public", "stadium_owned", "none"];
+  const relationList = ["contextual_booking", "none"];
+  const scopeList = ["owner_owned", "public", "stadium_owned", "none"];
   const statusList = ["explicit", "resolved", "inferred", "ambiguous", "unresolved"];
 
   let domain = domainList.includes(raw.domain) ? raw.domain : undefined;
@@ -345,39 +343,31 @@ export function validateAndNormalizeSemanticOutput(raw: any, rawInputText: strin
     action = opList.includes(operation) ? (operation as any) : "none";
   }
   if (!domain) {
-    if (intent === "booking") {
-      domain = (action === "inspect") ? "self_service" : "booking";
-    } else if (intent === "tournament") {
-      domain = "tournament";
-    } else if (intent === "challenge") {
-      domain = "challenge";
-    } else if (intent === "owner_operations" || intent === "financial_question") {
+    if (intent === "owner_operations") {
       domain = "owner_operations";
+    } else if (intent === "financial_question") {
+      domain = "financials";
+    } else if (intent === "availability" || intent === "booking") {
+      domain = "booking";
     } else if (intent === "general_question") {
       domain = "general";
     } else {
-      domain = "booking";
+      domain = "owner_operations";
     }
   }
   if (!object) {
-    if (domain === "payment") {
-      object = "booking";
-    } else if (domain === "self_service") {
-      object = "booking";
+    if (domain === "financials") {
+      object = "financials";
     } else if (domain === "general") {
       object = "bot";
     } else if (domain === "booking") {
-      object = action === "create" ? "stadium" : "booking";
-    } else if (domain === "tournament") {
-      object = "tournament";
-    } else if (domain === "challenge") {
-      object = "slot";
+      object = "stadium";
     } else {
-      object = "booking";
+      object = "stadium";
     }
   }
   if (!scope) {
-    scope = (domain === "self_service" || domain === "payment") ? "user_owned" : "public";
+    scope = "owner_owned";
   }
   if (!semantic_status) {
     semantic_status = raw.ambiguities && raw.ambiguities.length > 0 ? "ambiguous" : "resolved";

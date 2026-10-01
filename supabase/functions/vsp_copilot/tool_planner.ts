@@ -1,11 +1,11 @@
-// Deterministic Tool Planner for VSP Copilot
-// Gates execution and plans operational actions based on state completeness, ambiguity, and role permissions.
-// Uses Capability Registry, Task Manager, and Adaptive Clarification Planner.
+// Deterministic Tool Planner for VSP Owner Copilot
+// Gates execution and plans operational actions for Pitch Owners strictly.
+// Rejects all Player requests with direct, courteous refusal and NO tool execution.
 
 import type { ConversationState } from "./conversation_state.ts";
 import type { SemanticParseOutput } from "./semantic_schema.ts";
 import { planClarification } from "./clarification_planner.ts";
-import { resolveCapability, isToolAllowedForRole, getCapabilityByTool } from "./capability_registry.ts";
+import { isToolAllowedForRole } from "./capability_registry.ts";
 
 export interface ToolPlan {
   action: "EXECUTE_TOOL" | "ASK_SLOT" | "CONFIRM_PROPOSAL" | "CLARIFY_AMBIGUITY" | "SAFE_DEGRADED_CLARIFICATION" | "RESPOND_DIRECTLY";
@@ -29,7 +29,6 @@ export function planToolExecution(
   const role = state.user_role;
 
   // SAFE DEGRADED MODE (Strict Non-Execution Rule):
-  // When models are exhausted, NO new tool execution and NO state mutation.
   if (options?.isDegraded) {
     return {
       action: "SAFE_DEGRADED_CLARIFICATION",
@@ -40,7 +39,7 @@ export function planToolExecution(
     };
   }
 
-  // 0. Bot Identity / Side Question (Zero Booking Pollution)
+  // 0. Bot Identity / Side Question
   const isBotIdentity =
     semanticOutput.domain === "general" ||
     semanticOutput.object === "bot" ||
@@ -51,16 +50,48 @@ export function planToolExecution(
     return {
       action: "RESPOND_DIRECTLY",
       reason: "أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات! ⚽📊",
-      quick_replies: ["أرباحي كام", "حجوزات ملعبي", "الساعات الفاضية"],
+      quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"],
     };
   }
 
-  // 1. Acknowledge / non-operational turns
+  // 1. Strict Player Capability Rejection Firewall:
+  // If the owner asks for any player function (booking as a player, tournaments, 1v1, teams, player refunds)
+  const rawText = (semanticOutput.raw_user_language || "").toLowerCase();
+  const isPlayerIntent =
+    semanticOutput.domain === "unsupported" ||
+    semanticOutput.object === "unsupported" ||
+    semanticOutput.domain === "tournament" ||
+    semanticOutput.domain === "challenge" ||
+    semanticOutput.domain === "self_service" ||
+    semanticOutput.domain === "payment" ||
+    semanticOutput.intent === "tournament" ||
+    semanticOutput.intent === "challenge" ||
+    semanticOutput.intent === "stadium_search" ||
+    semanticOutput.action === "cancel" ||
+    semanticOutput.action === "reconcile" ||
+    rawText.includes("بطول") ||
+    rawText.includes("1v1") ||
+    rawText.includes("تقسيم") ||
+    rawText.includes("فريقي") ||
+    rawText.includes("احجزلي") ||
+    rawText.includes("حجوزاتي الشخصية") ||
+    rawText.includes("حجزي الشخصي") ||
+    rawText.includes("استرد");
+
+  if (isPlayerIntent) {
+    return {
+      action: "RESPOND_DIRECTLY",
+      reason: "يا كابتن، كابتن VSP مخصص حصرياً لأصحاب ومسؤولي الملاعب لمساعدتك في إدارة وتشغيل ملاعبك ومتابعة الحجوزات والماليات؛ خدمات اللاعبين والبطولات متاحة عبر شاشات التطبيق المخصصة للاعبين.",
+      quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"],
+    };
+  }
+
+  // 2. Acknowledge / non-operational turns
   if (semanticOutput.speech_act === "acknowledge" || (semanticOutput.operation === "none" && !semanticOutput.execution_request.requested && semanticOutput.speech_act === "inform")) {
     return { action: "RESPOND_DIRECTLY" };
   }
 
-  // 1b. Check Unresolved Ambiguities First (Version 93 Invariant)
+  // 3. Check Unresolved Ambiguities First
   if (state.unresolved_ambiguities.length > 0) {
     const amb = state.unresolved_ambiguities[0];
     return {
@@ -71,7 +102,7 @@ export function planToolExecution(
     };
   }
 
-  // 2. Adaptive Clarification Check
+  // 4. Adaptive Clarification Check
   const clarification = planClarification(state, semanticOutput);
   if (clarification.needsClarification) {
     if (clarification.type === "ambiguous_time" || clarification.type === "missing_stadium" || clarification.type === "missing_date" || clarification.type === "missing_time") {
@@ -97,208 +128,31 @@ export function planToolExecution(
     };
   }
 
-  // 3. Payment Reconciliation Workflow ("دفعت ومظهرش الحجز", "الفلوس اتخصمت")
-  const isPaymentReconcile =
-    semanticOutput.domain === "payment" ||
-    semanticOutput.action === "reconcile" ||
-    semanticOutput.sub_action === "reconcile_missing";
-
-  if (isPaymentReconcile) {
-    if (!isToolAllowedForRole(role, "reconcileBookingPayment")) {
-      return {
-        action: "RESPOND_DIRECTLY",
-        reason: "خدمة تدقيق ومطابقة الدفع الإلكتروني مخصصة لحسابات اللاعبين.",
-      };
-    }
-
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "reconcileBookingPayment",
-      toolArgs: {},
-    };
-  }
-
-  // 4. Booking Inspection (Owner Stadiums/Bookings for Owners, Self-Service for Players)
-  const isBookingInspect =
-    semanticOutput.domain === "self_service" ||
-    (semanticOutput.object === "booking" && semanticOutput.action === "inspect");
-
-  if (isBookingInspect) {
-    if (role === "owner") {
+  // 5. Navigation Request
+  if (semanticOutput.intent === "navigation" || semanticOutput.operation === "navigate") {
+    if (isToolAllowedForRole(role, "executeAppAction")) {
+      const rawText = (semanticOutput.raw_user_language || "").toLowerCase();
+      let targetRoute = "/bookings";
+      if (rawText.includes("مال") || rawText.includes("ارباح") || rawText.includes("أرباح") || rawText.includes("سجل") || rawText.includes("رصيد")) {
+        targetRoute = "/ledger";
+      } else if (rawText.includes("رئيسي") || rawText.includes("داشبورد") || rawText.includes("dashboard")) {
+        targetRoute = "/dashboard";
+      }
       return {
         action: "EXECUTE_TOOL",
-        toolName: "getOwnerStadiumsAndBookings",
+        toolName: "executeAppAction",
         toolArgs: {
-          stadium_name: semanticOutput.entities.stadium?.name || state.stadium?.name,
-          query_type: "all",
+          action_type: "NAVIGATE",
+          route: targetRoute,
+          label: "عرض الشاشة",
         },
       };
     }
-
-    if (!isToolAllowedForRole(role, "getUserBookingsAndRefunds")) {
-      return {
-        action: "RESPOND_DIRECTLY",
-        reason: "استعراض الحجوزات الشخصية متاح لحسابات اللاعبين.",
-      };
-    }
-
-    const isUpcoming = semanticOutput.sub_action === "upcoming" || (semanticOutput.raw_user_language || "").includes("الجاي");
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "getUserBookingsAndRefunds",
-      toolArgs: {
-        filter: isUpcoming ? "upcoming" : "recent",
-      },
-    };
   }
 
-  // 5. Booking Cancellation ("الغى الحجز ده")
-  const isBookingCancel =
-    (semanticOutput.domain === "booking" && semanticOutput.action === "cancel") ||
-    (semanticOutput.object === "booking" && semanticOutput.action === "cancel");
-
-  if (isBookingCancel) {
-    if (!isToolAllowedForRole(role, "cancelUserBooking")) {
-      return {
-        action: "RESPOND_DIRECTLY",
-        reason: "إلغاء الحجز متاح فقط لصاحب الحجز.",
-      };
-    }
-
-    const candidateBookings = state.candidate_bookings || [];
-    if (candidateBookings.length === 1) {
-      return {
-        action: "EXECUTE_TOOL",
-        toolName: "cancelUserBooking",
-        toolArgs: {
-          booking_id: candidateBookings[0].id,
-        },
-      };
-    }
-
-    if (candidateBookings.length > 1) {
-      return {
-        action: "CLARIFY_AMBIGUITY",
-        ambiguity_type: "booking_choice",
-        reason: "لقيت أكتر من حجز بحسابك، تحب تلغي حجز أنهي ملعب فيهم؟",
-        quick_replies: candidateBookings.map(b => b.name),
-      };
-    }
-
-    // Zero candidates currently cached in state: fetch user bookings first
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "getUserBookingsAndRefunds",
-      toolArgs: { filter: "upcoming" },
-    };
-  }
-
-  // 6. Booking Proposal Confirmation
-  const isUserConfirmed =
-    semanticOutput.confirmation?.meaning === "accepted" ||
-    (semanticOutput.speech_act === "confirm" && state.pending_confirmation !== null);
-
-  if (state.pending_confirmation && isUserConfirmed) {
-    if (!isToolAllowedForRole(role, "createBookingFromChat")) {
-      return {
-        action: "RESPOND_DIRECTLY",
-        reason: "حسابك لا يملك صلاحية تنفيذ الحجز كلاعب.",
-      };
-    }
-
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "createBookingFromChat",
-      toolArgs: {
-        stadium_id: state.pending_confirmation.stadium_id,
-        stadium_name: state.pending_confirmation.stadium_name,
-        start_time: state.pending_confirmation.start_time,
-        end_time: state.pending_confirmation.end_time,
-        confirm: true,
-      },
-    };
-  }
-
-  // 7. Booking Creation & Availability Checking: Check Stadium Availability when slots or inquiries are active
-  const isOwnerOps = semanticOutput.domain === "owner_operations" || semanticOutput.intent === "owner_operations";
-  const isAvailabilityInquiry =
-    !isOwnerOps &&
-    (
-      semanticOutput.intent === "availability" ||
-      (semanticOutput.action === "inspect" && (semanticOutput.object === "stadium" || semanticOutput.object === "slot")) ||
-      (state.active_task === "booking" && (semanticOutput.action === "create" || semanticOutput.action === "resume" || semanticOutput.speech_act === "question" || semanticOutput.speech_act === "inform"))
-    );
-
-  if (!isOwnerOps && (isAvailabilityInquiry || (state.active_task === "booking" && (state.times.length > 0 || state.time_range)))) {
-    if (state.date.value && (state.times.length > 0 || state.time_range || isAvailabilityInquiry)) {
-      if (state.location_scope === "nearby" && !state.stadium.id) {
-        return {
-          action: "EXECUTE_TOOL",
-          toolName: "searchStadiums",
-          toolArgs: { governorate: "" },
-        };
-      }
-
-      if (state.stadium.name || state.stadium.id) {
-        return {
-          action: "EXECUTE_TOOL",
-          toolName: "checkStadiumAvailability",
-          toolArgs: {
-            stadium_id: state.stadium.id,
-            stadium_name: state.stadium.name,
-            date: state.date.value,
-            time_preference: state.times.map(t => t.time).join(" أو "),
-          },
-        };
-      }
-    }
-  }
-
-  // 8. Stadium Search
-  if (state.active_task === "stadium_search" || semanticOutput.intent === "stadium_search") {
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "searchStadiums",
-      toolArgs: {
-        governorate: semanticOutput.entities.location?.governorate || state.location_scope || "",
-        max_price: semanticOutput.entities.money?.max_price,
-      },
-    };
-  }
-
-  // 9. Tournaments
-  if (state.active_task === "tournament" || semanticOutput.intent === "tournament") {
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "searchTournaments",
-      toolArgs: {
-        tournament_type: "all",
-        governorate: semanticOutput.entities.location?.governorate || "",
-      },
-    };
-  }
-
-  // 10. 1v1 Leaderboard
-  if (state.active_task === "challenge" || semanticOutput.intent === "challenge") {
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "get1v1Leaderboard",
-      toolArgs: { limit: 5 },
-    };
-  }
-
-  // 11. Open Matches (تقسيمة)
-  if (semanticOutput.intent === "navigation" && (semanticOutput.raw_user_language || "").includes("تقسيمة")) {
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "getOpenMatches",
-      toolArgs: {},
-    };
-  }
-
-  // 12. Owner Inquiries
-  if (state.active_task === "owner_financial" || semanticOutput.intent === "financial_question") {
-    if (role !== "owner") {
+  // 6. Owner Financial Insights
+  if (state.active_task === "owner_financial" || semanticOutput.intent === "financial_question" || semanticOutput.domain === "financials") {
+    if (role !== "owner" && role !== "pitch_owner") {
       return {
         action: "RESPOND_DIRECTLY",
         reason: "البيانات المالية لملاك الملاعب متاحة فقط لحسابات المالكين.",
@@ -316,8 +170,15 @@ export function planToolExecution(
     };
   }
 
-  if (state.active_task === "owner_stadiums" || semanticOutput.intent === "owner_operations") {
-    if (role !== "owner") {
+  // 7. Owner Stadiums and Bookings (Schedule & Who booked)
+  const isOwnerScheduleQuery =
+    state.active_task === "owner_stadiums" ||
+    semanticOutput.intent === "owner_operations" ||
+    semanticOutput.domain === "owner_operations" ||
+    (semanticOutput.object === "booking" && semanticOutput.action === "inspect");
+
+  if (isOwnerScheduleQuery) {
+    if (role !== "owner" && role !== "pitch_owner") {
       return {
         action: "RESPOND_DIRECTLY",
         reason: "إدارة الملاعب والحجوزات مخصصة لحسابات ملاك الملاعب.",
@@ -327,22 +188,33 @@ export function planToolExecution(
     return {
       action: "EXECUTE_TOOL",
       toolName: "getOwnerStadiumsAndBookings",
-      toolArgs: { query_type: "all" },
+      toolArgs: {
+        stadium_name: semanticOutput.entities.stadium?.name || state.stadium?.name,
+        query_type: "all",
+      },
     };
   }
 
-  // 13. Navigation Request
-  if (semanticOutput.intent === "navigation" || semanticOutput.operation === "navigate") {
-    if (isToolAllowedForRole(role, "executeAppAction")) {
-      return {
-        action: "EXECUTE_TOOL",
-        toolName: "executeAppAction",
-        toolArgs: {
-          action_type: "NAVIGATE",
-          route: "/bookings",
-          label: "عرض الشاشة",
-        },
-      };
+  // 8. Check Stadium Availability & Free Slots
+  const isAvailabilityInquiry =
+    semanticOutput.intent === "availability" ||
+    (semanticOutput.action === "inspect" && (semanticOutput.object === "stadium" || semanticOutput.object === "slot")) ||
+    (state.active_task === "booking" && (semanticOutput.speech_act === "question" || semanticOutput.speech_act === "inform"));
+
+  if (isAvailabilityInquiry || (state.active_task === "booking" && (state.times.length > 0 || state.time_range))) {
+    if (state.date.value && (state.times.length > 0 || state.time_range || isAvailabilityInquiry)) {
+      if (state.stadium.name || state.stadium.id) {
+        return {
+          action: "EXECUTE_TOOL",
+          toolName: "checkStadiumAvailability",
+          toolArgs: {
+            stadium_id: state.stadium.id,
+            stadium_name: state.stadium.name,
+            date: state.date.value,
+            time_preference: state.times.map(t => t.time).join(" أو "),
+          },
+        };
+      }
     }
   }
 

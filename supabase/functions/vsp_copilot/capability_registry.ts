@@ -1,7 +1,7 @@
-// Application-Controlled Capability Registry for VSP Copilot
-// Declares all permissible operational capabilities with role policies, risk levels, and workflow mapping.
+// Application-Controlled Capability Registry for VSP Owner Copilot
+// Declares all permissible operational capabilities for Pitch Owners only.
 
-export type RoleType = "player" | "owner" | "admin";
+export type RoleType = "owner" | "pitch_owner";
 export type RiskLevel = "low" | "medium" | "high";
 
 export interface CapabilityDefinition {
@@ -24,7 +24,7 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     domain: "owner_operations",
     object: "booking",
     action: "inspect",
-    allowed_roles: ["owner"],
+    allowed_roles: ["owner", "pitch_owner"],
     is_read_only: true,
     risk_level: "low",
     workflow_id: "workflow_owner_stadiums",
@@ -36,7 +36,7 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     domain: "financials",
     object: "financials",
     action: "inspect",
-    allowed_roles: ["owner"],
+    allowed_roles: ["owner", "pitch_owner"],
     is_read_only: true,
     risk_level: "low",
     workflow_id: "workflow_owner_financials",
@@ -49,7 +49,7 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     object: "stadium",
     action: "inspect",
     sub_action: "availability",
-    allowed_roles: ["owner"],
+    allowed_roles: ["owner", "pitch_owner"],
     is_read_only: true,
     risk_level: "low",
     workflow_id: "workflow_check_availability",
@@ -61,7 +61,7 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     domain: "navigation",
     object: "app",
     action: "navigate",
-    allowed_roles: ["owner"],
+    allowed_roles: ["owner", "pitch_owner"],
     is_read_only: false,
     risk_level: "low",
     workflow_id: "workflow_navigate_action",
@@ -73,10 +73,12 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
 export function isToolAllowedForRole(role: string | undefined | null, toolName: string): boolean {
   if (!toolName || !role) return false;
   const normRole = role.toLowerCase().trim();
-  const canonicalRole = (normRole === "pitch_owner" || normRole === "owner") ? "owner" : normRole;
+  if (normRole !== "owner" && normRole !== "pitch_owner") {
+    return false;
+  }
 
   for (const cap of Object.values(CAPABILITY_REGISTRY)) {
-    if (cap.tool_id === toolName && cap.allowed_roles.includes(canonicalRole as RoleType)) {
+    if (cap.tool_id === toolName) {
       return true;
     }
   }
@@ -95,9 +97,9 @@ export function getCapabilityByTool(toolName: string): CapabilityDefinition | nu
 export function getAllowedToolsForRole(role: string | undefined | null): string[] {
   if (!role) return [];
   const normRole = role.toLowerCase().trim();
-  const canonicalRole = (normRole === "pitch_owner" || normRole === "owner") ? "owner" : normRole;
+  if (normRole !== "owner" && normRole !== "pitch_owner") return [];
   return Object.values(CAPABILITY_REGISTRY)
-    .filter(cap => cap.tool_id && cap.allowed_roles.includes(canonicalRole as RoleType))
+    .filter(cap => cap.tool_id)
     .map(cap => cap.tool_id as string);
 }
 

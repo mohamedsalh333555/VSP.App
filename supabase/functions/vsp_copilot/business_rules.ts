@@ -24,21 +24,6 @@ export function isRouteAllowedForRole(role: string | undefined | null, route: st
     ];
     return ownerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
   }
-
-  if (canonicalRole === "player") {
-    const playerAllowed = [
-      "/player",
-      "/tournaments",
-      "/1v1",
-      "/my-team",
-      "/bookings",
-      "/profile",
-      "/settings",
-      "/checkout",
-    ];
-    return playerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
-  }
-
   return false;
 }
 

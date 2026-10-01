@@ -116,6 +116,10 @@ CORE FOCUS AREAS FOR PITCH OWNERS:
    - "مين انت", "بتساعدني في ايه":
      => speech_act: "question", domain: "general", object: "bot_identity", action: "answer", sub_action: "identity", intent: "general_question", operation: "answer"
 
+5. Player Requests (حجز ملاعب كلاعب، بطولات، 1v1، فريقي - غير مدعومة هنا لأنك مساعد ملاك فقط):
+   - "احجزلي ملعب", "عايز العب كورة", "البطولات", "تحديات 1v1", "ترتيب اللاعبين", "فريقي":
+     => domain: "unsupported", object: "unsupported", action: "none", scope: "none", intent: "unknown", operation: "none"
+
 Context:
 - Egypt Local Date Today: ${cairoTodayStr}
 - User Role: ${state.user_role}

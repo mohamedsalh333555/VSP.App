@@ -61,7 +61,7 @@ ${JSON.stringify(toolResult.data, null, 2)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
     : "";
 
-  return `أنت "كابتن VSP"، المساعد الرياضي الذكي لتطبيق VSP في مصر.
+  return `أنت "كابتن VSP"، المستشار الذكي لإدارة وتشغيل الملاعب لأصحاب ومسؤولي الملاعب في منصة VSP الرياضية بمصر.
 مهمتك صياغة رد نهائي ذكي وطبيعي ومختصر باللهجة المصرية الودودة.
 
 قواعد الصياغة الصارمة (STRICT RULES):
@@ -91,23 +91,8 @@ export function generateDeterministicResponse(
   plan: ToolPlan,
   toolResult: ToolResultContract | null
 ): { message: string; quick_replies: string[] } {
-  // 1. Tool result responses
+  // 1. Tool result responses (Owner tools only)
   if (toolResult) {
-    if (toolResult.tool_name === "searchStadiums") {
-      const count = toolResult.data.count || 0;
-      if (count === 0) {
-        return {
-          message: "دورتلك في المنطقة المحددة ومفيش ملاعب متاحة دلوقتي يا كابتن. تحب نبحث في محافظة تانية أو نعدل السعر؟",
-          quick_replies: ["القاهرة", "الجيزة", "أسوان"],
-        };
-      }
-      const label = formatArabicCount(count, "ملعب متاح", "ملعبين متاحين", "ملاعب متاحة");
-      return {
-        message: `يا كابتن! لقيتلك ${label} جاهزة للحجز على VSP:`,
-        quick_replies: toolResult.stadiums?.slice(0, 3).map(s => s.name) || [],
-      };
-    }
-
     if (toolResult.tool_name === "checkStadiumAvailability") {
       const availableCount = toolResult.data.available_slots_count || 0;
       const stadiumName = toolResult.data.stadium_name || state.stadium.name || "الملعب";
@@ -127,102 +112,6 @@ export function generateDeterministicResponse(
         };
       }
     }
-
-    if (toolResult.tool_name === "createBookingFromChat") {
-      if (toolResult.status === "SUCCESS") {
-        const std = toolResult.data.stadium_name || "الملعب";
-        if (toolResult.data.deposit_required) {
-          return {
-            message: `تم تجهيز موعدك في ${std} بنجاح يا كابتن ⚽! تم حفظ الحجز مؤقتاً، اضغط بالأسفل لإتمام دفع العربون وتأكيد الحجز.`,
-            quick_replies: [],
-          };
-        }
-        return {
-          message: `ألف مبروك يا كابتن! تم تأكيد حجزك في ${std} بنجاح والدفع كاش في الملعب 📋`,
-          quick_replies: [],
-        };
-      }
-      return {
-        message: toolResult.error_message || "تعذر إتمام الحجز في هذا التوقيت، تحب نختار ميعاد تاني؟",
-        quick_replies: ["شوف ميعاد تاني"],
-      };
-    }
-
-    // Player Self-Service: User Bookings / Upcoming Booking
-    if (toolResult.tool_name === "getUserBookingsAndRefunds") {
-      if (toolResult.data.has_upcoming !== undefined) {
-        // Upcoming booking query
-        if (!toolResult.data.has_upcoming || !toolResult.data.booking) {
-          return {
-            message: "يا كابتن، مفيش أي حجز قادم مسجل بحسابك حالياً. تحب نحجزلك ماتش جديد في أقرب ملعب؟",
-            quick_replies: ["عايز ملعب قريب", "البطولات المفتوحة"],
-          };
-        }
-        const b = toolResult.data.booking;
-        const statusLabel = b.status === "confirmed" ? "مؤكد ✅" : "قيد التأكيد ⏳";
-        return {
-          message: `حجزك القادم في ${b.stadium_name || "الملعب"} (${statusLabel}): يوم ${b.start_time ? b.start_time.substring(0, 10) : ""} بإجمالي ${b.total_price || 0} ج.م.`,
-          quick_replies: ["تفاصيل الحجز", "عرض كل حجوزاتي"],
-        };
-      }
-
-      // Recent Bookings list
-      const list = toolResult.data.bookings || [];
-      if (list.length === 0) {
-        return {
-          message: "يا كابتن، مفيش أي حجوزات مسجلة بحسابك حتى الآن. تحب أساعدك تختار ملعب قريب؟",
-          quick_replies: ["عايز ملعب قريب", "البطولات المفتوحة"],
-        };
-      }
-
-      const count = list.length;
-      const countLabel = formatArabicCount(count, "حجز واحد", "حجزين", "حجوزات");
-      const summaryItems = list.slice(0, 3).map((b: any, idx: number) => {
-        const sName = b.stadium_name || "الملعب";
-        const dStr = b.start_time ? b.start_time.substring(0, 10) : "";
-        const st = b.status === "confirmed" ? "مؤكد ✅" : b.status === "cancelled" ? "ملغى ❌" : "قيد المعالجة ⏳";
-        return `${idx + 1}. ${sName} (${dStr}) - ${st}`;
-      }).join("\n");
-
-      return {
-        message: `يا كابتن، لقيتلك ${countLabel} في سجلك:\n${summaryItems}`,
-        quick_replies: ["الحجز القادم", "فتح قائمة الحجوزات"],
-      };
-    }
-
-    // Payment / Booking Reconciliation
-    if (toolResult.tool_name === "reconcileBookingPayment") {
-      const rec = toolResult.data;
-      if (rec && rec.explanation) {
-        return {
-          message: rec.explanation,
-          quick_replies: rec.reconciliation_state === "PAYMENT_CONFIRMED_BOOKING_CONFIRMED"
-            ? ["عرض تذكرة الحجز", "حجوزاتي"]
-            : ["التواصل مع الدعم", "حجوزاتي"],
-        };
-      }
-      return {
-        message: "تم فحص حالة المعاملة، يرجى مراجعة التفاصيل أدناه.",
-        quick_replies: ["حجوزاتي", "الدعم الفني"],
-      };
-    }
-
-    // Booking Cancellation
-    if (toolResult.tool_name === "cancelUserBooking") {
-      if (toolResult.data?.already_cancelled) {
-        return {
-          message: "الحجز ده ملغى بالفعل يا كابتن.",
-          quick_replies: ["عرض حجوزاتي"],
-        };
-      }
-      const refund = toolResult.data?.refund_amount || 0;
-      const refundMsg = refund > 0 ? ` وجاري استرداد مبلغ ${refund} ج.م إلى وسيلة الدفع الخاصة بك.` : " دون أي رسوم إضافية.";
-      return {
-        message: `تم إلغاء الحجز في ${toolResult.data?.stadium_name || "الملعب"} بنجاح ✅${refundMsg}`,
-        quick_replies: ["عرض حجوزاتي", "حجز ملعب تاني"],
-      };
-    }
-
 
     if (toolResult.tool_name === "getOwnerFinancialInsights") {
       const avail = toolResult.data.available_balance ?? 0;
@@ -244,19 +133,19 @@ export function generateDeterministicResponse(
   if (plan.action === "ASK_SLOT") {
     if (plan.missing_slot === "stadium") {
       return {
-        message: plan.reason || "تمام يا كابتن. تحب تحجز في أنهي ملعب؟",
+        message: plan.reason || "تمام يا كابتن. تحب نراجع جدول أنهي ملعب فيهم؟",
         quick_replies: plan.quick_replies || [],
       };
     }
     if (plan.missing_slot === "date") {
       return {
-        message: plan.reason || "تمام، طلبك اتسجل. تحب الحجز يكون النهارده ولا بكرة؟",
+        message: plan.reason || "تمام، تحب تتابع المواعيد ليوم النهارده ولا بكرة؟",
         quick_replies: plan.quick_replies || ["النهارده", "بكرة"],
       };
     }
     if (plan.missing_slot === "time") {
       return {
-        message: plan.reason || "تحب نحجز الساعة كام يا كابتن؟",
+        message: plan.reason || "تحب تفحص الساعة كام يا كابتن؟",
         quick_replies: plan.quick_replies || ["8 بالليل", "9 بالليل", "10 بالليل"],
       };
     }
@@ -266,7 +155,7 @@ export function generateDeterministicResponse(
       const displayH = h > 12 ? h - 12 : h;
       const stadiumName = state.stadium.name ? ` في ${state.stadium.name}` : "";
       return {
-        message: plan.reason || `عايز تحجز${stadiumName} الساعة ${displayH} بالليل، مظبوط كده؟`,
+        message: plan.reason || `تقصد${stadiumName} الساعة ${displayH} بالليل، مظبوط كده؟`,
         quick_replies: ["أيوه بالليل", "الصبح"],
       };
     }
@@ -275,14 +164,14 @@ export function generateDeterministicResponse(
   if (plan.action === "SAFE_DEGRADED_CLARIFICATION") {
     return {
       message: plan.reason || "يا كابتن، في ضغط لحظي مؤقت على خدمة الذكاء الاصطناعي وما قدرتش أستوعب رسالتك الأخيرة بدقة. بياناتك ومواعيدك السابقة محفوظة بأمان، تقدر تختار الخطوة التالية من الخيارات بالأسفل:",
-      quick_replies: plan.quick_replies || ["عايز ملعب قريب", "البطولات المفتوحة", "ترتيب الحريفة 1v1"],
+      quick_replies: plan.quick_replies || ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي", "السجل المالي"],
     };
   }
 
   if (plan.action === "CLARIFY_AMBIGUITY") {
     return {
-      message: plan.reason || "محتاج توضيح بسيط عشان أنفذ طلبك بدقة يا كابتن:",
-      quick_replies: plan.quick_replies || [],
+      message: plan.reason || "محتاج توضيح بسيط عشان أساعدك بدقة يا كابتن:",
+      quick_replies: plan.quick_replies || ["جدول ملاعبي", "المواعيد الفاضية"],
     };
   }
 
@@ -290,33 +179,19 @@ export function generateDeterministicResponse(
     if (plan.reason) {
       return {
         message: plan.reason,
-        quick_replies: plan.quick_replies || [],
+        quick_replies: plan.quick_replies || ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي", "السجل المالي"],
       };
     }
-    if (state.active_task === "booking") {
-      if (!state.stadium.name && !state.stadium.id) {
-        return {
-          message: "تمام يا كابتن. تحب نحجز في أنهي ملعب؟",
-          quick_replies: state.candidate_stadiums.slice(0, 3).map(s => s.name),
-        };
-      }
-      if (!state.date.value) {
-        return {
-          message: "تمام، تحب الحجز يكون النهارده ولا بكرة؟",
-          quick_replies: ["النهارده", "بكرة"],
-        };
-      }
-    }
     return {
-      message: "يا كابتن، أنا في خدمتك. تحب أساعدك في حجز ملعب، استعراض حجوزاتك، أو استكشاف البطولات؟",
-      quick_replies: ["حجوزاتي", "عايز ملعب قريب", "البطولات المفتوحة"],
+      message: "أهلاً بك يا كابتن! أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات. تحب نتابع جدول الحجوزات، نشيك على الفترات الفاضية، ولا نستعرض أرباحك؟ ⚽📊",
+      quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي", "السجل المالي"],
     };
   }
 
-  // Safe Operational Fallback: Never return sticky welcome greeting for failed understanding
+  // Safe Operational Fallback: Strictly Pitch Owner Advisor
   return {
-    message: "يا كابتن، أنا في خدمتك. تحب أساعدك في حجز ملعب، متابعة حجوزاتك السابقة، أو استكشاف البطولات وماتشات التقسيمة؟",
-    quick_replies: ["حجوزاتي", "عايز ملعب قريب", "البطولات المفتوحة"],
+    message: "أهلاً بك يا كابتن! أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات. تحب نتابع جدول الحجوزات، نشيك على الفترات الفاضية، ولا نستعرض أرباحك؟ ⚽📊",
+    quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي", "السجل المالي"],
   };
 }
 

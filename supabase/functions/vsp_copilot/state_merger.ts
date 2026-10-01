@@ -46,29 +46,22 @@ export function mergeState(
     semanticOutput.action === "resume" ||
     (semanticOutput.speech_act === "request" && (semanticOutput.raw_user_language || "").includes("نرجع"));
 
-  const isSelfServiceOrPayment =
-    semanticOutput.domain === "self_service" ||
-    semanticOutput.domain === "payment" ||
-    semanticOutput.action === "reconcile" ||
-    (semanticOutput.action === "inspect" && semanticOutput.object === "booking");
-
   if (isResumeRequest) {
-    const resumed = resumeParkedTask(next.task_manager, "booking_create");
+    const resumed = resumeParkedTask(next.task_manager, "booking_create") || resumeParkedTask(next.task_manager, "owner_inquiry");
     if (resumed && resumed.state_snapshot) {
       if (resumed.state_snapshot.stadium) next.stadium = { ...resumed.state_snapshot.stadium };
       if (resumed.state_snapshot.date) next.date = { ...resumed.state_snapshot.date };
       if (resumed.state_snapshot.times) next.times = [...resumed.state_snapshot.times];
       if (resumed.state_snapshot.duration_hours) next.duration_hours = resumed.state_snapshot.duration_hours;
       if (resumed.state_snapshot.group_size) next.group_size = resumed.state_snapshot.group_size;
-      next.active_task = "booking";
+      next.active_task = "owner_stadiums";
       next.task_lifecycle = "in_progress";
     } else {
-      next.active_task = "booking";
+      next.active_task = "owner_stadiums";
       next.task_lifecycle = "in_progress";
     }
   } else if (isGeneralOrSideQuestion) {
-    // If currently in booking, PARK it safely so the side question doesn't destroy the booking task!
-    if (next.active_task === "booking") {
+    if ((next.active_task === "booking" || next.active_task === "owner_stadiums") && (next.stadium.name || next.date.value)) {
       const snapshot = {
         stadium: { ...next.stadium },
         date: { ...next.date },
@@ -77,59 +70,40 @@ export function mergeState(
         group_size: next.group_size,
       };
       if (!next.task_manager.active_task) {
-        next.task_manager.active_task = createTaskRecord("booking_create", snapshot, "حجز ملعب قيد الإعداد");
+        next.task_manager.active_task = createTaskRecord("owner_inquiry", snapshot, "استفسار المالك قيد المتابعة");
       }
       parkActiveTask(next.task_manager);
     }
     next.active_task = "general";
     next.task_lifecycle = "in_progress";
-  } else if (isSelfServiceOrPayment) {
-    if (next.active_task === "booking" && (next.stadium.name || next.date.value)) {
-      const snapshot = {
-        stadium: { ...next.stadium },
-        date: { ...next.date },
-        times: [...next.times],
-        duration_hours: next.duration_hours,
-      };
-      if (!next.task_manager.active_task) {
-        next.task_manager.active_task = createTaskRecord("booking_create", snapshot, "حجز ملعب قيد الإعداد");
-      }
-      parkActiveTask(next.task_manager);
-    }
-    next.active_task = semanticOutput.domain === "payment" ? "payment" : "self_service";
-    next.task_lifecycle = "in_progress";
   } else if (semanticOutput.speech_act === "switch_task" || (semanticOutput.intent !== "unknown" && semanticOutput.intent !== currentState.active_task)) {
-    if (next.active_task === "booking" && (next.stadium.name || next.date.value)) {
+    if ((next.active_task === "booking" || next.active_task === "owner_stadiums") && (next.stadium.name || next.date.value)) {
       const snapshot = { stadium: { ...next.stadium }, date: { ...next.date }, times: [...next.times] };
       if (!next.task_manager.active_task) {
-        next.task_manager.active_task = createTaskRecord("booking_create", snapshot);
+        next.task_manager.active_task = createTaskRecord("owner_inquiry", snapshot);
       }
       parkActiveTask(next.task_manager);
     }
-    if (semanticOutput.intent === "booking") {
-      next.active_task = "booking";
-      next.task_lifecycle = "in_progress";
-    } else if (semanticOutput.intent === "stadium_search") {
-      next.active_task = "stadium_search";
-      next.task_lifecycle = "in_progress";
-    } else if (semanticOutput.intent === "tournament") {
-      next.active_task = "tournament";
-      next.task_lifecycle = "in_progress";
-      next.pending_confirmation = null;
-    } else if (semanticOutput.intent === "challenge") {
-      next.active_task = "challenge";
-      next.task_lifecycle = "in_progress";
-      next.pending_confirmation = null;
-    } else if (semanticOutput.intent === "owner_operations") {
+    if (semanticOutput.intent === "owner_operations") {
       next.active_task = "owner_stadiums";
       next.task_lifecycle = "in_progress";
     } else if (semanticOutput.intent === "financial_question") {
       next.active_task = "owner_financial";
       next.task_lifecycle = "in_progress";
+    } else if (semanticOutput.intent === "availability") {
+      next.active_task = "availability";
+      next.task_lifecycle = "in_progress";
+    } else if (semanticOutput.intent === "booking") {
+      next.active_task = "booking";
+      next.task_lifecycle = "in_progress";
     }
   } else if (!next.active_task && semanticOutput.intent !== "unknown") {
-    next.active_task = semanticOutput.intent as any;
-    next.task_lifecycle = "in_progress";
+    if (semanticOutput.intent === "owner_operations") next.active_task = "owner_stadiums";
+    else if (semanticOutput.intent === "financial_question") next.active_task = "owner_financial";
+    else if (semanticOutput.intent === "availability") next.active_task = "availability";
+    else if (semanticOutput.intent === "booking") next.active_task = "booking";
+    else if (semanticOutput.intent === "general_question") next.active_task = "general";
+    if (next.active_task) next.task_lifecycle = "in_progress";
   }
 
   // 2. Cancellation of current task

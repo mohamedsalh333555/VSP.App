@@ -49,7 +49,7 @@ export interface PendingConfirmation {
 
 export interface ConversationState {
   version: number;
-  active_task: "booking" | "stadium_search" | "availability" | "tournament" | "challenge" | "owner_financial" | "owner_stadiums" | "profile" | "general" | "self_service" | "payment" | null;
+  active_task: "owner_financial" | "owner_stadiums" | "availability" | "booking" | "general" | null;
   task_lifecycle: "idle" | "in_progress" | "pending_confirmation" | "awaiting_clarification" | "completed" | "cancelled";
   stadium: StadiumState;
   candidate_stadiums: VisibleEntity[];
@@ -71,12 +71,12 @@ export interface ConversationState {
     checked_at: string;
   } | null;
   last_visible_entities: VisibleEntity[];
-  user_role: "player" | "owner" | "admin";
+  user_role: "owner" | "pitch_owner";
   created_at: string;
   updated_at: string;
 }
 
-export function createInitialConversationState(userRole: "player" | "owner" | "admin" = "player"): ConversationState {
+export function createInitialConversationState(userRole: "owner" | "pitch_owner" = "owner"): ConversationState {
   const now = new Date().toISOString();
   return {
     version: 1,
@@ -113,7 +113,7 @@ export function createInitialConversationState(userRole: "player" | "owner" | "a
 }
 
 // Convert legacy task_state / context_snapshot to strongly-typed ConversationState
-export function hydrateConversationState(rawSnapshot: any, userRole: "player" | "owner" | "admin" = "player"): ConversationState {
+export function hydrateConversationState(rawSnapshot: any, userRole: "owner" | "pitch_owner" = "owner"): ConversationState {
   if (!rawSnapshot || typeof rawSnapshot !== "object") {
     return createInitialConversationState(userRole);
   }
@@ -139,11 +139,17 @@ export function hydrateConversationState(rawSnapshot: any, userRole: "player" | 
     state.duration_hours = Number(task.duration_hours);
   }
 
-  if (task.intent === "book_stadium" || task.intent === "booking") {
+  if (task.intent === "owner_operations" || task.intent === "owner_stadiums") {
+    state.active_task = "owner_stadiums";
+    state.task_lifecycle = "in_progress";
+  } else if (task.intent === "financial_question" || task.intent === "owner_financial") {
+    state.active_task = "owner_financial";
+    state.task_lifecycle = "in_progress";
+  } else if (task.intent === "availability" || task.intent === "check_availability") {
+    state.active_task = "availability";
+    state.task_lifecycle = "in_progress";
+  } else if (task.intent === "booking") {
     state.active_task = "booking";
-    state.task_lifecycle = task.confirmation_pending ? "pending_confirmation" : "in_progress";
-  } else if (task.intent === "search_stadiums" || task.intent === "stadium_search") {
-    state.active_task = "stadium_search";
     state.task_lifecycle = "in_progress";
   }
 

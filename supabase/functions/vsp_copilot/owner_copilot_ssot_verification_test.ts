@@ -60,7 +60,7 @@ const expectedTools = [
 for (const tool of expectedTools) {
   const cap = getCapabilityByTool(tool);
   assert.ok(cap, `Tool ${tool} must exist in CAPABILITY_REGISTRY`);
-  assert.deepEqual(cap.allowed_roles, ["owner"], `Tool ${tool} must only be allowed for owner`);
+  assert.deepEqual(cap.allowed_roles, ["owner", "pitch_owner"], `Tool ${tool} must only be allowed for owner and pitch_owner`);
   assert.ok(cap.workflow_id, `Tool ${tool} must declare a workflow`);
   assert.ok(typeof cap.is_read_only === "boolean", `Tool ${tool} must declare is_read_only`);
   assert.ok(cap.risk_level, `Tool ${tool} must declare risk_level`);
@@ -69,8 +69,11 @@ for (const tool of expectedTools) {
 // 2. Test role allowlist matches Registry exactly
 const ownerAllowed = getAllowedToolsForRole("owner");
 assert.equal(ownerAllowed.length, 4);
+const pitchOwnerAllowed = getAllowedToolsForRole("pitch_owner");
+assert.equal(pitchOwnerAllowed.length, 4);
 for (const tool of expectedTools) {
   assert.ok(ownerAllowed.includes(tool), `Owner must have tool ${tool}`);
+  assert.ok(pitchOwnerAllowed.includes(tool), `Pitch owner must have tool ${tool}`);
 }
 
 // 3. Player must have ZERO capabilities
@@ -85,6 +88,7 @@ assert.equal(isToolAllowedForRole("player", "searchStadiums"), false);
 
 // 4. Unknown tool must be rejected
 assert.equal(isToolAllowedForRole("owner", "unknownPhantomTool"), false, "Unknown tool must be rejected");
+assert.equal(isToolAllowedForRole("pitch_owner", "unknownPhantomTool"), false, "Unknown tool must be rejected");
 assert.equal(isToolAllowedForRole("owner", "createBookingFromChat"), false, "Player tool must be rejected for owner");
 
 console.log("✅ [TASK 1 PASS] Capability SSOT verified: 4 owner tools, 0 player tools, 0 phantom capabilities.");
@@ -419,9 +423,9 @@ for (const r of ownerForbiddenRoutes) {
   assert.equal(isRouteAllowedForRole("pitch_owner", r), false, `Pitch Owner must NOT be allowed to access forbidden route ${r}`);
 }
 
-// 2. Test isRouteAllowedForRole directly for Player
-assert.equal(isRouteAllowedForRole("player", "/player"), true, "Player allowed on /player");
-assert.equal(isRouteAllowedForRole("player", "/checkout"), true, "Player allowed on /checkout");
+// 2. Test isRouteAllowedForRole directly for Player (Player has 0 routes in Owner Copilot)
+assert.equal(isRouteAllowedForRole("player", "/player"), false, "Player has no allowed routes in Owner Copilot");
+assert.equal(isRouteAllowedForRole("player", "/checkout"), false, "Player has no allowed routes in Owner Copilot");
 assert.equal(isRouteAllowedForRole("player", "/dashboard"), false, "Player forbidden on /dashboard");
 assert.equal(isRouteAllowedForRole("player", "/ledger"), false, "Player forbidden on /ledger");
 assert.equal(isRouteAllowedForRole("player", "/subscription-plans"), false, "Player forbidden on /subscription-plans");
@@ -732,6 +736,125 @@ const ownerCopilotTools = ["getOwnerStadiumsAndBookings", "getOwnerFinancialInsi
 for (const tool of ownerCopilotTools) {
   assert.equal(isToolAllowedForRole("player", tool), false, `Player must not be allowed to execute owner tool: ${tool}`);
 }
+
+// Verify that Player queries asked by an owner are rejected directly with ZERO tool execution:
+const playerTestQueries = [
+  "احجزلي ملعب كلاعب بكرة بالليل",
+  "عايز اشترك في بطولة رمضان",
+  "ترتيب تحديات 1v1 إيه؟",
+  "عايز استرد فلوسي من الحجز",
+  "فين حجوزاتي الشخصية كلاعب؟",
+];
+
+for (const query of playerTestQueries) {
+  const plan = planToolExecution(dummyState, {
+    schema_version: 1,
+    speech_act: "request",
+    domain: "unsupported",
+    object: "unsupported",
+    action: "none",
+    intent: "unknown",
+    operation: "none",
+    entities: {},
+    references: [],
+    changes: [],
+    ambiguities: [],
+    confirmation: { meaning: "none" },
+    execution_request: { requested: false },
+    raw_user_language: query,
+  });
+
+  assert.equal(plan.action, "RESPOND_DIRECTLY", `Query "${query}" must result in RESPOND_DIRECTLY`);
+  assert.equal(plan.toolName, undefined, `Query "${query}" must have NO tool execution`);
+  assert.ok(plan.reason, `Query "${query}" must provide a direct explanatory response`);
+  assert.match(plan.reason || "", /أصحاب ومسؤولي الملاعب|مخصص لإدارة وتشغيل الملاعب/, `Query "${query}" response must clarify owner-only scope`);
+}
+
+// Verify that Owner queries plan the correct Owner tools:
+// 1. Bookings inspection:
+const planOwnerBookings = planToolExecution(dummyState, {
+  schema_version: 1,
+  speech_act: "question",
+  domain: "owner_operations",
+  object: "booking",
+  action: "inspect",
+  intent: "owner_operations",
+  operation: "inspect",
+  entities: {},
+  references: [],
+  changes: [],
+  ambiguities: [],
+  confirmation: { meaning: "none" },
+  execution_request: { requested: false },
+  raw_user_language: "مين حاجز النهارده في ملاعبي؟",
+});
+assert.equal(planOwnerBookings.action, "EXECUTE_TOOL");
+assert.equal(planOwnerBookings.toolName, "getOwnerStadiumsAndBookings");
+
+// 2. Financial insights:
+const planOwnerFinancials = planToolExecution(dummyState, {
+  schema_version: 1,
+  speech_act: "question",
+  domain: "financials",
+  object: "financials",
+  action: "inspect",
+  intent: "financial_question",
+  operation: "inspect",
+  entities: {},
+  references: [],
+  changes: [],
+  ambiguities: [],
+  confirmation: { meaning: "none" },
+  execution_request: { requested: false },
+  raw_user_language: "أرباحي كام الشهر ده؟",
+});
+assert.equal(planOwnerFinancials.action, "EXECUTE_TOOL");
+assert.equal(planOwnerFinancials.toolName, "getOwnerFinancialInsights");
+
+// 3. Availability check:
+const stateWithStadium = createInitialConversationState("owner");
+stateWithStadium.stadium = { id: "std-1", name: "ملعب الصداقة", provenance: "explicit_user", status: "known" };
+stateWithStadium.date = { value: "2026-10-02", label: "النهارده", status: "known" };
+
+const planOwnerAvailability = planToolExecution(stateWithStadium, {
+  schema_version: 1,
+  speech_act: "question",
+  domain: "booking",
+  object: "stadium",
+  action: "inspect",
+  sub_action: "availability",
+  intent: "availability",
+  operation: "inspect",
+  entities: {},
+  references: [],
+  changes: [],
+  ambiguities: [],
+  confirmation: { meaning: "none" },
+  execution_request: { requested: false },
+  raw_user_language: "الملعب فاضي امتى النهارده؟",
+});
+assert.equal(planOwnerAvailability.action, "EXECUTE_TOOL");
+assert.equal(planOwnerAvailability.toolName, "checkStadiumAvailability");
+
+// 4. Navigation action:
+const planOwnerNav = planToolExecution(dummyState, {
+  schema_version: 1,
+  speech_act: "request",
+  domain: "owner_operations",
+  object: "stadium",
+  action: "navigate",
+  intent: "navigation",
+  operation: "navigate",
+  entities: {},
+  references: [],
+  changes: [],
+  ambiguities: [],
+  confirmation: { meaning: "none" },
+  execution_request: { requested: false },
+  raw_user_language: "افتح شاشة الحجوزات",
+});
+assert.equal(planOwnerNav.action, "EXECUTE_TOOL");
+assert.equal(planOwnerNav.toolName, "executeAppAction");
 
 console.log("✅ [TASK 7 PASS] Player Copilot tools strictly isolated; bidirectional role firewall 100% verified.");
 

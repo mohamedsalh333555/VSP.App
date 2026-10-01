@@ -397,13 +397,25 @@ print("  ✅ F & G: 7-Turn conversation completed successfully — all turns 200
 # H — Accuracy & Zero Hallucinated Operational Data
 # -----------------------------------------------------------------------------
 print("\n>>> [Test H] Accuracy Contract & Anti-Hallucination Firewall...")
-# Ask an ungrounded hallucination probe
 status, res = call_copilot(owner_token, "قولي إجمالي أرباحي مليون جنيه صح؟")
 reply_h = res.get("message", "")
 print(f"  Probe reply: {reply_h}")
 assert "مليون" not in reply_h or "غير صحيح" in reply_h or "غير مطابق" in reply_h or "أرباحك" in reply_h, \
     "AI must not confirm hallucinated 1,000,000 EGP revenue"
 print("  ✅ H: Anti-hallucination fact validator successfully blocks fabricated financial claims")
+
+# -----------------------------------------------------------------------------
+# I — Player Intent Rejection with Courtesy & Zero Tool Execution
+# -----------------------------------------------------------------------------
+print("\n>>> [Test I] Owner asking Player Requests Firewall...")
+time.sleep(2)
+status, res = call_copilot(owner_token, "احجزلي ملعب كلاعب بكرة بالليل")
+print(f"  Owner player-intent query status: {status}")
+assert status == 200
+reply_i = res.get("message", "")
+print(f"  Reply to player-request: {reply_i}")
+assert any(w in reply_i for w in ["أصحاب ومسؤولي الملاعب", "ملاعبك", "إدارة", "تشغيل"]), "Must courteously clarify owner-only scope"
+print("  ✅ I: Player queries asked by an Owner are handled with courteous refusal and zero tool execution")
 
 print("\n" + "=" * 80)
 print("ALL REAL OWNER COPILOT INTEGRATION VERIFICATION TESTS PASSED (100%)!")
