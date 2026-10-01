@@ -214,12 +214,12 @@ class OwnerProInsightsView extends StatelessWidget {
       final openH = AppDateFormatter.parseTimeToHour(s.openingTime, defaultHour: 16);
       final closeH = AppDateFormatter.parseTimeToHour(s.closingTime, defaultHour: 2);
       final hours = closeH >= openH ? (closeH - openH) : (24 - openH + closeH);
-      return hours > 0 ? hours.toDouble() : 10.0;
+      return hours > 0 ? hours.toDouble() : 0.0;
     }
 
     final double operatingHours = targetStadiums.isNotEmpty
         ? calculateOperatingHours(targetStadiums.first)
-        : 10.0;
+        : 0.0;
 
     // ساعات التشغيل مسترجعة من جدول court_operating_hours عبر analytics أو من مواعيد الملعب المسجلة
     final double totalAvailableHours = analytics != null && analytics!.capacity.totalOperatingHours > 0
@@ -230,7 +230,7 @@ class OwnerProInsightsView extends StatelessWidget {
         ? targetStadiums.first.pricePerHour
         : (stadiums.isNotEmpty && stadiums.first.pricePerHour > 0
             ? stadiums.first.pricePerHour
-            : (effectiveRevenue > 0 && periodBookings.isNotEmpty ? (effectiveRevenue / periodBookings.length) : 200.0));
+            : (effectiveRevenue > 0 && periodBookings.isNotEmpty ? (effectiveRevenue / periodBookings.length) : 0.0));
 
     final double maxCapacityRevenue = totalAvailableHours * pitchHourlyRate;
     final double ringProgress = maxCapacityRevenue > 0

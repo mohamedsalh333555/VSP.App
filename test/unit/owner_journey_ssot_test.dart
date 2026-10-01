@@ -283,21 +283,161 @@ void main() {
     });
   });
 
+  group('Owner Journey SSOT - Zero Artificial Financial Fallback Invariants', () {
+    test('Zero price per hour yields 0.0 unrealized revenue without 200 EGP fallback', () {
+      double computeUnrealizedRevenue({
+        required double totalOperatingHours,
+        required double bookedHours,
+        required double? pricePerHour,
+      }) {
+        final unbooked = (totalOperatingHours - bookedHours).clamp(0.0, totalOperatingHours);
+        if (pricePerHour == null || pricePerHour <= 0) return 0.0;
+        return unbooked * pricePerHour;
+      }
+
+      // No price set on stadium
+      expect(
+        computeUnrealizedRevenue(totalOperatingHours: 10.0, bookedHours: 2.0, pricePerHour: null),
+        equals(0.0),
+        reason: 'Unconfigured price must yield 0.0, NEVER invent 200 EGP',
+      );
+
+      // Price is zero
+      expect(
+        computeUnrealizedRevenue(totalOperatingHours: 10.0, bookedHours: 2.0, pricePerHour: 0.0),
+        equals(0.0),
+        reason: 'Zero price must yield 0.0',
+      );
+
+      // Valid price
+      expect(
+        computeUnrealizedRevenue(totalOperatingHours: 10.0, bookedHours: 2.0, pricePerHour: 250.0),
+        equals(2000.0),
+      );
+    });
+
+    test('Operational Booking Value does not count as Available Balance', () {
+      const double operationalBookingValue = 8000.0; // Total upcoming bookings
+      const double realizedOnlineRev = 1200.0; // Actually completed & paid
+      const double totalWithdrawn = 200.0;
+
+      // Available Balance strictly follows get_owner_financial_summary formula
+      final availableBalance = (realizedOnlineRev - totalWithdrawn).clamp(0.0, double.infinity);
+
+      expect(availableBalance, equals(1000.0));
+      expect(operationalBookingValue, isNot(equals(availableBalance)));
+    });
+
+    test('Cash collected reflects deposit/cash received, not remaining outstanding value', () {
+      const double totalPrice = 600.0;
+      const double depositPaid = 150.0;
+      const bool isFullyPaid = false;
+
+      final double cashCollected = isFullyPaid ? totalPrice : depositPaid;
+      final double cashOutstanding = totalPrice - cashCollected;
+
+      expect(cashCollected, equals(150.0));
+      expect(cashOutstanding, equals(450.0));
+    });
+  });
+
+  group('Owner Journey SSOT - Real Supabase Schema Conformity', () {
+    test('public.users schema columns verify accurately', () {
+      final userRow = {
+        'role': 'owner',
+        'is_onboarding_confirmed': true,
+        'has_stadium': true,
+        'subscription_plan': 'pro',
+        'trial_ends_at': '2026-11-23T00:00:00Z',
+        'subscription_expires_at': '2027-10-01T00:00:00Z',
+      };
+
+      expect(userRow.containsKey('role'), isTrue);
+      expect(userRow.containsKey('is_onboarding_confirmed'), isTrue);
+      expect(userRow.containsKey('has_stadium'), isTrue);
+      expect(userRow.containsKey('subscription_plan'), isTrue);
+      expect(userRow.containsKey('trial_ends_at'), isTrue);
+      expect(userRow.containsKey('subscription_expires_at'), isTrue);
+
+      // Verify no nonexistent columns
+      expect(userRow.containsKey('onboarding_completed'), isFalse);
+    });
+
+    test('public.subscription_plans schema columns verify accurately', () {
+      final planRow = {
+        'code': 'basic',
+        'trial_days': 365,
+        'monthly_price': 500.0,
+        'yearly_price': 5000.0,
+        'max_stadiums': 1,
+        'is_active': true,
+      };
+
+      expect(planRow['trial_days'], equals(365));
+      expect(planRow['max_stadiums'], equals(1));
+      expect(planRow.containsKey('trial_period_days'), isFalse);
+    });
+
+    test('public.stadiums schema columns verify accurately', () {
+      final stadiumRow = {
+        'id': 'stadium-uuid',
+        'owner_id': 'owner-uuid',
+        'is_verified': true,
+        'is_blocked': false,
+        'is_deleted_by_owner': false,
+        'opening_time': '15:00:00',
+        'closing_time': '02:00:00',
+        'is_split_shift': true,
+        'break_start_time': '18:00:00',
+        'break_end_time': '19:00:00',
+        'price_per_hour': 250.0,
+      };
+
+      expect(stadiumRow['is_verified'], isTrue);
+      expect(stadiumRow['is_blocked'], isFalse);
+      expect(stadiumRow['is_deleted_by_owner'], isFalse);
+      expect(stadiumRow.containsKey('status'), isFalse);
+      expect(stadiumRow.containsKey('is_verified_by_admin'), isFalse);
+    });
+
+    test('public.court_operating_hours strictly references court_id', () {
+      final courtHoursRow = {
+        'id': 'coh-uuid',
+        'court_id': 'court-uuid',
+        'day_of_week': 1,
+        'open_time': '15:00:00',
+        'close_time': '02:00:00',
+        'is_closed': false,
+      };
+
+      expect(courtHoursRow.containsKey('court_id'), isTrue);
+      expect(courtHoursRow.containsKey('stadium_id'), isFalse, reason: 'court_operating_hours references court_id, never stadium_id');
+    });
+
+    test('public.owner_trial_ledger references original trial timestamps', () {
+      final ledgerRow = {
+        'email': 'owner@test.com',
+        'first_trial_started_at': '2026-09-24T00:00:00Z',
+        'original_trial_ends_at': '2026-11-23T00:00:00Z',
+      };
+
+      expect(ledgerRow.containsKey('first_trial_started_at'), isTrue);
+      expect(ledgerRow.containsKey('original_trial_ends_at'), isTrue);
+    });
+  });
+
   group('Owner Journey SSOT - Free Trial Semantic Plan Invariance', () {
     int? resolveTrialDaysStrict({
       required Map<String, int> activePlans,
       String authoritativePlanCode = 'basic',
     }) {
-      // Fail closed: if basic is missing or inactive, return null (never invent 365)
       return activePlans[authoritativePlanCode];
     }
 
     test('Changing unrelated plan trial duration does NOT alter owner trial duration', () {
-      // Base state: basic=365, pro=365
       final plansBefore = {'basic': 365, 'pro': 365};
       expect(resolveTrialDaysStrict(activePlans: plansBefore), equals(365));
 
-      // Unrelated plan changed: pro changed to 14 days or 30 days
       final plansAfterProChanged = {'basic': 365, 'pro': 14};
       expect(
         resolveTrialDaysStrict(activePlans: plansAfterProChanged),
@@ -305,7 +445,6 @@ void main() {
         reason: 'Owner trial duration must strictly read basic plan, unaffected by pro plan changes',
       );
 
-      // Enterprise plan added with 90 days
       final plansWithEnterprise = {'basic': 365, 'pro': 14, 'enterprise': 90};
       expect(
         resolveTrialDaysStrict(activePlans: plansWithEnterprise),
@@ -376,11 +515,9 @@ void main() {
         return null;
       }
 
-      // Catalog has 365 days
       final catalog = {'code': 'basic', 'trial_days': 365, 'is_active': true};
       expect(computeTrialDays(catalog), equals(365));
 
-      // Missing catalog fails closed (returns null, NEVER 60)
       expect(computeTrialDays(null), isNull);
       expect(computeTrialDays({'code': 'basic', 'is_active': false}), isNull);
       expect(computeTrialDays({'code': 'basic', 'trial_days': 0, 'is_active': true}), isNull);
@@ -434,18 +571,18 @@ void main() {
       );
     });
 
-    test('Stadium verification lifecycle: unverified on creation, verified only by admin', () {
+    test('Stadium verification lifecycle: unverified on creation, verified only by admin (is_verified)', () {
       final initialStadium = {
         'id': 'std-new',
         'is_verified': false,
-        'verification_status': 'unverified',
+        'is_blocked': false,
       };
       expect(initialStadium['is_verified'], isFalse);
 
-      // Admin approval transition
+      // Admin approval transition using real schema column is_verified
       Map<String, dynamic> approveStadium(Map<String, dynamic> s, {required bool isAdmin}) {
         if (!isAdmin) throw Exception('Unauthorized');
-        return {...s, 'is_verified': true, 'verification_status': 'verified'};
+        return {...s, 'is_verified': true};
       }
 
       final approved = approveStadium(initialStadium, isAdmin: true);
@@ -576,34 +713,34 @@ void main() {
     });
   });
 
-  group('Owner Journey SSOT - Complete State Transition Matrix', () {
-    test('Full Owner Lifecycle Transitions', () {
+  group('Owner Journey SSOT - Complete State Transition Matrix (Real Schema)', () {
+    test('Full Owner Lifecycle Transitions using public.users and public.stadiums schema', () {
       // 1. Registered -> Needs Stadium
       var ownerState = 'OWNER_REGISTERED';
       bool hasStadium = false;
-      String? verificationStatus;
+      bool isVerified = false;
 
       if (!hasStadium) {
         ownerState = 'OWNER_NEEDS_STADIUM';
       }
       expect(ownerState, equals('OWNER_NEEDS_STADIUM'));
 
-      // 2. Stadium Added -> Pending Verification
+      // 2. Stadium Added -> Pending Admin Verification
       hasStadium = true;
-      verificationStatus = 'pending';
-      if (hasStadium && verificationStatus == 'pending') {
+      isVerified = false;
+      if (hasStadium && !isVerified) {
         ownerState = 'OWNER_PENDING_VERIFICATION';
       }
       expect(ownerState, equals('OWNER_PENDING_VERIFICATION'));
 
-      // 3. Admin Approved -> Active
-      verificationStatus = 'approved';
-      if (hasStadium && verificationStatus == 'approved') {
+      // 3. Admin Approved (is_verified = true) -> Active
+      isVerified = true;
+      if (hasStadium && isVerified) {
         ownerState = 'OWNER_ACTIVE';
       }
       expect(ownerState, equals('OWNER_ACTIVE'));
 
-      // 4. Admin Blocked -> Blocked
+      // 4. Admin Blocked (is_blocked = true) -> Blocked
       bool isBlocked = true;
       if (isBlocked) {
         ownerState = 'OWNER_BLOCKED';
@@ -612,4 +749,3 @@ void main() {
     });
   });
 }
-

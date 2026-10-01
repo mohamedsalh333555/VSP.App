@@ -431,12 +431,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
-                    cashThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
-                        ? _dashboardAnalytics.revenue.realizedCash
-                        : metrics.pitchCashRevenue,
-                    onlineThisMonth: _dashboardAnalytics.revenue.total > 0 || _dashboardAnalytics.capacity.totalOperatingHours > 0
-                        ? _dashboardAnalytics.revenue.realizedOnline
-                        : metrics.digitalVspBalance,
+                    cashThisMonth: _dashboardAnalytics.revenue.realizedCash,
+                    onlineThisMonth: _dashboardAnalytics.revenue.realizedOnline,
                     upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                     timePeriod: _selectedTimePeriod,
                     periodLabel: _currentFilter.periodLabel,
