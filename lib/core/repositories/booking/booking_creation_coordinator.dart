@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../../../data/models.dart';
 import '../../services/analytics_service.dart';
 import '../../services/logger_service.dart';
@@ -61,6 +62,7 @@ class BookingCreationCoordinator {
           'p_end_time': draft.endTime.toUtc().toIso8601String(),
           'p_payment_method': draft.paymentMethod ?? 'cash',
           'p_rent_ball': draft.rentBall,
+          'p_idempotency_key': draft.idempotencyKey ?? const Uuid().v4(),
         });
       } else {
         rpcResult = await _supabase.rpc('create_booking_atomic', params: {

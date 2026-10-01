@@ -42,6 +42,7 @@ class BookingDraft {
   final String? vodafoneCash;
   final String? binanceId;
   final String? challengeCode;
+  final String? idempotencyKey;
 
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
@@ -82,6 +83,7 @@ class BookingDraft {
     this.vodafoneCash,
     this.binanceId,
     this.challengeCode,
+    this.idempotencyKey,
   });
 
   BookingDraft copyWith({
@@ -120,6 +122,7 @@ class BookingDraft {
     String? vodafoneCash,
     String? binanceId,
     String? challengeCode,
+    String? idempotencyKey,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -157,6 +160,7 @@ class BookingDraft {
       vodafoneCash: vodafoneCash ?? this.vodafoneCash,
       binanceId: binanceId ?? this.binanceId,
       challengeCode: challengeCode ?? this.challengeCode,
+      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
     );
   }
 
@@ -196,6 +200,7 @@ class BookingDraft {
       'vodafoneCash': vodafoneCash,
       'binanceId': binanceId,
       'challengeCode': challengeCode,
+      'idempotencyKey': idempotencyKey,
     };
   }
 
@@ -275,6 +280,7 @@ class BookingDraft {
       vodafoneCash: map['vodafoneCash']?.toString(),
       binanceId: map['binanceId']?.toString(),
       challengeCode: map['challengeCode']?.toString(),
+      idempotencyKey: map['idempotencyKey']?.toString(),
     );
   }
 }

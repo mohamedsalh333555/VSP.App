@@ -12,6 +12,7 @@ import '../../../../data/models.dart';
 import 'booking_payment_method_sheet.dart';
 import 'booking_slot_calculator.dart';
 import 'booking_slot_models.dart';
+import 'package:uuid/uuid.dart';
 import '../../screens/payment_gateway_screen.dart';
 
 /// Encapsulates all logic for the "Confirm Booking" action that was previously
@@ -249,6 +250,7 @@ class BookingConfirmationHandler {
       vodafoneCash: stadium.features is Map ? stadium.features['vodafoneCash'] : null,
       binanceId: stadium.features is Map ? stadium.features['binanceId'] : null,
       challengeCode: bookingProvider.currentDraft?.challengeCode,
+      idempotencyKey: const Uuid().v4(),
     );
 
     onLoadingChanged(false);
