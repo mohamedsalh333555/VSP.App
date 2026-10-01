@@ -223,26 +223,6 @@ export function generateDeterministicResponse(
       };
     }
 
-    if (toolResult.tool_name === "searchTournaments") {
-      return {
-        message: "يا كابتن! دي البطولات النشطة والمتاحة للاشتراك حالياً على VSP:",
-        quick_replies: ["بطولات 5v5", "بطولات 1v1"],
-      };
-    }
-
-    if (toolResult.tool_name === "get1v1Leaderboard") {
-      return {
-        message: "يا كابتن، ده ترتيب قمة دوري الـ 1v1 والنقاط محسوبة بمجموع (الأهداف + المهارات + قطع الكرات):",
-        quick_replies: [],
-      };
-    }
-
-    if (toolResult.tool_name === "getOpenMatches") {
-      return {
-        message: "دي الماتشات المفتوحة والتقسيمات اللي ناقصها لعيبة ومتاحة تنضم ليها فوراً يا كابتن ⚽:",
-        quick_replies: [],
-      };
-    }
 
     if (toolResult.tool_name === "getOwnerFinancialInsights") {
       const avail = toolResult.data.available_balance ?? 0;
@@ -438,6 +418,11 @@ export function validateAssistantResponseFacts(
     if (toolResult?.data?.total_amount) allowedPrices.add(toolResult.data.total_amount);
     if (toolResult?.data?.deposit_amount) allowedPrices.add(toolResult.data.deposit_amount);
     if (toolResult?.data?.transaction?.amount) allowedPrices.add(toolResult.data.transaction.amount);
+    // Owner financial summary metrics
+    if (toolResult?.data?.available_balance !== undefined) allowedPrices.add(Number(toolResult.data.available_balance));
+    if (toolResult?.data?.total_revenue !== undefined) allowedPrices.add(Number(toolResult.data.total_revenue));
+    if (toolResult?.data?.pending_balance !== undefined) allowedPrices.add(Number(toolResult.data.pending_balance));
+    if (toolResult?.data?.total_withdrawn !== undefined) allowedPrices.add(Number(toolResult.data.total_withdrawn));
 
     if (allowedPrices.size > 0) {
       for (const m of priceMatches) {
@@ -452,7 +437,24 @@ export function validateAssistantResponseFacts(
     }
   }
 
-  // 6. Check for leaked internal terms
+  // 6. Check for fabricated booking counts
+  const countMatches = [...response.matchAll(/(\d{1,4})\s*(?:حجز|حجوزات|ماتش|ماتشات)/gi)];
+  if (countMatches.length > 0 && toolResult?.bookings) {
+    const actualCount = toolResult.bookings.length;
+    const actualTotal = toolResult.data?.stadiums_count ?? actualCount;
+    const allowedCounts = new Set([actualCount, actualTotal, toolResult.data?.bookings?.length || 0]);
+    for (const cm of countMatches) {
+      const claimedCount = Number(cm[1]);
+      if (!allowedCounts.has(claimedCount)) {
+        return {
+          isValid: false,
+          reason: `Claimed booking count (${claimedCount}) does not match verified count (${Array.from(allowedCounts).join(", ")})`,
+        };
+      }
+    }
+  }
+
+  // 7. Check for leaked internal terms
   const leakedInternals = /(?:قاعدة البيانات|السيستم|API|Supabase|Gemini|RPC|السيرفر|الأداة|tool)/i.test(response);
   if (leakedInternals) {
     return {

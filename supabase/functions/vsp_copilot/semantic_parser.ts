@@ -71,6 +71,31 @@ export async function parseUserMessageSemantically(
     price_per_hour: e.price_per_hour,
   }));
 
+  const structuredContext = {
+    current_facts: {
+      stadium_id: state.stadium.id,
+      stadium_name: state.stadium.name,
+      stadium_status: state.stadium.status,
+      date_iso: state.date.value,
+      date_label: state.date.label,
+      target_times: state.times.map(t => t.time),
+      time_period: state.time_period,
+      duration_hours: state.duration_hours,
+      active_task: state.active_task,
+      task_lifecycle: state.task_lifecycle,
+      pending_confirmation: state.pending_confirmation ? {
+        type: state.pending_confirmation.type,
+        stadium_id: state.pending_confirmation.stadium_id,
+        stadium_name: state.pending_confirmation.stadium_name,
+        date: state.pending_confirmation.date,
+        start_time: state.pending_confirmation.start_time,
+        end_time: state.pending_confirmation.end_time,
+      } : null,
+    },
+    visible_stadiums_and_entities: visibleContext,
+    active_ambiguities: state.active_ambiguities.map(a => a.type),
+  };
+
   const systemInstruction = `You are the Pitch Owner Copilot & Business Advisory Engine of VSP Sports Platform in Egypt.
 Your task is to interpret inquiries from Pitch Owners (أصحاب ومسؤولو الملاعب) in Egyptian Arabic into strict structured JSON.
 
@@ -94,7 +119,8 @@ CORE FOCUS AREAS FOR PITCH OWNERS:
 Context:
 - Egypt Local Date Today: ${cairoTodayStr}
 - User Role: ${state.user_role}
-- Current State: ${JSON.stringify({ active_task: state.active_task })}`;
+- Structured Operational Context (SSOT Facts vs Visible Entities vs Ambiguities):
+${JSON.stringify(structuredContext, null, 2)}`;
 
   const promptContents: any[] = [];
   // Include last 3 turns of context

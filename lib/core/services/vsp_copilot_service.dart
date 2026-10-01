@@ -32,6 +32,30 @@ class CopilotUnavailableException implements Exception {
   String toString() => 'CopilotUnavailableException: $message';
 }
 
+/// Raised when non-owner accounts attempt to access Owner Copilot (HTTP 403)
+class CopilotForbiddenException implements Exception {
+  final String message;
+
+  const CopilotForbiddenException([
+    this.message = 'خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.',
+  ]);
+
+  @override
+  String toString() => 'CopilotForbiddenException: $message';
+}
+
+/// Raised when pitch owner has expired trial and no active subscription (HTTP 402)
+class CopilotSubscriptionRequiredException implements Exception {
+  final String message;
+
+  const CopilotSubscriptionRequiredException([
+    this.message = 'خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.',
+  ]);
+
+  @override
+  String toString() => 'CopilotSubscriptionRequiredException: $message';
+}
+
 /// Mock database dataset for testing pitch owner database grounding and zero-hallucination
 class OwnerDatabaseMockData {
   final List<Map<String, dynamic>>? stadiums;
@@ -287,13 +311,27 @@ class VspCopilotService {
         if (statusCode == 429) {
           throw const RateLimitException();
         }
+        if (statusCode == 403) {
+          final data = response.data;
+          final msg = (data is Map) ? data['message']?.toString() : null;
+          throw CopilotForbiddenException(msg ?? 'خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.');
+        }
+        if (statusCode == 402) {
+          final data = response.data;
+          final msg = (data is Map) ? data['message']?.toString() : null;
+          throw CopilotSubscriptionRequiredException(msg ?? 'خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.');
+        }
 
         final data = response.data;
         if (data is Map<String, dynamic>) {
           return _parseCloudResponse(data, conversationId);
         }
       } catch (e) {
-        if (e is RateLimitException) rethrow;
+        if (e is RateLimitException ||
+            e is CopilotForbiddenException ||
+            e is CopilotSubscriptionRequiredException) {
+          rethrow;
+        }
         debugPrint('[VspCopilotService] Cloud call failed: $e');
         throw const CopilotUnavailableException();
       }

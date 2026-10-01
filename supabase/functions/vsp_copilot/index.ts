@@ -96,30 +96,31 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     const dbRole = String(userProfile?.role || "").toLowerCase().trim();
-    const userRole: "player" | "owner" | "admin" =
-      ["admin","super_admin","cofounder","co_founder"].includes(dbRole)
-        ? "admin"
-        : (dbRole === "pitch_owner" || dbRole === "owner" ? "owner" : "player");
-
-    // Copilot is available to players for free. Owners require an active paid/trial entitlement.
-    if (userRole === "owner") {
-      const nowMs = Date.now();
-      const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
-      const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
-      const entitlementUntil = Math.max(trialMs, subMs);
-      if (entitlementUntil <= nowMs) {
-        return new Response(
-          JSON.stringify({
-            error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
-            message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    if (dbRole !== "pitch_owner" && dbRole !== "owner") {
+      return new Response(
+        JSON.stringify({
+          error: "FORBIDDEN_OWNER_ONLY",
+          message: "خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+    const userRole: "owner" = "owner";
 
-    // Copilot is available to players and owners. Owner-only operations are
-    // protected again by the capability registry/tool planner and executor.
+    // Owners require an active paid or trial entitlement.
+    const nowMs = Date.now();
+    const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
+    const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
+    const entitlementUntil = Math.max(trialMs, subMs);
+    if (entitlementUntil <= nowMs) {
+      return new Response(
+        JSON.stringify({
+          error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
+          message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
+        }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // 6. Retrieve or Initialize Conversation Session
     let contextSnapshot: Record<string, any> = {};
@@ -169,18 +170,20 @@ serve(async (req: Request) => {
       contextSnapshot = newConv.context_snapshot || {};
     }
 
-    // 7. Load Recent Message History
+    // 7. Load Recent Message History (Latest 6 messages in chronological order)
     const { data: priorMessages } = await supabase
       .from("copilot_messages")
       .select("role, content, ui_metadata")
       .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(6);
 
-    const recentHistory: Array<{ role: string; content: string }> = (priorMessages || []).map((m: any) => ({
-      role: m.role,
-      content: m.content,
-    }));
+    const recentHistory: Array<{ role: string; content: string }> = (priorMessages || [])
+      .reverse()
+      .map((m: any) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
     // 8. Hydrate Conversation State
     const currentState = hydrateConversationState(contextSnapshot, userRole);

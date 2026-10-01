@@ -208,6 +208,7 @@ export async function executeGuardedTool(
           .from("stadiums")
           .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
           .eq("id", stadiumId)
+          .eq("owner_id", callerUser.id)
           .maybeSingle();
         targetStadium = s;
       }
@@ -216,6 +217,7 @@ export async function executeGuardedTool(
           .from("stadiums")
           .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
           .ilike("name", `%${stadiumName}%`)
+          .eq("owner_id", callerUser.id)
           .limit(1);
         if (sList && sList.length > 0) targetStadium = sList[0];
       }
@@ -225,7 +227,7 @@ export async function executeGuardedTool(
           status: "INVALID_INPUT",
           tool_name: toolName,
           data: {},
-          error_message: "لم يتم العثور على الملعب المحدد للتحقق من المواعيد.",
+          error_message: "لم يتم العثور على هذا الملعب ضمن ملاعبك المسجلة يا كابتن.",
         };
       }
 

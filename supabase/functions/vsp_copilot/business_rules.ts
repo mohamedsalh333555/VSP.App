@@ -11,7 +11,6 @@ const OWNER_ALLOWED_TOOLS = new Set([
   "getOwnerFinancialInsights",
   "checkStadiumAvailability",
   "executeAppAction",
-  "updateUserProfile",
 ]);
 
 export function isToolAllowedForRole(role: string | undefined | null, toolName: string): boolean {
