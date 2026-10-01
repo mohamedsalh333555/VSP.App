@@ -90,11 +90,22 @@ class TeamRosterCoordinator {
     }
   }
 
-  /// Stream user's membership changes
+  /// نقل شارة الكابتنة ذرياً لعضو آخر مسجل في الفريق
+  Future<void> transferCaptaincy(String teamId, String newCaptainId) async {
+    final response = await _supabase.rpc('transfer_team_captaincy_atomic', params: {
+      'p_team_id': teamId,
+      'p_new_captain_id': newCaptainId,
+    });
+    if (response is! Map || response['success'] != true) {
+      throw Exception(response is Map ? response['error'] ?? 'فشل نقل شارة الكابتنة' : 'فشل نقل شارة الكابتنة');
+    }
+  }
+
+  /// Stream user's membership changes (Composite Primary Key: team_id, user_id)
   Stream<List<Map<String, dynamic>>> streamUserMembership(String userId) {
     return _supabase
         .from('team_members')
-        .stream(primaryKey: ['id'])
+        .stream(primaryKey: ['team_id', 'user_id'])
         .eq('user_id', userId)
         .timeout(
           const Duration(seconds: 10),

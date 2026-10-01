@@ -264,10 +264,17 @@ class AuthService {
   // Delete Account
   Future<Map<String, dynamic>> deleteAccount(String uid) async {
     try {
-      await _supabase.rpc(
+      final res = await _supabase.rpc(
         'delete_user_permanently',
         params: {'p_user_id': uid},
       );
+      if (res is Map && res['success'] == false) {
+        return {
+          'success': false,
+          'message': res['message']?.toString() ?? 'فشل في حذف الحساب.',
+          'error': res['error']?.toString(),
+        };
+      }
       await signOut();
       return {'success': true};
     } catch (e) {

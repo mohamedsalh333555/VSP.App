@@ -220,6 +220,10 @@ class TeamRepository {
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) =>
       _rosterCoordinator.removeMemberFromTeam(teamId, userId, imageUrl);
 
+  /// نقل شارة قيادة الفريق ذرياً
+  Future<void> transferCaptaincy(String teamId, String newCaptainId) =>
+      _rosterCoordinator.transferCaptaincy(teamId, newCaptainId);
+
  Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
   try {
     final pgData = TeamPayloadBuilder.buildUpdatePayload(data);
