@@ -1,7 +1,6 @@
 // Owner Copilot SSOT Verification Suite
-// Tests Tasks 1, 2, and 3 with deterministic assertions and a controlled clock.
+// Tests Tasks 1 through 7 with deterministic assertions, strict types, and a controlled clock.
 
-import assert from "node:assert/strict";
 import {
   CAPABILITY_REGISTRY,
   isToolAllowedForRole,
@@ -15,6 +14,27 @@ import { resolveReferences } from "./reference_resolver.ts";
 import { mergeState } from "./state_merger.ts";
 import { planToolExecution } from "./tool_planner.ts";
 import { executeGuardedTool } from "./tool_executor.ts";
+
+declare const process: any;
+
+// Strongly-typed lightweight assert helper (compatible with Node, tsx, and Deno)
+function assert(condition: any, message?: string): asserts condition {
+  if (!condition) throw new Error(message || "Assertion failed");
+}
+namespace assert {
+  export function equal(a: any, b: any, message?: string) {
+    if (a !== b) throw new Error(message || `Expected ${a} === ${b}`);
+  }
+  export function deepEqual(a: any, b: any, message?: string) {
+    if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(message || `Expected deepEqual: ${JSON.stringify(a)} vs ${JSON.stringify(b)}`);
+  }
+  export function ok(val: any, message?: string): asserts val {
+    if (!val) throw new Error(message || `Expected truthy value, got ${val}`);
+  }
+  export function match(val: string, re: RegExp, message?: string) {
+    if (!re.test(val)) throw new Error(message || `Expected ${val} to match ${re}`);
+  }
+}
 
 async function runVerificationSuite() {
 console.log("===============================================================================");
@@ -74,7 +94,7 @@ console.log("✅ [TASK 1 PASS] Capability SSOT verified: 4 owner tools, 0 player
 // ============================================================================
 console.log("\n>>> [TASK 2] Testing Fact Validator Booking Counts Decoupling...");
 
-const dummyState = createInitialConversationState("owner-test-usr", "owner");
+const dummyState = createInitialConversationState("owner");
 
 // Case A: 2 stadiums + 1 booking
 const toolResultCaseA = {
@@ -111,22 +131,25 @@ assert.equal(resA4.isValid, true, "Should accept 2 stadiums");
 const resA5 = validateAssistantResponseFacts("مسجل عندك 3 ملاعب", dummyState, dummyPlan, toolResultCaseA);
 assert.equal(resA5.isValid, false, "Must reject false stadium count");
 
-// Case B: 0 Bookings
+// Case B: 3 stadiums + 0 bookings
 const toolResultZeroBookings = {
   status: "SUCCESS" as const,
   tool_name: "getOwnerStadiumsAndBookings",
-  data: { stadiums_count: 1, bookings_count: 0 },
-  stadiums: [{ id: "std-1", name: "الملعب" }],
+  data: {
+    stadiums_count: 3,
+    bookings_count: 0,
+  },
+  stadiums: [{ id: "std-1" }, { id: "std-2" }, { id: "std-3" }],
   bookings: [],
 };
 
-const resB1 = validateAssistantResponseFacts("عندك 0 حجز اليوم في ملعبك", dummyState, dummyPlan, toolResultZeroBookings);
+const resB1 = validateAssistantResponseFacts("ما عندكش أي حجوزات مسجلة اليوم في الملاعب الثلاثة", dummyState, dummyPlan, toolResultZeroBookings);
 assert.equal(resB1.isValid, true, "Should accept 0 bookings");
 
-const resB2 = validateAssistantResponseFacts("عندك 1 حجز اليوم في ملعبك", dummyState, dummyPlan, toolResultZeroBookings);
-assert.equal(resB2.isValid, false, "Must reject 1 booking when 0 bookings exist");
+const resB2 = validateAssistantResponseFacts("عندك 3 حجوزات اليوم", dummyState, dummyPlan, toolResultZeroBookings);
+assert.equal(resB2.isValid, false, "Must reject claiming 3 bookings when 0 bookings exist!");
 
-// Case C: Multiple Bookings (3 bookings)
+// Case C: 1 stadium + 3 bookings
 const toolResultThreeBookings = {
   status: "SUCCESS" as const,
   tool_name: "getOwnerStadiumsAndBookings",
@@ -215,11 +238,11 @@ const stateWithAmbiguousTime = mergeState(
     domain: "booking",
     object: "booking",
     action: "create",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "create",
     entities: {
-      times: [{ time: "10:00", period: "unknown", period_certainty: "inferred" }],
+      times: [{ time: "10:00", period: "unknown", period_certainty: "inferred", preference_order: 1 }],
     },
     references: [],
     changes: [{ field: "time", operation: "set", value: "10:00" }],
@@ -237,7 +260,7 @@ const planAmbiguous = planToolExecution(stateWithAmbiguousTime, {
   domain: "booking",
   object: "booking",
   action: "create",
-  semantic_status: "in_progress",
+  semantic_status: "inferred",
   intent: "booking",
   operation: "create",
   entities: {},
@@ -258,7 +281,7 @@ const stateWithMultipleTimes = mergeState(
     domain: "booking",
     object: "booking",
     action: "create",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "create",
     entities: {
@@ -282,7 +305,7 @@ assert.equal(stateWithMultipleTimes.times[1].time, "23:00");
 
 // 3. Multi-turn Stadium Persistence ("نفس الملعب")
 // Turn 1: User establishes stadium "ملعب الأبطال" (id: "std-abc")
-let turnState = createInitialConversationState("owner-test", "owner");
+let turnState = createInitialConversationState("owner");
 turnState.stadium = {
   id: "std-abc",
   name: "ملعب الأبطال",
@@ -299,11 +322,11 @@ turnState = mergeState(
     domain: "booking",
     object: "stadium",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "inspect",
     entities: {
-      date: { type: "next_friday", value: "2026-10-09" },
+      date: { type: "iso_date", value: "2026-10-09" },
       time_range: { from_hour: 20, to_hour: 23, label: "بالليل" },
     },
     references: [],
@@ -337,11 +360,11 @@ turnState = mergeState(
     domain: "booking",
     object: "stadium",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "inspect",
     entities: {},
-    references: [{ reference_type: "context_entity", source_phrase: "نفس الملعب", target: "same_stadium" }],
+    references: [{ reference_type: "previous_state", raw_phrase: "نفس الملعب", target: "same_stadium" }],
     changes: [],
     ambiguities: [],
     confirmation: { meaning: "none", target: null },
@@ -452,11 +475,11 @@ conv7State = mergeState(
     domain: "booking",
     object: "stadium",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "explicit",
     intent: "booking",
     operation: "inspect",
     entities: {
-      stadium_name: "ملعب النجوم الدولي",
+      stadium: { name: "ملعب النجوم الدولي", is_explicit: true },
     },
     references: [],
     changes: [{ field: "stadium", operation: "set", value: "std-star-77" }],
@@ -484,11 +507,11 @@ conv7State = mergeState(
     domain: "booking",
     object: "stadium",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "inspect",
     entities: {
-      date: { type: "next_friday", value: "2026-10-09" },
+      date: { type: "iso_date", value: "2026-10-09" },
       time_range: { from_hour: 20, to_hour: 23, label: "بالليل" },
     },
     references: [],
@@ -508,11 +531,11 @@ assert.equal(conv7State.time_range?.to_hour, 23, "Turn 2: time_range to_hour mus
 // --- Turn 3: Inspect Bookings for that Date ---
 const planTurn3 = planToolExecution(conv7State, {
   schema_version: 1,
-  speech_act: "query",
+  speech_act: "question",
   domain: "owner_operations",
   object: "stadium",
   action: "inspect",
-  semantic_status: "in_progress",
+  semantic_status: "inferred",
   intent: "owner_operations",
   operation: "inspect",
   entities: {},
@@ -539,15 +562,15 @@ conv7State = mergeState(
   conv7State,
   {
     schema_version: 1,
-    speech_act: "query",
+    speech_act: "question",
     domain: "booking",
     object: "stadium",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "inferred",
     intent: "booking",
     operation: "inspect",
     entities: {},
-    references: [{ reference_type: "context_entity", source_phrase: "نفس الملعب", target: "same_stadium" }],
+    references: [{ reference_type: "previous_state", raw_phrase: "نفس الملعب", target: "same_stadium" }],
     changes: [],
     ambiguities: [],
     confirmation: { meaning: "none", target: null },
@@ -568,11 +591,11 @@ conv7State = mergeState(
     domain: "booking",
     object: "booking",
     action: "inspect",
-    semantic_status: "in_progress",
+    semantic_status: "explicit",
     intent: "booking",
     operation: "inspect",
     entities: {
-      times: [{ time: "22:00", period: "pm", period_certainty: "explicit" }],
+      times: [{ time: "22:00", period: "pm", period_certainty: "explicit", preference_order: 1 }],
     },
     references: [],
     changes: [{ field: "time", operation: "set", value: "22:00" }],
@@ -591,11 +614,11 @@ assert.equal(conv7State.time_period_confirmed, true, "Turn 5: time period confir
 // --- Turn 6: Navigation Action ("افتح لي شاشة الحجوزات") ---
 const planTurn6 = planToolExecution(conv7State, {
   schema_version: 1,
-  speech_act: "command",
-  domain: "navigation",
-  object: "app",
-  action: "navigate",
-  semantic_status: "in_progress",
+  speech_act: "request",
+  domain: "owner_operations",
+  object: "stadium",
+  action: "inspect",
+  semantic_status: "inferred",
   intent: "navigation",
   operation: "navigate",
   entities: {},
@@ -622,11 +645,11 @@ assert.equal(conv7State.stadium?.id, "std-star-77", "Turn 6: Stadium persists af
 // --- Turn 7: Owner Financial Query ("والسجل المالي أخباره إيه؟") ---
 const planTurn7 = planToolExecution(conv7State, {
   schema_version: 1,
-  speech_act: "query",
-  domain: "financials",
-  object: "financials",
+  speech_act: "question",
+  domain: "owner_operations",
+  object: "stadium",
   action: "inspect",
-  semantic_status: "in_progress",
+  semantic_status: "inferred",
   intent: "financial_question",
   operation: "inspect",
   entities: {},
@@ -719,5 +742,7 @@ console.log("===================================================================
 
 runVerificationSuite().catch((err) => {
   console.error("Test suite failed:", err);
-  process.exit(1);
+  if (typeof process !== "undefined" && process.exit) {
+    process.exit(1);
+  }
 });
