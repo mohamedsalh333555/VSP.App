@@ -7,6 +7,12 @@ class RevenueData {
   final double cashPercentage;
   final double onlinePercentage;
   final double unrealized;
+  final double realizedRevenue;
+  final double realizedCash;
+  final double realizedOnline;
+  final double upcomingConfirmedValue;
+  final double upcomingCashValue;
+  final double upcomingOnlineValue;
 
   const RevenueData({
     this.total = 0,
@@ -15,15 +21,27 @@ class RevenueData {
     this.cashPercentage = 0,
     this.onlinePercentage = 0,
     this.unrealized = 0,
+    this.realizedRevenue = 0,
+    this.realizedCash = 0,
+    this.realizedOnline = 0,
+    this.upcomingConfirmedValue = 0,
+    this.upcomingCashValue = 0,
+    this.upcomingOnlineValue = 0,
   });
 
   factory RevenueData.fromJson(Map<String, dynamic> j) => RevenueData(
-        total:              (j['total'] ?? 0).toDouble(),
-        cash:               (j['cash'] ?? 0).toDouble(),
-        online:             (j['online'] ?? 0).toDouble(),
-        cashPercentage:     (j['cash_percentage'] ?? 0).toDouble(),
-        onlinePercentage:   (j['online_percentage'] ?? 0).toDouble(),
-        unrealized:         (j['unrealized'] ?? 0).toDouble(),
+        total:                  (j['total'] ?? 0).toDouble(),
+        cash:                   (j['cash'] ?? 0).toDouble(),
+        online:                 (j['online'] ?? 0).toDouble(),
+        cashPercentage:         (j['cash_percentage'] ?? 0).toDouble(),
+        onlinePercentage:       (j['online_percentage'] ?? 0).toDouble(),
+        unrealized:             (j['unrealized'] ?? 0).toDouble(),
+        realizedRevenue:        (j['realized_revenue'] ?? (j['realized'] ?? 0)).toDouble(),
+        realizedCash:           (j['realized_cash'] ?? 0).toDouble(),
+        realizedOnline:         (j['realized_online'] ?? 0).toDouble(),
+        upcomingConfirmedValue: (j['upcoming_confirmed_value'] ?? (j['upcoming'] ?? 0)).toDouble(),
+        upcomingCashValue:      (j['upcoming_cash_value'] ?? 0).toDouble(),
+        upcomingOnlineValue:    (j['upcoming_online_value'] ?? 0).toDouble(),
       );
 
   // تحقق: total == cash + online دايماً

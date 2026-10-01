@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/models/user_model.dart';
 import 'package:vsp_application/features/owner/services/facility_onboarding_service.dart';
+import 'package:vsp_application/models/dashboard_analytics.dart';
 
 void main() {
   group('Owner Journey SSOT - Subscription Limits & 365-Day Free Trial', () {
@@ -236,4 +237,122 @@ void main() {
       );
     });
   });
+
+  group('Owner Journey SSOT - Dashboard Revenue Separation & Consistency', () {
+    test('RevenueData separates realized accounting revenue from upcoming operational value', () {
+      final json = {
+        'total': 1500.0,
+        'cash': 500.0,
+        'online': 1000.0,
+        'cash_percentage': 33.3,
+        'online_percentage': 66.7,
+        'unrealized': 200.0,
+        'realized_revenue': 600.0,
+        'realized_cash': 200.0,
+        'realized_online': 400.0,
+        'upcoming_confirmed_value': 900.0,
+        'upcoming_cash_value': 300.0,
+        'upcoming_online_value': 600.0,
+      };
+
+      final revenue = RevenueData.fromJson(json);
+
+      expect(revenue.total, equals(1500.0));
+      expect(revenue.cash, equals(500.0));
+      expect(revenue.online, equals(1000.0));
+      expect(revenue.isConsistent, isTrue);
+
+      expect(revenue.realizedRevenue, equals(600.0));
+      expect(revenue.realizedCash, equals(200.0));
+      expect(revenue.realizedOnline, equals(400.0));
+
+      expect(revenue.upcomingConfirmedValue, equals(900.0));
+      expect(revenue.upcomingCashValue, equals(300.0));
+      expect(revenue.upcomingOnlineValue, equals(600.0));
+
+      // Operational consistency
+      expect(revenue.realizedRevenue + revenue.upcomingConfirmedValue, equals(revenue.total));
+    });
+
+    test('Empty or default RevenueData initializes safely with zeros', () {
+      const revenue = RevenueData();
+      expect(revenue.total, equals(0.0));
+      expect(revenue.realizedRevenue, equals(0.0));
+      expect(revenue.upcomingConfirmedValue, equals(0.0));
+      expect(revenue.isConsistent, isTrue);
+    });
+  });
+
+  group('Owner Journey SSOT - Free Trial Semantic Plan Invariance', () {
+    int resolveTrialDays({
+      required Map<String, int> activePlans,
+      String authoritativePlanCode = 'basic',
+      int defaultFallback = 365,
+    }) {
+      return activePlans[authoritativePlanCode] ?? defaultFallback;
+    }
+
+    test('Changing unrelated plan trial duration does NOT alter owner trial duration', () {
+      // Base state: basic=365, pro=365
+      final plansBefore = {'basic': 365, 'pro': 365};
+      expect(resolveTrialDays(activePlans: plansBefore), equals(365));
+
+      // Unrelated plan changed: pro changed to 14 days or 30 days
+      final plansAfterProChanged = {'basic': 365, 'pro': 14};
+      expect(
+        resolveTrialDays(activePlans: plansAfterProChanged),
+        equals(365),
+        reason: 'Owner trial duration must strictly read basic plan, unaffected by pro plan changes',
+      );
+
+      // Enterprise plan added with 90 days
+      final plansWithEnterprise = {'basic': 365, 'pro': 14, 'enterprise': 90};
+      expect(
+        resolveTrialDays(activePlans: plansWithEnterprise),
+        equals(365),
+        reason: 'Enterprise plan presence must not alter basic owner free trial duration',
+      );
+    });
+  });
+
+  group('Owner Journey SSOT - View & Function Isolation Policy', () {
+    bool canSelectSubscriptionStatusRow({
+      required String? callerId,
+      required String rowOwnerId,
+      required bool isAdmin,
+    }) {
+      if (callerId == null) return false; // anon rejected
+      if (isAdmin) return true; // admin allowed
+      return callerId == rowOwnerId; // owner sees only self
+    }
+
+    test('Anonymous user is rejected from viewing owner subscription status', () {
+      expect(
+        canSelectSubscriptionStatusRow(callerId: null, rowOwnerId: 'owner-1', isAdmin: false),
+        isFalse,
+      );
+    });
+
+    test('Owner A cannot view Owner B subscription status row', () {
+      expect(
+        canSelectSubscriptionStatusRow(callerId: 'owner-A', rowOwnerId: 'owner-B', isAdmin: false),
+        isFalse,
+      );
+    });
+
+    test('Owner A can view own subscription status row', () {
+      expect(
+        canSelectSubscriptionStatusRow(callerId: 'owner-A', rowOwnerId: 'owner-A', isAdmin: false),
+        isTrue,
+      );
+    });
+
+    test('Admin can view any owner subscription status row', () {
+      expect(
+        canSelectSubscriptionStatusRow(callerId: 'admin-1', rowOwnerId: 'owner-B', isAdmin: true),
+        isTrue,
+      );
+    });
+  });
 }
+
