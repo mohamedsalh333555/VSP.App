@@ -270,6 +270,53 @@ try:
     print("  ✅ Test 5 Passed: League champion strictly crowned based on 1st place in table.")
 
     # -----------------------------------------------------------------
+    # TEST 5B: Groups Tournament Crowning (Must FAIL without knockout)
+    # -----------------------------------------------------------------
+    print("\n>>> [Test 5B] Testing type='groups' rejection before knockout bracket...")
+    groups_champ_id = str(uuid.uuid4())
+    gm1_id = str(uuid.uuid4())
+    gm2_id = str(uuid.uuid4())
+    all_champ_ids.append(groups_champ_id)
+
+    run_sql(f"""
+    INSERT INTO public.championships (
+      id, name, owner_id, status, type, template_type,
+      start_date, end_date, entry_fee, grand_prize, governorate,
+      max_teams, joined_teams, paid_teams, created_at, updated_at
+    ) VALUES (
+      '{groups_champ_id}', 'بطولة مجموعات بدون خروج مغلوب', '{owner_id}', 'ongoing', 'groups', 'custom',
+      CURRENT_DATE, CURRENT_DATE + INTERVAL '7 days', 0, 0, 'القاهرة',
+      2, ARRAY['{team_a_id}', '{team_b_id}']::text[], ARRAY['{team_a_id}', '{team_b_id}']::text[], now(), now()
+    );
+
+    INSERT INTO public.championship_registrations (id, championship_id, team_id, registration_status, payment_status, created_at, updated_at)
+    VALUES
+      (gen_random_uuid(), '{groups_champ_id}', '{team_a_id}', 'confirmed', 'paid', now(), now()),
+      (gen_random_uuid(), '{groups_champ_id}', '{team_b_id}', 'confirmed', 'paid', now(), now());
+
+    INSERT INTO public.championship_rosters (id, championship_id, team_id, is_frozen, frozen_at, created_at)
+    VALUES
+      (gen_random_uuid(), '{groups_champ_id}', '{team_a_id}', true, now(), now()),
+      (gen_random_uuid(), '{groups_champ_id}', '{team_b_id}', true, now(), now());
+
+    INSERT INTO public.tournament_matches (
+      id, championship_id, round_index, match_index, next_match_id,
+      home_team_id, home_team_name, away_team_id, away_team_name,
+      home_score, away_score, status, result_status, is_completed, stage, group_name, match_day, updated_at
+    ) VALUES
+      ('{gm1_id}', '{groups_champ_id}', 0, 0, NULL, '{team_a_id}', 'فريق النسور أ', '{team_b_id}', 'فريق الذئاب ب', 2, 1, 'completed', 'confirmed', true, 'group_stage', 'المجموعة 1', CURRENT_DATE, now()),
+      ('{gm2_id}', '{groups_champ_id}', 0, 1, NULL, '{team_b_id}', 'فريق الذئاب ب', '{team_a_id}', 'فريق النسور أ', 1, 1, 'completed', 'confirmed', true, 'group_stage', 'المجموعة 1', CURRENT_DATE, now());
+    """)
+
+    # Attempt to crown Team A from groups directly without generating knockout
+    crown_groups_res = run_rpc(f"public.crown_tournament_champion_atomic('{groups_champ_id}', '{team_a_id}')")
+    print(f"  Crown groups without knockout result: {crown_groups_res}")
+    assert crown_groups_res.get("success") is False, "Must NOT crown directly from group stage in type='groups'"
+    assert "FINAL_MATCH_NOT_FOUND" in crown_groups_res.get("error", "")
+    assert "knockout" in crown_groups_res.get("error", "").lower()
+    print("  ✅ Test 5B Passed: type='groups' strictly blocked from direct crowning before knockout.")
+
+    # -----------------------------------------------------------------
     # TEST 6: Completion Guard (Test I)
     # -----------------------------------------------------------------
     print("\n>>> [Test 6 / Scenario I] Testing transition_championship_status_atomic completion guard...")
@@ -295,7 +342,7 @@ try:
     );
     """)
 
-    # Attempt to complete with completed + scheduled result -> MUST FAIL!
+    # 6A. Negative test: completed + scheduled result -> MUST FAIL!
     try:
         res = run_rpc(f"public.transition_championship_status_atomic('{guard_champ_id}', 'completed')")
         assert False, "Should have failed on unconfirmed result_status"
@@ -303,12 +350,19 @@ try:
         assert "BLOCKED_BY_STATE" in str(e)
         print("  Caught expected guard failure for completed+scheduled result.")
 
-    # Transition the fully completed and crowned real league -> MUST SUCCEED!
-    trans_league_res = run_rpc(f"public.transition_championship_status_atomic('{league_champ_id}', 'completed')")
-    print(f"  Transition League completed: {trans_league_res}")
-    assert trans_league_res.get("success") is True
-    assert trans_league_res.get("status") == "completed" or trans_league_res.get("new_status") == "completed"
-    print("  ✅ Test 6 Passed: Completion guard strictly enforced and confirmed league completed.")
+    # 6B. Positive test: update match to confirmed, then transition ongoing -> completed!
+    run_sql(f"""
+    UPDATE public.tournament_matches
+    SET result_status = 'confirmed'
+    WHERE id = '{guard_match_id}';
+    """)
+
+    guard_trans_res = run_rpc(f"public.transition_championship_status_atomic('{guard_champ_id}', 'completed')")
+    print(f"  Positive ongoing -> completed transition result: {guard_trans_res}")
+    assert guard_trans_res.get("success") is True
+    assert guard_trans_res.get("previous_status") == "ongoing", f"Must transition FROM ongoing! Got: {guard_trans_res}"
+    assert guard_trans_res.get("new_status") == "completed", f"Must transition TO completed! Got: {guard_trans_res}"
+    print("  ✅ Test 6 Passed: Real ongoing -> completed transition validated successfully.")
 
     print("\n" + "=" * 80)
     print("ALL TARGETED REAL LEAGUE & TOURNAMENT TESTS PASSED 100%!")
@@ -316,21 +370,30 @@ try:
 
 finally:
     print("\n[Cleanup] Cleaning up isolated test entities from Supabase Production...")
-    champs_in = f"('{league_champ_id}', '{cup_champ_id}', '{guard_champ_id}')"
-    teams_in = f"('{team_a_id}', '{team_b_id}', '{team_c_id}')"
-    rosters_in = f"('{roster_a_id}', '{roster_b_id}', '{roster_c_id}')"
+    champ_list = ", ".join(f"'{cid}'" for cid in all_champ_ids)
+    team_list = ", ".join(f"'{tid}'" for tid in all_team_ids)
+    roster_list = ", ".join(f"'{rid}'" for rid in all_roster_ids)
 
     cleanup_sql = f"""
-    DELETE FROM public.player_trophies WHERE championship_id IN {champs_in};
-    DELETE FROM public.tournament_matches WHERE championship_id IN {champs_in};
-    DELETE FROM public.championship_roster_players WHERE roster_id IN {rosters_in};
-    DELETE FROM public.championship_rosters WHERE championship_id IN {champs_in};
-    DELETE FROM public.championship_registrations WHERE championship_id IN {champs_in};
-    DELETE FROM public.championships WHERE id IN {champs_in};
-    DELETE FROM public.teams WHERE id IN {teams_in};
+    DELETE FROM public.player_trophies WHERE championship_id IN ({champ_list});
+    DELETE FROM public.tournament_matches WHERE championship_id IN ({champ_list});
+    DELETE FROM public.championship_roster_players WHERE roster_id IN (
+      SELECT id FROM public.championship_rosters WHERE championship_id IN ({champ_list})
+    );
+    DELETE FROM public.championship_rosters WHERE championship_id IN ({champ_list});
+    DELETE FROM public.championship_registrations WHERE championship_id IN ({champ_list});
+    DELETE FROM public.championships WHERE id IN ({champ_list});
+    DELETE FROM public.teams WHERE id IN ({team_list});
     """
     try:
         run_sql(cleanup_sql)
-        print("  Cleanup completed successfully. Zero leftover test records.")
+        print("  Cleanup executed.")
+
+        # Post-cleanup SQL verification
+        remaining_champs = run_sql(f"SELECT COUNT(*) as count FROM public.championships WHERE id IN ({champ_list});")[0]["count"]
+        remaining_teams = run_sql(f"SELECT COUNT(*) as count FROM public.teams WHERE id IN ({team_list});")[0]["count"]
+        assert remaining_champs == 0, f"Expected 0 remaining championships, found {remaining_champs}"
+        assert remaining_teams == 0, f"Expected 0 remaining teams, found {remaining_teams}"
+        print(f"  ✅ SQL Cleanup Verification: Remaining test championships = 0, Remaining test teams = 0.")
     except Exception as e:
         print(f"  [WARN] Cleanup error: {e}")

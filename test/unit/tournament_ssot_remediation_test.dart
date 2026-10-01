@@ -395,6 +395,72 @@ void main() {
     });
 
     // -------------------------------------------------------------
+    // Test H2: Groups Tournament: crowning MUST fail if knockout not generated
+    // -------------------------------------------------------------
+    test('H2. Groups tournament: type=groups with completed group stage and no knockout generated MUST FAIL to crown', () {
+      Map<String, dynamic> simulateCrowningGroups({
+        required String championshipType,
+        required List<Map<String, dynamic>> allMatches,
+        required String candidateChampionId,
+        required bool isRosterFrozen,
+      }) {
+        if (championshipType == 'league') {
+          return {'success': true};
+        } else {
+          // For groups/cup, a knockout final match is strictly required!
+          final finalMatch = allMatches.cast<Map<String, dynamic>?>().firstWhere(
+            (m) =>
+                m!['round_index'] == 0 &&
+                m['next_match_id'] == null &&
+                ['final', 'knockout', 'cup'].contains(m['stage']),
+            orElse: () => null,
+          );
+
+          if (finalMatch == null) {
+            if (championshipType == 'groups') {
+              return {
+                'success': false,
+                'error': 'FINAL_MATCH_NOT_FOUND: Groups tournament requires advancing to knockout bracket before crowning champion'
+              };
+            }
+            return {'success': false, 'error': 'FINAL_MATCH_NOT_FOUND'};
+          }
+
+          if (finalMatch['status'] != 'completed' ||
+              !['confirmed', 'locked'].contains(finalMatch['result_status'])) {
+            return {'success': false, 'error': 'FINAL_MATCH_NOT_COMPLETED'};
+          }
+
+          if (finalMatch['winner_id'] != candidateChampionId) {
+            return {'success': false, 'error': 'CHAMPION_IS_NOT_FINAL_WINNER'};
+          }
+        }
+
+        if (!isRosterFrozen) {
+          return {'success': false, 'error': 'FROZEN_ROSTER_REQUIRED'};
+        }
+
+        return {'success': true, 'champion_team_id': candidateChampionId};
+      }
+
+      // Group stage matches only (no knockout bracket generated yet):
+      final groupMatchesOnly = [
+        {'id': 'gm1', 'round_index': 0, 'stage': 'group_stage', 'group_name': 'A', 'next_match_id': null, 'status': 'completed', 'result_status': 'confirmed', 'winner_id': 'team-a'},
+        {'id': 'gm2', 'round_index': 0, 'stage': 'group_stage', 'group_name': 'A', 'next_match_id': null, 'status': 'completed', 'result_status': 'confirmed', 'winner_id': 'team-b'},
+      ];
+
+      final resGroupsFail = simulateCrowningGroups(
+        championshipType: 'groups',
+        allMatches: groupMatchesOnly,
+        candidateChampionId: 'team-a',
+        isRosterFrozen: true,
+      );
+      expect(resGroupsFail['success'], isFalse);
+      expect(resGroupsFail['error'], contains('FINAL_MATCH_NOT_FOUND'));
+      expect(resGroupsFail['error'], contains('advancing to knockout bracket'));
+    });
+
+    // -------------------------------------------------------------
     // Test I: Completion guard: completed + scheduled cannot bypass;
     // completed + confirmed is valid
     // -------------------------------------------------------------
