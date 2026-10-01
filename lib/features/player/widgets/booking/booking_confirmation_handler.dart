@@ -248,6 +248,7 @@ class BookingConfirmationHandler {
       instapay: stadium.features is Map ? stadium.features['instapay'] : null,
       vodafoneCash: stadium.features is Map ? stadium.features['vodafoneCash'] : null,
       binanceId: stadium.features is Map ? stadium.features['binanceId'] : null,
+      challengeCode: bookingProvider.currentDraft?.challengeCode,
     );
 
     onLoadingChanged(false);

@@ -41,6 +41,7 @@ class BookingDraft {
   final String? instapay;
   final String? vodafoneCash;
   final String? binanceId;
+  final String? challengeCode;
 
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
@@ -80,6 +81,7 @@ class BookingDraft {
     this.instapay,
     this.vodafoneCash,
     this.binanceId,
+    this.challengeCode,
   });
 
   BookingDraft copyWith({
@@ -117,6 +119,7 @@ class BookingDraft {
     String? instapay,
     String? vodafoneCash,
     String? binanceId,
+    String? challengeCode,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -153,6 +156,7 @@ class BookingDraft {
       instapay: instapay ?? this.instapay,
       vodafoneCash: vodafoneCash ?? this.vodafoneCash,
       binanceId: binanceId ?? this.binanceId,
+      challengeCode: challengeCode ?? this.challengeCode,
     );
   }
 
@@ -191,6 +195,7 @@ class BookingDraft {
       'instapay': instapay,
       'vodafoneCash': vodafoneCash,
       'binanceId': binanceId,
+      'challengeCode': challengeCode,
     };
   }
 
@@ -269,6 +274,7 @@ class BookingDraft {
       instapay: map['instapay']?.toString(),
       vodafoneCash: map['vodafoneCash']?.toString(),
       binanceId: map['binanceId']?.toString(),
+      challengeCode: map['challengeCode']?.toString(),
     );
   }
 }

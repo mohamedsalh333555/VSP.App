@@ -50,38 +50,67 @@ class BookingCreationCoordinator {
     try {
       // The server calculates payment fees from the authoritative payment transaction.
       const double platformFee = 0.0;
-      final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
-        'p_stadium_id': draft.stadiumId,
-        'p_user_id': userId,
-        'p_owner_id': draft.ownerId,
-        'p_start_time': draft.startTime.toUtc().toIso8601String(),
-        'p_end_time': draft.endTime.toUtc().toIso8601String(),
-        'p_booking_type': dbBookingType(draft.bookingType),
-        'p_total_price': draft.totalPrice,
-        'p_platform_fee': platformFee,
-        'p_stadium_name': draft.stadiumName,
-        'p_stadium_image_url': draft.stadiumImageUrl,
-        'p_is_private': draft.isPrivate,
-        'p_rent_ball': draft.rentBall,
-        'p_needs_deposit': draft.needsDeposit,
-        'p_deposit_amount': draft.depositPaid,
-        'p_payment_method': draft.paymentMethod ?? 'cash',
-        'p_payment_status': draft.paymentStatus ?? 'pending',
-        'p_player_team_id': draft.playerTeamId,
-        'p_player_team_name': draft.playerTeamName,
-        'p_opponent_team_id': draft.opponentTeamId,
-        'p_opponent_team_name': draft.opponentTeamName,
-        // Server persists the host's real player count for open_join
-        'p_initial_players': (draft.bookingType == BookingType.openJoin)
-            ? draft.currentPlayers
-            : 1,
+      final dynamic rpcResult;
+      if (draft.bookingType == BookingType.challenge &&
+          draft.challengeCode != null &&
+          draft.challengeCode!.trim().isNotEmpty) {
+        rpcResult = await _supabase.rpc('create_challenge_booking_atomic', params: {
+          'p_challenge_code': draft.challengeCode!.trim(),
+          'p_stadium_id': draft.stadiumId,
+          'p_start_time': draft.startTime.toUtc().toIso8601String(),
+          'p_end_time': draft.endTime.toUtc().toIso8601String(),
+          'p_payment_method': draft.paymentMethod ?? 'cash',
+          'p_rent_ball': draft.rentBall,
+        });
+      } else {
+        rpcResult = await _supabase.rpc('create_booking_atomic', params: {
+          'p_stadium_id': draft.stadiumId,
+          'p_user_id': userId,
+          'p_owner_id': draft.ownerId,
+          'p_start_time': draft.startTime.toUtc().toIso8601String(),
+          'p_end_time': draft.endTime.toUtc().toIso8601String(),
+          'p_booking_type': dbBookingType(draft.bookingType),
+          'p_total_price': draft.totalPrice,
+          'p_platform_fee': platformFee,
+          'p_stadium_name': draft.stadiumName,
+          'p_stadium_image_url': draft.stadiumImageUrl,
+          'p_is_private': draft.isPrivate,
+          'p_rent_ball': draft.rentBall,
+          'p_needs_deposit': draft.needsDeposit,
+          'p_deposit_amount': draft.depositPaid,
+          'p_payment_method': draft.paymentMethod ?? 'cash',
+          'p_payment_status': draft.paymentStatus ?? 'pending',
+          'p_player_team_id': draft.playerTeamId,
+          'p_player_team_name': draft.playerTeamName,
+          'p_opponent_team_id': draft.opponentTeamId,
+          'p_opponent_team_name': draft.opponentTeamName,
+          // Server persists the host's real player count for open_join
+          'p_initial_players': (draft.bookingType == BookingType.openJoin)
+              ? draft.currentPlayers
+              : 1,
 
-        'p_total_capacity': draft.totalFieldCapacity,
-      });
+          'p_total_capacity': draft.totalFieldCapacity,
+        });
+      }
 
       if (rpcResult is Map && rpcResult['success'] == false) {
-        String errorMessage = rpcResult['message']?.toString() ?? 'عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.';
-        final errorCode = rpcResult['code']?.toString();
+        final err = rpcResult['error']?.toString() ?? '';
+        if (err == 'CHALLENGE_CODE_INVALID_OR_USED') {
+          throw Exception('كود التحدي غير صالح أو تم استخدامه من قبل.');
+        } else if (err == 'CALLER_NOT_A_CAPTAIN') {
+          throw Exception('يجب أن تكون كابتن فريق لتأكيد حجز التحدي.');
+        } else if (err == 'CANNOT_CHALLENGE_OWN_TEAM') {
+          throw Exception('لا يمكن تحدي فريقك نفسه.');
+        } else if (err == 'OPPONENT_TEAM_NOT_FOUND') {
+          throw Exception('تعذر العثور على الفريق المنافس.');
+        } else if (err == 'SLOT_LOCKED_OR_TAKEN') {
+          throw Exception('عذراً، هذا الموعد محجوز لمباراة أخرى.');
+        }
+
+        String errorMessage = rpcResult['message']?.toString() ??
+            rpcResult['error']?.toString() ??
+            'عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.';
+        final errorCode = rpcResult['code']?.toString() ?? err;
 
         if (errorMessage.contains('???')) {
           if (errorCode == 'SLOT_LOCKED_OR_TAKEN') {

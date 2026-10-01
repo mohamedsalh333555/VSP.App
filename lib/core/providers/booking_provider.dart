@@ -86,6 +86,7 @@ class BookingProvider with ChangeNotifier {
     String? playerTeamName,
     int? currentPlayers,
     int? maxPlayers,
+    String? challengeCode,
   }) {
     if (_currentDraft != null) {
       _currentDraft = BookingListModifier.applyDraftUpdates(
@@ -104,6 +105,7 @@ class BookingProvider with ChangeNotifier {
         playerTeamName: playerTeamName,
         currentPlayers: currentPlayers,
         maxPlayers: maxPlayers,
+        challengeCode: challengeCode,
       );
       BookingDraftStorage.save(_currentDraft);
       notifyListeners();

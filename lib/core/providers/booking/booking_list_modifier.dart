@@ -119,6 +119,7 @@ class BookingListModifier {
     String? playerTeamName,
     int? currentPlayers,
     int? maxPlayers,
+    String? challengeCode,
   }) {
     return draft.copyWith(
       paymentMethod: paymentMethod,
@@ -135,6 +136,7 @@ class BookingListModifier {
       playerTeamName: playerTeamName,
       currentPlayers: currentPlayers,
       totalFieldCapacity: maxPlayers,
+      challengeCode: challengeCode,
     );
   }
 }

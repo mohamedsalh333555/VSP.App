@@ -223,9 +223,17 @@ class MatchRepository {
  VSPLogger.w('FCM sendNotification failed on player leaving: $fcmError');
  }
  return true;
+ } on PostgrestException catch (e) {
+ VSPLogger.e('Postgrest error leaving public match', e);
+ if (e.message.contains('HOST_CANNOT_LEAVE')) {
+ throw 'لا يمكن لمضيف المباراة المغادرة، يمكنك إلغاء الحجز بدلاً من ذلك.';
+ } else if (e.message.contains('LEAVE_BLOCKED')) {
+ throw 'لا يمكن مغادرة مباراة منتهية أو ملغاة.';
+ }
+ throw e.message;
  } catch (e) {
  VSPLogger.e('Error leaving public match', e);
- return false;
+ rethrow;
  }
  }
 

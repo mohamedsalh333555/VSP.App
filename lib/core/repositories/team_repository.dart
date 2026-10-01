@@ -265,4 +265,36 @@ class TeamRepository {
           VSPLogger.w('Team realtime stream notice: $err');
         });
   }
+
+  /// توليد أو جلب كود التحدي النشط للفريق (للكابتن فقط)
+  Future<Map<String, dynamic>> generateChallengeCode(String teamId) async {
+    try {
+      final res = await _supabase.rpc('generate_team_challenge_code', params: {
+        'p_team_id': teamId,
+      });
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'success': false, 'error': 'UNEXPECTED_RESPONSE'};
+    } catch (e) {
+      VSPLogger.e('Error generating challenge code: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// البحث عن الفريق المنافس عبر كود التحدي
+  Future<Map<String, dynamic>> lookupChallengeCode(String code) async {
+    try {
+      final res = await _supabase.rpc('lookup_challenge_code', params: {
+        'p_code': code.trim().toUpperCase(),
+      });
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'success': false, 'error': 'UNEXPECTED_RESPONSE'};
+    } catch (e) {
+      VSPLogger.e('Error looking up challenge code: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }
