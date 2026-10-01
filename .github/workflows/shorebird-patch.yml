@@ -28,7 +28,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
       - name: Prepare Firebase Android config
         run: |
           mkdir -p android/app

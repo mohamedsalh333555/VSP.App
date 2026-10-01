@@ -102,6 +102,13 @@ class Booking {
  // Backward compatibility getters
  int get maxPlayers => totalFieldCapacity;
  String get userId => createdByUserId;
+ bool get isOpenJoin => bookingType == BookingType.openJoin;
+ bool get isChallenge => bookingType == BookingType.challenge;
+ bool get isPersonal =>
+     bookingType == BookingType.personal ||
+     bookingType == BookingType.team ||
+     bookingType == BookingType.matchup;
+ bool get hasPlayerCounters => isOpenJoin;
 
  RefundInfo get refundInfo => RefundInfo.fromBookingRow({
    'refund_channel': refundChannel,

@@ -330,6 +330,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  Widget build(BuildContext context) {
  final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+ final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
  return StreamBuilder<List<Map<String, dynamic>>>(
  stream: _bookingStream,
@@ -438,7 +439,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  children: [
  Expanded(
  child: Text(
- AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium"),
+ _booking!.isChallenge
+     ? (isAr ? 'مباراة تحدي في ${_stadium?.name ?? "الملعب"}' : 'Challenge Match at ${_stadium?.name ?? "Stadium"}')
+     : (_booking!.isOpenJoin
+         ? AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium")
+         : (isAr ? 'حجز ملعب ${_stadium?.name ?? ""}' : 'Pitch Booking at ${_stadium?.name ?? ""}')),
  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
  fontWeight: FontWeight.bold,
  color: VSPColors.textPrimary,
@@ -452,12 +457,88 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),
  child: Text(
- AppLocalizations.of(context)!.vsMatchFormat('', ''),
+ _booking!.isChallenge
+     ? (isAr ? 'تحدي فرق' : 'Challenge')
+     : (_booking!.isOpenJoin ? (isAr ? 'مفتوح' : 'Open Join') : (isAr ? 'حجز خاص' : 'Personal')),
  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
  ),
  ),
  ],
  ),
+ if (_booking!.isChallenge) ...[
+   const SizedBox(height: VSPSpacing.md),
+   Container(
+     padding: const EdgeInsets.all(16),
+     decoration: BoxDecoration(
+       color: VSPColors.surface,
+       borderRadius: BorderRadius.circular(VSPRadius.lg),
+       border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+     ),
+     child: Row(
+       children: [
+         Expanded(
+           child: Column(
+             children: [
+               CircleAvatar(
+                 radius: 24,
+                 backgroundColor: VSPColors.background,
+                 backgroundImage: (_booking!.playerTeamLogoUrl != null && _booking!.playerTeamLogoUrl!.isNotEmpty)
+                     ? CachedNetworkImageProvider(_booking!.playerTeamLogoUrl!)
+                     : null,
+                 child: (_booking!.playerTeamLogoUrl == null || _booking!.playerTeamLogoUrl!.isEmpty)
+                     ? const Icon(Iconsax.shield_tick_copy, color: VSPColors.accent)
+                     : null,
+               ),
+               const SizedBox(height: 8),
+               Text(
+                 _booking!.playerTeamName ?? (isAr ? 'فريقنا' : 'Our Team'),
+                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 textAlign: TextAlign.center,
+                 maxLines: 1,
+                 overflow: TextOverflow.ellipsis,
+               ),
+             ],
+           ),
+         ),
+         Container(
+           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+           decoration: BoxDecoration(
+             color: VSPColors.accent.withValues(alpha: 0.15),
+             shape: BoxShape.circle,
+           ),
+           child: const Text(
+             'VS',
+             style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 14),
+           ),
+         ),
+         Expanded(
+           child: Column(
+             children: [
+               CircleAvatar(
+                 radius: 24,
+                 backgroundColor: VSPColors.background,
+                 backgroundImage: (_booking!.opponentTeamLogoUrl != null && _booking!.opponentTeamLogoUrl!.isNotEmpty)
+                     ? CachedNetworkImageProvider(_booking!.opponentTeamLogoUrl!)
+                     : null,
+               child: (_booking!.opponentTeamLogoUrl == null || _booking!.opponentTeamLogoUrl!.isEmpty)
+                   ? const Icon(Iconsax.shield_tick_copy, color: VSPColors.textSecondary)
+                   : null,
+               ),
+               const SizedBox(height: 8),
+               Text(
+                 _booking!.opponentTeamName ?? (isAr ? 'الخصم' : 'Opponent'),
+                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 textAlign: TextAlign.center,
+                 maxLines: 1,
+                 overflow: TextOverflow.ellipsis,
+               ),
+             ],
+           ),
+         ),
+       ],
+     ),
+   ),
+ ],
  const SizedBox(height: VSPSpacing.md),
  _buildDetailRow(Iconsax.clock_copy, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
  const SizedBox(height: VSPSpacing.sm),
@@ -525,6 +606,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                       ),
                     ),
                   ],
+ if (_booking!.isOpenJoin) ...[
  const Divider(color: VSPColors.divider, height: 40),
  Text(
  AppLocalizations.of(context)!.playersCount(
@@ -583,6 +665,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                     },
  ),
  const SizedBox(height: 24),
+ ],
  ],
  ),
  ),

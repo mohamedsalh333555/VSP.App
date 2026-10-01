@@ -42,6 +42,29 @@ class BookingMapper {
         data['max_players'],
         ppt * 2);
 
+    final BookingType parsedBookingType = () {
+      final val =
+          bookingTypeVal
+              ?.toString()
+              .toLowerCase()
+              .replaceAll('_', '')
+              .replaceAll(' ', '') ??
+          '';
+      if (val == 'openjoin' || val == 'openjoinmatch') {
+        return BookingType.openJoin;
+      }
+      if (val == 'challenge' || val == 'challengematch') {
+        return BookingType.challenge;
+      }
+      if (val == 'team') {
+        return BookingType.team;
+      }
+      if (val == 'matchup' || val == 'matchups') {
+        return BookingType.matchup;
+      }
+      return BookingType.personal;
+    }();
+
     return Booking(
       id: id,
       stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
@@ -64,28 +87,7 @@ class BookingMapper {
                 ? opDateVal
                 : DateTime.tryParse(opDateVal.toString()))
           : null,
-      bookingType: () {
-        final val =
-            bookingTypeVal
-                ?.toString()
-                .toLowerCase()
-                .replaceAll('_', '')
-                .replaceAll(' ', '') ??
-            '';
-        if (val == 'openjoin' || val == 'openjoinmatch') {
-          return BookingType.openJoin;
-        }
-        if (val == 'challenge' || val == 'challengematch') {
-          return BookingType.challenge;
-        }
-        if (val == 'team') {
-          return BookingType.team;
-        }
-        if (val == 'matchup' || val == 'matchups') {
-          return BookingType.matchup;
-        }
-        return BookingType.personal;
-      }(),
+      bookingType: parsedBookingType,
       playerTeamId: data['playerTeamId'] ?? data['player_team_id'],
       playerTeamName: data['playerTeamName'] ?? data['player_team_name'],
       playerTeamLogoUrl:
@@ -157,10 +159,13 @@ class BookingMapper {
           data['requiresAdminIntervention'] ??
           data['requires_admin_intervention'] ??
           false,
-      currentPlayers: _parseInt(
-          data['currentPlayers'] ?? data['current_players'], 1),
+      currentPlayers: (parsedBookingType == BookingType.challenge)
+          ? 0
+          : _parseInt(data['currentPlayers'] ?? data['current_players'], 1),
       playersPerTeam: ppt,
-      totalFieldCapacity: tfc,
+      totalFieldCapacity: (parsedBookingType == BookingType.challenge)
+          ? 0
+          : tfc,
       pendingUserIds:
           (data['pendingUserIds'] ?? data['pending_user_ids']) is List
           ? ((data['pendingUserIds'] ?? data['pending_user_ids']) as List)
@@ -326,10 +331,10 @@ class BookingMapper {
       'finalOutcome': booking.finalOutcome?.name,
       'requires_admin_intervention': booking.requiresAdminIntervention,
       'requiresAdminIntervention': booking.requiresAdminIntervention,
-      'current_players': booking.currentPlayers,
+      'current_players': booking.isOpenJoin ? booking.currentPlayers : null,
       'players_per_team': booking.playersPerTeam,
-      'total_field_capacity': booking.totalFieldCapacity,
-      'max_players': booking.totalFieldCapacity,
+      'total_field_capacity': booking.isOpenJoin ? booking.totalFieldCapacity : null,
+      'max_players': booking.isOpenJoin ? booking.totalFieldCapacity : null,
       'joined_user_ids': booking.joinedUserIds,
       'joinedUserIds': booking.joinedUserIds,
       'pending_user_ids': booking.pendingUserIds,

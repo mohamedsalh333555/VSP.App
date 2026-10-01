@@ -54,12 +54,20 @@ BEGIN
       'message', 'يجب تسجيل الدخول أولاً.');
   END IF;
 
-  -- 2. Idempotency protection (Safe retry)
+  -- 2. Strengthened User-Scoped Idempotency protection
   IF p_idempotency_key IS NOT NULL AND trim(p_idempotency_key) <> '' THEN
-    SELECT id, status INTO v_existing_id, v_existing_status
+    SELECT id, status, user_id INTO v_existing_id, v_existing_status, v_existing_user_id
     FROM public.bookings
     WHERE idempotency_key = trim(p_idempotency_key) AND status <> 'cancelled' LIMIT 1;
     IF FOUND THEN
+      IF v_existing_user_id IS NOT NULL AND v_caller IS NOT NULL AND v_existing_user_id <> v_caller THEN
+        RETURN jsonb_build_object(
+          'success', false,
+          'error',   'IDEMPOTENCY_KEY_COLLISION',
+          'message', 'مفتاح العملية غير صالح أو مستخدم مسبقاً لحساب آخر.'
+        );
+      END IF;
+
       RETURN jsonb_build_object(
         'success',     true,
         'booking_id',  v_existing_id,

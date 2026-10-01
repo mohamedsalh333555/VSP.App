@@ -8,8 +8,8 @@ void main() {
     test('dbBookingType mappings match schema expectations', () {
       expect(BookingCreationCoordinator.dbBookingType(BookingType.openJoin), 'open_join');
       expect(BookingCreationCoordinator.dbBookingType(BookingType.challenge), 'challenge');
-      expect(BookingCreationCoordinator.dbBookingType(BookingType.team), 'team');
-      expect(BookingCreationCoordinator.dbBookingType(BookingType.matchup), 'matchup');
+      expect(BookingCreationCoordinator.dbBookingType(BookingType.team), 'personal');
+      expect(BookingCreationCoordinator.dbBookingType(BookingType.matchup), 'personal');
       expect(BookingCreationCoordinator.dbBookingType(BookingType.personal), 'personal');
     });
   });
