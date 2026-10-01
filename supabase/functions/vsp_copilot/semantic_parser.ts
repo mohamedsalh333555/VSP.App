@@ -32,8 +32,8 @@ export interface SemanticParseResult {
 }
 
 export const SEMANTIC_MODEL_CHAIN = [
-  "gemini-3.5-flash-lite",
-  "gemini-3.1-flash-lite",
+  "gemini-flash-lite-latest",
+  "gemini-2.5-flash",
 ];
 
 export async function parseUserMessageSemantically(
@@ -93,7 +93,7 @@ export async function parseUserMessageSemantically(
       } : null,
     },
     visible_stadiums_and_entities: visibleContext,
-    active_ambiguities: state.active_ambiguities.map(a => a.type),
+    active_ambiguities: (state.unresolved_ambiguities ?? []).map(a => a.type),
   };
 
   const systemInstruction = `You are the Pitch Owner Copilot & Business Advisory Engine of VSP Sports Platform in Egypt.
@@ -150,7 +150,7 @@ ${JSON.stringify(structuredContext, null, 2)}`;
     const model = SEMANTIC_MODEL_CHAIN[i];
     const startTime = Date.now();
     const abortController = new AbortController();
-    const timeoutHandle = setTimeout(() => abortController.abort(), 4000);
+    const timeoutHandle = setTimeout(() => abortController.abort(), 25000);
 
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;

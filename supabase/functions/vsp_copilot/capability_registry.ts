@@ -19,20 +19,8 @@ export interface CapabilityDefinition {
 }
 
 export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
-  OWNER_FINANCIAL_INSIGHTS: {
-    id: "OWNER_FINANCIAL_INSIGHTS",
-    domain: "financials",
-    object: "financials",
-    action: "inspect",
-    allowed_roles: ["owner"],
-    is_read_only: true,
-    risk_level: "low",
-    workflow_id: "workflow_owner_financials",
-    tool_id: "getOwnerFinancialInsights",
-    description: "استعراض الأرباح والرصيد القابل للسحب لمالك الملعب",
-  },
   OWNER_STADIUMS_AND_BOOKINGS: {
-    id: "OWNER_STADIUMS_AND_BOOKINGS",
+    id: "getOwnerStadiumsAndBookings",
     domain: "owner_operations",
     object: "booking",
     action: "inspect",
@@ -43,8 +31,20 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     tool_id: "getOwnerStadiumsAndBookings",
     description: "استعراض ملاعب المالك وحجوزاتها وجدول المواعيد",
   },
-  CHECK_AVAILABILITY: {
-    id: "CHECK_AVAILABILITY",
+  OWNER_FINANCIAL_INSIGHTS: {
+    id: "getOwnerFinancialInsights",
+    domain: "financials",
+    object: "financials",
+    action: "inspect",
+    allowed_roles: ["owner"],
+    is_read_only: true,
+    risk_level: "low",
+    workflow_id: "workflow_owner_financials",
+    tool_id: "getOwnerFinancialInsights",
+    description: "استعراض الأرباح والرصيد القابل للسحب لمالك الملعب",
+  },
+  CHECK_STADIUM_AVAILABILITY: {
+    id: "checkStadiumAvailability",
     domain: "booking",
     object: "stadium",
     action: "inspect",
@@ -56,46 +56,50 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     tool_id: "checkStadiumAvailability",
     description: "فحص الفترات المتاحة والمشغولة لملعب محدد في تاريخ معين",
   },
-  VIEW_BOOKING_DETAILS: {
-    id: "VIEW_BOOKING_DETAILS",
-    domain: "self_service",
-    object: "booking",
-    action: "inspect",
-    sub_action: "details",
+  EXECUTE_APP_ACTION: {
+    id: "executeAppAction",
+    domain: "navigation",
+    object: "app",
+    action: "navigate",
     allowed_roles: ["owner"],
-    is_read_only: true,
+    is_read_only: false,
     risk_level: "low",
-    workflow_id: "workflow_view_booking_details",
-    tool_id: "getOwnerStadiumsAndBookings",
-    description: "استعراض تفاصيل حجز محدد بعد التحقق من تبعيته لملعب المالك",
-  },
-  GENERAL_BOT_INQUIRY: {
-    id: "GENERAL_BOT_INQUIRY",
-    domain: "general",
-    object: "bot",
-    action: "answer",
-    sub_action: "identity",
-    allowed_roles: ["owner"],
-    is_read_only: true,
-    risk_level: "low",
-    workflow_id: "workflow_general_inquiry",
-    tool_id: null,
-    description: "الإجابة على الأسئلة الجانبية أو سؤال هوية المساعد دون التأثير على المهام المعلقة",
-  },
-  RESUME_PARKED_TASK: {
-    id: "RESUME_PARKED_TASK",
-    domain: "booking",
-    object: "booking",
-    action: "resume",
-    sub_action: "parked_task",
-    allowed_roles: ["owner"],
-    is_read_only: true,
-    risk_level: "low",
-    workflow_id: "workflow_resume_parked",
-    tool_id: null,
-    description: "استئناف المهمة السابقة التي تم إيقافها مؤقتاً",
+    workflow_id: "workflow_navigate_action",
+    tool_id: "executeAppAction",
+    description: "تنفيذ إجراءات التنقل التفاعلية داخل التطبيق لملاك الملاعب",
   },
 };
+
+export function isToolAllowedForRole(role: string | undefined | null, toolName: string): boolean {
+  if (!toolName || !role) return false;
+  const normRole = role.toLowerCase().trim();
+  const canonicalRole = (normRole === "pitch_owner" || normRole === "owner") ? "owner" : normRole;
+
+  for (const cap of Object.values(CAPABILITY_REGISTRY)) {
+    if (cap.tool_id === toolName && cap.allowed_roles.includes(canonicalRole as RoleType)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getCapabilityByTool(toolName: string): CapabilityDefinition | null {
+  for (const cap of Object.values(CAPABILITY_REGISTRY)) {
+    if (cap.tool_id === toolName) {
+      return cap;
+    }
+  }
+  return null;
+}
+
+export function getAllowedToolsForRole(role: string | undefined | null): string[] {
+  if (!role) return [];
+  const normRole = role.toLowerCase().trim();
+  const canonicalRole = (normRole === "pitch_owner" || normRole === "owner") ? "owner" : normRole;
+  return Object.values(CAPABILITY_REGISTRY)
+    .filter(cap => cap.tool_id && cap.allowed_roles.includes(canonicalRole as RoleType))
+    .map(cap => cap.tool_id as string);
+}
 
 export function resolveCapability(
   domain: string | undefined,

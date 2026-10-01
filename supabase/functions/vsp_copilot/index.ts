@@ -253,7 +253,7 @@ serve(async (req: Request) => {
     );
 
     if (needsCreativeSynthesis && geminiApiKey) {
-      const activeModel = aiTelemetry.model_used || "gemini-3.5-flash-lite";
+      const activeModel = aiTelemetry.model_used || "gemini-flash-lite-latest";
       try {
         const responsePrompt = buildResponseGeneratorPrompt(nextState, toolPlan, toolResult, userMessage);
         const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/${activeModel}:generateContent?key=${geminiApiKey}`;

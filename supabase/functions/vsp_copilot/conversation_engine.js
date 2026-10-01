@@ -206,8 +206,12 @@ function extractPreferredTimes(input) {
 
 function extractTimeWindow(input) {
   const t = normalizeEgyptianText(input);
+  if (/سهرة|سهرة\s+متأخرة/i.test(t))
+    return {type:"late_night",label:"سهرة",from_hour:23,to_hour:2};
+  if (/بعد\s+المغرب/i.test(t))
+    return {type:"after_maghrib",label:"بعد المغرب",from_hour:18,to_hour:21};
   if (/بعد\s+العصر|بعد\s+الضهر|بعد\s+الظهر|من\s+بعد\s+العصر/i.test(t))
-    return {type:"after_afternoon",label:"بعد العصر",from_hour:16,to_hour:23};
+    return {type:"after_afternoon",label:"بعد الظهر",from_hour:14,to_hour:18};
   if (/بالليل|ليل|مساء|المساء/i.test(t) && extractPreferredTimes(t).length === 0)
     return {type:"evening",label:"بالليل",from_hour:20,to_hour:23};
   if (/الصبح|صباح|الصباح/i.test(t) && extractPreferredTimes(t).length === 0)

@@ -4,9 +4,8 @@
 
 import type { ConversationState } from "./conversation_state.ts";
 import type { SemanticParseOutput } from "./semantic_schema.ts";
-import { isToolAllowedForRole } from "./business_rules.ts";
 import { planClarification } from "./clarification_planner.ts";
-import { resolveCapability } from "./capability_registry.ts";
+import { resolveCapability, isToolAllowedForRole, getCapabilityByTool } from "./capability_registry.ts";
 
 export interface ToolPlan {
   action: "EXECUTE_TOOL" | "ASK_SLOT" | "CONFIRM_PROPOSAL" | "CLARIFY_AMBIGUITY" | "SAFE_DEGRADED_CLARIFICATION" | "RESPOND_DIRECTLY";
@@ -31,32 +30,13 @@ export function planToolExecution(
 
   // SAFE DEGRADED MODE (Strict Non-Execution Rule):
   // When models are exhausted, NO new tool execution and NO state mutation.
-  // Exception: structured UI actions or idempotent replays.
   if (options?.isDegraded) {
-    if (options.structuredUiAction?.type === "CONFIRM_BOOKING" && state.pending_confirmation) {
-      if (isToolAllowedForRole(role, "createBookingFromChat")) {
-        return {
-          action: "EXECUTE_TOOL",
-          toolName: "createBookingFromChat",
-          toolArgs: {
-            stadium_id: state.pending_confirmation.stadium_id,
-            stadium_name: state.pending_confirmation.stadium_name,
-            start_time: state.pending_confirmation.start_time,
-            end_time: state.pending_confirmation.end_time,
-            confirm: true,
-          },
-        };
-      }
-    }
-
     return {
       action: "SAFE_DEGRADED_CLARIFICATION",
       reason: "يا كابتن، في ضغط لحظي مؤقت على خدمة الذكاء الاصطناعي وما قدرتش أستوعب رسالتك الأخيرة بدقة. بياناتك ومواعيدك السابقة محفوظة بأمان، تقدر تختار الخطوة التالية من الخيارات بالأسفل:",
-      quick_replies: state.pending_confirmation
-        ? ["تأكيد الحجز", "تغيير الميعاد", "إلغاء"]
-        : state.active_task === "owner_financial"
-          ? ["أرباح النهاردة", "الرصيد المتاح", "السجل المالي"]
-          : ["جدول الحجوزات", "المواعيد الفاضية", "أرباحي كام"],
+      quick_replies: state.active_task === "owner_financial"
+        ? ["أرباح النهاردة", "الرصيد المتاح", "السجل المالي"]
+        : ["جدول الحجوزات", "المواعيد الفاضية", "أرباحي كام"],
     };
   }
 
@@ -333,15 +313,17 @@ export function planToolExecution(
 
   // 13. Navigation Request
   if (semanticOutput.intent === "navigation" || semanticOutput.operation === "navigate") {
-    return {
-      action: "EXECUTE_TOOL",
-      toolName: "executeAppAction",
-      toolArgs: {
-        action_type: "NAVIGATE",
-        route: "/bookings",
-        label: "عرض الشاشة",
-      },
-    };
+    if (isToolAllowedForRole(role, "executeAppAction")) {
+      return {
+        action: "EXECUTE_TOOL",
+        toolName: "executeAppAction",
+        toolArgs: {
+          action_type: "NAVIGATE",
+          route: "/bookings",
+          label: "عرض الشاشة",
+        },
+      };
+    }
   }
 
   return { action: "RESPOND_DIRECTLY" };

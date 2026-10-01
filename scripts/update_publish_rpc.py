@@ -2,11 +2,15 @@ import urllib.request
 import urllib.error
 import json
 
+import os
+
 with open('env.json', 'r', encoding='utf-8') as f:
     env = json.load(f)
 
-MANAGEMENT_TOKEN = env.get('SUPABASE_MANAGEMENT_KEY') or 'sbp_de5a1fcaf401fdf49b8c0003f784ee42cb7bef2b'
-PROJECT_REF = 'mktqkddbcddrxjxabdua'
+MANAGEMENT_TOKEN = os.environ.get('SUPABASE_MANAGEMENT_KEY') or env.get('SUPABASE_MANAGEMENT_KEY')
+if not MANAGEMENT_TOKEN:
+    raise ValueError("SUPABASE_MANAGEMENT_KEY is required and must be provided via environment or env.json")
+PROJECT_REF = os.environ.get('SUPABASE_PROJECT_REF') or env.get('SUPABASE_PROJECT_REF') or 'mktqkddbcddrxjxabdua'
 URL = f"https://api.supabase.com/v1/projects/{PROJECT_REF}/database/query"
 
 sql = """

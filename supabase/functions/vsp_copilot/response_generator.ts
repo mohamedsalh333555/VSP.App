@@ -437,18 +437,81 @@ export function validateAssistantResponseFacts(
     }
   }
 
-  // 6. Check for fabricated booking counts
-  const countMatches = [...response.matchAll(/(\d{1,4})\s*(?:حجز|حجوزات|ماتش|ماتشات)/gi)];
-  if (countMatches.length > 0 && toolResult?.bookings) {
-    const actualCount = toolResult.bookings.length;
-    const actualTotal = toolResult.data?.stadiums_count ?? actualCount;
-    const allowedCounts = new Set([actualCount, actualTotal, toolResult.data?.bookings?.length || 0]);
-    for (const cm of countMatches) {
+  // 6. Strict Operational Count Validation: Decouple stadiums_count from bookings_count completely
+  // 6a. Bookings Count Validation
+  const bookingCountMatches = [...response.matchAll(/(\d{1,4})\s*(?:حجز|حجوزات|ماتش|ماتشات)/gi)];
+  const allowedBookingCounts = new Set<number>();
+  if (toolResult?.bookings && Array.isArray(toolResult.bookings)) {
+    allowedBookingCounts.add(toolResult.bookings.length);
+  }
+  if (toolResult?.data?.bookings && Array.isArray(toolResult.data.bookings)) {
+    allowedBookingCounts.add(toolResult.data.bookings.length);
+  }
+  if (typeof toolResult?.data?.bookings_count === "number") {
+    allowedBookingCounts.add(toolResult.data.bookings_count);
+  }
+  if (typeof toolResult?.data?.total_bookings === "number") {
+    allowedBookingCounts.add(toolResult.data.total_bookings);
+  }
+
+  if (bookingCountMatches.length > 0 && allowedBookingCounts.size > 0) {
+    for (const cm of bookingCountMatches) {
       const claimedCount = Number(cm[1]);
-      if (!allowedCounts.has(claimedCount)) {
+      if (!allowedBookingCounts.has(claimedCount)) {
         return {
           isValid: false,
-          reason: `Claimed booking count (${claimedCount}) does not match verified count (${Array.from(allowedCounts).join(", ")})`,
+          reason: `Claimed booking count (${claimedCount}) does not match verified count (${Array.from(allowedBookingCounts).join(", ")})`,
+        };
+      }
+    }
+  }
+
+  // 6b. Stadiums Count Validation
+  const stadiumCountMatches = [...response.matchAll(/(\d{1,4})\s*(?:ملعب|ملاعب)/gi)];
+  const allowedStadiumCounts = new Set<number>();
+  if (toolResult?.stadiums && Array.isArray(toolResult.stadiums)) {
+    allowedStadiumCounts.add(toolResult.stadiums.length);
+  }
+  if (toolResult?.data?.stadiums && Array.isArray(toolResult.data.stadiums)) {
+    allowedStadiumCounts.add(toolResult.data.stadiums.length);
+  }
+  if (typeof toolResult?.data?.stadiums_count === "number") {
+    allowedStadiumCounts.add(toolResult.data.stadiums_count);
+  }
+  if (typeof toolResult?.data?.total_stadiums === "number") {
+    allowedStadiumCounts.add(toolResult.data.total_stadiums);
+  }
+
+  if (stadiumCountMatches.length > 0 && allowedStadiumCounts.size > 0) {
+    for (const sm of stadiumCountMatches) {
+      const claimedStadiums = Number(sm[1]);
+      if (!allowedStadiumCounts.has(claimedStadiums)) {
+        return {
+          isValid: false,
+          reason: `Claimed stadium count (${claimedStadiums}) does not match verified count (${Array.from(allowedStadiumCounts).join(", ")})`,
+        };
+      }
+    }
+  }
+
+  // 6c. Completed Bookings Count Validation
+  const completedMatches = [...response.matchAll(/(\d{1,4})\s*(?:حجز\s+مكتمل|حجوزات\s+مكتملة|حجز\s+منتهي|حجوزات\s+منتهية)/gi)];
+  const allowedCompletedCounts = new Set<number>();
+  if (typeof toolResult?.data?.completed_bookings_count === "number") {
+    allowedCompletedCounts.add(toolResult.data.completed_bookings_count);
+  }
+  if (toolResult?.bookings && Array.isArray(toolResult.bookings)) {
+    const completed = toolResult.bookings.filter((b: any) => b.status === "completed" || b.status === "confirmed").length;
+    allowedCompletedCounts.add(completed);
+  }
+
+  if (completedMatches.length > 0 && allowedCompletedCounts.size > 0) {
+    for (const cm of completedMatches) {
+      const claimedCompleted = Number(cm[1]);
+      if (!allowedCompletedCounts.has(claimedCompleted)) {
+        return {
+          isValid: false,
+          reason: `Claimed completed booking count (${claimedCompleted}) does not match verified count (${Array.from(allowedCompletedCounts).join(", ")})`,
         };
       }
     }

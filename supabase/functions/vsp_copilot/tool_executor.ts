@@ -2,7 +2,7 @@
 // Wraps all Supabase RPC and database calls with robust execution guards and typed status categories.
 
 import type { ConversationState, VisibleEntity } from "./conversation_state.ts";
-import { isToolAllowedForRole } from "./business_rules.ts";
+import { isToolAllowedForRole } from "./capability_registry.ts";
 import {
   executeViewUserBookingsWorkflow,
   executeViewUpcomingBookingWorkflow,
