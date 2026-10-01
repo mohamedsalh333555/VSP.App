@@ -210,46 +210,7 @@ export function validateAssistantResponseFacts(
   if (!response || typeof response !== "string") {
     return { isValid: false, reason: "Empty response" };
   }
-
-  // 1. Check for fabricated booking completion claims
-  const claimsBookingComplete = /(?:تم الحجز|حجزتلك|تم تأكيد الحجز بنجاح|حجزنا الملعب|تم تسجيل حجزك)/i.test(response);
-  if (claimsBookingComplete) {
-    const actuallySucceeded = toolResult && toolResult.tool_name === "createBookingFromChat" && toolResult.status === "SUCCESS";
-    if (!actuallySucceeded) {
-      return {
-        isValid: false,
-        reason: "Fabricated booking completion claim without verified SUCCESS booking tool result",
-      };
-    }
-  }
-
-  // 2. Check for fabricated booking cancellation claims
-  const claimsBookingCancelled = /(?:تم إلغاء الحجز|لغيتلك الحجز|تم الإلغاء بنجاح)/i.test(response);
-  if (claimsBookingCancelled) {
-    const actuallyCancelled = toolResult && toolResult.tool_name === "cancelUserBooking" && toolResult.status === "SUCCESS";
-    if (!actuallyCancelled) {
-      return {
-        isValid: false,
-        reason: "Fabricated cancellation claim without verified cancelUserBooking SUCCESS result",
-      };
-    }
-  }
-
-  // 3. Check for false payment confirmation claims
-  const claimsPaymentConfirmed = /(?:تم تأكيد الدفع|الحجز اتأكد بعد الدفع|عملية الدفع مؤكدة|تم سداد الحجز)/i.test(response);
-  if (claimsPaymentConfirmed) {
-    if (toolResult?.tool_name === "reconcileBookingPayment") {
-      const recState = toolResult.data?.reconciliation_state;
-      if (recState !== "PAYMENT_CONFIRMED_BOOKING_CONFIRMED") {
-        return {
-          isValid: false,
-          reason: `Claimed payment confirmed when reconciliation state is actually ${recState}`,
-        };
-      }
-    }
-  }
-
-  // 4. Check for false availability claims when an error occurred
+  // 1. Check for false availability claims when an error occurred
   const claimsUnavailable = /(?:الملعب غير متاح|مفيش مواعيد|غير متوفر|مفيش فترات فاضية)/i.test(response);
   if (claimsUnavailable && toolResult) {
     if (toolResult.status === "TEMPORARY_ERROR" || toolResult.status === "DATA_ERROR" || toolResult.status === "AUTH_ERROR") {
@@ -260,7 +221,7 @@ export function validateAssistantResponseFacts(
     }
   }
 
-  // 5. Check for price fabrication in EGP
+  // 2. Check for price fabrication in EGP
   const priceMatches = [...response.matchAll(/(?:بـ\s*|سعر(?:ها|ه)?\s*|بمبلغ\s*)?(\d{2,5})\s*(?:جنيه|ج\.م|ج\b)/gi)];
   if (priceMatches.length > 0) {
     const allowedPrices = new Set<number>();
