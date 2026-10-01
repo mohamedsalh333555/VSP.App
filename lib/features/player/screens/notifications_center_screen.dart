@@ -210,48 +210,16 @@ class _NotificationCard extends StatelessWidget {
                     ),
                   ),
   
-                  // Secure interactive actions for challenges
-                  if (notification.type == 'challenge' && notification.bookingId != null) ...[
+                  // Secure interactive action for challenges
+                  if ((notification.type == 'challenge' || notification.type == 'challenge_confirmed') && notification.bookingId != null) ...[
                     const SizedBox(height: VSPSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: VSPAnimatedButton(
-                            text: isArabic ? 'عرض التحدي والرد' : 'View & Respond',
-                            height: 44,
-                            onPressed: () {
-                              NotificationRepository().markNotificationAsRead(userId, notification.id);
-                              NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: VSPSpacing.sm),
-                        Expanded(
-                          child: VSPAnimatedButton(
-                            text: AppLocalizations.of(context)!.decline,
-                            height: 44,
-                            color: VSPColors.surfaceAlt,
-                            textColor: VSPColors.error,
-                            onPressed: () async {
-                              await NotificationRepository().respondToChallenge(
-                                userId,
-                                notification.id, 
-                                notification.bookingId!, 
-                                false
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(isArabic ? 'تم رفض طلب التحدي' : 'Challenge declined'),
-                                    backgroundColor: VSPColors.surface,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                      ],
+                    VSPAnimatedButton(
+                      text: isArabic ? 'عرض تفاصيل التحدي' : 'View Challenge Details',
+                      height: 44,
+                      onPressed: () {
+                        NotificationRepository().markNotificationAsRead(userId, notification.id);
+                        NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                      },
                     ),
                   ],
                 ],
