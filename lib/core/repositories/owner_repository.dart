@@ -173,6 +173,48 @@ class OwnerRepository {
     }
   }
 
+  /// رفض طلب تسوية وصرف مستحقات من قبل الإدارة ذرياً
+  Future<Map<String, dynamic>> rejectPayoutSettlement({
+    required String settlementId,
+    String? rejectionReason,
+  }) async {
+    try {
+      final response = await _supabase.rpc('reject_payout_settlement_atomic', params: {
+        'p_settlement_id': settlementId,
+        'p_rejection_reason': rejectionReason,
+      });
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e, stack) {
+      VSPLogger.e('Error rejecting payout settlement', e, stack);
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// اعتماد وصرف طلب تسوية وصرف مستحقات من قبل الإدارة ذرياً
+  Future<Map<String, dynamic>> approvePayoutSettlement({
+    required String settlementId,
+    String? adminNotes,
+  }) async {
+    try {
+      final response = await _supabase.rpc('approve_payout_settlement_atomic', params: {
+        'p_settlement_id': settlementId,
+        'p_admin_notes': adminNotes,
+      });
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e, stack) {
+      VSPLogger.e('Error approving payout settlement', e, stack);
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// تأكيد استلام الدفع النقدي في الملعب ذرياً
   Future<dynamic> confirmCashBookingAtomic({
     required String bookingId,

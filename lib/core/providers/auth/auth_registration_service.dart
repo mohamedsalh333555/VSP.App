@@ -217,15 +217,22 @@ class AuthRegistrationService {
       }
       updatedAdditional['isOnboardingConfirmed'] = true;
 
-      await _supabase.rpc('submit_owner_verification', params: {
+      final response = await _supabase.rpc('submit_owner_verification', params: {
         'p_owner_id': authUser.id,
         'p_additional_data': updatedAdditional,
       });
 
+      if (response is Map && response['success'] != true) {
+        VSPLogger.w('submit_owner_verification returned error: ${response['error']}');
+        return (success: false, userModel: null);
+      }
+
+      final bool authoritativeHasStadium = response is Map && response['has_stadium'] == true;
+
       final updatedModel = currentUserModel.copyWith(
         verificationStatus: verificationStatus,
         isRegistrationComplete: true,
-        hasStadium: true,
+        hasStadium: authoritativeHasStadium,
         additionalData: updatedAdditional,
       );
 
