@@ -609,6 +609,7 @@ serve(async (req: Request) => {
           p_refund_amount: refundAmount,
           p_refund_txn_id: refundTxnId,
           p_refund_payment_method: refundMethod,
+          p_refund_gross_amount: refundAmount,
         }
       );
       if (refundRecordError || refundResult?.success !== true) {
@@ -688,6 +689,7 @@ serve(async (req: Request) => {
             p_refund_amount: chargedAmountEgp,
             p_refund_txn_id: refundId,
             p_refund_payment_method: "card",
+            p_refund_gross_amount: chargedAmountEgp,
           });
         } else {
           await supabase

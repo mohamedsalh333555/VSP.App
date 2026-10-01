@@ -28,7 +28,7 @@ serve(async(req:Request)=>{
    const {data:r,error}=await admin.rpc("cancel_booking_with_refund_atomic",{p_booking_id:bookingId,p_user_id:caller.id,p_reason:reason});
    if(error)return out({success:false,message:"تعذر إلغاء الحجز النقدي."},409);return out(r||{success:true});
   }
-  const {data:payments,error:pe}=await admin.from("transactions").select("id,amount,paymob_transaction_id,reference_number,type,status,payment_method,created_at").eq("booking_id",bookingId).eq("status","completed").in("type",["payment","deposit"]).order("created_at",{ascending:false});
+  const {data:payments,error:pe}=await admin.from("transactions").select("id,amount,gross_amount,paymob_transaction_id,reference_number,type,status,payment_method,created_at").eq("booking_id",bookingId).eq("status","completed").in("type",["payment","deposit"]).order("created_at",{ascending:false});
   if(pe)return out({success:false,message:"تعذر قراءة سجل الدفع."},409);
   const tx=(payments||[]).find((t:any)=>String(t.payment_method||"").toLowerCase()!=="cash"&&(t.paymob_transaction_id||t.reference_number));
   if(!tx||Number(tx.amount||0)<=0){
@@ -38,21 +38,22 @@ serve(async(req:Request)=>{
   let paymobTxnId=String(tx.paymob_transaction_id||tx.reference_number||""),m=paymobTxnId.match(/\d+/);if(m)paymobTxnId=m[0];
   if(!paymobTxnId)return out({success:false,message:"رقم معاملة Paymob غير متوفر."},409);
   const refundAmount=Math.round(Number(tx.amount)*100)/100;
+  const refundGrossAmount=Math.round(Number(tx.gross_amount ?? tx.amount)*100)/100;
   const ar=await fetch("https://accept.paymob.com/api/auth/tokens",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({api_key:apiKey})});
   if(!ar.ok)throw new Error("Paymob authentication failed");
   const aj=await ar.json();if(!aj.token)throw new Error("Paymob returned no auth token");
-  const rr=await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({auth_token:aj.token,transaction_id:Number(paymobTxnId),amount_cents:Math.round(refundAmount*100)})});
+  const rr=await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({auth_token:aj.token,transaction_id:Number(paymobTxnId),amount_cents:Math.round(refundGrossAmount*100)})});
   const rj=await rr.json().catch(()=>({}));
   if(!(rr.ok&&(rj.success===true||rj.is_refund===true||rj.id))){
    const pendingRef="REFUND_PENDING_"+bookingId;
-   await admin.from("transactions").upsert({user_id:booking.created_by_user_id||booking.user_id,booking_id:bookingId,amount:refundAmount,type:"refund",status:"pending",payment_method:String(booking.payment_method||"paymob"),description:"استرداد Paymob بانتظار المراجعة",reference_number:pendingRef,metadata:{paymob_transaction_id:paymobTxnId,gateway_error:rj?.message||rj?.detail||"refund_failed"},updated_at:now.toISOString()},{onConflict:"reference_number"});
+   await admin.from("transactions").upsert({user_id:booking.created_by_user_id||booking.user_id,booking_id:bookingId,amount:refundAmount,gross_amount:refundGrossAmount,type:"refund",status:"pending",payment_method:String(booking.payment_method||"paymob"),description:"استرداد Paymob بانتظار المراجعة",reference_number:pendingRef,metadata:{paymob_transaction_id:paymobTxnId,gateway_error:rj?.message||rj?.detail||"refund_failed",refund_gross:refundGrossAmount},updated_at:now.toISOString()},{onConflict:"reference_number"});
    await admin.from("bookings").update({status:"cancelled",payment_status:"refund_pending",payment_reconcile_state:"refund_pending",refund_amount:refundAmount,cancellation_reason:reason,cancelled_at:now.toISOString(),updated_at:now.toISOString()}).eq("id",bookingId);
    return out({success:false,refund_failed:true,refund_pending:true,refund_amount:refundAmount,message:"تم إلغاء الحجز، والاسترداد يحتاج مراجعة يدوية."});
   }
   const refundTxnId=String(rj.id||rj.transaction_id||"");
-  const {data:recorded,error:re}=await admin.rpc("record_booking_gateway_refund_atomic",{p_booking_id:bookingId,p_refund_amount:refundAmount,p_refund_txn_id:refundTxnId,p_refund_payment_method:String(booking.payment_method||"card").toLowerCase().includes("wallet")?"wallet":"card"});
+  const {data:recorded,error:re}=await admin.rpc("record_booking_gateway_refund_atomic",{p_booking_id:bookingId,p_refund_amount:refundAmount,p_refund_txn_id:refundTxnId,p_refund_payment_method:String(booking.payment_method||"card").toLowerCase().includes("wallet")?"wallet":"card",p_refund_gross_amount:refundGrossAmount});
   if(re||!recorded?.success)throw new Error("Failed to reconcile successful refund");
   await admin.from("bookings").update({cancellation_reason:reason}).eq("id",bookingId);
-  return out({success:true,refund_amount:refundAmount,refund_txn_id:refundTxnId,message:"تم استرداد المبلغ بنجاح عبر Paymob."});
+  return out({success:true,refund_amount:refundAmount,refund_gross_amount:refundGrossAmount,refund_txn_id:refundTxnId,message:"تم استرداد المبلغ بنجاح عبر Paymob."});
  }catch(e){console.error("process_paymob_refund:",e);return out({success:false,message:"تعذر إتمام الاسترداد حالياً. تم حفظ الحالة للمراجعة."},500);}
 });
