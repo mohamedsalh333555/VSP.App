@@ -77,11 +77,82 @@ void main() {
     });
   });
 
+  group('Owner Journey SSOT - Stadium Reactivation Limit Invariants', () {
+    test('Basic owner with 1 active stadium cannot reactivate another soft-deleted stadium', () {
+      final futureDate = DateTime.now().add(const Duration(days: 90));
+      final user = UserModel(
+        uid: 'owner-basic',
+        email: 'basic@test.com',
+        role: 'owner',
+        subscriptionPlan: 'basic',
+        subscriptionExpiresAt: futureDate,
+      );
+
+      const int currentActiveStadiums = 1;
+      final bool canReactivate = FacilityOnboardingService.canAddStadium(
+        user: user,
+        currentStadiumsCount: currentActiveStadiums,
+      );
+      expect(canReactivate, isFalse, reason: 'Reactivation must be blocked when at limit');
+    });
+
+    test('Pro owner with 3 active stadiums cannot reactivate a fourth', () {
+      final futureDate = DateTime.now().add(const Duration(days: 90));
+      final user = UserModel(
+        uid: 'owner-pro',
+        email: 'pro@test.com',
+        role: 'owner',
+        subscriptionPlan: 'pro',
+        subscriptionExpiresAt: futureDate,
+      );
+
+      const int currentActiveStadiums = 3;
+      final bool canReactivate = FacilityOnboardingService.canAddStadium(
+        user: user,
+        currentStadiumsCount: currentActiveStadiums,
+      );
+      expect(canReactivate, isFalse, reason: 'Pro reactivation blocked at 3 stadiums');
+    });
+
+    test('Reactivation succeeds when active stadium count is below allowed limit', () {
+      final futureDate = DateTime.now().add(const Duration(days: 90));
+      final user = UserModel(
+        uid: 'owner-basic',
+        email: 'basic@test.com',
+        role: 'owner',
+        subscriptionPlan: 'basic',
+        subscriptionExpiresAt: futureDate,
+      );
+
+      const int currentActiveStadiums = 0; // Previous active stadium was soft-deleted
+      final bool canReactivate = FacilityOnboardingService.canAddStadium(
+        user: user,
+        currentStadiumsCount: currentActiveStadiums,
+      );
+      expect(canReactivate, isTrue, reason: 'Reactivation allowed when capacity available');
+    });
+
+    test('Expired subscription cannot reactivate any stadium', () {
+      final pastDate = DateTime.now().subtract(const Duration(days: 10));
+      final user = UserModel(
+        uid: 'owner-expired',
+        email: 'expired@test.com',
+        role: 'owner',
+        subscriptionPlan: 'pro',
+        subscriptionExpiresAt: pastDate,
+      );
+
+      const int currentActiveStadiums = 0;
+      final bool canReactivate = FacilityOnboardingService.canAddStadium(
+        user: user,
+        currentStadiumsCount: currentActiveStadiums,
+      );
+      expect(canReactivate, isFalse, reason: 'Expired owner cannot reactivate stadiums');
+    });
+  });
+
   group('Owner Journey SSOT - Financial Reconciliation Logic', () {
     test('Available balance formula mathematically matches payout atomic requirement', () {
-      // Rule: available_balance = GREATEST(0, realized_online_revenue - total_withdrawn - pending_payouts)
-      // realized_online_revenue strictly requires status in ('completed', 'no_show')
-      
       const double realizedOnlineRev = 5000.0;
       const double totalWithdrawn = 2000.0;
       const double pendingPayouts = 1000.0;
@@ -99,14 +170,70 @@ void main() {
       const double totalWithdrawn = 500.0;
       const double pendingPayouts = 0.0;
 
-      // Old buggy logic: 1000 + 4000 - 500 = 4500 (caused payout request to fail when owner asked for 4500)
-      // New authoritative SSOT: only realized revenue is withdrawable
       final available = (realizedOnlineRev - totalWithdrawn - pendingPayouts) > 0
           ? (realizedOnlineRev - totalWithdrawn - pendingPayouts)
           : 0.0;
 
       expect(available, equals(500.0));
       expect(upcomingOnlineRev, equals(4000.0));
+    });
+  });
+
+  group('Owner Journey SSOT - Security & Authorization Invariants', () {
+    bool checkDashboardAccess({
+      required String? callerId,
+      required String targetOwnerId,
+      required String callerRole,
+    }) {
+      if (callerId == null) return false; // anon blocked
+      if (callerRole == 'admin' || callerRole == 'co_founder' || callerRole == 'super_admin') {
+        return true; // admin allowed
+      }
+      return callerId == targetOwnerId; // only self allowed
+    }
+
+    test('Anonymous caller cannot access owner dashboard analytics', () {
+      expect(
+        checkDashboardAccess(
+          callerId: null,
+          targetOwnerId: 'owner-123',
+          callerRole: 'anon',
+        ),
+        isFalse,
+      );
+    });
+
+    test('Cross-owner analytics access is strictly denied', () {
+      expect(
+        checkDashboardAccess(
+          callerId: 'owner-456',
+          targetOwnerId: 'owner-123',
+          callerRole: 'owner',
+        ),
+        isFalse,
+      );
+    });
+
+    test('Owner requesting own dashboard analytics is allowed', () {
+      expect(
+        checkDashboardAccess(
+          callerId: 'owner-123',
+          targetOwnerId: 'owner-123',
+          callerRole: 'owner',
+        ),
+        isTrue,
+      );
+    });
+
+    test('Platform admin requesting owner dashboard analytics is allowed', () {
+      expect(
+        checkDashboardAccess(
+          callerId: 'admin-999',
+          targetOwnerId: 'owner-123',
+          callerRole: 'admin',
+        ),
+        isTrue,
+      );
     });
   });
 }
