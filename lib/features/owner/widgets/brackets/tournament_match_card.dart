@@ -114,7 +114,7 @@ class TournamentMatchCard extends StatelessWidget {
                   : (isAr ? 'قيد الانتظار' : 'Pending'),
               style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54),
             ),
-            trailing: isOwner && match.homeTeamId != null && match.awayTeamId != null && championship.status == 'in_progress'
+            trailing: isOwner && match.homeTeamId != null && match.awayTeamId != null && championship.status == 'ongoing'
                 ? IconButton(
                     tooltip: match.winnerId != null
                         ? (isAr ? 'تعديل النتيجة' : 'Edit Score')
