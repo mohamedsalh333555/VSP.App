@@ -13,6 +13,7 @@ import '../../../data/models.dart';
 import '../widgets/payment/paymob_callback_url_parser.dart';
 import '../widgets/payment/paymob_still_waiting_dialog.dart';
 import '../widgets/payment/paymob_web_fallback_view.dart';
+import '../services/payment_checkout_service.dart';
 
 class PaymobWebViewScreen extends StatefulWidget {
  final String initialUrl;
@@ -131,10 +132,10 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
 
       final booking = await SupabaseBookingRepository().getBookingById(widget.bookingId!);
       if (booking != null &&
-          (booking.status == BookingStatus.confirmed ||
-              booking.isPaid ||
-              booking.paymentStatus == 'paid' ||
-              booking.paymentStatus == 'partially_paid')) {
+          PaymentCheckoutService.isPaymentConfirmed(
+            status: booking.status.toDbValue(),
+            paymentStatus: booking.paymentStatus,
+          )) {
         return true;
       }
     } catch (e) {

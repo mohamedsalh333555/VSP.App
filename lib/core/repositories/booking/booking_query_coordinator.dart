@@ -145,17 +145,24 @@ class BookingQueryCoordinator {
   }
 
   /// Real-time stream of upcoming confirmed bookings for a player.
-  Stream<List<Booking>> getUpcomingBookings(String userId) {
-    final now = DateTime.now();
+  Stream<List<Booking>> getUpcomingBookings(String userId) async* {
     final lowerUserId = userId.trim().toLowerCase();
-    return _supabase
+    final direct = await getUserBookingsDirectly(userId);
+    if (direct.isNotEmpty) {
+      final now = DateTime.now();
+      yield direct.where((b) {
+        final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+            b.userId.trim().toLowerCase() == lowerUserId ||
+            b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+        return isParticipant && b.status == BookingStatus.confirmed && b.startTime.isAfter(now);
+      }).toList();
+    }
+
+    yield* _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
         .map((list) {
+          final now = DateTime.now();
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
@@ -168,21 +175,43 @@ class BookingQueryCoordinator {
           bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
           return bookings;
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getUserBookingsDirectly(userId);
+            if (refreshed.isNotEmpty) {
+              final now = DateTime.now();
+              final upcoming = refreshed.where((b) {
+                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                    b.userId.trim().toLowerCase() == lowerUserId ||
+                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+                return isParticipant && b.status == BookingStatus.confirmed && b.startTime.isAfter(now);
+              }).toList();
+              sink.add(upcoming);
+            }
+          },
+        )
         .handleError((error) {
           VSPLogger.w('Handled realtime error in getUpcomingBookings: $error');
         });
   }
 
   /// Real-time stream of completed bookings history.
-  Stream<List<Booking>> getBookingHistory(String userId) {
+  Stream<List<Booking>> getBookingHistory(String userId) async* {
     final lowerUserId = userId.trim().toLowerCase();
-    return _supabase
+    final direct = await getUserBookingsDirectly(userId);
+    if (direct.isNotEmpty) {
+      yield direct.where((b) {
+        final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+            b.userId.trim().toLowerCase() == lowerUserId ||
+            b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+        return isParticipant && b.status == BookingStatus.completed;
+      }).toList();
+    }
+
+    yield* _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
@@ -196,6 +225,21 @@ class BookingQueryCoordinator {
           bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
           return bookings;
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getUserBookingsDirectly(userId);
+            if (refreshed.isNotEmpty) {
+              final history = refreshed.where((b) {
+                final isParticipant = b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+                    b.userId.trim().toLowerCase() == lowerUserId ||
+                    b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId);
+                return isParticipant && b.status == BookingStatus.completed;
+              }).toList();
+              sink.add(history);
+            }
+          },
+        )
         .handleError((error) {
           VSPLogger.w('Handled realtime error in getBookingHistory: $error');
         });
@@ -239,7 +283,7 @@ class BookingQueryCoordinator {
       final response = await _supabase
           .from('bookings')
           .select()
-          .eq('created_by_user_id', userId)
+          .or('user_id.eq.$userId,created_by_user_id.eq.$userId')
           .eq('is_paid', false)
           .gte('end_time', nowUtcIso)
           .neq('status', 'cancelled')

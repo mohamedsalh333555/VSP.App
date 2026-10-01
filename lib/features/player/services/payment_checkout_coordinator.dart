@@ -60,16 +60,26 @@ class PaymentCheckoutCoordinator {
   }
 
   /// Starts periodic polling fallback if webhook is delayed.
+  ///
+  /// Payment Success (SSOT):
+  ///   confirmed + paid         → Full payment collected.
+  ///   confirmed + partially_paid → Deposit collected; booking is confirmed.
+  /// Both are valid end-states that unblock the payment screen.
   void startFallbackPolling({
     required String bookingId,
     required Future<Booking?> Function(String) fetchBooking,
     required void Function(Booking booking) onConfirmed,
+    Duration interval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
-    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    _fallbackPollingTimer = Timer.periodic(interval, (timer) async {
       try {
         final booking = await fetchBooking(bookingId);
-        if (booking != null && (booking.isPaid || booking.paymentStatus == 'paid')) {
+        if (booking != null &&
+            PaymentCheckoutService.isPaymentConfirmed(
+              status: booking.status.toDbValue(),
+              paymentStatus: booking.paymentStatus,
+            )) {
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -79,6 +89,12 @@ class PaymentCheckoutCoordinator {
         debugPrint('Fallback polling notice: $e');
       }
     });
+  }
+
+  /// Cancels active fallback polling timer.
+  void cancelFallbackPolling() {
+    _fallbackPollingTimer?.cancel();
+    _fallbackPollingTimer = null;
   }
 
 

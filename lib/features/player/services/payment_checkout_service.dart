@@ -70,12 +70,14 @@ class PaymentCheckoutService {
     final p = paymentStatus?.toLowerCase().trim();
 
     // Booking is confirmed through electronic payment (either full payment 'paid'
-    // or deposit payment 'partially_paid'). Cash bookings remain pending payment.
+    // or deposit payment 'partially_paid') only when server booking status is confirmed.
+    // 'pending + partially_paid' must NEVER be treated as confirmed booking success.
     if (s == 'confirmed') {
       return p == 'paid' || p == 'partially_paid';
     }
-    if (p == 'paid' || p == 'partially_paid') {
-      return s != 'cancelled' && s != 'failed';
+    // Backward-compatibility fallback when status is omitted: only accept strictly 'paid'
+    if (s == null && p == 'paid') {
+      return true;
     }
     return false;
   }

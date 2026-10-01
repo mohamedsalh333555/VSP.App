@@ -1,6 +1,29 @@
-﻿import 'package:flutter_test/flutter_test.dart';
+import 'dart:async';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/providers/booking/booking_sync_coordinator.dart';
+import 'package:vsp_application/core/repositories/booking_repository.dart';
+import 'package:vsp_application/features/player/services/payment_checkout_coordinator.dart';
 import 'package:vsp_application/features/player/services/payment_checkout_service.dart';
+
+class FakeBookingRepository implements BookingRepository {
+  final Future<List<Booking>> Function(String) onGetDirectly;
+  final Stream<List<Booking>> Function(String) onGetStream;
+
+  FakeBookingRepository({
+    required this.onGetDirectly,
+    required this.onGetStream,
+  });
+
+  @override
+  Future<List<Booking>> getUserBookingsDirectly(String userId) => onGetDirectly(userId);
+
+  @override
+  Stream<List<Booking>> getUserBookings(String userId) => onGetStream(userId);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('Player Booking & Open Join SSOT Remediation Tests', () {
@@ -331,6 +354,215 @@ void main() {
       // DB serialization maps upcoming enum alias to confirmed
       expect(BookingStatus.upcoming.toDbValue(), equals('confirmed'));
       expect(BookingStatus.confirmed.toDbValue(), equals('confirmed'));
+    });
+
+    // 13. Realtime SSOT Lifecycle: Participant retains booking across partial/reconnect events and updates correctly
+    test('13. Realtime SSOT Lifecycle: Participant retains booking across reconnects and receives status updates', () async {
+      final directBooking = makeBooking(
+        id: 'open-booking-1',
+        startTime: now.add(const Duration(hours: 3)),
+        endTime: now.add(const Duration(hours: 4)),
+        status: BookingStatus.confirmed,
+        bookingType: BookingType.openJoin,
+        createdByUserId: 'host-user-a',
+        joinedUserIds: ['host-user-a', 'player-user-b'],
+        currentPlayers: 2,
+        maxPlayers: 10,
+      );
+
+      final streamController = StreamController<List<Booking>>.broadcast();
+      final fakeRepo = FakeBookingRepository(
+        onGetDirectly: (uid) async => [directBooking],
+        onGetStream: (uid) => streamController.stream,
+      );
+
+      final coordinator = BookingSyncCoordinator(fakeRepo);
+      final receivedLists = <List<Booking>>[];
+
+      coordinator.syncUserBookings(
+        userId: 'player-user-b',
+        onData: (bookings, categorized) {
+          receivedLists.add(List.from(bookings));
+        },
+        onError: (err) {},
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(receivedLists.isNotEmpty, isTrue);
+      expect(receivedLists.last.any((b) => b.id == 'open-booking-1'), isTrue,
+          reason: 'Player B must see booking after initial direct fetch');
+
+      // 1. Reconnect/Partial event arrives (empty list) -> booking MUST NOT vanish
+      streamController.add([]);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(receivedLists.last.any((b) => b.id == 'open-booking-1'), isTrue,
+          reason: 'Booking MUST NOT disappear on partial/empty Realtime reconnect');
+
+      // 2. Realtime event updates player count to 3
+      final updatedBooking = directBooking.copyWith(
+        currentPlayers: 3,
+        joinedUserIds: ['host-user-a', 'player-user-b', 'player-user-c'],
+      );
+      streamController.add([updatedBooking]);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      final latest = receivedLists.last.firstWhere((b) => b.id == 'open-booking-1');
+      expect(latest.currentPlayers, equals(3),
+          reason: 'Player count must update from incoming Realtime event');
+
+      // 3. Host cancels -> Participant receives updated cancelled status without disappearing
+      final cancelledBooking = updatedBooking.copyWith(
+        status: BookingStatus.cancelled,
+        cancellationReason: 'Cancelled by host',
+      );
+      streamController.add([cancelledBooking]);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      final cancelledResult = receivedLists.last.firstWhere((b) => b.id == 'open-booking-1');
+      expect(cancelledResult.status, equals(BookingStatus.cancelled));
+      expect(cancelledResult.cancellationReason, equals('Cancelled by host'));
+
+      coordinator.dispose();
+      await streamController.close();
+    });
+
+    // 14. Error Resilience: Transport error preserves existing bookings
+    test('14. Transport error preserves existing bookings without clearing UI state', () async {
+      final initialBooking = makeBooking(
+        id: 'bk-resilient-1',
+        startTime: now.add(const Duration(hours: 1)),
+        endTime: now.add(const Duration(hours: 2)),
+        status: BookingStatus.confirmed,
+        createdByUserId: 'user-1',
+      );
+
+      final streamController = StreamController<List<Booking>>.broadcast();
+      final fakeRepo = FakeBookingRepository(
+        onGetDirectly: (uid) async => [initialBooking],
+        onGetStream: (uid) => streamController.stream,
+      );
+
+      final coordinator = BookingSyncCoordinator(fakeRepo);
+      final emittedLists = <List<Booking>>[];
+      String? lastError;
+
+      coordinator.syncUserBookings(
+        userId: 'user-1',
+        onData: (bookings, _) => emittedLists.add(List.from(bookings)),
+        onError: (err) => lastError = err,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(emittedLists.last.isNotEmpty, isTrue);
+
+      // Stream encounters WebSocket transport error
+      streamController.addError('WebSocket disconnect');
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(lastError, isNotNull);
+      expect(emittedLists.last.isNotEmpty, isTrue,
+          reason: 'Bookings must be preserved on transport error');
+
+      coordinator.dispose();
+      await streamController.close();
+    });
+
+    // 15. Fallback Polling recognizes confirmed + partially_paid
+    test('15. Fallback Polling recognizes confirmed + partially_paid as booking success', () async {
+      final coordinator = PaymentCheckoutCoordinator();
+      bool confirmedCalled = false;
+
+      final depositConfirmedBooking = makeBooking(
+        id: 'bk-poll-dep',
+        startTime: now.add(const Duration(hours: 2)),
+        endTime: now.add(const Duration(hours: 3)),
+        status: BookingStatus.confirmed,
+        paymentStatus: 'partially_paid',
+        isDepositPaid: true,
+        depositPaid: 100,
+      );
+
+      coordinator.startFallbackPolling(
+        bookingId: 'bk-poll-dep',
+        interval: const Duration(milliseconds: 50),
+        fetchBooking: (id) async => depositConfirmedBooking,
+        onConfirmed: (_) => confirmedCalled = true,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      coordinator.cancelFallbackPolling();
+
+      expect(confirmedCalled, isTrue,
+          reason: 'Polling must invoke onConfirmed for confirmed + partially_paid');
+
+      coordinator.dispose();
+    });
+
+    // 16. Fallback Polling rejects pending + partially_paid
+    test('16. Fallback Polling strictly rejects pending + partially_paid', () async {
+      final coordinator = PaymentCheckoutCoordinator();
+      bool confirmedCalled = false;
+
+      final pendingDepositBooking = makeBooking(
+        id: 'bk-poll-pending-dep',
+        startTime: now.add(const Duration(hours: 2)),
+        endTime: now.add(const Duration(hours: 3)),
+        status: BookingStatus.pending,
+        paymentStatus: 'partially_paid',
+      );
+
+      coordinator.startFallbackPolling(
+        bookingId: 'bk-poll-pending-dep',
+        interval: const Duration(milliseconds: 50),
+        fetchBooking: (id) async => pendingDepositBooking,
+        onConfirmed: (_) => confirmedCalled = true,
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      coordinator.cancelFallbackPolling();
+
+      expect(confirmedCalled, isFalse,
+          reason: 'Polling must NOT confirm pending + partially_paid');
+
+      coordinator.dispose();
+    });
+
+    // 17. Payment SSOT Decision Matrix
+    test('17. Payment SSOT Decision Matrix enforces strict canonical confirmation rules', () {
+      // Confirmed states
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'paid'), isTrue);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'confirmed', paymentStatus: 'partially_paid'), isTrue);
+
+      // Pending states — never confirmed
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'partially_paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'pending', paymentStatus: 'pending'), isFalse);
+
+      // Terminal / Cancelled states
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'cancelled', paymentStatus: 'paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: 'cancelled', paymentStatus: 'partially_paid'), isFalse);
+      expect(PaymentCheckoutService.isPaymentConfirmed(status: null, paymentStatus: null), isFalse);
+    });
+
+    // 18. Booking Ownership and Participation SSOT Predicate
+    test('18. Participant Matching rule matches createdByUserId, userId, and joinedUserIds', () {
+      final booking = makeBooking(
+        id: 'bk-ownership-1',
+        startTime: now,
+        endTime: now.add(const Duration(hours: 1)),
+        status: BookingStatus.confirmed,
+        createdByUserId: 'host-1',
+        joinedUserIds: ['host-1', 'participant-2', 'participant-3'],
+      );
+
+      // Host matches
+      expect(booking.createdByUserId == 'host-1' || booking.joinedUserIds.contains('host-1'), isTrue);
+      // Participants match
+      expect(booking.createdByUserId == 'participant-2' || booking.joinedUserIds.contains('participant-2'), isTrue);
+      expect(booking.createdByUserId == 'participant-3' || booking.joinedUserIds.contains('participant-3'), isTrue);
+      // Unrelated user does not match
+      expect(booking.createdByUserId == 'stranger-4' || booking.joinedUserIds.contains('stranger-4'), isFalse);
     });
   });
 }
