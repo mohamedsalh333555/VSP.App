@@ -6,16 +6,9 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/stadium_provider.dart';
-import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../data/models.dart';
-import '../../player/screens/booking_confirmation_screen.dart';
-import '../../player/screens/payment_gateway_screen.dart';
-import '../../player/screens/champion_screen.dart';
-import '../../player/screens/player_home_screen.dart';
 import '../../owner/screens/owner_main_screen.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/copilot_chat_bubble.dart';
@@ -186,118 +179,9 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
   }
 
   Future<void> _handleBookStadium(CopilotStadiumSummary summary) async {
-    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
-    Stadium? targetStadium = stadiumProvider.stadiums.cast<Stadium?>().firstWhere(
-      (s) => s?.id == summary.id,
-      orElse: () => null,
-    );
-
-    if (targetStadium == null) {
-      try {
-        final repo = StadiumRepository();
-        targetStadium = await repo.getStadiumById(summary.id);
-      } catch (e) {
-        debugPrint('[VspCopilotScreen] getStadiumById error: $e');
-      }
-    }
-
     if (!mounted) return;
-
-    if (targetStadium != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => BookingConfirmationScreen(
-            stadium: targetStadium!,
-            // Never invent a booking time from a stadium-card tap.
-            // The booking screen will load the real slots and let the user choose.
-            selectedDate: DateTime.now(),
-          ),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('تعذر تحميل بيانات ملعب ${summary.name} حالياً، يرجى المحاولة لاحقاً'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleOpenPayment(CopilotAction action) async {
-    final bookingId = action.params?['booking_id']?.toString() ?? '';
-    if (bookingId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر تجهيز الدفع حالياً.')),
-      );
-      return;
-    }
-
-    final navigator = Navigator.of(context);
     context.pop();
-
-    try {
-      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
-      if (booking == null) {
-        if (navigator.mounted) {
-          ScaffoldMessenger.of(navigator.context).showSnackBar(
-            const SnackBar(content: Text('تعذر تحميل الحجز لإتمام الدفع.')),
-          );
-        }
-        return;
-      }
-
-      final forceFullPayment =
-          action.params?['force_full_payment'] == true ||
-          (action.params?['force_full_payment']?.toString().toLowerCase() == 'true');
-
-      final draft = BookingDraft(
-        stadiumId: booking.stadiumId,
-        stadiumName: booking.stadiumName,
-        stadiumImageUrl: booking.stadiumImageUrl,
-        ownerId: booking.ownerId,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        bookingType: booking.bookingType,
-        playerTeamId: booking.playerTeamId,
-        playerTeamName: booking.playerTeamName,
-        opponentTeamId: booking.opponentTeamId,
-        opponentTeamName: booking.opponentTeamName,
-        isPrivate: booking.isPrivate,
-        rentBall: booking.rentBall,
-        totalPrice: booking.totalPrice,
-        paymentMethod: forceFullPayment ? 'paymob' : booking.paymentMethod,
-        currentPlayers: booking.currentPlayers,
-        playersPerTeam: booking.playersPerTeam,
-        totalFieldCapacity: booking.totalFieldCapacity,
-        playerPhone: booking.playerPhone,
-        notes: booking.notes,
-        isPaid: booking.isPaid,
-        depositPaid: forceFullPayment ? 0.0 : booking.depositPaid,
-        isDepositPaid: forceFullPayment ? false : booking.isDepositPaid,
-        paymentStatus: booking.paymentStatus,
-        needsDeposit: forceFullPayment ? false : booking.depositPaid > 0,
-      );
-
-      if (!navigator.mounted) return;
-      navigator.push(
-        MaterialPageRoute(
-          builder: (_) => PaymentGatewayScreen(
-            bookingDraft: draft,
-            forceFullPayment: forceFullPayment,
-            existingBookingId: booking.id,
-            existingBooking: booking,
-          ),
-        ),
-      );
-    } catch (e) {
-      debugPrint('[VspCopilotScreen] Payment action error: $e');
-      if (navigator.mounted) {
-        ScaffoldMessenger.of(navigator.context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح الدفع حالياً. حاول مرة أخرى.')),
-        );
-      }
-    }
+    ownerMainScreenKey.currentState?.openBookings();
   }
 
   void _handleExecuteAction(CopilotAction action) {
@@ -337,7 +221,11 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     }
 
     if (actionType == 'OPEN_PAYMENT') {
-      _handleOpenPayment(action);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('عملية الدفع تخص رحلة اللاعب وليست متاحة في مساعد مالك الملعب.'),
+        ),
+      );
       return;
     }
 
@@ -403,23 +291,38 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
 
   void _handleSelectTournament(CopilotTournamentSummary t) {
     HapticFeedback.lightImpact();
-    if (t.type == '1v1') {
-      context.pop();
-      playerHomeScreenKey.currentState?.switchToTab(2);
-      championScreenKey.currentState?.switchToTab(1);
-    } else {
-      context.push('/championship/${t.id}');
-    }
+    context.pop();
+    ownerMainScreenKey.currentState?.openTournaments();
   }
 
   void _handleJoinMatch(CopilotOpenMatchSummary m) {
     HapticFeedback.lightImpact();
-    context.push('/match/${m.id}');
+    context.pop();
+    ownerMainScreenKey.currentState?.openBookings();
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
     final isArabic = widget.isArabic ?? (Localizations.maybeLocaleOf(context)?.languageCode != 'en');
+
+    if (auth?.isOwner != true) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: VSPStateView(
+          state: VSPUiState.disabled,
+          title: isArabic ? 'مساعد المالك غير متاح' : 'Owner Copilot unavailable',
+          message: isArabic
+              ? 'هذا المساعد مخصص حصرياً لصاحب الملعب.'
+              : 'This assistant is exclusively for stadium owners.',
+          action: OutlinedButton(
+            onPressed: () => context.go('/player'),
+            child: Text(isArabic ? 'العودة' : 'Go back'),
+          ),
+        ),
+      );
+    }
+
     final hasMessages = _messages.isNotEmpty;
 
     return VSPScaffold(
@@ -463,7 +366,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
           const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 18),
           const SizedBox(width: 8),
           Text(
-            isArabic ? 'كابتن VSP الذكي' : 'Captain VSP',
+            isArabic ? 'مساعد مالك الملعب' : 'Owner Copilot',
             style: const TextStyle(
               color: VSPColors.textPrimary,
               fontSize: 16,
@@ -535,7 +438,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
               minLines: 1,
               maxLines: 4,
               decoration: InputDecoration(
-                hintText: isArabic ? 'اسأل كابتن VSP عن الملاعب والبطولات...' : 'Ask Captain VSP...',
+                hintText: isArabic ? 'اسأل مساعد المالك عن ملعبك وحجوزاتك وماليتك...' : 'Ask Owner Copilot about your stadiums, bookings and finances...',
                 hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 filled: true,
                 fillColor: VSPColors.inputFill,
