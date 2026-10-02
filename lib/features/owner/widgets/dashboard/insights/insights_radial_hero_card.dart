@@ -35,9 +35,9 @@ class InsightsRadialHeroCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
       decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
+        border: Border.all(color: VSPColors.divider, width: 1.0),
       ),
       child: Column(
         children: [
@@ -52,8 +52,8 @@ class InsightsRadialHeroCard extends StatelessWidget {
                   size: const Size(172, 172),
                   painter: RadialTickGaugePainter(
                     progress: ringProgress.clamp(0.0, 1.0),
-                    activeColor: VSPColors.accent,
-                    inactiveColor: Colors.white.withValues(alpha: 0.12),
+                    activeColor: VSPColors.textPrimary,
+                    inactiveColor: VSPColors.divider,
                     totalTicks: 52,
                     tickLength: 13.5,
                     strokeWidth: 2.3,
@@ -69,7 +69,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                         currentRevenue.toStringAsFixed(0),
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
-                          fontSize: 32,
+                          fontSize: 34,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -1.0,
                         ),
@@ -79,7 +79,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                     Text(
                       isArabic ? 'جنيه $periodLabel' : 'EGP $periodLabel',
                       style: const TextStyle(
-                        color: Colors.white54,
+                        color: VSPColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -99,7 +99,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.08),
@@ -113,7 +113,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                             ? Iconsax.trend_up_copy
                             : (isNegative ? Iconsax.trend_down_copy : Iconsax.minus_copy),
                         size: 16,
-                        color: Colors.white70,
+                        color: VSPColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -142,7 +142,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white54,
+                                color: VSPColors.textSecondary,
                                 fontSize: 10.5,
                               ),
                             ),
@@ -160,16 +160,16 @@ class InsightsRadialHeroCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
+                    border: Border.all(color: VSPColors.divider, width: 1.0),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Iconsax.flash_1_copy,
                         size: 16,
-                        color: Colors.white70,
+                        color: VSPColors.textSecondary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -196,7 +196,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white54,
+                                color: VSPColors.textSecondary,
                                 fontSize: 10.5,
                               ),
                             ),
