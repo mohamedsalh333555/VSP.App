@@ -57,7 +57,9 @@ class League1v1PrizeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${entryFee.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                    entryFee > 0
+                        ? '${entryFee.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}'
+                        : (isArabic ? 'غير متاح' : 'Unavailable'),
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 2),
@@ -98,7 +100,9 @@ class League1v1PrizeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${prizePool.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
+                    prizePool > 0
+                        ? '${prizePool.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}'
+                        : (isArabic ? 'غير متاح' : 'Unavailable'),
                     style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 2),
