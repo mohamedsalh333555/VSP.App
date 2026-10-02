@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/phone_utils.dart';
 import '../../../../data/models.dart';
 
 /// Utilities for launching WhatsApp support and generating official digital booking receipts.
@@ -103,12 +104,31 @@ https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 Enjoy your match.
 ''';
 
-    final String whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(receiptText)}';
+    final rawPhone = b.playerPhone?.trim() ?? '';
+    final phone = rawPhone.isEmpty ? '' : PhoneUtils.toE164(rawPhone).replaceAll('+', '');
+    if (phone.isEmpty) {
+      if (context.mounted) {
+        VSPFeedback.showError(context, isArabic ? 'رقم الهاتف غير متاح لهذا الحجز.' : 'No phone number is available for this booking.');
+      }
+      return;
+    }
+
+    final isManual = b.paymentTransactionId?.startsWith('MANUAL') == true;
+    final message = isManual
+        ? (isArabic
+            ? '*تفاصيل الحجز*\\nاسم العميل: $customerName\\nالملعب: $stadiumName\\nالتاريخ: $dateStr\\nالتوقيت: من $startTimeStr إلى $endTimeStr\\nقيمة الحجز: ${totalPrice.toInt()} ج.م'
+            : '*Booking Details*\\nCustomer: $customerName\\nStadium: $stadiumName\\nDate: $dateStr\\nTime: $startTimeStr - $endTimeStr\\nBooking Price: ${totalPrice.toInt()} EGP')
+        : receiptText;
+
+    final whatsappUrl = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
     try {
-      await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        VSPFeedback.showError(context, isArabic ? 'تعذر فتح محادثة واتساب لهذا الرقم.' : 'Could not open a WhatsApp chat for this number.');
+      }
     } catch (e) {
       if (context.mounted) {
-        VSPFeedback.showError(context, 'تعذر فتح الواتساب: $e');
+        VSPFeedback.showError(context, isArabic ? 'تعذر فتح محادثة واتساب لهذا الرقم. تأكد أن الرقم مسجل على واتساب.' : 'Could not open WhatsApp chat for this number. Make sure the number is registered on WhatsApp.');
       }
     }
   }
