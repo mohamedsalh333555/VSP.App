@@ -88,7 +88,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     value: 'all',
                     child: Text(
                       isArabic ? 'جميع الملاعب' : 'All Pitches',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
@@ -154,12 +154,11 @@ class InsightsTopFiltersRow extends StatelessWidget {
                   }).toList();
                 },
                 items: periodOptions.map((p) {
-                  final isCurrent = selectedTimePeriod == p['key'];
                   return DropdownMenuItem<String>(
                     value: p['key'],
                     child: Text(
                       p['label']!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
