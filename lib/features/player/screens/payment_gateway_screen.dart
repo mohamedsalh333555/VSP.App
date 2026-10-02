@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -495,7 +496,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         final cancel = await _confirmCancel(context, isChampionship, isArabic);
         if (cancel == true && context.mounted) Navigator.pop(context);
       },
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         appBar: _buildAppBar(context, l10n, isArabic, isChampionship),
         body: Stack(
