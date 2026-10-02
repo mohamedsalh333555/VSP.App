@@ -524,7 +524,56 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       amountToPay: amountToPay,
                       isArabic: isArabic,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: VSPSpacing.md),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.lg,
+                        vertical: VSPSpacing.md,
+                      ),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.card),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Iconsax.card_copy,
+                            color: VSPColors.accent,
+                            size: 20,
+                          ),
+                          const SizedBox(width: VSPSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isArabic ? 'طريقة الدفع' : 'Payment method',
+                                  style: const TextStyle(
+                                    color: VSPColors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  isArabic
+                                      ? 'هتختار وسيلة الدفع المناسبة داخل بوابة Paymob الرسمية.'
+                                      : 'Choose your preferred method inside the official Paymob gateway.',
+                                  style: const TextStyle(
+                                    color: VSPColors.textSecondary,
+                                    fontSize: 11.5,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: VSPSpacing.lg),
                     PaymentSecurityFooter(
                       isLoading: _isLoading,
                       isAwaitingWebhook: _isAwaitingWebhook,
