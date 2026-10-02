@@ -1,5 +1,6 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -23,7 +24,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
       {'name': 'العربية', 'code': 'ar'},
     ];
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
