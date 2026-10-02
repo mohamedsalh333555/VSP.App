@@ -6,6 +6,7 @@ import 'package:vsp_application/core/providers/stadium_provider.dart';
 import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_chat_bubble.dart';
+import '../helpers/test_owner_auth_provider.dart';
 
 void main() {
   group('Copilot E2E - Complete User Journey & Widget Integration', () {
@@ -16,11 +17,14 @@ void main() {
       copilotService.resetRateLimiter();
     });
 
-    // ==================== الرحلة الكاملة للمستخدم ====================
-    testWidgets('Complete Booking Journey via Copilot Widget Tree', (tester) async {
+    // ==================== رحلة مالك الملعب ====================
+    testWidgets('Owner Stadium Discovery Journey via Copilot Widget Tree', (tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
+            ChangeNotifierProvider<TestOwnerAuthProvider>(
+              create: (_) => TestOwnerAuthProvider(),
+            ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
           child: MaterialApp(
@@ -35,8 +39,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // 1. تحقق من ظهور عنوان كابتن VSP والأسئلة الافتراضية
-      expect(find.text('كابتن VSP الذكي'), findsWidgets);
+      // 1. Verify the owner-only Copilot header and conversational input
+      expect(find.text('مساعد مالك الملعب'), findsWidgets);
       expect(find.byType(TextField), findsOneWidget);
 
       // 2. اكتب طلب بحث
@@ -64,6 +68,9 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
+            ChangeNotifierProvider<TestOwnerAuthProvider>(
+              create: (_) => TestOwnerAuthProvider(),
+            ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
           child: MaterialApp(
