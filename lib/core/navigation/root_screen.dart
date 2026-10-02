@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import '../../shared/widgets/primary_button.dart';
 import 'package:provider/provider.dart';
@@ -163,7 +164,7 @@ class MaintenanceScreen extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Center(
  child: Padding(
