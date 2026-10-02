@@ -226,7 +226,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   @override
   void didUpdateWidget(covariant OwnerDashboardScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.isHomeVisible && isHomeVisible) {
+    if (!oldWidget.isHomeVisible && widget.isHomeVisible) {
       onHomeBecameVisible();
     }
   }
