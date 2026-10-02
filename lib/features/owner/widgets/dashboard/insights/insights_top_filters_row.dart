@@ -99,7 +99,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         value: s.id,
                         child: Text(
                           s.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: VSPColors.textPrimary,
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
