@@ -51,6 +51,14 @@ class StadiumFilterService {
     if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
       return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
     }
+    if (amenity == 'Night Floodlights' || amenity == 'كشافات ليلية') {
+      // Late operating hours are the canonical signal when the owner does not
+      // explicitly persist a separate floodlight flag.
+      return isNightShiftStadium(stadium) ||
+          featMap['nightFloodlights'] == true ||
+          featMap['floodlights'] == true ||
+          featMap['hasFloodlights'] == true;
+    }
     if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
       return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
     }
