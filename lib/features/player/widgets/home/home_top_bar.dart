@@ -95,23 +95,6 @@ class HomeTopBar extends StatelessWidget {
                 ),
                 
                 HomeNotificationBadge(userId: auth.currentUser?.uid ?? ''),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'VSP Copilot',
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1.2),
-                    ),
-                    child: const Icon(Iconsax.magic_star_copy, color: VSPColors.accent, size: 20),
-                  ),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    context.push('/copilot');
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 16),
