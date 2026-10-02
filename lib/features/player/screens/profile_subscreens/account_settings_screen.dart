@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/ui/vsp_ui.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/providers/auth_provider.dart';
