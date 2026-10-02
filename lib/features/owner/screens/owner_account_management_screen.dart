@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/stadium_repository.dart';
@@ -172,7 +173,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     final currentUid = authProvider.currentUser?.uid ?? '';
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
