@@ -102,7 +102,21 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
     _scrollToBottom();
 
     final auth = Provider.of<AuthProvider?>(context, listen: false);
-    final userGov = auth?.userModel?.governorate ?? 'أسوان';
+    final userGov = auth?.userModel?.governorate?.trim();
+    if (userGov == null || userGov.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _messages.add(CopilotMessage.assistant(
+            widget.isArabic
+                ? 'حدد محافظتك أولاً حتى أقدر أعرض بيانات الملاعب الصحيحة.'
+                : 'Set your governorate first so I can show the correct stadium data.',
+          ));
+        });
+        _scrollToBottom();
+      }
+      return;
+    }
 
     final response = await widget.copilotService.sendMessage(
       message: text,
