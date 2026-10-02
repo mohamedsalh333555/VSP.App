@@ -31,13 +31,13 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
       title = isAr ? 'مكافأة فوز بمباراة' : 'Match Win Reward';
       amountText = isAr ? '+3 نقاط' : '+3 pts';
     } else if (type == 'payout_disbursed' || type == 'payout') {
-      title = isAr ? 'سحب أرباح مكتمل' : 'Payout Disbursed';
+      title = isAr ? 'سحب إلكتروني مكتمل' : 'Online Withdrawal Completed';
       amountText = '-${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'payout_pending') {
-      title = isAr ? 'طلب سحب قيد المراجعة' : 'Payout Pending';
+      title = isAr ? 'طلب سحب قيد المراجعة' : 'Withdrawal Pending';
       amountText = '-${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'payout_rejected') {
-      title = isAr ? 'طلب سحب مرفوض (مسترد)' : 'Payout Rejected (Restored)';
+      title = isAr ? 'طلب سحب مرفوض (مسترد)' : 'Withdrawal Rejected (Restored)';
       amountText = '${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     } else if (type == 'digital' || type == 'online' || method == 'paymob') {
       title = isAr ? 'تحصيل إلكتروني آمن' : 'Digital Online Payment';
