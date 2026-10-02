@@ -16,10 +16,31 @@ import '../widgets/chat/chat_dialogs.dart';
 import '../widgets/chat/chat_call_utils.dart';
 
 class ChatScreen extends StatefulWidget {
-  final Booking booking;
+  final Booking? booking;
+  final String? conversationId;
+  final String? conversationTitle;
+  final String? otherUserId;
+  final bool isSupportChat;
   static String? activeBookingId;
 
-  const ChatScreen({super.key, required this.booking});
+  const ChatScreen({super.key, required Booking booking})
+      : booking = booking,
+        conversationId = null,
+        conversationTitle = null,
+        otherUserId = null,
+        isSupportChat = false;
+
+  const ChatScreen.conversation({
+    super.key,
+    required String conversationId,
+    required String title,
+    String? otherUserId,
+    bool isSupportChat = false,
+  })  : booking = null,
+        conversationId = conversationId,
+        conversationTitle = title,
+        otherUserId = otherUserId,
+        isSupportChat = isSupportChat;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -37,19 +58,20 @@ class _ChatScreenState extends State<ChatScreen> {
       return _messagesStream!;
     }
     _lastUserId = currentUserId;
-    _messagesStream = ChatRepository().getChatMessages(widget.booking.id, currentUserId: currentUserId);
+    final id = widget.conversationId ?? widget.booking!.id;
+    _messagesStream = ChatRepository().getChatMessages(id, currentUserId: currentUserId);
     return _messagesStream!;
   }
 
   @override
   void initState() {
     super.initState();
-    ChatScreen.activeBookingId = widget.booking.id;
+    ChatScreen.activeBookingId = widget.conversationId ?? widget.booking?.id;
     // Mark messages as read when entering the screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser != null) {
-        ChatRepository().markMessagesAsRead(widget.booking.id, auth.currentUser!.uid);
+        ChatRepository().markMessagesAsRead(widget.conversationId ?? widget.booking!.id, auth.currentUser!.uid);
       }
     });
   }
@@ -84,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _messageController.clear();
       await ChatRepository().sendMessage(widget.booking.id, message);
-      AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
+      AnalyticsService.logChatMessageSent(widget.booking?.bookingType.name ?? 'direct');
 
       if (mounted && _scrollController.hasClients) {
         _scrollController.animateTo(
@@ -113,21 +135,35 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.surface,
         elevation: 0,
-        title: ChatAppBarTitle(
-          booking: widget.booking,
-          currentUserId: currentUserId,
-        ),
+        title: widget.booking != null
+            ? ChatAppBarTitle(booking: widget.booking!, currentUserId: currentUserId)
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.conversationTitle ?? (isArabic ? 'المحادثة' : 'Conversation'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    widget.isSupportChat
+                        ? (isArabic ? 'محادثة الدعم الفني' : 'Support Conversation')
+                        : (isArabic ? 'محادثة مباشرة' : 'Direct Conversation'),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                  ),
+                ],
+              ),
         leading: const VSPBackButton(),
         actions: [
-          IconButton(
-            icon: const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 20),
-            tooltip: isArabic ? 'اتصال بالمالك' : 'Call Owner',
-            onPressed: () => ChatCallUtils.makeCall(
-              context,
-              booking: widget.booking,
-              currentUserId: currentUserId,
+          if (widget.booking != null)
+            IconButton(
+              icon: const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 20),
+              tooltip: isArabic ? 'اتصال بالمالك' : 'Call Owner',
+              onPressed: () => ChatCallUtils.makeCall(
+                context,
+                booking: widget.booking!,
+                currentUserId: currentUserId,
+              ),
             ),
-          ),
           PopupMenuButton<String>(
             icon: const Icon(Iconsax.more_copy, color: VSPColors.textPrimary),
             color: VSPColors.surface,
@@ -136,7 +172,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ChatDialogs.showReportDialog(
                   context,
                   currentUserId: currentUserId,
-                  bookingId: widget.booking.id,
+                  bookingId: widget.conversationId ?? widget.booking!.id,
                 );
               } else if (value == 'delete') {
                 ChatDialogs.showConfirmDeleteDialog(
@@ -199,6 +235,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       return ChatSystemBanner(
                         booking: widget.booking,
                         currentUserId: currentUserId,
+                        isSpecialChat: widget.booking == null || widget.isSupportChat,
                       );
                     }
                     final message = messages[index];
@@ -208,6 +245,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       message: message,
                       isMe: isMe,
                       booking: widget.booking,
+                      isHost: widget.booking != null && message.senderId == widget.booking!.createdByUserId,
                     );
                   },
                 );
@@ -216,6 +254,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ChatInputBar(
             booking: widget.booking,
+            isSpecialChat: widget.booking == null || widget.isSupportChat,
             messageController: _messageController,
             isSending: _isSending,
             onSendMessage: _sendMessage,
