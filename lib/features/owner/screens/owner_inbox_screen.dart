@@ -249,26 +249,16 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
       unreadCount: unreadCount,
       onTap: () async {
         final isSupport = type == 'support' || otherUserId.isEmpty;
-        final dummyBooking = Booking(
-          id: conversationId,
-          stadiumId: isSupport ? 'support_chat' : 'direct_chat',
-          stadiumName: title,
-          ownerId: ownerId,
-          startTime: latestTime,
-          endTime: latestTime.add(const Duration(hours: 1)),
-          bookingType: BookingType.personal,
-          isPrivate: false,
-          rentBall: false,
-          totalPrice: 0,
-          paymentMethod: 'none',
-          status: BookingStatus.confirmed,
-          createdByUserId: ownerId,
-          createdAt: latestTime,
-          joinedUserIds: [ownerId, if (otherUserId.isNotEmpty) otherUserId],
-        );
         await Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ChatScreen(booking: dummyBooking)),
+          MaterialPageRoute(
+            builder: (_) => ChatScreen.conversation(
+              conversationId: conversationId,
+              title: title,
+              otherUserId: otherUserId.isNotEmpty ? otherUserId : null,
+              isSupportChat: isSupport,
+            ),
+          ),
         );
         if (mounted) {
           setState(() {});
