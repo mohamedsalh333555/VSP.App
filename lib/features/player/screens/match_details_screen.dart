@@ -408,7 +408,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  case BookingStatus.expired:
  statusLabel = isAr ? 'منتهية' : 'Expired';
  statusColor = VSPColors.textSecondary;
- statusIcon = Iconsax.timer_1_copy;
+ statusIcon = Icons.timer_off_outlined;
  break;
  }
 
