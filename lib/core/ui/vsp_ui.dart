@@ -242,9 +242,11 @@ class VSPStateView extends StatelessWidget {
                     foregroundColor: VSPColors.accent,
                     shape: const StadiumBorder(),
                   ),
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  child: Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'إعادة المحاولة'
+                        : 'Retry',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
