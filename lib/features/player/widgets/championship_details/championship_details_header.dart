@@ -178,10 +178,10 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                         : status == 'completed'
                             ? Iconsax.tick_circle_copy
                             : status == 'ongoing'
-                                ? Iconsax.play_circle_copy
+                                ? Icons.play_circle_outline
                                 : (isFull || status == 'full')
                                     ? Iconsax.people_copy
-                                    : Iconsax.edit_copy,
+                                    : Icons.edit_outlined,
                   );
                 },
               ),
