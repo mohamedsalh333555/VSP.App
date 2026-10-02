@@ -34,7 +34,7 @@ void showBookingPaymentMethodSheet({
     useSafeArea: true,
     isScrollControlled: true,
     backgroundColor: VSPColors.surface,
-    shape: const RoundedRectangleBorder(
+    shape: RoundedRectangleBorder(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
     ),
     builder: (ctx) {
