@@ -17,7 +17,9 @@ import '../widgets/ledger/owner_payout_dialog.dart';
 
 /// شاشة السجل المالي والتسويات للمالك (Monochrome + Emerald Clean Ledger)
 class OwnerLedgerScreen extends StatefulWidget {
-  const OwnerLedgerScreen({super.key});
+  final bool payoutOnly;
+
+  const OwnerLedgerScreen({super.key, this.payoutOnly = false});
 
   @override
   State<OwnerLedgerScreen> createState() => _OwnerLedgerScreenState();
@@ -140,7 +142,9 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           ),
         ],
         title: Text(
-          isAr ? 'السجل المالي والتسويات' : 'Financial Ledger',
+          widget.payoutOnly
+              ? (isAr ? 'سجل السحوبات' : 'Withdrawal History')
+              : (isAr ? 'السجل المالي والتسويات' : 'Financial Ledger'),
           style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
@@ -152,7 +156,10 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
 
-          final transactions = snapshot.data ?? [];
+          final allTransactions = snapshot.data ?? [];
+          final transactions = widget.payoutOnly
+              ? allTransactions.where((tx) => tx['type']?.toString().toLowerCase() == 'payout').toList()
+              : allTransactions;
 
           // الرصيد المالي لا يُستنتج من قائمة المعاملات؛ المصدر الوحيد هو ملخص الخادم.
           final summaryReady = _summary?['success'] == true;
@@ -163,7 +170,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
               ? ((_summary?['cash_revenue'] as num?)?.toDouble() ?? 0.0)
               : 0.0;
 
-          if (transactions.isEmpty && _summary == null) {
+          if (transactions.isEmpty && (_summary == null || widget.payoutOnly)) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
