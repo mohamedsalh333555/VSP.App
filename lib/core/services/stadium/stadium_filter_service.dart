@@ -51,14 +51,8 @@ class StadiumFilterService {
     if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
       return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
     }
-    if (amenity == 'Night Floodlights' || amenity == 'كشافات إضاءة ليلاً') {
-      return stadium.hasJerash || featMap['hasLighting'] == true || featMap['lighting'] == true;
-    }
     if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
       return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
-    }
-    if (amenity == 'Ball Provided' || amenity == 'كرة متوفرة' || amenity == 'كرة') {
-      return stadium.hasBall || featMap['hasBall'] == true;
     }
     if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
       return stadium.hasSeats || featMap['hasSeats'] == true;
