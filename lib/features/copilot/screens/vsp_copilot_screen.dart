@@ -265,28 +265,10 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
       }
     }
 
-    if (route.contains('team') || route.contains('my-team')) {
-      context.pop();
-      playerHomeScreenKey.currentState?.switchToTab(1);
-    } else if (route.contains('1v1') || route.contains('tournament') || route.contains('championship')) {
-      context.pop();
-      playerHomeScreenKey.currentState?.switchToTab(2);
-      if (route.contains('1v1')) {
-        championScreenKey.currentState?.switchToTab(1);
-      }
-    } else if (route.contains('booking') || route.contains('match')) {
-      context.pop();
-      playerHomeScreenKey.currentState?.switchToTab(3);
-    } else if (route.contains('profile') || route.contains('setting')) {
-      context.pop();
-      playerHomeScreenKey.currentState?.switchToTab(4);
-    } else {
-      try {
-        context.push(action.route);
-      } catch (e) {
-        debugPrint('[VspCopilotScreen] Navigate error: $e');
-      }
-    }
+    // Unknown actions stay inside the owner workspace; Owner Copilot never
+    // routes to player-only surfaces.
+    context.pop();
+    ownerMainScreenKey.currentState?.openDashboard();
   }
 
   void _handleSelectTournament(CopilotTournamentSummary t) {
