@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
+import '../../screens/booking_confirmation_screen.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../booking_type_modal.dart';
@@ -98,10 +99,42 @@ class StadiumBottomBookingBar extends StatelessWidget {
                 Expanded(
                   child: PrimaryButton(
                     text: isArabic ? 'احجز الآن' : 'Book Now',
-                    onPressed: () => BookingTypeModal.show(context, stadium),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingConfirmationScreen(
+                            stadium: stadium,
+                            bookingType: 'Personal',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: VSPSpacing.actionGap),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton.icon(
+                onPressed: () => BookingTypeModal.show(context, stadium),
+                icon: const Icon(Iconsax.arrow_down_1_copy, size: 15),
+                label: Text(
+                  isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: VSPColors.textSecondary,
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
             ),
           ],
         ),
