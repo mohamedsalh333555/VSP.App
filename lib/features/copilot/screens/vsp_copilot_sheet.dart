@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/vsp_copilot_service.dart';
-import '../../../core/ui/vsp_ui.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../owner/screens/owner_main_screen.dart';
 
