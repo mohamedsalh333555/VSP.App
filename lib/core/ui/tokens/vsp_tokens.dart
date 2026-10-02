@@ -102,6 +102,7 @@ class VSPSize {
 }
 
 class VSPSpacing {
+  // Backward-compatible tokens retained for existing feature code.
   static const double xs = 4.0;
   static const double sm = 8.0;
   static const double md = 12.0;
@@ -109,6 +110,15 @@ class VSPSpacing {
   static const double xl = 20.0;
   static const double xxl = 24.0;
   static const double xxxl = 32.0;
+
+  // Canonical 8px visual grid used by new/refined screens.
+  static const double grid1 = 8.0;
+  static const double grid2 = 16.0;
+  static const double grid3 = 24.0;
+  static const double grid4 = 32.0;
+  static const double page = grid2;
+  static const double section = grid3;
+  static const double actionGap = grid1;
 }
 
 /// Shared geometry for the floating bottom navigation and content that must clear it.
