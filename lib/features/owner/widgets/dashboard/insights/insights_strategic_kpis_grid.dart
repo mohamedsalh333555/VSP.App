@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/utils/arabic_plural_utils.dart';
 
 /// 2x2 grid of strategic KPI metric cards (Bookings, Lost Revenue, Occupancy, Ticket Price).
 /// Each card is interactive and triggers a detailed explanatory bottom sheet on tap.
@@ -289,7 +290,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                   context,
                   title: isArabic ? 'حجوزات $periodLabel' : 'Bookings ($periodLabel)',
                   value: isArabic
-                      ? '$totalBookingsToday حجز ($onlinePaidCount أونلاين • ${totalBookingsToday - onlinePaidCount} كاش)'
+                      ? '${ArabicPluralUtils.formatBookingCount(totalBookingsToday, isArabic: true)} ($onlinePaidCount أونلاين • ${totalBookingsToday - onlinePaidCount} كاش)'
                       : '$totalBookingsToday bookings ($onlinePaidCount online • ${totalBookingsToday - onlinePaidCount} cash)',
                   icon: Iconsax.calendar_1_copy,
                   explanation: isArabic
@@ -306,13 +307,13 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                 value: '${lostRevenue.toStringAsFixed(0)} ${isArabic ? "ج.م" : "EGP"}',
                 label: isArabic ? 'الإيراد غير المستغل' : 'Lost Potential',
                 subtext: isArabic
-                    ? '${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة $periodLabel'
+                    ? '${ArabicPluralUtils.formatHourCount(unbookedHours, isArabic: true)} شاغرة $periodLabel'
                     : '${unbookedHours.toStringAsFixed(1)} unbooked hrs',
                 onTap: () => showKpiExplanationSheet(
                   context,
                   title: isArabic ? 'الإيراد غير المستغل' : 'Lost Potential Revenue',
                   value: isArabic
-                      ? '${lostRevenue.toStringAsFixed(0)} ج.م (${unbookedHours.toStringAsFixed(unbookedHours % 1 == 0 ? 0 : 1)} ساعة شاغرة $periodLabel)'
+                      ? '${lostRevenue.toStringAsFixed(0)} ج.م (${ArabicPluralUtils.formatHourCount(unbookedHours, isArabic: true)} شاغرة $periodLabel)'
                       : '${lostRevenue.toStringAsFixed(0)} EGP (${unbookedHours.toStringAsFixed(1)} unbooked hrs)',
                   icon: Iconsax.moneys_copy,
                   explanation: isArabic

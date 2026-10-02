@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/arabic_plural_utils.dart';
 import '../../../../data/models.dart';
 
 /// شريط الإجراء التشغيلي الفوري للحجوزات المعلقة (فحمي وأخضر نيون)
@@ -24,7 +25,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
       if (b.status == BookingStatus.cancelled || b.status == BookingStatus.completed) {
         return false;
       }
-      final isCash = (b.paymentMethod.toLowerCase() == 'cash') ||
+      final isCash = b.isCash ||
+          (b.paymentMethod.toLowerCase() == 'cash') ||
           (b.paymentSource?.toLowerCase() == 'cash');
       final isUnpaidOrUnconfirmed = !b.isPaid && b.paymentStatus != 'paid';
       return isCash && isUnpaidOrUnconfirmed;
@@ -63,9 +65,7 @@ class OwnerPendingActionsBar extends StatelessWidget {
       );
     }
 
-    final countText = isArabic
-        ? '$count حجوزات نقدية بحاجة للتحصيل أو التأكيد'
-        : '$count cash bookings pending collection/confirmation';
+    final countText = ArabicPluralUtils.formatPendingCashBookingCount(count, isArabic: isArabic);
 
     return Container(
       width: double.infinity,

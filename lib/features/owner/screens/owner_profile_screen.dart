@@ -6,6 +6,7 @@ import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/arabic_plural_utils.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -189,7 +190,7 @@ class OwnerProfileScreen extends StatelessWidget {
                               const Icon(Iconsax.building_copy, size: 11, color: VSPColors.textSecondary),
                               const SizedBox(width: 4),
                               Text(
-                                isArabic ? '$count ملاعب' : '$count Stadiums',
+                                ArabicPluralUtils.formatStadiumCount(count, isArabic: isArabic),
                                 style: const TextStyle(
                                   fontSize: 10,
                                   color: VSPColors.textSecondary,

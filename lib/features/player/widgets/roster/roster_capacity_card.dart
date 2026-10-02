@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/arabic_plural_utils.dart';
 
 /// Card showing current team lineup capacity progress vs tournament min and max constraints.
 class RosterCapacityCard extends StatelessWidget {
@@ -69,14 +70,18 @@ class RosterCapacityCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'الحد الأدنى: $minPlayers لاعبين' : 'Min: $minPlayers players',
+                isArabic
+                    ? 'الحد الأدنى: ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)}'
+                    : 'Min: ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: false)}',
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
                   fontSize: 11,
                 ),
               ),
               Text(
-                isArabic ? 'الحد الأقصى: $maxPlayers لاعبين' : 'Max: $maxPlayers players',
+                isArabic
+                    ? 'الحد الأقصى: ${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)}'
+                    : 'Max: ${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: false)}',
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
                   fontSize: 11,

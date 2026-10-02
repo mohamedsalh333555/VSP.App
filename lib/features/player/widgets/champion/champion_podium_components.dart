@@ -5,10 +5,12 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Translates filter items (governorates and sports) according to current locale.
-String championTranslateItem(BuildContext context, String item) {
+String championTranslateItem(BuildContext context, String item, {bool isSport = false}) {
   final isArabic = AppLocalizations.of(context)!.localeName == 'ar';
-  if (item == 'All') {
-    return isArabic ? 'كل المحافظات' : 'All Governorates';
+  if (item == 'All' || item == 'الكل') {
+    return isArabic
+        ? (isSport ? 'كافة الرياضات' : 'كل المحافظات')
+        : (isSport ? 'All Sports' : 'All Governorates');
   }
   if (!isArabic) return item;
   if (EgyptGovernorates.sportsTranslations.containsKey(item)) {

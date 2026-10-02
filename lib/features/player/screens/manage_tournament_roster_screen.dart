@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/arabic_plural_utils.dart';
 import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -112,7 +113,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
           VSPFeedback.showError(
             context,
             isAr
-                ? 'وصلت للحد الأقصى لتشكيلة البطولة ($_maxPlayers لاعبين)!'
+                ? 'وصلت للحد الأقصى لتشكيلة البطولة (${ArabicPluralUtils.formatPlayerCount(_maxPlayers, isArabic: true)})!'
                 : 'Reached maximum roster limit of $_maxPlayers players!',
           );
           return;
@@ -141,7 +142,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
       VSPFeedback.showError(
         context,
         isAr
-            ? 'وصلت للحد الأقصى لتشكيلة البطولة ($_maxPlayers لاعبين)!'
+            ? 'وصلت للحد الأقصى لتشكيلة البطولة (${ArabicPluralUtils.formatPlayerCount(_maxPlayers, isArabic: true)})!'
             : 'Reached maximum roster limit of $_maxPlayers players!',
       );
       return;
@@ -197,8 +198,8 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
       VSPFeedback.showSuccess(
         context,
         isAr
-            ? 'تمت إضافة $addedCount لاعبين من نص التشكيلة بنجاح! '
-            : 'Successfully added $addedCount players from WhatsApp text! ',
+            ? 'تمت إضافة ${ArabicPluralUtils.formatPlayerCount(addedCount, isArabic: true)} من نص التشكيلة بنجاح!'
+            : 'Successfully added $addedCount players from WhatsApp text!',
       );
     }
   }
@@ -222,7 +223,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
       VSPFeedback.showError(
         context,
         isAr
-            ? 'يجب أن تضم التشكيلة $_minPlayers لاعبين على الأقل للمشاركة!'
+            ? 'يجب أن تضم التشكيلة ${ArabicPluralUtils.formatPlayerCount(_minPlayers, isArabic: true)} على الأقل للمشاركة!'
             : 'Roster must contain at least $_minPlayers players!',
       );
       return;
@@ -232,7 +233,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
       VSPFeedback.showError(
         context,
         isAr
-            ? 'تجاوزت الحد الأقصى المسموح به ($_maxPlayers لاعبين)!'
+            ? 'تجاوزت الحد الأقصى المسموح به (${ArabicPluralUtils.formatPlayerCount(_maxPlayers, isArabic: true)})!'
             : 'Roster exceeds maximum allowed of $_maxPlayers players!',
       );
       return;

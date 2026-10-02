@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:provider/provider.dart';
 import '../../../core/constants/egypt_governorates.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/league_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
@@ -26,9 +24,8 @@ class ChampionScreenState extends State<ChampionScreen>
   int _selectedTabIndex = 0;
 
   // Filter states
-  String _selectedLocation = 'Cairo'; 
-  String _selectedSport = 'Football'; 
-  bool _isLocationInitialized = false;
+  String _selectedLocation = 'All'; 
+  String _selectedSport = 'All';
 
   @override
   void initState() {
@@ -39,26 +36,6 @@ class ChampionScreenState extends State<ChampionScreen>
         _selectedTabIndex = _tabController.index;
       });
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isLocationInitialized) {
-      final auth = Provider.of<AuthProvider>(context);
-      final rawGov = auth.userModel?.governorate ?? auth.governorate;
-      final resolvedGov = EgyptGovernorates.resolveGoogleName(rawGov);
-      if (resolvedGov != null && EgyptGovernorates.allGovernorates.contains(resolvedGov)) {
-        _selectedLocation = resolvedGov;
-      } else {
-        final matchedGov = EgyptGovernorates.allGovernorates.firstWhere(
-          (g) => g.toLowerCase() == rawGov.toLowerCase(),
-          orElse: () => 'Cairo',
-        );
-        _selectedLocation = matchedGov;
-      }
-      _isLocationInitialized = true;
-    }
   }
   
   void switchToTab(int index) {
@@ -220,8 +197,9 @@ class ChampionScreenState extends State<ChampionScreen>
                   Expanded(
                     child: _buildFunctionalDropdown(
                       value: _selectedSport,
-                      items: VSPConstants.sports,
+                      items: ['All', ...VSPConstants.sports],
                       onChanged: (val) => setState(() => _selectedSport = val!),
+                      isSport: true,
                     ),
                   ),
                 ],
@@ -268,6 +246,7 @@ class ChampionScreenState extends State<ChampionScreen>
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
+    bool isSport = false,
   }) {
     final effectiveValue = items.contains(value) ? value : items.first;
 
@@ -297,7 +276,7 @@ class ChampionScreenState extends State<ChampionScreen>
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    championTranslateItem(context, item),
+                    championTranslateItem(context, item, isSport: isSport),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
@@ -311,7 +290,7 @@ class ChampionScreenState extends State<ChampionScreen>
             return DropdownMenuItem<String>(
               value: item,
               child: Text(
-                championTranslateItem(context, item),
+                championTranslateItem(context, item, isSport: isSport),
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
               ),

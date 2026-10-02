@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/utils/arabic_plural_utils.dart';
 
 /// List of players currently registered and confirmed in the 1v1 tournament roster.
 class League1v1RosterList extends StatelessWidget {
@@ -40,7 +41,7 @@ class League1v1RosterList extends StatelessWidget {
                   border: Border.all(color: VSPColors.divider, width: 0.5),
                 ),
                 child: Text(
-                  '$registeredCount ${isArabic ? "لاعبين" : "players"}',
+                  ArabicPluralUtils.formatPlayerCount(registeredCount, isArabic: isArabic),
                   style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),

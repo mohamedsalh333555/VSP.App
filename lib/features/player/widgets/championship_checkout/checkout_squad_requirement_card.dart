@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/arabic_plural_utils.dart';
 
 class CheckoutSquadRequirementCard extends StatelessWidget {
   final int totalCount;
@@ -74,7 +75,7 @@ class CheckoutSquadRequirementCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(VSPRadius.full),
                       ),
                       child: Text(
-                        isArabic ? '$totalCount لاعبين' : '$totalCount Players',
+                        ArabicPluralUtils.formatPlayerCount(totalCount, isArabic: isArabic),
                         style: const TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.w900,
@@ -87,8 +88,12 @@ class CheckoutSquadRequirementCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   minPlayers == maxPlayers
-                      ? (isArabic ? 'المطلوب: $minPlayers لاعبين بالضبط' : 'Required: Exactly $minPlayers players')
-                      : (isArabic ? 'المطلوب: من $minPlayers إلى $maxPlayers لاعبين' : 'Required: $minPlayers to $maxPlayers players'),
+                      ? (isArabic
+                          ? 'المطلوب: ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)} بالضبط'
+                          : 'Required: Exactly ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: false)}')
+                      : (isArabic
+                          ? 'المطلوب: من ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)} إلى ${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)}'
+                          : 'Required: $minPlayers to $maxPlayers players'),
                   style: TextStyle(
                     color: isSelectionValid ? VSPColors.textSecondary : VSPColors.warning,
                     fontSize: 12,

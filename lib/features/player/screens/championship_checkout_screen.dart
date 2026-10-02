@@ -6,6 +6,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/arabic_plural_utils.dart';
 import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -107,7 +108,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
     final maxPlayers = widget.championship.maxPlayersPerTeam;
     if (_selectedPlayerIds.length + _offlineGuestNames.length >= maxPlayers) {
-      VSPFeedback.showError(context, 'تجاوزت الحد الأقصى للاعبين ($maxPlayers لاعبين)!');
+      VSPFeedback.showError(context, 'تجاوزت الحد الأقصى للاعبين (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)})!');
       return;
     }
 
@@ -143,8 +144,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       VSPFeedback.showSuccess(
         context,
         isArabic
-            ? 'تمت إضافة $addedCount لاعبين من نص التشكيلة بنجاح! '
-            : 'Successfully added $addedCount players from WhatsApp text! ',
+            ? 'تمت إضافة ${ArabicPluralUtils.formatPlayerCount(addedCount, isArabic: true)} من نص التشكيلة بنجاح!'
+            : 'Successfully added $addedCount players from WhatsApp text!',
       );
     }
   }
@@ -157,11 +158,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final totalCount = _selectedPlayerIds.length + _offlineGuestNames.length;
 
     if (totalCount < minPlayers) {
-      VSPFeedback.showError(context, 'يرجى اختيار $minPlayers لاعبين على الأقل للتشكيلة.');
+      VSPFeedback.showError(context, 'يرجى اختيار ${ArabicPluralUtils.formatPlayerCount(minPlayers, isArabic: true)} على الأقل للتشكيلة.');
       return;
     }
     if (totalCount > maxPlayers) {
-      VSPFeedback.showError(context, 'التشكيلة تجاوزت الحد الأقصى ($maxPlayers لاعبين).');
+      VSPFeedback.showError(context, 'التشكيلة تجاوزت الحد الأقصى (${ArabicPluralUtils.formatPlayerCount(maxPlayers, isArabic: true)}).');
       return;
     }
 
