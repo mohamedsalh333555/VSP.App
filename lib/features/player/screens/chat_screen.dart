@@ -105,7 +105,7 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       _messageController.clear();
-      await ChatRepository().sendMessage(widget.booking.id, message);
+      await ChatRepository().sendMessage(widget.conversationId ?? widget.booking!.id, message);
       AnalyticsService.logChatMessageSent(widget.booking?.bookingType.name ?? 'direct');
 
       if (mounted && _scrollController.hasClients) {
@@ -175,11 +175,19 @@ class _ChatScreenState extends State<ChatScreen> {
                   bookingId: widget.conversationId ?? widget.booking!.id,
                 );
               } else if (value == 'delete') {
-                ChatDialogs.showConfirmDeleteDialog(
-                  context,
-                  currentUserId: currentUserId,
-                  booking: widget.booking,
-                );
+                if (widget.booking != null) {
+                  ChatDialogs.showConfirmDeleteDialog(
+                    context,
+                    currentUserId: currentUserId,
+                    booking: widget.booking!,
+                  );
+                } else {
+                  ChatDialogs.showConfirmDeleteConversationDialog(
+                    context,
+                    currentUserId: currentUserId,
+                    conversationId: widget.conversationId!,
+                  );
+                }
               }
             },
             itemBuilder: (ctx) => [
