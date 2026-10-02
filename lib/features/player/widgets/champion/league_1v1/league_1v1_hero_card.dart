@@ -29,7 +29,7 @@ class League1v1HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveTarget = targetCount > 0 ? targetCount : 32;
+    final hasTarget = targetCount > 0;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -70,8 +70,8 @@ class League1v1HeroCard extends StatelessWidget {
                       ),
                       child: Text(
                         isArabic
-                            ? 'بطولة تحديات ($effectiveTarget لاعب) • مباريات من 6 جولات'
-                            : '$effectiveTarget Players Challenge • 6 Rounds per Match',
+                            ? (hasTarget ? 'بطولة تحديات ($targetCount لاعب)' : 'بطولة تحديات')
+                            : (hasTarget ? '$targetCount Players Challenge' : 'Players Challenge'),
                         style: const TextStyle(
                           color: VSPColors.accent,
                           fontSize: 10.5,
@@ -109,7 +109,9 @@ class League1v1HeroCard extends StatelessWidget {
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
               ),
               Text(
-                '$registeredCount / $effectiveTarget ${isArabic ? "لاعب" : "Players"}',
+                targetCount > 0
+                    ? '$registeredCount / $targetCount ${isArabic ? "لاعب" : "Players"}'
+                    : '$registeredCount ${isArabic ? "لاعب مؤكد" : "confirmed players"}',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 13,
