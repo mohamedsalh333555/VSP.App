@@ -7,7 +7,6 @@ class BookingSheetDetailsForm extends StatelessWidget {
   final TextEditingController nameController;
   final TextEditingController phoneController;
   final TextEditingController noteController;
-  final TextEditingController collectedAmountController;
   final bool isReadOnly;
   final bool isArabic;
   final String customerNameLabel;
@@ -18,7 +17,6 @@ class BookingSheetDetailsForm extends StatelessWidget {
     required this.nameController,
     required this.phoneController,
     required this.noteController,
-    required this.collectedAmountController,
     required this.isReadOnly,
     required this.isArabic,
     required this.customerNameLabel,
@@ -52,15 +50,6 @@ class BookingSheetDetailsForm extends StatelessWidget {
           controller: noteController,
           hint: isArabic ? 'أدخل أي ملاحظات إضافية عن الحجز...' : 'Enter internal notes...',
           keyboardType: TextInputType.text,
-          enabled: !isReadOnly,
-        ),
-        const SizedBox(height: 14),
-        InputLabel(isArabic ? "المبلغ المحصل (ج.م)" : "Collected Amount (EGP)"),
-        PillTextField(
-          controller: collectedAmountController,
-          hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار غير المدفوع)" : "Enter amount (0 for unpaid)",
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
           enabled: !isReadOnly,
         ),
       ],
