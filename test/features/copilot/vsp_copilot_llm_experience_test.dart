@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/models/copilot_message.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
 import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
@@ -157,8 +158,8 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<TestOwnerAuthProvider>(
-              create: (_) => TestOwnerAuthProvider(),
+            ChangeNotifierProvider<AuthProvider>.value(
+              value: TestOwnerAuthProvider(),
             ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
