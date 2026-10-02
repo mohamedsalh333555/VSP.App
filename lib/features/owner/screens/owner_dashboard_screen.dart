@@ -25,6 +25,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
 import '../widgets/dashboard/owner_venue_filter_chips.dart';
+import '../widgets/dashboard/insights/insights_top_filters_row.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_operational_finance_card.dart';
 import '../widgets/dashboard/owner_today_pitch_schedule_card.dart';
@@ -445,26 +446,58 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
                 if (_selectedDashboardTab == 0) ...[
-                  // شريط فلاتر الملاعب (يظهر لأصحاب باقة Pro عند امتلاك أكثر من ملعب)
-                  if (isProOwner && stadiums.length > 1) ...[
-                    OwnerVenueFilterChips(
-                      stadiums: stadiums,
-                      selectedStadiumId: _selectedStadiumFilter,
-                      onStadiumSelected: (id) {
-                        setState(() {
-                          _selectedStadiumFilter = id;
-                          _cachedMetrics = null;
-                          _currentFilter = _currentFilter.copyWith(courtId: id != 'all' ? id : null);
-                        });
-                        _loadDashboardAnalytics(filter: _currentFilter);
-                      },
-                      isArabic: isArabic,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // شريط الفلتر الزمني الواضح
-                  _buildTimeFilterBar(isArabic),
+                  // نفس فلاتر Insights — حالة واحدة مشتركة بين التبويبين.
+                  InsightsTopFiltersRow(
+                    stadiums: stadiums,
+                    selectedStadiumFilter: _selectedStadiumFilter,
+                    selectedTimePeriod: _selectedTimePeriod,
+                    isArabic: isArabic,
+                    onStadiumFilterChanged: (id) {
+                      final filter = _currentFilter.copyWith(
+                        courtId: id != 'all' ? id : null,
+                      );
+                      setState(() {
+                        _selectedStadiumFilter = id;
+                        _currentFilter = filter;
+                        _cachedMetrics = null;
+                      });
+                      _loadDashboardAnalytics(filter: filter);
+                    },
+                    onTimePeriodChanged: (period) {
+                      DashboardFilter filter;
+                      if (period == 'yesterday') {
+                        filter = DashboardFilter.yesterday();
+                      } else if (period == 'week' || period == 'thisWeek') {
+                        filter = DashboardFilter.thisWeek();
+                      } else if (period == 'month' || period == 'thisMonth') {
+                        filter = DashboardFilter.thisMonth();
+                      } else if (period == 'year' || period == 'thisYear') {
+                        filter = DashboardFilter.thisYear();
+                      } else {
+                        filter = DashboardFilter.today();
+                      }
+                      filter = filter.copyWith(
+                        courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                      );
+                      setState(() {
+                        _selectedTimePeriod = period;
+                        _currentFilter = filter;
+                        _cachedMetrics = null;
+                      });
+                      _loadDashboardAnalytics(filter: filter);
+                    },
+                    onCustomRangeSelected: (start, end) {
+                      final filter = DashboardFilter.custom(start, end).copyWith(
+                        courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
+                      );
+                      setState(() {
+                        _selectedTimePeriod = 'custom';
+                        _currentFilter = filter;
+                        _cachedMetrics = null;
+                      });
+                      _loadDashboardAnalytics(filter: filter);
+                    },
+                  ),
                   const SizedBox(height: 12),
 
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
