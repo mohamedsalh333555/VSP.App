@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -12,7 +13,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isOwner = context.select<AuthProvider, bool>((a) => a.isOwner);
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
