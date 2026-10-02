@@ -556,7 +556,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                isArabic ? 'العربون المسدد إلكترونياً (في محفظتك):' : 'Online Deposit (In Balance):',
+                                isArabic
+                                    ? (flags.isOwnerManual ? 'المبلغ المحصل كاش:' : 'العربون المسدد إلكترونياً (في المحفظة):')
+                                    : (flags.isOwnerManual ? 'Cash Collected:' : 'Online Deposit (In Balance):'),
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                               ),
                               Text(
@@ -570,7 +572,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                isArabic ? 'المتبقي للتحصيل نقداً بالملعب:' : 'Remaining Cash Due:',
+                                isArabic
+                                    ? (flags.isOwnerManual ? 'المتبقي من قيمة الحجز:' : 'المتبقي للتحصيل نقداً بالملعب:')
+                                    : (flags.isOwnerManual ? 'Remaining Booking Balance:' : 'Remaining Cash Due:'),
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                               ),
                               Text(
