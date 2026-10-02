@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,7 +105,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final proMaxStadiums = (proPlan?['max_stadiums'] as num?)?.toInt();
 
     if (basicPlan == null || proPlan == null || basicPrice == null || proPrice == null || basicMaxStadiums == null || proMaxStadiums == null) {
-      return Scaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -126,7 +127,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       );
     }
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
