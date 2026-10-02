@@ -247,6 +247,49 @@ class AppTheme {
         dividerColor: Colors.transparent,
         indicatorSize: TabBarIndicatorSize.label,
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: VSPColors.accent,
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+          textStyle: const TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: VSPColors.accent,
+          side: const BorderSide(color: VSPColors.borderAccent),
+          minimumSize: const Size(0, VSPSize.buttonHeight),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: VSPColors.surface,
+        elevation: 0,
+        indicatorColor: VSPColors.accentSoft,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: VSPColors.accent,
