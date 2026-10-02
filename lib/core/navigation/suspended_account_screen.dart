@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -14,7 +15,7 @@ class SuspendedAccountScreen extends StatelessWidget {
  final auth = Provider.of<AuthProvider>(context);
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Center(
  child: SingleChildScrollView(
