@@ -134,6 +134,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // This sheet is secondary to the normal booking CTA.
           // Drag handle
           Center(
             child: Container(
@@ -151,7 +152,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.of(context)!.chooseBookingType,
+                isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               IconButton(
