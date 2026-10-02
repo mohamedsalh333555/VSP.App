@@ -29,7 +29,7 @@ class VSPEmptyState extends StatelessWidget {
           children: [
             // أيقونة خلفية مع إضاءة نيون هادئة (الصفحة 8)
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
                 color: VSPColors.accent.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
@@ -41,19 +41,19 @@ class VSPEmptyState extends StatelessWidget {
               child: Icon(
                 icon,
                 color: VSPColors.accent,
-                size: 52,
+                size: 28,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
             Text(
               title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: VSPSpacing.sm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
@@ -61,16 +61,16 @@ class VSPEmptyState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: VSPColors.textSecondary,
-                      height: 1.6,
+                      height: 1.45,
                       fontSize: 12.5,
                     ),
               ),
             ),
             if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: 28),
+              const SizedBox(height: VSPSpacing.lg),
               SizedBox(
-                width: 220,
-                height: 48, // ارتفاع مريح للإبهام (الصفحات 6 و 9)
+                width: double.infinity,
+                height: VSPSize.buttonHeight, // ارتفاع مريح للإبهام (الصفحات 6 و 9)
                 child: PrimaryButton(
                   text: buttonText!,
                   onPressed: onButtonPressed,
