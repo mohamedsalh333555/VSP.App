@@ -8,6 +8,7 @@ import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_chat_bubble.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_conversations_drawer.dart';
+import '../../helpers/test_owner_auth_provider.dart';
 
 class MockLlmCopilotService extends VspCopilotService {
   final List<CopilotConversation> conversations;
@@ -156,6 +157,9 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
+            ChangeNotifierProvider<TestOwnerAuthProvider>(
+              create: (_) => TestOwnerAuthProvider(),
+            ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
           child: MaterialApp(
