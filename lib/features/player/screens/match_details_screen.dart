@@ -35,7 +35,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  bool _isJoining = false;
   bool _isActionProcessing = false;
   final Map<String, UserModel> _joinedUserProfiles = {};
-  late final Stream<List<Map<String, dynamic>>> _bookingStream;
+  late final Stream<Booking?> _bookingStream;
 
   Future<void> _loadJoinedUsers(List<String> userIds) async {
     if (userIds.isEmpty) return;
@@ -56,7 +56,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  void initState() {
  super.initState();
- _bookingStream = SupabaseBookingRepository().streamBookingRaw(widget.bookingId);
+ _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
     _fetchMatchDetails();
  }
 
@@ -66,7 +66,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
- final booking = await bookingProvider.getBookingById(widget.bookingId);
+ final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
  if (booking != null) {
  _booking = booking;
         _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
@@ -335,8 +335,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  return StreamBuilder<List<Map<String, dynamic>>>(
  stream: _bookingStream,
  builder: (context, snapshot) {
- if (snapshot.hasData && snapshot.data!.isNotEmpty) {
- _booking = Booking.fromFirestore(snapshot.data!.first, widget.bookingId);
+ if (snapshot.hasData && snapshot.data != null) {
+ _booking = snapshot.data;
       if (_booking != null && _booking!.joinedUserIds.isNotEmpty) {
         final missing = _booking!.joinedUserIds.where((id) => !_joinedUserProfiles.containsKey(id)).toList();
         if (missing.isNotEmpty) {
@@ -407,13 +407,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
  },
  ),
- if (alreadyJoined && !isHost)
-              IconButton(
-                icon: const Icon(Iconsax.logout_copy, color: VSPColors.error),
-                tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'مغادرة المباراة' : 'Leave Match',
-                onPressed: _onLeaveMatch,
-              ),
-            IconButton(
+ IconButton(
  icon: const Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
  onPressed: _onReport,
  ),
@@ -610,9 +604,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  const Divider(color: VSPColors.divider, height: 40),
  Text(
  AppLocalizations.of(context)!.playersCount(
- _booking!.currentPlayers > _booking!.joinedUserIds.length
- ? _booking!.currentPlayers
- : _booking!.joinedUserIds.length,
+ _booking!.currentPlayers,
  _booking!.maxPlayers,
  ),
  style: Theme.of(context).textTheme.titleLarge,
@@ -675,7 +667,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  bottomSheet: Container(
         padding: const EdgeInsets.all(VSPSpacing.lg),
         color: VSPColors.background,
-        child: (alreadyJoined || isHost)
+        child: isHost
             ? PrimaryButton(
                 text: Localizations.localeOf(context).languageCode == 'ar'
                     ? '💬 محادثة وتنسيق المباراة'
@@ -691,13 +683,23 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 color: VSPColors.accent,
                 textColor: VSPColors.background,
               )
-            : PrimaryButton(
-                text: isFull
-                    ? AppLocalizations.of(context)!.matchFull
-                    : AppLocalizations.of(context)!.join,
-                onPressed: isFull ? null : _onJoin,
-                isLoading: _isJoining,
-              ),
+            : alreadyJoined
+                ? PrimaryButton(
+                    text: Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'خروج'
+                        : 'Leave',
+                    onPressed: _isActionProcessing ? null : _onLeaveMatch,
+                    isLoading: _isActionProcessing,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.error,
+                  )
+                : PrimaryButton(
+                    text: isFull
+                        ? AppLocalizations.of(context)!.matchFull
+                        : AppLocalizations.of(context)!.join,
+                    onPressed: isFull ? null : _onJoin,
+                    isLoading: _isJoining,
+                  ),
       ),
  );
  },
