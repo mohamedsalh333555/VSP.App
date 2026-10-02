@@ -35,6 +35,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
           (b.paymentMethod.toLowerCase() == 'cash') ||
           (b.paymentSource?.toLowerCase() == 'cash');
       final isUnpaidOrUnconfirmed = !b.isPaid && b.paymentStatus != 'paid';
+      // Manual owner-created bookings are accounting records, not app cash-collection actions.
+      if (b.createdByUserId == b.ownerId) return false;
       if (!isCash || !isUnpaidOrUnconfirmed) return false;
 
       final effectiveDate = (b.operationalDate ?? b.startTime).toLocal();
@@ -43,36 +45,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
 
     final count = unconfirmedCashBookings.length;
 
-    // إذا لم تكن هناك أي حجوزات معلقة لليوم، يعرض شريطاً صامتاً ومطمئناً
-    if (count == 0) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: VSPColors.surface, // #18181B الفحمي
-          borderRadius: BorderRadius.circular(VSPRadius.card),
-          border: Border.all(color: VSPColors.divider, width: 1.0),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Iconsax.tick_circle_copy,
-              size: 18,
-              color: VSPColors.accent, // #9FDF02 الأخضر نيون
-            ),
-            const SizedBox(width: 10),
-            Text(
-              isArabic ? 'كل الحجوزات النقدية لليوم مؤكدة ومحدثة' : 'All cash bookings today are confirmed',
-              style: const TextStyle(
-                color: VSPColors.textSecondary,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+    // لا يوجد إجراء = لا نستهلك مساحة من الرئيسية.
+    if (count == 0) return const SizedBox.shrink();
 
     final countText = ArabicPluralUtils.formatPendingCashBookingCount(count, isArabic: isArabic);
 
