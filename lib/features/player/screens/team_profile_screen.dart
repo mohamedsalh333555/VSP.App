@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
@@ -176,7 +177,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingTeam) {
-      return const Scaffold(
+      return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Center(
           child: CircularProgressIndicator(color: VSPColors.accent),
@@ -185,7 +186,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
 
     if (widget.team == null && _fetchedTeam == null) {
-      return const Scaffold(
+      return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Center(
           child: Text('Team not found ', style: TextStyle(color: Colors.white)),
@@ -199,7 +200,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final isCaptain = currentUid != null &&
         (currentUid == team.captainId || (team.memberUids.isNotEmpty && team.memberUids.first == currentUid));
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
