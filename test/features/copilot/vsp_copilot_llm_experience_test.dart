@@ -184,6 +184,9 @@ void main() {
       // Prompt is sent and bubble appears
       expect(find.text('رد تجريبي على: فين ألعب النهارده؟'), findsOneWidget);
       expect(find.text('ملعب التجمع'), findsOneWidget);
+
+      // Drain AuthProvider's 5-second safety timer before test teardown.
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('CopilotConversationsDrawer opens and shows past conversations', (tester) async {
