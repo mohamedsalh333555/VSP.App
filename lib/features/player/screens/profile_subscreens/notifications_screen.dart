@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -72,7 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final isOwner = auth.isOwner;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
