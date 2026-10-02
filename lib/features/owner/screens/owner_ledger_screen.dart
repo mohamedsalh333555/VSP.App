@@ -158,7 +158,24 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
 
-          final transactions = snapshot.data ?? [];
+          final rawRows = snapshot.data ?? [];
+          final transactions = widget.payoutOnly
+              ? rawRows.map((row) {
+                  final status = row['status']?.toString().toLowerCase();
+                  final type = status == 'completed'
+                      ? 'payout_disbursed'
+                      : status == 'rejected'
+                          ? 'payout_rejected'
+                          : 'payout_pending';
+                  return <String, dynamic>{
+                    'id': row['id'],
+                    'type': type,
+                    'amount': row['amount'],
+                    'payment_method': row['method'],
+                    'created_at': row['created_at'],
+                  };
+                }).toList()
+              : rawRows;
 
           // الرصيد المالي لا يُستنتج من قائمة المعاملات؛ المصدر الوحيد هو ملخص الخادم.
           final summaryReady = _summary?['success'] == true;
