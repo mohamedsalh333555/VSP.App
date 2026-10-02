@@ -35,7 +35,7 @@ void showBookingPaymentMethodSheet({
     isScrollControlled: true,
     backgroundColor: VSPColors.surface,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
     ),
     builder: (ctx) {
       bool isNavigating = false;
@@ -70,7 +70,7 @@ void showBookingPaymentMethodSheet({
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: VSPColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(VSPRadius.sm),
                         border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
                       ),
                       child: Row(
