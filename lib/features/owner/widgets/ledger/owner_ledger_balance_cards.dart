@@ -50,7 +50,7 @@ class OwnerDigitalBalanceCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isAr ? 'مستحقات قابلة للتحويل' : 'Withdrawable earnings',
+                    isAr ? 'رصيد إلكتروني متاح للسحب' : 'Available online balance',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                   ),
                 ],
