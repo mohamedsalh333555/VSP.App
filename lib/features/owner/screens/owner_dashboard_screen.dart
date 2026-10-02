@@ -45,6 +45,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
+  final Map<String, DateTime> _approvalNoticeSeenUntil = {};
 
   String? _lastMetricsKey;
   OwnerFinancialMetrics? _cachedMetrics;
@@ -101,9 +102,31 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         setState(() {
           _ownerChampionships = champs;
         });
+        _claimApprovedChampionshipHomeNotices(champs);
       }
     } catch (e) {
       VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
+    }
+  }
+
+  Future<void> _claimApprovedChampionshipHomeNotices(List<Championship> champs) async {
+    final repo = TournamentRepository();
+    final now = DateTime.now().toUtc();
+    for (final championship in champs) {
+      if (!championship.isApproved) continue;
+      try {
+        final response = await repo.claimOwnerChampionshipApprovalHomeNotice(championship.id);
+        if (response['success'] == true && response['seen_until'] != null) {
+          final seenUntil = DateTime.tryParse(response['seen_until'].toString());
+          if (seenUntil != null && seenUntil.isAfter(now) && mounted) {
+            setState(() {
+              _approvalNoticeSeenUntil[championship.id] = seenUntil;
+            });
+          }
+        }
+      } catch (e) {
+        VSPLogger.w('Failed to claim championship approval Home notice: $e');
+      }
     }
   }
 
@@ -183,6 +206,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             setState(() {
               _ownerChampionships = champs;
             });
+            _claimApprovedChampionshipHomeNotices(champs);
           },
           onError: (e) {
             VSPLogger.w('Owner championships subscription notice (handled): $e');
@@ -431,8 +455,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
-                    cashThisMonth: _dashboardAnalytics.revenue.cash,
-                    onlineThisMonth: _dashboardAnalytics.revenue.online,
+                    cashThisMonth: _dashboardAnalytics.revenue.cashCollected,
+                    onlineThisMonth: _dashboardAnalytics.revenue.onlineCollected,
+                    cashUncollected: _dashboardAnalytics.revenue.cashUncollected,
+                    onlineUnavailable: _dashboardAnalytics.revenue.onlineUnavailable,
+                    showProFinancialDetail: isProOwner,
                     upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                     timePeriod: _selectedTimePeriod,
                     periodLabel: _currentFilter.periodLabel,
@@ -471,36 +498,40 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     ),
                   const SizedBox(height: 16),
 
-                  // ج. البطولة القادمة: تظهر عند وجود بطولة معتمدة
+                  // ج. تنبيه البطولة: انتظار الاعتماد ثم إشعار اعتماد لمدة 24 ساعة من أول زيارة Home.
                   Builder(
                     builder: (context) {
-                      final now = DateTime.now();
-                      final upcoming = _ownerChampionships
+                      final nowUtc = DateTime.now().toUtc();
+                      final pending = _ownerChampionships
                           .where((c) =>
-                              c.isApproved &&
-                              c.status.toLowerCase() != 'completed' &&
-                              (c.status.toLowerCase() == 'open' ||
-                                  c.status.toLowerCase() == 'ongoing' ||
-                                  c.endDate.isAfter(now)))
+                              !c.isApproved &&
+                              c.status.toLowerCase() != 'cancelled' &&
+                              c.status.toLowerCase() != 'completed')
                           .toList()
-                        ..sort((a, b) => a.startDate.compareTo(b.startDate));
+                        ..sort((a, b) => b.startDate.compareTo(a.startDate));
 
-                      if (upcoming.isEmpty) return const SizedBox.shrink();
-                      final championship = upcoming.first;
-                      final bool isOngoing = championship.status.toLowerCase() == 'ongoing';
-                      final String cardHeader = isOngoing
-                          ? (isArabic ? 'البطولة الجارية الآن' : 'Ongoing Tournament')
-                          : (isArabic ? 'البطولة القادمة' : 'Upcoming Tournament');
-                      final String badgeText = isOngoing
-                          ? (isArabic ? 'جارية' : 'Ongoing')
+                      final approvedVisible = _ownerChampionships.where((c) {
+                        final until = _approvalNoticeSeenUntil[c.id];
+                        return c.isApproved &&
+                            c.status.toLowerCase() != 'cancelled' &&
+                            c.status.toLowerCase() != 'completed' &&
+                            until != null &&
+                            until.isAfter(nowUtc);
+                      }).toList()
+                        ..sort((a, b) => b.startDate.compareTo(a.startDate));
+
+                      final Championship? championship =
+                          pending.isNotEmpty ? pending.first :
+                          (approvedVisible.isNotEmpty ? approvedVisible.first : null);
+                      if (championship == null) return const SizedBox.shrink();
+
+                      final isPending = !championship.isApproved;
+                      final title = isPending
+                          ? (isArabic ? 'في انتظار اعتماد البطولة' : 'Tournament awaiting approval')
+                          : (isArabic ? 'تم اعتماد البطولة' : 'Tournament approved');
+                      final badge = isPending
+                          ? (isArabic ? 'قيد المراجعة' : 'Pending')
                           : (isArabic ? 'معتمدة' : 'Approved');
-                      final String subtitleText = isOngoing
-                          ? (isArabic
-                              ? 'جارية الآن • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
-                              : 'Ongoing now • ${championship.joinedTeams.length}/${championship.maxTeams} teams')
-                          : (isArabic
-                              ? 'تبدأ ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
-                              : 'Starts ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} teams');
 
                       return Container(
                         width: double.infinity,
@@ -508,18 +539,30 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         decoration: BoxDecoration(
                           color: VSPColors.surface,
                           borderRadius: BorderRadius.circular(VSPRadius.card),
-                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+                          border: Border.all(
+                            color: isPending
+                                ? VSPColors.divider
+                                : VSPColors.accent.withValues(alpha: 0.35),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.emoji_events_outlined, color: VSPColors.accent, size: 20),
+                                Icon(
+                                  isPending
+                                      ? Icons.hourglass_top_rounded
+                                      : Icons.verified_rounded,
+                                  color: isPending
+                                      ? VSPColors.textSecondary
+                                      : VSPColors.accent,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    cardHeader,
+                                    title,
                                     style: const TextStyle(
                                       color: VSPColors.textPrimary,
                                       fontWeight: FontWeight.w800,
@@ -528,9 +571,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                   ),
                                 ),
                                 Text(
-                                  badgeText,
-                                  style: const TextStyle(
-                                    color: VSPColors.accent,
+                                  badge,
+                                  style: TextStyle(
+                                    color: isPending
+                                        ? VSPColors.textSecondary
+                                        : VSPColors.accent,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -550,7 +595,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              subtitleText,
+                              isPending
+                                  ? (isArabic
+                                      ? 'ستظل ظاهرة حتى اعتماد الأدمن.'
+                                      : 'This notice stays until admin approval.')
+                                  : (isArabic
+                                      ? 'سيظل التنبيه ظاهرًا لمدة 24 ساعة من أول زيارة للرئيسية.'
+                                      : 'Shown for 24 hours from your first Home visit.'),
                               style: const TextStyle(
                                 color: VSPColors.textSecondary,
                                 fontSize: 12,
@@ -581,8 +632,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                   const SizedBox(height: 16),
 
-                  // هـ. إجراءات تشغيلية سريعة تملأ المساحة وتوفر وصولاً سريعاً
-                  _buildQuickOperationalActions(context, isArabic),
                   SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
                 ]
                 // ── TAB 1: التحليلات والقرارات الذكية (Insights) ──
@@ -765,108 +814,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildQuickOperationalActions(BuildContext context, bool isArabic) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.card),
-        border: Border.all(color: VSPColors.divider),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isArabic ? 'إجراءات تشغيلية سريعة' : 'Quick Operations',
-            style: const TextStyle(
-              color: VSPColors.textPrimary,
-              fontWeight: FontWeight.w800,
-              fontSize: 13.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionButton(
-                  icon: Icons.receipt_long_outlined,
-                  label: isArabic ? 'كشف الحساب' : 'Ledger',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickActionButton(
-                  icon: Icons.calendar_month_outlined,
-                  label: isArabic ? 'جدول الحجوزات' : 'Bookings',
-                  onTap: () {
-                    if (widget.onNavigateTab != null) {
-                      widget.onNavigateTab!(3);
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
-                      );
-                    }
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildQuickActionButton(
-                  icon: Icons.workspace_premium_outlined,
-                  label: isArabic ? 'الباقات' : 'Plans',
-                  onTap: () => _showProUpgradeSheet(context),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-        decoration: BoxDecoration(
-          color: VSPColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(VSPRadius.sm),
-          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 20, color: VSPColors.accent),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: VSPColors.textPrimary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
