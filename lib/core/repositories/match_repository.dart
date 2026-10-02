@@ -58,7 +58,7 @@ class MatchRepository {
      }
      return null;
    } on PostgrestException catch (e) {
-     VSPLogger.w('Public match details RPC failed: \${e.message}');
+     VSPLogger.w('Public match details RPC failed: ${e.message}');
      return null;
    } catch (e, stack) {
      VSPLogger.e('Error loading public match details', e, stack);
