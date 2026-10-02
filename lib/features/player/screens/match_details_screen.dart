@@ -345,14 +345,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  if (_isLoading) {
- return const Scaffold(
+ return const VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
  );
  }
 
  if (_booking == null) {
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(backgroundColor: Colors.transparent),
  body: Center(
@@ -412,7 +412,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  break;
  }
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: CustomScrollView(
  slivers: [
