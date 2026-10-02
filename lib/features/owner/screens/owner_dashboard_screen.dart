@@ -519,6 +519,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     onRequestPayout: () {
                       OwnerPayoutDialog.show(context, availableBalance, isArabic);
                     },
+                    onOpenPayoutHistory: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const OwnerLedgerScreen(payoutOnly: true),
+                        ),
+                      );
+                    },
                     isArabic: isArabic,
                   ),
                   const SizedBox(height: 16),
