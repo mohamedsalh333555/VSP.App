@@ -33,7 +33,8 @@ import '../widgets/dashboard/owner_pending_actions_bar.dart';
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
   final Function(int)? onNavigateTab;
-  const OwnerDashboardScreen({super.key, this.onNavigateTab});
+  final bool isHomeVisible;
+  const OwnerDashboardScreen({super.key, this.onNavigateTab, this.isHomeVisible = true});
 
   @override
   State<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();
@@ -220,6 +221,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
     if (uid == null) return;
     await _fetchOwnerChampionships(uid);
+  }
+
+  @override
+  void didUpdateWidget(covariant OwnerDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isHomeVisible && isHomeVisible) {
+      onHomeBecameVisible();
+    }
   }
 
   @override
