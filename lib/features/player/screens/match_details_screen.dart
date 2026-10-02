@@ -330,7 +330,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return StreamBuilder<List<Map<String, dynamic>>>(
+ return StreamBuilder<Booking?>(
  stream: _bookingStream,
  builder: (context, snapshot) {
  if (snapshot.hasData && snapshot.data != null) {
