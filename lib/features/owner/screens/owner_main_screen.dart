@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
@@ -126,7 +127,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
 
  @override
  Widget build(BuildContext context) {
- return Scaffold(
+ return VSPScaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
  body: VSPAmbientBackground(
