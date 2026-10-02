@@ -126,7 +126,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
