@@ -67,10 +67,14 @@ class VspBottomNavBar extends StatelessWidget {
                     vertical: 8.0,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.accent : Colors.transparent,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(VSPRadius.full),
                   ),
-                  child: Row(
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOutCubic,
+                    offset: isSelected ? const Offset(0, -0.12) : Offset.zero,
+                    child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Stack(
@@ -78,7 +82,7 @@ class VspBottomNavBar extends StatelessWidget {
                         children: [
                           Icon(
                             isSelected ? item.activeIcon : item.inactiveIcon,
-                            color: isSelected ? Colors.black : VSPColors.textSecondary,
+                            color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
                             size: 22,
                           ),
                           if (item.hasNotification && !isSelected)
@@ -120,7 +124,7 @@ class VspBottomNavBar extends StatelessWidget {
                             softWrap: false,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              color: Colors.black,
+                              color: VSPColors.accent,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
                               letterSpacing: 0.2,
@@ -129,6 +133,7 @@ class VspBottomNavBar extends StatelessWidget {
                         ),
                       ],
                     ],
+                  ),
                   ),
                 ),
               ),
