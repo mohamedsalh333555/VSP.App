@@ -170,22 +170,8 @@ class Championship {
  registrationLockedAt: data['registration_locked_at'] != null ? DateTime.tryParse(data['registration_locked_at'].toString()) : null,
  );
  } catch (e) {
- // كود أمان احتياطي لمنع انهيار التطبيق في حال وجود بيانات تالفة
- return Championship(
- id: id,
- name: 'Error Loading',
- type: 'Cup',
- sportType: 'Football',
- logoUrl: '',
- startDate: DateTime.now(),
- endDate: DateTime.now(),
- entryFee: 0,
- grandPrize: 0,
- maxTeams: 16,
- joinedTeams: [],
- ownerId: '',
- governorate: 'Cairo',
- );
+ // لا نحوّل البيانات التالفة إلى بطولة وهمية قابلة للعرض.
+ throw FormatException('Invalid championship data', e);
  }
  }
 
