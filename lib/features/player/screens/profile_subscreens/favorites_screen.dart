@@ -1,6 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
-import '../../../core/ui/vsp_ui.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
