@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -499,6 +500,39 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                   const SizedBox(height: 12),
 
+                  VSPSectionHeader(
+                    title: isArabic ? 'ما يحدث الآن' : 'What is happening now',
+                    subtitle: isArabic
+                        ? 'نظرة سريعة على تشغيل ملاعبك في الفترة المحددة.'
+                        : 'A quick view of your stadium operation for the selected period.',
+                  ),
+                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
+                  if (stadiums.isEmpty)
+                    _buildNoStadiumsPrompt(context, isArabic)
+                  else
+                    OwnerTodayPitchScheduleCard(
+                      allBookings: allBookings,
+                      stadiums: stadiums,
+                      selectedStadiumFilter: _selectedStadiumFilter,
+                      isArabic: isArabic,
+                      onNavigateToBookings: () {
+                        if (widget.onNavigateTab != null) {
+                          widget.onNavigateTab!(3);
+                        } else {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
+                          );
+                        }
+                      },
+                    ),
+
+                  VSPSectionHeader(
+                    title: isArabic ? 'المال' : 'Finance',
+                    subtitle: isArabic
+                        ? 'ما تم تحصيله وما هو متاح لك الآن.'
+                        : 'What has been collected and what is available now.',
+                  ),
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
@@ -529,29 +563,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     },
                     isArabic: isArabic,
                   ),
-                  const SizedBox(height: 16),
 
-                  // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
-                  if (stadiums.isEmpty)
-                    _buildNoStadiumsPrompt(context, isArabic)
-                  else
-                    OwnerTodayPitchScheduleCard(
-                      allBookings: allBookings,
-                      stadiums: stadiums,
-                      selectedStadiumFilter: _selectedStadiumFilter,
-                      isArabic: isArabic,
-                      onNavigateToBookings: () {
-                        if (widget.onNavigateTab != null) {
-                          widget.onNavigateTab!(3);
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const OwnerBookingsScreen()),
-                          );
-                        }
-                      },
-                    ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+
 
                   // ج. تنبيه البطولة: انتظار الاعتماد ثم إشعار اعتماد لمدة 24 ساعة من أول زيارة Home.
                   Builder(
