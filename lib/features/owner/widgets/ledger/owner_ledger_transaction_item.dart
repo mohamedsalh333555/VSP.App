@@ -15,12 +15,14 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final type = transaction['type']?.toString() ?? 'cash';
-    final method = transaction['payment_method']?.toString() ?? type;
+    final type = transaction['type']?.toString().trim() ?? '';
+    if (type.isEmpty) return const SizedBox.shrink();
+    final method = transaction['payment_method']?.toString().trim() ?? '';
     final amountVal = transaction['amount'] ?? 0;
     final double amount = (amountVal is num) ? amountVal.toDouble() : 0.0;
     final dateStr = transaction['created_at'] as String?;
-    final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
+    final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
+    if (date == null) return const SizedBox.shrink();
 
     final String title;
     final String amountText;
@@ -41,8 +43,8 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
       title = isAr ? 'تحصيل إلكتروني آمن' : 'Digital Online Payment';
       amountText = '+${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     } else {
-      title = isAr ? 'تحصيل نقدي بالملعب' : 'Pitch Cash Payment';
-      amountText = '+${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
+      title = isAr ? 'عملية مالية' : 'Financial Transaction';
+      amountText = '${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     }
 
     String formattedDate;
