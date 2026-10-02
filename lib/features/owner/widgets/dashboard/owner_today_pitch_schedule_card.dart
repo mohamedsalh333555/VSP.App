@@ -25,8 +25,6 @@ class OwnerTodayPitchScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
-    final todayEnd = todayStart.add(const Duration(days: 1));
 
     // 1. استخراج حجوزات اليوم الحالي (مع استبعاد الملغي وتطبيق فلتر الملعب)
     final todayBookings = allBookings.where((b) {
@@ -34,7 +32,8 @@ class OwnerTodayPitchScheduleCard extends StatelessWidget {
       if (selectedStadiumFilter != 'all' && b.stadiumId != selectedStadiumFilter) {
         return false;
       }
-      return b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd);
+      final effectiveDate = (b.operationalDate ?? b.startTime).toLocal();
+      return DateUtils.isSameDay(effectiveDate, now);
     }).toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 

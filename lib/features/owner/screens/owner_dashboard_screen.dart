@@ -566,6 +566,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   // د. شريط الإجراء التشغيلي الفوري للحجوزات المعلقة
                   OwnerPendingActionsBar(
                     allBookings: allBookings,
+                    selectedStadiumFilter: _selectedStadiumFilter,
                     isArabic: isArabic,
                     onActionTap: () {
                       if (widget.onNavigateTab != null) {

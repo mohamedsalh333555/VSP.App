@@ -89,6 +89,63 @@ void main() {
       expect(categorized.history.first.id, 'b_past');
     });
 
+    test('categorizeUserBookings preserves multiple pending cash bookings and does not drop after 10 min', () {
+      final oldPendingCash = Booking(
+        id: 'b_pending_cash_1',
+        stadiumId: 'std_2',
+        stadiumName: 'Giza Arena',
+        stadiumImageUrl: '',
+        ownerId: 'own_1',
+        startTime: now.add(const Duration(hours: 1)),
+        endTime: now.add(const Duration(hours: 2)),
+        bookingType: BookingType.personal,
+        playerTeamName: 'Mohamed Ali',
+        playerPhone: '01012345678',
+        totalPrice: 250.0,
+        currentPlayers: 10,
+        status: BookingStatus.pending,
+        paymentStatus: 'pending',
+        paymentMethod: 'cash',
+        isPaid: false,
+        isPrivate: true,
+        rentBall: false,
+        createdByUserId: 'user_1',
+        createdAt: now.subtract(const Duration(hours: 2)), // 2 hours ago!
+      );
+
+      final secondPendingCash = Booking(
+        id: 'b_pending_cash_2',
+        stadiumId: 'std_1',
+        stadiumName: 'Cairo Stadium',
+        stadiumImageUrl: '',
+        ownerId: 'own_1',
+        startTime: now.add(const Duration(hours: 3)),
+        endTime: now.add(const Duration(hours: 4)),
+        bookingType: BookingType.personal,
+        playerTeamName: 'Stars',
+        playerPhone: '01012345678',
+        totalPrice: 300.0,
+        currentPlayers: 10,
+        status: BookingStatus.pending,
+        paymentStatus: 'unpaid',
+        paymentMethod: 'cash',
+        isPaid: false,
+        isPrivate: true,
+        rentBall: false,
+        createdByUserId: 'user_1',
+        createdAt: now.subtract(const Duration(minutes: 45)), // 45 min ago!
+      );
+
+      final categorized = BookingCategorizationService.categorizeUserBookings(
+        bookings: [oldPendingCash, secondPendingCash, futureBooking],
+        now: now,
+      );
+
+      // Both pending cash bookings MUST be retained (take(1) removed, no 10-minute timeout for cash)
+      expect(categorized.pending.length, 2);
+      expect(categorized.pending.map((b) => b.id), containsAll(['b_pending_cash_1', 'b_pending_cash_2']));
+    });
+
     test('categorizeOwnerBookings accurately separates confirmed future vs completed/cancelled', () {
       final categorized = BookingCategorizationService.categorizeOwnerBookings(
         bookings: [futureBooking, pastBooking, pendingRecentBooking],

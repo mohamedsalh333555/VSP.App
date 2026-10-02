@@ -8,33 +8,42 @@ import '../../../../data/models.dart';
 /// شريط الإجراء التشغيلي الفوري للحجوزات المعلقة (فحمي وأخضر نيون)
 class OwnerPendingActionsBar extends StatelessWidget {
   final List<Booking> allBookings;
+  final String selectedStadiumFilter;
   final bool isArabic;
   final VoidCallback onActionTap;
 
   const OwnerPendingActionsBar({
     super.key,
     required this.allBookings,
+    this.selectedStadiumFilter = 'all',
     required this.isArabic,
     required this.onActionTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // حساب عدد الحجوزات النقدية غير المؤكدة بعد
+    final now = DateTime.now();
+    // حساب عدد الحجوزات النقدية غير المؤكدة بعد لليوم وللملعب المختار
     final unconfirmedCashBookings = allBookings.where((b) {
       if (b.status == BookingStatus.cancelled || b.status == BookingStatus.completed) {
+        return false;
+      }
+      if (selectedStadiumFilter != 'all' && b.stadiumId != selectedStadiumFilter) {
         return false;
       }
       final isCash = b.isCash ||
           (b.paymentMethod.toLowerCase() == 'cash') ||
           (b.paymentSource?.toLowerCase() == 'cash');
       final isUnpaidOrUnconfirmed = !b.isPaid && b.paymentStatus != 'paid';
-      return isCash && isUnpaidOrUnconfirmed;
+      if (!isCash || !isUnpaidOrUnconfirmed) return false;
+
+      final effectiveDate = (b.operationalDate ?? b.startTime).toLocal();
+      return DateUtils.isSameDay(effectiveDate, now);
     }).toList();
 
     final count = unconfirmedCashBookings.length;
 
-    // إذا لم تكن هناك أي حجوزات معلقة، يعرض شريطاً صامتاً ومطمئناً
+    // إذا لم تكن هناك أي حجوزات معلقة لليوم، يعرض شريطاً صامتاً ومطمئناً
     if (count == 0) {
       return Container(
         width: double.infinity,
@@ -53,7 +62,7 @@ class OwnerPendingActionsBar extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Text(
-              isArabic ? 'كل الحجوزات النقدية مؤكدة ومحدثة' : 'All cash bookings are confirmed',
+              isArabic ? 'كل الحجوزات النقدية لليوم مؤكدة ومحدثة' : 'All cash bookings today are confirmed',
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 12.5,

@@ -41,20 +41,26 @@ class BookingCategorizationService {
 
     final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
     final pending = bookings.where((b) {
-      final isRecent = b.createdAt.isAfter(tenMinutesAgo);
-      final isFuture = b.startTime.isAfter(now);
+      final isFuture = b.endTime.isAfter(now);
       final hasConfirmedSameSlot = upcoming.any(
         (u) =>
             u.status == BookingStatus.confirmed &&
             u.stadiumId == b.stadiumId &&
             u.startTime == b.startTime,
       );
-      return b.status == BookingStatus.pending && !b.isPaid && isRecent && isFuture && !hasConfirmedSameSlot;
-    }).take(1).toList();
+      if (hasConfirmedSameSlot || !isFuture) return false;
+      if (b.status != BookingStatus.pending) return false;
+      // Cash bookings remain pending until owner confirms/collects
+      if (b.isCash) return true;
+      // Online unpaid checkouts have 10-minute payment grace period
+      final isRecent = b.createdAt.isAfter(tenMinutesAgo);
+      return !b.isPaid && isRecent;
+    }).toList();
 
     final history = bookings.where((b) {
       if (b.status == BookingStatus.completed) return true;
       if (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)) return true;
+      if (b.status == BookingStatus.pending && b.endTime.isBefore(now)) return true;
       if (b.status == BookingStatus.cancelled) {
         // Exclude abandoned checkouts where no money was ever paid
         final bool isAbandonedCheckout =
@@ -87,14 +93,14 @@ class BookingCategorizationService {
     required DateTime now,
   }) {
     final upcoming = bookings
-        .where((b) => b.status == BookingStatus.confirmed && b.endTime.isAfter(now))
+        .where((b) => (b.status == BookingStatus.confirmed || (b.status == BookingStatus.pending && b.isCash)) && b.endTime.isAfter(now))
         .toList();
 
     final history = bookings
         .where((b) =>
             b.status == BookingStatus.completed ||
             b.status == BookingStatus.cancelled ||
-            (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
+            b.endTime.isBefore(now))
         .toList();
 
     return CategorizedOwnerBookings(
