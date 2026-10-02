@@ -119,7 +119,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
               alignment: AlignmentDirectional.centerEnd,
               child: TextButton.icon(
                 onPressed: () => BookingTypeModal.show(context, stadium),
-                icon: const Icon(Iconsax.arrow_down_1_copy, size: 15),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 15),
                 label: Text(
                   isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
                   style: const TextStyle(
