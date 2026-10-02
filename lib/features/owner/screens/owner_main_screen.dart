@@ -138,7 +138,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  IndexedStack(
  index: _currentIndex,
  children: [
- OwnerDashboardScreen(onNavigateTab: _onItemTapped),
+ OwnerDashboardScreen(onNavigateTab: _onItemTapped, isHomeVisible: _currentIndex == 0),
  const OwnerCupScreen(),
  const OwnerInboxScreen(), // New Chat tab
  const OwnerBookingsScreen(),
