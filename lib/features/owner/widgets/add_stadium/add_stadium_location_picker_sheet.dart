@@ -64,10 +64,10 @@ class AddStadiumLocationPickerSheet {
               height: MediaQuery.of(builderContext).size.height * 0.85,
               decoration: const BoxDecoration(
                 color: VSPColors.background,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
                 child: Stack(
                   children: [
                     FlutterMap(
@@ -413,7 +413,7 @@ class AddStadiumLocationPickerSheet {
               ),
               decoration: const BoxDecoration(
                 color: VSPColors.background,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
               ),
               child: SingleChildScrollView(
                 child: Column(
