@@ -215,7 +215,7 @@ class BookingSheetBottomActions extends StatelessWidget {
     required this.isPastCompleted,
     required this.isUpcomingPendingCash,
     required this.isUpcomingOnlinePaid,
-    required this.isOwnerManual,
+    this.isOwnerManual = false,
     required this.isSaving,
     required this.isDeleting,
     required this.onConfirmCashPayment,
