@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  void _showLocationPicker(BuildContext context, AuthProvider auth) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  const governorates = EgyptGovernorates.allGovernorates;
- final currentGov = auth.userModel?.governorate ?? 'Aswan';
+ final currentGov = auth.userModel?.governorate?.trim() ?? '';
 
  showModalBottomSheet(
  context: context,
@@ -151,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final auth = context.watch<AuthProvider>();
  final String? userProfileUrl = auth.userModel?.profileImageUrl;
  final String userName = auth.userModel?.name ?? l10n.player;
- final String userPosition = auth.userModel?.position ?? "ST";
+ final String userPosition = auth.userModel?.position?.trim() ?? '';
 
  return Scaffold(
  backgroundColor: VSPColors.background,
@@ -249,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  const SizedBox(height: 2),
  Text(
- l10n.positionLabel(userPosition),
+ userPosition.isNotEmpty ? l10n.positionLabel(userPosition) : (isArabic ? 'المركز غير محدد' : 'Position not set'),
  style: const TextStyle(
  fontSize: 12,
  color: VSPColors.accent,
@@ -428,10 +428,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
  index: 4,
  child: Builder(builder: (context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final govName = auth.userModel?.governorate ?? (isArabic ? 'أسوان' : 'Aswan');
- final displayGov = isArabic
- ? EgyptGovernorates.getArabicName(govName)
- : govName;
+ final govName = auth.userModel?.governorate?.trim() ?? '';
+ final displayGov = govName.isNotEmpty
+ ? (isArabic ? EgyptGovernorates.getArabicName(govName) : govName)
+ : (isArabic ? 'المحافظة غير محددة' : 'Governorate not set');
 
  return VSPMenuItem(
  icon: Iconsax.location_copy,
