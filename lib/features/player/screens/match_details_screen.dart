@@ -1,4 +1,3 @@
-import '../../../core/repositories/booking_repository.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +62,6 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Future<void> _fetchMatchDetails() async {
  setState(() => _isLoading = true);
  try {
- final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
  final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
@@ -75,7 +73,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         }
  }
  } catch (e) {
- debugPrint('Error fetching match details: ');
+ debugPrint('Error fetching match details: $e');
  } finally {
  if (mounted) setState(() => _isLoading = false);
  }
