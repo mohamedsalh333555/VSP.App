@@ -19,7 +19,7 @@ class ChatDialogs {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
         title: Text(
           isArabic ? 'إبلاغ عن المحادثة ' : 'Report Chat ',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -92,7 +92,7 @@ class ChatDialogs {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
         title: Text(
           isArabic ? 'حذف المحادثة' : 'Delete Conversation',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -132,7 +132,7 @@ class ChatDialogs {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
         title: Text(
           isArabic ? 'حذف المحادثة ' : 'Delete Conversation ',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
