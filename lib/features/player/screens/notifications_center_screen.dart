@@ -37,7 +37,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
