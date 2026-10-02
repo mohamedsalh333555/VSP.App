@@ -120,7 +120,7 @@ class BookingSheetPastPanel extends StatelessWidget {
                   : const Icon(Iconsax.user_remove_copy, size: 18),
               label: Text(
                 isArabic
-                    ? 'تسجيل عدم حضور اللاعب (No-Show) '
+                    ? 'تسجيل عدم حضور اللاعب '
                     : 'Report Player No-Show ',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
