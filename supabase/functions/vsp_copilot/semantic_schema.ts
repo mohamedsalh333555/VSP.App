@@ -69,8 +69,8 @@ export interface SemanticExecutionRequest {
 export interface SemanticParseOutput {
   schema_version: number;
   speech_act: "request" | "question" | "inform" | "clarify" | "confirm" | "reject" | "correct" | "cancel" | "select" | "acknowledge" | "switch_task";
-  domain?: "booking" | "self_service" | "payment" | "stadium" | "tournament" | "challenge" | "owner_operations" | "general" | "unknown";
-  object?: "booking" | "payment" | "stadium" | "slot" | "tournament" | "bot" | "bot_identity" | "match" | "unknown";
+  domain?: "booking" | "self_service" | "payment" | "financials" | "stadium" | "tournament" | "challenge" | "owner_operations" | "general" | "unsupported" | "unknown";
+  object?: "booking" | "payment" | "financials" | "stadium" | "slot" | "tournament" | "bot" | "bot_identity" | "match" | "unsupported" | "unknown";
   action?: "create" | "search" | "inspect" | "modify" | "cancel" | "reconcile" | "resume" | "confirm" | "answer" | "none";
   sub_action?: "upcoming" | "recent" | "details" | "reconcile_missing" | "explain_status" | "identity" | "parked_task" | "none";
   relation?: "payment_for_booking" | "contextual_booking" | "none";
