@@ -235,13 +235,13 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            u.name ?? 'Player',
+                                            u.name ?? (isArabic ? 'اسم غير متاح' : 'Name unavailable'),
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
-                                            u.position ?? 'Player',
+                                            u.position ?? (isArabic ? 'المركز غير متاح' : 'Position unavailable'),
                                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -320,7 +320,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                           children: [
                                             Flexible(
                                               child: Text(
-                                                u.name ?? AppLocalizations.of(context)!.player,
+                                                u.name ?? (isArabic ? 'اسم غير متاح' : 'Name unavailable'),
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodyLarge
@@ -351,7 +351,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                           ],
                                         ),
                                         Text(
-                                          u.position ?? "Midfielder",
+                                          u.position ?? (isArabic ? 'المركز غير متاح' : 'Position unavailable'),
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelSmall
