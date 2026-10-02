@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_chat_bubble.dart';
@@ -61,6 +62,9 @@ void main() {
 
       // 4. تحقق من ظهور بطاقات الملاعب وأزرار الحجز
       expect(find.text('احجز'), findsWidgets);
+
+      // Drain AuthProvider's 5-second safety timer before test teardown.
+      await tester.pump(const Duration(seconds: 5));
     });
 
     // ==================== اختبار الردود المتعددة والذاكرة ====================
@@ -102,6 +106,9 @@ void main() {
       // تحقق من أن الرد يتذكر السياق ويظهر في الشاشة
       expect(find.byType(CopilotChatBubble), findsWidgets);
       expect(find.textContaining('الجيزة'), findsWidgets);
+
+      // Drain AuthProvider's 5-second safety timer before test teardown.
+      await tester.pump(const Duration(seconds: 5));
     });
   });
 }
