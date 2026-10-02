@@ -60,7 +60,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         stream: _notificationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جاري تحميل الإشعارات' : 'Loading notifications',
+              message: isArabic ? 'بنجهّز آخر التنبيهات والإجراءات المطلوبة.' : 'Refreshing your latest alerts and required actions.',
+            );
           }
 
           final notifications = snapshot.data ?? [];
