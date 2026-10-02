@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/repositories/matchup_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -159,13 +160,13 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const Scaffold(
+      return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
       );
     }
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
