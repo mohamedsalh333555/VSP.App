@@ -223,7 +223,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 selectedLocation: widget.selectedLocation,
                 status: status,
                 remainingCount: remainingCount,
-                entryFee: entryFee,
+                entryFee: entryFee ?? 0.0,
                 isProcessingPayment: _isProcessingPayment,
                 isArabic: isArabic,
                 onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee ?? 0.0),
