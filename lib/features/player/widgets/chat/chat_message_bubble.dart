@@ -9,13 +9,15 @@ import '../../../../data/models.dart';
 class ChatMessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
-  final Booking booking;
+  final Booking? booking;
+  final bool isHost;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
     required this.isMe,
-    required this.booking,
+    this.booking,
+    this.isHost = false,
   });
 
   void _showEditDialog(BuildContext context) {
@@ -64,7 +66,7 @@ class ChatMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHost = message.senderId == booking.createdByUserId;
+    final host = isHost || (booking != null && message.senderId == booking!.createdByUserId);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return GestureDetector(
@@ -109,7 +111,7 @@ class ChatMessageBubble extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (isHost) ...[
+                    if (host) ...[
                       const SizedBox(width: 4),
                       Text(
                         isArabic ? '[المُضيف ]' : '[HOST ]',
