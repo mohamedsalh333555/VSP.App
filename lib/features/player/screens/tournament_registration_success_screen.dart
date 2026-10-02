@@ -571,9 +571,11 @@ class _TournamentRegistrationSuccessScreenState
       );
     }
 
-    final double fillPercentage = _maxCapacity > 0
+    final bool hasCapacity = _maxCapacity > 0;
+    final bool hasPosition = _myPosition > 0;
+    final double fillPercentage = hasCapacity && hasPosition
         ? (_myPosition / _maxCapacity).clamp(0.0, 1.0)
-        : 1.0;
+        : 0.0;
 
     return Container(
       width: double.infinity,
@@ -613,7 +615,9 @@ class _TournamentRegistrationSuccessScreenState
                         color: VSPColors.accent, size: 16),
                     const SizedBox(width: 6),
                     Text(
-                      'أنت $participantLabel رقم #$_myPosition من $_maxCapacity',
+                      hasPosition && hasCapacity
+                          ? 'أنت $participantLabel رقم #$_myPosition من $_maxCapacity'
+                          : 'تم تأكيد اشتراكك بنجاح',
                       style: const TextStyle(
                         color: VSPColors.accent,
                         fontWeight: FontWeight.w900,
@@ -643,7 +647,9 @@ class _TournamentRegistrationSuccessScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'المقاعد المحجوزة: $_totalParticipants / $_maxCapacity',
+                hasCapacity
+                    ? 'المقاعد المحجوزة: $_totalParticipants / $_maxCapacity'
+                    : 'بيانات السعة غير متاحة حالياً',
                 style: const TextStyle(
                   color: VSPColors.textSecondary,
                   fontSize: 12,
@@ -652,9 +658,11 @@ class _TournamentRegistrationSuccessScreenState
                 ),
               ),
               Text(
-                _maxCapacity - _totalParticipants > 0
-                    ? 'متبقي ${_maxCapacity - _totalParticipants} مقاعد فقط'
-                    : 'اكتملت المقاعد!',
+                hasCapacity
+                    ? (_maxCapacity - _totalParticipants > 0
+                        ? 'متبقي ${_maxCapacity - _totalParticipants} مقاعد فقط'
+                        : 'اكتملت المقاعد!')
+                    : 'السعة غير متاحة',
                 style: TextStyle(
                   color: _maxCapacity - _totalParticipants <= 2
                       ? VSPColors.warning
@@ -674,7 +682,7 @@ class _TournamentRegistrationSuccessScreenState
   Widget _buildTournamentDetailsCard() {
     final formattedDate = _scheduledDate != null
         ? DateFormat('EEEE، d MMMM yyyy', 'ar').format(_scheduledDate!)
-        : 'قريباً (سيتم تحديد الموعد)';
+        : 'موعد الانطلاق غير محدد';
 
     final refCode = widget.orderReference ??
         (widget.tournamentId.length >= 8
@@ -732,7 +740,7 @@ class _TournamentRegistrationSuccessScreenState
             label: 'البطولة:',
             value: _tournamentName.isNotEmpty
                 ? _tournamentName
-                : (widget.initialTournamentName ?? 'دوري VSP'),
+                : 'اسم البطولة غير متاح',
             isBold: true,
           ),
           const SizedBox(height: 10),
@@ -742,8 +750,8 @@ class _TournamentRegistrationSuccessScreenState
             icon: Iconsax.location_copy,
             label: 'المكان:',
             value: _stadiumName != null
-                ? '$_stadiumName ($_governorate)'
-                : 'محافظة $_governorate',
+                ? '$_stadiumName${_governorate.isNotEmpty ? ' ($_governorate)' : ''}'
+                : (_governorate.isNotEmpty ? _governorate : 'المكان غير محدد'),
           ),
           const SizedBox(height: 10),
 
