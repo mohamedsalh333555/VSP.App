@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_initializing_formals
 
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/chat_model.dart';
@@ -132,7 +133,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final currentUserId = auth.currentUser?.uid ?? '';
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.surface,
