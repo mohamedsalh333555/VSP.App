@@ -379,7 +379,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
      style: OutlinedButton.styleFrom(
        minimumSize: const Size(double.infinity, 50),
        foregroundColor: VSPColors.accent,
-       side: BorderSide(color: VSPColors.borderAccent),
+       side: const BorderSide(color: VSPColors.borderAccent),
        shape: const StadiumBorder(),
      ),
      child: Text(
