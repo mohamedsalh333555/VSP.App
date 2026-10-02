@@ -7,6 +7,39 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import 'booking_sheet_whatsapp_utils.dart';
 
+/// Minimal actions for owner-created manual bookings.
+class BookingSheetManualPanel extends StatelessWidget {
+  final Booking booking;
+  final bool isArabic;
+  final bool isSaving;
+  const BookingSheetManualPanel({super.key, required this.booking, required this.isArabic, required this.isSaving});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: VSPSize.buttonHeight,
+            child: ElevatedButton.icon(
+              onPressed: isSaving ? null : () => BookingSheetWhatsAppUtils.sendWhatsAppReceipt(context, booking, isArabic),
+              icon: const Icon(Iconsax.message_copy, size: 18),
+              label: Text(isArabic ? 'إرسال عبر واتساب' : 'Send via WhatsApp', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.success.withValues(alpha: 0.15),
+                foregroundColor: VSPColors.success,
+                side: const BorderSide(color: VSPColors.success),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: PrimaryButton(text: isArabic ? 'إغلاق' : 'Close', onPressed: () => Navigator.pop(context))),
+      ],
+    );
+  }
+}
+
 /// Past/completed branch of [BookingSheetBottomActions].
 class BookingSheetPastPanel extends StatelessWidget {
   final Booking booking;
