@@ -82,6 +82,46 @@ class ChatDialogs {
     });
   }
 
+  static void showConfirmDeleteConversationDialog(
+    BuildContext context, {
+    required String currentUserId,
+    required String conversationId,
+  }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isArabic ? 'حذف المحادثة' : 'Delete Conversation',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isArabic ? 'هل أنت متأكد من رغبتك في حذف هذه المحادثة من طرفك؟' : 'Are you sure you want to delete this conversation?',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dlgCtx);
+              await ChatRepository().deleteConversationForUser(conversationId, currentUserId);
+              if (context.mounted) {
+                Navigator.pop(context, true);
+                VSPFeedback.showSuccess(context, isArabic ? 'تم حذف المحادثة.' : 'Conversation deleted.');
+              }
+            },
+            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   static void showConfirmDeleteDialog(
     BuildContext context, {
     required String currentUserId,
