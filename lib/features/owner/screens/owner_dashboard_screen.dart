@@ -24,7 +24,6 @@ import '../widgets/ledger/owner_payout_dialog.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_verification_banner.dart';
-import '../widgets/dashboard/owner_venue_filter_chips.dart';
 import '../widgets/dashboard/insights/insights_top_filters_row.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
 import '../widgets/dashboard/owner_operational_finance_card.dart';
@@ -747,122 +746,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTimeFilterBar(bool isArabic) {
-    final periods = DashboardFilter.getOptionsForLanguage(isArabic).map((p) {
-      if (p['key'] == 'custom' && _selectedTimePeriod == 'custom') {
-        return {
-          'key': 'custom',
-          'labelAr': _currentFilter.periodLabel,
-          'labelEn': _currentFilter.periodLabel,
-        };
-      }
-      return p;
-    }).toList();
-
-    return Container(
-      height: 38,
-      margin: const EdgeInsets.only(bottom: 2),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: periods.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final p = periods[index];
-          final isSelected = _selectedTimePeriod == p['key'];
-          final label = isArabic ? p['labelAr']! : p['labelEn']!;
-
-          return GestureDetector(
-            onTap: () async {
-              HapticFeedback.selectionClick();
-              if (p['key'] == 'custom') {
-                final picked = await showDateRangePicker(
-                  context: context,
-                  firstDate: DateTime(2024),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                  locale: isArabic ? const Locale('ar') : const Locale('en'),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.dark(
-                          primary: VSPColors.accent,
-                          onPrimary: Colors.black,
-                          surface: VSPColors.surface,
-                          onSurface: VSPColors.textPrimary,
-                        ),
-                      ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (picked != null) {
-                  final filter = DashboardFilter.custom(picked.start, picked.end).copyWith(
-                    courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
-                  );
-                  setState(() {
-                    _selectedTimePeriod = 'custom';
-                    _currentFilter = filter;
-                    _cachedMetrics = null;
-                  });
-                  _loadDashboardAnalytics(filter: filter);
-                }
-                return;
-              }
-
-              DashboardFilter filter;
-              if (p['key'] == 'yesterday') {
-                filter = DashboardFilter.yesterday();
-              } else if (p['key'] == 'week') {
-                filter = DashboardFilter.thisWeek();
-              } else if (p['key'] == 'month') {
-                filter = DashboardFilter.thisMonth();
-              } else if (p['key'] == 'year') {
-                filter = DashboardFilter.thisYear();
-              } else {
-                filter = DashboardFilter.today();
-              }
-              filter = filter.copyWith(
-                courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
-              );
-              setState(() {
-                _selectedTimePeriod = p['key']!;
-                _currentFilter = filter;
-                _cachedMetrics = null;
-              });
-              _loadDashboardAnalytics(filter: filter);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? VSPColors.accent.withValues(alpha: 0.15)
-                    : VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(
-                  color: isSelected
-                      ? VSPColors.accent
-                      : VSPColors.divider.withValues(alpha: 0.6),
-                  width: isSelected ? 1.2 : 0.8,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }
