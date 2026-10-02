@@ -17,6 +17,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final String? periodLabel;
   final VoidCallback onOpenLedger;
   final VoidCallback onRequestPayout;
+  final VoidCallback? onOpenPayoutHistory;
   final bool isArabic;
 
   const OwnerOperationalFinanceCard({
@@ -32,6 +33,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     this.periodLabel,
     required this.onOpenLedger,
     required this.onRequestPayout,
+    this.onOpenPayoutHistory,
     required this.isArabic,
   });
 
@@ -66,11 +68,31 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onOpenLedger();
-                },
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (onOpenPayoutHistory != null)
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onOpenPayoutHistory!();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Text(
+                        isArabic ? 'سجل السحوبات' : 'Withdrawal History',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  if (onOpenPayoutHistory != null) const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onOpenLedger();
+                    },
                 behavior: HitTestBehavior.opaque,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -91,6 +113,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                  ),
+                ],
               ),
             ],
           ),
