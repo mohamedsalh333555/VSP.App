@@ -159,7 +159,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           auth.userModel?.profileImageUrl ?? '',
           ..._teamMembers.map((m) => m.profileImageUrl ?? ''),
         ],
-        'governorate': auth.userModel?.governorate ?? 'Cairo',
+        'governorate': auth.userModel?.governorate?.trim() ?? '',
         'sportType': _selectedSport,
       };
 
