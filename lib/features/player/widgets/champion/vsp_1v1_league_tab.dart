@@ -168,12 +168,12 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = auth.currentUser?.uid;
     final tournamentId = tournament['id']?.toString() ?? '';
-    final tourneyName = tournament['name'] as String? ?? 'بطولة VSP فردي 1vs1';
-    final targetCount = (tournament['target_player_count'] as num?)?.toInt() ?? 16;
+    final tourneyName = (tournament['name'] as String?)?.trim() ?? '';
+    final targetCount = (tournament['target_player_count'] as num?)?.toInt() ?? 0;
     final scheduledAt = tournament['scheduled_at'] as String?;
     final is1v1Open = config.is1v1RegistrationOpen && config.isFeatureEnabled('1v1_enabled');
-    final status = is1v1Open ? (tournament['status'] as String? ?? 'registration_open') : 'registration_closed';
-    final entryFee = (tournament['entry_fee'] as num?)?.toDouble() ?? 0.0;
+    final status = is1v1Open ? ((tournament['status'] as String?)?.trim() ?? '') : 'registration_closed';
+    final entryFee = (tournament['entry_fee'] as num?)?.toDouble();
     final prizePool = (tournament['prize_pool'] as num?)?.toDouble() ?? 0.0;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -208,7 +208,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
               ),
               const SizedBox(height: 14),
               League1v1PrizeCard(
-                entryFee: entryFee,
+                entryFee: entryFee ?? 0.0,
                 prizePool: prizePool,
                 registeredCount: registeredCount,
                 isArabic: isArabic,
@@ -226,7 +226,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 entryFee: entryFee,
                 isProcessingPayment: _isProcessingPayment,
                 isArabic: isArabic,
-                onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee),
+                onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee ?? 0.0),
                 onSwitchToUserGov: () => widget.onLocationChanged(userGov),
               ),
               const SizedBox(height: 24),
