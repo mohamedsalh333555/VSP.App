@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -221,7 +222,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
     return PopScope(
       canPop: false,
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: SafeArea(
           child: SingleChildScrollView(
