@@ -120,6 +120,11 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: VSPColors.surface,
         elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(VSPRadius.bottomSheet),
+          ),
+        ),
       ),
 
       dialogTheme: DialogThemeData(
@@ -129,7 +134,7 @@ class AppTheme {
         titleTextStyle: const TextStyle(fontFamily: tajawalFamily, fontFamilyFallback: fallbackFonts, color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         contentTextStyle: const TextStyle(fontFamily: tajawalFamily, fontFamilyFallback: fallbackFonts, color: VSPColors.textSecondary, fontSize: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          borderRadius: BorderRadius.circular(VSPRadius.dialog),
         ),
       ),
 
@@ -205,7 +210,7 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         enabledBorder: OutlineInputBorder(
@@ -213,7 +218,7 @@ class AppTheme {
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: const BorderSide(color: VSPColors.accent, width: 1.5),
         ),
       ),
