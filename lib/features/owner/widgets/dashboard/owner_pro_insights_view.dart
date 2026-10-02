@@ -57,8 +57,36 @@ class OwnerProInsightsView extends StatelessWidget {
       return true;
     }).toList();
 
+    // التحليلات المالية/التشغيلية المعروضة في Pro يجب أن تأتي من مصدر التحليلات الرسمي في Supabase.
+    // لا نستخدم إعادة حساب محلية كبديل لأن ذلك قد ينتج أرقاماً مختلفة عن الـSSOT.
+    if (analytics == null) {
+      return Column(
+        children: [
+          const SizedBox(height: 6),
+          InsightsTopFiltersRow(
+            selectedStadiumFilter: selectedStadiumFilter,
+            selectedTimePeriod: selectedTimePeriod,
+            stadiums: stadiums,
+            onStadiumFilterChanged: onStadiumFilterChanged,
+            onTimePeriodChanged: onTimePeriodChanged,
+            onCustomRangeSelected: onCustomRangeSelected,
+            isArabic: isArabic,
+          ),
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              isArabic ? 'بيانات التحليلات غير متاحة حالياً.' : 'Analytics data is currently unavailable.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+            ),
+          ),
+        ],
+      );
+    }
+
     // حالة الفراغ عند عدم وجود أي حجوزات
-    final bool hasServerData = analytics != null && (analytics!.bookings.totalCount > 0 || analytics!.capacity.bookedHours > 0);
+    final bool hasServerData = analytics!.bookings.totalCount > 0 || analytics!.capacity.bookedHours > 0;
     if (validBookings.isEmpty && !hasServerData) {
       return Column(
         children: [
