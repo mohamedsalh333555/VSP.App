@@ -114,6 +114,9 @@ class AppRouter {
           if (!authProvider.isAuthenticated) {
             return '/login';
           }
+          if (!authProvider.isOwner) {
+            return '/player';
+          }
           return null;
         },
         builder: (context, state) => const VspCopilotScreen(),
