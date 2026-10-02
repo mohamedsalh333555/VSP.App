@@ -50,6 +50,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _noteController;
+  late final TextEditingController _collectedAmountController;
   bool _isSaving = false;
   bool _isDeleting = false;
   int _selectedMinutes = 60;
@@ -62,6 +63,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     _phoneController = TextEditingController(text: widget.isEdit ? (booking?.playerPhone ?? '') : '');
     _noteController = TextEditingController(text: widget.isEdit ? (booking?.notes ?? '') : '');
 
+    double initialAmount = 0.0;
+    if (widget.isEdit && booking != null) {
+      initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
+    }
+    _collectedAmountController = TextEditingController(
+      text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0),
+    );
+
     if (widget.isEdit && booking != null) {
       _selectedMinutes = booking.endTime.difference(booking.startTime).inMinutes;
     }
@@ -72,6 +81,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     _nameController.dispose();
     _phoneController.dispose();
     _noteController.dispose();
+    _collectedAmountController.dispose();
     super.dispose();
   }
 
@@ -128,7 +138,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       final stadium = widget.selectedStadium;
       final customerPhone = _phoneController.text.trim();
       final notes = _noteController.text.trim();
-      const double collectedAmount = 0.0;
+      final double collectedAmount = widget.isEdit && !((widget.slot['booking'] as Booking?)?.paymentTransactionId?.startsWith('MANUAL') == true)
+          ? (double.tryParse(_collectedAmountController.text.trim()) ?? 0.0)
+          : 0.0;
 
       if (!widget.isEdit) {
         final selectedDate = widget.baseDate.add(Duration(days: widget.selectedDayIndex));
@@ -405,6 +417,8 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     isArabic: isArabic,
                     customerNameLabel: l10n.customerName,
                     internalNotesLabel: l10n.internalNotes,
+                    collectedAmountController: _collectedAmountController,
+                    showCollectedAmount: !flags.isOwnerManual,
                   ),
                   if (!flags.isOwnerManual && booking != null && booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice) ...[
                     const SizedBox(height: 14),
