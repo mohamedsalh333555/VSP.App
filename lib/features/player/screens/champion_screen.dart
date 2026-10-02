@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/repositories/league_repository.dart';
@@ -52,7 +53,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
