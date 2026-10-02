@@ -78,7 +78,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: VSPColors.iconBadgeBg,
+                        color: VSPColors.inputFill,
                         borderRadius: BorderRadius.circular(VSPRadius.chip),
                         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
                       ),
@@ -101,7 +101,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                           Text(
                             value,
                             style: const TextStyle(
-                              color: VSPColors.accent,
+                              color: VSPColors.textPrimary,
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
                             ).merge(VSPTypography.numericStyle),
@@ -226,7 +226,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                         value,
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
-                          fontSize: 21,
+                          fontSize: 23,
                           fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
                         ).merge(VSPTypography.numericStyle),
