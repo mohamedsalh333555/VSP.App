@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -435,7 +436,7 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     final isArabic = widget.isArabic ?? (Localizations.maybeLocaleOf(context)?.languageCode != 'en');
     final hasMessages = _messages.isNotEmpty;
 
-    return Scaffold(
+    return VSPScaffold(
       key: _scaffoldKey,
       backgroundColor: VSPColors.background,
       drawer: CopilotConversationsDrawer(
