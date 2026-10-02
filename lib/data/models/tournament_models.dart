@@ -40,6 +40,7 @@ class Championship {
  // TOURNAMENT Lifecycle
  final String status; // 'open', 'ongoing', 'completed'
  final bool isApproved;
+ final bool creationFeePaid;
  final String? championTeamId;
  final String? championTeamName;
 
