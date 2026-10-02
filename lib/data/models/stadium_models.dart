@@ -1,5 +1,3 @@
-import '../../core/services/remote_config_service.dart';
-
 /// Stadium data model
 class Stadium {
  final String id;
@@ -221,7 +219,6 @@ class Stadium {
  }
  }
 
-  final defaultStadiumPrice = RemoteConfigService().stadiumPriceDefault;
   final rawPPH = data['pricePerHour'] ?? data['price_per_hour'];
   final double parsedPricePerHour = rawPPH == null ? 0.0 : (rawPPH is num ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? 0.0));
 
