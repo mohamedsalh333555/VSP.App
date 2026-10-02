@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/services/connectivity_service.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/ui/vsp_ui.dart';
 import 'primary_button.dart';
 
