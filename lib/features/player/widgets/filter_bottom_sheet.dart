@@ -45,8 +45,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     'غرف تغيير ملابس': false,
     'كافتيريا ومشروبات': false,
     'جراج سيارات': false,
-    'كشافات إضاءة ليلاً': false,
-    'كرة': false,
     'مقاعد': false,
   };
 
