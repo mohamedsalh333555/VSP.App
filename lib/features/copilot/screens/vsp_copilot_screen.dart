@@ -137,20 +137,6 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
 
     final auth = Provider.of<AuthProvider?>(context, listen: false);
     final userGov = auth?.userModel?.governorate?.trim();
-    if (userGov == null || userGov.isEmpty) {
-      setState(() {
-        _isSending = false;
-        _messages.add(CopilotMessage.assistant(
-          Localizations.localeOf(context).languageCode == 'ar'
-              ? 'حدد محافظتك أولاً حتى أقدر أعرض بيانات الملاعب الصحيحة.'
-              : 'Set your governorate first so I can show the correct stadium data.',
-          conversationId: _activeConversationId,
-        ));
-      });
-      _scrollToBottom();
-      return;
-    }
-
     try {
       final response = await widget.copilotService.sendMessage(
         message: text,
