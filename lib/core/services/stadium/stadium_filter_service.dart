@@ -55,7 +55,9 @@ class StadiumFilterService {
       return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
     }
     if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
-      return stadium.hasSeats || featMap['hasSeats'] == true;
+      final rawSeats = featMap['seats'];
+      final seatCount = rawSeats is num ? rawSeats.toInt() : int.tryParse(rawSeats?.toString() ?? '') ?? 0;
+      return seatCount > 0 || featMap['hasSeats'] == true || stadium.hasSeats;
     }
     if (amenity == 'Garage & Parking' || amenity == 'جراج سيارات') {
       return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
