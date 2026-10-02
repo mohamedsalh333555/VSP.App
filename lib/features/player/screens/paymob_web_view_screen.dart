@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -303,7 +304,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  Widget build(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: VSPColors.surface,
