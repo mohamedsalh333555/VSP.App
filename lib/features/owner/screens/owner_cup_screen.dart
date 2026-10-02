@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -68,7 +69,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       _selectedSport = availableSports.first;
     }
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       // The parent OwnerMainScreen owns the bottom navigation.
       // This Scaffold keeps the FAB, but its offset is shared with the
