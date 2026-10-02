@@ -46,7 +46,7 @@ class FramedMetricProgressBar extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '(${percentage.toStringAsFixed(0)}%)',
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
             const Spacer(),
             Text(
@@ -97,16 +97,16 @@ class InsightsRevenueSourcesCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
+        border: Border.all(color: VSPColors.divider, width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.wallet_3_copy, size: 15, color: Colors.white70),
+              const Icon(Iconsax.wallet_3_copy, size: 15, color: VSPColors.textSecondary),
               const SizedBox(width: 8),
               Text(
                 isArabic ? 'طرق التحصيل والإيراد' : 'COLLECTION & PAYMENT METHODS',
@@ -123,7 +123,7 @@ class InsightsRevenueSourcesCard extends StatelessWidget {
             title: isArabic ? 'دفع إلكتروني ورقمي' : 'Digital & Online',
             amount: digitalRevenue,
             percentage: digitalPct,
-            color: VSPColors.accent,
+            color: VSPColors.textPrimary,
             isArabic: isArabic,
           ),
           const SizedBox(height: 14),
@@ -131,7 +131,7 @@ class InsightsRevenueSourcesCard extends StatelessWidget {
             title: isArabic ? 'تحصيل كاش ونقدي' : 'Cash on Arrival',
             amount: cashRevenue,
             percentage: cashPct,
-            color: Colors.white70,
+            color: VSPColors.textSecondary,
             isArabic: isArabic,
           ),
         ],
