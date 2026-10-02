@@ -53,9 +53,9 @@ class _TournamentRegistrationSuccessScreenState
   DateTime? _scheduledDate;
   double _entryFee = 0.0;
   double _prizePool = 0.0;
-  int _myPosition = 1;
+  int _myPosition = 0;
   int _totalParticipants = 0;
-  int _maxCapacity = 16;
+  int _maxCapacity = 0;
   String? _stadiumName;
 
   @override
@@ -125,15 +125,15 @@ class _TournamentRegistrationSuccessScreenState
         int resolvedIndex =
             playersList.indexWhere((p) => p['user_id'] == currentUid) + 1;
         if (resolvedIndex <= 0) {
-          resolvedIndex = playersList.isNotEmpty ? playersList.length : 1;
+          resolvedIndex = 0;
         }
 
         if (mounted) {
           setState(() {
             _tournamentName = tourneyRes?['name']?.toString() ??
                 widget.initialTournamentName ??
-                'بطولة 1VS1 الفردية';
-            final rawGov = tourneyRes?['governorate']?.toString() ?? 'Cairo';
+                '';
+            final rawGov = tourneyRes?['governorate']?.toString() ?? '';
             _governorate = EgyptGovernorates.governorateToArabic[rawGov] ??
                 rawGov;
             if (tourneyRes?['scheduled_at'] != null) {
@@ -146,7 +146,7 @@ class _TournamentRegistrationSuccessScreenState
             _prizePool =
                 (tourneyRes?['prize_pool'] as num?)?.toDouble() ?? 0.0;
             _maxCapacity =
-                (tourneyRes?['target_player_count'] as num?)?.toInt() ?? 16;
+                (tourneyRes?['target_player_count'] as num?)?.toInt() ?? 0;
             _myPosition = resolvedIndex;
             _totalParticipants = playersList.length;
             _isLoading = false;
@@ -174,15 +174,15 @@ class _TournamentRegistrationSuccessScreenState
               rostersList.indexWhere((r) => r['team_id'] == widget.teamId) + 1;
         }
         if (teamOrder <= 0) {
-          teamOrder = rostersList.isNotEmpty ? rostersList.length : 1;
+          teamOrder = 0;
         }
 
         if (mounted) {
           setState(() {
             _tournamentName = leagueRes?['name']?.toString() ??
                 widget.initialTournamentName ??
-                'دوري الـ 4 فرق';
-            final rawGov = leagueRes?['governorate']?.toString() ?? 'Cairo';
+                '';
+            final rawGov = leagueRes?['governorate']?.toString() ?? '';
             _governorate = EgyptGovernorates.governorateToArabic[rawGov] ??
                 rawGov;
             if (leagueRes?['start_date'] != null) {
@@ -229,8 +229,8 @@ class _TournamentRegistrationSuccessScreenState
           setState(() {
             _tournamentName = champRes?['name']?.toString() ??
                 widget.initialTournamentName ??
-                'بطولة كرة القدم';
-            final rawGov = champRes?['governorate']?.toString() ?? 'Cairo';
+                '';
+            final rawGov = champRes?['governorate']?.toString() ?? '';
             _governorate = EgyptGovernorates.governorateToArabic[rawGov] ??
                 rawGov;
             if (champRes?['start_date'] != null) {
@@ -244,7 +244,7 @@ class _TournamentRegistrationSuccessScreenState
             _prizePool =
                 (champRes?['prize'] as num?)?.toDouble() ?? 0.0;
             _maxCapacity =
-                (champRes?['max_teams'] as num?)?.toInt() ?? 8;
+                (champRes?['max_teams'] as num?)?.toInt() ?? 0;
             _myPosition = teamOrder;
             _totalParticipants = rostersList.length;
             _isLoading = false;
@@ -255,8 +255,6 @@ class _TournamentRegistrationSuccessScreenState
       debugPrint('Error fetching live tournament details: $e');
       if (mounted) {
         setState(() {
-          _tournamentName =
-              widget.initialTournamentName ?? 'البطولة الرسمية';
           _isLoading = false;
         });
       }
