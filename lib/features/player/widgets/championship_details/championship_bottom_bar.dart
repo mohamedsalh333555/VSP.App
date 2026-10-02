@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -30,16 +31,12 @@ class ChampionshipBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Container(
+    return VSPBottomActionBar(
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.sm,
         VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom + VSPSpacing.md,
-      ),
-      decoration: const BoxDecoration(
-        color: VSPColors.surface,
-        border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
+        VSPSpacing.md,
       ),
       child: Builder(
         builder: (context) {
