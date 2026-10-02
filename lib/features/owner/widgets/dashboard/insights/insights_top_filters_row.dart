@@ -47,9 +47,9 @@ class InsightsTopFiltersRow extends StatelessWidget {
               child: DropdownButton<String>(
                 value: selectedStadiumFilter,
                 isExpanded: true,
-                dropdownColor: VSPColors.surfaceAlt,
+                dropdownColor: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.card),
-                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 12),
+                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 12),
                 selectedItemBuilder: (context) {
                   final items = [
                     DropdownMenuItem<String>(
@@ -89,9 +89,9 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     child: Text(
                       isArabic ? 'جميع الملاعب' : 'All Pitches',
                       style: TextStyle(
-                        color: selectedStadiumFilter == 'all' ? VSPColors.accent : VSPColors.textPrimary,
+                        color: VSPColors.textPrimary,
                         fontSize: 12.5,
-                        fontWeight: selectedStadiumFilter == 'all' ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -100,9 +100,9 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         child: Text(
                           s.name,
                           style: TextStyle(
-                            color: selectedStadiumFilter == s.id ? VSPColors.accent : VSPColors.textPrimary,
+                            color: VSPColors.textPrimary,
                             fontSize: 12.5,
-                            fontWeight: selectedStadiumFilter == s.id ? FontWeight.w800 : FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       )),
@@ -135,7 +135,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                 isExpanded: true,
                 dropdownColor: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.card),
-                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 12),
+                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 12),
                 selectedItemBuilder: (context) {
                   return periodOptions.map((p) {
                     return Align(
@@ -160,9 +160,9 @@ class InsightsTopFiltersRow extends StatelessWidget {
                     child: Text(
                       p['label']!,
                       style: TextStyle(
-                        color: isCurrent ? VSPColors.accent : VSPColors.textPrimary,
+                        color: VSPColors.textPrimary,
                         fontSize: 12.5,
-                        fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   );
