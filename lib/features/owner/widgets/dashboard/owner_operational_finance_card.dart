@@ -9,7 +9,10 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double availableBalance;
   final double cashThisMonth;
   final double onlineThisMonth;
+  final double cashUncollected;
+  final double onlineUnavailable;
   final double upcomingValue;
+  final bool showProFinancialDetail;
   final String timePeriod;
   final String? periodLabel;
   final VoidCallback onOpenLedger;
@@ -21,7 +24,10 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required this.availableBalance,
     required this.cashThisMonth,
     required this.onlineThisMonth,
+    this.cashUncollected = 0.0,
+    this.onlineUnavailable = 0.0,
     this.upcomingValue = 0.0,
+    this.showProFinancialDetail = false,
     this.timePeriod = 'today',
     this.periodLabel,
     required this.onOpenLedger,
@@ -211,68 +217,50 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      // كاش محصّل
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              cashLabel,
-                              style: const TextStyle(
-                                color: VSPColors.textSecondary,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${cashThisMonth.toStringAsFixed(0)} $currencyLabel',
-                              style: const TextStyle(
-                                color: VSPColors.textPrimary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
+                        child: _FinanceMetric(
+                          label: cashLabel,
+                          value: cashThisMonth,
+                          currencyLabel: currencyLabel,
                         ),
                       ),
-
-                      Container(
-                        width: 1,
-                        height: 28,
-                        color: VSPColors.divider,
-                      ),
+                      Container(width: 1, height: 28, color: VSPColors.divider),
                       const SizedBox(width: 16),
-
-                      // أونلاين محقق
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              onlineLabel,
-                              style: const TextStyle(
-                                color: VSPColors.textSecondary,
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${onlineThisMonth.toStringAsFixed(0)} $currencyLabel',
-                              style: const TextStyle(
-                                color: VSPColors.textPrimary,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                          ],
+                        child: _FinanceMetric(
+                          label: onlineLabel,
+                          value: onlineThisMonth,
+                          currencyLabel: currencyLabel,
                         ),
                       ),
                     ],
                   ),
+
+                  if (showProFinancialDetail) ...[
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _FinanceMetric(
+                            label: isArabic ? 'كاش غير محصّل' : 'Cash Uncollected',
+                            value: cashUncollected,
+                            currencyLabel: currencyLabel,
+                            compact: true,
+                          ),
+                        ),
+                        Container(width: 1, height: 24, color: VSPColors.divider),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _FinanceMetric(
+                            label: isArabic ? 'أونلاين غير متاح للسحب' : 'Online Unavailable',
+                            value: onlineUnavailable,
+                            currencyLabel: currencyLabel,
+                            compact: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
 
                   // عرض قيمة الحجوزات القادمة المؤكدة بشكل منفصل كـ operational metric
                   if (upcomingValue > 0) ...[
@@ -326,6 +314,47 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FinanceMetric extends StatelessWidget {
+  final String label;
+  final double value;
+  final String currencyLabel;
+  final bool compact;
+
+  const _FinanceMetric({
+    required this.label,
+    required this.value,
+    required this.currencyLabel,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: VSPColors.textSecondary,
+            fontSize: compact ? 10.5 : 11.5,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '${value.toStringAsFixed(0)} $currencyLabel',
+          style: TextStyle(
+            color: VSPColors.textPrimary,
+            fontSize: compact ? 14 : 17,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
     );
   }
 }
