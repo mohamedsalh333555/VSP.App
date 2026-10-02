@@ -15,6 +15,7 @@ import '../../player/screens/profile_subscreens/language_screen.dart';
 import '../../player/screens/profile_subscreens/notifications_screen.dart';
 import '../../player/screens/terms_and_privacy_screen.dart';
 import 'owner_account_management_screen.dart';
+import 'owner_ledger_screen.dart';
 import 'subscription_plans_screen.dart';
 
 class OwnerProfileScreen extends StatelessWidget {
@@ -228,103 +229,6 @@ class OwnerProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSubscriptionCard(BuildContext context, AuthProvider auth, bool isArabic) {
-    final user = auth.userModel;
-    final planLabel = user?.subscriptionPlanLabel ?? (isArabic ? 'الباقة الأساسية' : 'Basic Plan');
-    final isActive = user?.hasActiveSubscription ?? true;
-
-    return Container(
-      padding: const EdgeInsets.all(VSPSpacing.md),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            VSPColors.surface,
-            VSPColors.surfaceAlt.withValues(alpha: 0.8),
-          ],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(
-          color: isActive ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.divider,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(VSPRadius.sm),
-                ),
-                child: const Icon(Iconsax.crown_1_copy, color: VSPColors.accent, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'اشتراك المنصة' : 'Platform Subscription',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: VSPColors.textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      planLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isActive ? VSPColors.accent : VSPColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Upgrade / Plans Button
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
-                  );
-                },
-                borderRadius: BorderRadius.circular(VSPRadius.sm),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: VSPColors.accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        isArabic ? 'إدارة الباقة' : 'Manage',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: VSPColors.accent,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 10, color: VSPColors.accent),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -355,11 +259,9 @@ class OwnerProfileScreen extends StatelessWidget {
             _buildOwnerHeader(context, auth, isArabic),
             const SizedBox(height: VSPSpacing.md),
 
-            // ── 2. Subscription Status Card ──
-            _buildSubscriptionCard(context, auth, isArabic),
             const SizedBox(height: VSPSpacing.lg),
 
-            // ── 3. Facility & Account Management Section ──
+            // ── 2. Facility & Account Management Section ──
             VSPSectionTitle(isArabic ? 'إدارة المنشأة والحساب' : l10n.profileAccountLabel),
             const SizedBox(height: VSPSpacing.md),
             VSPFadeInItem(
@@ -382,15 +284,15 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 1,
               child: VSPMenuItem(
-                icon: Iconsax.security_card_copy,
-                title: isArabic ? 'بيانات استلام الأرباح والتحويلات' : 'Payout & Transfer Details',
+                icon: Iconsax.receipt_2_1_copy,
+                title: isArabic ? 'سجل السحوبات' : 'Withdrawal History',
                 subtitle: isArabic
-                    ? 'إنستا باي، كاش، والبنك (محمية بـ OTP)'
-                    : 'InstaPay, Cash, and Bank (OTP protected)',
+                    ? 'عرض المبالغ التي تمت تسويتها وسحبها'
+                    : 'View completed and requested withdrawals',
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const OwnerAccountManagementScreen()),
+                    MaterialPageRoute(builder: (context) => const OwnerLedgerScreen(payoutOnly: true)),
                   );
                 },
               ),
