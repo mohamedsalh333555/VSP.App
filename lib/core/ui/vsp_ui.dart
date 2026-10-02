@@ -327,6 +327,7 @@ class VSPScaffold extends StatelessWidget {
   final bool drawerEnableOpenDragGesture;
   final bool endDrawerEnableOpenDragGesture;
   final String? restorationId;
+  final Widget? bottomNavigationBar;
   final Widget? bottomSheet;
 
   const VSPScaffold({
@@ -351,6 +352,7 @@ class VSPScaffold extends StatelessWidget {
     this.drawerEnableOpenDragGesture = true,
     this.endDrawerEnableOpenDragGesture = true,
     this.restorationId,
+    this.bottomNavigationBar,
     this.bottomSheet,
   });
 
@@ -377,6 +379,7 @@ class VSPScaffold extends StatelessWidget {
       drawerEnableOpenDragGesture: drawerEnableOpenDragGesture,
       endDrawerEnableOpenDragGesture: endDrawerEnableOpenDragGesture,
       restorationId: restorationId,
+      bottomNavigationBar: bottomNavigationBar,
       bottomSheet: bottomSheet,
     );
   }
