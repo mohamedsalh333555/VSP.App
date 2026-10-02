@@ -111,9 +111,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  }
 
   Future<bool> _checkBookingStatusDb() async {
-    if (widget.bookingId == null ||
-        widget.bookingId!.isEmpty ||
-        widget.bookingId!.startsWith('mock_')) {
+    if (widget.bookingId == null || widget.bookingId!.isEmpty) {
       return false;
     }
     try {
