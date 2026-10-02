@@ -265,19 +265,29 @@ class _TournamentRegistrationSuccessScreenState
     final bool isSolo = widget.tournamentType == '1v1';
     final String shareMessage;
 
+    final ref = widget.orderReference ??
+        widget.tournamentId.substring(0, min(8, widget.tournamentId.length));
     if (isSolo) {
-      shareMessage =
-          '🔥 أنا اشتركت رسمي في "$_tournamentName" على تطبيق VSP!\n'
-          '🏆 ترتيبي: اللاعب رقم #$_myPosition من أصل $_maxCapacity لاعب.\n'
-          '⚽ مين قد التحدي؟ حمل التطبيق وسجل مكانك قبل اكتمال المقاعد!\n'
-          '📌 كود الحجز: ${widget.orderReference ?? widget.tournamentId.substring(0, min(8, widget.tournamentId.length))}';
+      final ranking = (_myPosition > 0 && _maxCapacity > 0)
+          ? '🏆 ترتيبي: اللاعب رقم #$_myPosition من أصل $_maxCapacity لاعب.'
+          : '';
+      shareMessage = [
+        '🔥 أنا اشتركت رسمي في "$_tournamentName" على تطبيق VSP!',
+        if (ranking.isNotEmpty) ranking,
+        '⚽ مين قد التحدي؟ حمل التطبيق وسجل مكانك قبل اكتمال المقاعد!',
+        '📌 كود الحجز: $ref',
+      ].join('\n');
     } else {
-      final team = widget.teamName ?? 'فريقنا';
-      shareMessage =
-          '🔥 سجلنا رسمي لفريق "$team" في "$_tournamentName" على تطبيق VSP!\n'
-          '🏆 ترتيبنا: الفريق رقم #$_myPosition من أصل $_maxCapacity فرق.\n'
-          '⚽ جهزوا نفسكم للمنافسة على الكأس!\n'
-          '📌 كود الحجز: ${widget.orderReference ?? widget.tournamentId.substring(0, min(8, widget.tournamentId.length))}';
+      final team = widget.teamName?.trim().isNotEmpty == true ? widget.teamName!.trim() : 'فريقك';
+      final ranking = (_myPosition > 0 && _maxCapacity > 0)
+          ? '🏆 ترتيبنا: الفريق رقم #$_myPosition من أصل $_maxCapacity فرق.'
+          : '';
+      shareMessage = [
+        '🔥 سجلنا رسمي لفريق "$team" في "$_tournamentName" على تطبيق VSP!',
+        if (ranking.isNotEmpty) ranking,
+        '⚽ جهزوا نفسكم للمنافسة على الكأس!',
+        '📌 كود الحجز: $ref',
+      ].join('\n');
     }
 
     VSPLauncherUtils.openWhatsApp(context, phone: '', message: shareMessage);
