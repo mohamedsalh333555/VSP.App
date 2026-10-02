@@ -187,6 +187,66 @@ class AppTheme {
         ),
       ),
 
+      // Shared surface grammar: all common controls inherit the same hierarchy.
+      dividerTheme: const DividerThemeData(
+        color: VSPColors.divider,
+        thickness: 1,
+        space: VSPSpacing.md,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: VSPColors.surface,
+        contentTextStyle: TextStyle(
+          fontFamily: tajawalFamily,
+          fontFamilyFallback: fallbackFonts,
+          color: VSPColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: VSPColors.surfaceAlt,
+        selectedColor: VSPColors.accentSoft,
+        disabledColor: VSPColors.surfaceAlt.withValues(alpha: 0.5),
+        secondarySelectedColor: VSPColors.accentSoft,
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.xs),
+        side: const BorderSide(color: VSPColors.divider),
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(
+          fontFamily: tajawalFamily,
+          fontFamilyFallback: fallbackFonts,
+          color: VSPColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      popupMenuTheme: const PopupMenuThemeData(
+        color: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(VSPRadius.dialog)),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: VSPColors.accent,
+        linearTrackColor: VSPColors.surfaceAlt,
+        circularTrackColor: VSPColors.surfaceAlt,
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
+        minLeadingWidth: 36,
+        iconColor: VSPColors.textSecondary,
+        textColor: VSPColors.textPrimary,
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: VSPColors.accent,
+        unselectedLabelColor: VSPColors.textSecondary,
+        indicatorColor: VSPColors.accent,
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.label,
+      ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: VSPColors.accent,
