@@ -370,7 +370,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final serviceFee = _feePolicy?.serviceFee(entryFee) ?? 0.0;
     final totalCheckoutPrice = _feePolicy?.total(entryFee) ?? entryFee;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
