@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/components/vsp_section_title.dart';
@@ -153,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final String userName = auth.userModel?.name ?? l10n.player;
  final String userPosition = auth.userModel?.position?.trim() ?? '';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: Colors.transparent,
