@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -109,7 +110,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Stack(
           children: [
