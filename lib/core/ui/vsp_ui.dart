@@ -301,3 +301,83 @@ class VSPBottomActionBar extends StatelessWidget {
     );
   }
 }
+
+
+/// Canonical VSP page scaffold.
+/// Existing feature screens can use it without changing their content structure;
+/// it centralizes the page surface defaults while preserving normal Scaffold APIs.
+class VSPScaffold extends StatelessWidget {
+  final PreferredSizeWidget? appBar;
+  final Widget? body;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+  final FloatingActionButtonAnimator? floatingActionButtonAnimator;
+  final List<Widget>? persistentFooterButtons;
+  final AlignmentDirectional persistentFooterAlignment;
+  final Widget? drawer;
+  final void Function(bool)? onDrawerChanged;
+  final Widget? endDrawer;
+  final void Function(bool)? onEndDrawerChanged;
+  final Color? drawerScrimColor;
+  final Color? backgroundColor;
+  final bool? resizeToAvoidBottomInset;
+  final bool primary;
+  final bool extendBody;
+  final bool extendBodyBehindAppBar;
+  final bool drawerEnableOpenDragGesture;
+  final bool endDrawerEnableOpenDragGesture;
+  final String? restorationId;
+  final Widget? bottomSheet;
+
+  const VSPScaffold({
+    super.key,
+    this.appBar,
+    this.body,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+    this.floatingActionButtonAnimator,
+    this.persistentFooterButtons,
+    this.persistentFooterAlignment = AlignmentDirectional.centerEnd,
+    this.drawer,
+    this.onDrawerChanged,
+    this.endDrawer,
+    this.onEndDrawerChanged,
+    this.drawerScrimColor,
+    this.backgroundColor,
+    this.resizeToAvoidBottomInset,
+    this.primary = true,
+    this.extendBody = false,
+    this.extendBodyBehindAppBar = false,
+    this.drawerEnableOpenDragGesture = true,
+    this.endDrawerEnableOpenDragGesture = true,
+    this.restorationId,
+    this.bottomSheet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: appBar,
+      body: body,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      floatingActionButtonAnimator: floatingActionButtonAnimator,
+      persistentFooterButtons: persistentFooterButtons,
+      persistentFooterAlignment: persistentFooterAlignment,
+      drawer: drawer,
+      onDrawerChanged: onDrawerChanged,
+      endDrawer: endDrawer,
+      onEndDrawerChanged: onEndDrawerChanged,
+      drawerScrimColor: drawerScrimColor,
+      backgroundColor: backgroundColor ?? VSPColors.background,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+      primary: primary,
+      extendBody: extendBody,
+      extendBodyBehindAppBar: extendBodyBehindAppBar,
+      drawerEnableOpenDragGesture: drawerEnableOpenDragGesture,
+      endDrawerEnableOpenDragGesture: endDrawerEnableOpenDragGesture,
+      restorationId: restorationId,
+      bottomSheet: bottomSheet,
+    );
+  }
+}
