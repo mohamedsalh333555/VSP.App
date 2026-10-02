@@ -1,6 +1,7 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
@@ -107,7 +108,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  if (didPop) return;
  Navigator.of(context).popUntil((route) => route.isFirst);
  },
- child: Scaffold(
+ child: VSPScaffold(
  backgroundColor: VSPColors.background,
  body: SafeArea(
  child: Stack(
