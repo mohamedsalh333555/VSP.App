@@ -155,14 +155,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       (hasHistory ? 1 + historyCount : 0),
                   itemBuilder: (context, index) {
                     var cursor = index;
-                    if (cursor < pendingCount) {
-                      return PendingBookingCard(
-                        pendingBooking: data.pending[cursor],
-                        isArabic: isArabic,
-                      );
-                    }
-                    cursor -= pendingCount;
 
+                    // Visual priority: Upcoming → Pending → History.
                     if (hasUpcoming) {
                       if (cursor == 0) {
                         return Padding(
@@ -181,7 +175,10 @@ class _BookingsScreenState extends State<BookingsScreen> {
                           index: cursor,
                           child: Padding(
                             padding: EdgeInsets.only(
-                              bottom: cursor == upcomingCount - 1 && hasHistory ? VSPSpacing.lg : VSPSpacing.md,
+                              bottom: cursor == upcomingCount - 1 &&
+                                      (pendingCount > 0 || hasHistory)
+                                  ? VSPSpacing.lg
+                                  : VSPSpacing.md,
                             ),
                             child: PlayerBookingCard(
                               booking: booking,
@@ -193,6 +190,17 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       }
                       cursor -= upcomingCount;
                     }
+
+                    if (cursor < pendingCount) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        child: PendingBookingCard(
+                          pendingBooking: data.pending[cursor],
+                          isArabic: isArabic,
+                        ),
+                      );
+                    }
+                    cursor -= pendingCount;
 
                     if (hasHistory) {
                       if (cursor == 0) {
