@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
