@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -92,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
  systemNavigationBarIconBrightness: Brightness.light,
  systemNavigationBarDividerColor: Colors.transparent,
  ),
- child: Scaffold(
+ child: VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Stack(
  children: [
