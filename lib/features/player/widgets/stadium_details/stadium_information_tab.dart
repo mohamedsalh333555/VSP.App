@@ -46,7 +46,7 @@ class FacilitiesGrid extends StatelessWidget {
       _FacilityItem(icon: Iconsax.car_copy, label: isArabic ? 'موقف سيارات' : 'Parking', active: hasGarage),
       _FacilityItem(icon: Iconsax.coffee_copy, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
       _FacilityItem(icon: Iconsax.shop_copy, label: isArabic ? 'غرف تبديل' : 'Changing Rooms', active: hasChangingRoom),
-      _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مدرجات ومقاعد' : 'Seats & Stands', active: hasSeats),
+      _FacilityItem(icon: Iconsax.home_copy, label: hasSeats ? (isArabic ? 'مقاعد: $seats' : 'Seats: $seats') : (isArabic ? 'مقاعد' : 'Seats'), active: hasSeats),
     ];
 
     final activeFacilities = allFacilities.where((f) => f.active).toList();
