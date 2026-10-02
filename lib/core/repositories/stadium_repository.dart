@@ -357,7 +357,7 @@ class StadiumRepository {
     required double rating,
     required String comment,
   }) async {
-    return _supabase.rpc('submit_stadium_review_atomic', params: {
+    final response = await _supabase.rpc('submit_stadium_review_atomic', params: {
       'p_stadium_id': stadiumId,
       'p_user_id': userId,
       'p_user_name': userName,
@@ -365,6 +365,10 @@ class StadiumRepository {
       'p_rating': rating.round(),
       'p_comment': comment,
     });
+    if (response is Map && response['success'] == false) {
+      throw Exception(response['error']?.toString() ?? 'review_submission_failed');
+    }
+    return response;
   }
 
   /// Fetch multiple stadiums by their IDs (e.g. for Favorites)
