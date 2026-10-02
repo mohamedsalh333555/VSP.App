@@ -280,7 +280,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         ? ((_financialSummary?['available_balance'] as num?)?.toDouble() ?? 0.0)
         : 0.0;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
         child: RefreshIndicator(
