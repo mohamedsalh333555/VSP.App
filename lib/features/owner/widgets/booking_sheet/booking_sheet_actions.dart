@@ -200,6 +200,7 @@ class BookingSheetBottomActions extends StatelessWidget {
   final bool isPastCompleted;
   final bool isUpcomingPendingCash;
   final bool isUpcomingOnlinePaid;
+  final bool isOwnerManual;
   final bool isSaving;
   final bool isDeleting;
   final VoidCallback onConfirmCashPayment;
@@ -214,6 +215,7 @@ class BookingSheetBottomActions extends StatelessWidget {
     required this.isPastCompleted,
     required this.isUpcomingPendingCash,
     required this.isUpcomingOnlinePaid,
+    required this.isOwnerManual,
     required this.isSaving,
     required this.isDeleting,
     required this.onConfirmCashPayment,
@@ -224,6 +226,13 @@ class BookingSheetBottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isOwnerManual && booking != null) {
+      return BookingSheetManualPanel(
+        booking: booking!,
+        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        isSaving: isSaving,
+      );
+    }
     if (isPastCompleted && booking != null) {
       return BookingSheetPastPanel(
         booking: booking!,
