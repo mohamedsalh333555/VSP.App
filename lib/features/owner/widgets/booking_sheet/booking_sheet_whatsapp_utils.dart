@@ -107,37 +107,15 @@ Enjoy your match.
     final rawPhone = b.playerPhone?.trim() ?? '';
     final normalizedPhone = rawPhone.isEmpty ? '' : PhoneUtils.toE164(rawPhone);
     final phone = normalizedPhone.replaceAll('+', '');
-    final isValidEgyptianMobile = RegExp(r'^201[0125][0-9]{8}
-      if (context.mounted) {
-        VSPFeedback.showError(context, isArabic ? 'رقم الهاتف غير متاح أو غير صالح لهذا الحجز.' : 'The phone number is unavailable or invalid for this booking.');
-      }
-      return;
-    }
-
-    final isManual = b.paymentTransactionId?.startsWith('MANUAL') == true;
-    final message = isManual
-        ? (isArabic
-            ? '*تفاصيل الحجز*\\nاسم العميل: $customerName\\nالملعب: $stadiumName\\nالتاريخ: $dateStr\\nالتوقيت: من $startTimeStr إلى $endTimeStr\\nقيمة الحجز: ${totalPrice.toInt()} ج.م'
-            : '*Booking Details*\\nCustomer: $customerName\\nStadium: $stadiumName\\nDate: $dateStr\\nTime: $startTimeStr - $endTimeStr\\nBooking Price: ${totalPrice.toInt()} EGP')
-        : receiptText;
-
-    final whatsappUrl = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
-    try {
-      final launched = await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
-      if (!launched && context.mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر فتح محادثة واتساب لهذا الرقم.' : 'Could not open a WhatsApp chat for this number.');
-      }
-    } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر فتح محادثة واتساب لهذا الرقم. تأكد أن الرقم مسجل على واتساب.' : 'Could not open WhatsApp chat for this number. Make sure the number is registered on WhatsApp.');
-      }
-    }
-  }
-}
-).hasMatch(phone);
+    final isValidEgyptianMobile = RegExp(r'^201[0125][0-9]{8}$').hasMatch(phone);
     if (phone.isEmpty || !isValidEgyptianMobile) {
       if (context.mounted) {
-        VSPFeedback.showError(context, isArabic ? 'رقم الهاتف غير متاح لهذا الحجز.' : 'No phone number is available for this booking.');
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'رقم الهاتف غير متاح أو غير صالح لهذا الحجز.'
+              : 'The phone number is unavailable or invalid for this booking.',
+        );
       }
       return;
     }
