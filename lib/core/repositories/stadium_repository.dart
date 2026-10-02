@@ -362,7 +362,7 @@ class StadiumRepository {
       'p_user_id': userId,
       'p_user_name': userName,
       'p_user_image_url': userImageUrl,
-      'p_rating': rating,
+      'p_rating': rating.round(),
       'p_comment': comment,
     });
   }
