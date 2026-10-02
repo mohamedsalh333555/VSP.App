@@ -133,7 +133,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
               child: DropdownButton<String>(
                 value: selectedTimePeriod,
                 isExpanded: true,
-                dropdownColor: VSPColors.surfaceAlt,
+                dropdownColor: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.card),
                 icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 12),
                 selectedItemBuilder: (context) {
@@ -180,7 +180,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         return Theme(
                           data: Theme.of(context).copyWith(
                             colorScheme: const ColorScheme.dark(
-                              primary: VSPColors.accent,
+                              primary: VSPColors.textPrimary,
                               onPrimary: Colors.black,
                               surface: VSPColors.surface,
                               onSurface: VSPColors.textPrimary,
@@ -271,7 +271,7 @@ class InsightsEmptyState extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
               decoration: BoxDecoration(
-                color: VSPColors.accent,
+                color: VSPColors.textSecondary,
                 borderRadius: BorderRadius.circular(VSPRadius.full),
               ),
               child: Text(
