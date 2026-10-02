@@ -16,7 +16,6 @@ import '../../player/screens/profile_subscreens/notifications_screen.dart';
 import '../../player/screens/terms_and_privacy_screen.dart';
 import 'owner_account_management_screen.dart';
 import 'owner_ledger_screen.dart';
-import 'subscription_plans_screen.dart';
 
 class OwnerProfileScreen extends StatelessWidget {
   const OwnerProfileScreen({super.key});
