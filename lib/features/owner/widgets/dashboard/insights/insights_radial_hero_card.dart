@@ -129,7 +129,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.textPrimary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -183,7 +183,7 @@ class InsightsRadialHeroCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.textPrimary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                               ),
