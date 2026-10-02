@@ -54,9 +54,10 @@ class StadiumFilterService {
       return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
     }
     if (normalizedAmenity == 'night floodlights' || amenity.trim() == 'كشافات ليلية') {
-      // Late operating hours are the canonical signal when the owner does not
-      // explicitly persist a separate floodlight flag.
-      return isNightShiftStadium(stadium) ||
+      // The owner-facing lighting source of truth is hasJerash, historically
+      // labeled as Professional Lighting in the stadium model.
+      return stadium.hasJerash ||
+          featMap['hasJerash'] == true ||
           featMap['nightFloodlights'] == true ||
           featMap['floodlights'] == true ||
           featMap['hasFloodlights'] == true;
@@ -71,6 +72,13 @@ class StadiumFilterService {
     }
     if (normalizedAmenity == 'garage & parking' || amenity.trim() == 'جراج سيارات') {
       return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
+    }
+
+    if (normalizedAmenity == 'ball provided' || amenity.trim() == 'الكرة متوفرة') {
+      return stadium.hasBall ||
+          featMap['hasBall'] == true ||
+          featMap['ballProvided'] == true ||
+          featMap['ball'] == true;
     }
 
     // Fallback checks
