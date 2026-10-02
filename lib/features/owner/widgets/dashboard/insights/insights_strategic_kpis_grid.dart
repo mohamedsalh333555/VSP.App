@@ -80,9 +80,9 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: VSPColors.inputFill,
                         borderRadius: BorderRadius.circular(VSPRadius.chip),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+                        border: Border.all(color: VSPColors.divider),
                       ),
-                      child: const Icon(Iconsax.info_circle_copy, size: 20, color: VSPColors.accent),
+                      child: const Icon(Iconsax.info_circle_copy, size: 20, color: VSPColors.textSecondary),
                     ),
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
@@ -118,7 +118,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt,
+                    color: VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.input),
                     border: Border.all(color: VSPColors.divider),
                   ),
@@ -143,7 +143,7 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.chip),
                       ),
-                      backgroundColor: VSPColors.surfaceAlt,
+                      backgroundColor: VSPColors.surface,
                     ),
                     onPressed: () => Navigator.of(ctx).pop(),
                     child: Text(
