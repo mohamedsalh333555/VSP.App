@@ -172,13 +172,13 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  child: GestureDetector(
  onTap: _isLoading ? null : onTap,
  child: Container(
- height: 42.0,
- padding: const EdgeInsets.symmetric(horizontal: 16),
+ height: 48.0,
+ padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
  decoration: BoxDecoration(
  color: isOutlined ? Colors.transparent : color,
- borderRadius: BorderRadius.circular(VSPRadius.sm),
+ borderRadius: BorderRadius.circular(VSPRadius.button),
  border: isOutlined ? Border.all(color: color, width: 1.5) : null,
- boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+ boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))],
  ),
  child: Center(
  child: _isLoading 
