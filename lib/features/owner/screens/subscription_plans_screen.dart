@@ -89,19 +89,42 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final bool isTrialOrBasic = userModel?.isInActiveTrial == true ||
         (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true);
 
-    final basicPlan = _plans.firstWhere(
-      (p) => p['code'] == 'basic',
-      orElse: () => {'monthly_price': 500, 'max_stadiums': 1},
-    );
-    final proPlan = _plans.firstWhere(
-      (p) => p['code'] == 'pro',
-      orElse: () => {'monthly_price': 1000, 'max_stadiums': 3},
-    );
+    Map<String, dynamic>? planByCode(String code) {
+      for (final plan in _plans) {
+        if (plan['code']?.toString() == code) return plan;
+      }
+      return null;
+    }
 
-    final int basicPrice = (num.tryParse(basicPlan['monthly_price']?.toString() ?? '500') ?? 500).toInt();
-    final int proPrice = (num.tryParse(proPlan['monthly_price']?.toString() ?? '1000') ?? 1000).toInt();
-    final int basicMaxStadiums = (basicPlan['max_stadiums'] as num?)?.toInt() ?? 1;
-    final int proMaxStadiums = (proPlan['max_stadiums'] as num?)?.toInt() ?? 3;
+    final basicPlan = planByCode('basic');
+    final proPlan = planByCode('pro');
+    final basicPrice = (basicPlan?['monthly_price'] as num?)?.toInt();
+    final proPrice = (proPlan?['monthly_price'] as num?)?.toInt();
+    final basicMaxStadiums = (basicPlan?['max_stadiums'] as num?)?.toInt();
+    final proMaxStadiums = (proPlan?['max_stadiums'] as num?)?.toInt();
+
+    if (basicPlan == null || proPlan == null || basicPrice == null || proPrice == null || basicMaxStadiums == null || proMaxStadiums == null) {
+      return Scaffold(
+        backgroundColor: VSPColors.background,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: const VSPBackButton(),
+          centerTitle: true,
+          title: Text(isArabic ? 'باقات الاشتراك' : 'Subscription Plans'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              isArabic ? 'بيانات الباقات غير متاحة حالياً.' : 'Subscription plan data is currently unavailable.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: VSPColors.background,
