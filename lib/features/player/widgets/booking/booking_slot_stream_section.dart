@@ -3,7 +3,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
-import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import 'booking_slot_calculator.dart';
