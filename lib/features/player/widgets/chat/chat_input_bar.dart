@@ -4,14 +4,16 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 
 class ChatInputBar extends StatelessWidget {
-  final Booking booking;
+  final Booking? booking;
+  final bool isSpecialChat;
   final TextEditingController messageController;
   final bool isSending;
   final VoidCallback onSendMessage;
 
   const ChatInputBar({
     super.key,
-    required this.booking,
+    this.booking,
+    this.isSpecialChat = false,
     required this.messageController,
     required this.isSending,
     required this.onSendMessage,
@@ -22,15 +24,8 @@ class ChatInputBar extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final now = DateTime.now();
 
-    final isSpecialChat = booking.stadiumId == 'support_chat' ||
-        booking.stadiumId == 'chat_thread' ||
-        booking.notes == 'chat_thread' ||
-        booking.notes == 'support_chat' ||
-        booking.id.startsWith('support_chat_') ||
-        booking.id.startsWith('chat_');
-
-    final bool isExpired = isSpecialChat ? false : booking.endTime.isBefore(now);
-    final bool isCancelled = isSpecialChat ? false : booking.status == BookingStatus.cancelled;
+    final bool isExpired = isSpecialChat ? false : (booking?.endTime.isBefore(now) ?? false);
+    final bool isCancelled = isSpecialChat ? false : (booking?.status == BookingStatus.cancelled);
 
     if (isExpired || isCancelled) {
       return Container(
