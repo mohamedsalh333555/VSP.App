@@ -32,16 +32,16 @@ class InsightsBookingTypesCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
+        border: Border.all(color: VSPColors.divider, width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Iconsax.category_copy, size: 15, color: Colors.white70),
+              const Icon(Iconsax.category_copy, size: 15, color: VSPColors.textSecondary),
               const SizedBox(width: 8),
               Text(
                 isArabic ? 'أنواع الحجوزات' : 'BOOKING TYPES',
@@ -55,7 +55,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
               Text(
                 isArabic ? 'إجمالي $totalBookings حجز' : '$totalBookings total',
                 style: const TextStyle(
-                  color: Colors.white54,
+                  color: VSPColors.textSecondary,
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                 ),
@@ -69,7 +69,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 isArabic ? 'لا توجد حجوزات مسجلة بعد.' : 'No bookings registered yet.',
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
               ),
             )
           else ...[
@@ -77,7 +77,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
               title: isArabic ? 'حجوزات عادية ومباشرة' : 'Direct & Standard',
               amount: personalCount.toDouble(),
               percentage: personalPct,
-              color: VSPColors.accent,
+              color: VSPColors.textPrimary,
               isArabic: isArabic,
               unit: isArabic ? 'حجز' : 'bookings',
             ),
@@ -86,7 +86,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
               title: isArabic ? 'تحديات ومباريات فرق' : 'Team Challenges',
               amount: challengeCount.toDouble(),
               percentage: challengePct,
-              color: Colors.white70,
+              color: VSPColors.textSecondary,
               isArabic: isArabic,
               unit: isArabic ? 'حجز' : 'bookings',
             ),
@@ -96,7 +96,7 @@ class InsightsBookingTypesCard extends StatelessWidget {
                 title: isArabic ? 'مباريات انضمام وتجميع' : 'Open-Join Matches',
                 amount: openJoinCount.toDouble(),
                 percentage: openJoinPct,
-                color: Colors.white38,
+                color: VSPColors.textMuted,
                 isArabic: isArabic,
                 unit: isArabic ? 'حجز' : 'bookings',
               ),
