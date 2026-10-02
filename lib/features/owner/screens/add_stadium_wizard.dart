@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -385,7 +386,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           Navigator.pop(context);
         }
       },
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: VSPColors.background,
