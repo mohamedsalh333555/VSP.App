@@ -10,6 +10,10 @@ class RevenueData {
   final double realizedRevenue;
   final double realizedCash;
   final double realizedOnline;
+  final double cashCollected;
+  final double cashUncollected;
+  final double onlineCollected;
+  final double onlineUnavailable;
   final double upcomingConfirmedValue;
   final double upcomingCashValue;
   final double upcomingOnlineValue;
@@ -24,6 +28,10 @@ class RevenueData {
     this.realizedRevenue = 0,
     this.realizedCash = 0,
     this.realizedOnline = 0,
+    this.cashCollected = 0,
+    this.cashUncollected = 0,
+    this.onlineCollected = 0,
+    this.onlineUnavailable = 0,
     this.upcomingConfirmedValue = 0,
     this.upcomingCashValue = 0,
     this.upcomingOnlineValue = 0,
@@ -39,6 +47,10 @@ class RevenueData {
         realizedRevenue:        (j['realized_revenue'] ?? (j['realized'] ?? 0)).toDouble(),
         realizedCash:           (j['realized_cash'] ?? 0).toDouble(),
         realizedOnline:         (j['realized_online'] ?? 0).toDouble(),
+        cashCollected:          (j['cash_collected'] ?? 0).toDouble(),
+        cashUncollected:        (j['cash_uncollected'] ?? 0).toDouble(),
+        onlineCollected:        (j['online_collected'] ?? 0).toDouble(),
+        onlineUnavailable:      (j['online_unavailable'] ?? 0).toDouble(),
         upcomingConfirmedValue: (j['upcoming_confirmed_value'] ?? (j['upcoming'] ?? 0)).toDouble(),
         upcomingCashValue:      (j['upcoming_cash_value'] ?? 0).toDouble(),
         upcomingOnlineValue:    (j['upcoming_online_value'] ?? 0).toDouble(),
