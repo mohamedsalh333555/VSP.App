@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -66,7 +67,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
