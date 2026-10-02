@@ -113,6 +113,18 @@ class TournamentRepository {
   Future<Championship?> getChampionshipById(String id) =>
       queryCoord.getChampionshipById(id);
 
+  /// Atomically starts the owner's one-time 24h approval notice on the first Home visit.
+  Future<Map<String, dynamic>> claimOwnerChampionshipApprovalHomeNotice(
+    String championshipId,
+  ) async {
+    final response = await (_client ?? Supabase.instance.client).rpc(
+      'claim_owner_championship_approval_home_notice',
+      params: {'p_championship_id': championshipId},
+    );
+    if (response is Map) return Map<String, dynamic>.from(response);
+    return {'success': false, 'error': 'INVALID_RESPONSE'};
+  }
+
   Future<List<Team>> getTeamsByIds(List<String> ids) =>
       queryCoord.getTeamsByIds(ids);
 
