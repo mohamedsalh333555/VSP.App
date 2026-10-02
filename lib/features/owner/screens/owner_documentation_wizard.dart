@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -333,7 +334,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           }
         }
       },
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: VSPColors.background,
