@@ -5,28 +5,23 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 
 class ChatSystemBanner extends StatelessWidget {
-  final Booking booking;
+  final Booking? booking;
+  final bool isSpecialChat;
   final String currentUserId;
 
   const ChatSystemBanner({
     super.key,
-    required this.booking,
+    this.booking,
     required this.currentUserId,
+    this.isSpecialChat = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isSpecialChat = booking.stadiumId == 'support_chat' ||
-        booking.stadiumId == 'chat_thread' ||
-        booking.notes == 'chat_thread' ||
-        booking.notes == 'support_chat' ||
-        booking.id.startsWith('support_chat_') ||
-        booking.id.startsWith('chat_');
-
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (isSpecialChat) {
-      final otherUserId = booking.joinedUserIds.firstWhere(
+      final otherUserId = (booking?.joinedUserIds ?? const <String>[]).firstWhere(
         (uid) => uid != currentUserId,
         orElse: () => 'vsp_support_admin',
       );
