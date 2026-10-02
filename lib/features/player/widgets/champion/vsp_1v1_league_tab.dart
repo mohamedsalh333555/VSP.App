@@ -272,6 +272,11 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       return;
     }
 
+    if (entryFee <= 0) {
+      VSPFeedback.showError(context, isArabic ? 'رسوم الاشتراك غير متاحة حالياً من السيرفر.' : 'Entry fee is currently unavailable from the server.');
+      return;
+    }
+
     setState(() => _isProcessingPayment = true);
 
     try {
