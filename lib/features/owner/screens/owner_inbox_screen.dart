@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -109,7 +110,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  final ownerId = auth.currentUser?.id ?? '';
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: VSPColors.background,
