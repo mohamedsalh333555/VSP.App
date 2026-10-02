@@ -22,6 +22,10 @@ class DashboardFilter {
     this.courtId,
   });
 
+  /// UTC ISO strings for Supabase query alignment
+  String get startIsoUtc => startDate.toUtc().toIso8601String();
+  String get endIsoUtc => endDate.toUtc().toIso8601String();
+
   /// خيارات الفلاتر الزمنية الموحدة للمشروع بالكامل
   static List<Map<String, String>> get filterOptions => const [
     {'key': 'today', 'ar': 'اليوم', 'en': 'Today'},

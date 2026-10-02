@@ -191,8 +191,8 @@ class OwnerSlotCard extends StatelessWidget {
                             : 'Rem. ${remaining.toStringAsFixed(0)} EGP';
                         badgeColor = VSPColors.info;
                       } else {
-                        badgeLabel = isAr ? 'كاش عند الحضور' : 'Pay on Arrival';
-                        badgeColor = Colors.white60;
+                        badgeLabel = isAr ? 'كاش مطلوب تحصيله' : 'Cash Pending';
+                        badgeColor = VSPColors.warning;
                       }
 
                       return Container(

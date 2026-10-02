@@ -24,7 +24,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
       if (b.status == BookingStatus.cancelled || b.status == BookingStatus.completed) {
         return false;
       }
-      final isCash = (b.paymentMethod.toLowerCase() == 'cash');
+      final isCash = (b.paymentMethod.toLowerCase() == 'cash') ||
+          (b.paymentSource?.toLowerCase() == 'cash');
       final isUnpaidOrUnconfirmed = !b.isPaid && b.paymentStatus != 'paid';
       return isCash && isUnpaidOrUnconfirmed;
     }).toList();
@@ -63,8 +64,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
     }
 
     final countText = isArabic
-        ? '$count حجوزات كاش لسه مش متأكده'
-        : '$count cash bookings pending confirmation';
+        ? '$count حجوزات نقدية بحاجة للتحصيل أو التأكيد'
+        : '$count cash bookings pending collection/confirmation';
 
     return Container(
       width: double.infinity,
@@ -72,8 +73,8 @@ class OwnerPendingActionsBar extends StatelessWidget {
         color: VSPColors.surface, // #18181B الفحمي
         borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(
-          color: VSPColors.divider,
-          width: 1.0,
+          color: VSPColors.accent.withValues(alpha: 0.4),
+          width: 1.2,
         ),
       ),
       child: Material(

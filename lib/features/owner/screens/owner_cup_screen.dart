@@ -25,7 +25,7 @@ class OwnerCupScreen extends StatefulWidget {
 
 class _OwnerCupScreenState extends State<OwnerCupScreen> {
   int _selectedTab = 0; // 0: Coming, 1: Ongoing, 2: Finished
-  String _selectedSport = 'Football';
+  String _selectedSport = 'All';
   String _selectedCategory = 'All';
   bool _hasAnyChampionships = true;
 
@@ -39,8 +39,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     }
     _lastSport = sportType;
     _lastOwnerId = ownerId;
+    final effectiveSport = (sportType == 'All' || sportType == 'الكل') ? null : sportType;
     _championshipsStream = TournamentRepository().getChampionshipsStream(
-      sportType: sportType,
+      sportType: effectiveSport,
       isOwner: true,
       ownerId: ownerId,
     );
@@ -55,15 +56,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final ownerStadiums = stadiumProvider.stadiums;
 
-    final List<String> availableSports = ownerStadiums
-        .map((s) => s.type.trim())
-        .where((t) => t.isNotEmpty)
-        .toSet()
-        .toList();
-
-    if (availableSports.isEmpty) {
-      availableSports.add('Football');
-    }
+    final List<String> availableSports = [
+      'All',
+      ...ownerStadiums
+          .map((s) => s.type.trim())
+          .where((t) => t.isNotEmpty)
+          .toSet()
+    ];
 
     if (!availableSports.contains(_selectedSport)) {
       _selectedSport = availableSports.first;
@@ -76,12 +75,15 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       // just above the navigation bar instead of being lifted toward the middle.
       floatingActionButton: !_hasAnyChampionships
           ? null
-          : FloatingActionButton(
-              onPressed: () => showOwnerCupFormatModal(context),
-              backgroundColor: VSPColors.accent,
-              shape: const CircleBorder(),
-              elevation: 6,
-              child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 76.0),
+              child: FloatingActionButton(
+                onPressed: () => showOwnerCupFormatModal(context),
+                backgroundColor: VSPColors.accent,
+                shape: const CircleBorder(),
+                elevation: 6,
+                child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
+              ),
             ),
       floatingActionButtonLocation: isArabic
           ? FloatingActionButtonLocation.startFloat
@@ -152,11 +154,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   final status = c.status.toLowerCase();
 
                   if (_selectedTab == 0) {
-                    isRightStatus = status == 'open';
+                    isRightStatus = status == 'open' || status == 'upcoming' || status == 'draft' || status == 'pending';
                   } else if (_selectedTab == 1) {
-                    isRightStatus = status == 'ongoing';
+                    isRightStatus = status == 'ongoing' || status == 'in_progress' || status == 'active';
                   } else if (_selectedTab == 2) {
-                    isRightStatus = status == 'completed' || status == 'finished';
+                    isRightStatus = status == 'completed' || status == 'finished' || status == 'cancelled';
                   }
 
                   return isRightCategory && isRightStatus;

@@ -260,7 +260,7 @@ class OwnerProInsightsView extends StatelessWidget {
     // =========================================================================
     final int totalBookingsPeriod = analytics != null ? analytics!.bookings.totalCount : periodBookings.length;
     final int onlinePaidCount = analytics != null ? analytics!.bookings.onlineCount : periodBookings.where((b) => b.isPaid).length;
-    final double averageBookingPrice = analytics != null
+    final double averageBookingPrice = (analytics != null && analytics!.bookings.averagePrice > 0)
         ? analytics!.bookings.averagePrice
         : (totalBookingsPeriod > 0 ? (effectiveRevenue / totalBookingsPeriod) : 0.0);
 
@@ -282,13 +282,13 @@ class OwnerProInsightsView extends StatelessWidget {
         : (unbookedHours * pitchHourlyRate);
 
     // =========================================================================
-    // METRIC 4: BOOKING TYPES BREAKDOWN (أنواع الحجوزات من إجمالي كل الحجوزات)
+    // METRIC 4: BOOKING TYPES BREAKDOWN (أنواع الحجوزات من إجمالي حجوزات الفترة المحددة)
     // =========================================================================
     int personalCount = 0;
     int challengeCount = 0;
     int openJoinCount = 0;
 
-    for (final b in validBookings) {
+    for (final b in periodBookings) {
       if (b.bookingType == BookingType.challenge || b.bookingType == BookingType.team) {
         challengeCount++;
       } else if (b.bookingType == BookingType.openJoin) {
@@ -298,10 +298,10 @@ class OwnerProInsightsView extends StatelessWidget {
       }
     }
 
-    final int totalAllBookings = validBookings.length;
-    final double personalPct = totalAllBookings > 0 ? (personalCount / totalAllBookings * 100) : 0.0;
-    final double challengePct = totalAllBookings > 0 ? (challengeCount / totalAllBookings * 100) : 0.0;
-    final double openJoinPct = totalAllBookings > 0 ? (openJoinCount / totalAllBookings * 100) : 0.0;
+    final int totalPeriodBookings = periodBookings.length;
+    final double personalPct = totalPeriodBookings > 0 ? (personalCount / totalPeriodBookings * 100) : 0.0;
+    final double challengePct = totalPeriodBookings > 0 ? (challengeCount / totalPeriodBookings * 100) : 0.0;
+    final double openJoinPct = totalPeriodBookings > 0 ? (openJoinCount / totalPeriodBookings * 100) : 0.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,9 +359,9 @@ class OwnerProInsightsView extends StatelessWidget {
         ),
         const SizedBox(height: 14),
 
-        // 4. BOOKING TYPES CARD (أنواع الحجوزات من إجمالي كل الحجوزات)
+        // 4. BOOKING TYPES CARD (أنواع الحجوزات من إجمالي حجوزات الفترة المحددة)
         InsightsBookingTypesCard(
-          totalBookings: totalAllBookings,
+          totalBookings: totalPeriodBookings,
           personalCount: personalCount,
           personalPct: personalPct,
           challengeCount: challengeCount,

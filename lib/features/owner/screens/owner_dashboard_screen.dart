@@ -129,8 +129,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         'get_owner_dashboard_analytics',
         params: {
           'p_owner_id': uid,
-          'p_start_date': activeFilter.startDate.toIso8601String(),
-          'p_end_date': activeFilter.endDate.toIso8601String(),
+          'p_start_date': activeFilter.startIsoUtc,
+          'p_end_date': activeFilter.endIsoUtc,
           'p_court_id': activeFilter.courtId,
         },
       );
@@ -431,8 +431,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
                   OwnerOperationalFinanceCard(
                     availableBalance: availableBalance,
-                    cashThisMonth: _dashboardAnalytics.revenue.realizedCash,
-                    onlineThisMonth: _dashboardAnalytics.revenue.realizedOnline,
+                    cashThisMonth: _dashboardAnalytics.revenue.cash,
+                    onlineThisMonth: _dashboardAnalytics.revenue.online,
                     upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                     timePeriod: _selectedTimePeriod,
                     periodLabel: _currentFilter.periodLabel,
@@ -487,6 +487,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                       if (upcoming.isEmpty) return const SizedBox.shrink();
                       final championship = upcoming.first;
+                      final bool isOngoing = championship.status.toLowerCase() == 'ongoing';
+                      final String cardHeader = isOngoing
+                          ? (isArabic ? 'البطولة الجارية الآن' : 'Ongoing Tournament')
+                          : (isArabic ? 'البطولة القادمة' : 'Upcoming Tournament');
+                      final String badgeText = isOngoing
+                          ? (isArabic ? 'جارية' : 'Ongoing')
+                          : (isArabic ? 'معتمدة' : 'Approved');
+                      final String subtitleText = isOngoing
+                          ? (isArabic
+                              ? 'جارية الآن • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
+                              : 'Ongoing now • ${championship.joinedTeams.length}/${championship.maxTeams} teams')
+                          : (isArabic
+                              ? 'تبدأ ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
+                              : 'Starts ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} teams');
 
                       return Container(
                         width: double.infinity,
@@ -505,7 +519,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    isArabic ? 'البطولة القادمة' : 'Upcoming Tournament',
+                                    cardHeader,
                                     style: const TextStyle(
                                       color: VSPColors.textPrimary,
                                       fontWeight: FontWeight.w800,
@@ -514,7 +528,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                   ),
                                 ),
                                 Text(
-                                  isArabic ? 'معتمدة' : 'Approved',
+                                  badgeText,
                                   style: const TextStyle(
                                     color: VSPColors.accent,
                                     fontSize: 11,
@@ -536,9 +550,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              isArabic
-                                  ? 'تبدأ ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} فريق'
-                                  : 'Starts ${championship.startDate.day}/${championship.startDate.month}/${championship.startDate.year} • ${championship.joinedTeams.length}/${championship.maxTeams} teams',
+                              subtitleText,
                               style: const TextStyle(
                                 color: VSPColors.textSecondary,
                                 fontSize: 12,

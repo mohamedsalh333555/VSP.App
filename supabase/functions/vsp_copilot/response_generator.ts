@@ -119,10 +119,22 @@ export function generateDeterministicResponse(
     }
 
     if (toolResult.tool_name === "getOwnerFinancialInsights") {
+      if (toolResult.data.metric === "period_revenue") {
+        const period = toolResult.data.period_label || "الفترة المحددة";
+        const total = toolResult.data.total_revenue ?? 0;
+        const cash = toolResult.data.cash_revenue ?? 0;
+        const online = toolResult.data.online_revenue ?? 0;
+        const count = toolResult.data.total_bookings ?? 0;
+        const avail = toolResult.data.available_balance ?? 0;
+        return {
+          message: `يا كابتن، إجمالي أرباحك في ${period} هو ${total} ج.م (منها ${cash} ج.م كاش و ${online} ج.م دفع إلكتروني) من إجمالي ${count} حجز. رصيد السحب المتاح حالياً: ${avail} ج.م.`,
+          quick_replies: ["فتح السجل المالي", "طلب سحب"],
+        };
+      }
       const avail = toolResult.data.available_balance ?? 0;
       return {
         message: `يا كابتن، الرصيد المتاح للسحب في حسابك حالياً هو ${avail} ج.م. تقدر تطلب سحب أو تعرض السجل المالي بالتفصيل.`,
-        quick_replies: ["فتح السجل المالي"],
+        quick_replies: ["طلب سحب", "فتح السجل المالي"],
       };
     }
 

@@ -46,89 +46,92 @@ class VspBottomNavBar extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: items.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
           final isSelected = index == selectedIndex;
 
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              onItemTapped(index);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOutCubic,
-              padding: EdgeInsets.symmetric(
-                horizontal: isSelected ? 16.0 : 12.0,
-                vertical: 10.0,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected ? VSPColors.accent : Colors.transparent,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // الأيقونة مع النقطة الحمراء
-                  Stack(
-                    clipBehavior: Clip.none,
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onItemTapped(index);
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOutCubic,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isSelected ? 12.0 : 8.0,
+                    vertical: 8.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? VSPColors.accent : Colors.transparent,
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        isSelected ? item.activeIcon : item.inactiveIcon,
-                        color: isSelected ? Colors.black : VSPColors.textSecondary,
-                        size: 20,
-                      ),
-                      // نقطة الإشعار
-                      if (item.hasNotification && !isSelected)
-                        Positioned(
-                          top: -3,
-                          right: -3,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween(begin: 0.0, end: 1.0),
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.elasticOut,
-                            builder: (ctx, val, _) => Transform.scale(
-                              scale: val,
-                              child: Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: VSPColors.error,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: VSPColors.error.withValues(alpha: 0.6),
-                                      blurRadius: 4,
-                                      spreadRadius: 1,
+                      // الأيقونة مع النقطة الحمراء
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            isSelected ? item.activeIcon : item.inactiveIcon,
+                            color: isSelected ? Colors.black : VSPColors.textSecondary,
+                            size: 20,
+                          ),
+                          // نقطة الإشعار
+                          if (item.hasNotification && !isSelected)
+                            Positioned(
+                              top: -3,
+                              right: -3,
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0.0, end: 1.0),
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.elasticOut,
+                                builder: (ctx, val, _) => Transform.scale(
+                                  scale: val,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: VSPColors.error,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: VSPColors.error.withValues(alpha: 0.6),
+                                          blurRadius: 4,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             ),
+                        ],
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 6),
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: isSelected ? 1.0 : 0.0,
+                          child: Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              letterSpacing: 0.2,
+                            ),
                           ),
                         ),
+                      ],
                     ],
                   ),
-                  if (isSelected) ...[
-                    const SizedBox(width: 8),
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isSelected ? 1.0 : 0.0,
-                      child: Text(
-                        item.label,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 13,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           );

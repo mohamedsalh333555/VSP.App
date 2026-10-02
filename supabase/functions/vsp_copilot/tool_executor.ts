@@ -372,8 +372,11 @@ export async function executeGuardedTool(
       };
     }
 
-    // 4. getOwnerFinancialInsights (Owner ledger & balance)
+    // 4. getOwnerFinancialInsights (Owner ledger, balance & period earnings)
     if (toolName === "getOwnerFinancialInsights") {
+      const metric = args.metric || "available_balance";
+      const period = args.period || "current";
+
       const { data: finSummary, error: finErr } = await supabase.rpc("get_owner_financial_summary", {
         p_owner_id: callerUser.id,
       });
@@ -387,10 +390,76 @@ export async function executeGuardedTool(
         };
       }
 
+      if (metric === "period_revenue" || (period && period !== "current")) {
+        const now = new Date();
+        let startDate: Date;
+        let endDate: Date;
+        let periodLabel = "هذه الفترة";
+
+        if (period === "last_month") {
+          startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+          endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+          periodLabel = "الشهر الماضي";
+        } else if (period === "this_month") {
+          startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+          endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+          periodLabel = "هذا الشهر";
+        } else if (period === "yesterday") {
+          startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
+          endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+          periodLabel = "أمس";
+        } else if (period === "this_week") {
+          const day = now.getUTCDay();
+          const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1);
+          startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), diff));
+          endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+          periodLabel = "هذا الأسبوع";
+        } else {
+          // today
+          startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+          endDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+          periodLabel = "اليوم";
+        }
+
+        const { data: analytics } = await supabase.rpc("get_owner_dashboard_analytics", {
+          p_owner_id: callerUser.id,
+          p_start_date: startDate.toISOString(),
+          p_end_date: endDate.toISOString(),
+          p_court_id: null,
+        });
+
+        const rev = analytics?.revenue || {};
+        const bookings = analytics?.bookings || {};
+
+        return {
+          status: "SUCCESS",
+          tool_name: toolName,
+          data: {
+            metric: "period_revenue",
+            period_label: periodLabel,
+            total_revenue: rev.total ?? 0,
+            cash_revenue: rev.cash ?? 0,
+            online_revenue: rev.online ?? 0,
+            total_bookings: bookings.total_count ?? 0,
+            available_balance: finSummary?.available_balance ?? 0,
+          },
+          app_action: {
+            action_type: "NAVIGATE",
+            route: "/ledger",
+            label: "فتح السجل المالي 💰",
+          },
+        };
+      }
+
       return {
         status: "SUCCESS",
         tool_name: toolName,
-        data: finSummary || {},
+        data: {
+          metric: "available_balance",
+          available_balance: finSummary?.available_balance ?? 0,
+          pending_payouts: finSummary?.pending_payouts ?? 0,
+          lifetime_earnings: finSummary?.lifetime_earnings ?? finSummary?.total_revenue ?? 0,
+        },
         app_action: {
           action_type: "NAVIGATE",
           route: "/ledger",

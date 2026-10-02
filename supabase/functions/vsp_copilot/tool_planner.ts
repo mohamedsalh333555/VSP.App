@@ -191,13 +191,34 @@ export function planToolExecution(
       };
     }
 
-    const metric = semanticOutput.entities.money?.metric || "available_balance";
+    const rawText = (semanticOutput.raw_user_language || "").toLowerCase();
+
+    // Determine target period from user query
+    let period = "current";
+    if (rawText.includes("الشهر اللي فات") || rawText.includes("الشهر الماضي") || rawText.includes("اخر شهر") || rawText.includes("آخر شهر")) {
+      period = "last_month";
+    } else if (rawText.includes("الشهر ده") || rawText.includes("هذا الشهر") || rawText.includes("من اول الشهر") || rawText.includes("من أول الشهر")) {
+      period = "this_month";
+    } else if (rawText.includes("النهارده") || rawText.includes("اليوم") || rawText.includes("النهاردة")) {
+      period = "today";
+    } else if (rawText.includes("امبارح") || rawText.includes("أمس") || rawText.includes("امس")) {
+      period = "yesterday";
+    } else if (rawText.includes("الاسبوع") || rawText.includes("الأسبوع") || rawText.includes("اخر 7") || rawText.includes("آخر 7")) {
+      period = "this_week";
+    }
+
+    // Determine metric: period_revenue vs available_balance
+    const isBalanceQuery = rawText.includes("رصيد") || rawText.includes("سحب") || rawText.includes("اسحب") || rawText.includes("متاح");
+    const isPeriodRevenue = (period !== "current") || (!isBalanceQuery && (rawText.includes("ارباح") || rawText.includes("أرباح") || rawText.includes("دخل") || rawText.includes("كسبت") || rawText.includes("مبيعات") || rawText.includes("عملت كام") || rawText.includes("كام عملت")));
+
+    const metric = isPeriodRevenue ? "period_revenue" : (isBalanceQuery ? "available_balance" : (semanticOutput.entities.money?.metric || "available_balance"));
+
     return {
       action: "EXECUTE_TOOL",
       toolName: "getOwnerFinancialInsights",
       toolArgs: {
         metric,
-        period: "current",
+        period,
       },
     };
   }

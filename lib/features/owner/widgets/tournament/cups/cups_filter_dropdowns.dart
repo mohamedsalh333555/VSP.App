@@ -33,6 +33,7 @@ class CupsFilterDropdowns extends StatelessWidget {
               (v) {
                 if (v != null) onSportChanged(v);
               },
+              isSport: true,
             ),
           ),
           const SizedBox(width: 10),
@@ -44,6 +45,7 @@ class CupsFilterDropdowns extends StatelessWidget {
               (v) {
                 if (v != null) onCategoryChanged(v);
               },
+              isSport: false,
             ),
           ),
         ],
@@ -55,13 +57,14 @@ class CupsFilterDropdowns extends StatelessWidget {
     BuildContext context,
     List<String> items,
     String value,
-    ValueChanged<String?> onChanged,
-  ) {
+    ValueChanged<String?> onChanged, {
+    bool isSport = false,
+  }) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     String translateItem(String val) {
       if (!isArabic) return val;
-      if (val == 'All') return 'جميع البطولات';
+      if (val == 'All') return isSport ? 'كافة الرياضات' : 'جميع البطولات';
       if (val == 'Cup') return 'كأس';
       if (val == 'League') return 'دوري';
       if (val == 'GroupsAndKnockout') return 'مجموعات وتصفيات';

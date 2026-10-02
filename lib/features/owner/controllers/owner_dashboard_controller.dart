@@ -55,8 +55,8 @@ class OwnerDashboardController with ChangeNotifier {
         'get_owner_dashboard_analytics',
         params: {
           'p_owner_id': currentOwnerId,
-          'p_start_date': filter.startDate.toIso8601String(),
-          'p_end_date': filter.endDate.toIso8601String(),
+          'p_start_date': filter.startIsoUtc,
+          'p_end_date': filter.endIsoUtc,
           'p_court_id': filter.courtId,
         },
       );
