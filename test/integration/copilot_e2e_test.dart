@@ -22,8 +22,8 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<TestOwnerAuthProvider>(
-              create: (_) => TestOwnerAuthProvider(),
+            ChangeNotifierProvider<AuthProvider>.value(
+              value: TestOwnerAuthProvider(),
             ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
@@ -68,8 +68,8 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            ChangeNotifierProvider<TestOwnerAuthProvider>(
-              create: (_) => TestOwnerAuthProvider(),
+            ChangeNotifierProvider<AuthProvider>.value(
+              value: TestOwnerAuthProvider(),
             ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
