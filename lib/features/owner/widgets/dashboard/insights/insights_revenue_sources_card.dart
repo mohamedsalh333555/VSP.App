@@ -65,7 +65,7 @@ class FramedMetricProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: (percentage / 100.0).clamp(0.0, 1.0),
             minHeight: 5,
-            backgroundColor: VSPColors.surfaceAlt,
+            backgroundColor: VSPColors.surface,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
