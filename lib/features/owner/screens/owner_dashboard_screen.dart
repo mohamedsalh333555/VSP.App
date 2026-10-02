@@ -505,6 +505,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       final pending = _ownerChampionships
                           .where((c) =>
                               !c.isApproved &&
+                              c.creationFeePaid &&
                               c.status.toLowerCase() != 'cancelled' &&
                               c.status.toLowerCase() != 'completed')
                           .toList()
