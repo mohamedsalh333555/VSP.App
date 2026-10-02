@@ -145,7 +145,26 @@ class OwnerRepository {
  }
 
  /// إرسال طلب تسوية وصرف مستحقات المالك إلكترونياً
- Future<Map<String, dynamic>> requestPayoutSettlement({
+   /// بث سجل طلبات السحب/التسويات الخاصة بالمالك.
+  Stream<List<Map<String, dynamic>>> getPayoutSettlementsStream() {
+    final uid = _supabase.auth.currentUser?.id;
+    if (uid == null) return Stream.value(const <Map<String, dynamic>>[]);
+    return _supabase
+        .from('payout_settlements')
+        .stream(primaryKey: ['id'])
+        .eq('owner_id', uid)
+        .map((rows) {
+          final sorted = List<Map<String, dynamic>>.from(rows);
+          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
+              .compareTo(DateTime.parse(a['created_at'].toString())));
+          return sorted;
+        })
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in getPayoutSettlementsStream: $e');
+        });
+  }
+
+Future<Map<String, dynamic>> requestPayoutSettlement({
  required double amount,
  required String method,
  required String destination,
