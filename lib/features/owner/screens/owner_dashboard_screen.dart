@@ -196,6 +196,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       if (uid != null) {
         _fetchFinancialSummary(uid);
         _loadDashboardAnalytics(ownerId: uid);
+        _fetchOwnerChampionships(uid);
         Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
         _champSubscription = TournamentRepository()
@@ -206,7 +207,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             setState(() {
               _ownerChampionships = champs;
             });
-            _claimApprovedChampionshipHomeNotices(champs);
           },
           onError: (e) {
             VSPLogger.w('Owner championships subscription notice (handled): $e');
@@ -214,6 +214,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         );
       }
     });
+  }
+
+  Future<void> onHomeBecameVisible() async {
+    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (uid == null) return;
+    await _fetchOwnerChampionships(uid);
   }
 
   @override
