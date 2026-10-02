@@ -111,6 +111,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  void openBookings() => _onItemTapped(3);
  void openProfile() => _onItemTapped(4);
  void openInbox() => _onItemTapped(2);
+ void openTournaments() => _onItemTapped(1);
 
  void openLedger() {
    _onItemTapped(0);
