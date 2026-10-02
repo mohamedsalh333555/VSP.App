@@ -111,6 +111,15 @@ class VSPSpacing {
   static const double xxxl = 32.0;
 }
 
+/// Shared geometry for the floating bottom navigation and content that must clear it.
+/// Keeping these values in one place prevents nested Scaffolds from drifting apart.
+class VSPBottomNavBarMetrics {
+  static const double height = 64.0;
+  static const double bottomMargin = VSPSpacing.md; // 12px
+  static const double contentClearance = 8.0;
+  static const double fabBottomOffset = height + bottomMargin;
+}
+
 class VSPStates {
   static const double disabledOpacity = 0.38;
   static const double pressedOverlayOpacity = 0.12;
@@ -236,7 +245,7 @@ class VSPScrollPadding {
     final double safeBottom = MediaQuery.of(context).padding.bottom;
     if (hasFloatingNavBar) {
       // 64 navbar height + 12 bottom margin + safeArea inset + snug clearance (~96px)
-      return 64.0 + 12.0 + safeBottom + extra;
+      return VSPBottomNavBarMetrics.height + VSPBottomNavBarMetrics.bottomMargin + safeBottom + extra;
     }
     return safeBottom + extra;
   }
