@@ -32,7 +32,9 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
   @override
   void initState() {
     super.initState();
-    _transactionsStream = OwnerRepository().getTransactionsStream();
+    _transactionsStream = widget.payoutOnly
+        ? OwnerRepository().getPayoutSettlementsStream()
+        : OwnerRepository().getTransactionsStream();
     _loadSummary();
   }
 
@@ -156,10 +158,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
 
-          final allTransactions = snapshot.data ?? [];
-          final transactions = widget.payoutOnly
-              ? allTransactions.where((tx) => tx['type']?.toString().toLowerCase() == 'payout').toList()
-              : allTransactions;
+          final transactions = snapshot.data ?? [];
 
           // الرصيد المالي لا يُستنتج من قائمة المعاملات؛ المصدر الوحيد هو ملخص الخادم.
           final summaryReady = _summary?['success'] == true;
