@@ -19,7 +19,10 @@ class AddStadiumLocationPickerSheet {
     double? initialLng,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final LatLng initialLocation = LatLng(initialLat ?? 30.0444, initialLng ?? 31.2357); // Cairo fallback
+    final bool hasInitialCoordinates = initialLat != null && initialLng != null;
+    // Map centering only; it is never persisted unless the user selects a real location/GPS fix.
+    final LatLng initialLocation = LatLng(initialLat ?? 26.8206, initialLng ?? 30.8025);
+    bool hasRealSelection = hasInitialCoordinates;
 
     LatLng selectedCoords = initialLocation;
     final MapController mapController = MapController();
@@ -52,6 +55,7 @@ class AddStadiumLocationPickerSheet {
               StadiumLocationGeocoder.getCurrentGpsPosition().then((gps) {
                 if (gps != null && builderContext.mounted) {
                   selectedCoords = gps;
+                  hasRealSelection = true;
                   mapController.move(gps, 15.0);
                 }
               });
@@ -76,6 +80,7 @@ class AddStadiumLocationPickerSheet {
                         ),
                         onPositionChanged: (position, hasGesture) {
                           selectedCoords = position.center;
+                          if (hasGesture) hasRealSelection = true;
                         },
                       ),
                       children: [
@@ -318,6 +323,13 @@ class AddStadiumLocationPickerSheet {
                         onPressed: isResolving
                             ? null
                             : () async {
+                                if (!hasRealSelection) {
+                                  VSPFeedback.showError(
+                                    builderContext,
+                                    isArabic ? 'حدد موقع الملعب فعلياً أو فعّل الموقع الحالي أولاً.' : 'Select the actual stadium location or enable current location first.',
+                                  );
+                                  return;
+                                }
                                 setSheetState(() => isResolving = true);
                                 try {
                                   final res = await StadiumLocationGeocoder.resolveCoordinates(
@@ -330,12 +342,11 @@ class AddStadiumLocationPickerSheet {
                                 } catch (e) {
                                   VSPLogger.w('Failed to resolve coordinates: $e');
                                   if (sheetContext.mounted) {
-                                    final fallback = LocationResult(
-                                      latitude: selectedCoords.latitude,
-                                      longitude: selectedCoords.longitude,
-                                      address: '${selectedCoords.latitude.toStringAsFixed(5)}, ${selectedCoords.longitude.toStringAsFixed(5)}',
+                                    VSPFeedback.showError(
+                                      sheetContext,
+                                      isArabic ? 'تعذر التحقق من عنوان الموقع. اختر الموقع مرة أخرى.' : 'Could not verify the selected location address. Please select the location again.',
                                     );
-                                    Navigator.pop(sheetContext, fallback);
+                                    setSheetState(() => isResolving = false);
                                   }
                                 }
                               },
