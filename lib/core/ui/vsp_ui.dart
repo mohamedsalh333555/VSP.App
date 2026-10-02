@@ -273,6 +273,7 @@ class VSPBottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
     return Container(
       decoration: BoxDecoration(
         color: VSPColors.surface,
@@ -281,19 +282,19 @@ class VSPBottomActionBar extends StatelessWidget {
         ),
         boxShadow: VSPShadow.mediumList,
       ),
-      padding: EdgeInsets.only(
-        left: VSPSpacing.lg,
-        top: VSPSpacing.md,
-        right: VSPSpacing.lg,
-        bottom: MediaQuery.of(context).padding.bottom + VSPSpacing.md,
-      ).add(padding.subtract(
-        const EdgeInsets.fromLTRB(
-          VSPSpacing.lg,
-          VSPSpacing.md,
-          VSPSpacing.lg,
-          VSPSpacing.lg,
-        ),
-      )),
+      padding: padding is EdgeInsets
+          ? EdgeInsets.fromLTRB(
+              (padding as EdgeInsets).left,
+              (padding as EdgeInsets).top,
+              (padding as EdgeInsets).right,
+              (padding as EdgeInsets).bottom + safeBottom,
+            )
+          : EdgeInsets.fromLTRB(
+              VSPSpacing.lg,
+              VSPSpacing.md,
+              VSPSpacing.lg,
+              VSPSpacing.lg + safeBottom,
+            ),
       child: child,
     );
   }
