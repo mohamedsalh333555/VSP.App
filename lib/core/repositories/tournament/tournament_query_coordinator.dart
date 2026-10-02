@@ -32,7 +32,8 @@ class TournamentQueryCoordinator {
         response = await _supabase
             .from('championships')
             .select()
-            .eq('is_approved', true)
+             .eq('is_approved', true)
+            .neq('status', 'cancelled')
             .order('created_at', ascending: false)
             .limit(50);
       }
@@ -53,7 +54,7 @@ class TournamentQueryCoordinator {
       if (isOwner && ownerId != null) {
         streamQuery = streamQuery.eq('owner_id', ownerId);
       } else if (!isOwner) {
-        streamQuery = streamQuery.eq('is_approved', true);
+        streamQuery = streamQuery.eq('is_approved', true).neq('status', 'cancelled');
       }
 
       yield* streamQuery
@@ -149,6 +150,8 @@ class TournamentQueryCoordinator {
         .map((data) {
           if (data is! Map<String, dynamic>) return null;
           if (!isOwner) {
+            final dynamic statusVal = data['status']?.toString().toLowerCase();
+            if (statusVal == 'cancelled') return null;
             final dynamic approvedVal =
                 data['is_approved'] ?? data['isApproved'];
             if (approvedVal != true) return null;
