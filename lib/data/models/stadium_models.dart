@@ -175,17 +175,17 @@ class Stadium {
  Stadium.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
 
  factory Stadium.fromFirestore(Map<String, dynamic> data, String id) {
- int parsedPPT = 5;
- final sizeStr = data['size']?.toString() ?? '5 VS 5';
+ int parsedPPT = 0;
+ final sizeStr = data['size']?.toString() ?? '';
  final match = RegExp(r'(\d+)\s*[Vv][Ss]\s*(\d+)').firstMatch(sizeStr);
  if (match != null) {
- parsedPPT = int.tryParse(match.group(1) ?? '') ?? 5;
+ parsedPPT = int.tryParse(match.group(1) ?? '') ?? 0;
  }
  final int ppt = data['players_per_team'] ?? data['playersPerTeam'] ?? parsedPPT;
- final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? (ppt * 2);
+ final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? (ppt > 0 ? ppt * 2 : 0);
 
  final String rawDesc = data['description'] ?? '';
- String sportType = 'Football';
+ String sportType = '';
  String cleanDesc = rawDesc;
  if (rawDesc.contains('|Sport:')) {
  final parts = rawDesc.split('|Sport:');
@@ -222,12 +222,12 @@ class Stadium {
  }
 
   final defaultStadiumPrice = RemoteConfigService().stadiumPriceDefault;
-  final rawPPH = data['pricePerHour'] ?? data['price_per_hour'] ?? defaultStadiumPrice;
-  final double parsedPricePerHour = (rawPPH is num) ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? defaultStadiumPrice);
+  final rawPPH = data['pricePerHour'] ?? data['price_per_hour'];
+  final double parsedPricePerHour = rawPPH == null ? 0.0 : (rawPPH is num ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? 0.0));
 
-  final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? defaultStadiumPrice;
-  double parsedBasePrice = (rawBasePrice is num) ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? parsedPricePerHour);
-  if (parsedBasePrice <= 0) parsedBasePrice = defaultStadiumPrice;
+  final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'];
+  double parsedBasePrice = rawBasePrice == null ? 0.0 : (rawBasePrice is num ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? 0.0));
+  
 
  final rawRating = data['rating'] ?? 0.0;
  final double parsedRating = (rawRating is num) ? rawRating.toDouble() : (double.tryParse(rawRating.toString()) ?? 0.0);
@@ -244,7 +244,7 @@ class Stadium {
  location: data['location'] ?? data['address'] ?? '',
  governorate: data['governorate'], // Added for filtering
  type: sportType,
- size: data['size'] ?? '5 VS 5',
+ size: data['size']?.toString() ?? '',
  imageUrl: parsedImages.isNotEmpty ? parsedImages.first : (data['imageUrl'] ?? data['image_url'] ?? ''),
  images: parsedImages,
  baths: data['baths'] ?? 0,
@@ -261,7 +261,7 @@ class Stadium {
  description: cleanDesc,
  features: data['features'] ?? {},
  policies: (data['policies'] is List) ? List<String>.from(data['policies']) : [],
- pitchCondition: data['pitchCondition'] ?? 'Good',
+ pitchCondition: data['pitchCondition']?.toString() ?? '',
  hasJerash: data['hasJerash'] ?? (data['features'] is Map ? data['features']['hasJerash'] ?? false : false),
  hasSeats: data['hasSeats'] ?? (data['features'] is Map ? data['features']['hasSeats'] ?? false : false),
  hasBall: data['hasBall'] ?? (data['features'] is Map ? data['features']['hasBall'] ?? false : false),
@@ -272,8 +272,8 @@ class Stadium {
  isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
  isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
  ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
- openingTime: (data['opening_time'] ?? data['openingTime'] ?? data['features']?['workingHours']?['start'])?.toString() ?? '04:00 PM',
- closingTime: (data['closing_time'] ?? data['closingTime'] ?? data['features']?['workingHours']?['end'])?.toString() ?? '03:00 AM',
+ openingTime: (data['opening_time'] ?? data['openingTime'] ?? data['features']?['workingHours']?['start'])?.toString() ?? '',
+ closingTime: (data['closing_time'] ?? data['closingTime'] ?? data['features']?['workingHours']?['end'])?.toString() ?? '',
  isSplitShift: data['features']?['isSplitShift'] ?? false,
  breakStartTime: data['features']?['breakTime']?['start'],
  breakEndTime: data['features']?['breakTime']?['end'],
