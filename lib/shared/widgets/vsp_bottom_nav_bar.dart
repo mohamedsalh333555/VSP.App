@@ -70,11 +70,9 @@ class VspBottomNavBar extends StatelessWidget {
                     color: isSelected ? VSPColors.accent : Colors.transparent,
                     borderRadius: BorderRadius.circular(VSPRadius.full),
                   ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                         // الأيقونة مع النقطة الحمراء
                         Stack(
                           clipBehavior: Clip.none,
@@ -82,7 +80,7 @@ class VspBottomNavBar extends StatelessWidget {
                             Icon(
                               isSelected ? item.activeIcon : item.inactiveIcon,
                               color: isSelected ? Colors.black : VSPColors.textSecondary,
-                              size: 20,
+                              size: 22,
                             ),
                             if (item.hasNotification && !isSelected)
                               Positioned(
@@ -116,16 +114,18 @@ class VspBottomNavBar extends StatelessWidget {
                         ),
                         if (isSelected) ...[
                           const SizedBox(width: 6),
-                          Text(
-                            item.label,
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                          Flexible(
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
                               color: Colors.black,
                               fontWeight: FontWeight.w900,
                               fontSize: 12,
-                              letterSpacing: 0.2,
+                                letterSpacing: 0.2,
+                              ),
                             ),
                           ),
                         ],
