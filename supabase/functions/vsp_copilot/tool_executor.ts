@@ -124,29 +124,115 @@ export async function executeGuardedTool(
   }
 
   try {
-    // 2. checkStadiumAvailability (Owner slot inspector)
+    // 1b. searchStadiums (Player & Pitch Discovery)
+    if (toolName === "searchStadiums") {
+      const queryText = (args.query || state.stadium?.name || "").toString().trim();
+      const gov = (args.governorate || state.location_scope || "").toString().trim();
+      const maxPrice = args.max_price ? Number(args.max_price) : null;
+
+      let q = supabase
+        .from("stadiums")
+        .select("id, name, governorate, price_per_hour, image_url, is_verified, is_blocked, is_deleted_by_owner")
+        .eq("is_verified", true)
+        .eq("is_blocked", false)
+        .eq("is_deleted_by_owner", false);
+
+      if (gov) {
+        q = q.ilike("governorate", `%${gov}%`);
+      }
+      if (queryText) {
+        q = q.ilike("name", `%${queryText}%`);
+      }
+      if (maxPrice && maxPrice > 0) {
+        q = q.lte("price_per_hour", maxPrice);
+      }
+
+      const { data: results, error: sErr } = await q.order("price_per_hour", { ascending: true }).limit(5);
+
+      if (sErr || !results || results.length === 0) {
+        return {
+          status: "NO_RESULT",
+          tool_name: toolName,
+          data: { query: queryText, governorate: gov },
+          stadiums: [],
+          error_message: `لم أجد ملاعب مطابقة لـ "${queryText || gov}" حالياً يا كابتن. تحب نبحث في محافظة تانية؟`,
+          quick_replies: ["ملاعب القاهرة", "ملاعب الجيزة", "ملاعب الإسكندرية"],
+        };
+      }
+
+      const stadiumSummaries = results.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        governorate: s.governorate,
+        price_per_hour: s.price_per_hour,
+        rating: 4.8,
+        image_url: s.image_url,
+      }));
+
+      const topStadium = stadiumSummaries[0];
+      const updatedStateObj: any = {
+        candidate_stadiums: stadiumSummaries.map((s: any, idx: number) => ({
+          reference_key: `stadium_${idx + 1}`,
+          entity_type: "stadium",
+          id: s.id,
+          name: s.name,
+          price_per_hour: s.price_per_hour,
+          governorate: s.governorate,
+        })),
+      };
+
+      if (stadiumSummaries.length === 1 || queryText) {
+        updatedStateObj.stadium = {
+          id: topStadium.id,
+          name: topStadium.name,
+          price_per_hour: topStadium.price_per_hour,
+          status: "known" as const,
+          provenance: "explicit_user" as const,
+        };
+      }
+
+      return {
+        status: "SUCCESS",
+        tool_name: toolName,
+        data: { stadiums: stadiumSummaries, count: stadiumSummaries.length },
+        stadiums: stadiumSummaries,
+        quick_replies: stadiumSummaries.slice(0, 3).map((s: any) => `حجز ${s.name}`),
+        updated_state: updatedStateObj,
+      };
+    }
+
+    // 2. checkStadiumAvailability (Slot inspector for owner or player)
     if (toolName === "checkStadiumAvailability") {
       const stadiumId = args.stadium_id || state.stadium.id;
       const stadiumName = args.stadium_name || state.stadium.name;
       const dateStr = args.date || state.date.value || parseTargetDate("اليوم").targetDateStr;
+      const isOwner = state.user_role === "owner" || state.user_role === "pitch_owner";
 
       let targetStadium: any = null;
       if (stadiumId) {
-        const { data: s } = await supabase
+        let q = supabase
           .from("stadiums")
-          .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
-          .eq("id", stadiumId)
-          .eq("owner_id", callerUser.id)
-          .maybeSingle();
+          .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id, is_verified, is_blocked, is_deleted_by_owner")
+          .eq("id", stadiumId);
+        if (isOwner) {
+          q = q.eq("owner_id", callerUser.id);
+        } else {
+          q = q.eq("is_verified", true).eq("is_blocked", false).eq("is_deleted_by_owner", false);
+        }
+        const { data: s } = await q.maybeSingle();
         targetStadium = s;
       }
       if (!targetStadium && stadiumName) {
-        const { data: sList } = await supabase
+        let q = supabase
           .from("stadiums")
-          .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id")
-          .ilike("name", `%${stadiumName}%`)
-          .eq("owner_id", callerUser.id)
-          .limit(1);
+          .select("id, name, governorate, price_per_hour, needs_deposit, deposit_amount, owner_id, is_verified, is_blocked, is_deleted_by_owner")
+          .ilike("name", `%${stadiumName}%`);
+        if (isOwner) {
+          q = q.eq("owner_id", callerUser.id);
+        } else {
+          q = q.eq("is_verified", true).eq("is_blocked", false).eq("is_deleted_by_owner", false);
+        }
+        const { data: sList } = await q.limit(1);
         if (sList && sList.length > 0) targetStadium = sList[0];
       }
 
@@ -155,7 +241,9 @@ export async function executeGuardedTool(
           status: "INVALID_INPUT",
           tool_name: toolName,
           data: {},
-          error_message: "لم يتم العثور على هذا الملعب ضمن ملاعبك المسجلة يا كابتن.",
+          error_message: isOwner
+            ? "لم يتم العثور على هذا الملعب ضمن ملاعبك المسجلة يا كابتن."
+            : "لم أتمكن من العثور على هذا الملعب يا كابتن. يرجى التأكد من اسم الملعب.",
         };
       }
 

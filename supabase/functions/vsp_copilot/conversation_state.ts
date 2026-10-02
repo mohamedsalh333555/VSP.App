@@ -71,12 +71,12 @@ export interface ConversationState {
     checked_at: string;
   } | null;
   last_visible_entities: VisibleEntity[];
-  user_role: "owner" | "pitch_owner";
+  user_role: "owner" | "pitch_owner" | "player" | "admin";
   created_at: string;
   updated_at: string;
 }
 
-export function createInitialConversationState(userRole: "owner" | "pitch_owner" = "owner"): ConversationState {
+export function createInitialConversationState(userRole: "owner" | "pitch_owner" | "player" | "admin" = "player"): ConversationState {
   const now = new Date().toISOString();
   return {
     version: 1,
@@ -113,7 +113,7 @@ export function createInitialConversationState(userRole: "owner" | "pitch_owner"
 }
 
 // Convert legacy task_state / context_snapshot to strongly-typed ConversationState
-export function hydrateConversationState(rawSnapshot: any, userRole: "owner" | "pitch_owner" = "owner"): ConversationState {
+export function hydrateConversationState(rawSnapshot: any, userRole: "owner" | "pitch_owner" | "player" | "admin" = "player"): ConversationState {
   if (!rawSnapshot || typeof rawSnapshot !== "object") {
     return createInitialConversationState(userRole);
   }

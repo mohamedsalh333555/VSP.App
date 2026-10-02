@@ -111,9 +111,8 @@ class AppRouter {
       GoRoute(
         path: '/copilot',
         redirect: (context, state) {
-          final role = authProvider.userModel?.role.toLowerCase().trim();
-          if (role != 'owner' && role != 'pitch_owner') {
-            return '/player';
+          if (!authProvider.isAuthenticated) {
+            return '/login';
           }
           return null;
         },

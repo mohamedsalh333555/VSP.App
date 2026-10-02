@@ -96,7 +96,9 @@ export async function parseUserMessageSemantically(
     active_ambiguities: (state.unresolved_ambiguities ?? []).map(a => a.type),
   };
 
-  const systemInstruction = `You are the Pitch Owner Copilot & Business Advisory Engine of VSP Sports Platform in Egypt.
+  const isOwner = state.user_role === "owner" || state.user_role === "pitch_owner";
+  const systemInstruction = isOwner
+    ? `You are the Pitch Owner Copilot & Business Advisory Engine of VSP Sports Platform in Egypt.
 Your task is to interpret inquiries from Pitch Owners (أصحاب ومسؤولو الملاعب) in Egyptian Arabic into strict structured JSON.
 
 CORE FOCUS AREAS FOR PITCH OWNERS:
@@ -116,9 +118,38 @@ CORE FOCUS AREAS FOR PITCH OWNERS:
    - "مين انت", "بتساعدني في ايه":
      => speech_act: "question", domain: "general", object: "bot_identity", action: "answer", sub_action: "identity", intent: "general_question", operation: "answer"
 
-5. Player Requests (حجز ملاعب كلاعب، بطولات، 1v1، فريقي - غير مدعومة هنا لأنك مساعد ملاك فقط):
-   - "احجزلي ملعب", "عايز العب كورة", "البطولات", "تحديات 1v1", "ترتيب اللاعبين", "فريقي":
-     => domain: "unsupported", object: "unsupported", action: "none", scope: "none", intent: "unknown", operation: "none"
+5. Player Requests (بطولات، 1v1، فريقي):
+   - "البطولات", "تحديات 1v1", "ترتيب اللاعبين", "فريقي":
+     => domain: "unsupported", object: "unsupported", action: "none", scope: "none", intent: "unknown", operation: "none"`
+    : `You are the VSP Sports Copilot for Players in Egypt.
+Your task is to interpret inquiries from Football Players (اللاعبين) looking to explore pitches, check availability, choose date, time, duration, and book matches in Egyptian Arabic into strict structured JSON.
+
+CORE FOCUS AREAS FOR PLAYERS:
+1. Stadium Search & Selection (البحث عن الملاعب واختيارها):
+   - "عايز ملعب في مدينة نصر", "وريني الملاعب القريبة", "ملعب الصداقة الجديدة":
+     => domain: "booking", object: "stadium", action: "search", intent: "stadium_search", operation: "search"
+     => entities.stadium: { name: "اسم الملعب" }
+
+2. Date, Time & Availability (التاريخ والوقت والمواعيد المتاحة):
+   - "الملعب فاضي امتى", "فاضي الساعة 10 النهاردة؟", "مواعيد بكرة":
+     => domain: "booking", object: "stadium", action: "inspect", sub_action: "availability", intent: "availability", operation: "inspect"
+
+3. Booking Creation & Initiation (بدء وإنشاء الحجز):
+   - "احجزه النهارده الساعة 10 أو 11", "احجزلي الساعة 10", "عايز احجز":
+     => domain: "booking", object: "booking", action: "create", intent: "booking", operation: "create"
+
+4. Ambiguities & Multiple Times:
+   - When the user mentions multiple alternative times like "الساعة 10 أو 11", extract BOTH times in entities.times:
+     [{ "time": "10:00", "period": "pm", "period_certainty": "inferred", "preference_order": 1 }, { "time": "11:00", "period": "pm", "period_certainty": "inferred", "preference_order": 2 }]
+     and add an ambiguity: { "type": "time_period", "description": "المستخدم ذكر موعدين بديلين (10 أو 11) ويلزم حسم أحدهما" }
+
+5. Bot Identity / Greetings:
+   - "مين انت", "بتساعدني في ايه":
+     => speech_act: "question", domain: "general", object: "bot_identity", action: "answer", sub_action: "identity", intent: "general_question", operation: "answer"
+
+6. Owner-Only Requests:
+   - "أرباحي", "سجل مالي":
+     => domain: "financials", object: "financials", intent: "financial_question"`;
 
 Context:
 - Egypt Local Date Today: ${cairoTodayStr}

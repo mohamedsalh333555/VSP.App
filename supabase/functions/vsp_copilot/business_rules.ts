@@ -24,6 +24,25 @@ export function isRouteAllowedForRole(role: string | undefined | null, route: st
     ];
     return ownerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
   }
+
+  if (canonicalRole === "player") {
+    const playerAllowed = [
+      "/player",
+      "/explore",
+      "/bookings",
+      "/booking",
+      "/stadium",
+      "/booking-confirmation",
+      "/profile",
+      "/settings",
+    ];
+    return playerAllowed.some((r) => clean === r || clean.startsWith(r + "/") || clean.startsWith(r + "?"));
+  }
+
+  if (canonicalRole === "admin") {
+    return true;
+  }
+
   return false;
 }
 

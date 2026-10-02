@@ -91,35 +91,43 @@ serve(async (req: Request) => {
     // 5. Fetch User Profile
     const { data: userProfile } = await supabase
       .from("users")
-      .select("name, governorate, position, role, subscription_plan, subscription_expires_at, trial_ends_at")
+      .select("name, governorate, position, role, subscription_plan, subscription_expires_at, trial_ends_at, is_blocked")
       .eq("id", callerUser.id)
       .maybeSingle();
 
-    const dbRole = String(userProfile?.role || "").toLowerCase().trim();
-    if (dbRole !== "pitch_owner" && dbRole !== "owner") {
+    if (userProfile?.is_blocked === true) {
       return new Response(
         JSON.stringify({
-          error: "FORBIDDEN_OWNER_ONLY",
-          message: "خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.",
+          error: "USER_BLOCKED",
+          message: "تم حظر حسابك. يرجى التواصل مع إدارة المنصة.",
         }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    const userRole: "owner" = "owner";
 
-    // Owners require an active paid or trial entitlement.
-    const nowMs = Date.now();
-    const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
-    const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
-    const entitlementUntil = Math.max(trialMs, subMs);
-    if (entitlementUntil <= nowMs) {
-      return new Response(
-        JSON.stringify({
-          error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
-          message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
-        }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const dbRole = String(userProfile?.role || "").toLowerCase().trim();
+    let userRole: "owner" | "pitch_owner" | "player" | "admin" = "player";
+
+    if (dbRole === "pitch_owner" || dbRole === "owner") {
+      userRole = "owner";
+      // Owners require an active paid or trial entitlement for pitch management assistant.
+      const nowMs = Date.now();
+      const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
+      const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
+      const entitlementUntil = Math.max(trialMs, subMs);
+      if (entitlementUntil <= nowMs) {
+        return new Response(
+          JSON.stringify({
+            error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
+            message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (dbRole === "admin" || dbRole === "co_founder" || dbRole === "cofounder" || dbRole === "super_admin") {
+      userRole = "admin";
+    } else {
+      userRole = "player";
     }
 
     // 6. Retrieve or Initialize Conversation Session

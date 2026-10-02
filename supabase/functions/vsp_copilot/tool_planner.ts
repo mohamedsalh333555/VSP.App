@@ -47,43 +47,75 @@ export function planToolExecution(
     (semanticOutput.speech_act === "question" && (semanticOutput.raw_user_language || "").includes("اسمك"));
 
   if (isBotIdentity) {
+    const isOwner = role === "owner" || role === "pitch_owner";
     return {
       action: "RESPOND_DIRECTLY",
-      reason: "أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات! ⚽📊",
-      quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"],
+      reason: isOwner
+        ? "أنا «كابتن VSP»، المستشار الذكي لإدارة ملاعبك ومتابعة الحجوزات والماليات! ⚽📊"
+        : "أنا «كابتن VSP»، مساعدك الذكي لاستكشاف الملاعب وحجز مواعيد المباريات بسهولة! ⚽",
+      quick_replies: isOwner
+        ? ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"]
+        : ["ملاعب قريبة", "احجز ملعب", "مواعيد اليوم"],
     };
   }
 
-  // 1. Strict Player Capability Rejection Firewall:
-  // If the owner asks for any player function (booking as a player, tournaments, 1v1, teams, player refunds)
+  // 1. Role-Aware Capability Firewall:
   const rawText = (semanticOutput.raw_user_language || "").toLowerCase();
-  const isPlayerIntent =
-    semanticOutput.domain === "unsupported" ||
-    semanticOutput.object === "unsupported" ||
-    semanticOutput.domain === "tournament" ||
-    semanticOutput.domain === "challenge" ||
-    semanticOutput.domain === "self_service" ||
-    semanticOutput.domain === "payment" ||
-    semanticOutput.intent === "tournament" ||
-    semanticOutput.intent === "challenge" ||
-    semanticOutput.intent === "stadium_search" ||
-    semanticOutput.action === "cancel" ||
-    semanticOutput.action === "reconcile" ||
-    rawText.includes("بطول") ||
-    rawText.includes("1v1") ||
-    rawText.includes("تقسيم") ||
-    rawText.includes("فريقي") ||
-    rawText.includes("احجزلي") ||
-    rawText.includes("حجوزاتي الشخصية") ||
-    rawText.includes("حجزي الشخصي") ||
-    rawText.includes("استرد");
+  const isOwner = role === "owner" || role === "pitch_owner";
 
-  if (isPlayerIntent) {
-    return {
-      action: "RESPOND_DIRECTLY",
-      reason: "يا كابتن، كابتن VSP مخصص حصرياً لأصحاب ومسؤولي الملاعب لمساعدتك في إدارة وتشغيل ملاعبك ومتابعة الحجوزات والماليات؛ خدمات اللاعبين والبطولات متاحة عبر شاشات التطبيق المخصصة للاعبين.",
-      quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"],
-    };
+  if (isOwner) {
+    // If the owner asks for personal player functions (tournaments, 1v1, refunds)
+    const isPlayerOnlyIntent =
+      semanticOutput.domain === "tournament" ||
+      semanticOutput.domain === "challenge" ||
+      semanticOutput.intent === "tournament" ||
+      semanticOutput.intent === "challenge" ||
+      rawText.includes("بطول") ||
+      rawText.includes("1v1") ||
+      rawText.includes("تقسيم") ||
+      rawText.includes("فريقي") ||
+      rawText.includes("حجوزاتي الشخصية") ||
+      rawText.includes("حجزي الشخصي") ||
+      rawText.includes("استرد");
+
+    if (isPlayerOnlyIntent) {
+      return {
+        action: "RESPOND_DIRECTLY",
+        reason: "يا كابتن، كابتن VSP للمالك مخصص لمساعدتك في إدارة ملاعبك ومتابعة الحجوزات والماليات؛ خدمات البطولات والتحديات متاحة عبر شاشات التطبيق المخصصة للاعبين.",
+        quick_replies: ["جدول ملاعبي", "المواعيد الفاضية", "أرباحي كام", "السجل المالي"],
+      };
+    }
+  } else {
+    // If a player asks for owner operations or pitch management
+    const isOwnerOnlyIntent =
+      semanticOutput.domain === "owner_operations" ||
+      semanticOutput.intent === "owner_operations" ||
+      semanticOutput.domain === "financials" ||
+      semanticOutput.intent === "financial_question" ||
+      rawText.includes("أرباح") ||
+      rawText.includes("سجل مالي") ||
+      rawText.includes("ملاعيبي") ||
+      rawText.includes("ملاعب مسجلة");
+
+    if (isOwnerOnlyIntent) {
+      return {
+        action: "RESPOND_DIRECTLY",
+        reason: "البيانات المالية وإدارة تشغيل الملاعب مخصصة حصرياً لأصحاب ومسؤولي الملاعب.",
+        quick_replies: ["استكشاف الملاعب", "احجز ملعب", "مواعيد اليوم"],
+      };
+    }
+
+    // Direct pitch search for players
+    if (isToolAllowedForRole(role, "searchStadiums") && (semanticOutput.intent === "stadium_search" || (!state.stadium?.id && (rawText.includes("ملعب") || rawText.includes("ملاعب"))))) {
+      return {
+        action: "EXECUTE_TOOL",
+        toolName: "searchStadiums",
+        toolArgs: {
+          query: semanticOutput.entities.stadium?.name || state.stadium?.name || "",
+          governorate: state.location_scope || "",
+        },
+      };
+    }
   }
 
   // 2. Acknowledge / non-operational turns

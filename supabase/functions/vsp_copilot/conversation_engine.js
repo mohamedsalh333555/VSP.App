@@ -370,6 +370,9 @@ function mergeConversationState(contextSnapshot, analysis) {
   if (Array.isArray(e.preferred_times) && e.preferred_times.length) {
     next.preferred_times = e.preferred_times;
     delete next.time_window;
+    if (!analysis.signals?.explicit_period) {
+      next.time_period_confirmed = false;
+    }
   } else if (e.time_window && !(waitingForPeriod && Array.isArray(next.preferred_times) && next.preferred_times.length)) {
     next.time_window = e.time_window;
     next.preferred_times = [];

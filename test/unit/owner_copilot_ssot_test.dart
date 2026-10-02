@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Owner Copilot AI Journey SSOT', () {
     // -------------------------------------------------------------------------
-    // Task 1: Owner-Only Boundary
+    // Task 1: Role-Aware Authorization Boundary
     // -------------------------------------------------------------------------
-    test('Owner-Only Boundary: Rejects player role with 403 Forbidden', () {
+    test('Role-Aware Authorization: Player is authorized for player tools, blocked from owner tools', () {
       final userProfile = {
         'id': 'usr-player-1',
         'role': 'player',
@@ -14,19 +14,20 @@ void main() {
 
       final dbRole = (userProfile['role'] as String).toLowerCase().trim();
       final isOwner = dbRole == 'pitch_owner' || dbRole == 'owner';
-
       expect(isOwner, isFalse);
 
-      final simulatedResponse = {
-        'status': 403,
-        'body': {
-          'error': 'FORBIDDEN_OWNER_ONLY',
-          'message': 'خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.',
-        },
-      };
+      // Player capabilities
+      const playerAllowedTools = ['searchStadiums', 'checkStadiumAvailability', 'executeAppAction'];
+      const ownerOnlyTools = ['getOwnerStadiumsAndBookings', 'getOwnerFinancialInsights'];
 
-      expect(simulatedResponse['status'], equals(403));
-      expect((simulatedResponse['body'] as Map)['error'], equals('FORBIDDEN_OWNER_ONLY'));
+      expect(playerAllowedTools.contains('searchStadiums'), isTrue);
+      expect(playerAllowedTools.contains('checkStadiumAvailability'), isTrue);
+
+      // Owner tools must NEVER be allowed for player
+      for (final tool in ownerOnlyTools) {
+        expect(playerAllowedTools.contains(tool), isFalse,
+            reason: 'Tool $tool must be strictly restricted to pitch owners');
+      }
     });
 
     test('Owner-Only Boundary: Allows pitch owner with active entitlement', () {

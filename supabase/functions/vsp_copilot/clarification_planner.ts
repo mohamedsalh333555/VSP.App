@@ -76,6 +76,23 @@ export function planClarification(
       };
     }
 
+    // Ambiguous Multiple Times (e.g., 10 أو 11): ask user to choose
+    if (state.times.length > 1) {
+      const timeLabels = state.times.map(t => {
+        const parts = t.time.split(":");
+        const h = parseInt(parts[0], 10);
+        const displayH = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        return `الساعة ${displayH}`;
+      });
+      return {
+        needsClarification: true,
+        type: "ambiguous_time",
+        question: `تحب نحجز ${timeLabels.join(" ولا ")} يا كابتن؟`,
+        quickReplies: timeLabels,
+        reason: "multiple_alternative_times",
+      };
+    }
+
     // Missing Time: only ask if no times and no time range
     if (state.times.length === 0 && !state.time_range) {
       return {

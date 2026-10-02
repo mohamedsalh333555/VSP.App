@@ -1,7 +1,7 @@
-// Application-Controlled Capability Registry for VSP Owner Copilot
-// Declares all permissible operational capabilities for Pitch Owners only.
+// Application-Controlled Capability Registry for VSP Copilot
+// Declares all permissible operational capabilities partitioned by role (Player, Owner, Admin).
 
-export type RoleType = "owner" | "pitch_owner";
+export type RoleType = "owner" | "pitch_owner" | "player" | "admin";
 export type RiskLevel = "low" | "medium" | "high";
 
 export interface CapabilityDefinition {
@@ -19,29 +19,17 @@ export interface CapabilityDefinition {
 }
 
 export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
-  OWNER_STADIUMS_AND_BOOKINGS: {
-    id: "getOwnerStadiumsAndBookings",
-    domain: "owner_operations",
-    object: "booking",
-    action: "inspect",
-    allowed_roles: ["owner", "pitch_owner"],
+  SEARCH_STADIUMS: {
+    id: "searchStadiums",
+    domain: "booking",
+    object: "stadium",
+    action: "search",
+    allowed_roles: ["player", "owner", "pitch_owner", "admin"],
     is_read_only: true,
     risk_level: "low",
-    workflow_id: "workflow_owner_stadiums",
-    tool_id: "getOwnerStadiumsAndBookings",
-    description: "استعراض ملاعب المالك وحجوزاتها وجدول المواعيد",
-  },
-  OWNER_FINANCIAL_INSIGHTS: {
-    id: "getOwnerFinancialInsights",
-    domain: "financials",
-    object: "financials",
-    action: "inspect",
-    allowed_roles: ["owner", "pitch_owner"],
-    is_read_only: true,
-    risk_level: "low",
-    workflow_id: "workflow_owner_financials",
-    tool_id: "getOwnerFinancialInsights",
-    description: "استعراض الأرباح والرصيد القابل للسحب لمالك الملعب",
+    workflow_id: "workflow_search_stadiums",
+    tool_id: "searchStadiums",
+    description: "البحث عن الملاعب حسب الاسم والمحافظة والسعر للاعبين ومسؤولي الملاعب",
   },
   CHECK_STADIUM_AVAILABILITY: {
     id: "checkStadiumAvailability",
@@ -49,7 +37,7 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     object: "stadium",
     action: "inspect",
     sub_action: "availability",
-    allowed_roles: ["owner", "pitch_owner"],
+    allowed_roles: ["player", "owner", "pitch_owner", "admin"],
     is_read_only: true,
     risk_level: "low",
     workflow_id: "workflow_check_availability",
@@ -61,28 +49,45 @@ export const CAPABILITY_REGISTRY: Record<string, CapabilityDefinition> = {
     domain: "navigation",
     object: "app",
     action: "navigate",
-    allowed_roles: ["owner", "pitch_owner"],
+    allowed_roles: ["player", "owner", "pitch_owner", "admin"],
     is_read_only: false,
     risk_level: "low",
     workflow_id: "workflow_navigate_action",
     tool_id: "executeAppAction",
-    description: "تنفيذ إجراءات التنقل التفاعلية داخل التطبيق لملاك الملاعب",
+    description: "تنفيذ إجراءات التنقل أو الحجز التفاعلية داخل التطبيق",
+  },
+  OWNER_STADIUMS_AND_BOOKINGS: {
+    id: "getOwnerStadiumsAndBookings",
+    domain: "owner_operations",
+    object: "booking",
+    action: "inspect",
+    allowed_roles: ["owner", "pitch_owner", "admin"],
+    is_read_only: true,
+    risk_level: "low",
+    workflow_id: "workflow_owner_stadiums",
+    tool_id: "getOwnerStadiumsAndBookings",
+    description: "استعراض ملاعب المالك وحجوزاتها وجدول المواعيد (خاص بمالك الملعب)",
+  },
+  OWNER_FINANCIAL_INSIGHTS: {
+    id: "getOwnerFinancialInsights",
+    domain: "financials",
+    object: "financials",
+    action: "inspect",
+    allowed_roles: ["owner", "pitch_owner", "admin"],
+    is_read_only: true,
+    risk_level: "low",
+    workflow_id: "workflow_owner_financials",
+    tool_id: "getOwnerFinancialInsights",
+    description: "استعراض الأرباح والرصيد القابل للسحب لمالك الملعب (خاص بمالك الملعب)",
   },
 };
 
 export function isToolAllowedForRole(role: string | undefined | null, toolName: string): boolean {
   if (!toolName || !role) return false;
-  const normRole = role.toLowerCase().trim();
-  if (normRole !== "owner" && normRole !== "pitch_owner") {
-    return false;
-  }
-
-  for (const cap of Object.values(CAPABILITY_REGISTRY)) {
-    if (cap.tool_id === toolName) {
-      return true;
-    }
-  }
-  return false;
+  const normRole = role.toLowerCase().trim() as RoleType;
+  const cap = getCapabilityByTool(toolName);
+  if (!cap) return false;
+  return cap.allowed_roles.includes(normRole);
 }
 
 export function getCapabilityByTool(toolName: string): CapabilityDefinition | null {
@@ -96,10 +101,9 @@ export function getCapabilityByTool(toolName: string): CapabilityDefinition | nu
 
 export function getAllowedToolsForRole(role: string | undefined | null): string[] {
   if (!role) return [];
-  const normRole = role.toLowerCase().trim();
-  if (normRole !== "owner" && normRole !== "pitch_owner") return [];
+  const normRole = role.toLowerCase().trim() as RoleType;
   return Object.values(CAPABILITY_REGISTRY)
-    .filter(cap => cap.tool_id)
+    .filter(cap => cap.tool_id && cap.allowed_roles.includes(normRole))
     .map(cap => cap.tool_id as string);
 }
 
