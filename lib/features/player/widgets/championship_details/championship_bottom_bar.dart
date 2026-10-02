@@ -32,7 +32,7 @@ class ChampionshipBottomBar extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPBottomActionBar(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.sm,
         VSPSpacing.md,
