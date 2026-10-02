@@ -2,6 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -36,7 +37,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
@@ -59,7 +60,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         stream: _notificationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جاري تحميل الإشعارات' : 'Loading notifications',
+              message: isArabic ? 'بنجهّز آخر التنبيهات والإجراءات المطلوبة.' : 'Refreshing your latest alerts and required actions.',
+            );
           }
 
           final notifications = snapshot.data ?? [];

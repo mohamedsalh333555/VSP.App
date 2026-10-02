@@ -1,6 +1,7 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
@@ -107,8 +108,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  if (didPop) return;
  Navigator.of(context).popUntil((route) => route.isFirst);
  },
- child: Scaffold(
- backgroundColor: Colors.black.withValues(alpha: 0.85),
+ child: VSPScaffold(
+ backgroundColor: VSPColors.background,
  body: SafeArea(
  child: Stack(
  alignment: Alignment.topCenter,
@@ -152,6 +153,32 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22),
  ),
  
+ const SizedBox(height: 12),
+
+ Container(
+   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+   decoration: BoxDecoration(
+     color: VSPColors.accentSoft,
+     borderRadius: BorderRadius.circular(VSPRadius.full),
+     border: Border.all(color: VSPColors.borderAccent),
+   ),
+   child: Row(
+     mainAxisSize: MainAxisSize.min,
+     children: [
+       const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 15),
+       const SizedBox(width: 6),
+       Text(
+         isArabic ? 'الحجز مؤكد' : 'Booking confirmed',
+         style: const TextStyle(
+           color: VSPColors.accent,
+           fontWeight: FontWeight.w800,
+           fontSize: 12,
+         ),
+       ),
+     ],
+   ),
+ ),
+
  const SizedBox(height: 20),
  
  // Booking Details Summary (Receipt Summary Card)
@@ -320,79 +347,91 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  
  const SizedBox(height: 24),
 
- // Viral WhatsApp Match Invite Button
- PrimaryButton(
- text: isArabic ? 'مشاركة الماتش على جروب الواتساب ' : 'Share Match to WhatsApp Group ',
- height: 52,
- color: VSPColors.whatsApp,
- textColor: Colors.white,
- onPressed: () async {
- final inviteMessage = VSPMatchInviteFormatter.buildInviteMessage(
- stadiumName: widget.booking.stadiumName,
- bookingId: widget.booking.id,
- startTime: widget.booking.startTime,
- endTime: widget.booking.endTime,
- currentPlayers: widget.booking.currentPlayers,
- maxPlayers: widget.booking.maxPlayers,
- totalPrice: widget.booking.totalPrice,
- isArabic: isArabic,
- );
- await VSPMatchInviteFormatter.shareToWhatsApp(
- context: context,
- message: inviteMessage,
- );
- },
+ // Primary next step: My Bookings
+ SizedBox(
+   width: double.infinity,
+   child: PrimaryButton(
+     text: l10n.myBookings,
+     height: 52,
+     onPressed: () {
+       if (playerHomeScreenKey.currentState != null) {
+         Navigator.of(context).popUntil((route) => route.isFirst);
+         playerHomeScreenKey.currentState?.switchToTab(3);
+       } else {
+         Navigator.of(context).popUntil((route) => route.isFirst);
+         Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen()));
+       }
+     },
+   ),
  ),
- const SizedBox(height: 12),
+ const SizedBox(height: VSPSpacing.md),
 
- // Chat with Stadium Owner Button (Available Post-Booking)
- PrimaryButton(
- text: isArabic ? 'شات مع المالك ' : 'Chat with Owner ',
- height: 50,
- color: VSPColors.accent.withValues(alpha: 0.15),
- textColor: VSPColors.accent,
- onPressed: () {
- Navigator.push(
- context,
- MaterialPageRoute(
- builder: (_) => ChatScreen(booking: widget.booking),
+ // Secondary coordination action
+ SizedBox(
+   width: double.infinity,
+   child: OutlinedButton(
+     onPressed: () {
+       Navigator.push(
+         context,
+         MaterialPageRoute(builder: (_) => ChatScreen(booking: widget.booking)),
+       );
+     },
+     style: OutlinedButton.styleFrom(
+       minimumSize: const Size(double.infinity, 50),
+       foregroundColor: VSPColors.accent,
+       side: const BorderSide(color: VSPColors.borderAccent),
+       shape: const StadiumBorder(),
+     ),
+     child: Text(
+       isArabic ? 'التواصل مع مالك الملعب' : 'Chat with Stadium Owner',
+       style: const TextStyle(fontWeight: FontWeight.w800),
+     ),
+   ),
  ),
- );
- },
- ),
- const SizedBox(height: 12),
+ const SizedBox(height: VSPSpacing.sm),
 
- // Action Buttons (Equal Heights: 52px)
- Row(
- children: [
- Expanded(
- child: PrimaryButton(
- text: l10n.myBookings,
- height: 52,
- color: VSPColors.surfaceAlt,
- textColor: VSPColors.textPrimary,
- onPressed: () {
- if (playerHomeScreenKey.currentState != null) {
- Navigator.of(context).popUntil((route) => route.isFirst);
- playerHomeScreenKey.currentState?.switchToTab(3);
- } else {
- Navigator.of(context).popUntil((route) => route.isFirst);
- Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen()));
- }
- },
+ TextButton.icon(
+   onPressed: () async {
+     final inviteMessage = VSPMatchInviteFormatter.buildInviteMessage(
+       stadiumName: widget.booking.stadiumName,
+       bookingId: widget.booking.id,
+       startTime: widget.booking.startTime,
+       endTime: widget.booking.endTime,
+       currentPlayers: widget.booking.currentPlayers,
+       maxPlayers: widget.booking.maxPlayers,
+       totalPrice: widget.booking.totalPrice,
+       isArabic: isArabic,
+     );
+     await VSPMatchInviteFormatter.shareToWhatsApp(
+       context: context,
+       message: inviteMessage,
+     );
+   },
+   icon: const Icon(Iconsax.message_copy, size: 18),
+   label: Text(
+     isArabic ? 'مشاركة تفاصيل الماتش' : 'Share match details',
+     style: const TextStyle(fontWeight: FontWeight.w700),
+   ),
+   style: TextButton.styleFrom(
+     foregroundColor: VSPColors.textSecondary,
+   ),
  ),
- ),
- const SizedBox(width: VSPSpacing.md),
- Expanded(
- child: PrimaryButton(
- text: l10n.home,
- height: 52,
- onPressed: () {
- Navigator.of(context).popUntil((route) => route.isFirst);
- },
- ),
- ),
- ],
+ const SizedBox(height: VSPSpacing.xs),
+
+ SizedBox(
+   width: double.infinity,
+   child: TextButton(
+     onPressed: () {
+       Navigator.of(context).popUntil((route) => route.isFirst);
+     },
+     child: Text(
+       l10n.home,
+       style: const TextStyle(
+         color: VSPColors.textSecondary,
+         fontWeight: FontWeight.w700,
+       ),
+     ),
+   ),
  ),
  ],
  ),
@@ -408,13 +447,11 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  maxBlastForce: 10,
  minBlastForce: 3,
  emissionFrequency: 0.03,
- numberOfParticles: 15,
+ numberOfParticles: 10,
  gravity: 0.2,
  colors: const [
  VSPColors.accent,
- Colors.yellow,
- Colors.white,
- Colors.blue,
+ VSPColors.white,
  ],
  ),
  ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/services/connectivity_service.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/vsp_ui.dart';
 import 'primary_button.dart';
 
 /// Reusable Error State Widget that automatically distinguishes between
@@ -23,78 +23,31 @@ class VSPErrorState extends StatelessWidget {
     final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
     final isOnline = ConnectivityService.instance.isCurrentOnline;
 
-    final String title = !isOnline
+    final title = !isOnline
         ? (isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection')
-        : (isArabic ? 'تعذر تحميل البيانات' : 'Failed to Load Data');
+        : (isArabic ? 'تعذر تحميل البيانات' : 'Could not load data');
 
-    final String subtitle = !isOnline
+    final message = !isOnline
         ? (isArabic
-            ? 'يرجى التحقق من اتصالك بالواي فاي أو بيانات الهاتف ثم إعادة المحاولة.'
-            : 'Please check your Wi-Fi or mobile data connection and try again.')
+            ? 'تحقق من الاتصال ثم جرّب مرة أخرى.'
+            : 'Check your connection and try again.')
         : (customMessage ??
             (isArabic
-                ? 'تعذر الوصول إلى الخادم في الوقت الحالي، يرجى المحاولة مرة أخرى.'
-                : 'Could not connect to the server at this time. Please try again.'));
+                ? 'تعذر الوصول إلى الخادم في الوقت الحالي.'
+                : 'The server could not be reached right now.'));
 
-    final IconData icon = !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy;
-
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(VSPSpacing.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: VSPColors.error.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: VSPColors.error.withValues(alpha: 0.35),
-                  width: 2,
-                ),
-              ),
-              child: Icon(
-                icon,
-                color: VSPColors.error,
-                size: 48,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: VSPColors.textPrimary,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.textSecondary,
-                      height: 1.5,
-                      fontSize: 13,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 200,
-              height: 46,
-              child: PrimaryButton(
-                text: retryButtonText ?? (isArabic ? 'إعادة المحاولة' : 'Try Again'),
-                onPressed: onRetry,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return VSPStateView(
+      state: !isOnline ? VSPUiState.offline : VSPUiState.error,
+      title: title,
+      message: message,
+      icon: !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy,
+      onRetry: onRetry,
+      action: retryButtonText != null
+          ? PrimaryButton(
+              text: retryButtonText!,
+              onPressed: onRetry,
+            )
+          : null,
     );
   }
 }

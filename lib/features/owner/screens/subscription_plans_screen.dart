@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,7 +105,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final proMaxStadiums = (proPlan?['max_stadiums'] as num?)?.toInt();
 
     if (basicPlan == null || proPlan == null || basicPrice == null || proPrice == null || basicMaxStadiums == null || proMaxStadiums == null) {
-      return Scaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
@@ -126,7 +127,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       );
     }
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -220,15 +221,42 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   /// شريط حالة الاشتراك الهادئ والمضغوط
   Widget _buildCompactStatusHeader(UserModel user, bool isArabic) {
-    final bool isExpired = user.isPlanExpired;
     final bool isTrial = user.isInActiveTrial;
+    final bool isGrace = user.isInGracePeriod;
+    final bool isExpired = user.isPlanExpired;
 
     final days = _remainingTime.inDays;
     final hours = _remainingTime.inHours % 24;
 
     final String planLabelText = isArabic
-        ? (user.isProPlan ? 'الباقة الاحترافية' : (isTrial ? 'فترة تجريبية' : 'الباقة الأساسية'))
-        : (user.isProPlan ? 'Pro Plan' : (isTrial ? 'Free Trial' : 'Basic Plan'));
+        ? (user.isProPlan
+            ? 'الباقة الاحترافية'
+            : (user.subscriptionPlan == 'basic'
+                ? 'الباقة الأساسية'
+                : 'الفترة التجريبية'))
+        : (user.isProPlan
+            ? 'Pro Plan'
+            : (user.subscriptionPlan == 'basic'
+                ? 'Basic Plan'
+                : 'Free Trial'));
+
+    final String stateLabel = isTrial
+        ? (isArabic ? 'تجريبية نشطة' : 'Active Trial')
+        : isGrace
+            ? (isArabic ? 'فترة سماح' : 'Grace Period')
+            : isExpired
+                ? (isArabic ? 'منتهية' : 'Expired')
+                : (isArabic ? 'نشطة' : 'Active');
+
+    final String stateMessage = isTrial
+        ? (isArabic ? 'أنت داخل الفترة التجريبية الحالية.' : 'You are in the current free-trial period.')
+        : isGrace
+            ? (isArabic
+                ? 'لديك مهلة محدودة لتجديد الاشتراك وإعادة التفعيل.'
+                : 'You have a limited grace period to renew and reactivate.')
+            : isExpired
+                ? (isArabic ? 'جدد الاشتراك لإعادة تفعيل تشغيل الملاعب.' : 'Renew to reactivate stadium operations.')
+                : (isArabic ? 'اشتراكك الحالي فعال.' : 'Your current subscription is active.');
 
     return Container(
       width: double.infinity,
@@ -256,16 +284,16 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isExpired
-                        ? (isArabic ? 'الاشتراك منتهي' : 'Subscription Expired')
-                        : (isArabic ? 'الحالة: $planLabelText' : 'Status: $planLabelText'),
+                    isArabic
+                        ? 'الحالة: $stateLabel'
+                        : 'Status: $stateLabel',
                     style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isExpired
-                        ? (isArabic ? 'يرجى التجديد لتفعيل الحجز' : 'Renew to enable bookings')
-                        : (isArabic ? 'المتبقي: $days يوم و $hours ساعة' : 'Remaining: $days d $hours h'),
+                    isTrial || (!isGrace && !isExpired)
+                        ? (isArabic ? 'الخطة: $planLabelText • المتبقي: $days يوم و $hours ساعة' : 'Plan: $planLabelText • Remaining: $days d $hours h')
+                        : stateMessage,
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                   ),
                 ],
@@ -275,13 +303,15 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: isExpired ? VSPColors.error.withValues(alpha: 0.12) : VSPColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(VSPRadius.xs),
+              color: (isGrace || isExpired)
+                  ? VSPColors.error.withValues(alpha: 0.12)
+                  : VSPColors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(VSPRadius.full),
             ),
             child: Text(
-              isExpired ? (isArabic ? 'منتهي' : 'Expired') : (isArabic ? 'نشط' : 'Active'),
+              stateLabel,
               style: TextStyle(
-                color: isExpired ? VSPColors.error : VSPColors.accent,
+                color: (isGrace || isExpired) ? VSPColors.error : VSPColors.accent,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),

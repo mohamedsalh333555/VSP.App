@@ -172,13 +172,13 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  child: GestureDetector(
  onTap: _isLoading ? null : onTap,
  child: Container(
- height: 42.0,
- padding: const EdgeInsets.symmetric(horizontal: 16),
+ height: 48.0,
+ padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
  decoration: BoxDecoration(
  color: isOutlined ? Colors.transparent : color,
- borderRadius: BorderRadius.circular(VSPRadius.sm),
+ borderRadius: BorderRadius.circular(VSPRadius.button),
  border: isOutlined ? Border.all(color: color, width: 1.5) : null,
- boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
+ boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))],
  ),
  child: Center(
  child: _isLoading 
@@ -217,6 +217,8 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     final bool hasJoined = currentUser != null && booking.joinedUserIds.contains(currentUser.uid);
     final bool isPending = currentUser != null && booking.pendingUserIds.contains(currentUser.uid);
     final bool isHost = currentUser != null && booking.createdByUserId == currentUser.uid;
+    final bool isEnded = booking.endTime.isBefore(DateTime.now());
+    final bool isCancelled = booking.status == BookingStatus.cancelled;
     
     final totalFieldCapacity = booking.totalFieldCapacity;
     final remainingPlayers = PublicMatchCardFormatter.calculateRemainingSpots(
@@ -264,6 +266,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
   if (isHost)
   _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
+  else if (isEnded)
+  _buildStatusBadge(isArabic ? 'انتهت' : 'Ended', VSPColors.textSecondary)
+  else if (isCancelled)
+  _buildStatusBadge(isArabic ? 'ملغاة' : 'Cancelled', VSPColors.error)
   else if (hasJoined)
   _buildStatusBadge(AppLocalizations.of(context)!.joined, VSPColors.info)
   else if (isPending)
@@ -326,6 +332,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  const SizedBox(width: 12),
  Builder(builder: (context) {
  if (_isLoading) return const SizedBox(width: 100, height: 44, child: Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2)));
+ if (isEnded || isCancelled) {
+   return _buildRawButton(
+     label: isCancelled ? (isArabic ? 'المباراة ملغاة' : 'Match cancelled') : (isArabic ? 'انتهت المباراة' : 'Match ended'),
+     color: VSPColors.textSecondary,
+     onTap: null,
+     isOutlined: true,
+   );
+ }
  if (isHost) return _buildRawButton(label: AppLocalizations.of(context)!.manage, color: VSPColors.accent, onTap: () => _manageParticipants(context), isOutlined: false);
  if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser.uid), isOutlined: true);
  if (isPending) {

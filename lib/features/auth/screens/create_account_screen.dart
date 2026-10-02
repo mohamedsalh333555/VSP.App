@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -73,7 +74,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: VSPColors.background.withValues(alpha: 0),
       ),
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Stack(
           children: [

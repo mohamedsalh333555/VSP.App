@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +43,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  final auth = Provider.of<AuthProvider>(context);
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Stack(
  children: [

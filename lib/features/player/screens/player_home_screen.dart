@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -169,7 +170,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       statusBarBrightness: Brightness.dark, // iOS specific
     ));
 
-    return Scaffold(
+    return VSPScaffold(
       extendBody: true,
       backgroundColor: VSPColors.background,
       body: VSPAmbientBackground(

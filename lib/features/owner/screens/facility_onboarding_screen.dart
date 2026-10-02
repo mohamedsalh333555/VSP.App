@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -80,7 +81,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.id ?? '';
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: SafeArea(
         child: StreamBuilder<List<Stadium>>(

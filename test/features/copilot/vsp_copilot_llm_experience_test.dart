@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/models/copilot_message.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
 import 'package:vsp_application/core/providers/stadium_provider.dart';
 import 'package:vsp_application/core/services/vsp_copilot_service.dart';
 import 'package:vsp_application/features/copilot/screens/vsp_copilot_screen.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_chat_bubble.dart';
 import 'package:vsp_application/features/copilot/widgets/copilot_conversations_drawer.dart';
+import '../../helpers/test_owner_auth_provider.dart';
 
 class MockLlmCopilotService extends VspCopilotService {
   final List<CopilotConversation> conversations;
@@ -156,6 +158,9 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
+            ChangeNotifierProvider<AuthProvider>.value(
+              value: TestOwnerAuthProvider(),
+            ),
             ChangeNotifierProvider<StadiumProvider>(create: (_) => StadiumProvider()),
           ],
           child: MaterialApp(
@@ -179,6 +184,9 @@ void main() {
       // Prompt is sent and bubble appears
       expect(find.text('رد تجريبي على: فين ألعب النهارده؟'), findsOneWidget);
       expect(find.text('ملعب التجمع'), findsOneWidget);
+
+      // Drain AuthProvider's 5-second safety timer before test teardown.
+      await tester.pump(const Duration(seconds: 5));
     });
 
     testWidgets('CopilotConversationsDrawer opens and shows past conversations', (tester) async {

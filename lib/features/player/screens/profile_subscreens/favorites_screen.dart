@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -17,7 +18,7 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,

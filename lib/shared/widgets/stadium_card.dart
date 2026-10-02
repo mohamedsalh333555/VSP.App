@@ -176,8 +176,8 @@ class StadiumCard extends StatelessWidget {
  GestureDetector(
  onTap: onEditTap,
  child: Container(
- width: 36,
- height: 36,
+ width: 44,
+ height: 44,
  decoration: BoxDecoration(
  color: VSPColors.background.withValues(alpha: 0.7),
  shape: BoxShape.circle,
@@ -186,7 +186,7 @@ class StadiumCard extends StatelessWidget {
  child: const Icon(
  Iconsax.edit_copy,
  color: VSPColors.accent,
- size: 18,
+ size: 20,
  ),
  ),
  )
@@ -212,7 +212,7 @@ class StadiumCard extends StatelessWidget {
  child: Icon(
  isFav ? Iconsax.heart : Iconsax.heart_copy,
  color: VSPColors.accent,
- size: 20,
+ size: 22,
  ),
  ),
  );

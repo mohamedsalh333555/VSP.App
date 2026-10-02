@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -115,7 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  Widget build(BuildContext context) {
  final userProfileUrl = Provider.of<AuthProvider>(context).userModel?.profileImageUrl;
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: Colors.transparent,

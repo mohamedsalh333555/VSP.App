@@ -3,10 +3,9 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/copilot_message.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/vsp_copilot_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../player/screens/booking_confirmation_screen.dart';
+import '../../owner/screens/owner_main_screen.dart';
 
 /// Simple chat sheet for VSP Copilot POC with single read-only search tool.
 class VspCopilotSheet extends StatefulWidget {
@@ -20,6 +19,9 @@ class VspCopilotSheet extends StatefulWidget {
   });
 
   static Future<void> show(BuildContext context, {bool isArabic = true}) {
+    final auth = Provider.of<AuthProvider?>(context, listen: false);
+    if (auth?.isOwner != true) return Future.value();
+
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -38,25 +40,10 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
   final List<CopilotMessage> _messages = [];
   bool _isLoading = false;
 
-  Future<void> _handleBookStadium(CopilotStadiumSummary summary) async {
+  void _handleStadiumTap(CopilotStadiumSummary summary) {
+    if (!mounted) return;
     Navigator.of(context).pop();
-
-    try {
-      final repo = StadiumRepository();
-      final stadium = await repo.getStadiumById(summary.id);
-      if (stadium != null && mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => BookingConfirmationScreen(
-              stadium: stadium,
-              selectedDate: DateTime.now(),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('[VspCopilotSheet] _handleBookStadium error: $e');
-    }
+    ownerMainScreenKey.currentState?.openBookings();
   }
 
   @override
@@ -140,16 +127,19 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
         border: Border.all(color: VSPColors.borderLight, width: 1),
       ),
-      child: Column(
-        children: [
-          _buildHeader(),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            _buildHeader(),
           const Divider(color: VSPColors.divider, height: 1),
           Expanded(child: _buildMessagesList()),
-          _buildInputBar(),
-        ],
+            _buildInputBar(),
+          ],
+        ),
       ),
     );
   }
@@ -173,7 +163,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.isArabic ? 'كابتن VSP الذكي' : 'VSP Copilot',
+                  widget.isArabic ? 'مساعد مالك الملعب' : 'Owner Copilot',
                   style: const TextStyle(
                     color: VSPColors.textPrimary,
                     fontSize: 16,
@@ -181,7 +171,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                   ),
                 ),
                 Text(
-                  widget.isArabic ? 'بحث واستكشاف الملاعب' : 'Pitch Search & Discovery',
+                  widget.isArabic ? 'بحث في ملاعبك وحجوزاتك' : 'Stadium & booking operations',
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                 ),
               ],
@@ -265,7 +255,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              onTap: () => _handleBookStadium(s),
+              onTap: () => _handleStadiumTap(s),
               child: Container(
                 width: 200,
                 padding: const EdgeInsets.all(10),

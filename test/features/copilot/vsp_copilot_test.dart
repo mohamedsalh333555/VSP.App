@@ -100,7 +100,7 @@ void main() {
       );
 
       // Verify header and initial greeting
-      expect(find.text('كابتن VSP الذكي'), findsOneWidget);
+      expect(find.text('مساعد مالك الملعب'), findsOneWidget);
       // Quick prompts are intentionally not rendered; Copilot starts conversationally.
       expect(find.textContaining('أهلاً يا كابتن'), findsOneWidget);
 

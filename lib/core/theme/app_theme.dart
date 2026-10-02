@@ -120,6 +120,11 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: VSPColors.surface,
         elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(VSPRadius.bottomSheet),
+          ),
+        ),
       ),
 
       dialogTheme: DialogThemeData(
@@ -129,7 +134,7 @@ class AppTheme {
         titleTextStyle: const TextStyle(fontFamily: tajawalFamily, fontFamilyFallback: fallbackFonts, color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         contentTextStyle: const TextStyle(fontFamily: tajawalFamily, fontFamilyFallback: fallbackFonts, color: VSPColors.textSecondary, fontSize: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          borderRadius: BorderRadius.circular(VSPRadius.dialog),
         ),
       ),
 
@@ -182,6 +187,109 @@ class AppTheme {
         ),
       ),
 
+      // Shared surface grammar: all common controls inherit the same hierarchy.
+      dividerTheme: const DividerThemeData(
+        color: VSPColors.divider,
+        thickness: 1,
+        space: VSPSpacing.md,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: VSPColors.surface,
+        contentTextStyle: TextStyle(
+          fontFamily: tajawalFamily,
+          fontFamilyFallback: fallbackFonts,
+          color: VSPColors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: VSPColors.surfaceAlt,
+        selectedColor: VSPColors.accentSoft,
+        disabledColor: VSPColors.surfaceAlt.withValues(alpha: 0.5),
+        secondarySelectedColor: VSPColors.accentSoft,
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.xs),
+        side: const BorderSide(color: VSPColors.divider),
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(
+          fontFamily: tajawalFamily,
+          fontFamilyFallback: fallbackFonts,
+          color: VSPColors.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      popupMenuTheme: const PopupMenuThemeData(
+        color: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(VSPRadius.dialog)),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: VSPColors.accent,
+        linearTrackColor: VSPColors.surfaceAlt,
+        circularTrackColor: VSPColors.surfaceAlt,
+      ),
+      listTileTheme: const ListTileThemeData(
+        contentPadding: EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
+        minLeadingWidth: 36,
+        iconColor: VSPColors.textSecondary,
+        textColor: VSPColors.textPrimary,
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: VSPColors.accent,
+        unselectedLabelColor: VSPColors.textSecondary,
+        indicatorColor: VSPColors.accent,
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.label,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: VSPColors.accent,
+          minimumSize: const Size(0, 44),
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+          textStyle: const TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: VSPColors.accent,
+          side: const BorderSide(color: VSPColors.borderAccent),
+          minimumSize: const Size(0, VSPSize.buttonHeight),
+          shape: const StadiumBorder(),
+          textStyle: const TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: VSPColors.surface,
+        elevation: 0,
+        indicatorColor: VSPColors.accentSoft,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            fontFamily: tajawalFamily,
+            fontFamilyFallback: fallbackFonts,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: VSPColors.accent,
@@ -205,15 +313,15 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+           borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: const BorderSide(color: VSPColors.accent, width: 1.5),
         ),
       ),

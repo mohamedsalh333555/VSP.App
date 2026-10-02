@@ -1,5 +1,6 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 
 
@@ -48,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       body: Container(
         width: double.infinity,

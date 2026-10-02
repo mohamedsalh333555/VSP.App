@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -99,7 +100,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           } catch (_) {}
         }
 
-        return Scaffold(
+        return VSPScaffold(
           backgroundColor: VSPColors.background,
           body: Column(
             children: [

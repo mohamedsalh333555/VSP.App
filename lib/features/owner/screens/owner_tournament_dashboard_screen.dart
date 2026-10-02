@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -363,7 +364,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         auth.userModel?.role == 'super_admin';
     final isOwnerOrAdmin = (uid != null && uid == _currentChampionship.ownerId) || isAdmin;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,

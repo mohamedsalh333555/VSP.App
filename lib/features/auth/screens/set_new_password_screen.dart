@@ -1,10 +1,12 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 /// Screen shown when the user clicks a password-reset deep link.
 /// Supabase has already established the recovery session before this screen
@@ -101,7 +103,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  Widget build(BuildContext context) {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: Colors.transparent,
@@ -269,38 +271,10 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  const SizedBox(height: VSPSpacing.lg),
 
  // ── Save Button ────────────────────────────────────────────
- SizedBox(
- width: double.infinity,
- height: 56,
- child: ElevatedButton(
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- disabledBackgroundColor:
- VSPColors.accent.withValues(alpha: 0.3),
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.md),
- ),
- elevation: 0,
- ),
- onPressed: _isLoading ? null : () => _save(isAr),
- child: _isLoading
- ? const SizedBox(
- width: 22,
- height: 22,
- child: CircularProgressIndicator(
- strokeWidth: 2.5,
- color: Colors.black,
- ),
- )
- : Text(
- isAr ? 'حفظ كلمة المرور الجديدة' : 'Save New Password',
- style: const TextStyle(
- fontWeight: FontWeight.bold,
- fontSize: 16,
- ),
- ),
- ),
+ PrimaryButton(
+   text: isAr ? 'حفظ كلمة المرور الجديدة' : 'Save New Password',
+   isLoading: _isLoading,
+   onPressed: _isLoading ? null : () => _save(isAr),
  ),
  ],
  ),

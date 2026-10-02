@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -117,7 +118,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
       stream: TournamentRepository().getTournamentMatches(widget.championship.id),
       builder: (context, snapshot) {
         if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
-          return Scaffold(
+          return VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
             body: Center(
@@ -147,7 +148,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         }
 
         if (!snapshot.hasData) {
-          return const Scaffold(
+          return const VSPScaffold(
             backgroundColor: VSPColors.background,
             body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
           );
@@ -155,7 +156,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
 
         final matches = snapshot.data!;
         if (matches.isEmpty) {
-          return Scaffold(
+          return VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
             body: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary))),
@@ -185,7 +186,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
 
         return DefaultTabController(
           length: totalTabs,
-          child: Scaffold(
+          child: VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(
               backgroundColor: Colors.transparent,

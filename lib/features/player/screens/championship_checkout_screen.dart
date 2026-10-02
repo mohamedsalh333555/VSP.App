@@ -6,6 +6,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/paymob_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/arabic_plural_utils.dart';
 import '../../../core/utils/roster_parser_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -369,7 +370,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final serviceFee = _feePolicy?.serviceFee(entryFee) ?? 0.0;
     final totalCheckoutPrice = _feePolicy?.total(entryFee) ?? entryFee;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
@@ -387,6 +388,15 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            VSPSectionHeader(
+              title: isArabic ? 'أنت تسجل في' : 'You are registering in',
+              subtitle: widget.championship.name,
+              margin: const EdgeInsets.only(
+                left: VSPSpacing.xs,
+                right: VSPSpacing.xs,
+                bottom: VSPSpacing.md,
+              ),
+            ),
             // 1. Championship Summary Header Card
             CheckoutChampionshipHeader(
               championship: widget.championship,
@@ -394,7 +404,19 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             ),
             const SizedBox(height: VSPSpacing.lg),
 
-            // 2. Squad Selection Requirement Header
+            // 2. Squad selection — the completion gate
+            VSPSectionHeader(
+              title: isArabic ? 'التشكيلة' : 'Squad',
+              subtitle: isSelectionValid
+                  ? (isArabic ? 'التشكيلة مكتملة' : 'Squad is complete')
+                  : (isArabic
+                      ? 'أكمل العدد المطلوب قبل المتابعة'
+                      : 'Complete the required squad before continuing'),
+              margin: const EdgeInsets.only(
+                top: VSPSpacing.sm,
+                bottom: VSPSpacing.sm,
+              ),
+            ),
             CheckoutSquadRequirementCard(
               totalCount: totalCount,
               minPlayers: minPlayers,
@@ -433,7 +455,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             ),
             const SizedBox(height: VSPSpacing.xl),
 
-            // 5. Financial Breakdown Card
+            // 5. Amount due
+            VSPSectionHeader(
+              title: isArabic ? 'المبلغ المطلوب' : 'Amount due',
+              margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+            ),
             CheckoutFinancialCard(
               entryFee: entryFee,
               serviceFee: serviceFee,
@@ -444,18 +470,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         ),
       ),
 
-      // Sticky Bottom Navigation Action Bar
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(
-          VSPSpacing.lg,
-          VSPSpacing.sm,
-          VSPSpacing.lg,
-          MediaQuery.of(context).padding.bottom + VSPSpacing.sm,
-        ),
-        decoration: const BoxDecoration(
-          color: VSPColors.surface,
-          border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-        ),
+      // Sticky primary action
+      bottomNavigationBar: VSPBottomActionBar(
         child: PrimaryButton(
           text: entryFee > 0
               ? (isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Payment')

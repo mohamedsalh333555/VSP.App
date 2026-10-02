@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
@@ -344,14 +345,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  if (_isLoading) {
- return const Scaffold(
+ return const VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
  );
  }
 
  if (_booking == null) {
- return Scaffold(
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(backgroundColor: Colors.transparent),
  body: Center(
@@ -375,7 +376,43 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final isFull = _booking!.currentPlayers >= _booking!.maxPlayers || _booking!.joinedUserIds.length >= _booking!.maxPlayers;
  final alreadyJoined = _booking!.joinedUserIds.contains(currentUserId);
 
- return Scaffold(
+ String statusLabel;
+ Color statusColor;
+ IconData statusIcon;
+ switch (_booking!.status) {
+ case BookingStatus.pending:
+ statusLabel = isAr ? 'قيد الإنشاء' : 'Pending';
+ statusColor = VSPColors.warning;
+ statusIcon = Icons.hourglass_top_rounded;
+ break;
+ case BookingStatus.confirmed:
+ statusLabel = isAr ? 'مؤكدة' : 'Confirmed';
+ statusColor = VSPColors.accent;
+ statusIcon = Iconsax.verify_copy;
+ break;
+ case BookingStatus.upcoming:
+ statusLabel = isAr ? 'قادمة' : 'Upcoming';
+ statusColor = VSPColors.accent;
+ statusIcon = Iconsax.clock_copy;
+ break;
+ case BookingStatus.completed:
+ statusLabel = isAr ? 'مكتملة' : 'Completed';
+ statusColor = VSPColors.textSecondary;
+ statusIcon = Iconsax.tick_circle_copy;
+ break;
+ case BookingStatus.cancelled:
+ statusLabel = isAr ? 'ملغاة' : 'Cancelled';
+ statusColor = VSPColors.error;
+ statusIcon = Iconsax.close_circle_copy;
+ break;
+ case BookingStatus.expired:
+ statusLabel = isAr ? 'منتهية' : 'Expired';
+ statusColor = VSPColors.textSecondary;
+ statusIcon = Icons.timer_off_outlined;
+ break;
+ }
+
+ return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: CustomScrollView(
  slivers: [
@@ -456,6 +493,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  ),
  ),
  ],
+ ),
+ const SizedBox(height: VSPSpacing.sm),
+ VSPStatusPill(
+ label: statusLabel,
+ color: statusColor,
+ icon: statusIcon,
  ),
  if (_booking!.isChallenge) ...[
    const SizedBox(height: VSPSpacing.md),
@@ -668,8 +711,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         child: isHost
             ? PrimaryButton(
                 text: Localizations.localeOf(context).languageCode == 'ar'
-                    ? '💬 محادثة وتنسيق المباراة'
-                    : '💬 Match Chat & Coordination',
+                    ? 'محادثة وتنسيق المباراة'
+                    : 'Match Chat & Coordination',
                 onPressed: () {
                   Navigator.push(
                     context,

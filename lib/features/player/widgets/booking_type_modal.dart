@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
@@ -134,6 +133,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // This sheet is secondary to the normal booking CTA.
           // Drag handle
           Center(
             child: Container(
@@ -151,7 +151,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.of(context)!.chooseBookingType,
+                isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               IconButton(

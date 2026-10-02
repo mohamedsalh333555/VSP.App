@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
@@ -339,7 +340,7 @@ class _TournamentRegistrationSuccessScreenState
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _returnHome();
       },
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Stack(
           children: [
@@ -357,9 +358,9 @@ class _TournamentRegistrationSuccessScreenState
               alignment: Alignment.topCenter,
               child: ConfettiWidget(
                 confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
+                blastDirectionality: BlastDirectionality.directional,
                 shouldLoop: false,
-                numberOfParticles: 35,
+                numberOfParticles: 12,
                 gravity: 0.18,
                 colors: const [
                   VSPColors.accent,
@@ -441,7 +442,7 @@ class _TournamentRegistrationSuccessScreenState
 
                           // عنوان التهاني
                           const Text(
-                            'مبروك! اشتراكك اتأكد بنجاح 🎉',
+                            'تم تأكيد الاشتراك بنجاح',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: VSPColors.textPrimary,
@@ -452,7 +453,7 @@ class _TournamentRegistrationSuccessScreenState
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'تم سداد الرسوم إلكترونياً وحجز مقعدك رسمياً في البطولة',
+                            'تم تسجيلك رسميًا في البطولة',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: VSPColors.textSecondary.withValues(alpha: 0.9),
@@ -472,59 +473,52 @@ class _TournamentRegistrationSuccessScreenState
 
                           const SizedBox(height: 24),
 
-                          // زر المشاركة عبر واتساب
+                          // Primary next step: open the tournament
                           SizedBox(
                             width: double.infinity,
                             height: VSPSize.buttonHeight,
-                            child: ElevatedButton.icon(
-                              onPressed: _shareViaWhatsApp,
-                              icon: const Icon(Iconsax.message_copy,
-                                  color: Colors.white, size: 20),
-                              label: Text(
+                            child: ElevatedButton(
+                              onPressed: _navigateToStandingsOrSchedule,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: VSPColors.accent,
+                                foregroundColor: Colors.black,
+                                shape: const StadiumBorder(),
+                                elevation: 0,
+                              ),
+                              child: Text(
                                 isSolo
-                                    ? 'شارك اشتراكك مع أصحابك على واتساب'
-                                    : 'شارك انضمام الفريق على واتساب',
+                                    ? 'عرض البطولة والمباريات'
+                                    : 'فتح البطولة وإدارة الفريق',
                                 style: const TextStyle(
-                                  color: Colors.white,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                 ),
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: VSPColors.whatsApp,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(VSPRadius.button),
-                                ),
-                                elevation: 4,
-                                shadowColor:
-                                    VSPColors.whatsApp.withValues(alpha: 0.4),
-                              ),
                             ),
                           ),
 
-                          const SizedBox(height: 12),
+                          const SizedBox(height: VSPSpacing.sm),
 
-                          // زر الانتقال لجدول البطولة والمباريات
+                          // Secondary share action
                           SizedBox(
                             width: double.infinity,
                             height: VSPSize.buttonHeight,
-                            child: OutlinedButton(
-                              onPressed: _navigateToStandingsOrSchedule,
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: VSPColors.accent.withValues(alpha: 0.4)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(VSPRadius.button),
-                                ),
-                                backgroundColor: VSPColors.surfaceAlt,
-                              ),
-                              child: const Text(
-                                'عرض جدول الترتيب والمباريات',
-                                style: TextStyle(
-                                  color: VSPColors.accent,
-                                  fontWeight: FontWeight.bold,
+                            child: OutlinedButton.icon(
+                              onPressed: _shareViaWhatsApp,
+                              icon: const Icon(Iconsax.message_copy, size: 19),
+                              label: Text(
+                                isSolo
+                                    ? 'مشاركة الاشتراك'
+                                    : 'مشاركة تسجيل الفريق',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
                                   fontSize: 14,
                                 ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: VSPColors.textPrimary,
+                                side: const BorderSide(color: VSPColors.divider),
+                                shape: const StadiumBorder(),
                               ),
                             ),
                           ),

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../../shared/widgets/vsp_icon_badge.dart';
@@ -147,26 +148,42 @@ class ChampionshipDetailsHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: (isFull || championship.status != 'open')
-                      ? VSPColors.error.withValues(alpha: 0.15)
-                      : VSPColors.success.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(VSPRadius.sm),
-                ),
-                child: Text(
-                  isFull
-                      ? (isArabic ? 'مكتمل العدد' : 'Full')
-                      : (championship.status == 'open'
-                          ? (isArabic ? 'مفتوح للتسجيل' : 'Open')
-                          : championship.status.toUpperCase()),
-                  style: TextStyle(
-                    color: (isFull || championship.status != 'open') ? VSPColors.error : VSPColors.success,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final status = championship.status.trim().toLowerCase();
+                  String label;
+                  Color color;
+                  if (status == 'cancelled') {
+                    label = isArabic ? 'ملغاة' : 'Cancelled';
+                    color = VSPColors.error;
+                  } else if (status == 'completed') {
+                    label = isArabic ? 'مكتملة' : 'Completed';
+                    color = VSPColors.textSecondary;
+                  } else if (status == 'ongoing') {
+                    label = isArabic ? 'جارية' : 'Ongoing';
+                    color = VSPColors.accent;
+                  } else if (isFull || status == 'full') {
+                    label = isArabic ? 'مكتمل العدد' : 'Full';
+                    color = VSPColors.warning;
+                  } else {
+                    label = isArabic ? 'مفتوح للتسجيل' : 'Registration open';
+                    color = VSPColors.accent;
+                  }
+
+                  return VSPStatusPill(
+                    label: label,
+                    color: color,
+                    icon: status == 'cancelled'
+                        ? Iconsax.close_circle_copy
+                        : status == 'completed'
+                            ? Iconsax.tick_circle_copy
+                            : status == 'ongoing'
+                                ? Icons.play_circle_outline
+                                : (isFull || status == 'full')
+                                    ? Iconsax.people_copy
+                                    : Icons.edit_outlined,
+                  );
+                },
               ),
             ],
           ),

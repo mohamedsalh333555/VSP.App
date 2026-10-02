@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/services/secure_storage_service.dart';
 import '../widgets/verify_email/otp_box.dart';
 import '../widgets/verify_email/otp_resend_section.dart';
@@ -220,7 +222,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
     return PopScope(
       canPop: false,
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: SafeArea(
           child: SingleChildScrollView(
@@ -281,40 +283,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                 const SizedBox(height: VSPSpacing.xl),
 
                 // ── Verify Button ─────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor:
-                          VSPColors.accent.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                      ),
-                      elevation: 0,
-                    ),
-                    onPressed: (_enteredCode.length == 6 && !_isVerifying)
-                        ? _verify
-                        : null,
-                    child: _isVerifying
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.black,
-                            ),
-                          )
-                        : Text(
-                            isAr ? 'تأكيد الرمز' : 'Verify Code',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                  ),
+                PrimaryButton(
+                  text: isAr ? 'تأكيد الرمز' : 'Verify Code',
+                  isLoading: _isVerifying,
+                  onPressed: (_enteredCode.length == 6 && !_isVerifying)
+                      ? _verify
+                      : null,
                 ),
 
                 const SizedBox(height: VSPSpacing.lg),

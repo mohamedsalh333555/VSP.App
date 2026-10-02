@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -273,7 +274,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.surface,

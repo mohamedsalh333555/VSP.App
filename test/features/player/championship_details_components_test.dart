@@ -150,7 +150,7 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('Manage Roster'), findsOneWidget);
+      expect(find.textContaining('Manage team roster'), findsOneWidget);
 
       await tester.tap(find.byType(ChampionshipBottomBar));
       await tester.pump();
@@ -180,9 +180,9 @@ void main() {
         ),
       );
 
-      expect(find.text('View Tournament Brackets'), findsOneWidget);
+      expect(find.text('View matches & standings'), findsOneWidget);
 
-      await tester.tap(find.text('View Tournament Brackets'));
+      await tester.tap(find.text('View matches & standings'));
       await tester.pump();
       expect(viewed, isTrue);
     });

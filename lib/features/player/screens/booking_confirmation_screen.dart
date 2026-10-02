@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -153,7 +154,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     final maxPlayers =
         widget.stadium.totalFieldCapacity > 1 ? widget.stadium.totalFieldCapacity - 1 : 1;
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,

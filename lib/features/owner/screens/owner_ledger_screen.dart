@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/owner_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/ledger/owner_ledger_balance_cards.dart';
@@ -125,7 +126,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -155,7 +156,11 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
         stream: _transactionsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isAr ? 'جاري تحميل السجل المالي' : 'Loading financial ledger',
+              message: isAr ? 'بنحدّث الرصيد والمعاملات من المصدر المالي.' : 'Refreshing balance and transactions from the financial source.',
+            );
           }
 
           final rawRows = snapshot.data ?? [];
@@ -187,18 +192,13 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
               : 0.0;
 
           if (transactions.isEmpty && (_summary == null || widget.payoutOnly)) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Iconsax.receipt_2_1_copy, size: 36, color: VSPColors.textSecondary),
-                  const SizedBox(height: 12),
-                  Text(
-                    isAr ? 'لا توجد معاملات مالية مسجلة بعد' : 'No financial transactions yet',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
+            return VSPStateView(
+              state: VSPUiState.empty,
+              icon: Iconsax.receipt_2_1_copy,
+              title: isAr ? 'لا توجد معاملات مالية بعد' : 'No financial transactions yet',
+              message: isAr
+                  ? 'ستظهر هنا التحصيلات والسحوبات والتسويات بعد تسجيلها.'
+                  : 'Collections, payouts, and settlements will appear here once recorded.',
             );
           }
 

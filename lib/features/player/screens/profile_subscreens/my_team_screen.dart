@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -176,10 +177,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.uid;
 
-    if (uid == null) return const Scaffold(body: Center(child: Text("Not authenticated")));
+    if (uid == null) return const VSPScaffold(body: Center(child: Text("Not authenticated")));
 
     if (_isLoadingMembers && localTeam == null) {
-      return const Scaffold(
+      return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
       );
@@ -188,7 +189,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     final team = localTeam;
     final isCaptain = _isCaptain(team);
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: _buildAppBar(context, l10n, team),
       body: SingleChildScrollView(

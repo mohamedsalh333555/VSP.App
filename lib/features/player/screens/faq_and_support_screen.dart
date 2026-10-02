@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -42,7 +43,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isOwner = context.select<AuthProvider, bool>((a) => a.isOwner);
 
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,

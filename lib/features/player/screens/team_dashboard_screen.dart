@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
 import 'package:provider/provider.dart';
@@ -62,7 +63,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,

@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
@@ -110,6 +111,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  void openBookings() => _onItemTapped(3);
  void openProfile() => _onItemTapped(4);
  void openInbox() => _onItemTapped(2);
+ void openTournaments() => _onItemTapped(1);
 
  void openLedger() {
    _onItemTapped(0);
@@ -126,7 +128,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
 
  @override
  Widget build(BuildContext context) {
- return Scaffold(
+ return VSPScaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
  body: VSPAmbientBackground(

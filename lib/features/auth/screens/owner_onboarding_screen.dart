@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
+import '../../../core/ui/vsp_ui.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -159,7 +160,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         final shouldSignOut = await OwnerOnboardingExitDialog.show(context);
         if (shouldSignOut == true) await auth.abortRegistration();
       },
-      child: Scaffold(
+      child: VSPScaffold(
         backgroundColor: VSPColors.background,
         body: SafeArea(
           child: SingleChildScrollView(

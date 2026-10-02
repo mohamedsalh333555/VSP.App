@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -30,46 +30,61 @@ class ChampionshipBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
+    return VSPBottomActionBar(
+      padding: const EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.sm,
         VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom + VSPSpacing.md,
+        VSPSpacing.md,
       ),
-      decoration: const BoxDecoration(
-        color: VSPColors.surface,
-        border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-      ),
-      child: (isTeamRegistered && myTeam != null)
-          ? PrimaryButton(
-              text: isArabic
-                  ? 'فريقك مسجّل بالبطولة | إدارة التشكيلة '
-                  : 'Team Registered | Manage Roster ',
+      child: Builder(
+        builder: (context) {
+          final status = championship.status.trim().toLowerCase();
+
+          if (isTeamRegistered && myTeam != null) {
+            return PrimaryButton(
+              text: isArabic ? 'إدارة تشكيلة الفريق' : 'Manage team roster',
               color: VSPColors.accent,
               textColor: Colors.black,
               onPressed: onManageRoster,
-            )
-          : (isFull ||
-                  championship.status == 'ongoing' ||
-                  championship.status == 'completed')
-              ? PrimaryButton(
-                  text: isFull &&
-                          championship.status != 'ongoing' &&
-                          championship.status != 'completed'
-                      ? (isArabic
-                          ? 'مكتمل العدد (مشاهدة القرعة والجدول)'
-                          : 'Fully Booked (View Brackets)')
-                      : l10n.viewBrackets,
-                  onPressed: onViewBrackets,
-                )
-              : PrimaryButton(
-                  text: isArabic ? 'انضمام للبطولة الآن ' : l10n.join,
-                  isLoading: isJoining,
-                  onPressed: isJoining ? null : onJoin,
-                ),
+            );
+          }
+
+          if (status == 'cancelled') {
+            return PrimaryButton(
+              text: isArabic ? 'البطولة ملغاة' : 'Championship cancelled',
+              onPressed: null,
+              color: VSPColors.surfaceAlt,
+              textColor: VSPColors.textMuted,
+            );
+          }
+
+          if (status == 'ongoing' || status == 'completed' || isFull || status == 'full') {
+            return PrimaryButton(
+              text: status == 'completed'
+                  ? (isArabic ? 'عرض البطولة' : 'View championship')
+                  : (isArabic ? 'عرض المباريات والجدول' : 'View matches & standings'),
+              onPressed: onViewBrackets,
+            );
+          }
+
+          if (status != 'open') {
+            return PrimaryButton(
+              text: isArabic ? 'التسجيل مغلق' : 'Registration closed',
+              onPressed: null,
+              color: VSPColors.surfaceAlt,
+              textColor: VSPColors.textMuted,
+            );
+          }
+
+          return PrimaryButton(
+            text: isArabic ? 'سجّل فريقك الآن' : 'Register your team',
+            isLoading: isJoining,
+            onPressed: isJoining ? null : onJoin,
+          );
+        },
+      ),
     );
   }
 }
