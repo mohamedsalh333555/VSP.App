@@ -41,6 +41,50 @@ class MatchRepository {
  return getMatches();
  }
 
+
+ /// Safe public-match detail read. The bookings table remains private; this RPC
+ /// returns only fields required by the public match room.
+ Future<Booking?> getPublicMatchDetails(String bookingId) async {
+   try {
+     final response = await _supabase.rpc(
+       'get_public_match_details',
+       params: {'p_booking_id': bookingId},
+     );
+     if (response is Map) {
+       return Booking.fromFirestore(
+         Map<String, dynamic>.from(response),
+         bookingId,
+       );
+     }
+     return null;
+   } on PostgrestException catch (e) {
+     VSPLogger.w('Public match details RPC failed: \${e.message}');
+     return null;
+   } catch (e, stack) {
+     VSPLogger.e('Error loading public match details', e, stack);
+     return null;
+   }
+ }
+
+ /// Realtime public match stream. The public feed drives updates while the
+ /// RPC supplies the protected participant identifiers needed by the room.
+ Stream<Booking?> streamPublicMatchDetails(String bookingId) async* {
+   final initial = await getPublicMatchDetails(bookingId);
+   if (initial != null) {
+     yield initial;
+   }
+
+   yield* _supabase
+       .from('booking_public_feed')
+       .stream(primaryKey: ['id'])
+       .eq('id', bookingId)
+       .map((rows) => rows.isEmpty ? null : rows.first)
+       .asyncMap((_) => getPublicMatchDetails(bookingId))
+       .handleError((error) {
+         VSPLogger.w('Handled public match details realtime error: \$error');
+       });
+ }
+
  // --- PUBLIC MATCHES (Modern Supabase Integration) ---
 
  Stream<List<Booking>> getPublicMatches() async* {
