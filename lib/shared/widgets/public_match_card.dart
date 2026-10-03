@@ -46,6 +46,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  void _handleShare(Booking booking) {
  SharingService.shareMatch(
  bookingId: booking.id,
+ invite: booking.isOpenJoin,
  teamName: booking.playerTeamName ?? booking.hostName ?? AppLocalizations.of(context)!.vspTeam,
  stadiumName: booking.stadiumName,
  date: '${booking.formattedDate} at ${booking.formattedTimeRange}',
