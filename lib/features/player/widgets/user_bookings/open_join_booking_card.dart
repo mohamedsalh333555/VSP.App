@@ -219,13 +219,13 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
                     decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.11),
+                      color: VSPColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(VSPRadius.full),
-                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.30)),
+                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.65)),
                     ),
                     child: Text(
-                      isArabic ? 'تجميعي' : 'OPEN JOIN',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.w900),
+                      isArabic ? 'تجميعية خاصة' : 'PRIVATE COLLECTIVE',
+                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 10, fontWeight: FontWeight.w900),
                     ),
                   ),
                   const SizedBox(width: VSPSpacing.sm),
@@ -246,6 +246,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               ),
               const SizedBox(height: VSPSpacing.md),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -304,7 +305,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               ),
               const SizedBox(height: VSPSpacing.md),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.sm),
                 decoration: BoxDecoration(
                   color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -342,7 +343,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 borderRadius: BorderRadius.circular(VSPRadius.full),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 7,
+                  minHeight: 6,
                   backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
                   valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
                 ),
@@ -351,6 +352,17 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 const SizedBox(height: VSPSpacing.md),
                 RescheduleActionBanner(booking: booking),
               ],
+              const SizedBox(height: VSPSpacing.sm),
+              Row(
+                children: [
+                  Icon(Iconsax.arrow_right_3_copy, size: 16, color: VSPColors.textSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(
+                    isArabic ? 'اضغط على الكارت لعرض التفاصيل' : 'Tap the card to view details',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
+                  )),
+                ],
+              ),
               const SizedBox(height: VSPSpacing.md),
               if (widget.isHistory || _isEnded || booking.status == BookingStatus.cancelled) ...[
                 Row(
