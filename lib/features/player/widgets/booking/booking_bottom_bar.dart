@@ -93,8 +93,8 @@ class BookingBottomBar extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           isArabic
-                              ? 'بعد التأكيد ستحصل على رابط وكود لإرسالهما لمن تريد'
-                              : 'After confirmation you will get a link and code to send to invited players.',
+                              ? 'بعد دفع قيمة الحجز كاملة أونلاين وتأكيدها ستحصل على رابط وكود لإرسالهما لمن تريد'
+                              : 'After full online payment is confirmed, you will get a link and code to send to invited players.',
                           style: const TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 11,
