@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
 import '../champion_podium_components.dart';
+import '../champion_empty_state.dart';
 
 /// Displayed when a user does not have a home governorate set in their profile.
 class League1v1NoGovernorateState extends StatelessWidget {
@@ -81,42 +82,7 @@ class League1v1NoTournamentState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-              ),
-              child: const Icon(Iconsax.cup_copy, size: 38, color: VSPColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isArabic
-                  ? 'لا توجد بطولة فردية نشطة حالياً في $locationName'
-                  : 'No active 1v1 tournament in $locationName',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              isArabic
-                  ? 'ترقبوا إعلان موعد وتفاصيل بطولة 1vs1 القادمة قريباً!'
-                  : 'Stay tuned for upcoming 1v1 announcements!',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
+    return OneVsOneEmptyState(locationName: locationName);
   }
 }
 
