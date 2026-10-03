@@ -40,7 +40,7 @@ void main() {
  expect(invite, contains('ناقص 3 لاعيبة'));
  expect(invite, contains('50 ج.م'));
  expect(invite, contains('https://maps.google.com/?q=30.0444,31.2357'));
- expect(invite, contains('https://vsp.app/match/bk_test_123'));
+ expect(invite, contains('https://vspapp.online/match/bk_test_123'));
  });
 
  test('Builds formatted English match invite correctly', () {
@@ -61,7 +61,7 @@ void main() {
  expect(invite, contains('Camp Nou Arena'));
  expect(invite, contains('2 more players needed'));
  expect(invite, contains('60 EGP'));
- expect(invite, contains('https://vsp.app/match/bk_eng_456'));
+ expect(invite, contains('https://vspapp.online/match/bk_eng_456'));
  });
  });
 
