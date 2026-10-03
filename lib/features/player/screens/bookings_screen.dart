@@ -12,6 +12,7 @@ import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../widgets/user_bookings/pending_booking_card.dart';
+import '../widgets/user_bookings/open_join_booking_card.dart';
 import '../widgets/user_bookings/player_booking_card.dart';
 import 'player_home_screen.dart';
 
@@ -182,7 +183,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   : VSPSpacing.md,
                             ),
                             child: booking.bookingType == BookingType.openJoin
-                                ? PublicMatchCard(booking: booking)
+                                ? OpenJoinBookingCard(booking: booking, isHistory: false)
                                 : PlayerBookingCard(
                                     booking: booking,
                                     isHistory: false,
@@ -223,7 +224,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: VSPSpacing.md),
                           child: booking.bookingType == BookingType.openJoin
-                              ? PublicMatchCard(booking: booking)
+                              ? OpenJoinBookingCard(booking: booking, isHistory: true)
                               : PlayerBookingCard(
                                   booking: booking,
                                   isHistory: true,
