@@ -124,7 +124,7 @@ class ChampionScreenState extends State<ChampionScreen>
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedTabIndex == 0 ? VSPColors.textPrimary : VSPColors.textSecondary,
+                                        color: _selectedTabIndex == 0 ? Colors.black : VSPColors.textSecondary,
                                         fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
                                         fontSize: 13,
                                       ),
@@ -145,7 +145,7 @@ class ChampionScreenState extends State<ChampionScreen>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 1 ? VSPColors.textPrimary : VSPColors.textSecondary,
+                                    color: _selectedTabIndex == 1 ? Colors.black : VSPColors.textSecondary,
                                     fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.bold,
                                     fontSize: 13,
                                   ),
@@ -161,12 +161,12 @@ class ChampionScreenState extends State<ChampionScreen>
                           child: Center(
                             child: Text(
                               Localizations.localeOf(context).languageCode == 'ar'
-                                  ? 'واحد ضد واحد'
+                                  ? '1 ضد 1'
                                   : '1vs1',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 2 ? VSPColors.textPrimary : VSPColors.textSecondary,
+                                    color: _selectedTabIndex == 2 ? Colors.black : VSPColors.textSecondary,
                                     fontWeight: _selectedTabIndex == 2 ? FontWeight.w900 : FontWeight.bold,
                                     fontSize: 13,
                                   ),
