@@ -12,6 +12,7 @@ import '../../../core/providers/stadium_provider.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
