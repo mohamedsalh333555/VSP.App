@@ -7,8 +7,8 @@ class SharingService {
  static const String _baseUrl = 'https://vsp.app';
 
  /// Generate a link for a specific match/booking
- static String getMatchLink(String bookingId) {
- return '$_baseUrl/match/$bookingId?invite=1';
+ static String getMatchLink(String bookingId, {bool invite = false}) {
+ return '$_baseUrl/match/$bookingId' + (invite ? '?invite=1' : '');
  }
 
  /// Generate a link for a specific team
@@ -20,10 +20,11 @@ class SharingService {
  static Future<void> shareMatch({
  required String bookingId,
  required String teamName,
+ bool invite = false,
  required String stadiumName,
  required String date,
  }) async {
- final link = getMatchLink(bookingId);
+ final link = getMatchLink(bookingId, invite: invite);
  final text = ' انضم لمباراتنا على تطبيق VSP!\n\n'
  ' الملعب: $stadiumName\n'
  ' الفريق: $teamName\n'
