@@ -101,7 +101,7 @@ class ChampionScreenState extends State<ChampionScreen>
                       child: Container(
                         height: 42,
                         decoration: BoxDecoration(
-                          color: VSPColors.accent,
+                          color: VSPColors.background,
                           borderRadius: BorderRadius.circular(VSPRadius.full),
                         ),
                       ),
@@ -125,7 +125,7 @@ class ChampionScreenState extends State<ChampionScreen>
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                         color: _selectedTabIndex == 0 ? VSPColors.textPrimary : VSPColors.textSecondary,
-                                        fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
+                                        fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.w600,
                                         fontSize: 13,
                                       ),
                                 );
@@ -146,7 +146,7 @@ class ChampionScreenState extends State<ChampionScreen>
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     color: _selectedTabIndex == 1 ? VSPColors.textPrimary : VSPColors.textSecondary,
-                                    fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.bold,
+                                    fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.w600,
                                     fontSize: 13,
                                   ),
                             ),
@@ -161,13 +161,13 @@ class ChampionScreenState extends State<ChampionScreen>
                           child: Center(
                             child: Text(
                               Localizations.localeOf(context).languageCode == 'ar'
-                                  ? 'واحد ضد واحد'
-                                  : '1vs1',
+                                  ? '1 ضد 1'
+                                  : '1v1',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     color: _selectedTabIndex == 2 ? VSPColors.textPrimary : VSPColors.textSecondary,
-                                    fontWeight: _selectedTabIndex == 2 ? FontWeight.w900 : FontWeight.bold,
+                                    fontWeight: _selectedTabIndex == 2 ? FontWeight.w900 : FontWeight.w600,
                                     fontSize: 13,
                                   ),
                             ),
