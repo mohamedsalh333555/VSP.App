@@ -498,7 +498,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _booking!.isChallenge
      ? (isAr ? 'مباراة تحدي في ${_stadium?.name ?? "الملعب"}' : 'Challenge Match at ${_stadium?.name ?? "Stadium"}')
      : (_booking!.isOpenJoin
-         ? AppLocalizations.of(context)!.(isAr ? 'تجميعية في ${_stadium?.name ?? "الملعب"}' : 'Collective match at ${_stadium?.name ?? "Stadium"}')
+         ? (isAr ? 'تجميعية في \${_stadium?.name ?? "الملعب"}' : 'Collective match at \${_stadium?.name ?? "Stadium"}')
          : (isAr ? 'حجز ملعب ${_stadium?.name ?? ""}' : 'Pitch Booking at ${_stadium?.name ?? ""}')),
  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
  fontWeight: FontWeight.bold,
