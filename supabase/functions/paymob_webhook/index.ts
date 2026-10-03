@@ -242,12 +242,15 @@ serve(async (req: Request) => {
     ) => {
       const { data: order, error: orderError } = await supabase
         .from(orderTable)
-        .select("amount, payment_status")
+        .select("amount, payment_status, paymob_order_id")
         .eq("order_reference", reference)
         .maybeSingle();
 
       if (orderError || !order) {
         return { ok: false, reason: "payment_order_not_found" };
+      }
+      if (order.paymob_order_id && String(order.paymob_order_id) !== String(orderId)) {
+        return { ok: false, reason: "paymob_order_correlation_mismatch" };
       }
       if (order.payment_status === "paid") {
         return { ok: true, alreadyProcessed: true };
@@ -297,6 +300,20 @@ serve(async (req: Request) => {
     // Team league payments: verify the server-created order, then atomically mark the team paid.
     if (specialReference.startsWith("LEAGUE_")) {
       if (isSuccess) {
+        const { data: leaguePayment, error: leaguePaymentError } = await supabase
+          .from("team_league_payments")
+          .select("paymob_order_id, payment_status")
+          .eq("order_reference", specialReference)
+          .maybeSingle();
+
+        if (leaguePaymentError || !leaguePayment) {
+          return new Response(JSON.stringify({ error: "Team league payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+        }
+        if (leaguePayment.paymob_order_id && String(leaguePayment.paymob_order_id) !== String(orderId)) {
+          console.error("Rejected league webhook Paymob order correlation mismatch:", specialReference);
+          return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
+        }
+
         const sourceType = String(obj.source_data?.sub_type || obj.source_data?.type || "").toLowerCase();
         const { data: leagueResult, error: leagueError } = await supabase.rpc("confirm_team_league_payment", {
           p_order_reference: specialReference,
@@ -573,7 +590,7 @@ serve(async (req: Request) => {
     // Fetch existing booking to verify expected amount
     const { data: existingBooking, error: fetchError } = await supabase
       .from("bookings")
-      .select("id, status, total_price, deposit_amount, needs_deposit, owner_id, user_id, created_by_user_id, stadium_name")
+      .select("id, status, total_price, deposit_amount, needs_deposit, owner_id, user_id, created_by_user_id, stadium_name, paymob_order_id")
       .eq("id", bookingId)
       .maybeSingle();
 
@@ -581,6 +598,14 @@ serve(async (req: Request) => {
       console.error(`❌ Booking ${bookingId} not found in database.`);
       return new Response(JSON.stringify({ error: "Booking not found" }), {
         status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (existingBooking.paymob_order_id && String(existingBooking.paymob_order_id) !== String(orderId)) {
+      console.error("Rejected booking webhook Paymob order correlation mismatch:", bookingId);
+      return new Response(JSON.stringify({ error: "Invalid payment order correlation" }), {
+        status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -700,7 +725,8 @@ serve(async (req: Request) => {
               cancellation_reason: "انتهت مهلة الدفع ولم يكتمل الحجز، والاسترداد يحتاج معالجة.",
               updated_at: new Date().toISOString(),
             })
-            .eq("id", bookingId);
+            .eq("id", bookingId)
+        .eq("status", "pending");
         }
 
         await supabase.from("webhook_logs").insert({
