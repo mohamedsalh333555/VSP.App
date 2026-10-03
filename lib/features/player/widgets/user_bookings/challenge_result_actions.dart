@@ -47,9 +47,7 @@ class ChallengeResultActions extends StatelessWidget {
         return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? VSPColors.warning : VSPColors.error);
       }
       return buildStatusBadge(l10n.completed, VSPColors.textSecondary);
-    } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
-      return buildStatusBadge(l10n.disputed, VSPColors.warning);
-    } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+     else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       return buildStatusBadge(l10n.waitingOpponent, VSPColors.warning);
     } else if (booking.endTime.isBefore(DateTime.now())) {
       return buildStatusBadge(l10n.submitResult, VSPColors.warning);
