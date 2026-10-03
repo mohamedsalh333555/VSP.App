@@ -925,7 +925,7 @@ serve(async (req: Request) => {
         .eq("status", "pending");
     }
 
-    return new Response(JSON.stringify({ status: "processed", success: isSuccess }),
+    return new Response(JSON.stringify({ status: "processed", success: isSuccess }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
