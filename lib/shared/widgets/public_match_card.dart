@@ -77,27 +77,58 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  }
  }
 
- void _handleLeave(BuildContext context, String? userId) async {
- if (userId == null) return;
- setState(() => _isLoading = true);
- try {
- final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
- if (!context.mounted) return;
- if (success) {
- VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
- } else {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
- }
- } catch (e) {
- if (context.mounted) {
- VSPFeedback.showError(context, e.toString());
- }
- } finally {
- if (mounted) {
- setState(() => _isLoading = false);
- }
- }
- }
+  Future<void> _handleLeave(BuildContext context, String? userId) async {
+  if (userId == null || _isLoading) return;
+
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  final shouldLeave = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(
+        isArabic ? 'مغادرة المباراة؟' : 'Leave match?',
+        style: const TextStyle(fontWeight: FontWeight.w800),
+      ),
+      content: Text(
+        isArabic
+            ? 'هل أنت متأكد أنك تريد مغادرة المباراة؟ سيتم إتاحة مكانك للاعبين الآخرين.'
+            : 'Are you sure you want to leave this match? Your place will become available to other players.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: VSPColors.error),
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(isArabic ? 'تأكيد المغادرة' : 'Confirm leave'),
+        ),
+      ],
+    ),
+  );
+
+  if (shouldLeave != true || !mounted) return;
+
+  setState(() => _isLoading = true);
+  try {
+    final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
+    if (!context.mounted) return;
+    if (success) {
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
+    } else {
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+    }
+  } catch (e) {
+    if (context.mounted) {
+      VSPFeedback.showError(context, e.toString());
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+  }
 
  void _manageParticipants(BuildContext context) {
     ManageParticipantsModal.show(context, booking: widget.booking);

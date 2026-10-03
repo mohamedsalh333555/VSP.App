@@ -7,7 +7,7 @@ class VspNavItem {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final String label;
-  final bool hasNotification; // نقطة الإشعار
+  final bool hasNotification;
 
   VspNavItem({
     required this.activeIcon,
@@ -32,19 +32,18 @@ class VspBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useBlur = VSPGlass.shouldUseBlur;
+
     final navContent = Container(
       decoration: BoxDecoration(
-        color: useBlur
-            ? VSPColors.glassSurface.withValues(alpha: 0.9)
-            : VSPColors.surface.withValues(alpha: 0.96),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(VSPRadius.full),
         border: Border.all(
-          color: VSPColors.white.withValues(alpha: 0.08),
+          color: Colors.black.withValues(alpha: 0.05),
           width: 1,
         ),
         boxShadow: VSPShadow.mediumList,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       child: Row(
         children: items.asMap().entries.map((entry) {
           final index = entry.key;
@@ -52,88 +51,76 @@ class VspBottomNavBar extends StatelessWidget {
           final isSelected = index == selectedIndex;
 
           return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onItemTapped(index);
-              },
-              behavior: HitTestBehavior.opaque,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0,
-                    vertical: 8.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(VSPRadius.full),
-                  ),
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOutCubic,
-                    offset: isSelected ? const Offset(0, -0.12) : Offset.zero,
-                    child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Icon(
-                            isSelected ? item.activeIcon : item.inactiveIcon,
-                            color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                            size: 22,
-                          ),
-                          if (item.hasNotification && !isSelected)
-                            Positioned(
-                              top: -3,
-                              right: -3,
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.elasticOut,
-                                builder: (ctx, val, _) => Transform.scale(
-                                  scale: val,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: VSPColors.error,
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: VSPColors.error.withValues(alpha: 0.6),
-                                          blurRadius: 4,
-                                          spreadRadius: 1,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              label: item.label,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onItemTapped(index);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  height: 52,
+                  child: Center(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isSelected ? item.activeIcon : item.inactiveIcon,
+                              color: isSelected
+                                  ? VSPColors.accent
+                                  : Colors.black.withValues(alpha: 0.48),
+                              size: 22,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item.label,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? VSPColors.accent
+                                    : Colors.black.withValues(alpha: 0.58),
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                fontSize: 11,
+                                height: 1.1,
+                                letterSpacing: 0.1,
                               ),
                             ),
-                        ],
-                      ),
-                      if (isSelected) ...[
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            item.label,
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: VSPColors.accent,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12,
-                              letterSpacing: 0.2,
+                          ],
+                        ),
+                        if (item.hasNotification && !isSelected)
+                          Positioned(
+                            top: 0,
+                            right: -2,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: VSPColors.error,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: VSPColors.error.withValues(alpha: 0.35),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                       ],
-                    ],
-                  ),
+                    ),
                   ),
                 ),
               ),
@@ -143,9 +130,20 @@ class VspBottomNavBar extends StatelessWidget {
       ),
     );
 
+    final navCard = ClipRRect(
+      borderRadius: BorderRadius.circular(VSPRadius.full),
+      child: useBlur
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: navContent,
+            )
+          : navContent,
+    );
+
     return Container(
       color: Colors.transparent,
       child: SafeArea(
+        top: false,
         bottom: true,
         child: Container(
           margin: const EdgeInsets.fromLTRB(
@@ -155,15 +153,7 @@ class VspBottomNavBar extends StatelessWidget {
             VSPBottomNavBarMetrics.bottomMargin,
           ),
           height: VSPBottomNavBarMetrics.height,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(VSPRadius.full),
-            child: useBlur
-                ? BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: navContent,
-                  )
-                : navContent,
-          ),
+          child: navCard,
         ),
       ),
     );
