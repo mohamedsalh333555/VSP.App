@@ -38,7 +38,7 @@ class _CollectiveMatchInviteRouteState extends State<CollectiveMatchInviteRoute>
 
     if (!mounted) return;
     if (booking == null || !booking.isOpenJoin) {
-      context.go('/match/' + widget.bookingId);
+      context.go('/match/${widget.bookingId}');
       return;
     }
 

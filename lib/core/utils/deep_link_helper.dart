@@ -13,7 +13,7 @@ class ParsedDeepLink {
       return '/$type';
     }
     final invite = queryParams?['invite'] == '1' && type == 'match';
-    return '/$type/$id' + (invite ? '?invite=1' : '');
+    return '/$type/$id${invite ? '?invite=1' : ''}';
   }
 }
 

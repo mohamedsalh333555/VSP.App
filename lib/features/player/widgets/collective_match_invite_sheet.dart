@@ -172,7 +172,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
             child: Row(children: [
               const Icon(Iconsax.profile_2user_copy, color: VSPColors.accent), const SizedBox(width: 10),
               Expanded(child: Text(ar ? 'المنضمون' : 'Joined players', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
-              Text(booking.currentPlayers.toString() + ' / ' + booking.totalFieldCapacity.toString(), style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900)),
+              Text('${booking.currentPlayers} / ${booking.totalFieldCapacity}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900)),
             ]),
           ),
           ...booking.joinedUserIds.map((id) {
