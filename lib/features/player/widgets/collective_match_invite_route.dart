@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -37,7 +38,7 @@ class _CollectiveMatchInviteRouteState extends State<CollectiveMatchInviteRoute>
 
     if (!mounted) return;
     if (booking == null || !booking.isOpenJoin) {
-      Navigator.of(context).pushReplacementNamed('/match/' + widget.bookingId);
+      context.go('/match/' + widget.bookingId);
       return;
     }
 
