@@ -481,7 +481,7 @@ export async function executeGuardedTool(
       if (stadiumIds.length > 0) {
         const { data: bList } = await supabase
           .from("bookings")
-          .select("id, stadium_id, stadium_name, start_time, end_time, status, total_price, player_name, player_phone")
+          .select("id, stadium_id, stadium_name, start_time, end_time, status, total_price, player_name")
           .in("stadium_id", stadiumIds)
           .order("start_time", { ascending: false })
           .limit(10);
