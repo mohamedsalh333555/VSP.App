@@ -93,6 +93,19 @@ class VSPRadius {
   static const double sheet = bottomSheet;
 }
 
+/// Canonical geometry for the shared empty/no-content component.
+class VSPEmptyStateMetrics {
+  static const double iconContainerSize = 76.0;
+  static const double iconContainerRadius = 22.0;
+  static const double iconSize = 38.0;
+  static const double titleGap = 18.0;
+  static const double descriptionGap = 8.0;
+  static const double contentHorizontalPadding = 28.0;
+  static const double contentVerticalPadding = 32.0;
+  static const double textHorizontalPadding = 8.0;
+  static const double actionGap = VSPSpacing.lg;
+}
+
 class VSPSize {
   /// Standard Unified Height (56.0px) for All Single-Line Input Fields
   static const double inputHeight = 56.0;
