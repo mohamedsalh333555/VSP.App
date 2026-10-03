@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/repositories/match_repository.dart';
+import '../../../core/repositories/booking_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/services/sharing_service.dart';
@@ -206,6 +207,131 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     }
   }
 
+  Future<void> _removeParticipant(String participantId) async {
+    final booking = _booking;
+    if (booking == null) return;
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(ar ? 'إزالة اللاعب؟' : 'Remove player?'),
+        content: Text(
+          ar
+              ? 'سيتم إخراج هذا اللاعب من التجميعية وسيصبح مكانه متاحًا.'
+              : 'This player will be removed from the collective match and the place will become available.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(ar ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(ar ? 'إزالة' : 'Remove'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final ok = await MatchRepository().removePrivateCollectiveParticipant(
+        bookingId: booking.id,
+        participantId: participantId,
+      );
+      if (!ok && mounted) {
+        VSPFeedback.showError(context, ar ? 'تعذر إزالة اللاعب.' : 'Could not remove the player.');
+      }
+      await _load();
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e.toString());
+    }
+  }
+
+  Future<void> _cancelBooking() async {
+    final booking = _booking;
+    if (booking == null) return;
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(ar ? 'إلغاء التجميعية؟' : 'Cancel collective match?'),
+        content: Text(
+          ar
+              ? 'سيتم إلغاء الحجز وإيقاف رابط الدعوة. أي مبلغ مستحق للاسترداد سيُعالج حسب طريقة الدفع.'
+              : 'The booking will be cancelled and the invite will be disabled. Any eligible refund will be processed according to the payment method.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(ar ? 'الاحتفاظ بالحجز' : 'Keep booking'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: VSPColors.error),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(ar ? 'إلغاء الحجز' : 'Cancel booking'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final ok = await SupabaseBookingRepository().cancelBooking(booking.id);
+      if (!mounted) return;
+      if (ok) {
+        VSPFeedback.showSuccess(context, ar ? 'تم إلغاء التجميعية.' : 'Collective match cancelled.');
+        Navigator.pop(context);
+      } else {
+        VSPFeedback.showError(context, ar ? 'تعذر إلغاء الحجز.' : 'Could not cancel the booking.');
+      }
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e.toString());
+    }
+  }
+
+  Future<void> _requestReschedule() async {
+    final booking = _booking;
+    if (booking == null) return;
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final now = DateTime.now();
+    final initialDate = booking.startTime.isBefore(now) ? now : booking.startTime;
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 90)),
+    );
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(booking.startTime),
+    );
+    if (pickedTime == null || !mounted) return;
+    final newStart = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    final newEnd = newStart.add(booking.endTime.difference(booking.startTime));
+    try {
+      await SupabaseBookingRepository().requestReschedule(
+        bookingId: booking.id,
+        newStartTime: newStart,
+        newEndTime: newEnd,
+      );
+      await _load();
+      if (mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          ar ? 'تم إرسال طلب تعديل الموعد.' : 'The reschedule request was submitted.',
+        );
+      }
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e.toString());
+    }
+  }
+
   Future<void> _changeManualPlayers(int next) async {
     final booking = _booking;
     if (booking == null || _updatingManualPlayers) return;
@@ -341,7 +467,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
                 ...booking.joinedUserIds.map((id) {
                   final user = _users[id];
                   final name = user?.name?.isNotEmpty == true ? user!.name! : (id == booking.createdByUserId ? (ar ? 'المنشئ' : 'Host') : (ar ? 'لاعب' : 'Player'));
-                  return ListTile(contentPadding: EdgeInsets.zero, leading: CircleAvatar(backgroundColor: VSPColors.surface, backgroundImage: user?.profileImageUrl?.isNotEmpty == true ? CachedNetworkImageProvider(user!.profileImageUrl!) : null, child: user?.profileImageUrl?.isNotEmpty == true ? null : const Icon(Iconsax.user_copy, color: VSPColors.textSecondary)), title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)), subtitle: id == booking.createdByUserId ? Text(ar ? 'المنشئ' : 'Host', style: const TextStyle(color: VSPColors.accent, fontSize: 11)) : null);
+                  return ListTile(contentPadding: EdgeInsets.zero, leading: CircleAvatar(backgroundColor: VSPColors.surface, backgroundImage: user?.profileImageUrl?.isNotEmpty == true ? CachedNetworkImageProvider(user!.profileImageUrl!) : null, child: user?.profileImageUrl?.isNotEmpty == true ? null : const Icon(Iconsax.user_copy, color: VSPColors.textSecondary)), title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)), subtitle: id == booking.createdByUserId ? Text(ar ? 'المنشئ' : 'Host', style: const TextStyle(color: VSPColors.accent, fontSize: 11)) : null, trailing: isHost && id != booking.createdByUserId ? IconButton(icon: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 18), onPressed: () => _removeParticipant(id)) : null);
                 }),
                 const SizedBox(height: 8),
                 Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.divider)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -370,6 +496,34 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
               ],
             ),
           ),
+          if (isHost && !cancelled && !ended) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _requestReschedule,
+                      icon: const Icon(Iconsax.calendar_edit_copy, size: 18),
+                      label: Text(ar ? 'تعديل الموعد' : 'Change time'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _cancelBooking,
+                      icon: const Icon(Iconsax.trash_copy, size: 18),
+                      label: Text(ar ? 'إلغاء الحجز' : 'Cancel booking'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: VSPColors.error,
+                        side: BorderSide(color: VSPColors.error.withValues(alpha: .5)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Padding(
             padding: EdgeInsets.fromLTRB(20, 10, 20, MediaQuery.paddingOf(context).bottom + 12),
             child: isHost
