@@ -603,6 +603,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  maxPlayers: _booking!.maxPlayers,
  totalPrice: _booking!.totalPrice,
  hostName: _booking!.hostName,
+ isCollective: _booking!.isOpenJoin,
  isArabic: isAr,
  );
  await VSPMatchInviteFormatter.shareToWhatsApp(
