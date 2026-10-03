@@ -182,34 +182,38 @@ class ChampionScreenState extends State<ChampionScreen>
 
             const SizedBox(height: VSPSpacing.md),
 
-            // Filters Row - 2 Symmetrical Wide Dropdowns
-            Container(
+            // 1v1 only needs governorate; sport does not apply.
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  // Dropdown 1: Governorates (with 'All' / 'كل المحافظات' at start)
-                  Expanded(
-                    child: _buildFunctionalDropdown(
+              child: _selectedTabIndex == 2
+                  ? _buildFunctionalDropdown(
                       value: _selectedLocation,
                       items: ['All', ...EgyptGovernorates.allGovernorates],
                       onChanged: (val) => setState(() => _selectedLocation = val!),
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: _buildFunctionalDropdown(
+                            value: _selectedLocation,
+                            items: ['All', ...EgyptGovernorates.allGovernorates],
+                            onChanged: (val) => setState(() => _selectedLocation = val!),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildFunctionalDropdown(
+                            value: _selectedSport,
+                            items: ['All', ...VSPConstants.sports],
+                            onChanged: (val) => setState(() => _selectedSport = val!),
+                            isSport: true,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 10), 
-                  // Dropdown 2: Team Sports
-                  Expanded(
-                    child: _buildFunctionalDropdown(
-                      value: _selectedSport,
-                      items: ['All', ...VSPConstants.sports],
-                      onChanged: (val) => setState(() => _selectedSport = val!),
-                      isSport: true,
-                    ),
-                  ),
-                ],
-              ),
             ),
 
-            const SizedBox(height: VSPSpacing.lg),
+            const SizedBox(height: VSPSpacing.md),
 
             // Tab Views with smooth swipe gestures
             Expanded(
