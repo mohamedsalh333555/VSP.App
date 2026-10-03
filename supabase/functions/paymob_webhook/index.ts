@@ -921,10 +921,11 @@ serve(async (req: Request) => {
           payment_status: "failed",
           updated_at: new Date().toISOString(),
         })
-        .eq("id", bookingId);
+        .eq("id", bookingId)
+        .eq("status", "pending");
     }
 
-    return new Response(JSON.stringify({ status: "processed", success: isSuccess }), {
+    return new Response(JSON.stringify({ status: "processed", success: isSuccess }),
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
