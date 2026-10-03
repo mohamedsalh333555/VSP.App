@@ -268,6 +268,7 @@ class LeagueRepository {
             .from('vsp_1v1_tournament_players')
             .select('*')
             .eq('tournament_id', tournament['id'])
+            .eq('payment_status', 'paid')
             .order('total_points', ascending: false);
 
         final rawList = response as List<dynamic>;
