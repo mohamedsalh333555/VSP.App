@@ -1,5 +1,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
+// ignore_for_file: unnecessary_brace_in_string_interps
+
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -422,7 +424,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         text: l10n.leave,
                         color: VSPColors.error.withValues(alpha: 0.12),
                         textColor: VSPColors.error,
-                        onPressed: userId == null || _isProcessing ? null : () => _leaveMatch(userId),
+                        onPressed: _isProcessing ? null : () => _leaveMatch(userId!),
                       ),
                     ),
                   ],
@@ -435,7 +437,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                         text: isArabic ? 'إلغاء الطلب' : 'Cancel request',
                         color: VSPColors.error.withValues(alpha: 0.12),
                         textColor: VSPColors.error,
-                        onPressed: userId == null || _isProcessing ? null : () => _cancelJoinRequest(userId),
+                        onPressed: _isProcessing ? null : () => _cancelJoinRequest(userId!),
                       ),
                     ),
                     const SizedBox(width: VSPSpacing.sm),
