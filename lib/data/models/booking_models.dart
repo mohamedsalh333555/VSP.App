@@ -66,6 +66,7 @@ class Booking {
  final int currentPlayers;
  final int playersPerTeam;
  final int totalFieldCapacity;
+ final int manualPlayerCount;
  final List<String> joinedUserIds;
  final List<String> pendingUserIds;
 
@@ -160,6 +161,7 @@ class Booking {
  this.currentPlayers = 1,
  this.playersPerTeam = 5,
  this.totalFieldCapacity = 10,
+ this.manualPlayerCount = 0,
  this.joinedUserIds = const [],
  this.pendingUserIds = const [],
  this.isPaid = false,
@@ -239,6 +241,7 @@ class Booking {
  currentPlayers: draft.currentPlayers,
  playersPerTeam: draft.playersPerTeam,
  totalFieldCapacity: draft.totalFieldCapacity,
+ manualPlayerCount: 0,
  joinedUserIds: [userId],
  playerPhone: draft.playerPhone,
  notes: draft.notes,
@@ -291,6 +294,7 @@ class Booking {
  int? currentPlayers,
  int? playersPerTeam,
  int? totalFieldCapacity,
+ int? manualPlayerCount,
  List<String>? joinedUserIds,
  bool? isPaid,
  String? paymentStatus,
@@ -340,6 +344,7 @@ class Booking {
  currentPlayers: currentPlayers ?? this.currentPlayers,
  playersPerTeam: playersPerTeam ?? this.playersPerTeam,
  totalFieldCapacity: totalFieldCapacity ?? this.totalFieldCapacity,
+ manualPlayerCount: manualPlayerCount ?? this.manualPlayerCount,
  joinedUserIds: joinedUserIds ?? this.joinedUserIds,
  isPaid: isPaid ?? this.isPaid,
  paymentStatus: paymentStatus ?? this.paymentStatus,

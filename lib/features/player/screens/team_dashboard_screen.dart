@@ -11,12 +11,11 @@ import '../../../core/repositories/match_repository.dart';
 import '../../../data/models.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/sharing_service.dart';
-import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
-import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/team_card_hero.dart';
 import '../../../core/repositories/league/team_league_repository.dart';
 import '../widgets/league/team_league_tab.dart';
+import '../widgets/collective_match_invite_sheet.dart';
 import 'player_home_screen.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
@@ -29,19 +28,20 @@ class TeamDashboardScreen extends StatefulWidget {
 class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   final ScrollController _scrollController = ScrollController();
-  late final Stream<List<Booking>> _matchesStream;
+  final TextEditingController _collectiveCodeController = TextEditingController();
+  bool _resolvingCollectiveInvite = false;
   int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
 
   @override
   void initState() {
     super.initState();
-    _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
     _fetchUserTeam();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _collectiveCodeController.dispose();
     super.dispose();
   }
 
@@ -209,83 +209,117 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   }
 
   Widget _buildGatheringTab() {
-    return StreamBuilder<List<Booking>>(
-      stream: _matchesStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: const TextStyle(color: VSPColors.error),
-            ),
-          );
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
-            itemCount: 5,
-            itemBuilder: (context, index) => const CardSkeleton(),
-          );
-        }
-
-        final bookings = snapshot.data ?? [];
-
-        if (bookings.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Iconsax.cup_copy,
-                  color: VSPColors.textPrimary.withValues(alpha: 0.1),
-                  size: 80,
-                ),
-                const SizedBox(height: VSPSpacing.md),
-                Text(
-                  AppLocalizations.of(context)!.noMatchesAvailable,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    playerHomeScreenKey.currentState?.switchToTab(0);
-                  },
-                  child: Text(
-                    AppLocalizations.of(context)!.hostOne,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.accent,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                      decorationColor: VSPColors.accent,
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return ListView(
+      padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.lg),
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
+          padding: const EdgeInsets.all(VSPSpacing.lg),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
+            border: Border.all(color: VSPColors.divider),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    ),
+                    child: const Icon(Iconsax.people_copy, color: VSPColors.accent),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      isArabic ? 'التجميعية الخاصة' : 'Private Collective Match',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 17),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-              child: PublicMatchCard(
-                booking: bookings[index],
-                highlighted:
-                    _userTeam != null &&
-                    bookings[index].bookingType == BookingType.team &&
-                    bookings[index].playerTeamId != null,
+                ],
               ),
-            );
-          },
-        );
-      },
+              const SizedBox(height: 12),
+              Text(
+                isArabic
+                    ? 'التجميعية لا تظهر بشكل عام. افتح دعوة وصلتك من خلال الرابط أو استخدم كود الدعوة لعرض تفاصيل المباراة والانضمام.'
+                    : 'Collective matches are private. Open a received invitation by link or use its invite code to view the match and join.',
+                style: const TextStyle(color: VSPColors.textSecondary, height: 1.5, fontSize: 12),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                isArabic ? 'كود الدعوة' : 'Invite code',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _collectiveCodeController,
+                textCapitalization: TextCapitalization.characters,
+                textInputAction: TextInputAction.done,
+                maxLength: 10,
+                onSubmitted: (_) => _openCollectiveByCode(),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: isArabic ? 'مثال: 37D4B48CD9' : 'e.g. 37D4B48CD9',
+                  prefixIcon: const Icon(Iconsax.key_copy, color: VSPColors.textSecondary),
+                  filled: true,
+                  fillColor: VSPColors.surfaceAlt,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: const BorderSide(color: VSPColors.divider)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: const BorderSide(color: VSPColors.divider)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _resolvingCollectiveInvite ? null : _openCollectiveByCode,
+                  icon: _resolvingCollectiveInvite
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Iconsax.search_normal_1_copy, size: 18),
+                  label: Text(isArabic ? 'فتح التجميعية' : 'Open collective match'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
+  Future<void> _openCollectiveByCode() async {
+    final code = _collectiveCodeController.text.trim().toUpperCase();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    if (code.isEmpty) {
+      VSPFeedback.showInfo(context, isArabic ? 'اكتب كود الدعوة أولاً.' : 'Enter the invite code first.');
+      return;
+    }
+    if (_resolvingCollectiveInvite) return;
+    setState(() => _resolvingCollectiveInvite = true);
+    try {
+      final data = await MatchRepository().getPrivateCollectiveInviteByCode(code);
+      if (!mounted) return;
+      if (data == null) {
+        VSPFeedback.showError(context, isArabic ? 'كود الدعوة غير صحيح أو لم يعد متاحًا.' : 'The invite code is invalid or no longer available.');
+        return;
+      }
+      await CollectiveMatchInviteSheet.showInviteData(context, data);
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _resolvingCollectiveInvite = false);
+    }
+  }
   void _showTeamCard(BuildContext context, Team team) {
     VSPFeedback.triggerSuccess();
     showDialog(

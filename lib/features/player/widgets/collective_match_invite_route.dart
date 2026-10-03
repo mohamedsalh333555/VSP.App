@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../data/models.dart';
 import 'collective_match_invite_sheet.dart';
 
 class CollectiveMatchInviteRoute extends StatefulWidget {
-  final String bookingId;
-  const CollectiveMatchInviteRoute({super.key, required this.bookingId});
+  final String inviteToken;
+  const CollectiveMatchInviteRoute({super.key, required this.inviteToken});
 
   @override
   State<CollectiveMatchInviteRoute> createState() => _CollectiveMatchInviteRouteState();
@@ -27,23 +26,21 @@ class _CollectiveMatchInviteRouteState extends State<CollectiveMatchInviteRoute>
   }
 
   Future<void> _open() async {
-    if (!mounted) return;
     final auth = context.read<AuthProvider>();
     if (!auth.isAuthenticated || auth.userModel == null) return;
-
-    Booking? booking;
     try {
-      booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
-    } catch (_) {}
-
-    if (!mounted) return;
-    if (booking == null || !booking.isOpenJoin) {
-      context.go('/match/${widget.bookingId}');
-      return;
+      final data = await MatchRepository().getPrivateCollectiveInviteDetails(widget.inviteToken);
+      if (!mounted) return;
+      if (data == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الدعوة غير متاحة أو انتهت.')));
+        context.go('/player');
+        return;
+      }
+      await CollectiveMatchInviteSheet.showInviteData(context, data);
+      if (mounted) context.go('/player');
+    } catch (_) {
+      if (mounted) context.go('/player');
     }
-
-    await CollectiveMatchInviteSheet.show(context, bookingId: widget.bookingId, initialBooking: booking);
-    if (mounted) Navigator.of(context).pop();
   }
 
   @override

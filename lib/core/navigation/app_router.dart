@@ -139,10 +139,14 @@ class AppRouter {
  path: '/match/:bookingId',
  builder: (context, state) {
  final bookingId = state.pathParameters['bookingId'] ?? '';
- final isInvite = state.uri.queryParameters['invite'] == '1';
- return isInvite
-     ? CollectiveMatchInviteRoute(bookingId: bookingId)
-     : MatchDetailsScreen(bookingId: bookingId);
+ return MatchDetailsScreen(bookingId: bookingId);
+ },
+ ),
+ GoRoute(
+ path: '/collective/:inviteToken',
+ builder: (context, state) {
+ final inviteToken = state.pathParameters['inviteToken'] ?? '';
+ return CollectiveMatchInviteRoute(inviteToken: inviteToken);
  },
  ),
  GoRoute(

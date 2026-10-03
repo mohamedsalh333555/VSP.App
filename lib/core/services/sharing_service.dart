@@ -11,6 +11,32 @@ class SharingService {
  return '$_baseUrl/match/$bookingId${invite ? '?invite=1' : ''}';
  }
 
+
+ /// Canonical private collective-match invite link.
+ static String getCollectiveInviteLink(String inviteToken) {
+ return '$_baseUrl/collective/$inviteToken';
+ }
+
+ static Future<void> shareCollectiveInvite({
+ required String inviteToken,
+ required String inviteCode,
+ required String stadiumName,
+ required String date,
+ required String hostName,
+ }) async {
+ final link = getCollectiveInviteLink(inviteToken);
+ final text = '🏟️ VSP - مباراة تجميعية خاصة\n\n'
+     'الملعب: $stadiumName\n'
+     'الموعد: $date\n'
+     'المنشئ: $hostName\n\n'
+     'انضم من خلال الرابط:\n$link\n\n'
+     'أو استخدم كود الدعوة: $inviteCode';
+
+ await SharePlus.instance.share(ShareParams(
+ text: text,
+ subject: 'دعوة مباراة تجميعية على VSP',
+ ));
+ }
  /// Generate a link for a specific team
  static String getTeamLink(String teamId) {
  return '$_baseUrl/team/$teamId';

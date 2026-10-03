@@ -72,7 +72,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     if (widget.initialSelectedSlots != null) {
       _selectedTimeSlots.addAll(widget.initialSelectedSlots!);
     }
-    _isPrivate = !_isOpenJoin;
+    _isPrivate = true;
     _fetchUserTeam();
   }
 
@@ -205,8 +205,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       ),
       bottomNavigationBar: BookingBottomBar(
         isOpenJoin: _isOpenJoin,
-        isPrivate: _isPrivate,
-        onPrivateChanged: (val) => setState(() => _isPrivate = val),
+        isPrivate: _isOpenJoin ? true : _isPrivate,
+        onPrivateChanged: (_) {},
         initialPlayersCount: _initialPlayersCount,
         maxPlayersCount: maxPlayers,
         onPlayersCountChanged: (count) => setState(() => _initialPlayersCount = count),

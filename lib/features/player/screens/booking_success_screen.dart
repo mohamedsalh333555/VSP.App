@@ -8,6 +8,9 @@ import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
+import '../../../core/repositories/match_repository.dart';
+import '../../../core/services/sharing_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 import 'chat_screen.dart';
 import 'player_home_screen.dart';
@@ -392,6 +395,25 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
  TextButton.icon(
    onPressed: () async {
+     if (widget.booking.isOpenJoin) {
+       final credentials = await MatchRepository().getCollectiveInviteCredentials(widget.booking.id);
+       if (!context.mounted) return;
+       final token = credentials?['invite_token']?.toString();
+       final code = credentials?['invite_code']?.toString();
+       if (token != null && token.isNotEmpty && code != null && code.isNotEmpty) {
+         await SharingService.shareCollectiveInvite(
+           inviteToken: token,
+           inviteCode: code,
+           stadiumName: widget.booking.stadiumName,
+           date: widget.booking.formattedDate + ' - ' + widget.booking.formattedTimeRange,
+           hostName: widget.booking.hostName ?? (isArabic ? 'المنشئ' : 'Host'),
+         );
+       } else {
+         VSPFeedback.showInfo(context, isArabic ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after the booking is confirmed.');
+       }
+       return;
+     }
+
      final inviteMessage = VSPMatchInviteFormatter.buildInviteMessage(
        stadiumName: widget.booking.stadiumName,
        bookingId: widget.booking.id,
@@ -409,12 +431,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
    },
    icon: const Icon(Iconsax.message_copy, size: 18),
    label: Text(
-     isArabic ? 'مشاركة تفاصيل الماتش' : 'Share match details',
+     widget.booking.isOpenJoin
+         ? (isArabic ? 'مشاركة دعوة التجميعية' : 'Share collective invite')
+         : (isArabic ? 'مشاركة تفاصيل الماتش' : 'Share match details'),
      style: const TextStyle(fontWeight: FontWeight.w700),
    ),
-   style: TextButton.styleFrom(
-     foregroundColor: VSPColors.textSecondary,
-   ),
+   style: TextButton.styleFrom(foregroundColor: VSPColors.textSecondary),
  ),
  const SizedBox(height: VSPSpacing.xs),
 
