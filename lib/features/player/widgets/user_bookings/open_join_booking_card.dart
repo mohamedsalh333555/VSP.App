@@ -170,7 +170,6 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     final currentPlayers = booking.currentPlayers.clamp(0, totalCapacity);
     final remaining = (totalCapacity - currentPlayers).clamp(0, totalCapacity);
     final progress = (currentPlayers / totalCapacity).clamp(0.0, 1.0);
-    final entryFee = (booking.totalPrice / totalCapacity).round();
 
     Color statusColor;
     String statusText;
