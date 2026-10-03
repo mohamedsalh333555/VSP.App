@@ -10,7 +10,8 @@ import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 
-/// Actions and status badges for challenge bookings when a match has completed.
+/// Challenge result flow: both captains submit independently.
+/// The match is finalized only when both submissions match.
 class ChallengeResultActions extends StatelessWidget {
   final Booking booking;
   final String? myTeamId;
@@ -32,24 +33,31 @@ class ChallengeResultActions extends StatelessWidget {
 
     final isHome = currentTeamId == booking.playerTeamId;
     final isAway = currentTeamId == booking.opponentTeamId;
-
     if (!isHome && !isAway) return const SizedBox.shrink();
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
       if (outcome == MatchOutcome.draw) {
         return buildStatusBadge(l10n.draw, VSPColors.info);
-      } else if (outcome == MatchOutcome.homeWin) {
-        final isWon = isHome;
-        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? VSPColors.warning : VSPColors.error);
-      } else if (outcome == MatchOutcome.awayWin) {
-        final isWon = isAway;
-        return buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? VSPColors.warning : VSPColors.error);
       }
-      return buildStatusBadge(l10n.completed, VSPColors.textSecondary);
-     else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
-      return buildStatusBadge(l10n.waitingOpponent, VSPColors.warning);
-    } else if (booking.endTime.isBefore(DateTime.now())) {
+      final won = (outcome == MatchOutcome.homeWin && isHome) ||
+          (outcome == MatchOutcome.awayWin && isAway);
+      return buildStatusBadge(
+        won ? l10n.win : l10n.loss,
+        won ? VSPColors.warning : VSPColors.error,
+      );
+    }
+
+    if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+      return buildStatusBadge(
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'في انتظار تطابق النتيجة'
+            : 'Waiting for matching result',
+        VSPColors.warning,
+      );
+    }
+
+    if (booking.endTime.isBefore(DateTime.now())) {
       return buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
 
@@ -58,7 +66,10 @@ class ChallengeResultActions extends StatelessWidget {
 
   static Widget buildStatusBadge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPSpacing.sm,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
@@ -75,38 +86,40 @@ class ChallengeResultActions extends StatelessWidget {
     );
   }
 
-  Widget _buildAddResultButton(BuildContext context, String currentTeamId, {bool isPrimaryPopping = false}) {
+  Widget _openResultModal(BuildContext context, String teamId) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return VSPAnimatedButton(
-      text: l10n.addResult,
-      color: isPrimaryPopping ? VSPColors.warning : VSPColors.accent,
-      textColor: isPrimaryPopping ? Colors.black : VSPColors.textPrimary,
+      text: isArabic ? 'تسجيل نتيجتي' : 'Record my result',
+      color: VSPColors.accent,
+      textColor: Colors.black,
       onPressed: () {
         showDialog(
           context: context,
-          builder: (context) => MatchResultModal(
+          builder: (dialogContext) => MatchResultModal(
             booking: booking,
-            submittingTeamId: currentTeamId,
+            submittingTeamId: teamId,
             onConfirm: (outcome, rating, review) async {
-              final provider = Provider.of<BookingProvider>(context, listen: false);
-
+              final provider =
+                  Provider.of<BookingProvider>(context, listen: false);
               final success = await provider.submitMatchResult(
                 bookingId: booking.id,
-                teamId: currentTeamId,
+                teamId: teamId,
                 outcome: outcome,
                 rating: rating,
                 review: review,
               );
 
               if (!context.mounted) return;
+              Navigator.of(dialogContext).pop();
 
               if (success) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.resultSuccess),
-                    backgroundColor: VSPColors.accent,
-                  ),
+                VSPFeedback.showSuccess(
+                  context,
+                  isArabic
+                      ? 'تم تسجيل نتيجتك. لن تُعتمد المباراة إلا عند تطابق النتيجتين.'
+                      : 'Your result was recorded. The match is finalized only when both results match.',
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -129,270 +142,129 @@ class ChallengeResultActions extends StatelessWidget {
     final currentTeamId = myTeamId ?? booking.playerTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
-    final isHome = currentTeamId == booking.playerTeamId;
-
-    // 1. No result entered yet
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
-      return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
+      return _openResultModal(context, currentTeamId);
     }
 
-    // 2. First captain entered result, waiting for opponent or disputed
-    if (booking.matchResultStatus == MatchResultStatus.waitingOpponent ||
-        booking.matchResultStatus == MatchResultStatus.disputed) {
-      if (booking.resultSubmittedByTeamId == currentTeamId) {
-        // Submitting captain: sees waiting state with option to edit
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: VSPColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Row(
-            children: [
-              const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  booking.matchResultStatus == MatchResultStatus.disputed
-                      ? (isArabic ? 'النتيجة قيد النزاع ' : 'Result under dispute ')
-                      : (isArabic ? 'في انتظار تأكيد الخصم ' : 'Waiting opponent confirmation '),
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                ),
-              ),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white70,
-                  side: const BorderSide(color: Colors.white24),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  visualDensity: VisualDensity.compact,
-                ),
-                icon: const Icon(Iconsax.edit_2_copy, size: 14),
-                label: Text(
-                  isArabic ? 'تعديل' : 'Edit',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => MatchResultModal(
-                      booking: booking,
-                      submittingTeamId: currentTeamId,
-                      onConfirm: (outcome, rating, review) async {
-                        final provider = Provider.of<BookingProvider>(context, listen: false);
-                        final success = await provider.submitMatchResult(
-                          bookingId: booking.id,
-                          teamId: currentTeamId,
-                          outcome: outcome,
-                          rating: rating,
-                          review: review,
-                        );
-                        if (context.mounted && success) {
-                          VSPFeedback.showSuccess(
-                            context,
-                            isArabic
-                                ? 'تم تعديل النتيجة وإرسالها للخصم للموافقة '
-                                : 'Result updated & sent to opponent ',
-                          );
-                        }
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      } else {
-        // Opponent captain: sees claimed score, confirms or disputes
-        final pending = booking.pendingOutcome;
-        String claimText;
-        MatchOutcome agreeOutcome;
-        MatchOutcome disputeOutcome;
+    if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+      final submittedByMe =
+          booking.resultSubmittedByTeamId == currentTeamId;
+      final pending = booking.pendingOutcome;
 
-        if (pending == MatchOutcome.draw) {
-          claimText = isArabic ? 'أدخل الخصم أن المباراة انتهت بالتعادل ' : 'Opponent reported a DRAW ';
-          agreeOutcome = MatchOutcome.draw;
-          disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
-        } else if ((pending == MatchOutcome.homeWin && !isHome) ||
-            (pending == MatchOutcome.awayWin && isHome)) {
-          claimText = isArabic ? 'أدخل الخصم أن فريقه فاز بالمباراة ' : 'Opponent reported THEY WON ';
-          agreeOutcome = pending!;
-          disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
-        } else {
-          claimText = isArabic ? 'أدخل الخصم أن فريقك هو الفائز ' : 'Opponent reported YOU WON ';
-          agreeOutcome = pending!;
-          disputeOutcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+      String outcomeText(MatchOutcome? outcome) {
+        if (outcome == MatchOutcome.draw) {
+          return isArabic ? 'تعادل' : 'Draw';
+        }
+        if (outcome == null) {
+          return isArabic ? 'لم تُسجل نتيجة بعد' : 'No result yet';
         }
 
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: VSPColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: VSPColors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 14),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        isArabic
-                            ? ' يرجى تأكيد النتيجة خلال 24 ساعة؛ التجاهل يؤدي للاعتماد التلقائي وخصم 5 نقاط لعب نظيف.'
-                            : ' Please confirm score within 24h. Inaction auto-approves result & deducts 5 Fair-Play pts.',
-                        style: const TextStyle(
-                            color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                claimText,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VSPColors.accent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: () async {
-                        final provider = Provider.of<BookingProvider>(context, listen: false);
-                        await provider.submitMatchResult(
-                          bookingId: booking.id,
-                          teamId: currentTeamId,
-                          outcome: agreeOutcome,
-                        );
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: VSPColors.accent,
-                              behavior: SnackBarBehavior.floating,
-                              duration: const Duration(seconds: 6),
-                              content: Text(
-                                isArabic
-                                    ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!'
-                                    : 'Result confirmed & rankings updated!',
-                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                              ),
-                              action: SnackBarAction(
-                                label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
-                                textColor: Colors.black,
-                                onPressed: () => navigateToTeamsStandings(context),
-                              ),
-                            ),
-                          );
-                        }
-                      },
-                      child: Text(
-                        isArabic ? ' تأكيد النتيجة' : ' Confirm',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: VSPColors.error,
-                        side: const BorderSide(color: VSPColors.error),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      ),
-                      onPressed: () async {
-                        final provider = Provider.of<BookingProvider>(context, listen: false);
-                        await provider.submitMatchResult(
-                          bookingId: booking.id,
-                          teamId: currentTeamId,
-                          outcome: disputeOutcome,
-                        );
-                        if (context.mounted) {
-                          VSPFeedback.showWarning(
-                            context,
-                            isArabic
-                                ? 'تم تسجيل النزاع للمراجعة الإدارية '
-                                : 'Dispute recorded for review ',
-                          );
-                        }
-                      },
-                      child: Text(
-                        isArabic ? ' اعتراض' : ' Dispute',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      }
-    }
+        final myWin =
+            (outcome == MatchOutcome.homeWin &&
+                currentTeamId == booking.playerTeamId) ||
+            (outcome == MatchOutcome.awayWin &&
+                currentTeamId == booking.opponentTeamId);
 
-    // 3. Match result confirmed: show action card to view team standing in the leaderboard
-    if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+        return isArabic
+            ? (myWin ? 'فوز فريقي' : 'فوز الفريق المنافس')
+            : (myWin ? 'My team won' : 'Opponent won');
+      }
+
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
           color: VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  submittedByMe
+                      ? Iconsax.clock_copy
+                      : Iconsax.info_circle_copy,
+                  color: VSPColors.warning,
+                  size: 18,
+                ),
+                const SizedBox(width: VSPSpacing.sm),
+                Expanded(
+                  child: Text(
+                    submittedByMe
+                        ? (isArabic
+                            ? 'تم تسجيل نتيجتك. في انتظار نتيجة الفريق المنافس.'
+                            : 'Your result is recorded. Waiting for the opponent.')
+                        : (isArabic
+                            ? 'الفريق المنافس سجل: ' + outcomeText(pending)
+                            : 'Opponent recorded: ' + outcomeText(pending)),
+                    style: const TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (!submittedByMe) ...[
+              const SizedBox(height: VSPSpacing.xs),
+              Text(
+                isArabic
+                    ? 'سجل نتيجتك الصحيحة. إذا اختلفت النتيجتان، لن تُضاف أي نقاط حتى تتطابقا.'
+                    : 'Record your actual result. No points are added until both results match.',
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 11.5,
+                ),
+              ),
+              const SizedBox(height: VSPSpacing.sm),
+              _openResultModal(context, currentTeamId),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          horizontal: VSPSpacing.md,
+          vertical: VSPSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: VSPColors.accent.withValues(alpha: 0.35),
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 22),
-            const SizedBox(width: 10),
+            const Icon(
+              Iconsax.cup_copy,
+              color: VSPColors.accent,
+              size: 22,
+            ),
+            const SizedBox(width: VSPSpacing.sm),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isArabic ? 'تم اعتماد النتيجة رسمياً' : 'Result Officially Confirmed',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    isArabic ? 'تم تحديث نقاط وترتيب فريقك في الدوري' : 'Team points & ranking updated',
-                    style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.9), fontSize: 11),
-                  ),
-                ],
+              child: Text(
+                isArabic
+                    ? 'تم اعتماد النتيجة وتحديث ترتيب الفرق.'
+                    : 'Result confirmed and team standings updated.',
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
               ),
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-              ),
-              icon: const Icon(Iconsax.chart_copy, size: 14),
-              label: Text(
-                isArabic ? 'الترتيب' : 'Standings',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-              ),
+            TextButton(
               onPressed: () => navigateToTeamsStandings(context),
+              child: Text(isArabic ? 'الترتيب' : 'Standings'),
             ),
           ],
         ),
