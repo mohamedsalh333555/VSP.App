@@ -313,6 +313,8 @@ class LeagueRepository {
             rank: i + 1,
             trend: data['trend'] ?? 'stable',
             roundReached: data['round_reached']?.toString(),
+            roundsPlayed: (data['rounds_played'] ?? 0) as int,
+            isChampion: tournament['champion_user_id']?.toString() == userId,
           ));
         }
 
