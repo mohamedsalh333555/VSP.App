@@ -11,6 +11,7 @@ import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
 import '../championship_card.dart';
+import 'champion_empty_state.dart';
 
 class ChampionshipsListTab extends StatefulWidget {
   final Stream<List<Championship>>? championshipsStream;
@@ -169,30 +170,10 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
             // Content List
             Expanded(
               child: championships.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Iconsax.cup_copy, color: Colors.white.withValues(alpha: 0.1), size: 64),
-                            const SizedBox(height: 16),
-                            Text(
-                              AppLocalizations.of(context)!.noChampionshipsInLoc(widget.selectedLocation),
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                            ),
-                            if (isDifferentGov) ...[
-                              const SizedBox(height: 16),
-                              PrimaryButton(
-                                text: isArabic ? 'العودة لبطولات $userGov' : 'Return to $userGov Tournaments',
-                                height: 44,
-                                onPressed: () => widget.onLocationChanged(userGov),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                  ? ChampionshipsEmptyState(
+                      locationName: championTranslateItem(context, widget.selectedLocation),
+                      showReturnButton: isDifferentGov,
+                      onReturn: () => widget.onLocationChanged(userGov),
                     )
                   : ListView.builder(
                       padding: VSPScrollPadding.forList(
