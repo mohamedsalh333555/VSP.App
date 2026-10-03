@@ -79,7 +79,7 @@ export async function parseUserMessageSemantically(
       date_iso: state.date.value,
       date_label: state.date.label,
       target_times: state.times.map(t => t.time),
-      time_period: state.time_period,
+      time_range: state.time_range,
       duration_hours: state.duration_hours,
       active_task: state.active_task,
       task_lifecycle: state.task_lifecycle,
@@ -97,7 +97,7 @@ export async function parseUserMessageSemantically(
   };
 
   const isOwner = state.user_role === "owner" || state.user_role === "pitch_owner";
-  const systemInstruction = isOwner
+  const systemInstruction = (isOwner
     ? `You are the Pitch Owner Copilot & Business Advisory Engine of VSP Sports Platform in Egypt.
 Your task is to interpret inquiries from Pitch Owners (أصحاب ومسؤولو الملاعب) in Egyptian Arabic into strict structured JSON.
 
@@ -149,7 +149,7 @@ CORE FOCUS AREAS FOR PLAYERS:
 
 6. Owner-Only Requests:
    - "أرباحي", "سجل مالي":
-     => domain: "financials", object: "financials", intent: "financial_question"`;
+     => domain: "financials", object: "financials", intent: "financial_question"`) + `
 
 Context:
 - Egypt Local Date Today: ${cairoTodayStr}

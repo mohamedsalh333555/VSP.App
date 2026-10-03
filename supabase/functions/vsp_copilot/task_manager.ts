@@ -9,6 +9,7 @@ export type TaskType =
   | "payment_reconcile"
   | "tournament_browse"
   | "challenge_browse"
+  | "owner_inquiry"
   | "general_inquiry";
 
 export type TaskLifecycle =

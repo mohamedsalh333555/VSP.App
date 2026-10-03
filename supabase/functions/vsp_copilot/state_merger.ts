@@ -98,11 +98,12 @@ export function mergeState(
       next.task_lifecycle = "in_progress";
     }
   } else if (!next.active_task && semanticOutput.intent !== "unknown") {
-    if (semanticOutput.intent === "owner_operations") next.active_task = "owner_stadiums";
-    else if (semanticOutput.intent === "financial_question") next.active_task = "owner_financial";
-    else if (semanticOutput.intent === "availability") next.active_task = "availability";
-    else if (semanticOutput.intent === "booking") next.active_task = "booking";
-    else if (semanticOutput.intent === "general_question") next.active_task = "general";
+    const intent = semanticOutput.intent as string;
+    if (intent === "owner_operations") next.active_task = "owner_stadiums";
+    else if (intent === "financial_question") next.active_task = "owner_financial";
+    else if (intent === "availability") next.active_task = "availability";
+    else if (intent === "booking") next.active_task = "booking";
+    else if (intent === "general_question") next.active_task = "general";
     if (next.active_task) next.task_lifecycle = "in_progress";
   }
 
