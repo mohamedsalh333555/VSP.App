@@ -236,7 +236,7 @@ class League1v1RankListItem extends StatelessWidget {
             width: 28,
             child: Text(
               '#$rank',
-              style: TextStyle(
+              style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontWeight: FontWeight.w900,
                 fontSize: 13,
