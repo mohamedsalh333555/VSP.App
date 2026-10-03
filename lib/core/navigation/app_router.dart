@@ -136,6 +136,13 @@ class AppRouter {
  builder: (context, state) => const SuspendedAccountScreen(),
  ),
  GoRoute(
+ path: '/collective/:inviteToken',
+ builder: (context, state) {
+   final inviteToken = state.pathParameters['inviteToken'] ?? '';
+   return CollectiveMatchInviteRoute(inviteToken: inviteToken);
+ },
+ ),
+ GoRoute(
  path: '/match/:bookingId',
  builder: (context, state) {
  final bookingId = state.pathParameters['bookingId'] ?? '';
