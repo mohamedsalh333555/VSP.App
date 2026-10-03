@@ -4,17 +4,12 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 
-/// كارت المالية والتشغيل الموحد للباقتين (فحمي وأخضر نيون فقط)
 class OwnerOperationalFinanceCard extends StatelessWidget {
+  final double realizedTotal;
+  final double realizedCash;
+  final double realizedOnline;
   final double availableBalance;
-  final double cashThisMonth;
-  final double onlineThisMonth;
-  final double cashUncollected;
-  final double onlineUnavailable;
   final double upcomingValue;
-  final bool showProFinancialDetail;
-  final String timePeriod;
-  final String? periodLabel;
   final VoidCallback onOpenLedger;
   final VoidCallback onRequestPayout;
   final VoidCallback? onOpenPayoutHistory;
@@ -22,15 +17,11 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
 
   const OwnerOperationalFinanceCard({
     super.key,
+    required this.realizedTotal,
+    required this.realizedCash,
+    required this.realizedOnline,
     required this.availableBalance,
-    required this.cashThisMonth,
-    required this.onlineThisMonth,
-    this.cashUncollected = 0.0,
-    this.onlineUnavailable = 0.0,
     this.upcomingValue = 0.0,
-    this.showProFinancialDetail = false,
-    this.timePeriod = 'today',
-    this.periodLabel,
     required this.onOpenLedger,
     required this.onRequestPayout,
     this.onOpenPayoutHistory,
@@ -39,346 +30,160 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currencyLabel = isArabic ? 'ج.م' : 'EGP';
-    final hasBalance = availableBalance > 0;
+    final currency = isArabic ? 'ج.م' : 'EGP';
+    final hasBalance = availableBalance > 0.009;
+    final splitMatchesTotal =
+        (realizedTotal - (realizedCash + realizedOnline)).abs() < 0.01;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: VSPColors.surface, // #18181B الفحمي
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        border: Border.all(
-          color: VSPColors.divider,
-          width: 1.0,
-        ),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── السطر العلوي: العنوان ورابط كشف الحساب ──
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isArabic ? 'جاهز للسحب الآن' : 'Available for Payout',
-                style: const TextStyle(
-                  color: VSPColors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  isArabic ? 'إجمالي المحصل اليوم' : 'Total realized today',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (onOpenPayoutHistory != null)
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        onOpenPayoutHistory!();
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Text(
-                        isArabic ? 'سجل السحوبات' : 'Withdrawal History',
-                        style: const TextStyle(
-                          color: VSPColors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  if (onOpenPayoutHistory != null) const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      onOpenLedger();
-                    },
+              GestureDetector(
+                onTap: () { HapticFeedback.lightImpact(); onOpenLedger(); },
                 behavior: HitTestBehavior.opaque,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      isArabic ? 'كشف الحساب' : 'Statement',
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(isArabic ? 'كشف الحساب' : 'Statement',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 4),
-                    Icon(
-                      isArabic ? Icons.arrow_back : Icons.arrow_forward,
-                      size: 14,
-                      color: VSPColors.textSecondary,
-                    ),
+                    Icon(isArabic ? Icons.arrow_back : Icons.arrow_forward, size: 14, color: VSPColors.textSecondary),
                   ],
                 ),
-                  ),
-                ],
               ),
             ],
           ),
-
-          const SizedBox(height: 10),
-
-          // ── السطر الأوسط: الرقم الضخم بالأخضر النيون + زر طلب السحب ──
+          const SizedBox(height: 8),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    availableBalance.toStringAsFixed(0),
-                    style: const TextStyle(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w900,
-                      color: VSPColors.accent, // #9FDF02 الأخضر نيون
-                      letterSpacing: -1,
-                      height: 1.0,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    currencyLabel,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: VSPColors.accent,
-                    ),
-                  ),
-                ],
+              Text(
+                realizedTotal.toStringAsFixed(0),
+                style: const TextStyle(fontSize: 38, fontWeight: FontWeight.w900, color: VSPColors.accent, letterSpacing: -1.2, height: 1),
               ),
-
-              // زر سحب الأموال الموحد في نفس المكان لكلا الباقتين
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  if (hasBalance) {
-                    onRequestPayout();
-                  } else {
-                    VSPFeedback.showWarning(
-                      context,
-                      isArabic
-                          ? 'لا يوجد رصيد متاح للسحب حالياً'
-                          : 'No balance available for payout right now',
-                    );
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: hasBalance
-                        ? VSPColors.accent.withValues(alpha: 0.12)
-                        : Colors.white.withValues(alpha: 0.04),
-                    borderRadius: BorderRadius.circular(VSPRadius.full),
-                    border: Border.all(
-                      color: hasBalance
-                          ? VSPColors.accent.withValues(alpha: 0.5)
-                          : VSPColors.divider.withValues(alpha: 0.5),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              const SizedBox(width: 6),
+              Text(currency, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: VSPColors.accent)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: _MoneySplit(label: isArabic ? 'كاش' : 'Cash', value: realizedCash, currency: currency)),
+              const SizedBox(width: 10),
+              Expanded(child: _MoneySplit(label: isArabic ? 'أونلاين مدفوع' : 'Online Paid', value: realizedOnline, currency: currency)),
+            ],
+          ),
+          if (!splitMatchesTotal) ...[
+            const SizedBox(height: 8),
+            Text(
+              isArabic ? 'توجد عملية تحتاج مراجعة محاسبية.' : 'A financial transaction needs reconciliation.',
+              style: const TextStyle(color: VSPColors.error, fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.divider)),
+            child: Row(
+              children: [
+                const Icon(Iconsax.wallet_3_copy, size: 18, color: VSPColors.accent),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Iconsax.wallet_3_copy,
-                        size: 14,
-                        color: hasBalance ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        isArabic ? 'طلب سحب' : 'Payout',
-                        style: TextStyle(
-                          color: hasBalance ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      Text(isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      Text('${availableBalance.toStringAsFixed(0)} $currency',
+                          style: const TextStyle(color: VSPColors.textPrimary, fontSize: 17, fontWeight: FontWeight.w900)),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-          const Divider(color: VSPColors.divider, height: 1, thickness: 1),
-          const SizedBox(height: 14),
-
-          // ── السطر السفلي: كاش محصّل وأونلاين محقق للفترة المحددة ──
-          Builder(
-            builder: (context) {
-              String cashLabel;
-              String onlineLabel;
-              if (periodLabel != null && periodLabel!.isNotEmpty) {
-                cashLabel = isArabic ? 'كاش محصّل ($periodLabel)' : 'Cash Collected ($periodLabel)';
-                onlineLabel = isArabic ? 'أونلاين محقق ($periodLabel)' : 'Online Realized ($periodLabel)';
-              } else if (timePeriod == 'today') {
-                cashLabel = isArabic ? 'كاش محصّل اليوم' : 'Cash Collected Today';
-                onlineLabel = isArabic ? 'أونلاين محقق اليوم' : 'Online Realized Today';
-              } else if (timePeriod == 'yesterday') {
-                cashLabel = isArabic ? 'كاش محصّل أمس' : 'Cash Collected Yesterday';
-                onlineLabel = isArabic ? 'أونلاين محقق أمس' : 'Online Realized Yesterday';
-              } else if (timePeriod == 'week' || timePeriod == 'thisWeek') {
-                cashLabel = isArabic ? 'كاش محصّل هذا الأسبوع' : 'Cash Collected This Week';
-                onlineLabel = isArabic ? 'أونلاين محقق هذا الأسبوع' : 'Online Realized This Week';
-              } else if (timePeriod == 'month' || timePeriod == 'thisMonth') {
-                cashLabel = isArabic ? 'كاش محصّل هذا الشهر' : 'Cash Collected This Month';
-                onlineLabel = isArabic ? 'أونلاين محقق هذا الشهر' : 'Online Realized This Month';
-              } else if (timePeriod == 'year' || timePeriod == 'thisYear') {
-                cashLabel = isArabic ? 'كاش محصّل هذا العام' : 'Cash Collected This Year';
-                onlineLabel = isArabic ? 'أونلاين محقق هذا العام' : 'Online Realized This Year';
-              } else {
-                cashLabel = isArabic ? 'إجمالي الكاش المحصّل' : 'Total Cash Collected';
-                onlineLabel = isArabic ? 'إجمالي الأونلاين المحقق' : 'Total Online Realized';
-              }
-
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _FinanceMetric(
-                          label: cashLabel,
-                          value: cashThisMonth,
-                          currencyLabel: currencyLabel,
-                        ),
-                      ),
-                      Container(width: 1, height: 28, color: VSPColors.divider),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _FinanceMetric(
-                          label: onlineLabel,
-                          value: onlineThisMonth,
-                          currencyLabel: currencyLabel,
-                        ),
-                      ),
-                    ],
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    if (hasBalance) {
+                      onRequestPayout();
+                    } else {
+                      VSPFeedback.showWarning(context, isArabic ? 'لا يوجد رصيد متاح للسحب حالياً' : 'No balance is currently available for withdrawal');
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: hasBalance ? VSPColors.accent : Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                    child: Text(isArabic ? 'سحب' : 'Withdraw',
+                        style: TextStyle(color: hasBalance ? Colors.black : VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w900)),
                   ),
-
-                  if (showProFinancialDetail) ...[
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _FinanceMetric(
-                            label: isArabic ? 'كاش غير محصّل' : 'Cash Uncollected',
-                            value: cashUncollected,
-                            currencyLabel: currencyLabel,
-                            compact: true,
-                          ),
-                        ),
-                        Container(width: 1, height: 24, color: VSPColors.divider),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _FinanceMetric(
-                            label: isArabic ? 'أونلاين غير متاح للسحب' : 'Online Unavailable',
-                            value: onlineUnavailable,
-                            currencyLabel: currencyLabel,
-                            compact: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  // عرض قيمة الحجوزات القادمة المؤكدة بشكل منفصل كـ operational metric
-                  if (upcomingValue > 0) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(VSPRadius.sm),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.06),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Iconsax.calendar_tick_copy,
-                                size: 13,
-                                color: VSPColors.textSecondary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                isArabic ? 'قيمة الحجوزات القادمة المؤكدة' : 'Upcoming Confirmed Bookings',
-                                style: const TextStyle(
-                                  color: VSPColors.textSecondary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '${upcomingValue.toStringAsFixed(0)} $currencyLabel',
-                            style: const TextStyle(
-                              color: VSPColors.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              );
-            },
+                ),
+              ],
+            ),
           ),
+          if (onOpenPayoutHistory != null) ...[
+            const SizedBox(height: 9),
+            GestureDetector(
+              onTap: () { HapticFeedback.lightImpact(); onOpenPayoutHistory!(); },
+              behavior: HitTestBehavior.opaque,
+              child: Text(isArabic ? 'عرض سجل السحوبات' : 'View withdrawal history',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w700)),
+            ),
+          ],
+          if (upcomingValue > 0.009) ...[
+            const SizedBox(height: 10),
+            Text(
+              isArabic
+                  ? 'الحجوزات القادمة المؤكدة: ${upcomingValue.toStringAsFixed(0)} $currency'
+                  : 'Upcoming confirmed bookings: ${upcomingValue.toStringAsFixed(0)} $currency',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10.5),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _FinanceMetric extends StatelessWidget {
+class _MoneySplit extends StatelessWidget {
   final String label;
   final double value;
-  final String currencyLabel;
-  final bool compact;
-
-  const _FinanceMetric({
-    required this.label,
-    required this.value,
-    required this.currencyLabel,
-    this.compact = false,
-  });
+  final String currency;
+  const _MoneySplit({required this.label, required this.value, required this.currency});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: VSPColors.textSecondary,
-            fontSize: compact ? 10.5 : 11.5,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '${value.toStringAsFixed(0)} $currencyLabel',
-          style: TextStyle(
-            color: VSPColors.textPrimary,
-            fontSize: compact ? 14 : 17,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.3,
-          ),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.divider)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 3),
+          Text('${value.toStringAsFixed(0)} $currency',
+              style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w900)),
+        ],
+      ),
     );
   }
 }
