@@ -440,7 +440,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    final credentials = await MatchRepository().getCollectiveInviteCredentials(widget.bookingId);
    final token = credentials?['invite_token']?.toString();
    final code = credentials?['invite_code']?.toString();
-   if (!mounted) return;
+   if (!context.mounted) return;
    if (token == null || code == null || token.isEmpty || code.isEmpty || credentials?['active'] != true) {
      VSPFeedback.showInfo(context, isAr ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after confirmation.');
      return;
