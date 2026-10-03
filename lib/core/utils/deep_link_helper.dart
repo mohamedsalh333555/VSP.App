@@ -12,6 +12,7 @@ class ParsedDeepLink {
     if (id.isEmpty) {
       return '/$type';
     }
+    if (type == 'collective') return '/collective/$id';
     final invite = queryParams?['invite'] == '1' && type == 'match';
     return '/$type/$id${invite ? '?invite=1' : ''}';
   }
@@ -22,6 +23,7 @@ class DeepLinkHelper {
   static final RegExp _validIdRegex = RegExp(r'^[a-zA-Z0-9\-_\s]+$');
   static const Set<String> _validTypes = {
     'match',
+    'collective',
     'team',
     'championship',
     'booking',
