@@ -17,6 +17,7 @@ import '../../features/owner/screens/owner_main_screen.dart';
 
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
+import '../../features/player/widgets/collective_match_invite_route.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import 'offline_error_screen.dart';
@@ -138,7 +139,10 @@ class AppRouter {
  path: '/match/:bookingId',
  builder: (context, state) {
  final bookingId = state.pathParameters['bookingId'] ?? '';
- return MatchDetailsScreen(bookingId: bookingId);
+ final isInvite = state.uri.queryParameters['invite'] == '1';
+ return isInvite
+     ? CollectiveMatchInviteRoute(bookingId: bookingId)
+     : MatchDetailsScreen(bookingId: bookingId);
  },
  ),
  GoRoute(
