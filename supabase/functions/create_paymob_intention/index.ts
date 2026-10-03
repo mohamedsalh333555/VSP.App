@@ -120,7 +120,7 @@ serve(async (req: Request) => {
     if (is_tournament_payment && typeof booking_id === "string" && booking_id.startsWith("TOURN_1V1_")) {
       const { data: oneVsOneOrder, error: oneVsOneOrderError } = await supabase
         .from("vsp_1v1_tournament_orders")
-        .select("order_reference, amount, user_id, payment_status")
+        .select("order_reference, amount, user_id, payment_status, paymob_order_id")
         .eq("order_reference", booking_id)
         .maybeSingle();
       if (oneVsOneOrderError || !oneVsOneOrder) {
@@ -153,6 +153,43 @@ serve(async (req: Request) => {
       }
       finalBaseAmount = Number(leaguePayment.amount) || 0;
     }
+    // Generic team-tournament payments must also be backed by a server-created order.
+    if (
+      is_tournament_payment &&
+      typeof booking_id === "string" &&
+      booking_id.startsWith("TOURN_") &&
+      !booking_id.startsWith("TOURN_1V1_")
+    ) {
+      const { data: tournamentOrder, error: tournamentOrderError } = await supabase
+        .from("tournament_orders")
+        .select("order_reference, amount, captain_user_id, payment_status, paymob_order_id")
+        .eq("order_reference", booking_id)
+        .maybeSingle();
+
+      if (tournamentOrderError || !tournamentOrder) {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (tournamentOrder.captain_user_id !== callerUser.id) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: payment order belongs to another user" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (tournamentOrder.payment_status !== "pending") {
+        return new Response(
+          JSON.stringify({ error: "Tournament payment order is not pending" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      finalBaseAmount = Number(tournamentOrder.amount) || 0;
+    }
+
     if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
       const { data: booking, error: fetchErr } = await supabase
         .from("bookings")
@@ -311,6 +348,67 @@ serve(async (req: Request) => {
       );
     }
 
+    const intentionOrderId = String(
+      intentionData.intention_order_id ??
+      intentionData.payment_keys?.[0]?.order_id ??
+      ""
+    ).trim();
+
+    if (!intentionOrderId) {
+      return new Response(
+        JSON.stringify({ error: "Paymob response missing intention_order_id" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const persistPaymobOrder = async () => {
+      if (is_tournament_payment && typeof booking_id === "string") {
+        if (booking_id.startsWith("TOURN_1V1_")) {
+          const { error } = await supabase
+            .from("vsp_1v1_tournament_orders")
+            .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
+            .eq("order_reference", booking_id)
+            .eq("user_id", callerUser.id)
+            .eq("payment_status", "pending");
+          if (error) throw error;
+        } else if (booking_id.startsWith("LEAGUE_")) {
+          const { error } = await supabase
+            .from("team_league_payments")
+            .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
+            .eq("order_reference", booking_id)
+            .eq("user_id", callerUser.id)
+            .eq("payment_status", "pending");
+          if (error) throw error;
+        } else if (booking_id.startsWith("TOURN_")) {
+          const { error } = await supabase
+            .from("tournament_orders")
+            .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
+            .eq("order_reference", booking_id)
+            .eq("captain_user_id", callerUser.id)
+            .eq("payment_status", "pending");
+          if (error) throw error;
+        }
+      } else if (!is_tournament_payment && booking_id && !booking_id.startsWith("mock_")) {
+        const { error } = await supabase
+          .from("bookings")
+          .update({ paymob_order_id: intentionOrderId, updated_at: new Date().toISOString() })
+          .eq("id", booking_id)
+          .eq("status", "pending")
+          .or(`created_by_user_id.eq.${callerUser.id},user_id.eq.${callerUser.id}`);
+        if (error) throw error;
+      }
+    };
+
+    try {
+      await persistPaymobOrder();
+    } catch (persistError) {
+      console.error("Failed to persist Paymob order correlation:", persistError);
+      return new Response(
+        JSON.stringify({ error: "Failed to persist secure payment correlation" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const clientSecret = intentionData.client_secret;
     if (!clientSecret) {
       return new Response(
@@ -326,6 +424,7 @@ serve(async (req: Request) => {
         success: true,
         checkout_url: checkoutUrl,
         client_secret: clientSecret,
+        paymob_order_id: intentionOrderId,
         total_amount: totalAmountEgp,
       }),
       {
