@@ -47,7 +47,7 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
           items: [
             VspNavItem(
               activeIcon: Iconsax.element_4_copy,
-              inactiveIcon: Iconsax.element_4_copy,
+              inactiveIcon: Iconsax.element_4,
               label: AppLocalizations.of(context)!.home,
             ),
             VspNavItem(
