@@ -11,6 +11,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import 'champion_podium_components.dart';
+import 'champion_empty_state.dart';
 
 class TeamsRankingTab extends StatefulWidget {
   final Stream<List<Team>>? teamsStream;
@@ -105,16 +106,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         }).toList();
 
         if (teams.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                AppLocalizations.of(context)!.noTeamsInLoc(championTranslateItem(context, widget.selectedLocation)),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-              ),
-            ),
-          );
+          return const TeamsEmptyState();
         }
 
         // Sort by points desc
