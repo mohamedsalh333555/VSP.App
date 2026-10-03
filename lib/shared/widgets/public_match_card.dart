@@ -11,6 +11,7 @@ import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/utils/vsp_feedback.dart';
 import '../../data/models.dart';
 import 'match_card/manage_participants_modal.dart';
+import '../../features/player/widgets/collective_match_invite_sheet.dart';
 import 'match_card/public_match_card_formatter.dart';
 
 
@@ -45,6 +46,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  void _handleShare(Booking booking) {
  SharingService.shareMatch(
  bookingId: booking.id,
+ invite: booking.isOpenJoin,
  teamName: booking.playerTeamName ?? booking.hostName ?? AppLocalizations.of(context)!.vspTeam,
  stadiumName: booking.stadiumName,
  date: '${booking.formattedDate} at ${booking.formattedTimeRange}',
@@ -235,6 +237,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
+          if (booking.isOpenJoin) {
+            CollectiveMatchInviteSheet.show(
+              context,
+              bookingId: booking.id,
+              initialBooking: booking,
+            );
+            return;
+          }
           Navigator.push(
             context,
             MaterialPageRoute(

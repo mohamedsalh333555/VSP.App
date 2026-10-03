@@ -18,10 +18,11 @@ class VSPMatchInviteFormatter {
  double? totalPrice,
  String? hostName,
  bool isArabic = true,
+ bool isCollective = false,
  }) {
  final dateStr = AppDateFormatter.formatDayMonth(startTime, isArabic ? 'ar' : 'en');
  final timeStr = '${AppDateFormatter.formatTime(startTime, isArabic ? 'ar' : 'en')} - ${AppDateFormatter.formatTime(endTime, isArabic ? 'ar' : 'en')}';
- final matchLink = SharingService.getMatchLink(bookingId);
+ final matchLink = SharingService.getMatchLink(bookingId, invite: isCollective);
  
  final mapsLine = (googleMapsUrl != null && googleMapsUrl.isNotEmpty)
  ? (isArabic ? ' *الموقع على الخريطة:* $googleMapsUrl\n' : ' *Map Location:* $googleMapsUrl\n')

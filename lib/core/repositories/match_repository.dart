@@ -66,6 +66,27 @@ class MatchRepository {
    }
  }
 
+ /// Read a private collective invitation. Unlike the public details RPC,
+ /// this endpoint never exposes private collective matches through the public feed.
+ Future<Booking?> getPrivateMatchInviteDetails(String bookingId) async {
+   try {
+     final response = await _supabase.rpc(
+       'get_private_match_invite_details',
+       params: {'p_booking_id': bookingId},
+     );
+     if (response is Map) {
+       return Booking.fromFirestore(Map<String, dynamic>.from(response), bookingId);
+     }
+     return null;
+   } on PostgrestException catch (e) {
+     VSPLogger.w('Private collective invite RPC failed: ${e.message}');
+     return null;
+   } catch (e, stack) {
+     VSPLogger.e('Error loading private collective invite', e, stack);
+     return null;
+   }
+ }
+
  /// Realtime public match stream. The public feed drives updates while the
  /// RPC supplies the protected participant identifiers needed by the room.
  Stream<Booking?> streamPublicMatchDetails(String bookingId) async* {

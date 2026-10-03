@@ -12,7 +12,8 @@ class ParsedDeepLink {
     if (id.isEmpty) {
       return '/$type';
     }
-    return '/$type/$id';
+    final invite = queryParams?['invite'] == '1' && type == 'match';
+    return '/$type/$id' + (invite ? '?invite=1' : '');
   }
 }
 
@@ -62,7 +63,7 @@ class DeepLinkHelper {
         } else {
           id = uri.queryParameters['id'] ?? '';
         }
-      } else if (uri.host == 'vspapp.online') {
+      } else if (uri.host == 'vspapp.online' || uri.host == 'vsp.app') {
         if (uri.pathSegments.length >= 2) {
           type = uri.pathSegments[0].toLowerCase();
           id = uri.pathSegments[1];
