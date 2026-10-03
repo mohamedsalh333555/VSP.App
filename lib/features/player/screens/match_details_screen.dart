@@ -429,26 +429,44 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  pinned: true,
  backgroundColor: VSPColors.background,
  actions: [
+ if (!_booking?.isOpenJoin || isHost)
  IconButton(
  icon: const Icon(Iconsax.share_copy, color: Colors.white),
- onPressed: () {
- if (_booking != null) {
+ onPressed: () async {
+ if (_booking == null) return;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final msg = VSPMatchInviteFormatter.buildInviteMessage(
- stadiumName: _stadium?.name ?? 'ملعب VSP',
- bookingId: widget.bookingId,
- startTime: _booking!.startTime,
- endTime: _booking!.endTime,
- googleMapsUrl: _stadium?.googleMapsUrl,
- currentPlayers: _booking!.currentPlayers,
- maxPlayers: _booking!.maxPlayers,
- totalPrice: _booking!.totalPrice,
- hostName: _booking!.hostName,
- isArabic: isAr,
- isCollective: _booking!.isOpenJoin,
- );
- SharingService.shareMatchFormatted(msg);
+ if (_booking!.isOpenJoin) {
+   if (!isHost) return;
+   final credentials = await MatchRepository().getCollectiveInviteCredentials(widget.bookingId);
+   final token = credentials?['invite_token']?.toString();
+   final code = credentials?['invite_code']?.toString();
+   if (token == null || code == null || token.isEmpty || code.isEmpty || credentials?['active'] != true) {
+     VSPFeedback.showInfo(context, isAr ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after confirmation.');
+     return;
+   }
+   await SharingService.shareCollectiveInvite(
+     inviteToken: token,
+     inviteCode: code,
+     stadiumName: _booking!.stadiumName,
+     date: _booking!.formattedDate + ' - ' + _booking!.formattedTimeRange,
+     hostName: _booking!.hostName ?? (isAr ? 'المنشئ' : 'Host'),
+   );
+   return;
  }
+ final msg = VSPMatchInviteFormatter.buildInviteMessage(
+   stadiumName: _stadium?.name ?? 'ملعب VSP',
+   bookingId: widget.bookingId,
+   startTime: _booking!.startTime,
+   endTime: _booking!.endTime,
+   googleMapsUrl: _stadium?.googleMapsUrl,
+   currentPlayers: _booking!.currentPlayers,
+   maxPlayers: _booking!.maxPlayers,
+   totalPrice: _booking!.totalPrice,
+   hostName: _booking!.hostName,
+   isArabic: isAr,
+   isCollective: false,
+ );
+ await SharingService.shareMatchFormatted(msg);
  },
  ),
  IconButton(
@@ -591,7 +609,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _buildDetailRow(Iconsax.money_copy, AppLocalizations.of(context)!.price, '${_booking!.totalPrice.toInt()} EGP'),
  const SizedBox(height: VSPSpacing.md),
  
- // WhatsApp Group Share Button
+ // Private collective invitations use the dedicated VSP invite sheet.
+ if (!_booking!.isOpenJoin)
+  // WhatsApp Group Share Button
  PrimaryButton(
  text: Localizations.localeOf(context).languageCode == 'ar' 
  ? 'دعوة أصحابك عبر جروب الواتساب ' 
