@@ -217,6 +217,13 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  );
  }
 
+ String bookingLabel(int current, int total) {
+   if (widget.booking.isOpenJoin) {
+     final ar = Localizations.localeOf(context).languageCode == 'ar';
+     return ar ? 'الموجودون في الحجز: $current / $total' : 'People in booking: $current / $total';
+   }
+   return AppLocalizations.of(context)!.playersJoined(current, total);
+ }
  Widget _buildSpotsIndicator(int remaining, int current, int total) {
  return Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +238,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  Text(AppLocalizations.of(context)!.spotsLeft.toUpperCase(), style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 10)),
  ],
  ),
- Text(AppLocalizations.of(context)!.playersJoined(current, total), style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500)),
+ Text(
+   bookingLabel(current, total),
+   style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500),
+ ),
  ],
  );
  }
@@ -384,6 +394,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  }
  if (isHost) return _buildRawButton(label: booking.isOpenJoin ? (isArabic ? 'إدارة التجميعية' : 'Manage') : AppLocalizations.of(context)!.manage, color: VSPColors.accent, onTap: () => _manageParticipants(context), isOutlined: false);
  if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser.uid), isOutlined: true);
+ if (booking.isOpenJoin) return _buildRawButton(label: isArabic ? 'بدعوة خاصة' : 'Private invite', color: VSPColors.textSecondary, onTap: null, isOutlined: true);
  if (isPending) {
  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
  }
