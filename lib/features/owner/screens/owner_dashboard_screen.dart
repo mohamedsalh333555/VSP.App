@@ -339,42 +339,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                 ],
 
-                // 1. الهيدر الموحد وشارة الباقة
-                OwnerDashboardHeader(
-                  auth: auth,
-                  isProOwner: isProOwner,
-                  isArabic: isArabic,
-                  onUpgrade: () => _showProUpgradeSheet(context),
-                ),
-                const SizedBox(height: 14),
-
-                // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
-                if (userModel != null)
-                  OwnerVerificationBanner(userModel: userModel, isArabic: isArabic),
-
-                // 2.1 تنبيه اقتراب انتهاء التجربة المجانية (اليوم 51-60 فقط)
-                if (showTrialEndingSoon && remainingTrialDays != null)
-                  OwnerTrialEndingSoonAlert(
-                    remainingDays: remainingTrialDays,
-                    isArabic: isArabic,
-                    onUpgrade: () => _showProUpgradeSheet(context),
-                  ),
-
-                // 2.2 تنبيه مهلة السماح (3 أيام بعد انتهاء السنة المجانية أو الاشتراك)
-                if (userModel != null && userModel.isInGracePeriod)
-                  OwnerGracePeriodAlert(
-                    remainingHours: userModel.remainingGraceHours,
-                    isArabic: isArabic,
-                    onRenew: () => _showProUpgradeSheet(context),
-                  ),
-
-                // 2.3 تنبيه انتهاء الاشتراك بعد استنفاد مهلة السماح
-                if (userModel != null && isExpired)
-                  OwnerSubscriptionExpiredAlert(
-                    isArabic: isArabic,
-                    onRenew: () => _showProUpgradeSheet(context),
-                  ),
-
                 // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
                   height: 42,
@@ -444,68 +408,37 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
                 const SizedBox(height: 14),
 
+                // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
+                OwnerOperationalFinanceCard(
+                  realizedTotal: _dashboardAnalytics.revenue.realizedRevenue,
+                  realizedCash: _dashboardAnalytics.revenue.realizedCash,
+                  realizedOnline: _dashboardAnalytics.revenue.realizedOnline,
+                  availableBalance: availableBalance,
+                  upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
+                  onOpenLedger: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
+                    );
+                  },
+                  onRequestPayout: () {
+                    OwnerPayoutDialog.show(context, availableBalance, isArabic);
+                  },
+                  onOpenPayoutHistory: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const OwnerLedgerScreen(payoutOnly: true),
+                      ),
+                    );
+                  },
+                  isArabic: isArabic,
+                ),
+                const SizedBox(height: 14),
+
                 // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
                 if (_selectedDashboardTab == 0) ...[
-                  // نفس فلاتر Insights — حالة واحدة مشتركة بين التبويبين.
-                  InsightsTopFiltersRow(
-                    stadiums: stadiums,
-                    selectedStadiumFilter: _selectedStadiumFilter,
-                    selectedTimePeriod: _selectedTimePeriod,
-                    isArabic: isArabic,
-                    onStadiumFilterChanged: (id) {
-                      final filter = _currentFilter.copyWith(
-                        courtId: id != 'all' ? id : null,
-                      );
-                      setState(() {
-                        _selectedStadiumFilter = id;
-                        _currentFilter = filter;
-                        _cachedMetrics = null;
-                      });
-                      _loadDashboardAnalytics(filter: filter);
-                    },
-                    onTimePeriodChanged: (period) {
-                      DashboardFilter filter;
-                      if (period == 'yesterday') {
-                        filter = DashboardFilter.yesterday();
-                      } else if (period == 'week' || period == 'thisWeek') {
-                        filter = DashboardFilter.thisWeek();
-                      } else if (period == 'month' || period == 'thisMonth') {
-                        filter = DashboardFilter.thisMonth();
-                      } else if (period == 'year' || period == 'thisYear') {
-                        filter = DashboardFilter.thisYear();
-                      } else {
-                        filter = DashboardFilter.today();
-                      }
-                      filter = filter.copyWith(
-                        courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
-                      );
-                      setState(() {
-                        _selectedTimePeriod = period;
-                        _currentFilter = filter;
-                        _cachedMetrics = null;
-                      });
-                      _loadDashboardAnalytics(filter: filter);
-                    },
-                    onCustomRangeSelected: (start, end) {
-                      final filter = DashboardFilter.custom(start, end).copyWith(
-                        courtId: _selectedStadiumFilter != 'all' ? _selectedStadiumFilter : null,
-                      );
-                      setState(() {
-                        _selectedTimePeriod = 'custom';
-                        _currentFilter = filter;
-                        _cachedMetrics = null;
-                      });
-                      _loadDashboardAnalytics(filter: filter);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  VSPSectionHeader(
-                    title: isArabic ? 'ما يحدث الآن' : 'What is happening now',
-                    subtitle: isArabic
-                        ? 'نظرة سريعة على تشغيل ملاعبك في الفترة المحددة.'
-                        : 'A quick view of your stadium operation for the selected period.',
-                  ),
+                  // جدول حجوزات اليوم — يأتي مباشرة بعد الكارت المالي.
                   // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
                   if (stadiums.isEmpty)
                     _buildNoStadiumsPrompt(context, isArabic)
@@ -526,45 +459,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         }
                       },
                     ),
-
-                  VSPSectionHeader(
-                    title: isArabic ? 'المال' : 'Finance',
-                    subtitle: isArabic
-                        ? 'ما تم تحصيله وما هو متاح لك الآن.'
-                        : 'What has been collected and what is available now.',
-                  ),
-                  // أ. كارت المالية والتشغيل الموحد (نفس موقع زر السحب للباقتين)
-                  OwnerOperationalFinanceCard(
-                    availableBalance: availableBalance,
-                    cashThisMonth: _dashboardAnalytics.revenue.cashCollected,
-                    onlineThisMonth: _dashboardAnalytics.revenue.onlineCollected,
-                    cashUncollected: _dashboardAnalytics.revenue.cashUncollected,
-                    onlineUnavailable: _dashboardAnalytics.revenue.onlineUnavailable,
-                    showProFinancialDetail: isProOwner,
-                    upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
-                    timePeriod: _selectedTimePeriod,
-                    periodLabel: _currentFilter.periodLabel,
-                    onOpenLedger: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()),
-                      );
-                    },
-                    onRequestPayout: () {
-                      OwnerPayoutDialog.show(context, availableBalance, isArabic);
-                    },
-                    onOpenPayoutHistory: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const OwnerLedgerScreen(payoutOnly: true),
-                        ),
-                      );
-                    },
-                    isArabic: isArabic,
-                  ),
-
-                  const SizedBox(height: 8),
 
 
                   // ج. تنبيه البطولة: انتظار الاعتماد ثم إشعار اعتماد لمدة 24 ساعة من أول زيارة Home.
