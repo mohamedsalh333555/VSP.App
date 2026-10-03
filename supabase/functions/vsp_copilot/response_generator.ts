@@ -12,6 +12,18 @@ export function formatArabicCount(count: number, singular: string, dual: string,
   return `${count} ${singular}`;
 }
 
+function formatCairoTime(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("ar-EG", {
+      timeZone: "Africa/Cairo",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(new Date(iso));
+  } catch (_) {
+    return "";
+  }
+}
 function sanitizeToolDataForModel(data: any): any {
   if (data == null) return data;
   try {
@@ -127,10 +139,9 @@ export function generateDeterministicResponse(
       }
       const prop = toolResult.data.proposed_slot;
       if (prop) {
-        const h = new Date(prop.start_time).getUTCHours();
-        const displayH = (h + 2) % 24; // Cairo local
+        const displayTime = formatCairoTime(prop.start_time);
         return {
-          message: `تمام يا كابتن! ${stadiumName} متاح في الميعاد المطلوب. تحب نأكد حجز الساعة ${displayH > 12 ? displayH - 12 : displayH} بالليل لمدة ساعة؟`,
+          message: `تمام يا كابتن! ${stadiumName} متاح في الميعاد المطلوب. تحب نأكد حجز الساعة ${displayTime} لمدة ساعة؟`,
           quick_replies: ["أيوه، أكد الحجز", "تغيير الميعاد"],
         };
       }
