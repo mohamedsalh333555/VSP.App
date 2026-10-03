@@ -155,6 +155,33 @@ class MatchRepository {
    }
  }
 
+ Future<bool> leavePrivateCollectiveMatch({
+   required String bookingId,
+   required String userId,
+ }) async {
+   final response = await _supabase.rpc(
+     'leave_private_collective_match_atomic',
+     params: {'p_booking_id': bookingId, 'p_user_id': userId},
+   );
+   if (response == true) return true;
+   return response is Map ? response['success'] != false : true;
+ }
+
+ Future<bool> removePrivateCollectiveParticipant({
+   required String bookingId,
+   required String participantId,
+ }) async {
+   final response = await _supabase.rpc(
+     'remove_private_collective_participant_atomic',
+     params: {
+       'p_booking_id': bookingId,
+       'p_participant_id': participantId,
+     },
+   );
+   if (response == true) return true;
+   return response is Map ? response['success'] != false : true;
+ }
+
  Future<bool> updateCollectiveManualPlayers({required String bookingId, required int manualPlayerCount}) async {
    final userId = _supabase.auth.currentUser?.id;
    if (userId == null) return false;
