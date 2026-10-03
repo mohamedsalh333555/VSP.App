@@ -153,14 +153,16 @@ class ChampionScreenState extends State<ChampionScreen>
                           ),
                         ),
                       ),
-                      // Tab 2: 1VS1
+                      // Tab 2: 1vs1
                       Expanded(
                         child: GestureDetector(
                           onTap: () => _tabController.animateTo(2),
                           behavior: HitTestBehavior.opaque,
                           child: Center(
                             child: Text(
-                              '1VS1',
+                              Localizations.localeOf(context).languageCode == 'ar'
+                                  ? 'واحد ضد واحد'
+                                  : '1vs1',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
