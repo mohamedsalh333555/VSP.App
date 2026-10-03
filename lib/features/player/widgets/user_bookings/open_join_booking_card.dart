@@ -207,7 +207,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
             border: Border.all(
               color: booking.status == BookingStatus.cancelled
                   ? VSPColors.error.withValues(alpha: 0.25)
-                  : VSPColors.accent.withValues(alpha: 0.18),
+                  : VSPColors.divider,
             ),
             boxShadow: const [VSPShadow.subtle],
           ),
@@ -229,17 +229,6 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     ),
                   ),
                   const SizedBox(width: VSPSpacing.sm),
-                  if (booking.isPrivate)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: VSPColors.warning.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(VSPRadius.full),
-                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.28)),
-                      ),
-                      child: Text(l10n.private,
-                          style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.w800)),
-                    ),
                   const Spacer(),
                   _statusPill(statusText, statusColor),
                 ],
@@ -316,53 +305,30 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                     Container(width: 1, height: 34, color: VSPColors.divider),
                     _infoCell(isArabic ? 'الوقت' : 'TIME', booking.formattedTimeRange, Iconsax.clock_copy),
                     Container(width: 1, height: 34, color: VSPColors.divider),
-                    _infoCell(isArabic ? 'رسوم الفرد' : 'PER PLAYER',
-                        '${entryFee} ${l10n.egCurrency}', Iconsax.wallet_1_copy),
+                    _infoCell(isArabic ? 'إجمالي الحجز' : 'TOTAL',
+                        '${booking.totalPrice.toStringAsFixed(0)} ${l10n.egCurrency}', Iconsax.wallet_1_copy),
                   ],
                 ),
               ),
               const SizedBox(height: VSPSpacing.md),
               Row(
                 children: [
-                  const Icon(Iconsax.profile_2user_copy, size: 16, color: VSPColors.accent),
+                  const Icon(Iconsax.profile_2user_copy, size: 16, color: VSPColors.textSecondary),
                   const SizedBox(width: VSPSpacing.sm),
                   Expanded(
                     child: Text(
                       isArabic
-                          ? '${currentPlayers} من ${totalCapacity} لاعب • ${remaining > 0 ? 'متبقي ${remaining} أماكن' : 'اكتمل العدد'}'
-                          : '${currentPlayers} of ${totalCapacity} players • ${remaining} spots left',
+                          ? '${currentPlayers} من ${totalCapacity} لاعب • ${remaining > 0 ? 'متبقي ${remaining}' : 'اكتمل العدد'}'
+                          : '@@CURRENT of @@TOTAL players • @@REMAIN spots left',
                       style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                   ),
-                  Text('${(progress * 100).round()}%',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w900)),
                 ],
-              ),
-              const SizedBox(height: VSPSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: VSPColors.divider.withValues(alpha: 0.35),
-                  valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
-                ),
               ),
               if (booking.rescheduleStatus == 'pending' && booking.proposedStartTime != null) ...[
                 const SizedBox(height: VSPSpacing.md),
                 RescheduleActionBanner(booking: booking),
               ],
-              const SizedBox(height: VSPSpacing.sm),
-              Row(
-                children: [
-                  Icon(Iconsax.arrow_right_3_copy, size: 16, color: VSPColors.textSecondary),
-                  const SizedBox(width: 6),
-                  Expanded(child: Text(
-                    isArabic ? 'اضغط على الكارت لعرض التفاصيل' : 'Tap the card to view details',
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
-                  )),
-                ],
-              ),
               const SizedBox(height: VSPSpacing.md),
               if (widget.isHistory || _isEnded || booking.status == BookingStatus.cancelled) ...[
                 Row(
