@@ -238,7 +238,7 @@ class BookingConfirmationHandler {
       opponentTeamName: opponentTeam?.name,
       totalPrice: totalPrice,
       isPaid: false,
-      isPrivate: isPrivate,
+      isPrivate: isOpenJoin(bookingType) ? true : isPrivate,
       rentBall: isBallRented,
       currentPlayers: (bType == BookingType.openJoin) ? initialPlayersCount : currentPlayers,
       playersPerTeam: stadium.playersPerTeam,
@@ -254,6 +254,30 @@ class BookingConfirmationHandler {
     );
 
     onLoadingChanged(false);
+
+    // Collective bookings are host-paid and must be fully paid online.
+    // They never enter the payment-choice sheet.
+    if (isOpenJoin(bookingType)) {
+      if (!context.mounted) return;
+      final collectiveDraft = draft.copyWith(
+        paymentMethod: 'paymob',
+        paymentStatus: 'pending',
+        needsDeposit: false,
+        depositPaid: 0.0,
+        isDepositPaid: false,
+        isPaid: false,
+        isPrivate: true,
+      );
+      nav.push(
+        MaterialPageRoute(
+          builder: (_) => PaymentGatewayScreen(
+            bookingDraft: collectiveDraft,
+            forceFullPayment: true,
+          ),
+        ),
+      );
+      return;
+    }
 
     // ── Route to payment ─────────────────────────────────────────────────────
     final bool requiresDeposit = stadium.needsDeposit && depositAmount > 0;
