@@ -12,7 +12,8 @@ class ParsedDeepLink {
     if (id.isEmpty) {
       return '/$type';
     }
-    return '/$type/$id';
+    final invite = queryParams?['invite'] == '1' && type == 'match';
+    return '/$type/$id' + (invite ? '?invite=1' : '');
   }
 }
 
