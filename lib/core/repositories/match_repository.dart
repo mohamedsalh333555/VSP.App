@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/analytics_service.dart';
