@@ -12,6 +12,23 @@ export function formatArabicCount(count: number, singular: string, dual: string,
   return `${count} ${singular}`;
 }
 
+function sanitizeToolDataForModel(data: any): any {
+  if (data == null) return data;
+  try {
+    const copy = JSON.parse(JSON.stringify(data));
+    if (Array.isArray(copy?.bookings)) {
+      copy.bookings = copy.bookings.map((booking: any) => {
+        if (!booking || typeof booking !== "object") return booking;
+        const { player_phone: _playerPhone, phone: _phone, ...safeBooking } = booking;
+        return safeBooking;
+      });
+    }
+    return copy;
+  } catch (_) {
+    return data;
+  }
+}
+
 export function buildResponseGeneratorPrompt(
   state: ConversationState,
   plan: ToolPlan,
@@ -27,10 +44,11 @@ export function buildResponseGeneratorPrompt(
   if (state.group_size) verifiedFacts.group_size = state.group_size;
   if (state.pending_confirmation) verifiedFacts.pending_confirmation = state.pending_confirmation;
 
+  const safeToolData = sanitizeToolDataForModel(toolResult?.data);
   if (toolResult) {
     verifiedFacts.tool_name = toolResult.tool_name;
     verifiedFacts.tool_status = toolResult.status;
-    verifiedFacts.tool_data = toolResult.data;
+    verifiedFacts.tool_data = safeToolData;
     if (toolResult.error_message) verifiedFacts.tool_error = toolResult.error_message;
   }
 
@@ -47,7 +65,7 @@ export function buildResponseGeneratorPrompt(
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 أنت شايف البيانات الكاملة لملعب صاحب الملعب ده:
 
-${JSON.stringify(toolResult.data, null, 2)}
+${JSON.stringify(safeToolData, null, 2)}
 
 بعد ما تجاوب على سؤاله مباشرة، افحص الأرقام دي بعين خبير تشغيل ملاعب.
 لو لاحظت حاجة واحدة فعلاً تستحق انتباهه — سواء:
