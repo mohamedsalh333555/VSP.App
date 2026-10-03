@@ -437,6 +437,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  totalPrice: _booking!.totalPrice,
  hostName: _booking!.hostName,
  isArabic: isAr,
+ isCollective: _booking!.isOpenJoin,
  );
  SharingService.shareMatchFormatted(msg);
  }
