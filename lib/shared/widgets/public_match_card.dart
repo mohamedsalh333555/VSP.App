@@ -1,5 +1,7 @@
 import '../../features/player/screens/match_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+// ignore_for_file: prefer_interpolation_to_compose_strings, curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
@@ -126,7 +128,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  }
  void _manageParticipants(BuildContext context) {
     if (widget.booking.isOpenJoin) {
-      CollectiveMatchInviteSheet.show(context, bookingId: widget.booking.id, initialBooking: widget.booking);
+      CollectiveMatchInviteSheet.showForBooking(context, bookingId: widget.booking.id, initialBooking: widget.booking);
       return;
     }
     ManageParticipantsModal.show(context, booking: widget.booking);
