@@ -159,3 +159,7 @@ $function$;
 REVOKE ALL ON FUNCTION public.request_join_public_match(text,text) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.leave_public_match_atomic(uuid,uuid) FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON FUNCTION public.update_host_spots_atomic(uuid,uuid,integer) FROM PUBLIC,anon,authenticated;
+
+
+-- Applied separately in Production as 20261003182200_collective_full_online_payment.
+-- Collective bookings now reject cash/deposit payment modes at the database boundary.
