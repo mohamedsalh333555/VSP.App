@@ -134,7 +134,7 @@ serve(async (req: Request) => {
     }
 
     // 🔒 3. Verify HMAC Secret exists in Server Environment
-    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET");
+    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET") || Deno.env.get("PAYMOB_HMAC");
     if (!hmacSecret) {
       console.error("🚨 CRITICAL: PAYMOB_HMAC_SECRET environment variable is missing on server!");
       try {
