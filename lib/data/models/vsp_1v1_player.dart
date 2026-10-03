@@ -10,6 +10,8 @@ class VSP1v1Player {
   final int rank;
   final String trend;
   final String? roundReached; // 'champion', 'runner_up', 'semi_final', 'quarter_final', 'round_16', 'round_32'
+  final int roundsPlayed;
+  final bool isChampion;
 
   VSP1v1Player({
     required this.id,
@@ -23,6 +25,8 @@ class VSP1v1Player {
     required this.rank,
     this.trend = 'stable',
     this.roundReached,
+    this.roundsPlayed = 0,
+    this.isChampion = false,
   });
 
   /// مسمى الدور الإقصائي الذي بلغه اللاعب (بدون أي ألقاب وهمية إذا لم يحدد صراحة)
@@ -61,6 +65,8 @@ class VSP1v1Player {
       rank: (data['rank'] ?? 99).toInt(),
       trend: data['trend'] ?? 'stable',
       roundReached: roundReached,
+      roundsPlayed: (data['rounds_played'] ?? data['roundsPlayed'] ?? 0).toInt(),
+      isChampion: data['is_champion'] == true || data['isChampion'] == true,
     );
   }
 
@@ -78,6 +84,8 @@ class VSP1v1Player {
       'rank': rank,
       'trend': trend,
       'round_reached': roundReached,
+      'rounds_played': roundsPlayed,
+      'is_champion': isChampion,
     };
   }
 
