@@ -65,7 +65,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  try {
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
- final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
+ final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId) ??
+     await MatchRepository().getPrivateCollectiveMatchDetails(widget.bookingId);
  if (booking != null) {
  _booking = booking;
         _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
@@ -92,6 +93,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isJoining = true;
  _isActionProcessing = true;
  });
+ if (_booking?.isOpenJoin == true) {
+   VSPFeedback.showInfo(context, Localizations.localeOf(context).languageCode == 'ar' ? 'هذه تجميعية خاصة. استخدم رابط الدعوة للانضمام.' : 'This is a private collective match. Use the invitation link to join.');
+   return;
+ }
+
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
  final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.uid);
  
@@ -276,7 +282,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
     setState(() => _isActionProcessing = true);
     try {
-      final success = await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
+      final success = _booking?.isOpenJoin == true
+         ? await MatchRepository().leavePrivateCollectiveMatch(widget.bookingId, currentUserId)
+         : await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
       if (mounted) {
         setState(() => _isActionProcessing = false);
         if (success) {
@@ -472,7 +480,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _booking!.isChallenge
      ? (isAr ? 'مباراة تحدي في ${_stadium?.name ?? "الملعب"}' : 'Challenge Match at ${_stadium?.name ?? "Stadium"}')
      : (_booking!.isOpenJoin
-         ? AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium")
+         ? AppLocalizations.of(context)!.(isAr ? 'تجميعية في ${_stadium?.name ?? "الملعب"}' : 'Collective match at ${_stadium?.name ?? "Stadium"}')
          : (isAr ? 'حجز ملعب ${_stadium?.name ?? ""}' : 'Pitch Booking at ${_stadium?.name ?? ""}')),
  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
  fontWeight: FontWeight.bold,
@@ -489,7 +497,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  child: Text(
  _booking!.isChallenge
      ? (isAr ? 'تحدي فرق' : 'Challenge')
-     : (_booking!.isOpenJoin ? (isAr ? 'مفتوح' : 'Open Join') : (isAr ? 'حجز خاص' : 'Personal')),
+     : (_booking!.isOpenJoin ? (isAr ? 'خاص' : 'Private') : (isAr ? 'حجز خاص' : 'Personal')),
  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
  ),
  ),
