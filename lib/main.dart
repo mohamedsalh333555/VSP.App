@@ -252,6 +252,10 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
         if (data.event == AuthChangeEvent.passwordRecovery) {
           debugPrint(' Password recovery event triggered! Routing to /set-new-password');
           _router.go('/set-new-password');
+          return;
+        }
+        if (data.event == AuthChangeEvent.signedIn || data.event == AuthChangeEvent.tokenRefreshed) {
+          unawaited(_replayPendingDeepLink());
         }
       });
     } catch (e) {
@@ -265,6 +269,7 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  // Check for initial link when app starts
  _appLinks.getInitialLink().then((uri) {
  if (uri != null) _handleDeepLink(uri);
+   unawaited(_replayPendingDeepLink());
  });
 
  // Listen to incoming links while app is running
@@ -273,7 +278,27 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  });
  }
 
-  void _handleDeepLink(Uri uri) {
+  Future<void> _replayPendingDeepLink() async {
+   // Links opened from WhatsApp can arrive before authentication/profile loading
+   // finishes. Replay exactly once after the authenticated player is ready.
+   for (var attempt = 0; attempt < 20; attempt++) {
+     if (!mounted) return;
+     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+     if (auth.isAuthenticated && auth.userModel?.isRegistrationComplete == true) {
+       final prefs = await SharedPreferences.getInstance();
+       final raw = prefs.getString('pending_deep_link');
+       if (raw == null || raw.isEmpty) return;
+       await prefs.remove('pending_deep_link');
+       final uri = Uri.tryParse(raw);
+       if (uri == null) return;
+       _handleDeepLink(uri);
+       return;
+     }
+     await Future<void>.delayed(const Duration(milliseconds: 250));
+   }
+ }
+
+ void _handleDeepLink(Uri uri) {
     debugPrint('⚡ Handling deep link: scheme=${uri.scheme}, host=${uri.host}, path=${uri.path}');
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
