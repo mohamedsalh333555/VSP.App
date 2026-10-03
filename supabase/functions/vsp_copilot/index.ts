@@ -106,28 +106,45 @@ serve(async (req: Request) => {
     }
 
     const dbRole = String(userProfile?.role || "").toLowerCase().trim();
-    let userRole: "owner" | "pitch_owner" | "player" | "admin" = "player";
 
-    if (dbRole === "pitch_owner" || dbRole === "owner") {
-      userRole = "owner";
-      // Owners require an active paid or trial entitlement for pitch management assistant.
-      const nowMs = Date.now();
-      const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
-      const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
-      const entitlementUntil = Math.max(trialMs, subMs);
-      if (entitlementUntil <= nowMs) {
-        return new Response(
-          JSON.stringify({
-            error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
-            message: "خدمة كابتن VSP للمالك متاحة مع باقة نشطة أو فترة التجربة السارية.",
-          }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-    } else if (dbRole === "admin" || dbRole === "co_founder" || dbRole === "cofounder" || dbRole === "super_admin") {
-      userRole = "admin";
-    } else {
-      userRole = "player";
+    // Owner-only boundary: players/admins must never reach the Copilot runtime.
+    if (dbRole !== "pitch_owner" && dbRole !== "owner") {
+      return new Response(
+        JSON.stringify({
+          error: "FORBIDDEN_OWNER_ONLY",
+          message: "خدمة كابتن VSP الذكي مخصصة حصرياً لأصحاب ومسؤولي الملاعب.",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // PRO-only commercial entitlement enforced server-side.
+    const subscriptionPlan = String(userProfile?.subscription_plan || "").toLowerCase().trim();
+    if (subscriptionPlan !== "pro") {
+      return new Response(
+        JSON.stringify({
+          error: "OWNER_COPILOT_PRO_REQUIRED",
+          message: "خدمة كابتن VSP متاحة لمالكي الملاعب المشتركين في باقة PRO فقط.",
+        }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userRole: "owner" = "owner";
+
+    // Owners still require an active paid subscription or valid trial window.
+    const nowMs = Date.now();
+    const trialMs = userProfile?.trial_ends_at ? new Date(userProfile.trial_ends_at).getTime() : 0;
+    const subMs = userProfile?.subscription_expires_at ? new Date(userProfile.subscription_expires_at).getTime() : 0;
+    const entitlementUntil = Math.max(trialMs, subMs);
+    if (entitlementUntil <= nowMs) {
+      return new Response(
+        JSON.stringify({
+          error: "OWNER_COPILOT_SUBSCRIPTION_REQUIRED",
+          message: "خدمة كابتن VSP للمالك متاحة مع باقة PRO نشطة أو فترة التجربة السارية.",
+        }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // 6. Retrieve or Initialize Conversation Session
