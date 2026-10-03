@@ -112,7 +112,9 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
    if (confirmed != true || !mounted) return;
    setState(() => _isLoading = true);
    try {
-     final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
+     final success = booking.isOpenJoin
+          ? await MatchRepository().leavePrivateCollectiveMatch(widget.booking.id, userId)
+          : await MatchRepository().leavePublicMatch(widget.booking.id, userId);
      if (!context.mounted) return;
      if (success) VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
      else VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
@@ -263,7 +265,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
         behavior: HitTestBehavior.opaque,
         onTap: () {
           if (booking.isOpenJoin) {
-            CollectiveMatchInviteSheet.show(
+            CollectiveMatchInviteSheet.showForBooking(
               context,
               bookingId: booking.id,
               initialBooking: booking,
@@ -384,6 +386,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  }
  if (isHost) return _buildRawButton(label: booking.isOpenJoin ? (isArabic ? 'إدارة التجميعية' : 'Manage') : AppLocalizations.of(context)!.manage, color: VSPColors.accent, onTap: () => _manageParticipants(context), isOutlined: false);
  if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser.uid), isOutlined: true);
+ if (booking.isOpenJoin && !isHost && !hasJoined) {
+   return _buildRawButton(
+     label: isArabic ? 'دعوة خاصة' : 'Private invite',
+     color: VSPColors.textSecondary,
+     onTap: null,
+     isOutlined: true,
+   );
+ }
  if (isPending) {
  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
  }
