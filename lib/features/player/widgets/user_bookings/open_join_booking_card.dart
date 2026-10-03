@@ -355,7 +355,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
               const SizedBox(height: VSPSpacing.sm),
               Row(
                 children: [
-                  Icon(Iconsax.arrow_right_3_copy, size: 16, color: VSPColors.textSecondary),
+                  const Icon(Iconsax.arrow_right_3_copy, size: 16, color: VSPColors.textSecondary),
                   const SizedBox(width: 6),
                   Expanded(child: Text(
                     isArabic ? 'اضغط على الكارت لعرض التفاصيل' : 'Tap the card to view details',
