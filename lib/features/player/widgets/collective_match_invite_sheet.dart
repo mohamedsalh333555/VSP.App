@@ -46,7 +46,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _load() async {
     try {
-      final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
+      final booking = await MatchRepository().getPrivateMatchInviteDetails(widget.bookingId);
       if (!mounted) return;
       if (booking != null) {
         _booking = booking;
