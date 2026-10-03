@@ -29,6 +29,38 @@ void showBookingPaymentMethodSheet({
   final config = Provider.of<RemoteConfigService>(context, listen: false);
   final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled', defaultValue: true);
 
+  // Collective bookings are always fully paid online by the host.
+  // Keep this guard here as a second line of defense if this sheet is reused.
+  if (draft.bookingType == BookingType.openJoin) {
+    final collectiveDraft = draft.copyWith(
+      paymentMethod: 'paymob',
+      paymentStatus: 'pending',
+      needsDeposit: false,
+      depositPaid: 0.0,
+      isDepositPaid: false,
+      isPaid: false,
+      isPrivate: true,
+    );
+    if (!isOnlineEnabled) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الدفع الإلكتروني غير متاح حالياً، ولا يمكن تأكيد الحجز التجميعي بدونه.'
+            : 'Online payment is currently unavailable, so the collective booking cannot be confirmed.',
+      );
+      return;
+    }
+    nav.push(
+      MaterialPageRoute(
+        builder: (_) => PaymentGatewayScreen(
+          bookingDraft: collectiveDraft,
+          forceFullPayment: true,
+        ),
+      ),
+    );
+    return;
+  }
+
   showModalBottomSheet(
     context: context,
     useSafeArea: true,
