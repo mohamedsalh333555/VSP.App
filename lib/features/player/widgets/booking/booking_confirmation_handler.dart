@@ -238,7 +238,7 @@ class BookingConfirmationHandler {
       opponentTeamName: opponentTeam?.name,
       totalPrice: totalPrice,
       isPaid: false,
-      isPrivate: isPrivate,
+      isPrivate: isOpenJoin(bookingType) ? true : isPrivate,
       rentBall: isBallRented,
       currentPlayers: (bType == BookingType.openJoin) ? initialPlayersCount : currentPlayers,
       playersPerTeam: stadium.playersPerTeam,
