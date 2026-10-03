@@ -14,11 +14,11 @@ void main() {
     test('getLocalizedBookingType returns accurate localized names in Arabic and English', () {
       expect(
         PublicMatchCardFormatter.getLocalizedBookingType(BookingType.openJoin, isArabic: true),
-        equals('تجميعي'),
+        equals('تجميعية خاصة'),
       );
       expect(
         PublicMatchCardFormatter.getLocalizedBookingType(BookingType.openJoin, isArabic: false),
-        equals('OPEN JOIN'),
+        equals('PRIVATE COLLECTIVE'),
       );
 
       expect(
