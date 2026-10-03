@@ -83,7 +83,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         startTime: DateTime.now(),
         endTime: DateTime.now().add(const Duration(hours: 1)),
         bookingType: type,
-        isPrivate: type != BookingType.openJoin,
+        isPrivate: true,
         rentBall: false,
         totalPrice: 0,
         needsDeposit: widget.stadium.needsDeposit,
@@ -177,10 +177,10 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
           _buildOptionCard(
             context,
             id: 'Open Join Match',
-            title: isArabic ? 'حجز انضمام وتجميع' : 'Open Gathering Match',
+            title: isArabic ? 'حجز تجميعي خاص' : 'Private Collective Match',
             subtitle: isArabic
-                ? 'حجز مباراة تجميعية وتحديد عدد لاعبيك والسماح للاعبين بالانضمام'
-                : 'Create an open match, specify your available players, and let others join',
+                ? 'أنشئ حجزاً خاصاً واجمع أصحابك من خلال رابط الدعوة أو كود الحجز'
+                : 'Create a private collective booking and invite your players with a link or booking code',
             iconData: Iconsax.people_copy,
           ),
           const SizedBox(height: 12),
