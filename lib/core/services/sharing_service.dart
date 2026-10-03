@@ -4,7 +4,7 @@ import '../utils/app_date_formatter.dart';
 
 class SharingService {
  // Base URL for deep linking
- static const String _baseUrl = 'https://vsp.app';
+ static const String _baseUrl = 'https://vspapp.online';
 
  /// Generate a link for a specific match/booking
  static String getMatchLink(String bookingId, {bool invite = false}) {
