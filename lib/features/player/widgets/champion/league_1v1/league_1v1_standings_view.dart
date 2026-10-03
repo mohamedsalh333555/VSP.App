@@ -8,7 +8,7 @@ import '../../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../champion_podium_components.dart';
 
-/// شاشة عرض الترتيب والمنصة الرسمية لمواجهات 1v1 وفقاً لمنظومة الـ 32 لاعب
+/// شاشة عرض الترتيب الإحصائي للاعبي 1v1.
 class League1v1StandingsView extends StatefulWidget {
   final Stream<List<VSP1v1Player>> standingsStream;
   final VoidCallback onRetry;
@@ -95,8 +95,8 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                     Expanded(
                       child: Text(
                         isArabic
-                            ? 'مباريات من 6 جولات • نقطة للدفاع، الهدف، والمهارة • الترتيب حسب أعلى مجموع نقاط تراكمية'
-                            : '6-Round Matches • Points for Defense, Goals & Skill • Ranked by Highest Points',
+                            ? 'عدد الجولات + نقاط الدفاع + الأهداف + المهارة • الترتيب حسب إجمالي النقاط'
+                            : 'Rounds + Defense + Goals + Skill • Ranked by Total Points',
                         style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontSize: 11.5,
@@ -236,7 +236,7 @@ class League1v1RankListItem extends StatelessWidget {
             child: Text(
               '#$rank',
               style: TextStyle(
-                color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                color: VSPColors.textSecondary,
                 fontWeight: FontWeight.w900,
                 fontSize: 13,
               ),
