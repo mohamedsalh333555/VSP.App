@@ -231,7 +231,7 @@ class League1v1RankListItem extends StatelessWidget {
       child: Row(
         children: [
           // رقم الترتيب
-          SizedBox(
+          const SizedBox(
             width: 28,
             child: Text(
               '#$rank',
