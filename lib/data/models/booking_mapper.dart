@@ -166,6 +166,9 @@ class BookingMapper {
       totalFieldCapacity: (parsedBookingType == BookingType.challenge)
           ? 0
           : tfc,
+      manualPlayerCount: (parsedBookingType == BookingType.openJoin)
+          ? _parseInt(data['manual_player_count'] ?? data['manualPlayerCount'], 0)
+          : 0,
       pendingUserIds:
           (data['pendingUserIds'] ?? data['pending_user_ids']) is List
           ? ((data['pendingUserIds'] ?? data['pending_user_ids']) as List)
@@ -335,6 +338,7 @@ class BookingMapper {
       'players_per_team': booking.playersPerTeam,
       'total_field_capacity': booking.isOpenJoin ? booking.totalFieldCapacity : null,
       'max_players': booking.isOpenJoin ? booking.totalFieldCapacity : null,
+      'manual_player_count': booking.isOpenJoin ? booking.manualPlayerCount : 0,
       'joined_user_ids': booking.joinedUserIds,
       'joinedUserIds': booking.joinedUserIds,
       'pending_user_ids': booking.pendingUserIds,
