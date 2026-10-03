@@ -25,18 +25,18 @@ class VSPEmptyState extends StatelessWidget {
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
-          horizontal: VSPSpacing.xl,
-          vertical: VSPSpacing.xl,
+          horizontal: VSPEmptyStateMetrics.contentHorizontalPadding,
+          vertical: VSPEmptyStateMetrics.contentVerticalPadding,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 76,
-              height: 76,
+              width: VSPEmptyStateMetrics.iconContainerSize,
+              height: VSPEmptyStateMetrics.iconContainerSize,
               decoration: BoxDecoration(
                 color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(VSPEmptyStateMetrics.iconContainerRadius),
                 border: Border.all(
                   color: VSPColors.divider.withValues(alpha: 0.28),
                 ),
@@ -44,10 +44,10 @@ class VSPEmptyState extends StatelessWidget {
               child: Icon(
                 icon,
                 color: VSPColors.textSecondary,
-                size: 38,
+                size: VSPEmptyStateMetrics.iconSize,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: VSPEmptyStateMetrics.titleGap),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -58,9 +58,9 @@ class VSPEmptyState extends StatelessWidget {
                     height: 1.3,
                   ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: VSPEmptyStateMetrics.descriptionGap),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: VSPEmptyStateMetrics.textHorizontalPadding),
               child: Text(
                 subtitle,
                 textAlign: TextAlign.center,
@@ -72,7 +72,7 @@ class VSPEmptyState extends StatelessWidget {
               ),
             ),
             if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: VSPSpacing.lg),
+              const SizedBox(height: VSPEmptyStateMetrics.actionGap),
               SizedBox(
                 width: double.infinity,
                 height: VSPSize.buttonHeight,
