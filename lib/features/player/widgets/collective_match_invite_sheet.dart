@@ -16,7 +16,8 @@ import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
-import '../../../l10n/app_localizations.dart';
+
+// ignore_for_file: prefer_interpolation_to_compose_strings
 
 class CollectiveMatchInviteSheet extends StatefulWidget {
   final String? bookingId;
@@ -81,6 +82,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       }
       final booking = _booking;
       if (booking != null) {
+        if (!mounted) return;
         _stadium = await context.read<StadiumProvider>().getStadiumById(booking.stadiumId);
         await _loadUsers(booking.joinedUserIds);
         if (_inviteToken == null) {
