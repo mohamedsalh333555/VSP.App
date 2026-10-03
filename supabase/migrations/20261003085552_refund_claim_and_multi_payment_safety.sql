@@ -17,6 +17,7 @@ DECLARE
   v_refund_amount numeric(10,2);
   v_refund_gross numeric(10,2);
   v_source_paymob_id text;
+  v_meta jsonb;
 BEGIN
   IF coalesce(auth.role(), '') <> 'service_role'
      AND current_user NOT IN ('postgres', 'service_role') THEN
