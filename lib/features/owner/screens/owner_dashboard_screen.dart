@@ -27,6 +27,7 @@ import '../widgets/dashboard/owner_pro_insights_view.dart';
 import '../widgets/dashboard/owner_operational_finance_card.dart';
 import '../widgets/dashboard/owner_today_pitch_schedule_card.dart';
 import '../widgets/dashboard/owner_pending_actions_bar.dart';
+import '../widgets/dashboard/owner_dashboard_header.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -317,6 +318,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   ),
                 ],
 
+                // Header الأساسي للمالك: الصورة + الاسم + الإشعارات + VSP Copilot.
+                OwnerDashboardHeader(
+                  auth: auth,
+                  isProOwner: isProOwner,
+                  isArabic: isArabic,
+                  onUpgrade: () => _showProUpgradeSheet(context),
+                ),
+                const SizedBox(height: 14),
+
                 // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
                   height: 42,
@@ -386,6 +396,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
                 const SizedBox(height: 14),
 
+                // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
+                if (_selectedDashboardTab == 0) ...[
                 // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
                 OwnerOperationalFinanceCard(
                   realizedTotal: _dashboardAnalytics.revenue.realizedRevenue,
@@ -414,8 +426,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
                 const SizedBox(height: 14),
 
-                // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
-                if (_selectedDashboardTab == 0) ...[
+
                   // جدول حجوزات اليوم — يأتي مباشرة بعد الكارت المالي.
                   // ب. كارت جدول مواعيد اليوم بالنقط الملونة أو دعوة لإضافة الملعب الأول
                   if (stadiums.isEmpty)
