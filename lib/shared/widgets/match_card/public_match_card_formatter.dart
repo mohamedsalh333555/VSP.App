@@ -20,7 +20,7 @@ class PublicMatchCardFormatter {
       case BookingType.personal:
         return isArabic ? 'حجز عادي' : 'SOLO';
       case BookingType.openJoin:
-        return isArabic ? 'تجميعي' : 'OPEN JOIN';
+        return isArabic ? 'تجميعية خاصة' : 'PRIVATE COLLECTIVE';
       case BookingType.team:
         return isArabic ? 'فريق' : 'TEAM';
       case BookingType.challenge:

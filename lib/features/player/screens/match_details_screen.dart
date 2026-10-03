@@ -65,7 +65,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  try {
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
- final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId);
+ final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId) ??
+     await MatchRepository().getPrivateCollectiveMatchDetails(widget.bookingId);
  if (booking != null) {
  _booking = booking;
         _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
@@ -92,6 +93,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isJoining = true;
  _isActionProcessing = true;
  });
+ if (_booking?.isOpenJoin == true) {
+   VSPFeedback.showInfo(context, Localizations.localeOf(context).languageCode == 'ar' ? 'هذه تجميعية خاصة. استخدم رابط الدعوة للانضمام.' : 'This is a private collective match. Use the invitation link to join.');
+   return;
+ }
+
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
  final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.uid);
  
@@ -276,7 +282,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
     setState(() => _isActionProcessing = true);
     try {
-      final success = await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
+      final success = _booking?.isOpenJoin == true
+         ? await MatchRepository().leavePrivateCollectiveMatch(widget.bookingId, currentUserId)
+         : await MatchRepository().leavePublicMatch(widget.bookingId, currentUserId);
       if (mounted) {
         setState(() => _isActionProcessing = false);
         if (success) {
@@ -421,26 +429,44 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  pinned: true,
  backgroundColor: VSPColors.background,
  actions: [
+ if (!_booking?.isOpenJoin || isHost)
  IconButton(
  icon: const Icon(Iconsax.share_copy, color: Colors.white),
- onPressed: () {
- if (_booking != null) {
+ onPressed: () async {
+ if (_booking == null) return;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final msg = VSPMatchInviteFormatter.buildInviteMessage(
- stadiumName: _stadium?.name ?? 'ملعب VSP',
- bookingId: widget.bookingId,
- startTime: _booking!.startTime,
- endTime: _booking!.endTime,
- googleMapsUrl: _stadium?.googleMapsUrl,
- currentPlayers: _booking!.currentPlayers,
- maxPlayers: _booking!.maxPlayers,
- totalPrice: _booking!.totalPrice,
- hostName: _booking!.hostName,
- isArabic: isAr,
- isCollective: _booking!.isOpenJoin,
- );
- SharingService.shareMatchFormatted(msg);
+ if (_booking!.isOpenJoin) {
+   if (!isHost) return;
+   final credentials = await MatchRepository().getCollectiveInviteCredentials(widget.bookingId);
+   final token = credentials?['invite_token']?.toString();
+   final code = credentials?['invite_code']?.toString();
+   if (token == null || code == null || token.isEmpty || code.isEmpty || credentials?['active'] != true) {
+     VSPFeedback.showInfo(context, isAr ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after confirmation.');
+     return;
+   }
+   await SharingService.shareCollectiveInvite(
+     inviteToken: token,
+     inviteCode: code,
+     stadiumName: _booking!.stadiumName,
+     date: _booking!.formattedDate + ' - ' + _booking!.formattedTimeRange,
+     hostName: _booking!.hostName ?? (isAr ? 'المنشئ' : 'Host'),
+   );
+   return;
  }
+ final msg = VSPMatchInviteFormatter.buildInviteMessage(
+   stadiumName: _stadium?.name ?? 'ملعب VSP',
+   bookingId: widget.bookingId,
+   startTime: _booking!.startTime,
+   endTime: _booking!.endTime,
+   googleMapsUrl: _stadium?.googleMapsUrl,
+   currentPlayers: _booking!.currentPlayers,
+   maxPlayers: _booking!.maxPlayers,
+   totalPrice: _booking!.totalPrice,
+   hostName: _booking!.hostName,
+   isArabic: isAr,
+   isCollective: false,
+ );
+ await SharingService.shareMatchFormatted(msg);
  },
  ),
  IconButton(
@@ -472,7 +498,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _booking!.isChallenge
      ? (isAr ? 'مباراة تحدي في ${_stadium?.name ?? "الملعب"}' : 'Challenge Match at ${_stadium?.name ?? "Stadium"}')
      : (_booking!.isOpenJoin
-         ? AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium")
+         ? (isAr ? 'تجميعية في \${_stadium?.name ?? "الملعب"}' : 'Collective match at \${_stadium?.name ?? "Stadium"}')
          : (isAr ? 'حجز ملعب ${_stadium?.name ?? ""}' : 'Pitch Booking at ${_stadium?.name ?? ""}')),
  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
  fontWeight: FontWeight.bold,
@@ -489,7 +515,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  child: Text(
  _booking!.isChallenge
      ? (isAr ? 'تحدي فرق' : 'Challenge')
-     : (_booking!.isOpenJoin ? (isAr ? 'مفتوح' : 'Open Join') : (isAr ? 'حجز خاص' : 'Personal')),
+     : (_booking!.isOpenJoin ? (isAr ? 'خاص' : 'Private') : (isAr ? 'حجز خاص' : 'Personal')),
  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
  ),
  ),
@@ -583,7 +609,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _buildDetailRow(Iconsax.money_copy, AppLocalizations.of(context)!.price, '${_booking!.totalPrice.toInt()} EGP'),
  const SizedBox(height: VSPSpacing.md),
  
- // WhatsApp Group Share Button
+ // Private collective invitations use the dedicated VSP invite sheet.
+ if (!_booking!.isOpenJoin)
+  // WhatsApp Group Share Button
  PrimaryButton(
  text: Localizations.localeOf(context).languageCode == 'ar' 
  ? 'دعوة أصحابك عبر جروب الواتساب ' 
