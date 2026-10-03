@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import 'primary_button.dart';
 
-/// شاشة حالة الفراغ الموجهة (Actionable Empty State - الصفحة 8 و 9 من كتاب UX Playbook)
+/// Unified VSP empty/no-content state.
+/// Context-specific screens provide their own icon and copy; the visual shell stays consistent.
 class VSPEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -23,46 +24,50 @@ class VSPEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(VSPSpacing.xl),
+        padding: const EdgeInsets.symmetric(
+          horizontal: VSPSpacing.xl,
+          vertical: VSPSpacing.xl,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // أيقونة خلفية مع إضاءة نيون هادئة (الصفحة 8)
             Container(
-              padding: const EdgeInsets.all(VSPSpacing.md),
+              width: 76,
+              height: 76,
               decoration: BoxDecoration(
-                color: VSPColors.accent.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(
-                  color: VSPColors.accent.withValues(alpha: 0.25),
-                  width: 2,
+                  color: VSPColors.divider.withValues(alpha: 0.28),
                 ),
               ),
               child: Icon(
                 icon,
-                color: VSPColors.accent,
-                size: 28,
+                color: VSPColors.textSecondary,
+                size: 38,
               ),
             ),
-            const SizedBox(height: VSPSpacing.lg),
+            const SizedBox(height: 18),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: VSPColors.textPrimary,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
+                    height: 1.3,
                   ),
             ),
-            const SizedBox(height: VSPSpacing.sm),
+            const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 subtitle,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: VSPColors.textSecondary,
-                      height: 1.45,
-                      fontSize: 12.5,
+                      fontSize: 12,
+                      height: 1.55,
                     ),
               ),
             ),
@@ -70,10 +75,10 @@ class VSPEmptyState extends StatelessWidget {
               const SizedBox(height: VSPSpacing.lg),
               SizedBox(
                 width: double.infinity,
-                height: VSPSize.buttonHeight, // ارتفاع مريح للإبهام (الصفحات 6 و 9)
+                height: VSPSize.buttonHeight,
                 child: PrimaryButton(
                   text: buttonText!,
-                  onPressed: onButtonPressed,
+                  onPressed: onButtonPressed!,
                 ),
               ),
             ],
