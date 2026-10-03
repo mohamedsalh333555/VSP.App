@@ -1,5 +1,5 @@
 class ParsedDeepLink {
-  final String type; // 'match', 'team', 'championship', 'booking', 'stadium', 'payment-complete'
+  final String type; // 'match', 'collective', 'team', 'championship', 'booking', 'stadium', 'payment-complete'
   final String id;
   final Map<String, String>? queryParams;
 
@@ -12,8 +12,7 @@ class ParsedDeepLink {
     if (id.isEmpty) {
       return '/$type';
     }
-    final invite = queryParams?['invite'] == '1' && type == 'match';
-    return '/$type/$id${invite ? '?invite=1' : ''}';
+    return '/$type/$id';
   }
 }
 
@@ -22,6 +21,7 @@ class DeepLinkHelper {
   static final RegExp _validIdRegex = RegExp(r'^[a-zA-Z0-9\-_\s]+$');
   static const Set<String> _validTypes = {
     'match',
+    'collective',
     'team',
     'championship',
     'booking',
