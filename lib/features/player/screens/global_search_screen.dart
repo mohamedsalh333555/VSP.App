@@ -5,10 +5,13 @@ import '../../../core/ui/vsp_ui.dart';
 import 'dart:async';
 import '../../../core/repositories/search_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import 'stadium_details_screen.dart';
 import 'championship_details_screen.dart';
 import 'team_profile_screen.dart';
+import '../widgets/collective_match_invite_sheet.dart';
+import '../../../core/repositories/match_repository.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -71,9 +74,65 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     super.dispose();
   }
 
+
+  Future<void> _openCollectiveInviteCode() async {
+    final controller = TextEditingController();
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final code = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text(
+          ar ? 'كود التجميعية' : 'Collective match code',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.characters,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+          decoration: InputDecoration(
+            hintText: ar ? 'مثال: AB12CD34' : 'e.g. AB12CD34',
+            hintStyle: const TextStyle(color: VSPColors.textSecondary),
+            filled: true,
+            fillColor: VSPColors.surfaceAlt,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(ar ? 'إلغاء' : 'Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim().toUpperCase()),
+            child: Text(ar ? 'فتح' : 'Open'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (code == null || code.isEmpty || !mounted) return;
+
+    final data = await MatchRepository().getPrivateCollectiveInviteByCode(code);
+    if (!mounted) return;
+    final token = data?['invite_token']?.toString();
+    if (token == null || token.isEmpty) {
+      VSPFeedback.showError(context, ar ? 'كود التجميعية غير صالح أو انتهى.' : 'The collective match code is invalid or expired.');
+      return;
+    }
+    await CollectiveMatchInviteSheet.showForInvite(
+      context,
+      inviteToken: token,
+      initialInviteData: data,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasResults = _results.values.any((list) => list.isNotEmpty);
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
@@ -116,6 +175,41 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_searchController.text.isEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: VSPColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                            ),
+                            child: const Icon(Iconsax.key_copy, color: VSPColors.accent),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(ar ? 'لديك كود تجميعية؟' : 'Have a collective code?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 3),
+                                Text(ar ? 'افتح الدعوة مباشرة بالكود.' : 'Open a private invitation by code.', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                          TextButton(onPressed: _openCollectiveInviteCode, child: Text(ar ? 'فتح' : 'Open')),
+                        ],
+                      ),
+                    ),
                     Text(AppLocalizations.of(context)!.recentSearches, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
                     const SizedBox(height: VSPSpacing.md),
                     Wrap(
