@@ -112,7 +112,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
    if (confirmed != true || !mounted) return;
    setState(() => _isLoading = true);
    try {
-     final success = booking.isOpenJoin
+     final success = widget.booking.isOpenJoin
           ? await MatchRepository().leavePrivateCollectiveMatch(widget.booking.id, userId)
           : await MatchRepository().leavePublicMatch(widget.booking.id, userId);
      if (!context.mounted) return;
