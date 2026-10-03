@@ -180,6 +180,51 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   Future<void> _remove(String participantId) async {
     final booking = _booking;
     if (booking == null || participantId == booking.createdByUserId) return;
+
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final user = _users[participantId];
+    final name = user?.name?.trim().isNotEmpty == true
+        ? user!.name!
+        : (ar ? 'هذا اللاعب' : 'this player');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        ),
+        title: Text(
+          ar ? 'إزالة $name؟' : 'Remove $name?',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        content: Text(
+          ar
+              ? 'سيتم إخراجه من التجميعية وتحرير مكانه.'
+              : 'The player will be removed and the place will become available.',
+          style: const TextStyle(color: VSPColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(ar ? 'إلغاء' : 'Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: VSPColors.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(ar ? 'إزالة' : 'Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     try {
       await _repo.removePrivateCollectiveParticipant(booking.id, participantId);
       await _reload();
