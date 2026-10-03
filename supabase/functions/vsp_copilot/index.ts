@@ -276,11 +276,19 @@ serve(async (req: Request) => {
           generationConfig: { temperature: 0.3 },
         };
 
-        const genRes = await fetch(genUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(genPayload),
-        });
+        const responseAbortController = new AbortController();
+        const responseTimeoutHandle = setTimeout(() => responseAbortController.abort(), 15000);
+        let genRes: Response;
+        try {
+          genRes = await fetch(genUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(genPayload),
+            signal: responseAbortController.signal,
+          });
+        } finally {
+          clearTimeout(responseTimeoutHandle);
+        }
 
         if (genRes.ok) {
           const genData = await genRes.json();
