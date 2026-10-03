@@ -5,7 +5,6 @@ import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
@@ -170,7 +169,9 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
             Expanded(
               child: championships.isEmpty
                   ? ChampionshipsEmptyState(
-                      locationName: championTranslateItem(context, widget.selectedLocation),
+                      locationName: isArabic
+                          ? (EgyptGovernorates.governorateToArabic[widget.selectedLocation] ?? widget.selectedLocation)
+                          : widget.selectedLocation,
                       showReturnButton: isDifferentGov,
                       onReturn: () => widget.onLocationChanged(userGov),
                     )
