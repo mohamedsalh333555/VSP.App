@@ -8,7 +8,7 @@ class SharingService {
 
  /// Generate a link for a specific match/booking
  static String getMatchLink(String bookingId) {
- return '$_baseUrl/match/$bookingId';
+ return '$_baseUrl/match/$bookingId?invite=1';
  }
 
  /// Generate a link for a specific team
