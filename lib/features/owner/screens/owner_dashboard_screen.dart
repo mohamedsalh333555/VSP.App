@@ -250,25 +250,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     final userModel = auth.userModel;
     final isProOwner = userModel?.isProPlan == true;
 
-    bool isExpired = false;
-    int? remainingTrialDays;
-    bool showTrialEndingSoon = false;
-
-    if (userModel != null) {
-      if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
-        isExpired = false;
-      } else {
-        isExpired = userModel.isPlanExpired;
-      }
-
-      final trialEnds = userModel.effectiveTrialEndsAt;
-      if (trialEnds != null && userModel.isInActiveTrial) {
-        remainingTrialDays = trialEnds.difference(DateTime.now()).inDays;
-        // يظهر فقط في آخر 10 أيام من التجربة المجانية (اليوم 51 إلى 60)
-        showTrialEndingSoon = remainingTrialDays <= 10 && remainingTrialDays >= 0 && !isExpired;
-      }
-    }
-
     final bookingProvider = Provider.of<BookingProvider>(context);
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final allBookings = bookingProvider.userBookings;
