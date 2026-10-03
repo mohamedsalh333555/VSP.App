@@ -218,7 +218,7 @@ class League1v1RankListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final initialLetter =
         player.name.trim().isNotEmpty ? player.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'P';
-    final stageTitle = player.getStageTitle();
+    final stageTitle = player.isChampion ? (isArabic ? '🏆 بطل البطولة' : '🏆 Champion') : player.getStageTitle();
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -309,8 +309,8 @@ class League1v1RankListItem extends StatelessWidget {
                 // تفصيل الدرجات الصريح: دفاع • أهداف • مهارة
                 Text(
                   isArabic
-                      ? 'دفاع: ${player.tackles}  •  أهداف: ${player.goals}  •  مهارة: ${player.skillPoints}'
-                      : 'Defense: ${player.tackles}  •  Goals: ${player.goals}  •  Skill: ${player.skillPoints}',
+                      ? 'الجولات: ${player.roundsPlayed}  •  دفاع: ${player.tackles}  •  أهداف: ${player.goals}  •  مهارة: ${player.skillPoints}'
+                      : 'Rounds: ${player.roundsPlayed}  •  Defense: ${player.tackles}  •  Goals: ${player.goals}  •  Skill: ${player.skillPoints}',
                   style: const TextStyle(
                     color: VSPColors.textSecondary,
                     fontSize: 11,
