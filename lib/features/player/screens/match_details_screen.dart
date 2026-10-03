@@ -429,7 +429,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  pinned: true,
  backgroundColor: VSPColors.background,
  actions: [
- if (!_booking?.isOpenJoin || isHost)
+ if (_booking?.isOpenJoin != true || isHost)
  IconButton(
  icon: const Icon(Iconsax.share_copy, color: Colors.white),
  onPressed: () async {
@@ -440,6 +440,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    final credentials = await MatchRepository().getCollectiveInviteCredentials(widget.bookingId);
    final token = credentials?['invite_token']?.toString();
    final code = credentials?['invite_code']?.toString();
+   if (!mounted) return;
    if (token == null || code == null || token.isEmpty || code.isEmpty || credentials?['active'] != true) {
      VSPFeedback.showInfo(context, isAr ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invite can be shared after confirmation.');
      return;
@@ -448,7 +449,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
      inviteToken: token,
      inviteCode: code,
      stadiumName: _booking!.stadiumName,
-     date: _booking!.formattedDate + ' - ' + _booking!.formattedTimeRange,
+     date: '${_booking!.formattedDate} - ${_booking!.formattedTimeRange}',
      hostName: _booking!.hostName ?? (isAr ? 'المنشئ' : 'Host'),
    );
    return;
