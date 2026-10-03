@@ -64,45 +64,48 @@ class BookingBottomBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── خيار الحجز الخاص (خاص بـ OpenJoin) ──
+          // ── التجميعية خاصة دائمًا ──
           if (isOpenJoin) ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  isArabic ? 'حجز خاص' : 'Private',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.3,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.borderLight),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'حجز تجميعي خاص' : 'Private Collective Booking',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isArabic
+                              ? 'بعد دفع قيمة الحجز كاملة أونلاين وتأكيدها ستحصل على رابط وكود لإرسالهما لمن تريد'
+                              : 'After full online payment is confirmed, you will get a link and code to send to invited players.',
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 11,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Transform.scale(
-                  scale: 0.85,
-                  child: Switch(
-                    value: isPrivate,
-                    activeColor: Colors.black,
-                    activeTrackColor: VSPColors.accent,
-                    inactiveThumbColor: VSPColors.textMuted,
-                    inactiveTrackColor: VSPColors.surfaceAlt,
-                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-                    onChanged: (val) {
-                      onPrivateChanged(val);
-                      VSPFeedback.showInfo(
-                        context,
-                        val
-                            ? (isArabic
-                                ? 'حجز خاص: تقتصر المباراة على فريقك فقط.'
-                                : 'Private Booking: Exclusive for your team only.')
-                            : (isArabic
-                                ? 'حجز عام: ستظهر مباراتك في الخريطة ليتمكن باقي اللاعبين من الانضمام!'
-                                : 'Public Booking: Visible on map for players to join!'),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 12),
           ],
@@ -116,7 +119,7 @@ class BookingBottomBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isArabic ? 'عدد اللاعبين المتوفرين معك' : 'Players With You',
+                      isArabic ? 'إجمالي عدد لاعبي الحجز' : 'Total players in booking',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -126,7 +129,7 @@ class BookingBottomBar extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isArabic ? 'حدد عدد أصحابك القادمين معك لتكملة سعة الملعب' : 'Specify how many friends you bring with you',
+                      isArabic ? 'يشمل أنت وأي لاعبين ستضيفهم قبل إرسال الدعوة' : 'Includes you and any players you add before sharing the invite',
                       style: const TextStyle(
                         color: VSPColors.textSecondary,
                         fontSize: 11,
