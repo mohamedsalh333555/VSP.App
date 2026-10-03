@@ -337,7 +337,115 @@ class MatchRepository {
  }
  }
 
+ Future<Booking?> getPrivateCollectiveMatchDetails(String bookingId) async {
+   try {
+     final response = await _supabase.rpc(
+       'get_private_collective_match_details',
+       params: {'p_booking_id': bookingId},
+     );
+     if (response is Map) {
+       final data = Map<String, dynamic>.from(response);
+       data['joined_user_ids'] ??= <String>[];
+       return Booking.fromFirestore(data, bookingId);
+     }
+     return null;
+   } catch (e, stack) {
+     VSPLogger.e('Error loading private collective match details', e, stack);
+     return null;
+   }
+ }
+
+ Future<Map<String, dynamic>?> getCollectiveInviteCredentials(String bookingId) async {
+   try {
+     final response = await _supabase.rpc(
+       'get_collective_invite_credentials',
+       params: {'p_booking_id': bookingId},
+     );
+     return response is Map ? Map<String, dynamic>.from(response) : null;
+   } catch (e, stack) {
+     VSPLogger.e('Error loading collective invite credentials', e, stack);
+     return null;
+   }
+ }
+
+ Future<Map<String, dynamic>?> getPrivateCollectiveInviteByCode(String code) async {
+   try {
+     final response = await _supabase.rpc(
+       'get_private_collective_invite_by_code',
+       params: {'p_invite_code': code.trim().toUpperCase()},
+     );
+     return response is Map ? Map<String, dynamic>.from(response) : null;
+   } catch (e, stack) {
+     VSPLogger.e('Error resolving collective invite code', e, stack);
+     return null;
+   }
+ }
+
+ Future<bool> joinPrivateCollectiveMatch({
+   required String inviteToken,
+   required String userId,
+ }) async {
+   try {
+     final response = await _supabase.rpc(
+       'join_private_collective_match_atomic',
+       params: {
+         'p_invite_token': inviteToken,
+         'p_user_id': userId,
+       },
+     );
+     if (response is Map && response['success'] == false) {
+       throw Exception(response['message'] ?? response['error'] ?? 'تعذر الانضمام للمباراة.');
+     }
+     return response is Map ? response['success'] != false : true;
+   } on PostgrestException catch (e) {
+     final message = e.message.toLowerCase();
+     if (message.contains('collective_governorate_mismatch')) {
+       throw Exception('لا يمكنك الانضمام لهذه التجميعية لأن الملعب في محافظة مختلفة عن محافظتك.');
+     }
+     if (message.contains('governorate_not_verified')) {
+       throw Exception('يجب تحديد محافظتك أولاً للانضمام إلى هذه التجميعية.');
+     }
+     if (message.contains('match_awaiting_host_payment')) {
+       throw Exception('المنشئ لم يؤكد الدفع بعد. حاول مرة أخرى بعد تأكيد الحجز.');
+     }
+     if (message.contains('match_is_full')) {
+       throw Exception('اكتملت التجميعية بالفعل.');
+     }
+     if (message.contains('already_joined')) {
+       return true;
+     }
+     if (message.contains('time_conflict')) {
+       throw Exception('لديك حجز آخر يتعارض مع موعد هذه المباراة.');
+     }
+     rethrow;
+   }
+ }
+
+ Future<bool> updateCollectiveManualPlayers({
+   required String bookingId,
+   required int manualPlayerCount,
+ }) async {
+   final userId = _supabase.auth.currentUser?.id;
+   if (userId == null) return false;
+   try {
+     final response = await _supabase.rpc(
+       'update_collective_manual_players_atomic',
+       params: {
+         'p_booking_id': bookingId,
+         'p_user_id': userId,
+         'p_manual_player_count': manualPlayerCount,
+       },
+     );
+     if (response is Map && response['success'] == false) return false;
+     return true;
+   } catch (e, stack) {
+     VSPLogger.e('Error updating collective manual players', e, stack);
+     return false;
+   }
+ }
+
  Future<bool> updatePublicMatchHostSpots(String bookingId, int newHostSpotsCount) async {
+
  try {
  final uid = _supabase.auth.currentUser?.id ?? '';
  // PostgreSQL Atomic RPC
