@@ -16,7 +16,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
-import '../screens/match_details_screen.dart';
 
 class CollectiveMatchInviteSheet extends StatefulWidget {
   final String? bookingId;
@@ -528,9 +527,14 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
             padding: EdgeInsets.fromLTRB(20, 10, 20, MediaQuery.paddingOf(context).bottom + 12),
             child: isHost
                 ? OutlinedButton(
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => MatchDetailsScreen(bookingId: booking.id))),
-                    style: OutlinedButton.styleFrom(foregroundColor: VSPColors.accent, side: BorderSide(color: VSPColors.accent.withValues(alpha: .5)), minimumSize: const Size.fromHeight(50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button))),
-                    child: Text(ar ? 'إدارة الحجز' : 'Manage booking'),
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: VSPColors.accent,
+                      side: BorderSide(color: VSPColors.accent.withValues(alpha: .5)),
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)),
+                    ),
+                    child: Text(ar ? 'إغلاق' : 'Done'),
                   )
                 : ElevatedButton(
                     onPressed: cancelled || ended || full || joined || _inviteToken == null ? null : _join,
