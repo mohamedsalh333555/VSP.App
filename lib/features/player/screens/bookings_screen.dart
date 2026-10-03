@@ -8,7 +8,6 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
-import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
