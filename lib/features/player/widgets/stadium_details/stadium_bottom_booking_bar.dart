@@ -98,17 +98,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                 Expanded(
                   child: PrimaryButton(
                     text: isArabic ? 'احجز الآن' : 'Book Now',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BookingConfirmationScreen(
-                            stadium: stadium,
-                            bookingType: 'Personal',
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => BookingTypeModal.show(context, stadium),
                   ),
                 ),
               ],
