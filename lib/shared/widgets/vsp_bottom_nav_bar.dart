@@ -58,7 +58,7 @@ class VspBottomNavBar extends StatelessWidget {
         VSPDSSpacing.xs,
         VSPDSSpacing.xs,
         VSPDSSpacing.xs,
-        VSPDSSpacing.xxs + VSPDSSpacing.xs / 2,
+        VSPDSSpacing.navigationBottomPadding,
       ),
       child: Row(
         children: items.asMap().entries.map((entry) {
@@ -88,7 +88,7 @@ class VspBottomNavBar extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 180),
+                              duration: VSPDSMotion.navigationSwitch,
                               child: Icon(
                                 isSelected
                                     ? item.activeIcon
@@ -120,8 +120,8 @@ class VspBottomNavBar extends StatelessWidget {
                         ),
                         if (item.hasNotification && !isSelected)
                           Positioned(
-                            top: -1,
-                            right: -2,
+                            top: VSPDSizes.navigationNotificationTop,
+                            right: VSPDSizes.navigationNotificationRight,
                             child: Container(
                               width: VSPDSizes.notificationDot,
                               height: VSPDSizes.notificationDot,
