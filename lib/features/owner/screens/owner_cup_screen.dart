@@ -78,7 +78,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           ? null
           : Padding(
               padding: const EdgeInsets.only(
-                bottom: VSPBottomNavBarMetrics.fabBottomOffset,
+                bottom: VSPBottomNavBarMetrics.fabBottomOffset + 8,
               ),
               child: FloatingActionButton(
                 onPressed: () => showOwnerCupFormatModal(context),
