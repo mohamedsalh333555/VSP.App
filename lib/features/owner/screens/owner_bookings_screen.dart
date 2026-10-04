@@ -6,7 +6,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -76,9 +76,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPScaffold(
-      backgroundColor: VSPColors.background,
+      backgroundColor: VSPDSSemanticColors.background,
       appBar: AppBar(
-        backgroundColor: VSPColors.background,
+        backgroundColor: VSPDSSemanticColors.background,
         elevation: 0,
         leading: Navigator.canPop(context) ? const VSPBackButton() : null,
         centerTitle: true,
@@ -162,15 +162,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               Expanded(
                 child: ListView.separated(
                   controller: _scrollController,
-                  padding: VSPScrollPadding.forList(
+                  padding: VSPDSScrollPadding.forList(
                     context,
                     hasFloatingNavBar: true,
-                    top: VSPSpacing.md,
-                    horizontal: VSPSpacing.md,
+                    top: VSPDSSpacing.sm,
+                    horizontal: VSPDSSpacing.sm,
                   ),
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: mergedSlots.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: VSPSpacing.md),
+                  separatorBuilder: (_, __) => const SizedBox(height: VSPDSSpacing.sm),
                   itemBuilder: (context, index) {
                     final slot = mergedSlots[index];
                     return OwnerTimeSlotRow(
@@ -208,10 +208,10 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         return Theme(
           data: Theme.of(pickerCtx).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: VSPColors.accent,
+              primary: VSPDSSemanticColors.accent,
               onPrimary: Colors.black,
-              surface: VSPColors.surface,
-              onSurface: VSPColors.textPrimary,
+              surface: VSPDSSemanticColors.surface,
+              onSurface: VSPDSSemanticColors.textPrimary,
             ),
           ),
           child: child!,
