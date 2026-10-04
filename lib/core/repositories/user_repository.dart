@@ -182,7 +182,7 @@ class UserRepository {
     Map<String, dynamic> additionalData,
   ) async {
     try {
-      await _supabase.rpc(
+      final response = await _supabase.rpc(
         'complete_user_registration',
         params: {
           'p_user_id': userId,
@@ -202,6 +202,9 @@ class UserRepository {
           'p_p2p_bank': additionalData['p2p_bank'],
         },
       );
+      if (response is Map && response['success'] == false) {
+        throw Exception(response['error']?.toString() ?? 'REGISTRATION_COMPLETION_FAILED');
+      }
       VSPLogger.i(
         ' complete_user_registration RPC persisted successfully for $userId',
       );
