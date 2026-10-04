@@ -50,6 +50,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
   bool _isProcessingPayment = false;
   bool _hasPaid = false;
+  bool _isCancellingRegistration = false;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +228,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 isProcessingPayment: _isProcessingPayment,
                 isArabic: isArabic,
                 onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee ?? 0.0),
+                onCancelRegistration: () => _handleCancelRegistration(tournamentId),
+                isCancellingRegistration: _isCancellingRegistration,
                 onSwitchToUserGov: () => widget.onLocationChanged(userGov),
               ),
               const SizedBox(height: 24),
@@ -242,6 +245,46 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         );
       },
     );
+  }
+
+  Future<void> _handleCancelRegistration(String tournamentId) async {
+    if (_isCancellingRegistration) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isArabic ? 'إلغاء التسجيل' : 'Cancel registration'),
+        content: Text(isArabic
+            ? 'هل تريد إلغاء تسجيلك؟ إذا كنت قد دفعت، سيتم إنشاء طلب استرداد رسمي وإبلاغك بحالته.'
+            : 'Do you want to leave this tournament? If you paid, an official refund request will be created and you will be notified of its status.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(isArabic ? 'رجوع' : 'Back')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(isArabic ? 'تأكيد الإلغاء' : 'Confirm')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => _isCancellingRegistration = true);
+    try {
+      final res = await LeagueRepository().leave1v1Tournament(tournamentId);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final manual = res['manual_review'] == true;
+        VSPFeedback.showInfo(
+          context,
+          manual
+              ? (isArabic ? 'تم إلغاء تسجيلك، وطلب الاسترداد يحتاج مراجعة يدوية.' : 'Registration cancelled. Your refund requires manual review.')
+              : (isArabic ? 'تم إلغاء تسجيلك وإنشاء طلب الاسترداد. سيتم تحديثك عند اكتماله.' : 'Registration cancelled and refund requested. You will be updated when it completes.'),
+        );
+        setState(() => _hasPaid = false);
+      } else {
+        VSPFeedback.showError(context, res['error']?.toString() ?? (isArabic ? 'تعذر إلغاء التسجيل.' : 'Unable to cancel registration.'));
+      }
+    } catch (_) {
+      if (mounted) VSPFeedback.showError(context, isArabic ? 'تعذر إلغاء التسجيل حالياً.' : 'Unable to cancel registration right now.');
+    } finally {
+      if (mounted) setState(() => _isCancellingRegistration = false);
+    }
   }
 
   Future<void> _handleJoin1v1(String tournamentId, double entryFee) async {
