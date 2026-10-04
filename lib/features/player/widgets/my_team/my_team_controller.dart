@@ -33,6 +33,7 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddPlayerSheet(
+        requiredGovernorate: currentTeam?.governorate ?? auth.userModel?.governorate?.trim(),
         existingMemberUids: [
           currentTeam?.memberUids.first ?? auth.currentUser?.uid ?? '',
           ...teamMembers.map((m) => m.uid),
