@@ -77,6 +77,7 @@
  "registerPlayerSubtitle": "سجل كلاعب وشارك في أقوى التحديات",
  "fillAllFields": "يرجى ملء جميع الحقول",
  "pleaseEnterDob": "يرجى إدخال تاريخ الميلاد",
+ "mustBe18OrOlder": "يجب أن يكون عمرك 18 سنة فأكثر لاستخدام VSP.",
  "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
  "passwordMismatch": "كلمات المرور غير متطابقة",
  "passwordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
