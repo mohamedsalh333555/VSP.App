@@ -93,6 +93,40 @@ void main() {
       expect(tooShort.error, equals(SignupValidationError.passwordTooShort));
     });
 
+    test('validateForm rejects users under 18', () {
+      final res = SignupValidationService.validateForm(
+        agreedToTerms: true,
+        firstName: 'Young',
+        lastName: 'Player',
+        rawPhone: '01012345678',
+        email: 'young@test.com',
+        password: 'Password123!',
+        confirmPassword: 'Password123!',
+        dateOfBirth: DateTime(2009, 10, 5),
+      );
+
+      expect(res.isValid, isFalse);
+      expect(res.error, equals(SignupValidationError.mustBe18OrOlder));
+    });
+
+    test('isAtLeast18 handles the exact birthday boundary', () {
+      final today = DateTime(2026, 10, 5);
+      expect(
+        SignupValidationService.isAtLeast18(
+          DateTime(2008, 10, 5),
+          today: today,
+        ),
+        isTrue,
+      );
+      expect(
+        SignupValidationService.isAtLeast18(
+          DateTime(2008, 10, 6),
+          today: today,
+        ),
+        isFalse,
+      );
+    });
+
     test('validateForm succeeds on completely valid inputs', () {
       final res = SignupValidationService.validateForm(
         agreedToTerms: true,
