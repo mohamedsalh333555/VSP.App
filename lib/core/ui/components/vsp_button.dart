@@ -66,9 +66,7 @@ class VSPPrimaryButton extends StatelessWidget {
             minimumSize: Size.zero,
             padding: EdgeInsets.zero,
             shape: const StadiumBorder(),
-            overlayColor: VSPDSSemanticColors.focusRing.withValues(
-              alpha: VSPDSOpacity.pressed,
-            ),
+            overlayColor: VSPDSColors.white12,
           ),
           child: isLoading
               ? const SizedBox(
@@ -76,7 +74,7 @@ class VSPPrimaryButton extends StatelessWidget {
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: VSPDSSemanticColors.focusRing,
+                    color: resolvedTextColor,
                   ),
                 )
               : Text(
