@@ -69,7 +69,7 @@ class VSPPrimaryButton extends StatelessWidget {
             overlayColor: VSPDSColors.white12,
           ),
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   width: VSPDSizes.buttonProgress,
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
