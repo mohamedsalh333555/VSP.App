@@ -66,6 +66,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
  }
  }
 
+ Future<void> _openMyTeam() async {
+  final auth = context.read<AuthProvider>();
+  final uid = auth.currentUser?.uid;
+  if (uid == null) return;
+  final team = await TeamRepository().getUserTeam(uid);
+  if (!mounted) return;
+  if (team != null) {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+  } else {
+    await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateTeamSheet(),
+    );
+  }
+  if (mounted) setState(() {});
+ }
+
  void _showLocationPicker(BuildContext context, AuthProvider auth) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  const governorates = EgyptGovernorates.allGovernorates;
@@ -398,10 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  icon: Iconsax.people_copy,
  title: l10n.myTeam,
  subtitle: l10n.manageTeamInfo,
- onTap: () async {
- await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
- if (mounted) setState(() {});
- },
+ onTap: _openMyTeam,
  ),
  ),
  VSPFadeInItem(
