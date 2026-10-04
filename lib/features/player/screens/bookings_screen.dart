@@ -6,7 +6,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_error_state.dart';
@@ -69,9 +69,9 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return VSPScaffold(
-      backgroundColor: VSPColors.background,
+      backgroundColor: VSPDSSemanticColors.background,
       appBar: AppBar(
-        backgroundColor: VSPColors.background,
+        backgroundColor: VSPDSSemanticColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
@@ -95,7 +95,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             if (data.loading) {
               return const Center(
-                child: CircularProgressIndicator(color: VSPColors.accent),
+                child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
               );
             }
 
@@ -116,8 +116,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     await Future.delayed(const Duration(seconds: 1));
                   }
                 },
-                color: VSPColors.accent,
-                backgroundColor: VSPColors.surface,
+                color: VSPDSSemanticColors.accent,
+                backgroundColor: VSPDSSemanticColors.surface,
                 child: SingleChildScrollView(
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -140,8 +140,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
                 }
               },
-              color: VSPColors.accent,
-              backgroundColor: VSPColors.surface,
+              color: VSPDSSemanticColors.accent,
+              backgroundColor: VSPDSSemanticColors.surface,
               child: Builder(builder: (context) {
                 final pendingCount = data.pending.length;
                 final upcomingCount = data.upcoming.length;
@@ -151,7 +151,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
+                  padding: VSPDSScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPDSSpacing.sm),
                   itemCount: pendingCount +
                       (hasUpcoming ? 1 + upcomingCount : 0) +
                       (hasHistory ? 1 + historyCount : 0),
@@ -162,7 +162,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     if (hasUpcoming) {
                       if (cursor == 0) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                          padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
                           child: Text(
                             l10n.upcoming,
                             style: Theme.of(context).textTheme.titleLarge,
@@ -179,8 +179,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                             padding: EdgeInsets.only(
                               bottom: cursor == upcomingCount - 1 &&
                                       (pendingCount > 0 || hasHistory)
-                                  ? VSPSpacing.lg
-                                  : VSPSpacing.md,
+                                  ? VSPDSSpacing.md
+                                  : VSPDSSpacing.sm,
                             ),
                             child: booking.bookingType == BookingType.openJoin
                                 ? OpenJoinBookingCard(booking: booking, isHistory: false)
@@ -197,7 +197,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
                     if (cursor < pendingCount) {
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
                         child: PendingBookingCard(
                           pendingBooking: data.pending[cursor],
                           isArabic: isArabic,
@@ -209,7 +209,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                     if (hasHistory) {
                       if (cursor == 0) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                          padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
                           child: Text(
                             l10n.history,
                             style: Theme.of(context).textTheme.titleLarge,
@@ -222,7 +222,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                       return VSPFadeInItem(
                         index: cursor + upcomingCount,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                          padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
                           child: booking.bookingType == BookingType.openJoin
                               ? OpenJoinBookingCard(booking: booking, isHistory: true)
                               : PlayerBookingCard(
