@@ -102,7 +102,7 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.passwordMismatch);
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return SignupValidationResult.invalid(SignupValidationError.passwordTooShort);
     }
 
@@ -133,7 +133,7 @@ class SignupValidationService {
   /// Computes password strength, percentage and visual color indicator.
   static PasswordStrength calculatePasswordStrength(String password) {
     double strength = 0.0;
-    if (password.length >= 6) strength += 0.2;
+    if (password.length >= 8) strength += 0.2;
     if (password.length >= 8) strength += 0.2;
     if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
     if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
