@@ -16,7 +16,6 @@ import 'faq_and_support_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
 import 'profile_subscreens/favorites_screen.dart';
-import 'profile_subscreens/account_settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -29,6 +28,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../widgets/vsp_1v1_trophy_badge.dart';
+import '../widgets/create_team_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
  const ProfileScreen({super.key});
@@ -405,18 +405,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
  title: l10n.favoriteStadiums,
  subtitle: l10n.viewLikedFacilities,
  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
- ),
- ),
- VSPFadeInItem(
- index: 3,
- child: VSPMenuItem(
- icon: Iconsax.setting_2_copy,
- title: isArabic ? 'إعدادات الحساب' : 'Account Settings',
- subtitle: isArabic ? 'إدارة إعدادات حسابك وأمانه' : 'Manage your account settings and security',
- onTap: () => Navigator.push(
-   context,
-   MaterialPageRoute(builder: (_) => const AccountSettingsScreen()),
- ),
  ),
  ),
 
