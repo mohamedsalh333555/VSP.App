@@ -5,6 +5,7 @@ import '../../repositories/user_repository.dart';
 import '../../services/auth_service.dart';
 import '../../services/logger_service.dart';
 import '../../utils/phone_utils.dart';
+import '../../../features/auth/services/signup_validation_service.dart';
 
 /// Coordinates email/password authentication, account creation, and owner registration verification.
 class AuthRegistrationService {
@@ -73,7 +74,7 @@ class AuthRegistrationService {
         if (existingData != null) {
           userModel = UserModel.fromFirestore(existingData);
           if (!userModel.isRegistrationComplete) {
-            userModel = userModel.copyWith(isRegistrationComplete: true);
+            userModel = userModel.copyWith(isRegistrationComplete: false);
           }
         } else {
           userModel = UserModel(
@@ -123,13 +124,10 @@ class AuthRegistrationService {
         if (userData != null) {
           userModel = UserModel.fromFirestore(userData);
           if (!userModel.isRegistrationComplete) {
-            userModel = userModel.copyWith(isRegistrationComplete: true);
-            await _userRepository.updateUserProfile(
-              firebaseUser.id,
-              {'isRegistrationComplete': true},
-              authUser: firebaseUser,
-              role: userData['role'] ?? userModel.role,
-            );
+            // Never auto-complete an account during sign-in.
+            // Registration completion must pass the current onboarding and
+            // server-side age/eligibility checks.
+            userModel = userModel.copyWith(isRegistrationComplete: false);
           }
         } else {
           userModel = UserModel(
