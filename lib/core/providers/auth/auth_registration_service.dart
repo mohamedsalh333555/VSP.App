@@ -57,7 +57,16 @@ class AuthRegistrationService {
           'is_email_verified': true,
         };
 
-        await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
+        final registrationCompleted =
+            await _userRepository.completeRegistrationFlags(firebaseUser.id, profileData);
+        if (!registrationCompleted) {
+          return (
+            success: false,
+            user: null,
+            userModel: null,
+            error: 'REGISTRATION_COMPLETION_FAILED'
+          );
+        }
 
         UserModel? userModel;
         final existingData = await _userRepository.getUserData(firebaseUser.id);
