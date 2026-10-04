@@ -61,36 +61,52 @@ class AuthUserDataFetcher {
       }
 
       if (userData == null) {
-        final effectiveRole = pendingRole ?? userType ?? 'player';
-        final userMeta = user.userMetadata ?? {};
-        final name = (userMeta['full_name'] ??
-                userMeta['name'] ??
-                user.email?.split('@').first ??
-                'مستخدم جديد')
-            .toString();
-        final avatar = (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
+        // Only provision a missing profile during an explicit OAuth registration flow.
+        // Normal session restore must fail closed so a transient DB/RLS error cannot
+        // manufacture a new local profile or silently change account state.
+        final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
+        final canProvisionOAuthRegistration = pendingRole != null && !isLoginOnly;
 
-        final fallbackMap = {
-          'id': user.id,
-          'email': user.email ?? '',
-          'name': name,
-          'role': effectiveRole,
-          'profile_image_url': avatar,
-          'is_email_verified': true,
-          'is_registration_complete': false,
-          'subscription_plan': effectiveRole == 'owner' ? 'free_trial' : 'free',
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        };
+        if (canProvisionOAuthRegistration) {
+          final effectiveRole = pendingRole!;
+          final userMeta = user.userMetadata ?? {};
+          final name = (userMeta['full_name'] ??
+                  userMeta['name'] ??
+                  user.email?.split('@').first ??
+                  'مستخدم جديد')
+              .toString();
+          final avatar =
+              (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
 
-        try {
-          await _supabase.from('users').upsert(fallbackMap);
-          userData = await _userRepository.getUserData(user.id);
-        } catch (e) {
-          VSPLogger.w("Direct user row creation fallback failed: $e");
+          final fallbackMap = {
+            'id': user.id,
+            'email': user.email ?? '',
+            'name': name,
+            'role': effectiveRole,
+            'profile_image_url': avatar,
+            'is_email_verified': true,
+            'is_registration_complete': false,
+            'subscription_plan':
+                effectiveRole == 'owner' ? 'free_trial' : 'free',
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          };
+
+          try {
+            await _supabase.from('users').upsert(fallbackMap);
+            userData = await _userRepository.getUserData(user.id);
+          } catch (e) {
+            VSPLogger.w("OAuth registration profile provisioning failed: $e");
+          }
+
+          userData ??= fallbackMap;
+        } else {
+          return const UserDataFetchResult(
+            dataFetchError: true,
+            errorMessage:
+                'تعذر استرجاع بيانات حسابك. يرجى المحاولة مرة أخرى أو التواصل مع الدعم.',
+          );
         }
-
-        userData ??= fallbackMap;
       }
 
       final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
