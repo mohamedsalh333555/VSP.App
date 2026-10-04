@@ -44,7 +44,7 @@ android {
         // ✅ Production Unique Application ID for Google Play Store
         applicationId = "app.vsp.sports"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
