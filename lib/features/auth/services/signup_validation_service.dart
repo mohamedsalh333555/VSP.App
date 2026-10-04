@@ -195,6 +195,20 @@ class SignupValidationService {
     final defaultMsg = isArabic ? 'فشل إنشاء الحساب' : 'Account creation failed';
     final errorMsg = rawError ?? defaultMsg;
 
+    if (errorMsg.contains('VSP_AGE_RESTRICTED') ||
+        errorMsg.contains('REGISTRATION_REQUIRES_18_PLUS') ||
+        errorMsg.contains('DATE_OF_BIRTH_REQUIRED_18_PLUS')) {
+      return isArabic
+          ? 'يجب أن يكون عمرك 18 سنة فأكثر لاستخدام VSP.'
+          : 'You must be 18 or older to use VSP.';
+    }
+
+    if (errorMsg.contains('REGISTRATION_COMPLETION_FAILED')) {
+      return isArabic
+          ? 'تعذر إكمال التسجيل حالياً. يرجى المحاولة مرة أخرى.'
+          : 'We could not complete registration right now. Please try again.';
+    }
+
     if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
       return isArabic
           ? 'تعذر إرسال إيميل التأكيد. يرجى مراجعة إعدادات البريد.'
