@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import '../tokens/vsp_tokens.dart';
+import '../tokens/vsp_design_tokens.dart';
 
+/// Canonical VSP primary action.
+///
+/// API is intentionally backward-compatible so feature screens can migrate
+/// without changing business behavior or navigation.
 class VSPPrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -23,69 +27,65 @@ class VSPPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double h = height ?? 56;
-    final bool hasCustomColor = color != null;
-    const fontName = 'Poppins';
-    const fallbackFonts = ['Tajawal', 'sans-serif'];
-    
-    return Container(
-      height: h,
+    final resolvedHeight = height ?? VSPDSizes.buttonHeight;
+    final resolvedColor = color ?? VSPDSSemanticColors.accent;
+    final resolvedTextColor = textColor ?? VSPDSColors.black;
+    final isDisabled = onPressed == null || isLoading;
+
+    return SizedBox(
+      height: resolvedHeight,
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(VSPRadius.full),
-        gradient: hasCustomColor 
-            ? null 
-            : LinearGradient(
-                colors: gradientColors ?? [
-                  VSPColors.accent,          // Volt Green Solid
-                  VSPColors.accent,          // توحيد الأخضر الفولت الصاخب دون تشظي لوني
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        color: hasCustomColor 
-            ? (onPressed == null ? VSPStates.disabled(color!) : color)
-            : (onPressed == null ? VSPStates.disabled(VSPColors.accent) : null),
-        boxShadow: onPressed == null
-            ? []
-            : [
-                BoxShadow(
-                  color: (color ?? VSPColors.accent).withValues(alpha: 0.18),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(VSPDSRadius.button),
+          gradient: gradientColors == null
+              ? null
+              : LinearGradient(
+                  colors: gradientColors!,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-      ),
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent, // Transparent to show parent container gradient
-          foregroundColor: textColor ?? Colors.black,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: const StadiumBorder(),
-          overlayColor: VSPStates.pressedOverlay(),
-          disabledForegroundColor: VSPStates.disabled(textColor ?? Colors.black),
+          color: gradientColors == null
+              ? (isDisabled
+                  ? resolvedColor.withValues(alpha: VSPDSOpacity.disabled)
+                  : resolvedColor)
+              : null,
+          boxShadow: isDisabled
+              ? const <BoxShadow>[]
+              : const <BoxShadow>[VSPDSComponentEffects.buttonShadow],
         ),
-        child: isLoading
-            ? SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: textColor ?? Colors.black,
+        child: ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: resolvedTextColor,
+            disabledForegroundColor:
+                resolvedTextColor.withValues(alpha: VSPDSOpacity.disabled),
+            elevation: VSPDSElevation.none,
+            shadowColor: Colors.transparent,
+            minimumSize: Size.zero,
+            padding: EdgeInsets.zero,
+            shape: const StadiumBorder(),
+            overlayColor: VSPDSSemanticColors.focusRing.withValues(
+              alpha: VSPDSOpacity.pressed,
+            ),
+          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: VSPDSizes.buttonProgress,
+                  height: VSPDSizes.buttonProgress,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: VSPDSSemanticColors.focusRing,
+                  ),
+                )
+              : Text(
+                  text,
+                  style: VSPDSTypography.button.copyWith(
+                    color: resolvedTextColor,
+                  ),
                 ),
-              )
-            : Text(
-                text,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: fontName,
-                  fontFamilyFallback: fallbackFonts,
-                  color: textColor ?? Colors.black,
-                ),
-              ),
+        ),
       ),
     );
   }
