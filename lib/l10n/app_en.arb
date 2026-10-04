@@ -77,6 +77,7 @@
  "registerPlayerSubtitle": "Register as player and start your journey",
  "fillAllFields": "Please fill all fields",
  "pleaseEnterDob": "Please enter your date of birth",
+ "mustBe18OrOlder": "You must be 18 or older to use VSP.",
  "invalidPhone": "Please enter a valid phone number",
  "passwordMismatch": "Passwords do not match",
  "passwordTooShort": "Password must be at least 8 characters",
