@@ -113,8 +113,8 @@ begin
     nullif(new.phone, '')
   );
 
-  v_governorate := nullif(new.raw_user_meta_data->>'governorate', '');
-  v_position := nullif(new.raw_user_meta_data->>'position', '');
+  v_governorate := coalesce(nullif(new.raw_user_meta_data->>'governorate', ''), 'Cairo');
+  v_position := coalesce(nullif(new.raw_user_meta_data->>'position', ''), 'GK');
 
   begin
     v_dob := (new.raw_user_meta_data->>'date_of_birth')::timestamptz;
