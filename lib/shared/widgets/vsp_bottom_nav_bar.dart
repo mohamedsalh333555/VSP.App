@@ -77,7 +77,7 @@ class VspBottomNavBar extends StatelessWidget {
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 180),
                               child: Icon(
-                                isSelected ? item.inactiveIcon : item.activeIcon,
+                                isSelected ? item.activeIcon : item.inactiveIcon,
                                 key: ValueKey(isSelected),
                                 color: isSelected
                                     ? VSPColors.accent
