@@ -126,3 +126,47 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.start_owner_trial() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.start_owner_trial() TO authenticated, service_role;
+
+
+CREATE OR REPLACE FUNCTION public.get_owner_trial_state()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_owner public.users%ROWTYPE;
+  v_ledger public.owner_trial_ledger%ROWTYPE;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED' USING ERRCODE='42501';
+  END IF;
+
+  SELECT * INTO v_owner FROM public.users WHERE id=v_uid;
+  IF NOT FOUND OR v_owner.role <> 'owner' THEN
+    RAISE EXCEPTION 'OWNER_ONLY' USING ERRCODE='42501';
+  END IF;
+
+  IF v_owner.subscription_plan='free_trial'
+     AND v_owner.trial_ends_at IS NOT NULL
+     AND v_owner.trial_ends_at > now() THEN
+    RETURN jsonb_build_object('success',true,'state','active','trial_ends_at',v_owner.trial_ends_at);
+  END IF;
+
+  SELECT * INTO v_ledger
+  FROM public.owner_trial_ledger
+  WHERE lower(trim(email))=lower(trim(v_owner.email))
+     OR (phone IS NOT NULL AND v_owner.phone IS NOT NULL AND phone=v_owner.phone)
+  LIMIT 1;
+
+  IF FOUND THEN
+    RETURN jsonb_build_object('success',true,'state','used','trial_ends_at',v_ledger.original_trial_ends_at);
+  END IF;
+
+  RETURN jsonb_build_object('success',true,'state','available');
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_owner_trial_state() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_owner_trial_state() TO authenticated, service_role;
