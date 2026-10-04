@@ -163,7 +163,7 @@ class AppTheme {
           horizontal: VSPDSSpacing.sm,
           vertical: VSPDSSpacing.xxs,
         ),
-        minLeadingWidth: VSPDSSizes.iconXl,
+        minLeadingWidth: VSPDSizes.iconXl,
         iconColor: VSPDSSemanticColors.textSecondary,
         textColor: VSPDSSemanticColors.textPrimary,
       ),
