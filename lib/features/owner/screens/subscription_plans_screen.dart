@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/models/user_model.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -19,29 +18,7 @@ class SubscriptionPlansScreen extends StatefulWidget {
 }
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
-  List<Map<String, dynamic>> _plans = [];
   bool _isPaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchPlans();
-  }
-
-  Future<void> _fetchPlans() async {
-    try {
-      final res = await Supabase.instance.client
-          .from('subscription_plans')
-          .select()
-          .eq('is_active', true)
-          .order('display_order', ascending: true);
-      if (mounted) {
-        setState(() {
-          _plans = List<Map<String, dynamic>>.from(res);
-        });
-      }
-    } catch (_) {}
-  }
 
   @override
   Widget build(BuildContext context) {

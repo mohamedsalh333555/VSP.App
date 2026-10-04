@@ -68,7 +68,7 @@ class AuthUserDataFetcher {
         final canProvisionOAuthRegistration = pendingRole != null && !isLoginOnly;
 
         if (canProvisionOAuthRegistration) {
-          final effectiveRole = pendingRole!;
+          final effectiveRole = pendingRole;
           final userMeta = user.userMetadata ?? {};
           final name = (userMeta['full_name'] ??
                   userMeta['name'] ??

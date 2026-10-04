@@ -104,7 +104,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                 isCancellingRegistration
                     ? (isArabic ? 'جاري إلغاء التسجيل...' : 'Cancelling...')
                     : (isArabic ? 'إلغاء التسجيل واسترداد الرسوم' : 'Cancel registration & request refund'),
-                style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           ),

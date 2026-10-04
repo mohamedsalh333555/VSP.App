@@ -5,7 +5,7 @@ import 'package:vsp_application/models/dashboard_analytics.dart';
 
 void main() {
   group('Owner Journey SSOT - Subscription Limits & 365-Day Free Trial', () {
-    test('New owner with null trialEndsAt defaults to 365 days from creation', () {
+    test('New owner with active 7-day trial reflects canonical 7 days from start', () {
       final now = DateTime.now();
       final user = UserModel(
         uid: 'owner-1',
@@ -13,7 +13,7 @@ void main() {
         role: 'owner',
         createdAt: now,
         subscriptionPlan: 'free_trial',
-        trialEndsAt: null,
+        trialEndsAt: now.add(const Duration(days: 7)),
       );
 
       expect(user.isInActiveTrial, isTrue);
@@ -21,9 +21,9 @@ void main() {
       expect(user.isPlanExpired, isFalse);
       expect(user.maxStadiums, equals(1));
 
-      // Should be roughly 365 days in the future
+      // Should be roughly 7 days in the future
       final diff = user.effectiveTrialEndsAt!.difference(now).inDays;
-      expect(diff, inInclusiveRange(364, 366));
+      expect(diff, inInclusiveRange(6, 8));
     });
 
     test('Basic subscription owner allows exactly 1 stadium', () {
