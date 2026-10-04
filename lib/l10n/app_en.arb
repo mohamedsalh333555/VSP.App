@@ -79,7 +79,7 @@
  "pleaseEnterDob": "Please enter your date of birth",
  "invalidPhone": "Please enter a valid phone number",
  "passwordMismatch": "Passwords do not match",
- "passwordTooShort": "Password must be at least 6 characters",
+ "passwordTooShort": "Password must be at least 8 characters",
  "verifyAccount": "VERIFY ACCOUNT",
  "otpSentTo": "A 6-digit code was sent to ",
  "enterOtpPlaceholder": "Enter the verification code sent to your device",
