@@ -126,6 +126,9 @@ abstract final class VSPDSizes {
   static const double statusIcon = 14.0;
   static const double textButtonMinHeight = 44.0;
   static const double buttonProgress = 22.0;
+  static const double navigationItemHeight = 58.0;
+  static const double navigationIcon = 23.0;
+  static const double notificationDot = 8.0;
   static const double stateIconBox = 56.0;
   static const double stateLoadingIndicator = 28.0;
   static const double avatarSm = 40.0;
@@ -222,6 +225,12 @@ abstract final class VSPDSComponentEffects {
     blurRadius: 16.0,
     spreadRadius: 0.0,
     offset: Offset(0, 4),
+  );
+
+  static const BoxShadow navigationNotificationGlow = BoxShadow(
+    color: Color(0x59EF4444),
+    blurRadius: 4.0,
+    spreadRadius: 1.0,
   );
 
   static const BoxShadow glassShadow = BoxShadow(
@@ -393,6 +402,24 @@ abstract final class VSPDSTypography {
     height: 1.20,
   );
 
+  static const TextStyle navigationSelected = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 11.0,
+    fontWeight: FontWeight.w800,
+    height: 1.10,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle navigationUnselected = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 11.0,
+    fontWeight: FontWeight.w500,
+    height: 1.10,
+    color: VSPDSSemanticColors.textSecondary,
+  );
+
   static const TextStyle status = TextStyle(
     fontFamily: arabicFont,
     fontFamilyFallback: fallback,
@@ -522,6 +549,7 @@ abstract final class VSPDSMotion {
 
 abstract final class VSPDSBlur {
   static const double glassSigma = 16.0;
+  static const double navigationGlassSigma = 20.0;
 }
 
 abstract final class VSPDSLayout {
