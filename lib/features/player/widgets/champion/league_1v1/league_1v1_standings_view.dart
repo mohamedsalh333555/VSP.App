@@ -151,7 +151,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
 
               const SizedBox(height: 10),
 
-              // ── ترتيب أعلى النقاط (وليس تحديد البطل) ──
+              // ── ترتيب أعلى النقاط (منفصل تماماً عن اعتماد البطل) ──
               if (players.length >= 3)
                 SizedBox(
                   height: 290,
@@ -176,7 +176,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      // المركز الأول (البطل)
+                      // أعلى نقاط (ليس بالضرورة البطل)
                       Expanded(
                         child: VSPFadeInItem(
                           index: 0,
@@ -185,7 +185,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                             name: top3[0].name,
                             logo: top3[0].avatarUrl,
                             points: top3[0].totalPoints,
-                            badgeIcon: Iconsax.crown_copy,
+                            badgeIcon: Iconsax.award_copy,
                             borderColor: VSPColors.accent,
                             bgColor: VSPColors.surfaceAlt,
                             isCenter: true,
