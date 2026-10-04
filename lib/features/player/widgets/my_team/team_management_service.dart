@@ -30,7 +30,6 @@ class TeamManagementService {
       'memberUids': memberUids,
       'playerImages': playerImages,
       'playersCount': memberUids.length,
-      'governorate': user.governorate ?? 'Cairo',
       'stadium': 'TBD',
       'date': 'Upcoming',
       'points': 0,
