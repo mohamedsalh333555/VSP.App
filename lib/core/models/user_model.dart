@@ -72,7 +72,7 @@ class UserModel {
   bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
   DateTime? get effectiveTrialEndsAt =>
-      trialEndsAt ?? createdAt?.add(const Duration(days: 365));
+      trialEndsAt;
 
   bool get isInActiveTrial =>
       subscriptionPlan == 'free_trial' &&
@@ -85,7 +85,7 @@ class UserModel {
       (subscriptionExpiresAt != null &&
        DateTime.now().isBefore(subscriptionExpiresAt!));
 
-  /// مهلة سماح 3 أيام بعد انتهاء السنة المجانية أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
+  /// مهلة سماح 3 أيام بعد انتهاء التجربة أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
   bool get isInGracePeriod {
     if (hasActiveSubscription) return false;
     final trialEnds = effectiveTrialEndsAt;
