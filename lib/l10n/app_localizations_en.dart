@@ -244,6 +244,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseEnterDob => 'Please enter your date of birth';
 
   @override
+  String get mustBe18OrOlder => 'You must be 18 or older to use VSP.';
+
+  @override
   String get invalidPhone => 'Please enter a valid phone number';
 
   @override
