@@ -23,6 +23,8 @@ class League1v1RegistrationActionCard extends StatelessWidget {
   final bool isArabic;
   final VoidCallback onJoinPressed;
   final VoidCallback onSwitchToUserGov;
+  final VoidCallback onCancelRegistration;
+  final bool isCancellingRegistration;
 
   const League1v1RegistrationActionCard({
     super.key,
@@ -39,6 +41,8 @@ class League1v1RegistrationActionCard extends StatelessWidget {
     required this.isArabic,
     required this.onJoinPressed,
     required this.onSwitchToUserGov,
+    required this.onCancelRegistration,
+    required this.isCancellingRegistration,
   });
 
   @override
@@ -79,6 +83,27 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                       ? 'رقم تسجيلك: #$myIndex (تم سداد الاشتراك)'
                       : 'Registration #$myIndex (Entry fee paid)',
                   style: TextStyle(color: VSPColors.success.withValues(alpha: 0.8), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: OutlinedButton(
+                    onPressed: isCancellingRegistration ? null : onCancelRegistration,
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: VSPColors.error.withValues(alpha: 0.65)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.input)),
+                    ),
+                    child: Text(
+                      isCancellingRegistration ? (isArabic ? 'جاري إلغاء التسجيل...' : 'Cancelling...') : (isArabic ? 'إلغاء التسجيل واسترداد الرسوم' : 'Cancel registration & request refund'),
+                      style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
                 ),
               ],
             ),
