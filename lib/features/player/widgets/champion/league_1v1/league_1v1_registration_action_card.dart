@@ -20,6 +20,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
   final VoidCallback onSwitchToUserGov;
   final VoidCallback onCancelRegistration;
   final bool isCancellingRegistration;
+  final bool isRefundPending;
 
   const League1v1RegistrationActionCard({
     super.key,
@@ -38,6 +39,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
     required this.onSwitchToUserGov,
     required this.onCancelRegistration,
     required this.isCancellingRegistration,
+    required this.isRefundPending,
   });
 
   @override
@@ -48,7 +50,9 @@ class League1v1RegistrationActionCard extends StatelessWidget {
           ? _buildRegisteredState()
           : isBrowsingDifferentGov
               ? _buildDifferentGovState(context)
-              : _buildJoinButtonOrClosedState(),
+              : isRefundPending
+                  ? _buildRefundPendingState()
+                  : _buildJoinButtonOrClosedState(),
     );
   }
 
@@ -102,6 +106,31 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                     : (isArabic ? 'إلغاء التسجيل واسترداد الرسوم' : 'Cancel registration & request refund'),
                 style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRefundPendingState() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.timer_1_copy, color: VSPColors.warning, size: 24),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تم إلغاء تسجيلك. طلب استرداد الرسوم قيد المعالجة، ولا يمكن إعادة التسجيل حتى تتم تسوية الاسترداد.'
+                  : 'Your registration was cancelled. The refund is being processed; you cannot re-register until it is settled.',
+              style: const TextStyle(color: VSPColors.warning, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
         ],
