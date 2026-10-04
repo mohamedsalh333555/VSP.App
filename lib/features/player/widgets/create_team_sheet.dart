@@ -192,7 +192,15 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         VSPFeedback.showError(context, 'فشل إنشاء الفريق، يرجى إعادة المحاولة.');
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'Error creating team: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء الفريق حالياً. تأكد من البيانات وحاول مرة أخرى.'
+              : 'Unable to create the team right now. Please check the details and try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
