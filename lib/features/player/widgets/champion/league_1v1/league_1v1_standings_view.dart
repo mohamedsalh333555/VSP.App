@@ -79,6 +79,47 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              final champion = players.firstWhere(
+                (p) => p.isChampion,
+                orElse: () => players.first,
+              );
+
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
+                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.45)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.crown_copy, color: VSPColors.accent, size: 24),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic ? 'بطل البطولة' : 'Tournament Champion',
+                            style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 12),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            champion.name,
+                            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '\${champion.totalPoints} \${isArabic ? "نقطة" : "PTS"}',
+                      style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+
               // ── شريط قواعد ورصد البطولة الميدانية (بدون كلمة لجنة) ──
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
