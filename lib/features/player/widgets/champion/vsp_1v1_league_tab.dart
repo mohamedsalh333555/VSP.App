@@ -442,7 +442,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
       if (!mounted) return;
 
-      if (isRegistered || serverPaid) {
+      if (isRegistered) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -456,7 +456,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         );
         setState(() {});
       } else {
-        // Webhook لسه ما وصلش — رسالة تفاؤلية
+        // Payment is confirmed but roster registration has not reached the client yet.
         VSPFeedback.showInfo(context,
             isArabic
                 ? 'تم سداد الرسوم بنجاح. جاري تأكيد تسجيلك، ستظهر اسمك في القائمة خلال لحظات.'
