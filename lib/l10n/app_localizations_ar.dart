@@ -242,6 +242,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseEnterDob => 'يرجى إدخال تاريخ الميلاد';
 
   @override
+  String get mustBe18OrOlder => 'يجب أن يكون عمرك 18 سنة فأكثر لاستخدام VSP.';
+
+  @override
   String get invalidPhone => 'يرجى إدخال رقم هاتف صحيح';
 
   @override
