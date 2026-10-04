@@ -113,7 +113,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                       ),
                     ),
                     Text(
-                      '\${champion.totalPoints} \${isArabic ? "نقطة" : "PTS"}',
+                      '${champion.totalPoints} ${isArabic ? "نقطة" : "PTS"}',
                       style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 12),
                     ),
                   ],
