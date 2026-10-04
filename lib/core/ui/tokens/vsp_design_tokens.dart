@@ -46,6 +46,7 @@ abstract final class VSPDSColors {
   static const Color white10 = Color(0x1AFFFFFF);
   static const Color white12 = Color(0x1FFFFFFF);
   static const Color white15 = Color(0x26FFFFFF);
+  static const Color white08 = Color(0x14FFFFFF);
   static const Color white24 = Color(0x3DFFFFFF);
   static const Color white38 = Color(0x61FFFFFF);
 
@@ -245,6 +246,7 @@ abstract final class VSPDSOpacity {
   static const double disabled = 0.38;
   static const double pressed = 0.12;
   static const double secondaryText = 0.70;
+  static const double navigationGlass = 0.94;
 
   // [PROPOSED] interaction values inferred from the current visual language.
   static const double selectedSurface = 0.10;
