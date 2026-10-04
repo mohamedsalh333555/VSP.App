@@ -79,7 +79,7 @@
  "pleaseEnterDob": "يرجى إدخال تاريخ الميلاد",
  "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
  "passwordMismatch": "كلمات المرور غير متطابقة",
- "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+ "passwordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
  "verifyAccount": "تأكيد الحساب",
  "otpSentTo": "تم إرسال رمز التحقق المكون من 6 أرقام إلى ",
  "enterOtpPlaceholder": "أدخل رمز التحقق المرسل إلى جهازك",
