@@ -10,8 +10,6 @@ void main() {
         'logoUrl': 'https://example.com/logo.png',
         'primaryColor': '#FF0000',
         'secondaryColor': '#0000FF',
-        'city': 'Nasr City',
-        'governorate': 'Cairo',
         'bio': 'Strongest amateur football team',
         'preferredFormation': '3-1-1',
       };
@@ -22,8 +20,8 @@ void main() {
       expect(payload['logo_url'], equals('https://example.com/logo.png'));
       expect(payload['primary_color'], equals('#FF0000'));
       expect(payload['secondary_color'], equals('#0000FF'));
-      expect(payload['city'], equals('Nasr City'));
-      expect(payload['governorate'], equals('Cairo'));
+      expect(payload.containsKey('city'), isFalse);
+      expect(payload.containsKey('governorate'), isFalse);
       expect(payload['bio'], equals('Strongest amateur football team'));
       expect(payload['preferred_formation'], equals('3-1-1'));
       expect(payload['elo_rating'], equals(1200));
