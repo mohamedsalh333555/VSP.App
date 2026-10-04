@@ -21,6 +21,7 @@ abstract final class VSPDSColors {
 
   static const Color voltGreen = Color(0xFF9FDF02);
   static const Color black = Color(0xFF000000);
+  static const Color transparent = Color(0x00000000);
   static const Color white = Color(0xFFFFFFFF);
   static const Color zinc100 = Color(0xFFE4E4E7);
   static const Color zinc400 = Color(0xFFA1A1AA);
@@ -405,6 +406,69 @@ abstract final class VSPDSTypography {
     fontWeight: FontWeight.w600,
     height: 1.20,
     color: VSPDSSemanticColors.textSecondary,
+  );
+
+  static const TextStyle modalTitle = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 18.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle modalBody = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w400,
+    height: 1.35,
+    color: VSPDSSemanticColors.textSecondary,
+  );
+
+  static const TextStyle calendarHeadline = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 22.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle calendarDay = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle calendarWeekday = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 12.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textSecondary,
+  );
+
+  static const TextStyle compactLabel = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 12.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle actionLabel = TextStyle(
+    fontFamily: arabicFont,
+    fontFamilyFallback: fallback,
+    fontSize: 13.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.accent,
   );
 
   static const TextStyle numeric = TextStyle(
