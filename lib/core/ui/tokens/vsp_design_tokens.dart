@@ -113,6 +113,7 @@ abstract final class VSPDSizes {
   static const double iconXs = 14.0;
   static const double iconSm = 16.0;
   static const double iconMd = 20.0;
+  static const double iconCompact = 22.0;
   static const double iconLg = 24.0;
   static const double iconXl = 32.0;
 
@@ -121,6 +122,7 @@ abstract final class VSPDSizes {
   static const double compactButtonHeight = 48.0;
 
   static const double statusIcon = 14.0;
+  static const double buttonProgress = 22.0;
   static const double avatarSm = 40.0;
   static const double avatarMd = 48.0;
   static const double avatarLg = 64.0;
@@ -197,6 +199,28 @@ abstract final class VSPDSElevation {
     color: Color(0x73000000),
     blurRadius: strongBlur,
     offset: Offset(0, strongOffsetY),
+  );
+}
+
+abstract final class VSPDSComponentEffects {
+  static const BoxShadow buttonShadow = BoxShadow(
+    color: Color(0x2E9FDF02),
+    blurRadius: 12.0,
+    offset: Offset(0, 4),
+  );
+
+  static const BoxShadow cardShadow = BoxShadow(
+    color: Color(0x40000000),
+    blurRadius: 16.0,
+    spreadRadius: 0.0,
+    offset: Offset(0, 4),
+  );
+
+  static const BoxShadow glassShadow = BoxShadow(
+    color: VSPDSColors.glassGlow,
+    blurRadius: 16.0,
+    spreadRadius: 0.0,
+    offset: Offset(0, 4),
   );
 }
 
