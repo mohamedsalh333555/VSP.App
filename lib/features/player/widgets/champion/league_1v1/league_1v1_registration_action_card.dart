@@ -4,11 +4,6 @@ import '../../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../../shared/widgets/primary_button.dart';
 import '../champion_podium_components.dart';
 
-/// Interactive registration action card handling:
-/// 1. Already registered confirmation box with seat index.
-/// 2. Warning box if browsing outside the player's home governorate with switch button.
-/// 3. Secure Paymob entry fee payment CTA button.
-/// 4. Closed / Full capacity notice.
 class League1v1RegistrationActionCard extends StatelessWidget {
   final bool isRegistered;
   final int? myIndex;
@@ -65,47 +60,48 @@ class League1v1RegistrationActionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 28),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isArabic ? 'أنت مسجل في البطولة بنجاح!' : 'You are registered!',
-                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+          Row(
+            children: [
+              const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'أنت مسجل في البطولة بنجاح!' : 'You are registered!',
+                      style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isArabic
+                          ? 'رقم تسجيلك: #$myIndex (تم سداد الاشتراك)'
+                          : 'Registration #$myIndex (Entry fee paid)',
+                      style: TextStyle(color: VSPColors.success.withValues(alpha: 0.8), fontSize: 12),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  isArabic
-                      ? 'رقم تسجيلك: #$myIndex (تم سداد الاشتراك)'
-                      : 'Registration #$myIndex (Entry fee paid)',
-                  style: TextStyle(color: VSPColors.success.withValues(alpha: 0.8), fontSize: 12),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 42,
-                  child: OutlinedButton(
-                    onPressed: isCancellingRegistration ? null : onCancelRegistration,
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: VSPColors.error.withValues(alpha: 0.65)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.input)),
-                    ),
-                    child: Text(
-                      isCancellingRegistration ? (isArabic ? 'جاري إلغاء التسجيل...' : 'Cancelling...') : (isArabic ? 'إلغاء التسجيل واسترداد الرسوم' : 'Cancel registration & request refund'),
-                      style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: OutlinedButton(
+              onPressed: isCancellingRegistration ? null : onCancelRegistration,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: VSPColors.error.withValues(alpha: 0.65)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.input)),
+              ),
+              child: Text(
+                isCancellingRegistration
+                    ? (isArabic ? 'جاري إلغاء التسجيل...' : 'Cancelling...')
+                    : (isArabic ? 'إلغاء التسجيل واسترداد الرسوم' : 'Cancel registration & request refund'),
+                style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ),
           ),
         ],
@@ -133,11 +129,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
                   isArabic
                       ? 'أنت تتصفح بطولة خارج محافظتك (${championTranslateItem(context, tourneyLocation.toString())}). الاشتراك متاح فقط في بطولات محافظتك ($userGov).'
                       : 'Viewing tournament in ${championTranslateItem(context, tourneyLocation.toString())}. Registration is available only in your home city ($userGov).',
-                  style: const TextStyle(
-                    color: VSPColors.warning,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: VSPColors.warning, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -154,14 +146,8 @@ class League1v1RegistrationActionCard extends StatelessWidget {
               ),
               icon: const Icon(Iconsax.location_copy, size: 16, color: VSPColors.warning),
               label: Text(
-                isArabic
-                    ? 'الانتقال إلى بطولات محافظتي ($userGov)'
-                    : 'Switch to My City ($userGov)',
-                style: const TextStyle(
-                  color: VSPColors.warning,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+                isArabic ? 'الانتقال إلى بطولات محافظتي ($userGov)' : 'Switch to My City ($userGov)',
+                style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           ),
@@ -175,16 +161,13 @@ class League1v1RegistrationActionCard extends StatelessWidget {
       return PrimaryButton(
         text: isProcessingPayment
             ? (isArabic ? 'جاري فتح بوابة الدفع...' : 'Opening payment...')
-            : (isArabic
-                ? 'سداد الاشتراك والانضمام (${entryFee.toStringAsFixed(0)} ج.م)'
-                : 'Pay & Join (${entryFee.toStringAsFixed(0)} EGP)'),
+            : (isArabic ? 'سداد الاشتراك والانضمام (${entryFee.toStringAsFixed(0)} ج.م)' : 'Pay & Join (${entryFee.toStringAsFixed(0)} EGP)'),
         height: 50,
         color: VSPColors.accent,
         textColor: Colors.black,
         onPressed: isProcessingPayment ? () {} : onJoinPressed,
       );
     }
-
     return Container(
       padding: const EdgeInsets.all(14),
       alignment: Alignment.center,
@@ -195,11 +178,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
       ),
       child: Text(
         isArabic ? 'اكتمل العدد أو تم إغلاق باب التسجيل' : 'Registration is closed or full',
-        style: const TextStyle(
-          color: VSPColors.textSecondary,
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
       ),
     );
   }
