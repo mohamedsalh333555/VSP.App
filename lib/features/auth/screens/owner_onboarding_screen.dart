@@ -145,7 +145,9 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       } else {
         HapticFeedback.vibrate();
         if (mounted) {
-          VSPFeedback.showError(context, authProvider.errorMessage ?? (Localizations.localeOf(context).languageCode == 'ar' ? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً' : 'Failed to complete registration, please try again'));
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final message = SignupValidationService.formatSignupError(authProvider.errorMessage, isArabic: isArabic);
+          VSPFeedback.showError(context, message);
         }
       }
     } finally {
