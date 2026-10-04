@@ -51,6 +51,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
   bool _isProcessingPayment = false;
   bool _hasPaid = false;
   bool _isCancellingRegistration = false;
+  bool _refundPending = false;
 
   @override
   Widget build(BuildContext context) {
@@ -230,6 +231,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 onJoinPressed: () => _handleJoin1v1(tournamentId, entryFee ?? 0.0),
                 onCancelRegistration: () => _handleCancelRegistration(tournamentId),
                 isCancellingRegistration: _isCancellingRegistration,
+                isRefundPending: _refundPending,
                 onSwitchToUserGov: () => widget.onLocationChanged(userGov),
               ),
               const SizedBox(height: 24),
@@ -276,7 +278,10 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
               ? (isArabic ? 'تم إلغاء تسجيلك، وطلب الاسترداد يحتاج مراجعة يدوية.' : 'Registration cancelled. Your refund requires manual review.')
               : (isArabic ? 'تم إلغاء تسجيلك وإنشاء طلب الاسترداد. سيتم تحديثك عند اكتماله.' : 'Registration cancelled and refund requested. You will be updated when it completes.'),
         );
-        setState(() => _hasPaid = false);
+        setState(() {
+          _hasPaid = false;
+          _refundPending = true;
+        });
       } else {
         VSPFeedback.showError(context, res['error']?.toString() ?? (isArabic ? 'تعذر إلغاء التسجيل.' : 'Unable to cancel registration.'));
       }
