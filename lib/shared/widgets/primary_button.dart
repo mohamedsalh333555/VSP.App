@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 class PrimaryButton extends StatefulWidget {
   final String text;
@@ -48,7 +48,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       absorbing: isButtonDisabled,
       child: SizedBox(
         width: widget.width ?? double.infinity,
-        height: widget.height ?? VSPSize.buttonHeight,
+        height: widget.height ?? VSPDSizes.buttonHeight,
         child: ElevatedButton(
           onPressed: isButtonDisabled ? null : () {
             HapticFeedback.mediumImpact();
@@ -62,23 +62,23 @@ class _PrimaryButtonState extends State<PrimaryButton> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: widget.color ?? VSPColors.accent,
-            foregroundColor: widget.textColor ?? VSPColors.background,
+            backgroundColor: widget.color ?? VSPDSSemanticColors.accent,
+            foregroundColor: widget.textColor ?? VSPDSSemanticColors.background,
             shape: const StadiumBorder(),
             elevation: 0,
-            disabledBackgroundColor: VSPStates.disabled(widget.color ?? VSPColors.accent),
-            disabledForegroundColor: VSPStates.disabled(widget.textColor ?? VSPColors.background),
-            overlayColor: VSPStates.pressedOverlay(),
+            disabledBackgroundColor: (widget.color ?? VSPDSSemanticColors.accent).withValues(alpha: VSPDSOpacity.disabled),
+            disabledForegroundColor: (widget.textColor ?? VSPDSSemanticColors.background).withValues(alpha: VSPDSOpacity.disabled),
+            overlayColor: VSPDSColors.white12,
             padding: widget.padding,
           ),
           child: widget.isLoading
               ? const SizedBox(
-                  height: 24,
-                  width: 24,
+                  height: VSPDSizes.iconLg,
+                  width: VSPDSizes.iconLg,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      VSPColors.background,
+                      VSPDSSemanticColors.background,
                     ),
                   ),
                 )
@@ -87,8 +87,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (widget.icon != null) ...[
-                      Icon(widget.icon, size: 20),
-                      const SizedBox(width: 8),
+                      Icon(widget.icon, size: VSPDSizes.iconMd),
+                      const SizedBox(width: VSPDSSpacing.xs),
                     ],
                     Flexible(
                       child: FittedBox(
