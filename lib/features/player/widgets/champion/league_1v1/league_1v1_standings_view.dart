@@ -73,9 +73,9 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
         final top3 = players.take(3).toList();
         final rest = players.skip(3).toList();
 
-        final champion = players.firstWhere(
-          (p) => p.isChampion,
-          orElse: () => players.first,
+        final champion = players.cast<VSP1v1Player?>().firstWhere(
+          (p) => p?.isChampion == true,
+          orElse: () => null,
         );
 
         return SingleChildScrollView(
@@ -106,14 +106,14 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            champion.name,
+                            champion?.name ?? (isArabic ? 'لم يتم اعتماد البطل بعد' : 'Champion not finalized'),
                             style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 16),
                           ),
                         ],
                       ),
                     ),
                     Text(
-                      '${champion.totalPoints} ${isArabic ? "نقطة" : "PTS"}',
+                      champion == null ? '' : '\${champion.totalPoints} \${isArabic ? "نقطة" : "PTS"}',
                       style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 12),
                     ),
                   ],
@@ -151,7 +151,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
 
               const SizedBox(height: 10),
 
-              // ── منصة التتويج Top 3 Podium ──
+              // ── ترتيب أعلى النقاط (وليس تحديد البطل) ──
               if (players.length >= 3)
                 SizedBox(
                   height: 290,
@@ -216,7 +216,7 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
 
               const SizedBox(height: 20),
 
-              // ── قائمة الترتيب التفصيلية لباقي اللاعبين (#4 وما بعده) ──
+              // ── قائمة ترتيب النقاط التفصيلية لباقي اللاعبين (#4 وما بعده) ──
               ...List.generate(rest.length, (index) {
                 final player = rest[index];
                 final rank = index + 4;
@@ -259,7 +259,7 @@ class League1v1RankListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final initialLetter =
         player.name.trim().isNotEmpty ? player.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'P';
-    final stageTitle = player.isChampion ? (isArabic ? '🏆 بطل البطولة' : '🏆 Champion') : player.getStageTitle();
+    final stageTitle = player.isChampion ? (isArabic ? '🏆 بطل البطولة' : '🏆 Champion') : '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -348,7 +348,7 @@ class League1v1RankListItem extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 3),
-                // تفصيل الدرجات الصريح: دفاع • أهداف • مهارة
+                // إحصائيات اللاعب الإجمالية فقط — لا يوجد تفصيل حسب كل جولة
                 Text(
                   isArabic
                       ? 'الجولات: ${player.roundsPlayed}  •  دفاع: ${player.tackles}  •  أهداف: ${player.goals}  •  مهارة: ${player.skillPoints}'
