@@ -20,6 +20,7 @@ abstract final class VSPDSColors {
   static const Color zinc750 = Color(0xFF323238);
 
   static const Color voltGreen = Color(0xFF9FDF02);
+  static const Color black = Color(0xFF000000);
   static const Color white = Color(0xFFFFFFFF);
   static const Color zinc100 = Color(0xFFE4E4E7);
   static const Color zinc400 = Color(0xFFA1A1AA);
