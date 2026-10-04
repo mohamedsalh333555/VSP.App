@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_ambient_background.dart';
@@ -172,7 +172,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
     return VSPScaffold(
       extendBody: true,
-      backgroundColor: VSPColors.background,
+      backgroundColor: VSPDSSemanticColors.background,
       body: VSPAmbientBackground(
         showTopGlow: true,
         showBottomGlow: true,
