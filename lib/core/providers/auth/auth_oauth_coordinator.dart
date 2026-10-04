@@ -71,6 +71,16 @@ class AuthOAuthCoordinator {
     }
   }
 
+  bool _isAtLeast18(DateTime dateOfBirth) {
+    final today = DateTime.now();
+    if (dateOfBirth.isAfter(today)) return false;
+    var age = today.year - dateOfBirth.year;
+    final birthdayThisYear =
+        DateTime(today.year, dateOfBirth.month, dateOfBirth.day);
+    if (birthdayThisYear.isAfter(today)) age--;
+    return age >= 18;
+  }
+
   /// Completes social registration with phone, name, and role details.
   Future<({bool success, UserModel? userModel, String? error})> completeSocialRegistration({
     required User? firebaseUser,
@@ -87,6 +97,13 @@ class AuthOAuthCoordinator {
     String? p2pBank,
   }) async {
     final currentUid = firebaseUser?.id;
+    if (dateOfBirth == null || !_isAtLeast18(dateOfBirth)) {
+      return (
+        success: false,
+        userModel: null,
+        error: 'VSP_AGE_RESTRICTED'
+      );
+    }
     final normalizedPhone = PhoneUtils.normalize(phone) ?? phone;
     UserModel? existingPhoneUser;
     try {
@@ -160,8 +177,8 @@ class AuthOAuthCoordinator {
           hasStadium: false,
           isIdentityVerified: false,
           verificationStatus: 'pending',
-          subscriptionPlan: 'free_trial',
-          trialEndsAt: DateTime.now().add(const Duration(days: 365)),
+          subscriptionPlan: 'expired',
+          trialEndsAt: null,
         );
       }
 
@@ -180,15 +197,19 @@ class AuthOAuthCoordinator {
 
         if (rpcRes is Map && rpcRes['success'] == false) {
           VSPLogger.w('RPC complete_user_registration returned failure: ${rpcRes['error']}');
-          if (currentUid != null) {
-            await _userRepository.completeRegistrationFlags(currentUid, updateData);
-          }
+          return (
+            success: false,
+            userModel: null,
+            error: rpcRes['error']?.toString() ?? 'REGISTRATION_COMPLETION_FAILED'
+          );
         }
       } catch (rpcErr) {
-        VSPLogger.w('RPC complete_user_registration fallback: $rpcErr');
-        if (currentUid != null) {
-          await _userRepository.completeRegistrationFlags(currentUid, updateData);
-        }
+        VSPLogger.w('RPC complete_user_registration failed: $rpcErr');
+        return (
+          success: false,
+          userModel: null,
+          error: rpcErr.toString()
+        );
       }
 
       try {
