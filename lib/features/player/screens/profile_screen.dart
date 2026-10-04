@@ -29,7 +29,6 @@ import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../widgets/vsp_1v1_trophy_badge.dart';
 import '../widgets/create_team_sheet.dart';
-import '../widgets/create_team_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
  const ProfileScreen({super.key});
