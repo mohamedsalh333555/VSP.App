@@ -29,6 +29,7 @@ import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../widgets/vsp_1v1_trophy_badge.dart';
 import '../widgets/create_team_sheet.dart';
+import '../widgets/create_team_sheet.dart';
 
 class ProfileScreen extends StatefulWidget {
  const ProfileScreen({super.key});
@@ -361,8 +362,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
  text: l10n.buildYourSquad,
  height: 48,
  onPressed: () async {
- await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
- if (mounted) setState(() {});
+ final created = await showModalBottomSheet<bool>(
+   context: context,
+   isScrollControlled: true,
+   backgroundColor: Colors.transparent,
+   builder: (_) => const CreateTeamSheet(),
+ );
+ if (created == true && mounted) setState(() {});
  },
  ),
  ],
