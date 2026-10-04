@@ -7,6 +7,7 @@ enum SignupValidationError {
   pleaseAgreeToTerms,
   fillAllFields,
   pleaseEnterDob,
+  mustBe18OrOlder,
   invalidPhone,
   passwordMismatch,
   passwordTooShort,
@@ -93,6 +94,10 @@ class SignupValidationService {
       return SignupValidationResult.invalid(SignupValidationError.pleaseEnterDob);
     }
 
+    if (!isAtLeast18(dateOfBirth)) {
+      return SignupValidationResult.invalid(SignupValidationError.mustBe18OrOlder);
+    }
+
     final normalizedPhone = PhoneUtils.normalize(trimmedPhone);
     if (normalizedPhone == null || normalizedPhone.length != 11 || !normalizedPhone.startsWith("01")) {
       return SignupValidationResult.invalid(SignupValidationError.invalidPhone);
@@ -112,6 +117,16 @@ class SignupValidationService {
     );
   }
 
+  /// Returns true only when the user has reached their 18th birthday.
+  static bool isAtLeast18(DateTime dateOfBirth, {DateTime? today}) {
+    final current = today ?? DateTime.now();
+    if (dateOfBirth.isAfter(current)) return false;
+    var age = current.year - dateOfBirth.year;
+    final birthdayThisYear = DateTime(current.year, dateOfBirth.month, dateOfBirth.day);
+    if (birthdayThisYear.isAfter(current)) age--;
+    return age >= 18;
+  }
+
   /// Maps validation error enum to localized text.
   static String getLocalizedErrorMessage(SignupValidationError error, AppLocalizations l10n) {
     switch (error) {
@@ -121,6 +136,8 @@ class SignupValidationService {
         return l10n.fillAllFields;
       case SignupValidationError.pleaseEnterDob:
         return l10n.pleaseEnterDob;
+      case SignupValidationError.mustBe18OrOlder:
+        return l10n.mustBe18OrOlder;
       case SignupValidationError.invalidPhone:
         return l10n.invalidPhone;
       case SignupValidationError.passwordMismatch:
