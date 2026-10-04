@@ -13,6 +13,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_location_section.dart';
@@ -111,6 +112,10 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     }
     if (_dateOfBirth == null) {
       VSPFeedback.showError(context, l10n.pleaseEnterDob);
+      return;
+    }
+    if (!SignupValidationService.isAtLeast18(_dateOfBirth!)) {
+      VSPFeedback.showError(context, l10n.mustBe18OrOlder);
       return;
     }
     if (phone.length < 9) {
