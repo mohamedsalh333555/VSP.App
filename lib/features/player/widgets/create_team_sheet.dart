@@ -58,6 +58,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddPlayerSheet(
+        requiredGovernorate: context.read<AuthProvider>().userModel?.governorate?.trim(),
         onPlayerAdded: (user) {
           setState(() {
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
@@ -126,6 +127,15 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         return;
       }
 
+      final captainGovernorate = auth.userModel?.governorate?.trim();
+      if (captainGovernorate == null || captainGovernorate.isEmpty) {
+        VSPFeedback.showError(
+          context,
+          'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.',
+        );
+        return;
+      }
+
       setState(() => _isSubmitting = true);
 
       if (_teamMembers.isEmpty) {
@@ -159,7 +169,6 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           auth.userModel?.profileImageUrl ?? '',
           ..._teamMembers.map((m) => m.profileImageUrl ?? ''),
         ],
-        'governorate': auth.userModel?.governorate?.trim() ?? '',
         'sportType': _selectedSport,
       };
 

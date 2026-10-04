@@ -11,8 +11,6 @@ class TeamPayloadBuilder {
       'logo_url': data['logoUrl'] ?? data['logo_url'] ?? '',
       'primary_color': data['primaryColor'] ?? data['primary_color'] ?? '#FFFFFF',
       'secondary_color': data['secondaryColor'] ?? data['secondary_color'] ?? '#000000',
-      'city': data['city'],
-      'governorate': data['governorate'] ?? 'Cairo',
       'preferred_formation': data['preferredFormation'] ?? data['preferred_formation'] ?? '2-2-1',
       'elo_rating': 1200,
       'points': 0,
@@ -41,8 +39,6 @@ class TeamPayloadBuilder {
     if (data.containsKey('secondary_color')) pgData['secondary_color'] = data['secondary_color'];
     if (data.containsKey('customLogoBase64')) pgData['custom_logo_base64'] = data['customLogoBase64'];
     if (data.containsKey('custom_logo_base64')) pgData['custom_logo_base64'] = data['custom_logo_base64'];
-    if (data.containsKey('city')) pgData['city'] = data['city'];
-    if (data.containsKey('governorate')) pgData['governorate'] = data['governorate'];
     if (data.containsKey('preferredFormation')) pgData['preferred_formation'] = data['preferredFormation'];
     if (data.containsKey('preferred_formation')) pgData['preferred_formation'] = data['preferred_formation'];
     if (data.containsKey('isActive')) pgData['is_active'] = data['isActive'];
