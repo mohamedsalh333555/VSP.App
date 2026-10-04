@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 class VspNavItem {
   final IconData activeIcon;
@@ -17,6 +17,10 @@ class VspNavItem {
   });
 }
 
+/// Canonical VSP bottom navigation.
+///
+/// Selected/unselected icon variants and notification semantics are preserved;
+/// only visual values are bound to Design System V2.
 class VspBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -36,17 +40,26 @@ class VspBottomNavBar extends StatelessWidget {
     final navContent = Container(
       decoration: BoxDecoration(
         color: useBlur
-            ? VSPColors.glassSurface.withValues(alpha: 0.94)
-            : VSPColors.surface,
-        border: Border(
+            ? VSPDSColors.glassSurface.withValues(
+                alpha: VSPDSOpacity.navigationGlass,
+              )
+            : VSPDSSemanticColors.surface,
+        border: const Border(
           top: BorderSide(
-            color: VSPColors.white.withValues(alpha: 0.08),
-            width: 1,
+            color: VSPDSColors.white08,
+            width: VSPDSBorders.standard,
           ),
         ),
-        boxShadow: VSPShadow.mediumList,
+        boxShadow: const <BoxShadow>[
+          VSPDSElevation.medium,
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      padding: const EdgeInsets.fromLTRB(
+        VSPDSSpacing.xs,
+        VSPDSSpacing.xs,
+        VSPDSSpacing.xs,
+        VSPDSSpacing.xxs + VSPDSSpacing.xs / 2,
+      ),
       child: Row(
         children: items.asMap().entries.map((entry) {
           final index = entry.key;
@@ -65,7 +78,7 @@ class VspBottomNavBar extends StatelessWidget {
                 },
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
-                  height: 58,
+                  height: VSPDSizes.navigationItemHeight,
                   child: Center(
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -77,30 +90,30 @@ class VspBottomNavBar extends StatelessWidget {
                             AnimatedSwitcher(
                               duration: const Duration(milliseconds: 180),
                               child: Icon(
-                                isSelected ? item.activeIcon : item.inactiveIcon,
+                                isSelected
+                                    ? item.activeIcon
+                                    : item.inactiveIcon,
                                 key: ValueKey(isSelected),
                                 color: isSelected
-                                    ? VSPColors.accent
-                                    : VSPColors.textSecondary,
-                                size: 23,
+                                    ? VSPDSSemanticColors.accent
+                                    : VSPDSSemanticColors.textSecondary,
+                                size: VSPDSizes.navigationIcon,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: VSPDSSpacing.xxs),
                             Text(
                               item.label,
                               maxLines: 1,
                               softWrap: false,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: (isSelected
+                                      ? VSPDSTypography.navigationSelected
+                                      : VSPDSTypography.navigationUnselected)
+                                  .copyWith(
                                 color: isSelected
-                                    ? VSPColors.accent
-                                    : VSPColors.textSecondary,
-                                fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w500,
-                                fontSize: 11,
-                                height: 1.1,
+                                    ? VSPDSSemanticColors.accent
+                                    : VSPDSSemanticColors.textSecondary,
                               ),
                             ),
                           ],
@@ -110,17 +123,14 @@ class VspBottomNavBar extends StatelessWidget {
                             top: -1,
                             right: -2,
                             child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: VSPColors.error,
+                              width: VSPDSizes.notificationDot,
+                              height: VSPDSizes.notificationDot,
+                              decoration: const BoxDecoration(
+                                color: VSPDSSemanticColors.error,
                                 shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: VSPColors.error.withValues(alpha: 0.35),
-                                    blurRadius: 4,
-                                    spreadRadius: 1,
-                                  ),
+                                boxShadow: <BoxShadow>[
+                                  VSPDSComponentEffects
+                                      .navigationNotificationGlow,
                                 ],
                               ),
                             ),
@@ -138,18 +148,21 @@ class VspBottomNavBar extends StatelessWidget {
 
     final navCard = ClipRRect(
       borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(VSPRadius.xl),
+        top: Radius.circular(VSPDSRadius.xl),
       ),
       child: useBlur
           ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(
+                sigmaX: VSPDSBlur.navigationGlassSigma,
+                sigmaY: VSPDSBlur.navigationGlassSigma,
+              ),
               child: navContent,
             )
           : navContent,
     );
 
     return Container(
-      color: Colors.transparent,
+      color: VSPDSColors.transparent,
       child: SafeArea(
         top: false,
         bottom: true,
