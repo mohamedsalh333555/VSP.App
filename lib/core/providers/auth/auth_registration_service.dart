@@ -5,7 +5,6 @@ import '../../repositories/user_repository.dart';
 import '../../services/auth_service.dart';
 import '../../services/logger_service.dart';
 import '../../utils/phone_utils.dart';
-import '../../../features/auth/services/signup_validation_service.dart';
 
 /// Coordinates email/password authentication, account creation, and owner registration verification.
 class AuthRegistrationService {
