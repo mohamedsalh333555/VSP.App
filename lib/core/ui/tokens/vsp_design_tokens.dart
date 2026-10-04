@@ -123,6 +123,7 @@ abstract final class VSPDSizes {
   static const double compactButtonHeight = 48.0;
 
   static const double statusIcon = 14.0;
+  static const double textButtonMinHeight = 44.0;
   static const double buttonProgress = 22.0;
   static const double avatarSm = 40.0;
   static const double avatarMd = 48.0;
@@ -149,6 +150,7 @@ abstract final class VSPDSBorders {
   static const double hairline = 1.0;
   static const double standard = 1.0;
   static const double focus = 2.0;
+  static const double fieldFocus = 1.5;
 
   static const BorderSide divider = BorderSide(
     color: VSPDSSemanticColors.border,
@@ -181,6 +183,8 @@ abstract final class VSPDSElevation {
   static const double mediumOffsetY = 8.0;
   static const double strongBlur = 32.0;
   static const double strongOffsetY = 12.0;
+  static const double modal = 10.0;
+  static const double snackbar = 8.0;
 
   static const Color shadow = VSPDSColors.black80;
 
@@ -307,6 +311,60 @@ abstract final class VSPDSTypography {
     color: VSPDSSemanticColors.textSecondary,
   );
 
+  static const TextStyle headlineLarge = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 20.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle headlineMedium = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 18.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle headlineSmall = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 17.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle titleMedium = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 16.0,
+    fontWeight: FontWeight.w600,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle titleSmall = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w600,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle labelLarge = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 14.0,
+    fontWeight: FontWeight.w700,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
   static const TextStyle labelMedium = TextStyle(
     fontFamily: latinFont,
     fontFamilyFallback: fallback,
@@ -338,6 +396,15 @@ abstract final class VSPDSTypography {
     fontSize: 11.0,
     fontWeight: FontWeight.w700,
     height: 1.20,
+  );
+
+  static const TextStyle labelSmall = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 10.0,
+    fontWeight: FontWeight.w600,
+    height: 1.20,
+    color: VSPDSSemanticColors.textSecondary,
   );
 
   static const TextStyle numeric = TextStyle(
