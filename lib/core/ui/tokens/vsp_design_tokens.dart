@@ -130,6 +130,9 @@ abstract final class VSPDSizes {
   static const double navigationItemHeight = 58.0;
   static const double navigationIcon = 23.0;
   static const double notificationDot = 8.0;
+  static const double navigationNotificationTop = -1.0;
+  static const double navigationNotificationRight = -2.0;
+  static const double navigationBottomPadding = 6.0;
   static const double stateIconBox = 56.0;
   static const double stateLoadingIndicator = 28.0;
   static const double avatarSm = 40.0;
@@ -545,6 +548,7 @@ abstract final class VSPDSMotion {
   static const Duration standard = Duration(milliseconds: 250);
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
+  static const Duration navigationSwitch = Duration(milliseconds: 180);
 
   static const Curve standardCurve = Curves.easeOutCubic;
 }
