@@ -180,7 +180,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: VSPDSSemanticColors.accent,
           minimumSize: Size(
-            VSPDSElevation.none,
+            0,
             VSPDSizes.textButtonMinHeight,
           ),
           padding: const EdgeInsets.symmetric(
