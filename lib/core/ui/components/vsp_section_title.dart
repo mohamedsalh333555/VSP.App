@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../tokens/vsp_design_tokens.dart';
 
 class VSPSectionTitle extends StatelessWidget {
   final String text;
@@ -9,7 +10,9 @@ class VSPSectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleLarge,
+      style: VSPDSTypography.titleLarge.copyWith(
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
 }
