@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Please enter your date of birth'**
   String get pleaseEnterDob;
 
+  /// No description provided for @mustBe18OrOlder.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be 18 or older to use VSP.'**
+  String get mustBe18OrOlder;
+
   /// No description provided for @invalidPhone.
   ///
   /// In en, this message translates to:
