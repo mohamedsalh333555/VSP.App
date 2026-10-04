@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'tokens/vsp_tokens.dart';
+import 'tokens/vsp_design_tokens.dart';
 
-/// Shared UI grammar for VSP screens.
-///
-/// The goal is not to replace existing feature-specific widgets, but to give
-/// them the same hierarchy, state language, and geometry.
+/// Shared VSP UI grammar backed by Design System V2.
 enum VSPUiState {
   loading,
   empty,
@@ -27,7 +24,9 @@ class VSPSectionHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
-    this.margin = const EdgeInsets.only(bottom: VSPSpacing.md),
+    this.margin = const EdgeInsets.only(
+      bottom: VSPDSSpacing.fieldGap,
+    ),
   });
 
   @override
@@ -36,6 +35,7 @@ class VSPSectionHeader extends StatelessWidget {
       padding: margin,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
+        textDirection: Directionality.of(context),
         children: [
           Expanded(
             child: Column(
@@ -43,25 +43,22 @@ class VSPSectionHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: VSPColors.textPrimary,
-                      ),
+                  style: VSPDSTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
-                  const SizedBox(height: VSPSpacing.xs),
+                  const SizedBox(height: VSPDSSpacing.xxs),
                   Text(
                     subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: VSPColors.textSecondary,
-                        ),
+                    style: VSPDSTypography.bodyMedium,
                   ),
                 ],
               ],
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: VSPSpacing.md),
+            const SizedBox(width: VSPDSSpacing.fieldGap),
             trailing!,
           ],
         ],
@@ -84,27 +81,39 @@ class VSPStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = color ?? VSPColors.accent;
+    final foreground = color ?? VSPDSSemanticColors.accent;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPDSSpacing.sm,
+        vertical: VSPDSSpacing.xs,
+      ),
       decoration: BoxDecoration(
-        color: foreground.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(VSPRadius.full),
-        border: Border.all(color: foreground.withValues(alpha: 0.30)),
+        color: foreground.withValues(
+          alpha: VSPDSOpacity.selectedSurface,
+        ),
+        borderRadius: BorderRadius.circular(VSPDSRadius.full),
+        border: Border.all(
+          color: foreground.withValues(
+            alpha: VSPDSOpacity.border,
+          ),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        textDirection: Directionality.of(context),
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: foreground),
-            const SizedBox(width: VSPSpacing.xs),
+            Icon(
+              icon,
+              size: VSPDSizes.statusIcon,
+              color: foreground,
+            ),
+            const SizedBox(width: VSPDSSpacing.xxs),
           ],
           Text(
             label,
-            style: TextStyle(
+            style: VSPDSTypography.status.copyWith(
               color: foreground,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -133,7 +142,9 @@ class VSPStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isErrorLike = state == VSPUiState.error || state == VSPUiState.offline;
+    final isErrorLike =
+        state == VSPUiState.error || state == VSPUiState.offline;
+
     final iconData = icon ??
         switch (state) {
           VSPUiState.loading ||
@@ -147,7 +158,9 @@ class VSPStateView extends StatelessWidget {
           VSPUiState.disabled => Icons.lock_outline_rounded,
         };
 
-    final tint = isErrorLike ? VSPColors.error : VSPColors.accent;
+    final tint = isErrorLike
+        ? VSPDSSemanticColors.error
+        : VSPDSSemanticColors.accent;
 
     if (state == VSPUiState.loading || state == VSPUiState.processing) {
       return Center(
@@ -155,33 +168,25 @@ class VSPStateView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(
-              width: 28,
-              height: 28,
+              width: VSPDSizes.stateLoadingIndicator,
+              height: VSPDSizes.stateLoadingIndicator,
               child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: VSPColors.accent,
+                strokeWidth: VSPDSizes.progressStroke,
+                color: VSPDSSemanticColors.accent,
               ),
             ),
-            const SizedBox(height: VSPSpacing.lg),
+            const SizedBox(height: VSPDSSpacing.md),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: VSPColors.textPrimary,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-              ),
+              style: VSPDSTypography.stateTitle,
             ),
             if (message != null) ...[
-              const SizedBox(height: VSPSpacing.xs),
+              const SizedBox(height: VSPDSSpacing.xxs),
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: VSPColors.textSecondary,
-                  fontSize: 12,
-                  height: 1.4,
-                ),
+                style: VSPDSTypography.stateMessage,
               ),
             ],
           ],
@@ -191,62 +196,71 @@ class VSPStateView extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(VSPSpacing.xxl),
+        padding: const EdgeInsets.all(VSPDSSpacing.lg),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(
+            maxWidth: VSPDSAccessibility.stateMaxWidth,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: VSPDSizes.stateIconBox,
+                height: VSPDSizes.stateIconBox,
                 decoration: BoxDecoration(
-                  color: tint.withValues(alpha: 0.10),
+                  color: tint.withValues(
+                    alpha: VSPDSOpacity.selectedSurface,
+                  ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: tint.withValues(alpha: 0.25)),
+                  border: Border.all(
+                    color: tint.withValues(
+                      alpha: VSPDSOpacity.border,
+                    ),
+                  ),
                 ),
-                child: Icon(iconData, color: tint, size: 28),
+                child: Icon(
+                  iconData,
+                  color: tint,
+                  size: VSPDSizes.iconXl,
+                ),
               ),
-              const SizedBox(height: VSPSpacing.lg),
+              const SizedBox(height: VSPDSSpacing.md),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: VSPColors.textPrimary,
+                style: VSPDSTypography.titleMedium.copyWith(
                   fontWeight: FontWeight.w800,
-                  fontSize: 16,
                 ),
               ),
               if (message != null) ...[
-                const SizedBox(height: VSPSpacing.xs),
+                const SizedBox(height: VSPDSSpacing.xxs),
                 Text(
                   message!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: VSPColors.textSecondary,
-                    fontSize: 12.5,
-                    height: 1.45,
-                  ),
+                  style: VSPDSTypography.stateBody,
                 ),
               ],
               if (action != null) ...[
-                const SizedBox(height: VSPSpacing.lg),
+                const SizedBox(height: VSPDSSpacing.md),
                 action!,
               ] else if (onRetry != null && isErrorLike) ...[
-                const SizedBox(height: VSPSpacing.lg),
+                const SizedBox(height: VSPDSSpacing.md),
                 OutlinedButton(
                   onPressed: onRetry,
                   style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(140, VSPSize.buttonHeight),
-                    side: const BorderSide(color: VSPColors.borderAccent),
-                    foregroundColor: VSPColors.accent,
+                    minimumSize: Size(
+                      VSPDSizes.iconXl + VSPDSSpacing.section,
+                      VSPDSizes.buttonHeight,
+                    ),
+                    side: VSPDSBorders.accent,
+                    foregroundColor: VSPDSSemanticColors.accent,
                     shape: const StadiumBorder(),
                   ),
                   child: Text(
                     Localizations.localeOf(context).languageCode == 'ar'
                         ? 'إعادة المحاولة'
                         : 'Retry',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: VSPDSTypography.compactButton,
                   ),
                 ),
               ],
@@ -266,10 +280,10 @@ class VSPBottomActionBar extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.fromLTRB(
-      VSPSpacing.lg,
-      VSPSpacing.md,
-      VSPSpacing.lg,
-      VSPSpacing.lg,
+      VSPDSSpacing.md,
+      VSPDSSpacing.sm,
+      VSPDSSpacing.md,
+      VSPDSSpacing.md,
     ),
   });
 
@@ -277,12 +291,14 @@ class VSPBottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.of(context).padding.bottom;
     return Container(
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        border: const Border(
-          top: BorderSide(color: VSPColors.divider),
+      decoration: const BoxDecoration(
+        color: VSPDSSemanticColors.surface,
+        border: Border(
+          top: VSPDSBorders.divider,
         ),
-        boxShadow: VSPShadow.mediumList,
+        boxShadow: <BoxShadow>[
+          VSPDSElevation.medium,
+        ],
       ),
       padding: padding is EdgeInsets
           ? EdgeInsets.fromLTRB(
@@ -292,20 +308,17 @@ class VSPBottomActionBar extends StatelessWidget {
               (padding as EdgeInsets).bottom + safeBottom,
             )
           : EdgeInsets.fromLTRB(
-              VSPSpacing.lg,
-              VSPSpacing.md,
-              VSPSpacing.lg,
-              VSPSpacing.lg + safeBottom,
+              VSPDSSpacing.md,
+              VSPDSSpacing.sm,
+              VSPDSSpacing.md,
+              VSPDSSpacing.md + safeBottom,
             ),
       child: child,
     );
   }
 }
 
-
-/// Canonical VSP page scaffold.
-/// Existing feature screens can use it without changing their content structure;
-/// it centralizes the page surface defaults while preserving normal Scaffold APIs.
+/// Canonical page scaffold.
 class VSPScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
   final Widget? body;
@@ -371,7 +384,7 @@ class VSPScaffold extends StatelessWidget {
       endDrawer: endDrawer,
       onEndDrawerChanged: onEndDrawerChanged,
       drawerScrimColor: drawerScrimColor,
-      backgroundColor: backgroundColor ?? VSPColors.background,
+      backgroundColor: backgroundColor ?? VSPDSSemanticColors.background,
       resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       primary: primary,
       extendBody: extendBody,
