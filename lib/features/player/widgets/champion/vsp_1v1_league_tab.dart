@@ -174,7 +174,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     final is1v1Open = config.is1v1RegistrationOpen && config.isFeatureEnabled('1v1_enabled');
     final status = is1v1Open ? ((tournament['status'] as String?)?.trim() ?? '') : 'registration_closed';
     final entryFee = (tournament['entry_fee'] as num?)?.toDouble();
-    final prizePool = (tournament['prize_pool'] as num?)?.toDouble() ?? 0.0;
+    final prizeAmount = (tournament['prize_amount'] as num?)?.toDouble() ?? (tournament['prize_pool'] as num?)?.toDouble() ?? 0.0;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: widget.getTournamentPlayersStream(tournamentId),
@@ -209,7 +209,7 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
               const SizedBox(height: 14),
               League1v1PrizeCard(
                 entryFee: entryFee ?? 0.0,
-                prizePool: prizePool,
+                prizeAmount: prizeAmount,
                 registeredCount: registeredCount,
                 isArabic: isArabic,
               ),
