@@ -95,8 +95,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
     final proPlan = planByCode('pro');
     final proMonthly = (proPlan?['monthly_price'] as num?)?.toDouble() ?? 1000;
-    final price = proMonthly;
-
+    
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -115,7 +114,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           child: _buildCanonicalOfferCard(context, isArabic, proMonthly, isPro, userModel?.isInActiveTrial == true),
         ),
       ),
-    ),
+    );
   }
 
   Widget _buildCanonicalOfferCard(BuildContext context, bool isArabic, double price, bool isPro, bool isTrialActive) {
@@ -305,7 +304,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       final result = await Supabase.instance.client.rpc('start_owner_trial');
       final data = Map<String, dynamic>.from(result as Map);
       if (data['success'] != true) throw Exception(data['error']?.toString() ?? 'trial_start_failed');
-      await context.read<AuthProvider>().refreshProfile();
+      final auth = context.read<AuthProvider>();
+      await auth.refreshProfile();
       if (context.mounted) VSPFeedback.showSuccess(context, isArabic ? 'تم تفعيل تجربتك المجانية لمدة 7 أيام.' : 'Your 7-day free trial is now active.');
     } catch (_) {
       if (context.mounted) VSPFeedback.showError(context, isArabic ? 'تعذر تفعيل التجربة الآن. قد تكون استُخدمت من قبل.' : 'Unable to activate the trial. It may have already been used.');
