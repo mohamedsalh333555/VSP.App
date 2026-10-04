@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 import 'primary_button.dart';
 
-/// شاشة حالة الفراغ الموجهة (Actionable Empty State - الصفحة 8 و 9 من كتاب UX Playbook)
+/// Canonical actionable empty state backed by Design System V2.
 class VSPEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -23,54 +23,54 @@ class VSPEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(VSPSpacing.xl),
+        padding: const EdgeInsets.all(VSPDSSpacing.inputHorizontal),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // أيقونة خلفية مع إضاءة نيون هادئة (الصفحة 8)
             Container(
-              padding: const EdgeInsets.all(VSPSpacing.md),
+              padding: const EdgeInsets.all(VSPDSizes.emptyIconPadding),
               decoration: BoxDecoration(
-                color: VSPColors.accent.withValues(alpha: 0.08),
+                color: VSPDSSemanticColors.accent.withValues(
+                  alpha: VSPDSOpacity.selectedSurface,
+                ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: VSPColors.accent.withValues(alpha: 0.25),
-                  width: 2,
+                  color: VSPDSSemanticColors.accent.withValues(
+                    alpha: VSPDSOpacity.border,
+                  ),
+                  width: VSPDSBorders.focus,
                 ),
               ),
               child: Icon(
                 icon,
-                color: VSPColors.accent,
-                size: 28,
+                color: VSPDSSemanticColors.accent,
+                size: VSPDSizes.emptyIconSize,
               ),
             ),
-            const SizedBox(height: VSPSpacing.lg),
+            const SizedBox(height: VSPDSSpacing.md),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: VSPDSTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(height: VSPSpacing.sm),
+            const SizedBox(height: VSPDSSpacing.sm),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: VSPDSSpacing.md,
+              ),
               child: Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.textSecondary,
-                      height: 1.45,
-                      fontSize: 12.5,
-                    ),
+                style: VSPDSTypography.stateBody,
               ),
             ),
             if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: VSPSpacing.lg),
+              const SizedBox(height: VSPDSSpacing.md),
               SizedBox(
                 width: double.infinity,
-                height: VSPSize.buttonHeight, // ارتفاع مريح للإبهام (الصفحات 6 و 9)
+                height: VSPDSizes.buttonHeight,
                 child: PrimaryButton(
                   text: buttonText!,
                   onPressed: onButtonPressed,
