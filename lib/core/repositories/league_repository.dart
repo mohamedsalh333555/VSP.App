@@ -315,7 +315,7 @@ class LeagueRepository {
             trend: data['trend'] ?? 'stable',
             roundReached: data['round_reached']?.toString(),
             roundsPlayed: (data['rounds_played'] ?? 0) as int,
-            isChampion: tournament['champion_user_id']?.toString() == userId,
+            isChampion: (tournament['champion_player_id']?.toString() == data['id']?.toString()) || (tournament['champion_user_id']?.toString() == userId && userId.isNotEmpty),
           ));
         }
 
