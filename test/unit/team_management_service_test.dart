@@ -51,7 +51,7 @@ void main() {
         'https://vsp.app/zizo.jpg',
       ]);
       expect(payload['playersCount'], 3);
-      expect(payload['governorate'], 'Cairo');
+      expect(payload.containsKey('governorate'), isFalse);
     });
 
     test('buildUpdateTeamPayload preserves original captain and updates roster', () {
