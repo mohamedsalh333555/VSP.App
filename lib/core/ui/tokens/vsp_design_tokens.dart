@@ -132,6 +132,8 @@ abstract final class VSPDSizes {
   static const double notificationDot = 8.0;
   static const double navigationNotificationTop = -1.0;
   static const double navigationNotificationRight = -2.0;
+  static const double emptyIconSize = 28.0;
+  static const double emptyIconPadding = 16.0;
   static const double navigationBottomPadding = 6.0;
   static const double stateIconBox = 56.0;
   static const double stateLoadingIndicator = 28.0;
