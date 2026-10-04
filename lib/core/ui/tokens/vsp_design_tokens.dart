@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../utils/device_performance.dart';
 
 /// VSP Design System V2
 ///
@@ -574,6 +575,66 @@ abstract final class VSPDSAccessibility {
   static const double stateMaxWidth = 420.0;
   static const double progressStroke = 2.5;
   static const bool supportsReducedMotion = true;
+}
+
+abstract final class VSPDSBottomNavMetrics {
+  static const double height = 64.0;
+  static const double bottomMargin = 12.0;
+  static const double contentClearance = 8.0;
+  static const double fabBottomOffset = height + bottomMargin;
+}
+
+abstract final class VSPDSGlass {
+  static bool get shouldUseBlur => DevicePerformance.tier != DeviceTier.low;
+
+  static BoxDecoration bottomBarDecoration() {
+    if (shouldUseBlur) {
+      return const BoxDecoration(
+        color: VSPDSColors.glassSurface,
+      );
+    }
+    return BoxDecoration(
+      color: VSPDSSemanticColors.surface.withValues(
+        alpha: 0.96,
+      ),
+    );
+  }
+}
+
+abstract final class VSPDSScrollPadding {
+  static double bottom(
+    BuildContext context, {
+    bool hasFloatingNavBar = false,
+    double extra = 8.0,
+  }) {
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    if (hasFloatingNavBar) {
+      return VSPDSBottomNavMetrics.height +
+          VSPDSBottomNavMetrics.bottomMargin +
+          safeBottom +
+          extra;
+    }
+    return safeBottom + extra;
+  }
+
+  static EdgeInsets forList(
+    BuildContext context, {
+    bool hasFloatingNavBar = false,
+    double horizontal = VSPDSSpacing.md,
+    double top = VSPDSSpacing.md,
+    double extra = 8.0,
+  }) {
+    return EdgeInsets.fromLTRB(
+      horizontal,
+      top,
+      horizontal,
+      bottom(
+        context,
+        hasFloatingNavBar: hasFloatingNavBar,
+        extra: extra,
+      ),
+    );
+  }
 }
 
 abstract final class VSPDSGradients {
