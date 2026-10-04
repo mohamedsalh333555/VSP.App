@@ -72,7 +72,7 @@ class _SignupScreenState extends State<SignupScreen> {
  context,
  initialDate: _dateOfBirth ?? DateTime(2000),
  minYear: 1940,
- maxYear: DateTime.now().year - 10,
+ maxYear: DateTime.now().year - 18,
  );
  if (!mounted) return;
  if (picked != null) setState(() => _dateOfBirth = picked);
