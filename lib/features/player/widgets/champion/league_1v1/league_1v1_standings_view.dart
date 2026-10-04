@@ -73,17 +73,17 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
         final top3 = players.take(3).toList();
         final rest = players.skip(3).toList();
 
+        final champion = players.firstWhere(
+          (p) => p.isChampion,
+          orElse: () => players.first,
+        );
+
         return SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 12),
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              final champion = players.firstWhere(
-                (p) => p.isChampion,
-                orElse: () => players.first,
-              );
-
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(14),
