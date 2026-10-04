@@ -23,7 +23,6 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Timer? _timer;
   Duration _remainingTime = Duration.zero;
   List<Map<String, dynamic>> _plans = [];
-  bool _isAnnual = false;
   bool _isPaying = false;
 
   @override
@@ -96,8 +95,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
     final proPlan = planByCode('pro');
     final proMonthly = (proPlan?['monthly_price'] as num?)?.toDouble() ?? 1000;
-    final proAnnual = (proPlan?['yearly_price'] as num?)?.toDouble() ?? 11000;
-    final price = _isAnnual ? proAnnual : proMonthly;
+    final price = proMonthly;
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
@@ -114,142 +112,86 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
           physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              if (userModel != null) _buildCompactStatusHeader(userModel, isArabic),
-              const SizedBox(height: 14),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.card), border: Border.all(color: VSPColors.divider)),
-                child: Row(
-                  children: [
-                    const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text(
-                      isArabic ? 'تسجيل المالك مجاني، ولك 7 أيام تجربة قبل الاشتراك.' : 'Owner registration is free, with a 7-day trial before subscription.',
-                      style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12.5, height: 1.35, fontWeight: FontWeight.w700),
-                    )),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(VSPSpacing.xl),
-                decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.card),
-                    border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.45), width: 1.2)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
-                            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 18)),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(VSPRadius.xs)),
-                          child: Text(isArabic ? 'شهر مجاني سنوياً' : '1 month free annually',
-                              style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.w800)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Container(
-                      height: 42,
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.circular(VSPRadius.full)),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: _isPaying ? null : () => setState(() => _isAnnual = false),
-                              child: Container(
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(color: !_isAnnual ? VSPColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(VSPRadius.full)),
-                                child: Text(isArabic ? 'شهري' : 'Monthly',
-                                    style: TextStyle(color: !_isAnnual ? Colors.black : VSPColors.textSecondary, fontWeight: FontWeight.w800, fontSize: 12)),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: _isPaying ? null : () => setState(() => _isAnnual = true),
-                              child: Container(
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(color: _isAnnual ? VSPColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(VSPRadius.full)),
-                                child: Text(isArabic ? 'سنوي' : 'Annual',
-                                    style: TextStyle(color: _isAnnual ? Colors.black : VSPColors.textSecondary, fontWeight: FontWeight.w800, fontSize: 12)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text('${price.toStringAsFixed(0)} ${isArabic ? 'ج.م' : 'EGP'}',
-                            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 30, fontWeight: FontWeight.w900)),
-                        const SizedBox(width: 7),
-                        Text(_isAnnual ? (isArabic ? 'سنوياً' : 'per year') : (isArabic ? 'شهرياً' : 'per month'),
-                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
-                      ],
-                    ),
-                    if (_isAnnual) ...[
-                      const SizedBox(height: 5),
-                      Text(isArabic ? 'بدلاً من 12,000 ج.م — شهر مجاني' : 'Instead of 12,000 EGP — one month free',
-                          style: const TextStyle(color: VSPColors.accent, fontSize: 11.5, fontWeight: FontWeight.w700)),
-                    ],
-                    const SizedBox(height: 16),
-                    const Divider(color: VSPColors.divider, height: 1),
-                    const SizedBox(height: 14),
-                    ...[
-                      isArabic ? 'VSP Copilot وإحصاءات الملاعب الذكية' : 'VSP Copilot and smart stadium insights',
-                      isArabic ? 'تشغيل وإدارة حتى 3 ملاعب' : 'Operate up to 3 stadiums',
-                      isArabic ? 'إدارة الحجوزات النقدية والأونلاين' : 'Manage cash and online bookings',
-                      isArabic ? 'تقارير مالية وسجل حساب واضح' : 'Clear financial reports and ledger',
-                    ].map((feature) => Padding(
-                      padding: const EdgeInsets.only(bottom: 9),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 15),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(feature, style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12.5, height: 1.35))),
-                        ],
-                      ),
-                    )),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 46,
-                      child: isPro
-                          ? Container(
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(VSPRadius.sm), border: Border.all(color: VSPColors.divider)),
-                              child: Text(isArabic ? 'اشتراكك الحالي مفعّل' : 'Your subscription is active',
-                                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 12.5)),
-                            )
-                          : ElevatedButton(
-                              onPressed: _isPaying ? null : () => _startSubscriptionPayment(context, _isAnnual ? 'annual' : 'monthly', isArabic),
-                              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black, elevation: 0,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm))),
-                              child: _isPaying
-                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                                  : Text(isArabic ? 'الدفع عبر Paymob' : 'Pay with Paymob',
-                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          child: _buildCanonicalOfferCard(context, isArabic, proMonthly, isPro, userModel?.isInActiveTrial == true),
         ),
+      ),
+    ),
+  }
+
+  Widget _buildCanonicalOfferCard(BuildContext context, bool isArabic, double price, bool isPro, bool isTrialActive) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(VSPSpacing.xl),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.45), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(isArabic ? 'الباقة الاحترافية' : 'Pro Plan', style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w900, fontSize: 18)),
+          const SizedBox(height: 8),
+          Text(isArabic ? 'كل مزايا VSP للمالك في باقة واحدة.' : 'All VSP owner features in one plan.', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5, height: 1.4)),
+          const SizedBox(height: 16),
+          Text(isArabic ? '1000 جنيه / شهر' : '1000 EGP / month', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 30, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 16),
+          const Divider(color: VSPColors.divider, height: 1),
+          const SizedBox(height: 14),
+          ...[
+            isArabic ? 'VSP Copilot وإحصاءات الملاعب الذكية' : 'VSP Copilot and smart stadium insights',
+            isArabic ? 'تشغيل وإدارة حتى 3 ملاعب' : 'Operate up to 3 stadiums',
+            isArabic ? 'إدارة الحجوزات النقدية والأونلاين' : 'Manage cash and online bookings',
+            isArabic ? 'تقارير مالية وسجل حساب واضح' : 'Clear financial reports and ledger',
+          ].map((feature) => Padding(
+            padding: const EdgeInsets.only(bottom: 9),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 15),
+                const SizedBox(width: 8),
+                Expanded(child: Text(feature, style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12.5, height: 1.35))),
+              ],
+            ),
+          )),
+          const SizedBox(height: 16),
+          if (isPro)
+            Container(
+              width: double.infinity, height: 46, alignment: Alignment.center,
+              decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(VSPRadius.sm), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35))),
+              child: Text(isArabic ? 'اشتراكك الحالي مفعّل' : 'Your subscription is active', style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.w800, fontSize: 12.5)),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isPaying ? null : () => _startSubscriptionPayment(context, 'monthly', isArabic),
+                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black, elevation: 0, minimumSize: const Size.fromHeight(46), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm))),
+                    child: _isPaying ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black)) : Text(isArabic ? '1000 جنيه' : '1000 EGP', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: (_isPaying || isTrialActive) ? null : () => _startOwnerTrial(context, isArabic),
+                    style: OutlinedButton.styleFrom(foregroundColor: VSPColors.textPrimary, backgroundColor: VSPColors.surfaceAlt, side: const BorderSide(color: VSPColors.divider), minimumSize: const Size.fromHeight(46), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm))),
+                    child: Text(isTrialActive ? (isArabic ? 'التجربة مفعلة' : 'Trial active') : (isArabic ? 'جرب 7 أيام' : 'Try 7 days'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity, height: 46,
+              child: TextButton(
+                onPressed: _isPaying ? null : () => Navigator.maybePop(context),
+                style: TextButton.styleFrom(foregroundColor: VSPColors.textSecondary, backgroundColor: VSPColors.surfaceAlt, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm))),
+                child: Text(isArabic ? 'لاحقًا' : 'Later', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -357,6 +299,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
   }
 
+  Future<void> _startOwnerTrial(BuildContext context, bool isArabic) async {
+    setState(() => _isPaying = true);
+    try {
+      final result = await Supabase.instance.client.rpc('start_owner_trial');
+      final data = Map<String, dynamic>.from(result as Map);
+      if (data['success'] != true) throw Exception(data['error']?.toString() ?? 'trial_start_failed');
+      await context.read<AuthProvider>().refreshProfile();
+      if (context.mounted) VSPFeedback.showSuccess(context, isArabic ? 'تم تفعيل تجربتك المجانية لمدة 7 أيام.' : 'Your 7-day free trial is now active.');
+    } catch (_) {
+      if (context.mounted) VSPFeedback.showError(context, isArabic ? 'تعذر تفعيل التجربة الآن. قد تكون استُخدمت من قبل.' : 'Unable to activate the trial. It may have already been used.');
+    } finally {
+      if (mounted) setState(() => _isPaying = false);
+    }
+  }
   Future<void> _startSubscriptionPayment(BuildContext context, String billingPeriod, bool isArabic) async {
     setState(() => _isPaying = true);
     try {
@@ -380,8 +336,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
       if (context.mounted) {
         VSPFeedback.showSuccess(context, isArabic
-            ? 'أكمل الدفع عبر Paymob. سيتم تفعيل الاشتراك بعد تأكيد العملية.'
-            : 'Complete payment in Paymob. Your subscription will activate after confirmation.');
+            ? 'أكمل عملية الدفع. سيتم تفعيل الاشتراك بعد تأكيد العملية.'
+            : 'Complete the payment. Your subscription will activate after confirmation.');
       }
     } catch (_) {
       if (context.mounted) {
