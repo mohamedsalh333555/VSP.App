@@ -15,7 +15,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import '../../services/signup_validation_service.dart';
+import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
 class PlayerOnboardingScreen extends StatefulWidget {
