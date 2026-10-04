@@ -14,7 +14,7 @@ import '../../../shared/widgets/vsp_position_selector.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
-import '../../../core/utils/vsp_feedback.dart';
+import '../../../core.utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
 class PlayerOnboardingScreen extends StatefulWidget {
@@ -83,7 +83,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
       context,
       initialDate: _dateOfBirth ?? DateTime(2000),
       minYear: 1940,
-      maxYear: DateTime.now().year - 10,
+      maxYear: DateTime.now().year - 18,
     );
     if (picked != null) setState(() => _dateOfBirth = picked);
   }
@@ -112,6 +112,10 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     }
     if (_dateOfBirth == null) {
       VSPFeedback.showError(context, l10n.pleaseEnterDob);
+      return;
+    }
+    if (!SignupValidationService.isAtLeast18(_dateOfBirth!)) {
+      VSPFeedback.showError(context, l10n.mustBe18OrOlder);
       return;
     }
     if (_selectedPosition == null) {
