@@ -71,23 +71,21 @@ class UserModel {
   bool get isOwnerRole => role == 'owner';
   bool get isPlayerRole => !isOwnerRole && !isAdmin;
 
-  DateTime? get effectiveTrialEndsAt =>
-      trialEndsAt;
+  DateTime? get effectiveTrialEndsAt => trialEndsAt;
 
   bool get isInActiveTrial =>
-      subscriptionPlan == 'free_trial' &&
-      subscriptionExpiresAt == null &&
-      effectiveTrialEndsAt != null &&
-      DateTime.now().isBefore(effectiveTrialEndsAt!);
+      trialEndsAt != null &&
+      DateTime.now().isBefore(trialEndsAt!);
 
   bool get hasActiveSubscription =>
+      role == 'owner' ||
       isInActiveTrial ||
       (subscriptionExpiresAt != null &&
        DateTime.now().isBefore(subscriptionExpiresAt!));
 
-  /// مهلة سماح 3 أيام بعد انتهاء التجربة أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
+  /// مهلة سماح 3 أيام بعد انتهاء تجربة Pro أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
   bool get isInGracePeriod {
-    if (hasActiveSubscription) return false;
+    if (isProPlan) return false;
     final trialEnds = effectiveTrialEndsAt;
     if (trialEnds != null && subscriptionExpiresAt == null) {
       final now = DateTime.now();
@@ -108,36 +106,34 @@ class UserModel {
     return deadline.difference(DateTime.now()).inHours.clamp(0, 72);
   }
 
-  bool get isPro => isProPlan || subscriptionPlan == 'pro';
+  bool get isPro => isProPlan;
 
   bool get isProPlan =>
-      subscriptionPlan == 'pro' &&
-      subscriptionExpiresAt != null &&
-      DateTime.now().isBefore(subscriptionExpiresAt!);
+      (subscriptionPlan == 'pro' &&
+          subscriptionExpiresAt != null &&
+          DateTime.now().isBefore(subscriptionExpiresAt!)) ||
+      isInActiveTrial;
 
   bool get canCreateTournaments => true;
 
-  bool get isBasicOrHigher =>
-      (subscriptionPlan == 'basic' || subscriptionPlan == 'pro') &&
-      subscriptionExpiresAt != null &&
-      DateTime.now().isBefore(subscriptionExpiresAt!);
+  bool get isBasicOrHigher => true;
 
-  bool get isPlanExpired => !hasActiveSubscription && !isInGracePeriod;
+  bool get isPlanExpired => false;
 
   int get maxStadiums {
     if (isProPlan) return 3;
-    if (isBasicOrHigher || isInActiveTrial || isInGracePeriod) return 1;
-    return 0;
+    return 1;
   }
 
   String get subscriptionPlanLabel {
-    if (isProPlan) return 'Pro';
-    if (isBasicOrHigher) return 'Basic';
-    if (isInActiveTrial) {
-      final remaining = effectiveTrialEndsAt!.difference(DateTime.now()).inDays;
-      return 'تجريبي ($remaining يوم متبقي)';
+    if (isProPlan) {
+      if (isInActiveTrial) {
+        final remaining = effectiveTrialEndsAt!.difference(DateTime.now()).inDays + 1;
+        return 'Pro تجريبي ($remaining يوم متبقي)';
+      }
+      return 'Pro';
     }
-    return 'منتهي';
+    return 'Basic (مجاني)';
   }
 
   factory UserModel.fromMap(Map<String, dynamic> data) {

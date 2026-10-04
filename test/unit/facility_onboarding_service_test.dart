@@ -4,22 +4,21 @@ import 'package:vsp_application/features/owner/services/facility_onboarding_serv
 
 void main() {
   group('FacilityOnboardingService Unit Tests', () {
-    test('canAddStadium correctly gates addition based on owner capacity', () {
-      final trialOwner = UserModel(
-        uid: 'owner_trial',
-        email: 'trial@vsp.com',
+    test('canAddStadium correctly gates addition based on owner capacity for Basic vs Pro', () {
+      final basicOwner = UserModel(
+        uid: 'owner_basic',
+        email: 'basic@vsp.com',
         role: 'owner',
-        subscriptionPlan: 'free_trial',
-        trialEndsAt: DateTime.now().add(const Duration(days: 30)),
+        subscriptionPlan: 'basic',
       );
 
-      // maxStadiums = 1
-      expect(FacilityOnboardingService.canAddStadium(user: trialOwner, currentStadiumsCount: 0), isTrue);
-      expect(FacilityOnboardingService.canAddStadium(user: trialOwner, currentStadiumsCount: 1), isFalse);
+      // Basic tier: maxStadiums = 1
+      expect(FacilityOnboardingService.canAddStadium(user: basicOwner, currentStadiumsCount: 0), isTrue);
+      expect(FacilityOnboardingService.canAddStadium(user: basicOwner, currentStadiumsCount: 1), isFalse);
       expect(FacilityOnboardingService.canAddStadium(user: null, currentStadiumsCount: 0), isFalse);
     });
 
-    test('canAddStadium allows up to 3 stadiums for Pro tier owners', () {
+    test('canAddStadium allows up to 3 stadiums for Pro tier and Pro Trial owners', () {
       final proOwner = UserModel(
         uid: 'owner_pro',
         email: 'pro@vsp.com',
@@ -28,10 +27,23 @@ void main() {
         subscriptionExpiresAt: DateTime.now().add(const Duration(days: 30)),
       );
 
-      // maxStadiums = 3
+      // Pro tier: maxStadiums = 3
       expect(FacilityOnboardingService.canAddStadium(user: proOwner, currentStadiumsCount: 0), isTrue);
       expect(FacilityOnboardingService.canAddStadium(user: proOwner, currentStadiumsCount: 2), isTrue);
       expect(FacilityOnboardingService.canAddStadium(user: proOwner, currentStadiumsCount: 3), isFalse);
+
+      final trialOwner = UserModel(
+        uid: 'owner_trial',
+        email: 'trial@vsp.com',
+        role: 'owner',
+        subscriptionPlan: 'basic',
+        trialEndsAt: DateTime.now().add(const Duration(days: 7)),
+      );
+
+      // Pro trial tier: maxStadiums = 3
+      expect(FacilityOnboardingService.canAddStadium(user: trialOwner, currentStadiumsCount: 0), isTrue);
+      expect(FacilityOnboardingService.canAddStadium(user: trialOwner, currentStadiumsCount: 2), isTrue);
+      expect(FacilityOnboardingService.canAddStadium(user: trialOwner, currentStadiumsCount: 3), isFalse);
     });
 
     test('buildOnboardingConfirmedPayload sets isOnboardingConfirmed flag preserving existing keys', () {
@@ -54,17 +66,17 @@ void main() {
         uid: 'trial',
         email: 'trial@vsp.com',
         role: 'owner',
-        subscriptionPlan: 'free_trial',
-        trialEndsAt: DateTime.now().add(const Duration(days: 20)),
+        subscriptionPlan: 'basic',
+        trialEndsAt: DateTime.now().add(const Duration(days: 7)),
       );
 
       expect(
         FacilityOnboardingService.getPlanLabel(user: trialOwner, isArabic: true),
-        equals('اشتراك مجاني — فترة تجريبية سنة'),
+        equals('تجربة Pro (7 أيام)'),
       );
       expect(
         FacilityOnboardingService.getPlanLabel(user: trialOwner, isArabic: false),
-        equals('Free Trial — 1 Year Plan'),
+        equals('Pro Trial (7 Days)'),
       );
 
       final basicOwner = UserModel(
@@ -76,11 +88,11 @@ void main() {
 
       expect(
         FacilityOnboardingService.getPlanLabel(user: basicOwner, isArabic: true),
-        equals('الباقة الأساسية (Basic)'),
+        equals('الباقة الأساسية (مجاناً)'),
       );
       expect(
         FacilityOnboardingService.getPlanLabel(user: basicOwner, isArabic: false),
-        equals('Basic Plan'),
+        equals('Basic Plan (Free)'),
       );
     });
 
@@ -89,10 +101,10 @@ void main() {
         uid: 'active',
         email: 'active@vsp.com',
         role: 'owner',
-        subscriptionPlan: 'free_trial',
-        trialEndsAt: DateTime.now().add(const Duration(days: 15)),
+        subscriptionPlan: 'basic',
+        trialEndsAt: DateTime.now().add(const Duration(days: 5)),
       );
-      expect(FacilityOnboardingService.getTrialDaysRemaining(activeTrial), greaterThanOrEqualTo(14));
+      expect(FacilityOnboardingService.getTrialDaysRemaining(activeTrial), greaterThanOrEqualTo(4));
 
       final expired = UserModel(
         uid: 'expired',

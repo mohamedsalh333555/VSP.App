@@ -27,12 +27,13 @@ class FacilityOnboardingService {
     required UserModel user,
     required bool isArabic,
   }) {
-    if (user.isInActiveTrial) {
-      return isArabic
-          ? 'اشتراك مجاني — فترة تجريبية سنة'
-          : 'Free Trial — 1 Year Plan';
+    if (user.isProPlan) {
+      if (user.isInActiveTrial) {
+        return isArabic ? 'تجربة Pro (7 أيام)' : 'Pro Trial (7 Days)';
+      }
+      return isArabic ? 'باقة الاحتراف (Pro)' : 'Pro Plan';
     }
-    return isArabic ? 'الباقة الأساسية (Basic)' : 'Basic Plan';
+    return isArabic ? 'الباقة الأساسية (مجاناً)' : 'Basic Plan (Free)';
   }
 
   /// Calculates remaining trial days safely.

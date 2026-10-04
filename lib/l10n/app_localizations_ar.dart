@@ -248,7 +248,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordMismatch => 'كلمات المرور غير متطابقة';
 
   @override
-  String get passwordTooShort => 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+  String get passwordTooShort => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
 
   @override
   String get verifyAccount => 'تأكيد الحساب';

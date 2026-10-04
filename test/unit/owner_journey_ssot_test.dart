@@ -4,40 +4,42 @@ import 'package:vsp_application/features/owner/services/facility_onboarding_serv
 import 'package:vsp_application/models/dashboard_analytics.dart';
 
 void main() {
-  group('Owner Journey SSOT - Subscription Limits & 365-Day Free Trial', () {
-    test('New owner with active 7-day trial reflects canonical 7 days from start', () {
+  group('Owner Journey SSOT - Subscription Limits & 7-Day Pro Trial Commercial Lock', () {
+    test('New owner with active 7-day Pro trial reflects canonical 7 days and Pro capacity (3 stadiums)', () {
       final now = DateTime.now();
       final user = UserModel(
         uid: 'owner-1',
         email: 'owner@test.com',
         role: 'owner',
         createdAt: now,
-        subscriptionPlan: 'free_trial',
+        subscriptionPlan: 'basic',
         trialEndsAt: now.add(const Duration(days: 7)),
       );
 
       expect(user.isInActiveTrial, isTrue);
+      expect(user.isProPlan, isTrue); // Pro entitlement during trial
       expect(user.hasActiveSubscription, isTrue);
       expect(user.isPlanExpired, isFalse);
-      expect(user.maxStadiums, equals(1));
+      expect(user.maxStadiums, equals(3)); // Unlocks 3 stadiums during trial
 
       // Should be roughly 7 days in the future
       final diff = user.effectiveTrialEndsAt!.difference(now).inDays;
       expect(diff, inInclusiveRange(6, 8));
     });
 
-    test('Basic subscription owner allows exactly 1 stadium', () {
-      final futureDate = DateTime.now().add(const Duration(days: 90));
+    test('Basic subscription owner allows exactly 1 stadium and is perpetual free', () {
       final user = UserModel(
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
         subscriptionPlan: 'basic',
-        subscriptionExpiresAt: futureDate,
+        subscriptionExpiresAt: null, // Basic is perpetual free (no expiry)
       );
 
       expect(user.isBasicOrHigher, isTrue);
       expect(user.isProPlan, isFalse);
+      expect(user.hasActiveSubscription, isTrue);
+      expect(user.isPlanExpired, isFalse);
       expect(user.maxStadiums, equals(1));
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isFalse);
@@ -60,33 +62,33 @@ void main() {
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 3), isFalse);
     });
 
-    test('Expired owner with no grace period allows 0 stadiums', () {
+    test('Expired Pro owner automatically downgrades to Basic Free (1 stadium capacity, perpetual)', () {
       final pastDate = DateTime.now().subtract(const Duration(days: 30));
       final user = UserModel(
-        uid: 'owner-expired',
+        uid: 'owner-expired-pro',
         email: 'expired@test.com',
         role: 'owner',
-        subscriptionPlan: 'basic',
-        subscriptionExpiresAt: pastDate,
+        subscriptionPlan: 'basic', // Downgraded to basic free tier
+        subscriptionExpiresAt: null,
       );
 
-      expect(user.hasActiveSubscription, isFalse);
-      expect(user.isInGracePeriod, isFalse);
-      expect(user.isPlanExpired, isTrue);
-      expect(user.maxStadiums, equals(0));
-      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isFalse);
+      expect(user.hasActiveSubscription, isTrue);
+      expect(user.isPlanExpired, isFalse);
+      expect(user.isProPlan, isFalse);
+      expect(user.maxStadiums, equals(1));
+      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
+      expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 1), isFalse);
     });
   });
 
   group('Owner Journey SSOT - Stadium Reactivation Limit Invariants', () {
     test('Basic owner with 1 active stadium cannot reactivate another soft-deleted stadium', () {
-      final futureDate = DateTime.now().add(const Duration(days: 90));
       final user = UserModel(
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
         subscriptionPlan: 'basic',
-        subscriptionExpiresAt: futureDate,
+        subscriptionExpiresAt: null,
       );
 
       const int currentActiveStadiums = 1;
@@ -116,13 +118,12 @@ void main() {
     });
 
     test('Reactivation succeeds when active stadium count is below allowed limit', () {
-      final futureDate = DateTime.now().add(const Duration(days: 90));
       final user = UserModel(
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
         subscriptionPlan: 'basic',
-        subscriptionExpiresAt: futureDate,
+        subscriptionExpiresAt: null,
       );
 
       const int currentActiveStadiums = 0; // Previous active stadium was soft-deleted
@@ -131,24 +132,6 @@ void main() {
         currentStadiumsCount: currentActiveStadiums,
       );
       expect(canReactivate, isTrue, reason: 'Reactivation allowed when capacity available');
-    });
-
-    test('Expired subscription cannot reactivate any stadium', () {
-      final pastDate = DateTime.now().subtract(const Duration(days: 10));
-      final user = UserModel(
-        uid: 'owner-expired',
-        email: 'expired@test.com',
-        role: 'owner',
-        subscriptionPlan: 'pro',
-        subscriptionExpiresAt: pastDate,
-      );
-
-      const int currentActiveStadiums = 0;
-      final bool canReactivate = FacilityOnboardingService.canAddStadium(
-        user: user,
-        currentStadiumsCount: currentActiveStadiums,
-      );
-      expect(canReactivate, isFalse, reason: 'Expired owner cannot reactivate stadiums');
     });
   });
 
@@ -363,19 +346,32 @@ void main() {
       expect(userRow.containsKey('onboarding_completed'), isFalse);
     });
 
-    test('public.subscription_plans schema columns verify accurately', () {
-      final planRow = {
+    test('public.subscription_plans schema columns verify accurately for commercial lock', () {
+      final basicPlanRow = {
         'code': 'basic',
-        'trial_days': 365,
-        'monthly_price': 500.0,
-        'yearly_price': 5000.0,
+        'trial_days': 0,
+        'monthly_price': 0.0,
+        'yearly_price': 0.0,
         'max_stadiums': 1,
         'is_active': true,
       };
 
-      expect(planRow['trial_days'], equals(365));
-      expect(planRow['max_stadiums'], equals(1));
-      expect(planRow.containsKey('trial_period_days'), isFalse);
+      final proPlanRow = {
+        'code': 'pro',
+        'trial_days': 7,
+        'monthly_price': 1000.0,
+        'yearly_price': 10000.0,
+        'max_stadiums': 3,
+        'is_active': true,
+      };
+
+      expect(basicPlanRow['trial_days'], equals(0));
+      expect(basicPlanRow['monthly_price'], equals(0.0));
+      expect(basicPlanRow['max_stadiums'], equals(1));
+
+      expect(proPlanRow['trial_days'], equals(7));
+      expect(proPlanRow['monthly_price'], equals(1000.0));
+      expect(proPlanRow['max_stadiums'], equals(3));
     });
 
     test('public.stadiums schema columns verify accurately', () {
@@ -418,7 +414,7 @@ void main() {
       final ledgerRow = {
         'email': 'owner@test.com',
         'first_trial_started_at': '2026-09-24T00:00:00Z',
-        'original_trial_ends_at': '2026-11-23T00:00:00Z',
+        'original_trial_ends_at': '2026-10-01T00:00:00Z',
       };
 
       expect(ledgerRow.containsKey('first_trial_started_at'), isTrue);
@@ -429,40 +425,19 @@ void main() {
   group('Owner Journey SSOT - Free Trial Semantic Plan Invariance', () {
     int? resolveTrialDaysStrict({
       required Map<String, int> activePlans,
-      String authoritativePlanCode = 'basic',
+      String authoritativePlanCode = 'pro',
     }) {
       return activePlans[authoritativePlanCode];
     }
 
-    test('Changing unrelated plan trial duration does NOT alter owner trial duration', () {
-      final plansBefore = {'basic': 365, 'pro': 365};
-      expect(resolveTrialDaysStrict(activePlans: plansBefore), equals(365));
-
-      final plansAfterProChanged = {'basic': 365, 'pro': 14};
-      expect(
-        resolveTrialDaysStrict(activePlans: plansAfterProChanged),
-        equals(365),
-        reason: 'Owner trial duration must strictly read basic plan, unaffected by pro plan changes',
-      );
-
-      final plansWithEnterprise = {'basic': 365, 'pro': 14, 'enterprise': 90};
-      expect(
-        resolveTrialDaysStrict(activePlans: plansWithEnterprise),
-        equals(365),
-        reason: 'Enterprise plan presence must not alter basic owner free trial duration',
-      );
+    test('Pro trial duration is strictly 7 days', () {
+      final plans = {'basic': 0, 'pro': 7};
+      expect(resolveTrialDaysStrict(activePlans: plans), equals(7));
     });
 
-    test('Missing basic plan configuration fails closed and does not invent 365 days', () {
+    test('Missing pro plan configuration fails closed and does not invent days', () {
       final emptyPlans = <String, int>{};
       expect(resolveTrialDaysStrict(activePlans: emptyPlans), isNull);
-
-      final plansWithoutBasic = {'pro': 14, 'enterprise': 90};
-      expect(
-        resolveTrialDaysStrict(activePlans: plansWithoutBasic),
-        isNull,
-        reason: 'Missing basic plan must fail closed without inventing fallback duration',
-      );
     });
   });
 
@@ -507,25 +482,25 @@ void main() {
   });
 
   group('Owner Journey SSOT - Registration & Catalog Trial Invariants', () {
-    test('Trial duration strictly derives from subscription_plans without 60-day fallback', () {
-      int? computeTrialDays(Map<String, dynamic>? basicPlan) {
-        if (basicPlan == null || basicPlan['is_active'] != true) return null;
-        final days = basicPlan['trial_days'];
+    test('Trial duration strictly derives from subscription_plans without fallback', () {
+      int? computeTrialDays(Map<String, dynamic>? proPlan) {
+        if (proPlan == null || proPlan['is_active'] != true) return null;
+        final days = proPlan['trial_days'];
         if (days is int && days > 0) return days;
         return null;
       }
 
-      final catalog = {'code': 'basic', 'trial_days': 365, 'is_active': true};
-      expect(computeTrialDays(catalog), equals(365));
+      final catalog = {'code': 'pro', 'trial_days': 7, 'is_active': true};
+      expect(computeTrialDays(catalog), equals(7));
 
       expect(computeTrialDays(null), isNull);
-      expect(computeTrialDays({'code': 'basic', 'is_active': false}), isNull);
-      expect(computeTrialDays({'code': 'basic', 'trial_days': 0, 'is_active': true}), isNull);
+      expect(computeTrialDays({'code': 'pro', 'is_active': false}), isNull);
+      expect(computeTrialDays({'code': 'pro', 'trial_days': 0, 'is_active': true}), isNull);
     });
 
     test('Ledger re-registration preserves original trial and denies fresh trial', () {
       final now = DateTime(2026, 10, 1, 12, 0);
-      final originalEndsAt = now.add(const Duration(days: 45)); // 45 days remaining
+      final originalEndsAt = now.add(const Duration(days: 4)); // 4 days remaining
 
       DateTime calculateReRegistrationTrial({
         required DateTime now,
@@ -536,7 +511,7 @@ void main() {
       }
 
       final trialEnds = calculateReRegistrationTrial(now: now, originalEndsAt: originalEndsAt);
-      expect(trialEnds.difference(now).inDays, equals(45));
+      expect(trialEnds.difference(now).inDays, equals(4));
     });
 
     test('Expired ledger entry does not grant any extra days', () {
@@ -579,7 +554,6 @@ void main() {
       };
       expect(initialStadium['is_verified'], isFalse);
 
-      // Admin approval transition using real schema column is_verified
       Map<String, dynamic> approveStadium(Map<String, dynamic> s, {required bool isAdmin}) {
         if (!isAdmin) throw Exception('Unauthorized');
         return {...s, 'is_verified': true};
@@ -611,7 +585,6 @@ void main() {
       if (closeH > openH) {
         shiftDuration = closeH - openH;
       } else {
-        // Overnight shift (e.g. 15:00 to 02:00 -> 24 - 15 + 2 = 11 hours)
         shiftDuration = (24.0 - openH) + closeH;
       }
 
@@ -663,7 +636,6 @@ void main() {
       expect(duration, equals(2.0));
       expect(serverTotal, equals(400.0));
 
-      // Partial collection (deposit)
       const double collected = 100.0;
       final remaining = serverTotal - collected;
       final paymentStatus = collected >= serverTotal
@@ -687,7 +659,7 @@ void main() {
   });
 
   group('Owner Journey SSOT - Subscription Downgrade & Expiration Invariants', () {
-    test('Expired Pro owner without active trial downgrades to expired, NOT free_trial', () {
+    test('Expired Pro owner downgrades to basic free perpetual plan', () {
       final now = DateTime(2026, 10, 1, 12, 0);
       final trialEndsAt = now.subtract(const Duration(days: 60)); // expired long ago
       final subExpiresAt = now.subtract(const Duration(days: 1)); // pro expired yesterday
@@ -698,9 +670,9 @@ void main() {
         required DateTime subExpiresAt,
       }) {
         if (trialEndsAt != null && trialEndsAt.isAfter(now)) {
-          return 'free_trial'; // Edge case: still in valid trial
+          return 'basic'; // Still in 7-day trial with Pro benefits
         }
-        return 'expired'; // Standard SSOT
+        return 'basic'; // Automatic perpetual free basic plan
       }
 
       final plan = computeDowngradedPlan(
@@ -709,7 +681,7 @@ void main() {
         subExpiresAt: subExpiresAt,
       );
 
-      expect(plan, equals('expired'), reason: 'Expired Pro account must NOT revert to fake free_trial');
+      expect(plan, equals('basic'), reason: 'Expired Pro account reverts to basic free plan');
     });
   });
 
