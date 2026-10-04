@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../tokens/vsp_tokens.dart';
+import '../tokens/vsp_design_tokens.dart';
 
 class VSPMenuItem extends StatelessWidget {
   final IconData icon;
@@ -20,33 +20,40 @@ class VSPMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final accent = isLogout
+        ? VSPDSSemanticColors.error
+        : VSPDSSemanticColors.accent;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(VSPRadius.md),
+      borderRadius: BorderRadius.circular(VSPDSRadius.md),
       child: Container(
-        constraints: const BoxConstraints(minHeight: 56),
-        padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm),
+        constraints: const BoxConstraints(
+          minHeight: VSPDSizes.touchTarget,
+        ),
+        padding: const EdgeInsets.symmetric(
+          vertical: VSPDSSpacing.xs,
+        ),
         child: Row(
+          textDirection: Directionality.of(context),
           children: [
-            // Icon Box
             Container(
-              width: 48,
-              height: 48,
+              width: VSPDSizes.avatarMd,
+              height: VSPDSizes.avatarMd,
               decoration: BoxDecoration(
-                color: isLogout 
-                    ? VSPColors.error.withValues(alpha: 0.1) 
-                    : VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
+                color: isLogout
+                    ? accent.withValues(alpha: VSPDSOpacity.selectedSurface)
+                    : VSPDSSemanticColors.iconBadge,
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
               ),
               child: Icon(
                 icon,
-                color: isLogout ? VSPColors.error : VSPColors.accent,
-                size: 24,
+                color: accent,
+                size: VSPDSizes.iconLg,
               ),
             ),
-            const SizedBox(width: VSPSpacing.md),
-            
-            // Text Content
+            const SizedBox(width: VSPDSSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,30 +61,30 @@ class VSPMenuItem extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 16,
-                          color: isLogout ? VSPColors.error : VSPColors.textPrimary,
-                        ),
+                    style: VSPDSTypography.titleLarge.copyWith(
+                      fontSize: 16,
+                      color: accent,
+                    ),
                   ),
-                  const SizedBox(height: VSPSpacing.xs),
+                  const SizedBox(height: VSPDSSpacing.xxs),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isLogout 
-                              ? VSPColors.error.withValues(alpha: 0.7) 
-                              : VSPColors.textSecondary,
-                        ),
+                    style: VSPDSTypography.bodyMedium.copyWith(
+                      color: isLogout
+                          ? accent.withValues(alpha: VSPDSOpacity.secondaryText)
+                          : VSPDSSemanticColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            
-            // Chevron (RTL Directional compliant)
             if (!isLogout)
               Icon(
-                Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
-                color: VSPColors.textSecondary,
-                size: 22,
+                isArabic
+                    ? Iconsax.arrow_left_2_copy
+                    : Iconsax.arrow_right_1_copy,
+                color: VSPDSSemanticColors.textSecondary,
+                size: VSPDSizes.iconCompact,
               ),
           ],
         ),
@@ -85,4 +92,3 @@ class VSPMenuItem extends StatelessWidget {
     );
   }
 }
-
