@@ -35,7 +35,7 @@ class VspBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final useBlur = VSPGlass.shouldUseBlur;
+    final useBlur = VSPDSGlass.shouldUseBlur;
 
     final navContent = Container(
       decoration: BoxDecoration(
@@ -168,7 +168,7 @@ class VspBottomNavBar extends StatelessWidget {
         bottom: true,
         child: SizedBox(
           width: double.infinity,
-          height: VSPBottomNavBarMetrics.height,
+          height: VSPDSBottomNavMetrics.height,
           child: navCard,
         ),
       ),
