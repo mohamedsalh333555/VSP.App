@@ -72,7 +72,7 @@ class League1v1PrizeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Prize Pool Column (Live Accumulator)
+          // Official Prize Column
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
@@ -107,7 +107,7 @@ class League1v1PrizeCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'isArabic ? 'الجائزة الرسمية للبطل' : 'Official winner prize'',
+                    isArabic ? 'الجائزة الرسمية للبطل' : 'Official winner prize',
                     style: const TextStyle(
                       color: VSPColors.success,
                       fontSize: 10,
