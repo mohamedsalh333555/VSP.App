@@ -126,6 +126,8 @@ abstract final class VSPDSizes {
   static const double statusIcon = 14.0;
   static const double textButtonMinHeight = 44.0;
   static const double buttonProgress = 22.0;
+  static const double stateIconBox = 56.0;
+  static const double stateLoadingIndicator = 28.0;
   static const double avatarSm = 40.0;
   static const double avatarMd = 48.0;
   static const double avatarLg = 64.0;
@@ -408,6 +410,33 @@ abstract final class VSPDSTypography {
     color: VSPDSSemanticColors.textSecondary,
   );
 
+  static const TextStyle stateTitle = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 15.0,
+    fontWeight: FontWeight.w800,
+    height: 1.20,
+    color: VSPDSSemanticColors.textPrimary,
+  );
+
+  static const TextStyle stateMessage = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 12.0,
+    fontWeight: FontWeight.w400,
+    height: 1.40,
+    color: VSPDSSemanticColors.textSecondary,
+  );
+
+  static const TextStyle stateBody = TextStyle(
+    fontFamily: latinFont,
+    fontFamilyFallback: fallback,
+    fontSize: 12.5,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+    color: VSPDSSemanticColors.textSecondary,
+  );
+
   static const TextStyle modalTitle = TextStyle(
     fontFamily: arabicFont,
     fontFamilyFallback: fallback,
@@ -506,6 +535,8 @@ abstract final class VSPDSLayout {
 abstract final class VSPDSAccessibility {
   static const double minimumTapTarget = VSPDSizes.touchTarget;
   static const double focusStroke = VSPDSBorders.focus;
+  static const double stateMaxWidth = 420.0;
+  static const double progressStroke = 2.5;
   static const bool supportsReducedMotion = true;
 }
 
