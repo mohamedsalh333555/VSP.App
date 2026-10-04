@@ -141,6 +141,7 @@ class AuthService {
           'name': userData['name']?.toString().trim() ?? '',
           'position': userData['position'] ?? 'GK',
           'phone': userData['phone']?.toString().trim() ?? '',
+          'date_of_birth': userData['date_of_birth']?.toString(),
           'governorate': userData['governorate'],
         },
       );
