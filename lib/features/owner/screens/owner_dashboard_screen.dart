@@ -28,6 +28,7 @@ import '../widgets/dashboard/owner_operational_finance_card.dart';
 import '../widgets/dashboard/owner_today_pitch_schedule_card.dart';
 import '../widgets/dashboard/owner_pending_actions_bar.dart';
 import '../widgets/dashboard/owner_dashboard_header.dart';
+import '../widgets/dashboard/insights/insights_top_filters_row.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -382,10 +383,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                     fontSize: 13,
                                   ),
                                 ),
-                                if (!isProOwner) ...[
-                                  const SizedBox(width: 4),
-                                  const SizedBox.shrink(),
-                                ],
                               ],
                             ),
                           ),
