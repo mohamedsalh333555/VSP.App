@@ -1,125 +1,36 @@
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../ui/tokens/vsp_tokens.dart';
-import '../providers/auth_provider.dart';
-import '../repositories/app_settings_repository.dart';
-import '../utils/vsp_launcher_utils.dart';
+import '../../features/player/screens/support_tickets_screen.dart';
+import '../../data/models.dart';
 
 class SupportService {
- static final SupportService _instance = SupportService._internal();
- factory SupportService() => _instance;
- SupportService._internal();
+  static final SupportService _instance = SupportService._internal();
+  factory SupportService() => _instance;
+  SupportService._internal();
 
- Future<void> openSupport(BuildContext context, {String? category}) async {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final isOwner = auth.isOwner;
+  Future<void> openSupport(
+    BuildContext context, {
+    String? category,
+    Booking? booking,
+  }) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SupportTicketsScreen(
+          initialCategory: category == null ? null : _normalizeCategory(category),
+          contextBooking: booking,
+        ),
+      ),
+    );
+  }
 
- showModalBottomSheet(
- context: context,
- useSafeArea: true,
- isScrollControlled: true,
- backgroundColor: VSPColors.surface,
- shape: const RoundedRectangleBorder(
- borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
- ),
- builder: (context) => SafeArea(
- child: Container(
- padding: EdgeInsets.fromLTRB(
- VSPSpacing.xl,
- VSPSpacing.xl,
- VSPSpacing.xl,
- MediaQuery.of(context).padding.bottom > 0 ? 8 : VSPSpacing.xl,
- ),
- child: Column(
- mainAxisSize: MainAxisSize.min,
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- isArabic ? 'كيف يمكننا مساعدتك؟' : 'How can we help?',
- style: Theme.of(context).textTheme.headlineSmall?.copyWith(
- fontWeight: FontWeight.bold,
- ),
- ),
- const SizedBox(height: VSPSpacing.md),
- _buildSupportOption(
- context,
- Iconsax.security_safe_copy,
- isArabic ? "تفعيل وحماية الحساب" : "Profile & Account Security",
- isOwner 
- ? (isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.")
- : (isArabic ? "مشاكل تسجيل الدخول، كلمة المرور أو البيانات الشخصية" : "Login, password, or account profile issues."),
- ),
- _buildSupportOption(
- context,
- Iconsax.user_remove_copy,
- isArabic ? "الإبلاغ عن غياب لاعب" : "Report Player No-Show",
- isArabic ? "الإبلاغ عن عدم حضور اللاعبين في الوقت المحدد" : "Report players who did not show up on time.",
- ),
- _buildSupportOption(
- context,
- Iconsax.info_circle_copy,
- isOwner ? (isArabic ? "دعم البطولات والتحصيل" : "Tournaments & Revenue Support") : (isArabic ? "مساعدة بالحجوزات والتقييمات" : "Bookings & Review Support"),
- isOwner
- ? (isArabic ? "استفسارات تنظيم البطولات، المحفظة والتحصيل" : "Tournament organizing and payout inquiries.")
- : (isArabic ? "استفسارات الحجز، التقييم، أو إلغاء الحجز" : "Inquiries about bookings, reviews, or cancellations."),
- ),
- const SizedBox(height: VSPSpacing.xl),
- Center(
- child: Text(
- isOwner
- ? (isArabic ? 'متواجدون 24/7 لشركاء VSP' : 'Available 24/7 for VSP Partners')
- : (isArabic ? 'فريق دعم VSP متواجد لمساعدتك 24/7' : 'VSP Support Team is available 24/7'),
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
- ),
- ),
- ],
- ),
- ),
- ),
- );
-}
-
- Widget _buildSupportOption(BuildContext context, IconData icon, String title, String subtitle) {
- return ListTile(
- leading: Container(
- padding: const EdgeInsets.all(8),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.1),
- shape: BoxShape.circle,
- ),
- child: Icon(icon, color: VSPColors.accent),
- ),
- title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: VSPColors.textPrimary)),
- subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: VSPColors.textSecondary)),
- onTap: () {
- Navigator.pop(context);
- _launchSupportWhatsApp(context: context, category: title);
- },
- );
- }
-
- Future<void> _launchSupportWhatsApp({required BuildContext context, required String category}) async {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final user = auth.userModel;
-
- final name = user?.name ?? 'Guest';
- final governorate = user?.governorate ?? 'N/A';
-
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
- final messageText = isArabic
- ? "مرحباً فريق دعم VSP \nأحتاج مساعدة بخصوص: $category\nالاسم: $name\nالمحافظة: $governorate"
- : "Hi VSP Support \nI need assistance regarding: $category\nName: $name\nGovernorate: $governorate";
-
- try {
- final settings = await AppSettingsRepository().getSettings();
- if (!context.mounted) return;
- final supportNumber = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
- await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: messageText);
- } catch (e) {
- debugPrint('Could not launch WhatsApp support: $e');
- }
- }
+  String _normalizeCategory(String value) {
+    final v = value.toLowerCase();
+    if (v.contains('refund') || v.contains('استرد')) return 'refund';
+    if (v.contains('payment') || v.contains('دفع') || v.contains('تحصيل')) return 'payment';
+    if (v.contains('booking') || v.contains('حجز')) return 'booking';
+    if (v.contains('tournament') || v.contains('بطول')) return 'tournament';
+    if (v.contains('report') || v.contains('بلاغ')) return 'report';
+    if (v.contains('account') || v.contains('حساب')) return 'account';
+    return 'general';
+  }
 }
