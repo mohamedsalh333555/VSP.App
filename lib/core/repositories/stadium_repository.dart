@@ -114,7 +114,7 @@ class StadiumRepository {
             if (currentCount >= userModel.maxStadiums) {
               if (userModel.maxStadiums <= 1) {
                 throw Exception(
-                    'باقتك الحالية تدعم ملعباً واحداً فقط. يرجى الترقية للباقة الاحترافية (PRO) لإضافة حتى 3 ملاعب.'
+                    'حسابك المجاني يدعم ملعباً واحداً فقط. اشترك في Pro لإضافة حتى 3 ملاعب.'
                 );
               } else {
                 throw Exception(
