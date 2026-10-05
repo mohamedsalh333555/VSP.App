@@ -12,6 +12,8 @@ import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/deep_link_helper.dart';
+import '../services/logger_service.dart';
+import '../../l10n/app_localizations.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -60,7 +62,7 @@ class _RootScreenState extends State<RootScreen> {
  final prefs = await SharedPreferences.getInstance();
  final String? pendingLink = prefs.getString('pending_deep_link');
  if (pendingLink != null && mounted) {
- debugPrint(' Recovering pending deep link: $pendingLink');
+ VSPLogger.i('Recovering pending deep link');
  await prefs.remove('pending_deep_link'); // حذف الرابط فوراً لمنع التكرار
 
  final uri = Uri.parse(pendingLink);
@@ -69,8 +71,8 @@ class _RootScreenState extends State<RootScreen> {
  GoRouter.of(context).push(parsed.routePath);
  }
  }
- } catch (e) {
- debugPrint(' Error processing pending deep link: $e');
+ } catch (e, stackTrace) {
+ VSPLogger.e('Failed to process pending deep link', e, stackTrace);
  }
  }
 
@@ -86,19 +88,23 @@ class _RootScreenState extends State<RootScreen> {
  }
 
  void _showForceUpdateDialog(String url) {
+ final l10n = AppLocalizations.of(context)!;
  showDialog(
  context: context,
  barrierDismissible: false,
- builder: (context) => AlertDialog(
+ builder: (dialogContext) => AlertDialog(
  backgroundColor: VSPColors.surface,
- title: const Text('Update Required ', style: TextStyle(color: Colors.white)),
- content: const Text(
- 'A new version of VSP is available with improved performance and new features.',
- style: TextStyle(color: VSPColors.textSecondary),
+ title: Text(
+ l10n.updateRequired,
+ style: const TextStyle(color: Colors.white),
+ ),
+ content: Text(
+ l10n.updateAvailableMessage,
+ style: const TextStyle(color: VSPColors.textSecondary),
  ),
  actions: [
  PrimaryButton(
- text: 'Update Now',
+ text: l10n.updateNow,
  onPressed: () async {
  final Uri storeUri = Uri.parse(url);
  try {
@@ -108,10 +114,10 @@ class _RootScreenState extends State<RootScreen> {
  mode: LaunchMode.externalApplication,
  );
  } else {
- debugPrint('Could not launch store URL: $url');
+ VSPLogger.w('Could not launch update URL');
  }
  } catch (e) {
- debugPrint('Error launching store URL: $e');
+ VSPLogger.e('Error launching update URL', e);
  }
  },
  ),
