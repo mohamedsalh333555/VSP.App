@@ -47,6 +47,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       try {
         await _repo.markSupportTicketWhatsAppEscalated(widget.ticketId);
       } catch (_) {}
+      if (!mounted) return;
       final ar = Localizations.localeOf(context).languageCode == 'ar';
       final ref = widget.ticketId.length >= 8 ? widget.ticketId.substring(0, 8) : widget.ticketId;
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: ar ? 'أحتاج تصعيد تذكرة دعم VSP رقم #$ref.' : 'I need to escalate VSP support ticket #$ref.');
