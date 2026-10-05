@@ -139,18 +139,9 @@ class BookingCreationCoordinator {
       final created = await getBookingById(bookingId);
       if (created == null) throw Exception('تعذر جلب تفاصيل الحجز بعد الإنشاء.');
 
-      // Only notify owner when booking is actually confirmed (cash = immediate confirm; online = wait for webhook)
-      if (created.status == BookingStatus.confirmed || draft.paymentMethod == 'cash') {
-        sendOwnerNotification(draft, created.id);
-        // For challenge: also notify opponent team captain — only after confirmation
-        // NOTE: challenge bookings via create_challenge_booking_atomic handle this separately
-        // This path only fires for legacy challenge flow or cash challenges
-        if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
-          sendChallengeConfirmedNotification(draft, created.id);
-        }
-      }
-      // For online challenge bookings: notification is sent by the webhook after payment succeeds
-      // Do NOT send 'Challenge Confirmed' here for pending online payments
+      // Cash booking notifications are generated server-side by the bookings INSERT trigger,
+      // so normal users never need direct INSERT permission on notifications.
+      // Online payment notifications remain owned by the Paymob webhook.
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
       VSPLogger.i('Atomic booking created: ${created.id}');
@@ -166,53 +157,4 @@ class BookingCreationCoordinator {
     }
   }
 
-  /// Sends booking notification to stadium owner.
-  Future<void> sendOwnerNotification(BookingDraft draft, String bookingId) async {
-    try {
-      final dateStr = DateFormat('MMM d', 'en').format(draft.startTime);
-      final timeStr = DateFormat('h:mm a', 'en').format(draft.startTime);
-      await _notificationRepo.sendNotification(
-        draft.ownerId,
-        AppNotification(
-          id: '',
-          title: 'New Booking Received!',
-          body: '${draft.playerTeamName ?? "A player"} booked ${draft.stadiumName} on $dateStr at $timeStr.',
-          type: 'info',
-          createdAt: DateTime.now(),
-          bookingId: bookingId,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error sending owner notification: $e');
-    }
-  }
-
-  /// Sends challenge CONFIRMED notification to opponent captain.
-  /// Only called AFTER booking is actually confirmed (cash or post-payment webhook).
-  Future<void> sendChallengeConfirmedNotification(BookingDraft draft, String bookingId) async {
-    try {
-      if (draft.opponentTeamId == null) return;
-      final team = await _teamRepo.getTeam(draft.opponentTeamId!);
-      if (team == null) return;
-
-      final captainId = team.captainId;
-      if (captainId.isEmpty) return;
-
-      final dateStr = DateFormat('d MMM', 'ar').format(draft.startTime);
-      await _notificationRepo.sendNotification(
-        captainId,
-        AppNotification(
-          id: '',
-          title: 'تم تأكيد مباراة تحدي!',
-          body: '${draft.playerTeamName ?? "فريق"} × ${draft.opponentTeamName ?? "فريقك"} في ${draft.stadiumName} — $dateStr.',
-          type: 'challenge_confirmed',
-          bookingId: bookingId,
-          createdAt: DateTime.now(),
-        ),
-      );
-      AnalyticsService.logChallengeSent(draft.playerTeamId ?? 'unknown', draft.opponentTeamId!);
-    } catch (e) {
-      VSPLogger.e('Error sending challenge confirmed notification', e);
-    }
-  }
 }
