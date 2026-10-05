@@ -63,6 +63,7 @@ serve(async (req: Request) => {
       booking_id,
       is_tournament_payment = false,
       is_full_payment = false,
+      subscription_order_id = null,
       amount_egp,
       user_phone = "",
       user_name = "",
@@ -95,6 +96,16 @@ serve(async (req: Request) => {
 
     // 4. Determine Amount & Verify Ownership (IDOR Prevention - Fail-Closed)
     let finalBaseAmount = Number(amount_egp) || 0;
+    const isOwnerSubscription = Boolean(subscription_order_id);
+
+    if (isOwnerSubscription) {
+      if (is_tournament_payment) return new Response(JSON.stringify({ error: "Invalid mixed payment request" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      const { data: subscriptionOrder, error: subscriptionOrderError } = await supabase.from("owner_subscription_orders").select("id, owner_id, plan_code, billing_period, amount, status").eq("id", String(subscription_order_id)).maybeSingle();
+      if (subscriptionOrderError || !subscriptionOrder) return new Response(JSON.stringify({ error: "Subscription payment order not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (subscriptionOrder.owner_id !== callerUser.id) return new Response(JSON.stringify({ error: "Forbidden: subscription order belongs to another user" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (subscriptionOrder.status !== "pending") return new Response(JSON.stringify({ error: "Subscription payment order is not pending" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      finalBaseAmount = Number(subscriptionOrder.amount) || 0;
+    }
 
     if (is_tournament_payment) {
       const recognizedTournamentReference =
@@ -271,7 +282,7 @@ serve(async (req: Request) => {
     // Canonical fee SSOT. Never invent a fallback when the policy is unavailable.
     const { data: feeConfig } = await supabase
       .from("platform_fee_config")
-      .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_fixed_fee, paymob_applies_to_electronic")
+      .select("booking_vsp_rate, booking_paymob_rate, booking_paymob_local_rate, booking_paymob_fixed_fee, paymob_applies_to_electronic, subscription_vsp_rate, subscription_paymob_rate, subscription_paymob_fixed_fee")
       .eq("id", 1)
       .maybeSingle();
 
@@ -282,10 +293,16 @@ serve(async (req: Request) => {
       );
     }
 
-    const vspRate = Number(feeConfig.booking_vsp_rate);
-    const gatewayRate = Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
-    const gatewayFixed = Number(feeConfig.booking_paymob_fixed_fee);
-    if (![vspRate, gatewayRate, gatewayFixed].every(Number.isFinite)) {
+    const vspRate = isOwnerSubscription
+      ? Number(feeConfig.subscription_vsp_rate)
+      : Number(feeConfig.booking_vsp_rate);
+    const gatewayRate = isOwnerSubscription
+      ? Number(feeConfig.subscription_paymob_rate)
+      : Number(feeConfig.booking_paymob_local_rate ?? feeConfig.booking_paymob_rate);
+    const gatewayFixed = isOwnerSubscription
+      ? Number(feeConfig.subscription_paymob_fixed_fee)
+      : Number(feeConfig.booking_paymob_fixed_fee);
+    if (![vspRate, gatewayRate, gatewayFixed].every(Number.isFinite) || vspRate < 0 || gatewayRate < 0 || gatewayRate >= 1 || gatewayFixed < 0) {
       return new Response(
         JSON.stringify({ error: "Payment fee policy invalid. Checkout refused safely." }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -296,6 +313,26 @@ serve(async (req: Request) => {
     const platformFee = Math.round((vspFee + gatewayFee) * 100) / 100;
     const totalAmountEgp = Math.round((finalBaseAmount + platformFee) * 100) / 100;
     const amountInCents = Math.round(totalAmountEgp * 100);
+
+    if (isOwnerSubscription) {
+      const { error: subscriptionPricingError } = await supabase
+        .from("owner_subscription_orders")
+        .update({
+          vsp_fee_amount: vspFee,
+          paymob_fee_amount: gatewayFee,
+          gross_amount: totalAmountEgp,
+        })
+        .eq("id", String(subscription_order_id))
+        .eq("owner_id", callerUser.id)
+        .eq("status", "pending");
+      if (subscriptionPricingError) {
+        console.error("Failed to persist owner subscription fee breakdown:", subscriptionPricingError);
+        return new Response(
+          JSON.stringify({ error: "Failed to persist secure subscription pricing" }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     const safeFirstName = canonicalName.split(/\s+/)[0] || "Player";
     const safeLastName = canonicalName.split(/\s+/).slice(1).join(" ") || "VSP";
@@ -323,7 +360,7 @@ serve(async (req: Request) => {
         phone_number: safePhone,
         email: canonicalEmail || "customer@vsp.eg",
       },
-      special_reference: booking_id,
+      special_reference: isOwnerSubscription ? `OWNER_SUB_${subscription_order_id}` : booking_id,
       redirection_url: "https://vspapp.online/payment-callback",
     };
 
@@ -362,7 +399,10 @@ serve(async (req: Request) => {
     }
 
     const persistPaymobOrder = async () => {
-      if (is_tournament_payment && typeof booking_id === "string") {
+      if (isOwnerSubscription) {
+        const { error } = await supabase.from("owner_subscription_orders").update({ paymob_order_id: intentionOrderId }).eq("id", String(subscription_order_id)).eq("owner_id", callerUser.id).eq("status", "pending");
+        if (error) throw error;
+      } else if (is_tournament_payment && typeof booking_id === "string") {
         if (booking_id.startsWith("TOURN_1V1_")) {
           const { error } = await supabase
             .from("vsp_1v1_tournament_orders")
