@@ -6,6 +6,7 @@ import '../../services/auth_service.dart';
 import '../../services/logger_service.dart';
 import '../../services/secure_storage_service.dart';
 import '../../utils/phone_utils.dart';
+import '../../utils/app_error_handler.dart';
 
 /// Coordinates social OAuth logins (Google & Apple) and subsequent profile completion.
 class AuthOAuthCoordinator {
