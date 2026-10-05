@@ -8,7 +8,6 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_ambient_background.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
-import '../widgets/tournament/cups/owner_cup_format_modal.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
