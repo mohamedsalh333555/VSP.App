@@ -305,8 +305,8 @@ class StadiumProvider with ChangeNotifier {
  fetchStadiumsWithParams(
  isRefresh: true,
  governorate: location ?? _selectedGovernorate,
- sportType: sports.isNotEmpty ? sports.first : null,
- pitchSize: sizes.isNotEmpty ? sizes.first : null,
+ sportTypes: sports.isNotEmpty ? sports : null,
+ pitchSizes: sizes.isNotEmpty ? sizes : null,
  minPrice: minPrice,
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
@@ -342,6 +342,8 @@ class StadiumProvider with ChangeNotifier {
  governorate: governorate,
  sportType: sportType,
  pitchSize: pitchSize,
+ sportTypes: sportTypes,
+ pitchSizes: pitchSizes,
  minPrice: minPrice,
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
@@ -390,12 +392,16 @@ class StadiumProvider with ChangeNotifier {
   }
 
  // Reset all filters
- void clearFilters() {
+ Future<void> clearFilters() async {
  _isFilterActive = false;
  _currentFilters = null;
  _filteredStadiums = [];
  _activeQuickFilter = null;
- notifyListeners();
+ _selectedGovernorate = null;
+ _isGeographicFallback = false;
+ _lastDocument = null;
+ _hasMore = true;
+ await fetchStadiums(isRefresh: true);
  }
 
  // Clear error
