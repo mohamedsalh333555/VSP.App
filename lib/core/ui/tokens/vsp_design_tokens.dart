@@ -131,7 +131,8 @@ abstract final class VSPDSizes {
   static const double buttonProgress = 22.0;
   static const double progressStroke = 2.0;
   static const double navigationItemHeight = 58.0;
-  static const double navigationIcon = 23.0;
+  static const double navigationIcon = 22.0;
+  static const double navigationIconSelected = 24.0;
   static const double notificationDot = 8.0;
   static const double navigationNotificationTop = -1.0;
   static const double navigationNotificationRight = -2.0;
