@@ -88,7 +88,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
   }
 
   Future<void> _openChat() async {
-    final userId = context.read<app_auth.AuthProvider>().currentUser?.uid;
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
     if (userId == null) return;
     final other = <String>[
       widget.booking.ownerId,
