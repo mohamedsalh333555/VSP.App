@@ -87,7 +87,7 @@ class FilterPricePanel extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => onNoDepositChanged(!noDepositOnly),
                 child: Text(
-                  isArabic ? 'ملاعب بدون عربون (دفع نقدي مباشر)' : 'No Deposit Required (Cash On Arrival)',
+                  isArabic ? 'ملاعب بدون عربون' : 'No Deposit Required',
                   style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w500),
                 ),
               ),
