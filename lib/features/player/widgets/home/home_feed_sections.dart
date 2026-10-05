@@ -4,6 +4,7 @@ import '../../../../core/repositories/match_repository.dart';
 import '../../../../core/repositories/notification_repository.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/components/vsp_section_title.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../data/models.dart';
@@ -133,9 +134,16 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
     return StreamBuilder<List<Booking>>(
       stream: _matchesStream,
       builder: (context, snapshot) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         if (snapshot.hasError) {
           debugPrint('Matches Stream Error: ${snapshot.error}');
-          return const SizedBox.shrink();
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
+            message: isArabic
+                ? 'حصلت مشكلة أثناء تحديث المباريات. حاول مرة تانية.'
+                : 'We could not refresh matches right now. Please try again.',
+          );
         }
 
         final matches = snapshot.data ?? [];
@@ -227,6 +235,18 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
     return StreamBuilder<List<Championship>>(
       stream: _championshipsStream,
       builder: (context, snapshot) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        if (snapshot.hasError) {
+          debugPrint('Championships Stream Error: ${snapshot.error}');
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل البطولات' : 'Could not load tournaments',
+            message: isArabic
+                ? 'حصلت مشكلة أثناء تحديث البطولات. حاول مرة تانية.'
+                : 'We could not refresh tournaments right now. Please try again.',
+          );
+        }
+
         final championships = snapshot.data ?? [];
         final isLoading = snapshot.connectionState == ConnectionState.waiting && championships.isEmpty;
 
@@ -256,7 +276,9 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
                               Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
                               const SizedBox(height: 10),
                               Text(
-                                'لا توجد بطولات متاحة حالياً',
+                                isArabic
+                                    ? 'لا توجد بطولات متاحة حالياً'
+                                    : 'No tournaments available right now',
                                 style: TextStyle(
                                   color: VSPColors.textSecondary.withValues(alpha: 0.7),
                                   fontSize: 14,
@@ -264,7 +286,9 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'ترقب قريباً — البطولة القادمة في الطريق!',
+                                isArabic
+                                    ? 'ترقب قريباً — البطولة القادمة في الطريق!'
+                                    : 'Stay tuned — the next tournament is on the way!',
                                 style: TextStyle(
                                   color: VSPColors.textSecondary.withValues(alpha: 0.45),
                                   fontSize: 12,
