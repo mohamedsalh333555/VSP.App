@@ -67,7 +67,6 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final l10n = AppLocalizations.of(context)!;
     final isOwner = context.select<AuthProvider, bool>((a) => a.isOwner);
 

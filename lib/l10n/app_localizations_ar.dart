@@ -1489,7 +1489,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get faq10_a =>
-      'يمكنك الضغط على زر \'الدردشة مع الدعم\' في هذه الشاشة ليتم تحويلك مباشرة لمحادثة واتساب مع فريقنا.';
+      'افتح الدعم داخل التطبيق لإنشاء تذكرة والتواصل بالرسائل مع فريق الدعم. ويتوفر واتساب كقناة تصعيد عند الحاجة.';
 
   @override
   String get totalCollectedGross => 'إجمالي التحصيلات (كلّي)';
@@ -2377,4 +2377,87 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get refIdCopied => 'تم نسخ رقم الإيصال';
+
+  @override
+  String get supportOwnerPageTitle => 'دعم وأسئلة أصحاب الملاعب';
+
+  @override
+  String get supportPlayerPageTitle => 'الأسئلة الشائعة والدعم الفني';
+
+  @override
+  String get supportOwnerDirectTitle => 'دعم أصحاب الملاعب المباشر';
+
+  @override
+  String get supportPlayerDirectTitle => 'دعم VSP المباشر';
+
+  @override
+  String get supportInAppButton => 'الدعم داخل التطبيق';
+
+  @override
+  String get supportWhatsAppButton => 'واتساب كتصعيد';
+
+  @override
+  String get supportCallButton => 'اتصال كتصعيد';
+
+  @override
+  String get supportOwnerFaqHeading => 'أسئلة تهم أصحاب الملاعب:';
+
+  @override
+  String get supportPlayerFaqHeading => 'الأسئلة الأكثر شيوعاً:';
+
+  @override
+  String get ownerFaq1_q => 'كيف أضيف ملعبي وأتحكم في ساعات العمل والأسعار؟';
+
+  @override
+  String get ownerFaq1_a =>
+      'استخدم مسار إضافة ملعب جديد لرفع الصور وتحديد سعر الساعة وإضافة فترات الراحة الاختيارية وتحديد ساعات التشغيل اليومية.';
+
+  @override
+  String get ownerFaq2_q => 'كيف أحصل على مبالغ الحجوزات والعربون؟';
+
+  @override
+  String get ownerFaq2_a =>
+      'أضف بيانات التحصيل الخاصة بك من إعدادات الحساب، وتتم عمليات التحصيل والتسوية وفق مسار الدفع المعتمد في المنصة.';
+
+  @override
+  String get ownerFaq3_q =>
+      'كيف أتحكم في جدول الحجوزات وحظر الأوقات غير المتاحة؟';
+
+  @override
+  String get ownerFaq3_a =>
+      'استخدم شاشات الجدول والعمليات لحظر الأوقات غير المتاحة ومراجعة الحجوزات الواردة وإدارة جدول الملعب.';
+
+  @override
+  String get ownerFaq4_q => 'كيف أنظم البطولات على ملعبي؟';
+
+  @override
+  String get ownerFaq4_a =>
+      'افتح قسم البطولات لإنشاء البطولة وضبط قواعد التسجيل والجوائز ومتابعة مبارياتها.';
+
+  @override
+  String get ownerFaq5_q => 'ما هي باقات الاشتراك لأصحاب الملاعب؟';
+
+  @override
+  String get ownerFaq5_a =>
+      'الباقة الأساسية مجانية لإدارة ملعب واحد، بينما تضيف Pro سعة ملاعب أكبر ومزايا تشغيلية متقدمة وVSP Copilot.';
+
+  @override
+  String get ownerFaq6_q => 'كيف يتم احتساب رسوم المنصة والتسوية؟';
+
+  @override
+  String get ownerFaq6_a =>
+      'تحسب الرسوم وعمليات معالجة الدفع وفق القواعد المالية على الخادم وتظهر في الشاشات المالية الخاصة بالمالك.';
+
+  @override
+  String get skipButton => 'تخطي';
+
+  @override
+  String get updateRequired => 'يلزم تحديث التطبيق';
+
+  @override
+  String get updateAvailableMessage =>
+      'يتوفر إصدار جديد من VSP مع تحسينات في الأداء وميزات جديدة.';
+
+  @override
+  String get updateNow => 'تحديث الآن';
 }

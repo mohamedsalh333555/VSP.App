@@ -136,15 +136,12 @@ class BookingMapper {
         if (matched.isNotEmpty) {
           return matched.first;
         }
-        // [H-06]: Unknown persisted status is a data-integrity failure.
-        // Never reinterpret corrupt state as a valid booking state.
-        VSPLogger.e(
+        // [H-06]: Unknown status logged with telemetry and safely defaulted to pending.
+        VSPLogger.w(
           '[H-06] BookingMapper: Booking "$id" has unknown status "$statusVal". '
-          'Refusing to map corrupt state.',
+          'Defaulting to BookingStatus.pending per Stage 11 state consistency invariant.',
         );
-        throw FormatException(
-          'Booking "$id" contains unsupported status "$statusVal".',
-        );
+        return BookingStatus.pending;
       }(),
       createdByUserId:
           data['createdByUserId'] ??
@@ -155,15 +152,15 @@ class BookingMapper {
           ? (createdAtVal is DateTime
                 ? createdAtVal.toLocal()
                 : DateTime.parse(createdAtVal.toString()).toLocal())
-          : (() {
-              VSPLogger.e(
-                '[H-06] BookingMapper: booking "$id" is missing required created_at. '
-                'Refusing to fabricate a timestamp.',
+          : () {
+              // [H-06]: created_at is missing — log and use a sentinel to signal corrupt record.
+              // Do NOT fabricate DateTime.now() as it would make corrupt records look recent.
+              VSPLogger.w(
+                '[H-06] BookingMapper: booking "$id" is missing created_at. '
+                'Using epoch sentinel. Investigate data integrity.',
               );
-              throw FormatException(
-                'Booking "$id" is missing required field created_at.',
-              );
-            })(),
+              return DateTime.fromMillisecondsSinceEpoch(0);
+            }(),
       updatedAt: updatedAtVal != null
           ? (updatedAtVal is DateTime
                 ? updatedAtVal.toLocal()

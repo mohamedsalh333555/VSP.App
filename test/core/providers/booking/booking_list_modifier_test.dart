@@ -51,14 +51,14 @@ void main() {
       expect(list.last.isPaid, isFalse);
     });
 
-    test('formatCreationError strips exception prefixes', () {
+    test('formatCreationError delegates to unified AppErrorHandler', () {
       expect(
-        BookingListModifier.formatCreationError('Exception: Failed to create booking: Slot occupied'),
-        'Slot occupied',
+        BookingListModifier.formatCreationError('stadium limit exceeded'),
+        contains('تم تجاوز الحد الأقصى للملاعب'),
       );
       expect(
         BookingListModifier.formatCreationError('Network timeout'),
-        'Network timeout',
+        contains('تعذر الاتصال بالشبكة'),
       );
     });
 

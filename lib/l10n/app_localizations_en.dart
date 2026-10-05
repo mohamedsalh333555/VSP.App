@@ -1499,11 +1499,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.';
 
   @override
-  String get faq10_q => 'How do I contact support?';
+  String get faq10_q => 'How do I contact technical support?';
 
   @override
   String get faq10_a =>
-      'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.';
+      'Open In-App Support to create a support ticket and exchange messages with the support team. WhatsApp is available as an escalation channel when needed.';
 
   @override
   String get totalCollectedGross => 'Total Collected (Gross)';
@@ -2398,4 +2398,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refIdCopied => 'Reference ID copied';
+
+  @override
+  String get supportOwnerPageTitle => 'Owner Support & FAQ';
+
+  @override
+  String get supportPlayerPageTitle => 'FAQ & Support';
+
+  @override
+  String get supportOwnerDirectTitle => 'Stadium Owner Direct Support';
+
+  @override
+  String get supportPlayerDirectTitle => 'VSP Direct Support';
+
+  @override
+  String get supportInAppButton => 'In-App Support';
+
+  @override
+  String get supportWhatsAppButton => 'WhatsApp Escalation';
+
+  @override
+  String get supportCallButton => 'Call Escalation';
+
+  @override
+  String get supportOwnerFaqHeading => 'Stadium Owner FAQs:';
+
+  @override
+  String get supportPlayerFaqHeading => 'Frequently Asked Questions:';
+
+  @override
+  String get ownerFaq1_q =>
+      'How do I add my stadium and manage pricing & working hours?';
+
+  @override
+  String get ownerFaq1_a =>
+      'Use the Add New Stadium flow to upload stadium photos, set the hourly rate, optionally add breaks, and define daily operating hours.';
+
+  @override
+  String get ownerFaq2_q => 'How do I receive booking payments and deposits?';
+
+  @override
+  String get ownerFaq2_a =>
+      'Set your payout details in Account Settings. Booking collection follows the configured payment and settlement flow.';
+
+  @override
+  String get ownerFaq3_q =>
+      'How do I manage my schedule and block unavailable slots?';
+
+  @override
+  String get ownerFaq3_a =>
+      'Use the Stadium Schedule and Operations views to block unavailable time, review incoming bookings, and manage the calendar.';
+
+  @override
+  String get ownerFaq4_q =>
+      'How do I create and organize tournaments on my stadium?';
+
+  @override
+  String get ownerFaq4_a =>
+      'Open the Tournaments section to create a tournament, configure its registration rules and prizes, and manage its matches.';
+
+  @override
+  String get ownerFaq5_q =>
+      'What are the subscription plans for stadium owners?';
+
+  @override
+  String get ownerFaq5_a =>
+      'Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.';
+
+  @override
+  String get ownerFaq6_q => 'How do platform fees and settlement work?';
+
+  @override
+  String get ownerFaq6_a =>
+      'Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.';
+
+  @override
+  String get skipButton => 'Skip';
+
+  @override
+  String get updateRequired => 'Update Required';
+
+  @override
+  String get updateAvailableMessage =>
+      'A new version of VSP is available with improved performance and new features.';
+
+  @override
+  String get updateNow => 'Update Now';
 }

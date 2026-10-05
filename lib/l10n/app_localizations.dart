@@ -2843,13 +2843,13 @@ abstract class AppLocalizations {
   /// No description provided for @faq10_q.
   ///
   /// In en, this message translates to:
-  /// **'How do I contact support?'**
+  /// **'How do I contact technical support?'**
   String get faq10_q;
 
   /// No description provided for @faq10_a.
   ///
   /// In en, this message translates to:
-  /// **'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.'**
+  /// **'Open In-App Support to create a support ticket and exchange messages with the support team. WhatsApp is available as an escalation channel when needed.'**
   String get faq10_a;
 
   /// No description provided for @totalCollectedGross.
@@ -4489,6 +4489,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference ID copied'**
   String get refIdCopied;
+
+  /// No description provided for @supportOwnerPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner Support & FAQ'**
+  String get supportOwnerPageTitle;
+
+  /// No description provided for @supportPlayerPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQ & Support'**
+  String get supportPlayerPageTitle;
+
+  /// No description provided for @supportOwnerDirectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium Owner Direct Support'**
+  String get supportOwnerDirectTitle;
+
+  /// No description provided for @supportPlayerDirectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'VSP Direct Support'**
+  String get supportPlayerDirectTitle;
+
+  /// No description provided for @supportInAppButton.
+  ///
+  /// In en, this message translates to:
+  /// **'In-App Support'**
+  String get supportInAppButton;
+
+  /// No description provided for @supportWhatsAppButton.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp Escalation'**
+  String get supportWhatsAppButton;
+
+  /// No description provided for @supportCallButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Call Escalation'**
+  String get supportCallButton;
+
+  /// No description provided for @supportOwnerFaqHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium Owner FAQs:'**
+  String get supportOwnerFaqHeading;
+
+  /// No description provided for @supportPlayerFaqHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently Asked Questions:'**
+  String get supportPlayerFaqHeading;
+
+  /// No description provided for @ownerFaq1_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I add my stadium and manage pricing & working hours?'**
+  String get ownerFaq1_q;
+
+  /// No description provided for @ownerFaq1_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Add New Stadium flow to upload stadium photos, set the hourly rate, optionally add breaks, and define daily operating hours.'**
+  String get ownerFaq1_a;
+
+  /// No description provided for @ownerFaq2_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I receive booking payments and deposits?'**
+  String get ownerFaq2_q;
+
+  /// No description provided for @ownerFaq2_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your payout details in Account Settings. Booking collection follows the configured payment and settlement flow.'**
+  String get ownerFaq2_a;
+
+  /// No description provided for @ownerFaq3_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I manage my schedule and block unavailable slots?'**
+  String get ownerFaq3_q;
+
+  /// No description provided for @ownerFaq3_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Stadium Schedule and Operations views to block unavailable time, review incoming bookings, and manage the calendar.'**
+  String get ownerFaq3_a;
+
+  /// No description provided for @ownerFaq4_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I create and organize tournaments on my stadium?'**
+  String get ownerFaq4_q;
+
+  /// No description provided for @ownerFaq4_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Tournaments section to create a tournament, configure its registration rules and prizes, and manage its matches.'**
+  String get ownerFaq4_a;
+
+  /// No description provided for @ownerFaq5_q.
+  ///
+  /// In en, this message translates to:
+  /// **'What are the subscription plans for stadium owners?'**
+  String get ownerFaq5_q;
+
+  /// No description provided for @ownerFaq5_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.'**
+  String get ownerFaq5_a;
+
+  /// No description provided for @ownerFaq6_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do platform fees and settlement work?'**
+  String get ownerFaq6_q;
+
+  /// No description provided for @ownerFaq6_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.'**
+  String get ownerFaq6_a;
+
+  /// No description provided for @skipButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skipButton;
+
+  /// No description provided for @updateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Required'**
+  String get updateRequired;
+
+  /// No description provided for @updateAvailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of VSP is available with improved performance and new features.'**
+  String get updateAvailableMessage;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Now'**
+  String get updateNow;
 }
 
 class _AppLocalizationsDelegate
