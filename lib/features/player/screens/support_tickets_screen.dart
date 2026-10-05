@@ -28,7 +28,6 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   final ChatRepository _repo = ChatRepository();
 
   Future<void> _newTicket() async {
-    final auth = context.read<AuthProvider>();
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final subjectController = TextEditingController();
     String category = widget.initialCategory ?? 'general';
