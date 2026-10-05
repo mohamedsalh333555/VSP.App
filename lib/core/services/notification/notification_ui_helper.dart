@@ -10,6 +10,7 @@ import '../logger_service.dart';
 import '../../repositories/booking_repository.dart';
 import '../../repositories/chat_repository.dart';
 import '../../../features/owner/screens/owner_bookings_screen.dart';
+import '../../../data/models.dart';
 import '../../../features/player/screens/match_details_screen.dart';
 import '../../../features/player/screens/player_booking_details_screen.dart';
 import '../../../features/player/screens/chat_screen.dart';
