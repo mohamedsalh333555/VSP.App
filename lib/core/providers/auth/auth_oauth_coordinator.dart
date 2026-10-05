@@ -43,7 +43,7 @@ class AuthOAuthCoordinator {
         return (success: false, user: null, error: result['message']?.toString());
       }
     } catch (e) {
-      return (success: false, user: null, error: e.toString());
+      return (success: false, user: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
@@ -67,7 +67,7 @@ class AuthOAuthCoordinator {
         return (success: false, user: null, error: result['message']?.toString());
       }
     } catch (e) {
-      return (success: false, user: null, error: e.toString());
+      return (success: false, user: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
@@ -208,7 +208,7 @@ class AuthOAuthCoordinator {
         return (
           success: false,
           userModel: null,
-          error: rpcErr.toString()
+          error: AppErrorHandler.formatError(rpcErr, isArabic: true)
         );
       }
 
@@ -216,11 +216,13 @@ class AuthOAuthCoordinator {
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('pending_oauth_role');
         await SecureStorageService.deleteSecure('pending_oauth_role');
-      } catch (_) {}
+      } catch (e, stackTrace) {
+        VSPLogger.w('Failed to clear pending OAuth role metadata', e, stackTrace);
+      }
 
       return (success: true, userModel: updatedModel, error: null);
     } catch (e) {
-      return (success: false, userModel: null, error: e.toString());
+      return (success: false, userModel: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 }
