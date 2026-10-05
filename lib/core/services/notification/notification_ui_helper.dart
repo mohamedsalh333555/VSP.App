@@ -8,8 +8,10 @@ import '../../providers/auth_provider.dart';
 import '../../ui/tokens/vsp_tokens.dart';
 import '../logger_service.dart';
 import '../../repositories/booking_repository.dart';
+import '../../repositories/chat_repository.dart';
 import '../../../features/owner/screens/owner_bookings_screen.dart';
 import '../../../features/player/screens/match_details_screen.dart';
+import '../../../features/player/screens/player_booking_details_screen.dart';
 import '../../../features/player/screens/chat_screen.dart';
 
 /// Helper for presenting in-app notification snackbars and performing target screen navigation.
@@ -81,12 +83,52 @@ class NotificationUiHelper {
     try {
       final repo = repository ?? SupabaseBookingRepository();
       final booking = await repo.getBookingById(bookingId);
-      if (booking != null && context.mounted) {
+      if (booking == null || !context.mounted) return;
+
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userId = auth.currentUser?.id;
+      if (userId == null) return;
+
+      final otherUserId = <String>[
+        booking.ownerId,
+        booking.createdByUserId,
+        ...booking.joinedUserIds,
+      ].firstWhere(
+        (id) => id.isNotEmpty && id != userId,
+        orElse: () => '',
+      );
+
+      if (otherUserId.isEmpty) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
+          MaterialPageRoute(builder: (_) => booking.bookingType == BookingType.openJoin
+              ? MatchDetailsScreen(bookingId: booking.id)
+              : PlayerBookingDetailsScreen(booking: booking)),
         );
+        return;
       }
+
+      final chat = await ChatRepository().getOrCreateDirectChat(
+        otherUserId: otherUserId,
+        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        contextType: booking.bookingType == BookingType.challenge ? 'challenge' : 'booking',
+        contextId: booking.id,
+      );
+
+      if (!context.mounted) return;
+      final conversationId = chat['id']?.toString();
+      if (conversationId == null || conversationId.isEmpty) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            booking: booking,
+            conversationId: conversationId,
+            otherUserId: otherUserId,
+          ),
+        ),
+      );
     } catch (e) {
       VSPLogger.e('Error navigating to chat', e);
     }
@@ -107,7 +149,11 @@ class NotificationUiHelper {
         } else {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => MatchDetailsScreen(bookingId: booking.id)),
+            MaterialPageRoute(
+              builder: (_) => booking.bookingType == BookingType.openJoin
+                  ? MatchDetailsScreen(bookingId: booking.id)
+                  : PlayerBookingDetailsScreen(booking: booking),
+            ),
           );
         }
       }
