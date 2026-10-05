@@ -97,7 +97,7 @@ class VspBottomNavBar extends StatelessWidget {
                                 color: isSelected
                                     ? VSPDSSemanticColors.accent
                                     : VSPDSSemanticColors.textSecondary,
-                                size: VSPDSizes.navigationIcon,
+                                size: isSelected ? VSPDSizes.navigationIconSelected : VSPDSizes.navigationIcon,
                               ),
                             ),
                             const SizedBox(height: VSPDSSpacing.xxs),
