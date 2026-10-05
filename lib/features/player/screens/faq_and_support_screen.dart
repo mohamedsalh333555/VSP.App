@@ -31,7 +31,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'بيانات تصعيد الدعم غير مُهيأة حالياً.' : 'Support escalation contact is not configured.',
+            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
           );
         }
         return;
@@ -52,7 +52,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           VSPFeedback.showError(
             context,
-            isArabic ? 'رقم الدعم غير مُهيأ حالياً.' : 'Support phone number is not configured.',
+            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
           );
         }
         return;
