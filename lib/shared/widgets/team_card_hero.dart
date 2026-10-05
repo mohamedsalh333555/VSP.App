@@ -98,8 +98,10 @@ class TeamCardHero extends StatelessWidget {
                 Text(
                   team.name.toUpperCase(),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 24,
                     fontWeight: FontWeight.w900,
                     color: VSPColors.textPrimary,
                     letterSpacing: 2,
