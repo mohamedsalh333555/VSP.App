@@ -35,6 +35,17 @@ class ChampionScreenState extends State<ChampionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final governorate =
+          Provider.of<AuthProvider>(context, listen: false).userModel?.governorate?.trim();
+      if (governorate == null || governorate.isEmpty) return;
+      final resolved =
+          EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+      if (EgyptGovernorates.allGovernorates.contains(resolved)) {
+        setState(() => _selectedLocation = resolved);
+      }
+    });
     _tabController.addListener(() {
       setState(() {
         _selectedTabIndex = _tabController.index;
