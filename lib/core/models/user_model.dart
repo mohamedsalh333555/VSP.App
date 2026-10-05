@@ -146,7 +146,7 @@ class UserModel {
       }
       return 'Pro';
     }
-    return 'Basic (مجاني)';
+    return 'مجاني';
   }
 
   factory UserModel.fromMap(Map<String, dynamic> data) {
