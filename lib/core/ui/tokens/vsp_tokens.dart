@@ -126,12 +126,7 @@ class VSPTypography {
   static const TextStyle numericStyle = VSPDSTypography.numeric;
 }
 
-class VSPScrollPadding {
-  static double bottom(BuildContext context, {bool hasFloatingNavBar = false, double extra = 8.0}) =>
-      VSPDSScrollPadding.bottom(context, hasFloatingNavBar: hasFloatingNavBar, extra: extra);
-  static EdgeInsets forList(BuildContext context, {bool hasFloatingNavBar = false, double horizontal = VSPDSSpacing.md, double top = VSPDSSpacing.md, double extra = 8.0}) =>
-      VSPDSScrollPadding.forList(context, hasFloatingNavBar: hasFloatingNavBar, horizontal: horizontal, top: top, extra: extra);
-}
+
 
 class VSPConstants {
  /// Centralized Active Sports Control
