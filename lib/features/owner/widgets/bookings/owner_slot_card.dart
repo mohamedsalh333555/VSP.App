@@ -29,6 +29,44 @@ class OwnerSlotCard extends StatelessWidget {
         now.isAfter(slotTime.subtract(const Duration(minutes: 15))) &&
         now.isBefore(slotTime.add(const Duration(minutes: 15)));
 
+    if (slot['type'] == 'maintenance') {
+      return Container(
+        height: 70,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: VSPColors.warning.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Iconsax.slash_copy, color: VSPColors.warning, size: 21),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isAr ? 'مغلق للصيانة' : 'Closed for maintenance',
+                style: const TextStyle(
+                  color: VSPColors.warning,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              isAr ? 'غير متاح للحجز' : 'Not bookable',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (slot['type'] == 'empty' || slot['type'] == 'break') {
       final bool isBreak = slot['type'] == 'break';
       final Color badgeColor = isBreak
