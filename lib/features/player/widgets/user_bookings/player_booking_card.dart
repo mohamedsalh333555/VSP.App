@@ -4,7 +4,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/app_date_formatter.dart';
-import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../core/services/support_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../core/repositories/chat_repository.dart';
