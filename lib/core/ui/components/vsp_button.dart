@@ -57,12 +57,12 @@ class VSPPrimaryButton extends StatelessWidget {
         child: ElevatedButton(
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
+            backgroundColor: VSPDSColors.transparent,
             foregroundColor: resolvedTextColor,
             disabledForegroundColor:
                 resolvedTextColor.withValues(alpha: VSPDSOpacity.disabled),
             elevation: VSPDSElevation.none,
-            shadowColor: Colors.transparent,
+            shadowColor: VSPDSColors.transparent,
             minimumSize: Size.zero,
             padding: EdgeInsets.zero,
             shape: const StadiumBorder(),
@@ -73,7 +73,7 @@ class VSPPrimaryButton extends StatelessWidget {
                   width: VSPDSizes.buttonProgress,
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
+                    strokeWidth: VSPDSAccessibility.progressStroke,
                     color: resolvedTextColor,
                   ),
                 )
