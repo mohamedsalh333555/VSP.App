@@ -312,6 +312,8 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     );
 
     final isAppCreatedBooking = flags.isEdit && !flags.isOwnerManual;
+    final isAppCashBooking = isAppCreatedBooking &&
+        (booking?.paymentMethod.toLowerCase() == 'cash');
 
     final modalTitle = OwnerBookingSheetService.getModalTitle(
       isNewSlot: flags.isNewSlot,
@@ -394,7 +396,20 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                               ? VSPDSSemanticColors.accent
                               : VSPDSSemanticColors.textSecondary,
                         ),
-                        const SizedBox(width: VSPDSSpacing.sm),
+                        if (isAppCreatedBooking) ...[
+                          VSPStatusPill(
+                            icon: isAppCashBooking
+                                ? Iconsax.money_3_copy
+                                : Iconsax.card_copy,
+                            label: isAppCashBooking
+                                ? (isArabic ? 'كاش' : 'Cash')
+                                : (isArabic ? 'أونلاين' : 'Online'),
+                            color: isAppCashBooking
+                                ? VSPDSSemanticColors.warning
+                                : VSPDSSemanticColors.info,
+                          ),
+                          const SizedBox(width: VSPDSSpacing.sm),
+                        ],
                         if (isAppCreatedBooking &&
                             booking?.playerPhone != null &&
                             booking!.playerPhone!.trim().isNotEmpty)
