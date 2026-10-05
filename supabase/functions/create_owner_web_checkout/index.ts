@@ -43,10 +43,10 @@ async function verifyTurnstile(token: string, secret: string, expectedHostname?:
 serve(async(req:Request)=>{
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
-  const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});
+  const json=(req:Request,data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders(req),"Content-Type":"application/json","X-Content-Type-Options":"nosniff"}});
 
   if(req.method==="OPTIONS") return new Response("ok",{headers:{...corsHeaders,"Content-Length":"2"}});
-  if(req.method!=="POST") return json({error:"Method not allowed"},405);
+  if(req.method!=="POST") return json(req,{error:"Method not allowed"},405);
 
   // Block non-allowed origins (for browser-originated requests)
   if (origin && !ALLOWED_ORIGINS.includes(origin)) {
@@ -62,7 +62,7 @@ serve(async(req:Request)=>{
   const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
 
   if(!serviceKey||!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration){
-    return json({error:"Payment service configuration is incomplete"},500);
+    return json(req,{error:"Payment service configuration is incomplete"},500);
   }
 
   const supabase=createClient(supabaseUrl,serviceKey);
@@ -71,12 +71,12 @@ serve(async(req:Request)=>{
     let rawBody: string;
     try {
       rawBody = await req.text();
-      if (rawBody.length > 8192) return json({error:"Request body too large"},413);
+      if (rawBody.length > 8192) return json(req,{error:"Request body too large"},413);
     } catch {
-      return json({error:"Invalid request body"},400);
+      return json(req,{error:"Invalid request body"},400);
     }
     let body: any;
-    try { body = JSON.parse(rawBody); } catch { return json({error:"Invalid JSON"},400); }
+    try { body = JSON.parse(rawBody); } catch { return json(req,{error:"Invalid JSON"},400); }
 
     const name=String(body?.name||"").trim();
     const email=String(body?.email||"").trim().toLowerCase();
@@ -86,20 +86,40 @@ serve(async(req:Request)=>{
     const turnstileToken=typeof body?.turnstile_token === "string" ? body.turnstile_token : null;
 
     // Input validation
-    if(name.length<2||name.length>100) return json({error:"Name must be between 2 and 100 characters"},400);
-    if(!EMAIL_RE.test(email)||email.length>254) return json({error:"Valid email address required"},400);
-    if(phone.replace(/\D/g,"").length<10) return json({error:"Valid Egyptian phone number required"},400);
-    if(planCode!=="pro") return json({error:"Only Pro is available for web payment"},400);
-    if(!["monthly","annual"].includes(billingPeriod)) return json({error:"Invalid billing period"},400);
+    if(name.length<2||name.length>100) return json(req,{error:"Name must be between 2 and 100 characters"},400);
+    if(!EMAIL_RE.test(email)||email.length>254) return json(req,{error:"Valid email address required"},400);
+    if(phone.replace(/\D/g,"").length<10) return json(req,{error:"Valid Egyptian phone number required"},400);
+    if(planCode!=="pro") return json(req,{error:"Only Pro is available for web payment"},400);
+    if(!["monthly","annual"].includes(billingPeriod)) return json(req,{error:"INVALID_INPUT"},400);
+    if(captchaToken.length<20||captchaToken.length>4096) return json(req,{error:"SECURITY_VERIFICATION_REQUIRED"},400);
+
+    const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
+    if(!turnstileSecret) return json(req,{error:"SECURITY_VERIFICATION_UNAVAILABLE"},503);
+    const captchaBody=new URLSearchParams();
+    captchaBody.set("secret",turnstileSecret);
+    captchaBody.set("response",captchaToken);
+    const clientIp=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    if(clientIp) captchaBody.set("remoteip",clientIp);
+    const captchaRes=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:captchaBody,
+    });
+    const captchaData=await captchaRes.json().catch(()=>null);
+    const hostnameOk=!captchaData?.hostname||["vspapp.online","www.vspapp.online"].includes(String(captchaData.hostname));
+    const actionOk=!captchaData?.action||String(captchaData.action)==="owner_checkout";
+    if(!captchaRes.ok||captchaData?.success!==true||!hostnameOk||!actionOk){
+      return json(req,{error:"SECURITY_VERIFICATION_FAILED"},403);
+    }
 
     // Control characters check in name
-    if(/[\u0000-\u001F\u007F]/.test(name)) return json({error:"Invalid characters in name"},400);
+    if(/[\u0000-\u001F\u007F]/.test(name)) return json(req,{error:"Invalid characters in name"},400);
 
     // Turnstile verification (only if configured)
     if(turnstileSecret) {
-      if(!turnstileToken) return json({error:"Security verification required"},400);
+      if(!turnstileToken) return json(req,{error:"Security verification required"},400);
       const turnstileOk = await verifyTurnstile(turnstileToken, turnstileSecret, "www.vspapp.online");
-      if(!turnstileOk) return json({error:"Security verification failed"},403);
+      if(!turnstileOk) return json(req,{error:"Security verification failed"},403);
     }
 
     const {data:plan,error:planError}=await supabase
@@ -107,24 +127,24 @@ serve(async(req:Request)=>{
       .select("code,name_ar,name_en,monthly_price,yearly_price,max_stadiums")
       .eq("code",planCode).eq("is_active",true).maybeSingle();
 
-    if(planError||!plan) return json({error:"Subscription plan unavailable"},503);
+    if(planError||!plan) return json(req,{error:"Subscription plan unavailable"},503);
 
     const baseAmount=round2(Number(billingPeriod==="annual"?plan.yearly_price:plan.monthly_price));
-    if(!Number.isFinite(baseAmount)||baseAmount<=0) return json({error:"Invalid subscription price"},503);
+    if(!Number.isFinite(baseAmount)||baseAmount<=0) return json(req,{error:"Invalid subscription price"},503);
 
     const {data:feeConfig,error:feeError}=await supabase
       .from("platform_fee_config")
       .select("subscription_vsp_rate,subscription_paymob_rate,subscription_paymob_fixed_fee")
       .eq("id",1).maybeSingle();
 
-    if(feeError||!feeConfig) return json({error:"Subscription fee policy unavailable"},503);
+    if(feeError||!feeConfig) return json(req,{error:"Subscription fee policy unavailable"},503);
 
     const vspRate=Number(feeConfig.subscription_vsp_rate);
     const paymobRate=Number(feeConfig.subscription_paymob_rate);
     const fixedFee=Number(feeConfig.subscription_paymob_fixed_fee);
 
     if(![vspRate,paymobRate,fixedFee].every(Number.isFinite)||vspRate<0||paymobRate<0||paymobRate>=1||fixedFee<0){
-      return json({error:"Subscription fee policy invalid"},503);
+      return json(req,{error:"Subscription fee policy invalid"},503);
     }
 
     const vspFee=round2(baseAmount*vspRate);
@@ -155,8 +175,8 @@ serve(async(req:Request)=>{
       .single();
 
     if(orderError||!order){
-      console.error("Failed to create web subscription order",orderError);
-      return json({error:"Could not create payment order"},500);
+      console.error("Failed to create web subscription order",{code:orderError?.code||"UNKNOWN"});
+      return json(req,{error:"Could not create payment order"},500);
     }
 
     const firstName=name.split(/\s+/)[0]||"VSP";
@@ -194,9 +214,9 @@ serve(async(req:Request)=>{
     const paymobData=await paymobResponse.json().catch(()=>({}));
 
     if(!paymobResponse.ok||!paymobData?.client_secret){
-      console.error("Paymob web intention failed",paymobData);
+      console.error("Paymob web intention failed",{status:paymobResponse.status});
       await supabase.from("owner_subscription_orders").update({status:"cancelled"}).eq("id",order.id).eq("status","pending");
-      return json({error:"Payment provider could not start checkout"},502);
+      return json(req,{error:"Payment provider could not start checkout"},502);
     }
 
     const intentionId=String(paymobData.id||"");
@@ -220,7 +240,7 @@ serve(async(req:Request)=>{
       checkout_url:checkoutUrl
     });
   }catch(error){
-    console.error("create_owner_web_checkout error",error);
-    return json({error:"Unable to start checkout"},500);
+    console.error("create_owner_web_checkout failed",{reason:error instanceof Error?error.name:"unknown"});
+    return json(req,{error:"CHECKOUT_START_FAILED"},500);
   }
 });
