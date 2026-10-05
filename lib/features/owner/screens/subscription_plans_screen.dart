@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/repositories/owner_subscription_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// شاشة باقات اشتراك المالكين بالنموذج التجاري المعتمد نهائياً (Basic Free 0 EGP / Pro 1000 EGP / Pro 7-Day Trial)
@@ -19,6 +19,7 @@ class SubscriptionPlansScreen extends StatefulWidget {
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   bool _isPaying = false;
+  final OwnerSubscriptionRepository _subscriptionRepository = OwnerSubscriptionRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -495,15 +496,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               : 'Your 7-day Pro trial is now active.',
         );
       }
-    } catch (_) {
-      if (context.mounted) {
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'تعذر تفعيل التجربة. ربما تم استخدام التجربة المجانية من قبل.'
-              : 'Unable to activate trial. It may have already been used.',
-        );
-      }
+    } catch (e) {
+      if (context.mounted) VSPFeedback.showError(context, e);
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
@@ -516,24 +510,16 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   ) async {
     setState(() => _isPaying = true);
     try {
-      final order = await Supabase.instance.client.rpc(
-        'create_owner_subscription_order',
-        params: {'p_plan_code': 'pro', 'p_billing_period': billingPeriod},
+      final orderData = await _subscriptionRepository.createProOrder(
+        billingPeriod: billingPeriod,
       );
-      final orderData = Map<String, dynamic>.from(order as Map);
       if (orderData['success'] != true || orderData['order_id'] == null) {
         throw Exception(orderData['message'] ?? 'subscription_order_failed');
       }
 
-      final response = await Supabase.instance.client.functions.invoke(
-        'create_paymob_intention',
-        body: {'subscription_order_id': orderData['order_id']},
+      final checkoutUrl = await _subscriptionRepository.createPaymobCheckout(
+        subscriptionOrderId: orderData['order_id'].toString(),
       );
-      final data = Map<String, dynamic>.from(response.data as Map);
-      final checkoutUrl = data['checkout_url']?.toString();
-      if (checkoutUrl == null || checkoutUrl.isEmpty) {
-        throw Exception('checkout_url_missing');
-      }
 
       final launched = await launchUrl(
         Uri.parse(checkoutUrl),
@@ -550,14 +536,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         );
       }
     } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'تعذر بدء الدفع حالياً. يرجى المحاولة مرة أخرى.'
-              : 'Unable to start payment right now. Please try again.',
-        );
-      }
+      if (context.mounted) VSPFeedback.showError(context, e);
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
