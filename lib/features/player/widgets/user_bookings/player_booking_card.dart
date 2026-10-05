@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
+import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../data/models.dart';
@@ -10,6 +13,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_animated_button.dart';
 import '../../screens/chat_screen.dart';
 import '../../screens/match_details_screen.dart';
+import '../../screens/player_booking_details_screen.dart';
 import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
 import 'player_booking_cancel_dialog.dart';
@@ -113,6 +117,53 @@ class PlayerBookingCard extends StatelessWidget {
     PlayerBookingCancelDialog.show(context, booking);
   }
 
+  Future<void> _openDetails(BuildContext context) async {
+    if (booking.bookingType == BookingType.openJoin) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MatchDetailsScreen(bookingId: booking.id)),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PlayerBookingDetailsScreen(booking: booking)),
+    );
+  }
+
+  Future<void> _openChat(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    final me = auth.currentUser?.id;
+    if (me == null) return;
+    final other = <String>[booking.ownerId, booking.createdByUserId, ...booking.joinedUserIds]
+        .firstWhere((id) => id.isNotEmpty && id != me, orElse: () => '');
+    if (other.isEmpty) {
+      final ar = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(context, ar ? 'لا يوجد طرف مؤهل للمحادثة.' : 'No eligible chat participant.');
+      return;
+    }
+    try {
+      final type = booking.bookingType == BookingType.challenge ? 'challenge' : 'booking';
+      final chat = await ChatRepository().getOrCreateDirectChat(
+        otherUserId: other,
+        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        contextType: type,
+        contextId: booking.id,
+      );
+      final chatId = chat['id']?.toString();
+      if (chatId == null || !context.mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(booking: booking, conversationId: chatId, otherUserId: other)),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        final ar = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(context, ar ? 'تعذر فتح المحادثة.' : 'Could not open the chat.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -122,14 +173,7 @@ class PlayerBookingCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => MatchDetailsScreen(bookingId: booking.id),
-            ),
-          );
-        },
+        onTap: () => _openDetails(context),
         child: Ink(
           width: double.infinity,
           padding: const EdgeInsets.all(VSPSpacing.md),
@@ -431,14 +475,7 @@ class PlayerBookingCard extends StatelessWidget {
               Expanded(
                 child: VSPAnimatedButton(
                   text: l10n.chat,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(booking: booking),
-                        ),
-                      );
-                    },
+                    onPressed: () => _openChat(context),
                   ),
                 ),
               ],
