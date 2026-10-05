@@ -5,7 +5,7 @@ import '../../../../data/models.dart';
 
 class ChatInputBar extends StatelessWidget {
   final Booking? booking;
-  final bool isSpecialChat;
+  final bool canSend;
   final TextEditingController messageController;
   final bool isSending;
   final VoidCallback onSendMessage;
@@ -13,7 +13,7 @@ class ChatInputBar extends StatelessWidget {
   const ChatInputBar({
     super.key,
     this.booking,
-    this.isSpecialChat = false,
+    this.canSend = true,
     required this.messageController,
     required this.isSending,
     required this.onSendMessage,
@@ -21,33 +21,30 @@ class ChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final now = DateTime.now();
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
 
-    final bool isExpired = isSpecialChat ? false : (booking?.endTime.isBefore(now) ?? false);
-    final bool isCancelled = isSpecialChat ? false : (booking?.status == BookingStatus.cancelled);
-
-    if (isExpired || isCancelled) {
+    if (!canSend) {
       return Container(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 16),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.of(context).padding.bottom + 14),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
         ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isCancelled
-                    ? (isArabic ? 'هذه المحادثة مغلقة لإلغاء الحجز.' : 'This chat is closed due to cancellation.')
-                    : (isArabic ? 'المحادثة مغلقة لانتهاء وقت الحجز.' : 'This chat is closed as the booking time expired.'),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 18),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                ar
+                    ? 'انتهت فترة الكتابة لهذه المحادثة. يمكنك قراءة الرسائل السابقة.'
+                    : 'Messaging is closed for this conversation. Previous messages remain available.',
+                textAlign: TextAlign.center,
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -67,21 +64,19 @@ class ChatInputBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
               ),
               child: TextField(
                 controller: messageController,
                 style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
-                textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                textAlign: ar ? TextAlign.right : TextAlign.left,
                 decoration: InputDecoration(
-                  hintText: isArabic ? 'اكتب رسالتك هنا...' : 'Type a message...',
+                  hintText: ar ? 'اكتب رسالتك هنا...' : 'Type a message...',
                   hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                   border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
-                onSubmitted: (_) => onSendMessage(),
+                onSubmitted: (_) => isSending ? null : onSendMessage(),
               ),
             ),
           ),
@@ -91,13 +86,10 @@ class ChatInputBar extends StatelessWidget {
             child: Container(
               width: 48,
               height: 48,
-              decoration: const BoxDecoration(
-                color: VSPColors.accent,
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
               child: Center(
                 child: Transform.rotate(
-                  angle: isArabic ? 3.14159 : 0,
+                  angle: ar ? 3.14159 : 0,
                   child: const Icon(Iconsax.send_1_copy, color: Colors.black, size: 20),
                 ),
               ),
