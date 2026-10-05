@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -171,8 +172,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'تخطي',
+                      child: Text(
+                        l10n.skipButton,
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                       ),
                     ),
