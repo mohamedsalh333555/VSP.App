@@ -270,7 +270,7 @@ class _PendingMoneyCard extends StatelessWidget {
           ),
           const SizedBox(height: VSPDSSpacing.xxs),
           Text(
-            '\${value.toStringAsFixed(0)} \$currency',
+            value.toStringAsFixed(0) + ' ' + currency,
             style: VSPDSTypography.titleMedium.copyWith(
               color: hasValue ? color : VSPDSSemanticColors.textPrimary,
               fontWeight: FontWeight.w900,
