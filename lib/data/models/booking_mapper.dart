@@ -64,6 +64,9 @@ class BookingMapper {
       if (val == 'matchup' || val == 'matchups') {
         return BookingType.matchup;
       }
+      if (val == 'maintenance') {
+        return BookingType.maintenance;
+      }
       return BookingType.personal;
     }();
 
