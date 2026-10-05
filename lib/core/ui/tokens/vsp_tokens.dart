@@ -199,17 +199,29 @@ class SportPositionsRegistry {
 }
 
 class VSPScrollPadding {
-  /// Calculates bottom padding for scroll views to scroll past floating navbar or bottom action bars cleanly.
-  static double bottom(BuildContext context, {bool hasFloatingNavBar = false, double extra = 8.0}) {
-    final double safeBottom = MediaQuery.of(context).padding.bottom;
-    if (hasFloatingNavBar) {
-      // 64 navbar height + 12 bottom margin + safeArea inset + snug clearance (~96px)
-      return VSPBottomNavBarMetrics.height + VSPBottomNavBarMetrics.bottomMargin + safeBottom + extra;
-    }
-    return safeBottom + extra;
-  }
+  static double bottom(
+    BuildContext context, {
+    bool hasFloatingNavBar = false,
+    double extra = 8.0,
+  }) =>
+      VSPDSScrollPadding.bottom(
+        context,
+        hasFloatingNavBar: hasFloatingNavBar,
+        extra: extra,
+      );
 
-  static EdgeInsets forList(BuildContext context, {bool hasFloatingNavBar = false, double horizontal = 16.0, double top = 16.0, double extra = 8.0}) {
-    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom(context, hasFloatingNavBar: hasFloatingNavBar, extra: extra));
-  }
+  static EdgeInsets forList(
+    BuildContext context, {
+    bool hasFloatingNavBar = false,
+    double horizontal = VSPDSSpacing.md,
+    double top = VSPDSSpacing.md,
+    double extra = 8.0,
+  }) =>
+      VSPDSScrollPadding.forList(
+        context,
+        hasFloatingNavBar: hasFloatingNavBar,
+        horizontal: horizontal,
+        top: top,
+        extra: extra,
+      );
 }
