@@ -482,8 +482,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final auth = context.read<AuthProvider>();
     setState(() => _isPaying = true);
     try {
-      final result = await Supabase.instance.client.rpc('start_owner_trial');
-      final data = Map<String, dynamic>.from(result as Map);
+      final data = await _subscriptionRepository.startProTrial();
       if (data['success'] != true) {
         throw Exception(data['error']?.toString() ?? 'trial_start_failed');
       }
