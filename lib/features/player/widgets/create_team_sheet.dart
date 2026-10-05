@@ -196,15 +196,15 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final raw = e.toString().toLowerCase();
         String message;
-        if (raw.contains('team_name_already_exists') || raw.contains('duplicate key')) {
+        if (raw.contains('team name already exists') || raw.contains('team_name_already_exists') || raw.contains('duplicate key')) {
           message = isArabic ? 'اسم الفريق مستخدم بالفعل. اختر اسمًا مختلفًا.' : 'This team name is already in use. Choose another name.';
         } else if (raw.contains('captain_governorate_required')) {
           message = isArabic ? 'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.' : 'Captain governorate is required before creating a team.';
-        } else if (raw.contains('team_member_governorate_mismatch')) {
+        } else if (raw.contains('team_governorate_mismatch') || raw.contains('team_member_governorate_mismatch')) {
           message = isArabic ? 'لا يمكن ضم لاعب من محافظة مختلفة عن محافظة الفريق.' : 'Team members must be from the same governorate as the captain.';
-        } else if (raw.contains('user_team_limit')) {
+        } else if (raw.contains('maximum of 3 teams') || raw.contains('user_team_limit')) {
           message = isArabic ? 'وصلت للحد الأقصى لعدد الفرق التي يمكنك إنشاؤها.' : 'You have reached the maximum number of teams you can create.';
-        } else if (raw.contains('team_member_not_found')) {
+        } else if (raw.contains('invalid_team_member') || raw.contains('team_member_not_found')) {
           message = isArabic ? 'أحد اللاعبين المضافين لم يعد متاحًا. حدّث قائمة الفريق وحاول مرة أخرى.' : 'One of the selected players is no longer available. Refresh the roster and try again.';
         } else if (raw.contains('authentication_required')) {
           message = isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.';
