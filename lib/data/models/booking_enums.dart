@@ -31,6 +31,7 @@ enum BookingType {
   challenge, // Team challenge match (حجز تحدي فرق)
   team, // Legacy alias for challenge
   matchup, // Matchups mode: Duo or Winner Stays (مواجهات)
+  maintenance, // Owner-blocked time for maintenance; not a player booking
 }
 
 /// مصدر وسيلة الدفع الموحد للتطبيق
