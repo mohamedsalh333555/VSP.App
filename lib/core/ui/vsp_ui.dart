@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'tokens/vsp_design_tokens.dart';
 
 /// Shared VSP UI grammar backed by Design System V2.
@@ -269,6 +270,144 @@ class VSPStateView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+
+class VSPConfirmationDialog {
+  const VSPConfirmationDialog._();
+
+  static Future<bool> show({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String confirmLabel,
+    required String cancelLabel,
+    bool isDestructive = false,
+    IconData icon = Iconsax.warning_2_copy,
+  }) async {
+    final color = isDestructive
+        ? VSPDSSemanticColors.error
+        : VSPDSSemanticColors.accent;
+
+    return await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return AlertDialog(
+              backgroundColor: VSPDSSemanticColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(VSPDSRadius.dialog),
+              ),
+              titlePadding: const EdgeInsets.fromLTRB(
+                VSPDSSpacing.lg,
+                VSPDSSpacing.lg,
+                VSPDSSpacing.lg,
+                VSPDSSpacing.sm,
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(
+                VSPDSSpacing.lg,
+                0,
+                VSPDSSpacing.lg,
+                VSPDSSpacing.md,
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(
+                VSPDSSpacing.lg,
+                0,
+                VSPDSSpacing.lg,
+                VSPDSSpacing.lg,
+              ),
+              title: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: VSPDSizes.avatarSm,
+                    height: VSPDSizes.avatarSm,
+                    decoration: BoxDecoration(
+                      color: color.withValues(
+                        alpha: VSPDSOpacity.selectedSurface,
+                      ),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: color.withValues(
+                          alpha: VSPDSOpacity.border,
+                        ),
+                      ),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: VSPDSizes.iconLg,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(width: VSPDSSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: VSPDSTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Text(
+                message,
+                style: VSPDSTypography.bodyMedium,
+              ),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(
+                          dialogContext,
+                          false,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(
+                            0,
+                            VSPDSizes.buttonHeight,
+                          ),
+                          side: VSPDSBorders.subtle,
+                          foregroundColor:
+                              VSPDSSemanticColors.textSecondary,
+                          shape: const StadiumBorder(),
+                          textStyle: VSPDSTypography.compactButton,
+                        ),
+                        child: Text(cancelLabel),
+                      ),
+                    ),
+                    const SizedBox(width: VSPDSSpacing.sm),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(
+                          dialogContext,
+                          true,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(
+                            0,
+                            VSPDSizes.buttonHeight,
+                          ),
+                          backgroundColor: color,
+                          foregroundColor: isDestructive
+                              ? VSPDSColors.white
+                              : VSPDSColors.black,
+                          elevation: VSPDSElevation.none,
+                          shape: const StadiumBorder(),
+                          textStyle: VSPDSTypography.compactButton,
+                        ),
+                        child: Text(confirmLabel),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
   }
 }
 
