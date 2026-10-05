@@ -2,19 +2,21 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 declare const Deno: any;
 
-const ALLOWED_ORIGINS = [
+const ALLOWED_ORIGINS = new Set([
   "https://vspapp.online",
   "https://www.vspapp.online",
   "http://localhost:3000",
-];
+]);
+const MAX_BODY_BYTES = 16384;
 
-function getCorsHeaders(origin: string | null) {
-  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+function getCorsHeaders(origin: string | null): Record<string,string> {
   return {
-    "Access-Control-Allow-Origin": allowed,
+    ...(origin && ALLOWED_ORIGINS.has(origin) ? {"Access-Control-Allow-Origin": origin} : {}),
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Vary": "Origin",
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
   };
 }
 
@@ -43,14 +45,14 @@ async function verifyTurnstile(token: string, secret: string, expectedHostname?:
 serve(async(req:Request)=>{
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
-  const json=(req:Request,data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders(req),"Content-Type":"application/json","X-Content-Type-Options":"nosniff"}});
+  const json=(req:Request,data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...getCorsHeaders(req.headers.get("origin")),"Content-Type":"application/json"}});
 
-  if(req.method==="OPTIONS") return new Response("ok",{headers:{...corsHeaders,"Content-Length":"2"}});
-  if(req.method!=="POST") return json(req,{error:"Method not allowed"},405);
+  if(req.method==="OPTIONS") return new Response("ok",{headers:{...getCorsHeaders(origin),"Content-Length":"2"}});
+  if(req.method!=="POST") return json(req,{error:"METHOD_NOT_ALLOWED"},405);
 
   // Block non-allowed origins (for browser-originated requests)
-  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
-    return json({ error: "Origin not allowed" }, 403);
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    return json(req, { error: "FORBIDDEN_ORIGIN" }, 403);
   }
 
   const supabaseUrl=Deno.env.get("SUPABASE_URL")||"";
@@ -61,29 +63,29 @@ serve(async(req:Request)=>{
   const walletIntegration=Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")||0);
   const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
 
-  if(!serviceKey||!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration){
-    return json(req,{error:"Payment service configuration is incomplete"},500);
+  if(!serviceKey||!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration||!supabaseUrl){
+    return json(req,{error:"PAYMENT_CONFIGURATION_UNAVAILABLE"},503);
   }
 
   const supabase=createClient(supabaseUrl,serviceKey);
 
   try{
-    let rawBody: string;
-    try {
-      rawBody = await req.text();
-      if (rawBody.length > 8192) return json(req,{error:"Request body too large"},413);
-    } catch {
-      return json(req,{error:"Invalid request body"},400);
+    const declared = Number(req.headers.get("content-length") || "0");
+    if (declared > MAX_BODY_BYTES) return json(req,{error:"REQUEST_TOO_LARGE"},413);
+    const rawBody = await req.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return json(req,{error:"REQUEST_TOO_LARGE"},413);
     }
     let body: any;
-    try { body = JSON.parse(rawBody); } catch { return json(req,{error:"Invalid JSON"},400); }
+    try { body = JSON.parse(rawBody); } catch { return json(req,{error:"INVALID_JSON"},400); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json(req,{error:"INVALID_JSON"},400);
 
     const name=String(body?.name||"").trim();
     const email=String(body?.email||"").trim().toLowerCase();
     const phone=normalizePhone(String(body?.phone||""));
     const planCode=String(body?.plan_code||"").trim().toLowerCase();
     const billingPeriod=String(body?.billing_period||"monthly").trim().toLowerCase();
-    const turnstileToken=typeof body?.turnstile_token === "string" ? body.turnstile_token : null;
+    const turnstileToken=typeof body?.turnstile_token === "string" ? body.turnstile_token.trim() : (typeof body?.captcha_token === "string" ? body.captcha_token.trim() : "");
 
     // Input validation
     if(name.length<2||name.length>100) return json(req,{error:"Name must be between 2 and 100 characters"},400);
@@ -91,7 +93,7 @@ serve(async(req:Request)=>{
     if(phone.replace(/\D/g,"").length<10) return json(req,{error:"Valid Egyptian phone number required"},400);
     if(planCode!=="pro") return json(req,{error:"Only Pro is available for web payment"},400);
     if(!["monthly","annual"].includes(billingPeriod)) return json(req,{error:"INVALID_INPUT"},400);
-    if(captchaToken.length<20||captchaToken.length>4096) return json(req,{error:"SECURITY_VERIFICATION_REQUIRED"},400);
+    if(turnstileToken.length<20||turnstileToken.length>4096) return json(req,{error:"SECURITY_VERIFICATION_REQUIRED"},400);
 
     const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
     if(!turnstileSecret) return json(req,{error:"SECURITY_VERIFICATION_UNAVAILABLE"},503);
@@ -114,13 +116,6 @@ serve(async(req:Request)=>{
 
     // Control characters check in name
     if(/[\u0000-\u001F\u007F]/.test(name)) return json(req,{error:"Invalid characters in name"},400);
-
-    // Turnstile verification (only if configured)
-    if(turnstileSecret) {
-      if(!turnstileToken) return json(req,{error:"Security verification required"},400);
-      const turnstileOk = await verifyTurnstile(turnstileToken, turnstileSecret, "www.vspapp.online");
-      if(!turnstileOk) return json(req,{error:"Security verification failed"},403);
-    }
 
     const {data:plan,error:planError}=await supabase
       .from("subscription_plans")
