@@ -151,7 +151,7 @@ serve(async (req: Request) => {
         });
       } catch (_) {}
       return new Response(
-        JSON.stringify({ error: "Server Configuration Error: Missing PAYMOB_HMAC_SECRET" }),
+        JSON.stringify({ error: "Webhook temporarily unavailable" }),
         { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -217,6 +217,20 @@ serve(async (req: Request) => {
         JSON.stringify({ error: "Unauthorized: Invalid HMAC signature" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
       );
+    }
+
+    const amountCents = Number(obj?.amount_cents);
+    if (
+      !/^[0-9]+$/.test(transactionId) ||
+      !/^[0-9]+$/.test(orderId) ||
+      !Number.isInteger(amountCents) ||
+      amountCents <= 0 ||
+      amountCents > 100000000000
+    ) {
+      return new Response(JSON.stringify({ error: "Invalid payment payload" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
+      });
     }
 
     console.log("✅ HMAC Signature Verified Successfully!");
