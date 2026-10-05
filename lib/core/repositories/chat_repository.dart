@@ -137,6 +137,14 @@ class ChatRepository {
         .order('updated_at', ascending: false);
   }
 
+  Stream<Map<String, dynamic>?> streamSupportTicket(String ticketId) {
+    return _supabase
+        .from('support_tickets')
+        .stream(primaryKey: ['id'])
+        .eq('id', ticketId)
+        .map((rows) => rows.isEmpty ? null : rows.first);
+  }
+
   Stream<List<Map<String, dynamic>>> streamSupportTicketMessages(String ticketId) {
     return _supabase
         .from('support_ticket_messages')
