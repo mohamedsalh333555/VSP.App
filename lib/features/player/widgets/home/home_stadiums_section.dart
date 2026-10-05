@@ -7,6 +7,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
 import '../../../../core/repositories/app_settings_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -25,6 +26,17 @@ class HomeStadiumsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StadiumProvider>(
       builder: (context, provider, _) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        if (provider.errorMessage != null && !provider.isLoading) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل الملاعب' : 'Could not load stadiums',
+            message: isArabic
+                ? 'حصلت مشكلة أثناء تحديث الملاعب. حاول مرة تانية.'
+                : 'We could not refresh stadiums right now. Please try again.',
+          );
+        }
+
         if (provider.stadiums.isEmpty && !provider.isLoading) {
           final rawCityName = context.read<AuthProvider>().userModel?.governorate ?? 'منطقتك';
           final isAr = AppLocalizations.of(context)!.localeName == 'ar';
