@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../data/models.dart';
@@ -12,7 +11,10 @@ import '../user_repository.dart';
 /// Coordinates atomic booking creation via RPC, notifications to owner/opponent, and analytics.
 class BookingCreationCoordinator {
   final SupabaseClient? _client;
+  // Retained for constructor compatibility with existing dependency wiring.
+  // ignore: unused_field
   final NotificationRepository? _notificationRepository;
+  // ignore: unused_field
   final TeamRepository? _teamRepository;
 
   BookingCreationCoordinator({
@@ -25,9 +27,6 @@ class BookingCreationCoordinator {
         _teamRepository = teamRepository;
 
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
-  NotificationRepository get _notificationRepo => _notificationRepository ?? NotificationRepository();
-  TeamRepository get _teamRepo => _teamRepository ?? TeamRepository();
-
   /// Converts domain [BookingType] to canonical database string (SSOT: personal | open_join | challenge).
   static String dbBookingType(BookingType type) {
     switch (type) {
