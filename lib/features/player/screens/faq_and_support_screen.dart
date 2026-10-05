@@ -45,6 +45,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   }
 
   Future<void> _launchPhoneCall() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!mounted) return;
