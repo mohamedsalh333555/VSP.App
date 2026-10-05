@@ -395,11 +395,69 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // ── TAB 0: التشغيل اليومي الموحد (مفتوح للباقتين لإدارة الملاعب) ──
                 if (_selectedDashboardTab == 0) ...[
+                InsightsTopFiltersRow(
+                  selectedStadiumFilter: _selectedStadiumFilter,
+                  selectedTimePeriod: _selectedTimePeriod,
+                  stadiums: stadiums,
+                  onStadiumFilterChanged: (id) {
+                    setState(() {
+                      _selectedStadiumFilter = id;
+                      _cachedMetrics = null;
+                      _currentFilter = _currentFilter.copyWith(
+                        courtId: id != 'all' ? id : null,
+                      );
+                    });
+                    _loadDashboardAnalytics(filter: _currentFilter);
+                  },
+                  onTimePeriodChanged: (period) {
+                    DashboardFilter filter;
+                    if (period == 'yesterday') {
+                      filter = DashboardFilter.yesterday();
+                    } else if (period == 'week' || period == 'thisWeek') {
+                      filter = DashboardFilter.thisWeek();
+                    } else if (period == 'month' || period == 'thisMonth') {
+                      filter = DashboardFilter.thisMonth();
+                    } else if (period == 'year' || period == 'thisYear') {
+                      filter = DashboardFilter.thisYear();
+                    } else {
+                      filter = DashboardFilter.today();
+                    }
+                    filter = filter.copyWith(
+                      courtId: _selectedStadiumFilter != 'all'
+                          ? _selectedStadiumFilter
+                          : null,
+                    );
+                    setState(() {
+                      _selectedTimePeriod = period;
+                      _currentFilter = filter;
+                      _cachedMetrics = null;
+                    });
+                    _loadDashboardAnalytics(filter: filter);
+                  },
+                  onCustomRangeSelected: (start, end) {
+                    final filter = DashboardFilter.custom(start, end).copyWith(
+                      courtId: _selectedStadiumFilter != 'all'
+                          ? _selectedStadiumFilter
+                          : null,
+                    );
+                    setState(() {
+                      _selectedTimePeriod = 'custom';
+                      _currentFilter = filter;
+                      _cachedMetrics = null;
+                    });
+                    _loadDashboardAnalytics(filter: filter);
+                  },
+                  isArabic: isArabic,
+                ),
+                const SizedBox(height: VSPDSSpacing.sm),
+
                 // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
                 OwnerOperationalFinanceCard(
                   realizedTotal: _dashboardAnalytics.revenue.realizedRevenue,
                   realizedCash: _dashboardAnalytics.revenue.realizedCash,
                   realizedOnline: _dashboardAnalytics.revenue.realizedOnline,
+                  cashUncollected: _dashboardAnalytics.revenue.cashUncollected,
+                  onlineUnavailable: _dashboardAnalytics.revenue.onlineUnavailable,
                   availableBalance: availableBalance,
                   upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                   onOpenLedger: () {
