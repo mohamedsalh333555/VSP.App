@@ -110,6 +110,7 @@ abstract final class VSPDSSpacing {
 
   // The existing design uses 20px for text-field horizontal padding.
   static const double inputHorizontal = 20.0;
+  static const double navigationBottomPadding = 6.0;
 }
 
 abstract final class VSPDSizes {
@@ -141,6 +142,11 @@ abstract final class VSPDSizes {
   static const double avatarSm = 40.0;
   static const double avatarMd = 48.0;
   static const double avatarLg = 64.0;
+
+  // VSP Copilot identity geometry: two four-point sparks with different sizes.
+  static const double aiIcon = 24.0;
+  static const double aiIconLarge = 16.0;
+  static const double aiIconSmall = 9.0;
 }
 
 abstract final class VSPDSRadius {
