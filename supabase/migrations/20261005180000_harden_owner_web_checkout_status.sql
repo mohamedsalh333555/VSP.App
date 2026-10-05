@@ -2,6 +2,9 @@
 alter table public.owner_subscription_orders
   add column if not exists checkout_name text;
 
+alter table public.owner_subscription_orders
+  add column if not exists duration_days integer;
+
 revoke execute on function public.get_owner_subscription_checkout_status(uuid) from public;
 revoke execute on function public.get_owner_subscription_checkout_status(uuid) from anon;
 revoke execute on function public.get_owner_subscription_checkout_status(uuid) from authenticated;
