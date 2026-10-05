@@ -10,7 +10,7 @@ import '../../../core/utils/app_error_handler.dart';
 import '../../../core/repositories/owner_subscription_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// شاشة باقات اشتراك المالكين بالنموذج التجاري المعتمد نهائياً (Basic Free 0 EGP / Pro 1000 EGP / Pro 7-Day Trial)
+/// شاشة اشتراك المالكين: استخدام مجاني + Pro المدفوع + تجربة Pro
 class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
 
@@ -127,8 +127,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
               const SizedBox(height: 18),
 
-              // ── BASIC PLAN CARD (FREE FOREVER - 0 EGP - 1 STADIUM) ──
-              _buildBasicPlanCard(context, isArabic, isPro),
+              // ── FREE CARD (0 EGP - 1 STADIUM) ──
+              _buildFreePlanCard(context, isArabic, isPro),
 
               const SizedBox(height: 18),
 
@@ -141,7 +141,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
   }
 
-  Widget _buildBasicPlanCard(BuildContext context, bool isArabic, bool isPro) {
+  Widget _buildFreePlanCard(BuildContext context, bool isArabic, bool isPro) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -160,7 +160,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'الباقة الأساسية' : 'Basic Plan',
+                isArabic ? 'مجاني' : 'Free',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w900,
@@ -265,8 +265,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             ),
             child: Text(
               !isPro
-                  ? (isArabic ? 'باقتك الحالية المفعلة (مجاناً)' : 'Your Active Plan (Free)')
-                  : (isArabic ? 'مشمولة تلقائياً مع حسابك' : 'Included with your account'),
+                  ? (isArabic ? 'حسابك المجاني الحالي' : 'Your current free account')
+                  : (isArabic ? 'مضمنة مع حسابك مجاناً' : 'Included with your account for free'),
               style: TextStyle(
                 color: !isPro ? VSPColors.accent : VSPColors.textSecondary,
                 fontWeight: FontWeight.w800,
