@@ -95,6 +95,17 @@ class OwnerTimeSlotRow extends StatelessWidget {
   }
 
   Future<void> _handleTap(BuildContext context) async {
+    if (slot['type'] == 'maintenance') {
+      HapticFeedback.lightImpact();
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showInfo(
+        context,
+        isAr
+            ? 'هذه الفترة مقفولة للصيانة ولا يمكن تعديلها من هنا.'
+            : 'This period is locked for maintenance and cannot be edited here.',
+      );
+      return;
+    }
     if (slot['type'] == 'empty') {
       final now = VSPTimeService.now;
       final DateTime? slotTime = slot['slotTime'] as DateTime?;
