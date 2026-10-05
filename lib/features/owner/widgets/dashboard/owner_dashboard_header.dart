@@ -222,7 +222,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                             child: Text(
                               isProOwner
                                   ? 'PRO'
-                                  : (isTrial ? (isArabic ? 'فترة مجانية' : 'Free Trial') : 'Basic'),
+                                  : (isTrial ? (isArabic ? 'تجربة Pro' : 'Pro Trial') : (isArabic ? 'مجاني' : 'Free')),
                               style: TextStyle(
                                 color: isProOwner ? VSPColors.accent : VSPColors.textSecondary,
                                 fontSize: 10.5,
