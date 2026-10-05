@@ -3,7 +3,6 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -52,7 +51,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final ownerStadiums = stadiumProvider.stadiums;
