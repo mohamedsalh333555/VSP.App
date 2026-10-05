@@ -200,7 +200,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Badge Pill (Pro / Basic / Free Trial)
+                    // Badge Pill (Pro / Free)
                     Row(
                       children: [
                         GestureDetector(
