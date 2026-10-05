@@ -182,7 +182,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final currentUser = context.select((app_auth.AuthProvider a) => a.currentUser);
-    final userId = currentUser?.uid;
+    final userId = currentUser?.id;
     final isHost = userId != null && booking.createdByUserId == userId;
     final hasJoined = userId != null && booking.joinedUserIds.contains(userId);
     final isPending = userId != null && booking.pendingUserIds.contains(userId);
