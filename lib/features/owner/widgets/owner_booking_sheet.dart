@@ -316,12 +316,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       ),
     );
     if (confirmed != true || !mounted) return;
+    final parentContext = widget.parentContext;
+    final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
     setState(() => _isSaving = true);
     try {
       await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
-      final uid = Provider.of<AuthProvider>(widget.parentContext, listen: false).currentUser?.id;
+      final uid = authProvider.currentUser?.id;
       if (uid != null) {
-        await Provider.of<BookingProvider>(widget.parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
       }
       if (mounted) {
         Navigator.pop(context);
