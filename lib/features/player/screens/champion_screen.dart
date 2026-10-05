@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/league_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
@@ -25,8 +26,9 @@ class ChampionScreenState extends State<ChampionScreen>
   int _selectedTabIndex = 0;
 
   // Filter states
-  String _selectedLocation = 'All'; 
+  String _selectedLocation = 'All';
   String _selectedSport = 'All';
+  bool _locationInitialized = false;
 
   @override
   void initState() {
@@ -43,6 +45,17 @@ class ChampionScreenState extends State<ChampionScreen>
     if (_tabController.length > index) {
       _tabController.animateTo(index);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_locationInitialized) return;
+    final governorate = context.read<AuthProvider>().governorate.trim();
+    if (governorate.isNotEmpty && EgyptGovernorates.allGovernorates.contains(governorate)) {
+      _selectedLocation = governorate;
+    }
+    _locationInitialized = true;
   }
 
   @override
