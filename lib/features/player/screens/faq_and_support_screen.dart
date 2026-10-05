@@ -61,7 +61,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
       }
       await VSPLauncherUtils.makePhoneCall(context, phone);
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e);
+      if (mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     }
   }
 
