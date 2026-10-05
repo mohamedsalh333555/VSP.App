@@ -110,7 +110,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       Expanded(
                         child: Text(
                           isArabic
-                              ? 'تجربة Pro مفعلة (متبقي $trialDaysRemaining يوم). تشمل كافة مزايا Pro، وتعود تلقائياً للباقة الأساسية المجانية بعد انتهاء المدة.'
+                              ? 'تجربة Pro مفعلة (متبقي $trialDaysRemaining يوم). تشمل كافة مزايا Pro، وتعود تلقائياً للحساب المجاني بعد انتهاء المدة.'
                               : 'Pro Trial is active ($trialDaysRemaining days left). Reverts to Free after trial ends.',
                           style: const TextStyle(
                             color: VSPColors.textPrimary,
