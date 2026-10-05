@@ -218,6 +218,8 @@ class StadiumRepository {
     String? governorate,
     String? sportType,
     String? pitchSize,
+    List<String>? sportTypes,
+    List<String>? pitchSizes,
     double? minPrice,
     double? maxPrice,
     bool? noDepositOnly,
@@ -240,12 +242,24 @@ class StadiumRepository {
       }
 
       // 2. Sport Type Filter
-      if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
+      final normalizedSports = (sportTypes ?? const <String>[])
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && s != 'All')
+          .toList();
+      if (normalizedSports.isNotEmpty) {
+        query = query.inFilter('type', normalizedSports);
+      } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
         query = query.or('type.ilike.%$sportType%,description.ilike.%|Sport:$sportType%');
       }
 
       // 3. Pitch Size Filter
-      if (pitchSize != null && pitchSize.isNotEmpty) {
+      final normalizedSizes = (pitchSizes ?? const <String>[])
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      if (normalizedSizes.isNotEmpty) {
+        query = query.inFilter('size', normalizedSizes);
+      } else if (pitchSize != null && pitchSize.isNotEmpty) {
         query = query.eq('size', pitchSize);
       }
 
