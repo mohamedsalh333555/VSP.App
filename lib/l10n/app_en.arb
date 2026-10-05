@@ -1175,7 +1175,7 @@
   "ownerFaq4_q": "How do I create and organize tournaments on my stadium?",
   "ownerFaq4_a": "Open the Tournaments section to create a tournament, configure its registration rules and prizes, and manage its matches.",
   "ownerFaq5_q": "What are the subscription plans for stadium owners?",
-  "ownerFaq5_a": "Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.",
+  "ownerFaq5_a": "Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.",
   "ownerFaq6_q": "How do platform fees and settlement work?",
   "ownerFaq6_a": "Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.",
   "skipButton": "Skip",
