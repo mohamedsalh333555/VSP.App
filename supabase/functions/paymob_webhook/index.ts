@@ -51,13 +51,13 @@ async function computePaymobHMAC(obj: any, hmacSecret: string): Promise<string> 
 }
 
 serve(async (req: Request) => {
-  // CORS Preflight
+  // Paymob webhook is server-to-server. It does not expose browser CORS.
   if (req.method === "OPTIONS") {
     return new Response("ok", {
+      status: 204,
       headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-        "Access-Control-Allow-Headers": "*",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   }
