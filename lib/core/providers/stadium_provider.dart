@@ -319,6 +319,8 @@ class StadiumProvider with ChangeNotifier {
  String? governorate,
  String? sportType,
  String? pitchSize,
+ List<String>? sportTypes,
+ List<String>? pitchSizes,
  double? minPrice,
  double? maxPrice,
  bool? noDepositOnly,
