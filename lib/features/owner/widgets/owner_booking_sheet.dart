@@ -138,7 +138,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       final stadium = widget.selectedStadium;
       final customerPhone = _phoneController.text.trim();
       final notes = _noteController.text.trim();
-      final double collectedAmount = widget.isEdit && !((widget.slot['booking'] as Booking?)?.paymentTransactionId?.startsWith('MANUAL') == true)
+      final existingBooking = widget.slot['booking'] as Booking?;
+      final isManualBooking = existingBooking?.paymentTransactionId?.startsWith('MANUAL') == true ||
+          (existingBooking?.paymentMethod == 'cash' && existingBooking?.createdByUserId == existingBooking?.ownerId);
+      final double collectedAmount = (!widget.isEdit || isManualBooking)
           ? (double.tryParse(_collectedAmountController.text.trim()) ?? 0.0)
           : 0.0;
 
