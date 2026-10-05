@@ -173,10 +173,19 @@ class AuthService {
 
       return {'success': true, 'user': response.user};
     } on AuthException catch (e) {
-      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', 'auth_failure');
+      final isRateLimited =
+          e.statusCode == '429' ||
+          e.message.toLowerCase().contains('rate limit') ||
+          e.message.toLowerCase().contains('too many');
+      _logSecurityEvent(
+        'LOGIN_ATTEMPT_FAILED',
+        isRateLimited ? 'rate_limited' : 'auth_failure',
+      );
       return {
         'success': false,
-        'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+        'message': isRateLimited
+            ? 'تم تجاوز عدد محاولات الدخول مؤقتًا. حاول مرة أخرى بعد قليل.'
+            : 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
       };
     } catch (e) {
       _logSecurityEvent('SIGN_IN_CRITICAL_FAILURE', e);
