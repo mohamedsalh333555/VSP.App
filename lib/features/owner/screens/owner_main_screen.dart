@@ -168,7 +168,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
      ? FloatingActionButton(
          onPressed: () => showOwnerCupFormatModal(context),
          backgroundColor: VSPColors.accent,
-         foregroundColor: Colors.black,
+         foregroundColor: VSPDSColors.black,
          elevation: VSPDSElevation.none,
          shape: const CircleBorder(),
          tooltip: Localizations.localeOf(context).languageCode == 'ar'
