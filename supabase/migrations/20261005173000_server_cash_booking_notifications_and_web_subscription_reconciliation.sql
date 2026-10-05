@@ -126,11 +126,3 @@ select cron.schedule(
   '*/5 * * * *',
   $$select public.reconcile_owner_web_subscription_orders();$$
 );
-
--- 3) The pre-fee-policy web order was created against the old gross model.
--- Cancel it so an undercharged checkout can never be confirmed after the policy change.
-update public.owner_subscription_orders
-set status='cancelled'
-where id='cecec0b7-63cd-43eb-8070-a0d8c3a8710d'
-  and status='pending'
-  and payment_source='web';
