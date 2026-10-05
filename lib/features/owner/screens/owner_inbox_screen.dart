@@ -7,8 +7,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/user_repository.dart';
-import '../../../core/models/user_model.dart';
-import '../../../data/models.dart';
 import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -182,7 +180,6 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
       hasUnread: hasUnread,
       unreadCount: unreadCount,
       onTap: () async {
-        final isSupport = type == 'support' || otherUserId.isEmpty;
         await Navigator.push(
           context,
           MaterialPageRoute(
