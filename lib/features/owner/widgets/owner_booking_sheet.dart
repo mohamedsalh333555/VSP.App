@@ -345,11 +345,63 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   }
 
   Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
-    _nameController.text = isArabic ? 'مغلق للصيانة' : 'Closed for Maintenance';
-    _noteController.text = isArabic ? 'صيانة دورية بالملعب وغير متاح للحجز' : 'Pitch Maintenance';
-    _collectedAmountController.text = '0';
-    _phoneController.clear();
-    await _handleConfirmBooking(l10n, isArabic);
+    final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+    final ownerId = authProvider.currentUser?.id;
+    if (ownerId == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
+
+    final selectedDate = widget.baseDate.add(Duration(days: widget.selectedDayIndex));
+    final startTime = (widget.slot['slotTime'] as DateTime?) ??
+        DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+          widget.slot['hour'] as int,
+          widget.slot['minute'] as int,
+        );
+    final endTime = startTime.add(Duration(minutes: _selectedMinutes));
+
+    setState(() => _isSaving = true);
+    try {
+      final result = await OwnerRepository().lockSlotForMaintenance(
+        ownerId: ownerId,
+        stadiumId: widget.selectedStadium.id,
+        startTime: startTime,
+        endTime: endTime,
+        reason: isArabic ? 'صيانة دورية بالملعب وغير متاح للحجز' : 'Pitch maintenance',
+      );
+
+      if (result is Map && result['success'] != true) {
+        throw Exception(result['error']?.toString() ?? 'Failed to lock slot');
+      }
+
+      await Provider.of<BookingProvider>(widget.parentContext, listen: false)
+          .loadOwnerBookings(ownerId, forceRefresh: true);
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (widget.parentContext.mounted) {
+          VSPFeedback.showSuccess(
+            widget.parentContext,
+            isArabic ? 'تم قفل الفترة للصيانة.' : 'Slot locked for maintenance.',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر قفل الفترة للصيانة.' : 'Could not lock this slot for maintenance.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
