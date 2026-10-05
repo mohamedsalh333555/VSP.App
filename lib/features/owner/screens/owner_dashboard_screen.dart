@@ -384,7 +384,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                                 ),
                                 if (!isProOwner) ...[
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.lock_rounded, size: 13, color: VSPColors.textSecondary),
+                                  const SizedBox.shrink(),
                                 ],
                               ],
                             ),
