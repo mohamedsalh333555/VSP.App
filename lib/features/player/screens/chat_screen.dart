@@ -9,6 +9,7 @@ import '../../../core/repositories/chat_repository.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../widgets/chat/chat_message_bubble.dart';
@@ -109,7 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       _messageController.clear();
       await ChatRepository().sendMessage(widget.conversationId ?? widget.booking!.id, message);
-      AnalyticsService.logChatMessageSent(widget.booking?.bookingType.name ?? 'direct');
+      AnalyticsService.logChatMessageSent(widget.booking?.bookingType.name ?? (widget.isSupportChat ? 'support' : 'direct'));
 
       if (mounted && _scrollController.hasClients) {
         _scrollController.animateTo(
@@ -119,7 +120,15 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       }
     } catch (e) {
-      // Log errors if necessary
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إرسال الرسالة حالياً. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Message could not be sent. Check your connection and try again.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
