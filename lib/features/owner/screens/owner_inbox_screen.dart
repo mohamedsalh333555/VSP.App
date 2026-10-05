@@ -13,9 +13,7 @@ import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/support_service.dart';
-import '../../../core/utils/vsp_feedback.dart';
 import '../widgets/inbox/owner_chat_item_card.dart';
-import '../widgets/inbox/user_search_delegate.dart';
 
 class OwnerInboxScreen extends StatefulWidget {
  const OwnerInboxScreen({super.key});
@@ -55,55 +53,6 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  SupportService().openSupport(context);
  }
 
- Future<void> _startNewChat(BuildContext context, String currentUserId) async {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final userRole = auth.userModel?.role ?? auth.userType ?? 'owner';
-
- final selectedUser = await showSearch<UserModel?>(
- context: context,
- delegate: UserSearchDelegate(
-      currentUserId: currentUserId,
-      currentUserRole: userRole,
-      isArabic: Localizations.localeOf(context).languageCode == 'ar',
-    ),
- );
-
- if (selectedUser == null || !context.mounted) return;
-
- showDialog(
- context: context,
- barrierDismissible: false,
- builder: (context) => const Center(child: CircularProgressIndicator(color: VSPColors.accent)),
- );
-
- try {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final chatData = await _chatRepository.getOrCreateDirectChat(currentUserId, selectedUser.uid, isArabic);
- final chatId = chatData['id'].toString();
- final booking = Booking.fromFirestore(chatData, chatId);
-
- if (context.mounted) {
- Navigator.pop(context);
- Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
- );
- }
- } catch (e) {
- debugPrint('Error starting direct chat: ');
- if (context.mounted) {
- Navigator.pop(context);
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showError(
- context,
- isArabic 
- ? 'حدث خطأ أثناء فتح المحادثة، يرجى المحاولة لاحقاً.' 
- : 'Error opening chat, please try again later.',
- );
- }
- }
- }
-
  @override
  Widget build(BuildContext context) {
  final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -127,11 +76,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  onPressed: () => _openSupportChat(context),
  tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
  ),
- IconButton(
- icon: const Icon(Iconsax.search_normal_1_copy, color: VSPColors.accent),
- onPressed: () => _startNewChat(context, ownerId),
- tooltip: isArabic ? 'بحث عن لاعبين' : 'Search Players',
- ),
+
  ],
  ),
  body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -178,25 +123,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  final unreadCount = unreadMap[ownerId] as int? ?? 0;
  final latestTime = DateTime.parse(conv['last_message_time'] ?? conv['created_at']);
 
- if (type == 'support' || otherUserId.isEmpty) {
- return VSPFadeInItem(
- index: index,
- child: _buildChatRow(
- context: context,
- conversationId: convId,
- otherUserId: '',
- type: type,
- ownerId: ownerId,
- title: isArabic ? 'الدعم الفني VSP' : 'VSP Support',
- subtitle: conv['last_message'] ?? (isArabic ? 'مرحباً بك في الدعم الفني' : 'Welcome to Support'),
- timeStr: _formatTime(latestTime),
- avatar: null,
- latestTime: latestTime,
- hasUnread: unreadCount > 0,
- unreadCount: unreadCount,
- ),
- );
- }
+
 
  // N+1 FIX: Read from cache — no FutureBuilder, no per-row network call.
  final cachedUser = _userCache[otherUserId];
@@ -218,6 +145,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  latestTime: latestTime,
  hasUnread: unreadCount > 0,
  unreadCount: unreadCount,
+ reportContextType: conv['context_type']?.toString(),
+ reportContextId: conv['context_id']?.toString(),
+ reportBookingId: conv['booking_id']?.toString(),
  ),
  );
  },
@@ -240,6 +170,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
     required DateTime latestTime,
     required bool hasUnread,
     required int unreadCount,
+    String? reportContextType,
+    String? reportContextId,
+    String? reportBookingId,
   }) {
     return OwnerChatItemCard(
       title: title,
@@ -257,7 +190,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
               conversationId: conversationId,
               title: title,
               otherUserId: otherUserId.isNotEmpty ? otherUserId : null,
-              isSupportChat: isSupport,
+              reportContextType: reportContextType,
+              reportContextId: reportContextId,
+              reportBookingId: reportBookingId,
             ),
           ),
         );
