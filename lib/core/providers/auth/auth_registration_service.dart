@@ -55,7 +55,7 @@ class AuthRegistrationService {
           'governorate': userData?['governorate'] ?? governorate,
           'date_of_birth': userData?['date_of_birth'],
           'is_registration_complete': true,
-          'is_email_verified': true,
+          'is_email_verified': firebaseUser.emailConfirmedAt != null,
         };
 
         final registrationCompleted =
