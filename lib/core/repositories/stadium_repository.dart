@@ -29,6 +29,8 @@ class StadiumRepository {
           .select()
           .eq('id', stadiumId)
           .eq('is_deleted_by_owner', false)
+          .eq('is_verified', true)
+          .eq('is_blocked', false)
           .maybeSingle();
       if (response != null && response['is_deleted_by_owner'] != true) {
         return Stadium.fromFirestore(response, response['id'].toString());
@@ -392,7 +394,10 @@ class StadiumRepository {
       final res = await _supabase
           .from('stadiums')
           .select()
-          .inFilter('id', ids);
+          .inFilter('id', ids)
+          .eq('is_deleted_by_owner', false)
+          .eq('is_verified', true)
+          .eq('is_blocked', false);
       return (res as List)
           .map((d) => Stadium.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
