@@ -124,7 +124,7 @@ class UserModel {
   bool get isBasicOrHigher => isOwner && (hasActiveSubscription || isInActiveTrial);
 
   /// [H-07] Display-only indicator: true when subscription/trial has lapsed.
-  /// Basic plan is perpetual free (no expiry).
+  /// Free owner access is perpetual when no paid subscription expiry exists.
   /// Does NOT grant or revoke access; server RPC enforces enforcement.
   bool get isPlanExpired {
     if (!isOwner || isInActiveTrial) return false;
