@@ -15,6 +15,7 @@ import 'owner_cup_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_inbox_screen.dart';
 import 'owner_ledger_screen.dart';
+import '../widgets/tournament/cups/owner_cup_format_modal.dart';
 import 'subscription_plans_screen.dart';
 
 final GlobalKey<OwnerMainScreenState> ownerMainScreenKey =
@@ -181,6 +182,21 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
      Localizations.localeOf(context).languageCode == 'ar'
          ? FloatingActionButtonLocation.startFloat
          : FloatingActionButtonLocation.endFloat,
+ floatingActionButton: _currentIndex == 1
+     ? Padding(
+         padding: const EdgeInsets.only(bottom: VSPBottomNavBarMetrics.fabBottomOffset + 8),
+         child: FloatingActionButton(
+           onPressed: () => showOwnerCupFormatModal(context),
+           backgroundColor: VSPColors.accent,
+           shape: const CircleBorder(),
+           elevation: 0,
+           child: const Icon(Iconsax.add_copy, color: Colors.black, size: 24),
+         ),
+       )
+     : null,
+ floatingActionButtonLocation: Localizations.localeOf(context).languageCode == 'ar'
+     ? FloatingActionButtonLocation.startFloat
+     : FloatingActionButtonLocation.endFloat,
  bottomNavigationBar: OwnerBottomNavBar(
    currentIndex: _currentIndex,
    onTap: _onItemTapped,
