@@ -131,6 +131,9 @@ abstract final class VSPDSizes {
   static const double navigationItemHeight = 58.0;
   static const double navigationIcon = 23.0;
   static const double notificationDot = 8.0;
+  static const double aiIcon = 22.0;
+  static const double aiIconSmall = 9.0;
+  static const double aiIconLarge = 14.0;
   static const double navigationNotificationTop = -1.0;
   static const double navigationNotificationRight = -2.0;
   static const double emptyIconSize = 28.0;
@@ -657,3 +660,17 @@ abstract final class VSPDSGradients {
     end: Alignment.bottomRight,
   );
 }
+
+
+abstract final class VSPDSFeedback {
+  static const double horizontalInset = VSPDSSpacing.md;
+  static const double verticalInset = VSPDSSpacing.sm;
+  static const double icon = VSPDSizes.iconLg;
+  static const double shadowBlur = 12.0;
+  static const double shadowOffsetY = 4.0;
+  static const Duration enter = Duration(milliseconds: 250);
+  static const Duration dismiss = Duration(seconds: 3);
+  static const double maxWidth = 560.0;
+  static const double cornerRadius = VSPDSRadius.md;
+}
+

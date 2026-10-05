@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../ui/tokens/vsp_tokens.dart';
+import '../ui/tokens/vsp_design_tokens.dart';
 
 class VSPFeedback {
 
@@ -18,7 +18,7 @@ class VSPFeedback {
  context: context,
  message: message,
  backgroundColor: VSPColors.accent,
- textColor: Colors.black,
+ textColor: VSPDSColors.black,
  icon: Iconsax.tick_circle_copy,
  );
  }
@@ -31,7 +31,7 @@ class VSPFeedback {
  context: context,
  message: message,
  backgroundColor: VSPColors.error,
- textColor: Colors.white,
+ textColor: VSPDSColors.white,
  icon: Iconsax.warning_2_copy,
  );
  }
@@ -107,14 +107,14 @@ class VSPFeedback {
 
  entry = OverlayEntry(
  builder: (ctx) => Positioned(
- top: MediaQuery.of(ctx).padding.top + 12,
- left: 16,
- right: 16,
+ top: MediaQuery.of(ctx).padding.top + VSPDSSpacing.sm,
+ left: VSPDSSpacing.md,
+ right: VSPDSSpacing.md,
  child: Material(
  color: Colors.transparent,
  child: TweenAnimationBuilder<double>(
  tween: Tween(begin: 0.0, end: 1.0),
- duration: const Duration(milliseconds: 250),
+ duration: VSPDSFeedback.enter,
  curve: Curves.easeOutBack,
  builder: (ctx, value, child) {
  return Transform.translate(
@@ -122,29 +122,29 @@ class VSPFeedback {
  child: Opacity(
  opacity: value.clamp(0.0, 1.0),
  child: Container(
- padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+ padding: const EdgeInsets.symmetric(horizontal: VSPDSFeedback.horizontalInset, vertical: VSPDSFeedback.verticalInset),
  decoration: BoxDecoration(
  color: backgroundColor,
- borderRadius: BorderRadius.circular(VSPRadius.md),
+ borderRadius: BorderRadius.circular(VSPDSFeedback.cornerRadius),
  boxShadow: const [
  BoxShadow(
- color: Colors.black38,
- blurRadius: 12,
- offset: Offset(0, 4),
- )
+   color: Color(0x61000000),
+   blurRadius: VSPDSFeedback.shadowBlur,
+   offset: Offset(0, VSPDSFeedback.shadowOffsetY),
+ ),
  ],
  ),
  child: Row(
  children: [
- Icon(icon, color: textColor, size: 20),
+ Icon(icon, color: textColor, size: VSPDSFeedback.icon),
  const SizedBox(width: 12),
  Expanded(
  child: Text(
  message,
  style: TextStyle(
  color: textColor,
- fontWeight: FontWeight.bold,
- fontSize: 13,
+ fontWeight: FontWeight.w700,
+ fontSize: VSPDSTypography.bodyMedium.fontSize,
  ),
  ),
  ),
@@ -163,7 +163,7 @@ class VSPFeedback {
  overlay.insert(entry);
 
  // إخفاء التنبيه أوتوماتيكياً بعد 3 ثوانٍ
- Future.delayed(const Duration(seconds: 3), () {
+ Future.delayed(VSPDSFeedback.dismiss, () {
  if (entry.mounted) {
  entry.remove();
  }
@@ -173,7 +173,7 @@ class VSPFeedback {
  ScaffoldMessenger.of(context).hideCurrentSnackBar();
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
- content: Text(message, style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+ content: Text(message, style: VSPDSTypography.bodyMedium.copyWith(color: textColor, fontWeight: FontWeight.w700)),
  backgroundColor: backgroundColor,
  behavior: SnackBarBehavior.floating,
  ),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import 'booking_sheet_action_panels.dart';
@@ -161,6 +162,21 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final confirmed = await VSPConfirmationDialog.show(
+                  context: context,
+                  isDestructive: true,
+                  icon: Iconsax.danger_copy,
+                  title: isArabic
+                      ? 'تأكيد الإغلاق الطارئ'
+                      : 'Confirm emergency closure',
+                  message: isArabic
+                      ? 'سيؤدي هذا القرار إلى إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد المرتبطة إلى مسار المراجعة. هل تريد المتابعة؟'
+                      : 'This will temporarily close the stadium and route affected refund requests into review. Do you want to continue?',
+                  confirmLabel: isArabic ? 'نعم، أغلق الملعب' : 'Yes, close stadium',
+                  cancelLabel: isArabic ? 'إلغاء' : 'Cancel',
+                );
+                if (!confirmed || !context.mounted) return;
+
                 final res = await Provider.of<BookingProvider>(context, listen: false)
                     .requestEmergencyClosure(
                   stadiumId: booking.stadiumId,
@@ -168,21 +184,22 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   reason: 'عطل طارئ وصيانة بالملعب',
                   durationHours: 24,
                 );
-                if (context.mounted) {
-                  if (res['success'] == true) {
-                    VSPFeedback.showSuccess(
-                      context,
-                      isArabic
-                          ? 'تم إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد للأدمن '
-                          : 'Stadium temporarily closed for emergency ',
-                    );
-                    Navigator.pop(context);
-                  } else {
-                    VSPFeedback.showError(
-                      context,
-                      res['message'] ?? 'فشل طلب الإغلاق الطارئ',
-                    );
-                  }
+
+                if (!context.mounted) return;
+
+                if (res['success'] == true) {
+                  VSPFeedback.showSuccess(
+                    context,
+                    isArabic
+                        ? 'تم إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد للأدمن '
+                        : 'Stadium temporarily closed for emergency ',
+                  );
+                  Navigator.pop(context);
+                } else {
+                  VSPFeedback.showError(
+                    context,
+                    res['message'] ?? 'فشل طلب الإغلاق الطارئ',
+                  );
                 }
               },
             ),

@@ -71,26 +71,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
-      // The parent OwnerMainScreen owns the bottom navigation.
-      // This Scaffold keeps the FAB, but its offset is shared with the
-      // navigation geometry so the two nested Scaffolds cannot drift apart.
-      floatingActionButton: !_hasAnyChampionships
-          ? null
-          : Padding(
-              padding: const EdgeInsets.only(
-                bottom: VSPBottomNavBarMetrics.fabBottomOffset + 8,
-              ),
-              child: FloatingActionButton(
-                onPressed: () => showOwnerCupFormatModal(context),
-                backgroundColor: VSPColors.accent,
-                shape: const CircleBorder(),
-                elevation: 6,
-                child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
-              ),
-            ),
-      floatingActionButtonLocation: isArabic
-          ? FloatingActionButtonLocation.startFloat
-          : FloatingActionButtonLocation.endFloat,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,

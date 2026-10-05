@@ -277,7 +277,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => MatchDetailsScreen(bookingId: widget.booking.id),
+              builder: (_) => MatchDetailsScreen(
+                bookingId: widget.booking.id,
+                initialBooking: widget.booking,
+              ),
             ),
           );
         },

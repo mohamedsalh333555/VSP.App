@@ -21,8 +21,9 @@ import 'chat_screen.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
  final String bookingId;
+ final Booking? initialBooking;
 
- const MatchDetailsScreen({super.key, required this.bookingId});
+ const MatchDetailsScreen({super.key, required this.bookingId, this.initialBooking});
 
  @override
  State<MatchDetailsScreen> createState() => _MatchDetailsScreenState();
@@ -56,6 +57,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  void initState() {
  super.initState();
+ _booking = widget.initialBooking;
  _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
     _fetchMatchDetails();
  }
@@ -64,6 +66,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  setState(() => _isLoading = true);
  try {
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+ if (_booking != null) {
+   _stadium = await stadiumProvider.getStadiumById(_booking!.stadiumId);
+ }
+
 
  final booking = await MatchRepository().getPublicMatchDetails(widget.bookingId) ??
      await MatchRepository().getPrivateCollectiveMatchDetails(widget.bookingId);
@@ -83,6 +89,16 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  Future<void> _onJoin() async {
  if (_isJoining || _isActionProcessing) return;
+ if (_booking?.isOpenJoin != true) {
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   VSPFeedback.showInfo(
+     context,
+     isArabic
+         ? 'هذا النوع من المباريات يعرض التفاصيل فقط ولا يدعم الانضمام العام.'
+         : 'This match type is view-only here and does not support public joining.',
+   );
+   return;
+ }
  final auth = Provider.of<AuthProvider>(context, listen: false);
  if (!auth.isAuthenticated) {
  VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);

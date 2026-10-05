@@ -3,6 +3,7 @@ import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/repositories/league_repository.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../l10n/app_localizations.dart';
 import '../widgets/champion/champion_podium_components.dart';
@@ -25,8 +26,9 @@ class ChampionScreenState extends State<ChampionScreen>
   int _selectedTabIndex = 0;
 
   // Filter states
-  String _selectedLocation = 'All'; 
+  String _selectedLocation = 'All';
   String _selectedSport = 'All';
+  bool _userChangedGovernorate = false;
 
   @override
   void initState() {
@@ -53,6 +55,12 @@ class ChampionScreenState extends State<ChampionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final rawGovernorate = auth.userModel?.governorate ?? auth.governorate;
+    final userGovernorate = EgyptGovernorates.resolveGoogleName(rawGovernorate) ?? rawGovernorate.trim();
+    final effectiveLocation = !_userChangedGovernorate && userGovernorate.isNotEmpty
+        ? userGovernorate
+        : _selectedLocation;
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -190,9 +198,12 @@ class ChampionScreenState extends State<ChampionScreen>
                   // Dropdown 1: Governorates (with 'All' / 'كل المحافظات' at start)
                   Expanded(
                     child: _buildFunctionalDropdown(
-                      value: _selectedLocation,
+                      value: effectiveLocation,
                       items: ['All', ...EgyptGovernorates.allGovernorates],
-                      onChanged: (val) => setState(() => _selectedLocation = val!),
+                      onChanged: (val) => setState(() {
+                        _selectedLocation = val!;
+                        _userChangedGovernorate = true;
+                      }),
                     ),
                   ),
                   const SizedBox(width: 10), 
@@ -218,9 +229,12 @@ class ChampionScreenState extends State<ChampionScreen>
                 physics: const BouncingScrollPhysics(),
                 children: [
                   ChampionshipsListTab(
-                    selectedLocation: _selectedLocation,
+                    selectedLocation: effectiveLocation,
                     selectedSport: _selectedSport,
-                    onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
+                    onLocationChanged: (loc) => setState(() {
+                      _selectedLocation = loc;
+                      _userChangedGovernorate = true;
+                    }),
                     onRetry: () => setState(() {}),
                   ),
                   TeamsRankingTab(
@@ -229,7 +243,7 @@ class ChampionScreenState extends State<ChampionScreen>
                     onRetry: () => setState(() {}),
                   ),
                   Vsp1v1LeagueTab(
-                    selectedLocation: _selectedLocation,
+                    selectedLocation: effectiveLocation,
                     onLocationChanged: (loc) => setState(() => _selectedLocation = loc),
                     getActive1v1Stream: (loc) => LeagueRepository().getActive1v1TournamentStream(governorate: loc),
                     getTournamentPlayersStream: (id) => LeagueRepository().getTournamentPlayersStream(id, isCompleted: false),

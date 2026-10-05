@@ -139,11 +139,11 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       setState(() => _isSubmitting = true);
 
       if (_teamMembers.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.friendsRequiredNote),
-            duration: const Duration(seconds: 4),
-          ),
+        VSPFeedback.showInfo(
+          context,
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'يمكنك إنشاء الفريق بلا لاعبين إضافيين الآن. أضف اللاعبين لاحقاً، لكن لن تتمكن من تسجيل الفريق في بطولة قبل اكتمال العدد المطلوب.'
+              : 'You can create the team now without additional players. Add players later, but tournament registration stays blocked until the required squad size is reached.',
         );
       }
 
@@ -194,12 +194,26 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     } catch (e) {
       if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'تعذر إنشاء الفريق حالياً. تأكد من البيانات وحاول مرة أخرى.'
-              : 'Unable to create the team right now. Please check the details and try again.',
-        );
+        final raw = e.toString().toLowerCase();
+        String message;
+        if (raw.contains('team name already exists') || raw.contains('team_name_already_exists') || raw.contains('duplicate key')) {
+          message = isArabic ? 'اسم الفريق مستخدم بالفعل. اختر اسمًا مختلفًا.' : 'This team name is already in use. Choose another name.';
+        } else if (raw.contains('captain_governorate_required')) {
+          message = isArabic ? 'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.' : 'Captain governorate is required before creating a team.';
+        } else if (raw.contains('team_governorate_mismatch') || raw.contains('team_member_governorate_mismatch')) {
+          message = isArabic ? 'لا يمكن ضم لاعب من محافظة مختلفة عن محافظة الفريق.' : 'Team members must be from the same governorate as the captain.';
+        } else if (raw.contains('maximum of 3 teams') || raw.contains('user_team_limit')) {
+          message = isArabic ? 'وصلت للحد الأقصى لعدد الفرق التي يمكنك إنشاؤها.' : 'You have reached the maximum number of teams you can create.';
+        } else if (raw.contains('invalid_team_member') || raw.contains('team_member_not_found')) {
+          message = isArabic ? 'أحد اللاعبين المضافين لم يعد متاحًا. حدّث قائمة الفريق وحاول مرة أخرى.' : 'One of the selected players is no longer available. Refresh the roster and try again.';
+        } else if (raw.contains('authentication_required')) {
+          message = isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.';
+        } else {
+          message = isArabic
+              ? 'تعذر إنشاء الفريق. حاول مرة أخرى، وإذا استمرت المشكلة سيظهر رمز الخطأ في السجل.'
+              : 'Unable to create the team. Try again; the error will be logged for diagnosis.';
+        }
+        VSPFeedback.showError(context, message);
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

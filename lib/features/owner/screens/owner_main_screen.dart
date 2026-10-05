@@ -8,6 +8,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_ambient_background.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
+import '../widgets/tournament/cups/owner_cup_format_modal.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
@@ -163,9 +164,26 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  ],
  ),
  ),
+ floatingActionButton: _currentIndex == 1
+     ? FloatingActionButton(
+         onPressed: () => showOwnerCupFormatModal(context),
+         backgroundColor: VSPColors.accent,
+         foregroundColor: VSPDSColors.black,
+         elevation: VSPDSElevation.none,
+         shape: const CircleBorder(),
+         tooltip: Localizations.localeOf(context).languageCode == 'ar'
+             ? 'إنشاء بطولة'
+             : 'Create tournament',
+         child: const Icon(Iconsax.add_copy, size: VSPDSizes.iconLg),
+       )
+     : null,
+ floatingActionButtonLocation:
+     Localizations.localeOf(context).languageCode == 'ar'
+         ? FloatingActionButtonLocation.startFloat
+         : FloatingActionButtonLocation.endFloat,
  bottomNavigationBar: OwnerBottomNavBar(
- currentIndex: _currentIndex,
- onTap: _onItemTapped,
+   currentIndex: _currentIndex,
+   onTap: _onItemTapped,
  ),
  );
  }

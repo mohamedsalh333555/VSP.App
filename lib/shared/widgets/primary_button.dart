@@ -76,7 +76,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                   height: VSPDSizes.iconLg,
                   width: VSPDSizes.iconLg,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
+                    strokeWidth: VSPDSAccessibility.progressStroke,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       VSPDSSemanticColors.background,
                     ),
@@ -95,9 +95,8 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                         fit: BoxFit.scaleDown,
                         child: Text(
                           widget.text,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: widget.textColor ?? VSPColors.background,
-                            fontSize: 16,
+                          style: VSPDSTypography.button.copyWith(
+                            color: widget.textColor ?? VSPDSSemanticColors.background,
                           ),
                         ),
                       ),

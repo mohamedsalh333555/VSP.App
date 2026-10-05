@@ -58,7 +58,7 @@ class VspBottomNavBar extends StatelessWidget {
         VSPDSSpacing.xs,
         VSPDSSpacing.xs,
         VSPDSSpacing.xs,
-        VSPDSSpacing.navigationBottomPadding,
+        VSPDSizes.navigationBottomPadding,
       ),
       child: Row(
         children: items.asMap().entries.map((entry) {

@@ -8,6 +8,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double realizedTotal;
   final double realizedCash;
   final double realizedOnline;
+  final double cashUncollected;
+  final double onlineUnavailable;
   final double availableBalance;
   final double upcomingValue;
   final VoidCallback onOpenLedger;
@@ -20,6 +22,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required this.realizedTotal,
     required this.realizedCash,
     required this.realizedOnline,
+    this.cashUncollected = 0.0,
+    this.onlineUnavailable = 0.0,
     required this.availableBalance,
     this.upcomingValue = 0.0,
     required this.onOpenLedger,
@@ -149,6 +153,36 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.w700)),
             ),
           ],
+          const SizedBox(height: VSPDSSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: _PendingMoneyCard(
+                  icon: Iconsax.money_3_copy,
+                  label: isArabic ? 'كاش متبقي للتحصيل' : 'Cash still to collect',
+                  value: cashUncollected,
+                  currency: currency,
+                  color: VSPDSSemanticColors.warning,
+                  helper: isArabic
+                      ? 'مبالغ مستحقة من حجوزات كاش غير محصلة'
+                      : 'Due from unpaid cash bookings',
+                ),
+              ),
+              const SizedBox(width: VSPDSSpacing.sm),
+              Expanded(
+                child: _PendingMoneyCard(
+                  icon: Iconsax.card_copy,
+                  label: isArabic ? 'أونلاين محصل وغير متاح للسحب' : 'Online paid, not yet withdrawable',
+                  value: onlineUnavailable,
+                  currency: currency,
+                  color: VSPDSSemanticColors.info,
+                  helper: isArabic
+                      ? 'يُتاح بعد انتهاء المباراة وتسوية الحجز'
+                      : 'Released after the match is completed and settled',
+                ),
+              ),
+            ],
+          ),
           if (upcomingValue > 0.009) ...[
             const SizedBox(height: 10),
             Text(
@@ -182,6 +216,75 @@ class _MoneySplit extends StatelessWidget {
           const SizedBox(height: 3),
           Text('${value.toStringAsFixed(0)} $currency',
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w900)),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _PendingMoneyCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final double value;
+  final String currency;
+  final Color color;
+  final String helper;
+
+  const _PendingMoneyCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.currency,
+    required this.color,
+    required this.helper,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = value > 0.009;
+    return Container(
+      constraints: const BoxConstraints(minHeight: 118),
+      padding: const EdgeInsets.all(VSPDSSpacing.sm),
+      decoration: BoxDecoration(
+        color: VSPDSSemanticColors.surfaceRaised,
+        borderRadius: BorderRadius.circular(VSPDSRadius.md),
+        border: Border.all(
+          color: color.withValues(
+            alpha: hasValue ? VSPDSOpacity.border : 0.12,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: VSPDSizes.iconMd, color: color),
+          const SizedBox(height: VSPDSSpacing.xs),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: VSPDSTypography.labelSmall.copyWith(
+              color: VSPDSSemanticColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: VSPDSSpacing.xxs),
+          Text(
+            '\${value.toStringAsFixed(0)} \$currency',
+            style: VSPDSTypography.titleMedium.copyWith(
+              color: hasValue ? color : VSPDSSemanticColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: VSPDSSpacing.xxs),
+          Text(
+            helper,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: VSPDSTypography.labelSmall.copyWith(
+              color: VSPDSSemanticColors.textMuted,
+            ),
+          ),
         ],
       ),
     );
