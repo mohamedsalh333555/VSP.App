@@ -4,7 +4,6 @@ analyzer:
   exclude:
     - "scratch/**"
     - "bin/**"
-    - "test/**"
     - build/**
     - android/**
     - ios/**
