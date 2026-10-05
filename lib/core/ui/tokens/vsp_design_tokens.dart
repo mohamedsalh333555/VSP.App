@@ -666,10 +666,10 @@ abstract final class VSPDSFeedback {
   static const double horizontalInset = VSPDSSpacing.md;
   static const double verticalInset = VSPDSSpacing.sm;
   static const double icon = VSPDSizes.iconLg;
-  static const double shadowBlur = 16.0;
-  static const double shadowOffsetY = 6.0;
-  static const Duration enter = VSPDSMotion.standard;
-  static const Duration dismiss = Duration(milliseconds: 2200);
+  static const double shadowBlur = 12.0;
+  static const double shadowOffsetY = 4.0;
+  static const Duration enter = Duration(milliseconds: 250);
+  static const Duration dismiss = Duration(seconds: 3);
   static const double maxWidth = 560.0;
   static const double cornerRadius = VSPDSRadius.md;
 }
