@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/app_error_handler.dart';
 import '../../../data/models.dart';
 
@@ -35,30 +34,9 @@ class BookingListModifier {
   /// Cleans and formats database/network exception message for user presentation.
   /// Delegated to unified AppErrorHandler SSOT (H-05).
   static String formatCreationError(dynamic error) {
-    if (error == null) return 'حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.';
-    if (error is PostgrestException) {
-      return AppErrorHandler.formatError(error, isArabic: true);
-    }
-    final str = error.toString().trim();
-    final upper = str.toUpperCase();
-    if (upper.contains('STADIUM_LIMIT_EXCEEDED') ||
-        upper.contains('SLOT_LOCKED_OR_TAKEN') ||
-        upper.contains('CANNOT_CONFIRM_CANCELLED_BOOKING') ||
-        upper.contains('ACTIVE_BOOKINGS_EXIST') ||
-        upper.contains('DISPUTE_WINDOW_EXPIRED') ||
-        upper.contains('NOT_AT_STADIUM') ||
-        str.contains('PostgrestException') ||
-        str.contains('code:')) {
-      return AppErrorHandler.formatError(error, isArabic: true);
-    }
-    if (str.startsWith('Exception: Failed to create booking: ')) {
-      return str.replaceFirst('Exception: Failed to create booking: ', '').trim();
-    }
-    if (str.startsWith('Exception: ')) {
-      return str.replaceFirst('Exception: ', '').trim();
-    }
-    return str;
+    return AppErrorHandler.formatError(error, isArabic: true);
   }
+
 
   /// Applies partial updates to [draft] immutably.
   static BookingDraft applyDraftUpdates(
