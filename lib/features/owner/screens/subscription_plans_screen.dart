@@ -6,6 +6,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/app_error_handler.dart';
 import '../../../core/repositories/owner_subscription_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -496,7 +497,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         );
       }
     } catch (e) {
-      if (context.mounted) VSPFeedback.showError(context, e);
+      if (context.mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
