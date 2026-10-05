@@ -1,0 +1,5 @@
+[functions.create_owner_web_checkout]
+verify_jwt = false
+
+[functions.get_owner_web_checkout_status]
+verify_jwt = false
