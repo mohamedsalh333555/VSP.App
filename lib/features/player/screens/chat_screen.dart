@@ -17,6 +17,7 @@ import '../widgets/chat/chat_dialogs.dart';
 import '../widgets/chat/chat_call_utils.dart';
 
 class ChatScreen extends StatefulWidget {
+  String? get activeBookingId => booking?.id;
   final Booking? booking;
   final String? conversationId;
   final String? conversationTitle;
