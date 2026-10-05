@@ -171,7 +171,7 @@ class VSPStateView extends StatelessWidget {
               width: VSPDSizes.stateLoadingIndicator,
               height: VSPDSizes.stateLoadingIndicator,
               child: CircularProgressIndicator(
-                strokeWidth: VSPDSizes.progressStroke,
+                strokeWidth: VSPDSAccessibility.progressStroke,
                 color: VSPDSSemanticColors.accent,
               ),
             ),
