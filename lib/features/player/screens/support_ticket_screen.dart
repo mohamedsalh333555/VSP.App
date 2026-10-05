@@ -44,12 +44,13 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       final settings = await AppSettingsRepository().getSettings();
       final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : settings.supportPhone;
       if (phone.isEmpty || !mounted) return;
-      try {
-        await _repo.markSupportTicketWhatsAppEscalated(widget.ticketId);
-      } catch (_) {}
-      if (!mounted) return;
       final ar = Localizations.localeOf(context).languageCode == 'ar';
       final ref = widget.ticketId.length >= 8 ? widget.ticketId.substring(0, 8) : widget.ticketId;
+      final ticketId = widget.ticketId;
+      try {
+        await _repo.markSupportTicketWhatsAppEscalated(ticketId);
+      } catch (_) {}
+      if (!mounted) return;
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: ar ? 'أحتاج تصعيد تذكرة دعم VSP رقم #$ref.' : 'I need to escalate VSP support ticket #$ref.');
     } catch (_) {}
   }
