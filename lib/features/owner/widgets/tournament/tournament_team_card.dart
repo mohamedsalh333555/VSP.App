@@ -181,9 +181,9 @@ Future<void> showDeleteTeamConfirmationDialog(
 
   if (confirm == true && context.mounted) {
     try {
-      final success =
+      final result =
           await TournamentRepository().removeTournamentTeam(championship.id, team.id);
-      if (success && context.mounted) {
+      if (result.isSuccess && context.mounted) {
         final updatedList = List<String>.from(championship.joinedTeams)..remove(team.id);
         final updatedPaid = List<String>.from(championship.paidTeams)..remove(team.id);
         final updated = championship.copyWith(
@@ -195,6 +195,12 @@ Future<void> showDeleteTeamConfirmationDialog(
           context,
           isArabic ? 'تم إلغاء انضمام الفريق بنجاح.' : 'Team removed successfully.',
         );
+      } else if (result.isFailure && context.mounted) {
+        // [H-04]: Show the structured error message — no silent failure.
+        VSPFeedback.showError(
+          context,
+          result.errorMessage ?? (isArabic ? 'فشل إزالة الفريق.' : 'Failed to remove team.'),
+        );
       }
     } catch (e) {
       if (context.mounted) {
@@ -203,3 +209,4 @@ Future<void> showDeleteTeamConfirmationDialog(
     }
   }
 }
+

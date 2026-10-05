@@ -268,7 +268,12 @@ class TournamentRepository {
   Future<Map<String, dynamic>> fetchChampionshipPublicState(String championshipId) =>
       queryCoord.fetchChampionshipPublicState(championshipId);
 
-  Future<bool> removeTournamentTeam(String championshipId, String teamId) =>
+  /// [H-04]: Returns a [TournamentCommandResult] — callers must handle failure
+  /// explicitly. No semantic fallback to a different operation is permitted.
+  Future<TournamentCommandResult> removeTournamentTeam(
+    String championshipId,
+    String teamId,
+  ) =>
       registrationCoord.removeTournamentTeam(championshipId, teamId);
 
   // ==================== ROSTERS ====================

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../utils/app_error_handler.dart';
 import '../../../data/models.dart';
 
 /// Pure domain helper for modifying booking lists and drafts in BookingProvider.
@@ -32,74 +33,31 @@ class BookingListModifier {
   }
 
   /// Cleans and formats database/network exception message for user presentation.
+  /// Delegated to unified AppErrorHandler SSOT (H-05).
   static String formatCreationError(dynamic error) {
     if (error == null) return 'حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.';
-
-    String message = '';
-    String code = '';
-    String details = '';
-
     if (error is PostgrestException) {
-      message = error.message;
-      code = error.code ?? '';
-      details = error.details?.toString() ?? '';
-    } else {
-      message = error.toString();
+      return AppErrorHandler.formatError(error, isArabic: true);
     }
-
-    final combined = '$code $message $details';
-
-    // 1. Check machine-readable tokens and business codes first
-    if (combined.contains('SLOT_LOCKED_OR_TAKEN') ||
-        combined.contains('slot already booked') ||
-        combined.contains('هذا الوقت محجوز بالفعل')) {
-      return 'الوقت المحدد محجوز بالفعل، يرجى اختيار موعد آخر';
+    final str = error.toString().trim();
+    final upper = str.toUpperCase();
+    if (upper.contains('STADIUM_LIMIT_EXCEEDED') ||
+        upper.contains('SLOT_LOCKED_OR_TAKEN') ||
+        upper.contains('CANNOT_CONFIRM_CANCELLED_BOOKING') ||
+        upper.contains('ACTIVE_BOOKINGS_EXIST') ||
+        upper.contains('DISPUTE_WINDOW_EXPIRED') ||
+        upper.contains('NOT_AT_STADIUM') ||
+        str.contains('PostgrestException') ||
+        str.contains('code:')) {
+      return AppErrorHandler.formatError(error, isArabic: true);
     }
-    if (combined.contains('STADIUM_LIMIT_EXCEEDED') ||
-        combined.contains('الحد الأقصى للملاعب') ||
-        combined.contains('stadium limit exceeded')) {
-      return 'تم تجاوز الحد الأقصى للملاعب المسموح بها في باقتك';
+    if (str.startsWith('Exception: Failed to create booking: ')) {
+      return str.replaceFirst('Exception: Failed to create booking: ', '').trim();
     }
-    if (combined.contains('CANNOT_CONFIRM_CANCELLED_BOOKING') ||
-        combined.contains('حجز ملغي')) {
-      return 'لا يمكن تحصيل حجز ملغي';
+    if (str.startsWith('Exception: ')) {
+      return str.replaceFirst('Exception: ', '').trim();
     }
-    if (combined.contains('no_show') || combined.contains('تكرار عدم الحضور')) {
-      return 'حسابك مقيد عن الحجز النقدي بسبب تكرار عدم الحضور. يرجى السداد إلكترونياً.';
-    }
-    if (combined.contains('حجز نقدي نشط')) {
-      return 'لديك حجز نقدي نشط بالفعل. يرجى إنهاء الحجز السابق أو الدفع إلكترونياً.';
-    }
-    if (combined.contains('active_bookings_exist')) {
-      return 'لا يمكن حذف الملعب لوجود مباريات وحجوزات نشطة جارية أو قادمة.';
-    }
-    if (combined.contains('انتهت صلاحية باقة الاشتراك')) {
-      return 'انتهت صلاحية باقة الاشتراك الخاصة بك. يرجى تجديد الاشتراك لإضافة أو تفعيل الملاعب.';
-    }
-
-    // 2. Suppress raw technical / SQL / Postgrest internal exceptions from reaching users
-    final lower = combined.toLowerCase();
-    if (lower.contains('postgrestexception') ||
-        lower.contains('sqlstate') ||
-        lower.contains('syntax error') ||
-        lower.contains('violates') ||
-        lower.contains('p000') ||
-        lower.contains('socketexception') ||
-        lower.contains('connection refused') ||
-        lower.contains('internal server error')) {
-      return 'حدث خطأ في النظام أثناء معالجة الحجز. يرجى المحاولة لاحقاً.';
-    }
-
-    final cleaned = message
-        .replaceAll(RegExp(r'PostgrestException\(message:\s*'), '')
-        .replaceAll(RegExp(r',\s*code:\s*.*\)$'), '')
-        .replaceAll('Exception: ', '')
-        .replaceAll('Failed to create booking: ', '')
-        .trim();
-
-    return cleaned.isNotEmpty
-        ? cleaned
-        : 'حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.';
+    return str;
   }
 
   /// Applies partial updates to [draft] immutably.

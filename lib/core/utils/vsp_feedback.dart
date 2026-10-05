@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../ui/tokens/vsp_tokens.dart';
+import 'app_error_handler.dart';
 
 class VSPFeedback {
 
@@ -67,31 +68,10 @@ class VSPFeedback {
  HapticFeedback.selectionClick();
  }
 
- /// تنظيف رسائل الخطأ الخام من DB ومع localization تلقائي
- static String _cleanErrorMessage(BuildContext context, String raw) {
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- String msg = raw
- .replaceAll('Failed to create booking: ', '')
- .replaceAll('Exception: ', '')
- .replaceAll('PostgrestException', '')
- .replaceAll('(message:', '')
- .replaceAll('hint: null)', '')
- .trim();
-
- // ترجمة رسائل double booking الشائعة
- if (msg.contains('double booking') || msg.contains('time_conflict') || msg.contains('تحجز نفس الوقت')) {
- return isAr
- ? 'هذا الوقت محجوز بالفعل. يرجى اختيار وقت آخر.'
- : 'This time slot is already booked. Please choose another.';
- }
- if (msg.contains('cash limit') || msg.contains('حد الكاش')) {
- return isAr
- ? 'تجاوزت حد الحجوزات النقدية المسموح بها. يرجى سداد الحجوزات السابقة أولاً.'
- : 'Cash booking limit reached. Please pay for previous bookings first.';
- }
-
- return msg.isNotEmpty ? msg : (isAr ? 'حدث خطأ غير متوقع.' : 'An unexpected error occurred.');
- }
+  /// تنظيف وتوطين رسائل الخطأ عبر المحول المركزي الموحد (H-05)
+  static String _cleanErrorMessage(BuildContext context, String raw) {
+    return AppErrorHandler.getLocalizedMessage(context, raw);
+  }
 
  /// المحرك المركزي لإظهار التنبيهات بـ Root Overlay فوق جميع الطبقات والبوب اب
  static void _showOverlayToast({

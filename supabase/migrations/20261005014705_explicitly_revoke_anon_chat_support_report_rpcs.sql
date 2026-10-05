@@ -1,0 +1,23 @@
+revoke execute on function public.create_direct_chat_atomic(uuid,text,uuid) from anon, public;
+revoke execute on function public.send_chat_message_atomic(uuid,text) from anon, public;
+revoke execute on function public.create_support_ticket_atomic(text,text,text,uuid,uuid,text) from anon, public;
+revoke execute on function public.send_support_ticket_message_atomic(uuid,text) from anon, public;
+revoke execute on function public.admin_update_support_ticket_atomic(uuid,text,text,uuid) from anon, public;
+revoke execute on function public.create_report_atomic(text,uuid,text,text,text,uuid,uuid,uuid) from anon, public;
+revoke execute on function public.mark_support_ticket_whatsapp_escalation(uuid) from anon, public;
+revoke execute on function public.vsp_chat_write_allowed(uuid,uuid) from anon, public;
+revoke execute on function public.vsp_user_is_booking_participant(uuid,uuid) from anon, public;
+revoke execute on function public.vsp_user_is_tournament_participant(uuid,uuid) from anon, public;
+revoke execute on function public.vsp_is_admin_actor() from anon, public;
+
+grant execute on function public.create_direct_chat_atomic(uuid,text,uuid) to authenticated;
+grant execute on function public.send_chat_message_atomic(uuid,text) to authenticated;
+grant execute on function public.create_support_ticket_atomic(text,text,text,uuid,uuid,text) to authenticated;
+grant execute on function public.send_support_ticket_message_atomic(uuid,text) to authenticated;
+grant execute on function public.admin_update_support_ticket_atomic(uuid,text,text,uuid) to authenticated;
+grant execute on function public.create_report_atomic(text,uuid,text,text,text,uuid,uuid,uuid) to authenticated;
+grant execute on function public.mark_support_ticket_whatsapp_escalation(uuid) to authenticated;
+grant execute on function public.vsp_chat_write_allowed(uuid,uuid) to authenticated;
+grant execute on function public.vsp_user_is_booking_participant(uuid,uuid) to authenticated;
+grant execute on function public.vsp_user_is_tournament_participant(uuid,uuid) to authenticated;
+grant execute on function public.vsp_is_admin_actor() to authenticated;

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class VSP1v1Player {
   final String id;
   final String name;
@@ -89,7 +91,10 @@ class VSP1v1Player {
     };
   }
 
-  /// أرقام واقعية لبطولة 32 لاعب (البطل يخوض 5 مباريات ويجمع 18-24 نقطة)
+  /// [L-01] Standings mock fixture. Dedicated to testing/preview scenarios.
+  /// Production standings are fetched from Supabase via the repository layer.
+  @visibleForTesting
+  @Deprecated('Use for unit testing and UI fixtures only. Production uses Supabase repository.')
   static List<VSP1v1Player> getMockStandings() {
     return [
       VSP1v1Player(
@@ -160,3 +165,4 @@ class VSP1v1Player {
     ];
   }
 }
+

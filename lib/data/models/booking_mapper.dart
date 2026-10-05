@@ -2,7 +2,9 @@ import 'booking_enums.dart';
 import 'booking_models.dart';
 import '../../core/services/logger_service.dart';
 
-/// Handles Firestore and Supabase map serialization and deserialization for Booking instances.
+/// Handles Supabase map serialization and deserialization for Booking instances.
+/// [L-02]: Named fromFirestore/toFirestore are kept for backward compatibility;
+/// new code should call fromMap/toMap via the repository layer.
 class BookingMapper {
   const BookingMapper._();
 
@@ -65,6 +67,29 @@ class BookingMapper {
       return BookingType.personal;
     }();
 
+    // [H-06]: Required DB fields — missing values must cause a parse failure,
+    // not be silently replaced with DateTime.now().
+    if (startTimeVal == null) {
+      VSPLogger.e(
+        '[H-06] BookingMapper: booking "$id" is missing required field start_time. '
+        'Refusing to fabricate a timestamp. Record will not be mapped.',
+      );
+      throw FormatException(
+        'Booking "$id" is missing required field start_time. '
+        'Corrupt or partial record cannot be treated as valid.',
+      );
+    }
+    if (endTimeVal == null) {
+      VSPLogger.e(
+        '[H-06] BookingMapper: booking "$id" is missing required field end_time. '
+        'Refusing to fabricate a timestamp. Record will not be mapped.',
+      );
+      throw FormatException(
+        'Booking "$id" is missing required field end_time. '
+        'Corrupt or partial record cannot be treated as valid.',
+      );
+    }
+
     return Booking(
       id: id,
       stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
@@ -72,16 +97,12 @@ class BookingMapper {
       stadiumImageUrl:
           data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
-      startTime: startTimeVal != null
-          ? (startTimeVal is DateTime
-                ? startTimeVal.toLocal()
-                : DateTime.parse(startTimeVal.toString()).toLocal())
-          : DateTime.now(),
-      endTime: endTimeVal != null
-          ? (endTimeVal is DateTime
-                ? endTimeVal.toLocal()
-                : DateTime.parse(endTimeVal.toString()).toLocal())
-          : DateTime.now(),
+      startTime: startTimeVal is DateTime
+          ? startTimeVal.toLocal()
+          : DateTime.parse(startTimeVal.toString()).toLocal(),
+      endTime: endTimeVal is DateTime
+          ? endTimeVal.toLocal()
+          : DateTime.parse(endTimeVal.toString()).toLocal(),
       operationalDate: opDateVal != null
           ? (opDateVal is DateTime
                 ? opDateVal
@@ -115,9 +136,10 @@ class BookingMapper {
         if (matched.isNotEmpty) {
           return matched.first;
         }
-        VSPLogger.e(
-          'Critical: Unknown booking status encountered: "$statusVal" for booking ID: $id. '
-          'Falling back to pending with observability.',
+        // [H-06]: Unknown status logged with telemetry and safely defaulted to pending.
+        VSPLogger.w(
+          '[H-06] BookingMapper: Booking "$id" has unknown status "$statusVal". '
+          'Defaulting to BookingStatus.pending per Stage 11 state consistency invariant.',
         );
         return BookingStatus.pending;
       }(),
@@ -130,7 +152,15 @@ class BookingMapper {
           ? (createdAtVal is DateTime
                 ? createdAtVal.toLocal()
                 : DateTime.parse(createdAtVal.toString()).toLocal())
-          : DateTime.now(),
+          : () {
+              // [H-06]: created_at is missing — log and use a sentinel to signal corrupt record.
+              // Do NOT fabricate DateTime.now() as it would make corrupt records look recent.
+              VSPLogger.w(
+                '[H-06] BookingMapper: booking "$id" is missing created_at. '
+                'Using epoch sentinel. Investigate data integrity.',
+              );
+              return DateTime.fromMillisecondsSinceEpoch(0);
+            }(),
       updatedAt: updatedAtVal != null
           ? (updatedAtVal is DateTime
                 ? updatedAtVal.toLocal()

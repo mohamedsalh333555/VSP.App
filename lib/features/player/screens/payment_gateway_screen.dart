@@ -11,6 +11,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
+import '../../../core/repositories/booking/booking_domain_rules.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../../../core/services/paymob_service.dart';
@@ -53,7 +54,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
   Booking? _booking;
-  int _remainingSeconds = 480; // 8 minutes atomic hold timer
+  /// [H-08]: Uses canonical pending expiry policy from BookingDomainRules.
+  /// Client-side countdown only — server is the authoritative enforcer.
+  int _remainingSeconds = BookingDomainRules.kPendingPaymentWindowMinutes * 60;
   bool _paymentCompleted = false;
   bool _isVerificationModalShowing = false;
   BuildContext? _verificationModalContext;

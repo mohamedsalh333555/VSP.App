@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
+import 'booking/booking_categorization_service.dart';
 import 'booking/booking_draft_storage.dart';
 import 'booking/booking_list_modifier.dart';
 import 'booking/booking_match_coordinator.dart';
@@ -14,34 +15,51 @@ class BookingProvider with ChangeNotifier {
   late final BookingMatchCoordinator _matchCoordinator;
 
   List<Booking> _userBookings = [];
-  List<Booking> _upcomingBookings = [];
-  List<Booking> _historyBookings = [];
-  List<Booking> _pendingBookings = [];
   List<Booking> _publicMatches = []; // Dedicated list for paginated matches
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
   String? _activeOwnerId;
 
   bool _isLoading = false;
-  final bool _isLoadingMoreMatches = false;
+  bool _isLoadingPublicMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
 
-  // Getters
+  // Getters - _userBookings is the Single Source of Truth (SSOT)
   List<Booking> get userBookings =>
       _userBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
-  List<Booking> get upcomingBookings =>
-      _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
-  List<Booking> get historyBookings =>
-      _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
-  List<Booking> get pendingBookings =>
-      _pendingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+
+  List<Booking> get upcomingBookings {
+    final active = userBookings;
+    return BookingCategorizationService.categorizeUserBookings(
+      bookings: active,
+      now: DateTime.now(),
+    ).upcoming;
+  }
+
+  List<Booking> get historyBookings {
+    final active = userBookings;
+    return BookingCategorizationService.categorizeUserBookings(
+      bookings: active,
+      now: DateTime.now(),
+    ).history;
+  }
+
+  List<Booking> get pendingBookings {
+    final active = userBookings;
+    return BookingCategorizationService.categorizeUserBookings(
+      bookings: active,
+      now: DateTime.now(),
+    ).pending;
+  }
+
   List<Booking> get publicMatches => _publicMatches;
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
-  bool get isLoadingMoreMatches => _isLoadingMoreMatches;
+  bool get isLoadingPublicMatches => _isLoadingPublicMatches;
+  bool get isLoadingMoreMatches => _isLoadingPublicMatches;
   bool get hasMoreMatches => _hasMoreMatches;
   String? get errorMessage => _errorMessage;
 
@@ -134,7 +152,6 @@ class BookingProvider with ChangeNotifier {
     try {
       final booking = await _repository.createBooking(_currentDraft!, userId);
       _currentBooking = booking;
-      BookingListModifier.insertBooking(_upcomingBookings, booking);
       BookingListModifier.insertBooking(_userBookings, booking);
       _currentDraft = null; // Clear draft after successful creation
 
@@ -158,7 +175,6 @@ class BookingProvider with ChangeNotifier {
     try {
       final booking = await _repository.createBooking(draft, userId);
       _currentBooking = booking;
-      BookingListModifier.insertBooking(_upcomingBookings, booking);
       BookingListModifier.insertBooking(_userBookings, booking);
 
       _isLoading = false;
@@ -176,11 +192,8 @@ class BookingProvider with ChangeNotifier {
   void loadUserBookings(String userId) {
     _syncCoordinator.syncUserBookings(
       userId: userId,
-      onData: (userBookings, categorized) {
+      onData: (userBookings, _) {
         _userBookings = userBookings;
-        _upcomingBookings = categorized.upcoming;
-        _pendingBookings = categorized.pending;
-        _historyBookings = categorized.history;
         notifyListeners();
       },
       onError: (e) {
@@ -202,10 +215,8 @@ class BookingProvider with ChangeNotifier {
       stadiumIds: stadiumIds,
       getCurrentBookings: () => _userBookings,
       cancellingIds: _cancellingIds,
-      onData: (merged, categorized) {
+      onData: (merged, _) {
         _userBookings = merged;
-        _upcomingBookings = categorized.upcoming;
-        _historyBookings = categorized.history;
         notifyListeners();
       },
       onError: (e) {
@@ -224,9 +235,7 @@ class BookingProvider with ChangeNotifier {
     try {
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
-        BookingListModifier.removeBooking(_upcomingBookings, bookingId);
         BookingListModifier.removeBooking(_userBookings, bookingId);
-        BookingListModifier.removeBooking(_historyBookings, bookingId);
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
         _errorMessage ??= 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
@@ -295,8 +304,11 @@ class BookingProvider with ChangeNotifier {
 
   /// Fetch public matches directly from the unified active stream
   Future<void> fetchPublicMatches({bool isRefresh = false}) async {
-    if (_isLoading) return;
-    if (isRefresh) _setLoading(true);
+    if (_isLoadingPublicMatches) return;
+    if (isRefresh) {
+      _isLoadingPublicMatches = true;
+      notifyListeners();
+    }
 
     try {
       _publicMatches = await _matchCoordinator.fetchPublicMatches();
@@ -304,24 +316,15 @@ class BookingProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to fetch public matches: $e';
     } finally {
-      _isLoading = false;
+      _isLoadingPublicMatches = false;
       notifyListeners();
     }
   }
 
-  void _setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
   /// Join a public match
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
-    _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
-
     final res = await _matchCoordinator.joinPublicMatch(bookingId: bookingId, userId: userId);
-    _isLoading = false;
     _errorMessage = res.error;
     notifyListeners();
     return res.success;
@@ -329,11 +332,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Leave a public match
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
-    _isLoading = true;
-    notifyListeners();
-
     final res = await _matchCoordinator.leavePublicMatch(bookingId: bookingId, userId: userId);
-    _isLoading = false;
     _errorMessage = res.error;
     notifyListeners();
     return res.success;
@@ -347,9 +346,7 @@ class BookingProvider with ChangeNotifier {
     double? rating,
     String? review,
   }) async {
-    _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
 
     try {
       final success = await _repository.submitMatchResult(
@@ -363,13 +360,10 @@ class BookingProvider with ChangeNotifier {
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
-
-      _isLoading = false;
       notifyListeners();
       return success;
     } catch (e) {
       _errorMessage = 'Error submitting result: $e';
-      _isLoading = false;
       notifyListeners();
       return false;
     }
@@ -380,8 +374,6 @@ class BookingProvider with ChangeNotifier {
     final success = await _repository.updatePaymentStatus(bookingId, isPaid);
     if (success) {
       BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
-      BookingListModifier.updatePaymentStatus(_upcomingBookings, bookingId, isPaid);
-      BookingListModifier.updatePaymentStatus(_historyBookings, bookingId, isPaid);
       notifyListeners();
     }
     return success;

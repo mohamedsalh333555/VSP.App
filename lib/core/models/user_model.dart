@@ -114,11 +114,24 @@ class UserModel {
           DateTime.now().isBefore(subscriptionExpiresAt!)) ||
       isInActiveTrial;
 
-  bool get canCreateTournaments => true;
+  /// [H-07] Display-only gate: server RPC is the authoritative authority.
+  /// Client may show/hide UI elements, but server enforces entitlement.
+  bool get canCreateTournaments =>
+      isOwner && (hasActiveSubscription || isInActiveTrial);
 
-  bool get isBasicOrHigher => true;
+  /// [H-07] Display-only gate: true if user has any paid or trial plan.
+  /// Server is the canonical authority for security-sensitive decisions.
+  bool get isBasicOrHigher => isOwner && (hasActiveSubscription || isInActiveTrial);
 
-  bool get isPlanExpired => false;
+  /// [H-07] Display-only indicator: true when subscription/trial has lapsed.
+  /// Basic plan is perpetual free (no expiry).
+  /// Does NOT grant or revoke access; server RPC enforces enforcement.
+  bool get isPlanExpired {
+    if (!isOwner || isInActiveTrial) return false;
+    if (subscriptionPlan == 'basic' && subscriptionExpiresAt == null) return false;
+    if (subscriptionExpiresAt == null) return false;
+    return DateTime.now().isAfter(subscriptionExpiresAt!);
+  }
 
   int get maxStadiums {
     if (isProPlan) return 3;
@@ -201,7 +214,8 @@ class UserModel {
     );
   }
 
-  // Backward compatibility alias
+  /// Backward-compatibility alias — prefer [fromMap].
+  /// [L-02]: Supabase/Postgres terminology. Do not use for new code.
   factory UserModel.fromFirestore(Map<String, dynamic> data) => UserModel.fromMap(data);
 
   Map<String, dynamic> toMap() {
@@ -235,7 +249,8 @@ class UserModel {
     };
   }
 
-  // Backward compatibility alias
+  /// Backward-compatibility alias — prefer [toMap].
+  /// [L-02]: Supabase/Postgres terminology. Do not use for new code.
   Map<String, dynamic> toFirestore() => toMap();
 
   UserModel copyWith({

@@ -168,28 +168,88 @@ class TournamentRegistrationCoordinator {
 
 
   /// Removes a team from a tournament (by owner or admin).
-  Future<bool> removeTournamentTeam(String championshipId, String teamId) async {
+  ///
+  /// [H-04]: This is an authoritative server-side RPC operation.
+  /// If [remove_tournament_team_atomic] fails, the operation fails.
+  /// Callers receive a typed [TournamentCommandResult] with explicit error code.
+  /// No semantic fallback to a different operation (leaveChampionship/refund) is permitted.
+  Future<TournamentCommandResult> removeTournamentTeam(
+    String championshipId,
+    String teamId,
+  ) async {
     try {
-      try {
-        await _supabase.rpc('remove_tournament_team_atomic', params: {
-          'p_championship_id': championshipId,
-          'p_team_id': teamId,
-        });
-        debugPrint(
-          'Team $teamId removed via remove_tournament_team_atomic RPC.',
-        );
-        return true;
-      } catch (rpcErr) {
-        debugPrint('remove_tournament_team_atomic fallback: $rpcErr');
-        return await leaveChampionship(championshipId, teamId);
+      final res = await _supabase.rpc('remove_tournament_team_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+      });
+
+      if (res is Map && res['success'] == true) {
+        return TournamentCommandResult.success();
       }
+
+      final errorCode = res is Map ? (res['error_code']?.toString() ?? TournamentErrorCode.unknown) : TournamentErrorCode.unknown;
+      final message = res is Map ? (res['error'] ?? res['message'])?.toString() : null;
+      return TournamentCommandResult.failure(
+        code: errorCode,
+        message: message ?? 'فشل إزالة الفريق من البطولة.',
+      );
+    } on PostgrestException catch (e) {
+      return TournamentCommandResult.failure(
+        code: e.code ?? TournamentErrorCode.rpcError,
+        message: e.message,
+      );
     } catch (e) {
-      debugPrint('Error in removeTournamentTeam: $e');
-      return false;
+      debugPrint('removeTournamentTeam error: $e');
+      return TournamentCommandResult.failure(
+        code: TournamentErrorCode.unknown,
+        message: e.toString(),
+      );
     }
   }
-
-
-
-
 }
+
+/// Canonical result type for tournament command operations.
+/// [H-04], [H-05]: Replaces boolean/null returns with structured result.
+class TournamentCommandResult {
+  final bool isSuccess;
+  final String? errorCode;
+  final String? errorMessage;
+
+  const TournamentCommandResult._({
+    required this.isSuccess,
+    this.errorCode,
+    this.errorMessage,
+  });
+
+  factory TournamentCommandResult.success() =>
+      const TournamentCommandResult._(isSuccess: true);
+
+  factory TournamentCommandResult.failure({
+    required String code,
+    String? message,
+  }) =>
+      TournamentCommandResult._(
+        isSuccess: false,
+        errorCode: code,
+        errorMessage: message,
+      );
+
+  bool get isFailure => !isSuccess;
+
+  @override
+  String toString() =>
+      isSuccess ? 'TournamentCommandResult(success)' : 'TournamentCommandResult(failure: $errorCode — $errorMessage)';
+}
+
+/// Canonical tournament error codes. [H-05]
+abstract final class TournamentErrorCode {
+  static const String unknown = 'TOURNAMENT_UNKNOWN_ERROR';
+  static const String rpcError = 'TOURNAMENT_RPC_ERROR';
+  static const String notFound = 'TOURNAMENT_NOT_FOUND';
+  static const String conflict = 'TOURNAMENT_CONFLICT';
+  static const String unauthorized = 'TOURNAMENT_UNAUTHORIZED';
+  static const String invalidState = 'TOURNAMENT_INVALID_STATE';
+  static const String capacityExceeded = 'TOURNAMENT_CAPACITY_EXCEEDED';
+  static const String paymentRequired = 'TOURNAMENT_PAYMENT_REQUIRED';
+}
+

@@ -5,9 +5,14 @@ import '../../../data/models.dart';
 ///
 /// Covers:
 /// - Manual booking payment normalization (deposit vs full payment detection)
-/// - Pending booking expiry rules (5-minute payment window)
+/// - Pending booking expiry rules (8-minute payment window — see [kPendingPaymentWindowMinutes])
 /// - Challenge expiry rules (4-hour creation timeout or 12-hour proximity)
 /// - Match result submission time-lock guard
+///
+/// [H-08]: Canonical pending-expiry policy is defined here. The server DB
+/// (cleanup_stale_pending_bookings_atomic RPC) is the authoritative enforcer.
+/// Client uses [kPendingPaymentWindowMinutes] only for display/UX (e.g. countdown).
+/// A server-side safety-net (10-min) may clean up stragglers — it is NOT the canonical window.
 class BookingDomainRules {
   const BookingDomainRules._();
 
@@ -57,10 +62,20 @@ class BookingDomainRules {
 
   // ═══════════════════════ Pending Booking Expiry ══════════════════════════
 
-  /// Returns true if a pending booking has exceeded the 8-minute payment window.
+  /// [H-08]: Canonical pending-booking payment window — 8 minutes.
+  ///
+  /// This is the SINGLE source of truth for pending expiry on the client side.
+  /// - The server enforces this same window atomically via DB triggers.
+  /// - Client UI uses this only for countdown display — NOT for authorization.
+  /// - The server-side safety-net cleanup (10 min) is a separate worker concern.
+  ///
+  /// **Do NOT change this value without updating the corresponding DB policy.**
+  static const int kPendingPaymentWindowMinutes = 8;
+
+  /// Returns true if a pending booking has exceeded the [kPendingPaymentWindowMinutes] payment window.
   /// Expired pending bookings should not block time slots in availability checks.
   static bool isPendingBookingExpired(DateTime createdAt, DateTime now) {
-    return now.difference(createdAt.toLocal()).inMinutes >= 8;
+    return now.difference(createdAt.toLocal()).inMinutes >= kPendingPaymentWindowMinutes;
   }
 
   // ═══════════════════════ Challenge Expiry ════════════════════════════════
@@ -94,7 +109,7 @@ class BookingDomainRules {
   ///
   /// Filters out:
   /// - Cancelled bookings
-  /// - Expired pending bookings (pending > 8 minutes without payment)
+  /// - Expired pending bookings (pending > [kPendingPaymentWindowMinutes] minutes without payment)
   static bool isBookingVisible(Booking booking, DateTime now) {
     if (booking.status == BookingStatus.cancelled) return false;
     if (booking.status == BookingStatus.pending) {
