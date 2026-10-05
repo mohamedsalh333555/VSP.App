@@ -7,6 +7,8 @@ analyzer:
     dead_code: ignore
     prefer_const_declarations: ignore
     prefer_const_constructors: ignore
+    deprecated_member_use_from_same_package: ignore
+    prefer_interpolation_to_compose_strings: ignore
 
 linter:
   rules:

@@ -45,13 +45,13 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   }
 
   Future<void> _launchPhoneCall() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!mounted) return;
       final phone = settings.supportPhone;
       if (phone.isEmpty) {
         if (mounted) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           VSPFeedback.showError(
             context,
             isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',

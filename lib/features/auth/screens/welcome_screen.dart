@@ -175,7 +175,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                       child: Text(
                         l10n.skipButton,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],
