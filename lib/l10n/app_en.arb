@@ -1178,5 +1178,8 @@
   "ownerFaq5_a": "Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.",
   "ownerFaq6_q": "How do platform fees and settlement work?",
   "ownerFaq6_a": "Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.",
-  "skipButton": "Skip"
+  "skipButton": "Skip",
+  "updateRequired": "Update Required",
+  "updateAvailableMessage": "A new version of VSP is available with improved performance and new features.",
+  "updateNow": "Update Now"
 }
