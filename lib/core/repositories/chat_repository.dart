@@ -1,119 +1,59 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/chat_model.dart';
 import '../services/logger_service.dart';
-import '../services/notification_handler.dart';
 
 class ChatRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   Stream<List<ChatMessage>> getChatMessages(String conversationId, {String? currentUserId}) {
-    try {
-      final streamQuery = _supabase
-          .from('chat_messages')
-          .stream(primaryKey: ['id'])
-          .eq('conversation_id', conversationId);
+    final streamQuery = _supabase
+        .from('chat_messages')
+        .stream(primaryKey: ['id'])
+        .eq('conversation_id', conversationId);
 
-      return streamQuery
-          .map((list) {
-            try {
-              final messages = list
-                  .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
-                  .where((msg) => currentUserId == null || !msg.deletedForUsers.contains(currentUserId))
-                  .toList();
-              messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-              return messages;
-            } catch (e) {
-              VSPLogger.e('Error mapping chat messages list', e);
-              return <ChatMessage>[];
-            }
-          })
-          .handleError((error) {
-            VSPLogger.e('Error in chat messages stream', error);
-            return <ChatMessage>[];
-          });
-    } catch (e) {
-      VSPLogger.e('Failed to initiate getChatMessages stream', e);
-      return Stream.value(<ChatMessage>[]);
-    }
+    return streamQuery.map((list) {
+      final messages = list
+          .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
+          .where((msg) => currentUserId == null || !msg.deletedForUsers.contains(currentUserId))
+          .toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return messages;
+    }).handleError((error) {
+      VSPLogger.e('Error in chat messages stream', error);
+    });
   }
 
-  Future<void> sendMessage(String conversationId, ChatMessage message) async {
+  Future<Map<String, dynamic>> sendMessage(String conversationId, ChatMessage message) async {
+    final response = await _supabase.rpc('send_chat_message_atomic', params: {
+      'p_conversation_id': conversationId,
+      'p_text': message.text,
+    });
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('MESSAGE_SEND_FAILED');
+  }
+
+  Future<bool> canWriteConversation(String conversationId) async {
     try {
-      final conv = await _supabase
-          .from('conversations')
-          .select('participant_ids, unread_counts, booking_id')
-          .eq('id', conversationId)
-          .maybeSingle();
-
-      final bool isDirectOrSupport = conversationId.startsWith('direct_') ||
-          conversationId.startsWith('support_') ||
-          conversationId.contains('support') ||
-          conversationId.contains('direct');
-
-      final String? rawBookingId = isDirectOrSupport ? null : conv?['booking_id']?.toString();
-      final bool isValidBookingUuid = rawBookingId != null &&
-          RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(rawBookingId);
-      final String? bookingId = (isDirectOrSupport || !isValidBookingUuid) ? null : rawBookingId;
-
-      await _supabase.from('chat_messages').insert({
-        'conversation_id': conversationId,
-        'booking_id': bookingId,
-        'sender_id': message.senderId,
-        'sender_name': message.senderName,
-        'text': message.text,
-        'created_at': message.timestamp.toUtc().toIso8601String(),
-        'is_read': false,
-        'is_edited': false,
-        'deleted_for_users': [],
+      final uid = _supabase.auth.currentUser?.id;
+      if (uid == null) return false;
+      final result = await _supabase.rpc('vsp_chat_write_allowed', params: {
+        'p_conversation_id': conversationId,
+        'p_user_id': uid,
       });
-
-      if (conv != null) {
-        final List<dynamic> participants = conv['participant_ids'] ?? [];
-        final Map<String, dynamic> unreadCounts = Map<String, dynamic>.from(conv['unread_counts'] ?? {});
-
-        for (var p in participants) {
-          final pid = p.toString();
-          if (pid != message.senderId) {
-            unreadCounts[pid] = ((unreadCounts[pid] as int?) ?? 0) + 1;
-          }
-        }
-
-        await _supabase.from('conversations').update({
-          'last_message': message.text,
-          'last_message_time': DateTime.now().toUtc().toIso8601String(),
-          'unread_counts': unreadCounts,
-          'deleted_for_users': [], // Resurfaces chat for both participants
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', conversationId);
-
-        final recipients = participants.map((e) => e.toString()).where((id) => id != message.senderId).toList();
-        if (recipients.isNotEmpty) {
-          await NotificationHandler.notifyNewChatMessage(
-            recipientIds: recipients,
-            senderName: message.senderName,
-            messageText: message.text,
-            bookingId: conv['booking_id']?.toString() ?? conversationId,
-          );
-        }
-      }
+      return result == true;
     } catch (e) {
-      VSPLogger.e('Error sending message on Supabase', e);
-      rethrow;
+      VSPLogger.w('Unable to determine chat write state: $e');
+      return false;
     }
   }
 
   Future<void> editMessage(String messageId, String newText) async {
-    try {
-      final res = await _supabase.rpc('edit_chat_message_atomic', params: {
-        'p_message_id': messageId,
-        'p_new_text': newText,
-      });
-      if (res is Map && res['success'] == false) {
-        throw Exception(res['error']?.toString() ?? 'Failed to edit message');
-      }
-    } catch (e) {
-      VSPLogger.e('Error editing message', e);
-      rethrow;
+    final res = await _supabase.rpc('edit_chat_message_atomic', params: {
+      'p_message_id': messageId,
+      'p_new_text': newText,
+    });
+    if (res is Map && res['success'] == false) {
+      throw Exception(res['error']?.toString() ?? 'MESSAGE_EDIT_FAILED');
     }
   }
 
@@ -128,103 +68,106 @@ class ChatRepository {
     }
   }
 
-  Future<void> deleteConversationForUser(String conversationId, String userId, {String? contactId}) async {
+  Future<void> deleteConversationForUser(String conversationId, String userId) async {
     if (userId.isEmpty) return;
-    try {
-      await _supabase.rpc('delete_chat_for_user', params: {
-        'p_conversation_id': conversationId,
-        'p_user_id': userId,
-      });
-    } catch (e) {
-      VSPLogger.e('Error deleting conversation for user $userId', e);
-    }
+    await _supabase.rpc('delete_chat_for_user', params: {
+      'p_conversation_id': conversationId,
+      'p_user_id': userId,
+    });
   }
 
-  Future<Map<String, dynamic>> getOrCreateSupportChat(String userId, bool isArabic) async {
-    try {
-      final existing = await _supabase
-          .from('conversations')
-          .select()
-          .eq('type', 'support')
-          .contains('participant_ids', [userId])
-          .maybeSingle();
-
-      if (existing != null) return existing;
-
-      final newConv = {
-        'type': 'support',
-        'title': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
-        'participant_ids': [userId],
-        'unread_counts': {userId: 0},
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      };
-
-      final response = await _supabase.from('conversations').insert(newConv).select().single();
-      return response;
-    } catch (e) {
-      VSPLogger.e('Error in getOrCreateSupportChat', e);
-      rethrow;
-    }
+  Future<Map<String, dynamic>> getOrCreateDirectChat({
+    required String otherUserId,
+    required bool isArabic,
+    required String contextType,
+    required String contextId,
+  }) async {
+    final response = await _supabase.rpc('create_direct_chat_atomic', params: {
+      'p_other_user_id': otherUserId,
+      'p_context_type': contextType,
+      'p_context_id': contextId,
+    });
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('DIRECT_CHAT_CREATE_FAILED');
   }
 
-  Future<Map<String, dynamic>> getOrCreateDirectChat(String currentUserId, String otherUserId, bool isArabic) async {
-    try {
-      final existing = await _supabase
-          .from('conversations')
-          .select()
-          .eq('type', 'direct')
-          .contains('participant_ids', [currentUserId, otherUserId])
-          .maybeSingle();
+  Future<Map<String, dynamic>> createSupportTicket({
+    required String subject,
+    required String category,
+    String? contextType,
+    String? contextId,
+    String? bookingId,
+    String priority = 'normal',
+  }) async {
+    final response = await _supabase.rpc('create_support_ticket_atomic', params: {
+      'p_subject': subject,
+      'p_category': category,
+      'p_context_type': contextType,
+      'p_context_id': contextId,
+      'p_booking_id': bookingId,
+      'p_priority': priority,
+    });
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('SUPPORT_TICKET_CREATE_FAILED');
+  }
 
-      if (existing != null) return existing;
+  Future<Map<String, dynamic>> sendSupportTicketMessage({
+    required String ticketId,
+    required String body,
+  }) async {
+    final response = await _supabase.rpc('send_support_ticket_message_atomic', params: {
+      'p_ticket_id': ticketId,
+      'p_body': body,
+    });
+    if (response is Map) return Map<String, dynamic>.from(response);
+    throw Exception('SUPPORT_MESSAGE_SEND_FAILED');
+  }
 
-      final newConv = {
-        'type': 'direct',
-        'title': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
-        'participant_ids': [currentUserId, otherUserId],
-        'unread_counts': {currentUserId: 0, otherUserId: 0},
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-      };
+  Stream<List<Map<String, dynamic>>> streamSupportTickets(String userId) {
+    return _supabase
+        .from('support_tickets')
+        .stream(primaryKey: ['id'])
+        .eq('requester_id', userId)
+        .order('updated_at', ascending: false);
+  }
 
-      final response = await _supabase.from('conversations').insert(newConv).select().single();
-      return response;
-    } catch (e) {
-      VSPLogger.e('Error in getOrCreateDirectChat', e);
-      rethrow;
-    }
+  Stream<List<Map<String, dynamic>>> streamSupportTicketMessages(String ticketId) {
+    return _supabase
+        .from('support_ticket_messages')
+        .stream(primaryKey: ['id'])
+        .eq('ticket_id', ticketId)
+        .order('created_at', ascending: true);
   }
 
   Stream<List<Map<String, dynamic>>> streamUserConversations(String userId) {
     return _supabase
         .from('conversations')
         .stream(primaryKey: ['id'])
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
+        .eq('type', 'direct')
         .map((list) => list.where((c) {
               final parts = (c['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];
               final deleted = (c['deleted_for_users'] as List?)?.map((e) => e.toString()).toList() ?? [];
-              return parts.contains(userId) && !deleted.contains(userId);
+              return parts.contains(userId) &&
+                  !deleted.contains(userId) &&
+                  (c['context_id']?.toString().isNotEmpty ?? false);
             }).toList()
               ..sort((a, b) {
-                final t1 = DateTime.parse(a['last_message_time'] ?? a['created_at']);
-                final t2 = DateTime.parse(b['last_message_time'] ?? b['created_at']);
+                final aRaw = a['last_message_time'] ?? a['created_at'];
+                final bRaw = b['last_message_time'] ?? b['created_at'];
+                final t1 = DateTime.tryParse(aRaw?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+                final t2 = DateTime.tryParse(bRaw?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
                 return t2.compareTo(t1);
-              }))
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in streamUserConversations: $e');
-        });
+              }));
   }
 
   Stream<int> streamTotalUnreadCount(String userId) {
     return streamUserConversations(userId).map((list) {
-      int total = 0;
+      var total = 0;
       for (final conv in list) {
         final unreadMap = conv['unread_counts'];
         if (unreadMap is Map) {
-          final count = unreadMap[userId];
-          if (count is int && count > 0) total += count;
+          final value = unreadMap[userId];
+          if (value is int && value > 0) total += value;
         }
       }
       return total;
