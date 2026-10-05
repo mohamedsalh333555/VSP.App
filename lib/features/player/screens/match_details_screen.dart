@@ -13,6 +13,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/repositories/report_repository.dart';
+import '../../../core/repositories/chat_repository.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/repositories/match_repository.dart';
@@ -143,6 +144,146 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
  }
 
+ Future<void> _openOwnerChat() async {
+   final booking = _booking;
+   final auth = Provider.of<AuthProvider>(context, listen: false);
+   final currentUserId = auth.currentUser?.uid;
+   final ownerId = booking?.ownerId;
+   if (booking == null || currentUserId == null || ownerId == null || ownerId.isEmpty) {
+     VSPFeedback.showError(
+       context,
+       Localizations.localeOf(context).languageCode == 'ar'
+           ? 'لا يوجد مالك مؤهل للمحادثة لهذا الحجز.'
+           : 'No eligible stadium owner is available for this booking.',
+     );
+     return;
+   }
+   try {
+     final chat = await ChatRepository().getOrCreateDirectChat(
+       otherUserId: ownerId,
+       isArabic: Localizations.localeOf(context).languageCode == 'ar',
+       contextType: 'match',
+       contextId: booking.id,
+     );
+     final conversationId = chat['id']?.toString();
+     if (!mounted || conversationId == null || conversationId.isEmpty) return;
+     Navigator.push(
+       context,
+       MaterialPageRoute(
+         builder: (_) => ChatScreen(
+           booking: booking,
+           conversationId: conversationId,
+           otherUserId: ownerId,
+           reportContextType: 'match',
+           reportContextId: booking.id,
+           reportBookingId: booking.id,
+         ),
+       ),
+     );
+   } catch (_) {
+     if (mounted) {
+       VSPFeedback.showError(
+         context,
+         Localizations.localeOf(context).languageCode == 'ar'
+             ? 'تعذر فتح محادثة مالك الملعب.'
+             : 'Could not open the stadium owner chat.',
+       );
+     }
+   }
+ }
+
+ Future<void> _reportOwnerIssue() async {
+   final booking = _booking;
+   final ownerId = booking?.ownerId;
+   if (booking == null || ownerId == null || ownerId.isEmpty) return;
+
+   final ar = Localizations.localeOf(context).languageCode == 'ar';
+   final reasonController = TextEditingController();
+   final detailsController = TextEditingController();
+
+   final submitted = await showDialog<bool>(
+     context: context,
+     builder: (dlgCtx) => AlertDialog(
+       backgroundColor: VSPColors.surface,
+       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
+       title: Text(
+         ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue',
+         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+       ),
+       content: Column(
+         mainAxisSize: MainAxisSize.min,
+         children: [
+           Text(
+             ar
+                 ? 'سيتم ربط البلاغ بهذا الحجز ومراجعته إداريًا. لن يتم حظر الطرف الآخر تلقائيًا.'
+                 : 'The report will be linked to this booking for administrative review. The other party will not be auto-blocked.',
+             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+           ),
+           const SizedBox(height: VSPSpacing.md),
+           TextField(
+             controller: reasonController,
+             decoration: InputDecoration(
+               hintText: ar ? 'سبب البلاغ' : 'Reason',
+             ),
+           ),
+           const SizedBox(height: VSPSpacing.sm),
+           TextField(
+             controller: detailsController,
+             maxLines: 3,
+             decoration: InputDecoration(
+               hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)',
+             ),
+           ),
+         ],
+       ),
+       actions: [
+         TextButton(
+           onPressed: () => Navigator.pop(dlgCtx, false),
+           child: Text(ar ? 'إلغاء' : 'Cancel'),
+         ),
+         ElevatedButton(
+           onPressed: () => Navigator.pop(dlgCtx, reasonController.text.trim().isNotEmpty),
+           style: ElevatedButton.styleFrom(
+             backgroundColor: VSPColors.error,
+             foregroundColor: Colors.white,
+           ),
+           child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
+         ),
+       ],
+     ),
+   );
+
+   final reason = reasonController.text.trim();
+   final details = detailsController.text.trim();
+   reasonController.dispose();
+   detailsController.dispose();
+
+   if (submitted != true || reason.isEmpty || !mounted) return;
+
+   final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+   if (currentUserId == null) return;
+
+   final ok = await ReportRepository().reportEntity(
+     reporterId: currentUserId,
+     targetId: ownerId,
+     targetType: 'user',
+     reason: reason,
+     details: details.isEmpty ? null : details,
+     contextType: 'booking',
+     contextId: booking.id,
+     bookingId: booking.id,
+   );
+
+   if (mounted) {
+     VSPFeedback.showSuccess(
+       context,
+       ok
+           ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
+           : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
+     );
+   }
+ }
+
  void _onReport() {
  if (_isActionProcessing) return;
  final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -214,6 +355,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  targetId: widget.bookingId,
  targetType: 'match',
  reason: selectedReason,
+ contextType: 'match',
+ contextId: widget.bookingId,
+ bookingId: widget.bookingId,
  );
  if (!context.mounted) return;
  Navigator.pop(context);
@@ -470,9 +614,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  await SharingService.shareMatchFormatted(msg);
  },
  ),
+ if (alreadyJoined || isHost)
  IconButton(
- icon: const Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
- onPressed: _onReport,
+   icon: const Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
+   onPressed: _onReport,
  ),
  const SizedBox(width: 8),
  ],
@@ -740,30 +885,79 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         padding: const EdgeInsets.all(VSPSpacing.lg),
         color: VSPColors.background,
         child: isHost
-            ? PrimaryButton(
-                text: Localizations.localeOf(context).languageCode == 'ar'
-                    ? 'محادثة وتنسيق المباراة'
-                    : 'Match Chat & Coordination',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(booking: _booking!),
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: PrimaryButton(
+                      text: isAr
+                          ? 'التواصل مع مالك الملعب'
+                          : 'Chat with Stadium Owner',
+                      onPressed: _openOwnerChat,
+                      color: VSPColors.accent,
+                      textColor: VSPColors.background,
                     ),
-                  );
-                },
-                color: VSPColors.accent,
-                textColor: VSPColors.background,
+                  ),
+                  const SizedBox(height: VSPSpacing.sm),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _reportOwnerIssue,
+                      icon: const Icon(Iconsax.flag_copy, color: VSPColors.warning),
+                      label: Text(
+                        isAr ? 'الإبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: VSPColors.warning,
+                        side: const BorderSide(color: VSPColors.warning),
+                      ),
+                    ),
+                  ),
+                ],
               )
             : alreadyJoined
-                ? PrimaryButton(
-                    text: Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'خروج'
-                        : 'Leave',
-                    onPressed: _isActionProcessing ? null : _onLeaveMatch,
-                    isLoading: _isActionProcessing,
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.error,
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: PrimaryButton(
+                              text: isAr ? 'مراسلة المالك' : 'Chat with Owner',
+                              onPressed: _openOwnerChat,
+                              color: VSPColors.accent,
+                              textColor: VSPColors.background,
+                            ),
+                          ),
+                          const SizedBox(width: VSPSpacing.sm),
+                          Expanded(
+                            child: PrimaryButton(
+                              text: isAr ? 'خروج' : 'Leave',
+                              onPressed: _isActionProcessing ? null : _onLeaveMatch,
+                              isLoading: _isActionProcessing,
+                              color: VSPColors.surfaceAlt,
+                              textColor: VSPColors.error,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: VSPSpacing.sm),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _reportOwnerIssue,
+                          icon: const Icon(Iconsax.flag_copy, color: VSPColors.warning),
+                          label: Text(
+                            isAr ? 'الإبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: VSPColors.warning,
+                            side: const BorderSide(color: VSPColors.warning),
+                          ),
+                        ),
+                      ),
+                    ],
                   )
                 : PrimaryButton(
                     text: isFull
