@@ -21,7 +21,13 @@ function getCorsHeaders(origin: string | null): Record<string,string> {
 }
 
 const round2=(n:number)=>Math.round(n*100)/100;
-const normalizePhone=(raw:string)=>{const digits=String(raw||"").replace(/\D/g,"");if(digits.startsWith("20"))return "+"+digits;if(digits.startsWith("0"))return "+2"+digits;return "+20"+digits;};
+function normalizePhone(raw:string): string | null {
+  const digits=String(raw||"").replace(/\D/g,"");
+  if(/^20(1\d{9,10})$/.test(digits)) return "+"+digits;
+  if(/^0(1\d{9,10})$/.test(digits)) return "+2"+digits;
+  if(/^1\d{9,10}$/.test(digits)) return "+20"+digits;
+  return null;
+}
 
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
 
@@ -44,7 +50,6 @@ async function verifyTurnstile(token: string, secret: string, expectedHostname?:
 
 serve(async(req:Request)=>{
   const origin = req.headers.get("origin");
-  const corsHeaders = getCorsHeaders(origin);
   const json=(req:Request,data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...getCorsHeaders(req.headers.get("origin")),"Content-Type":"application/json"}});
 
   if(req.method==="OPTIONS") return new Response("ok",{headers:{...getCorsHeaders(origin),"Content-Length":"2"}});
@@ -80,7 +85,8 @@ serve(async(req:Request)=>{
     try { body = JSON.parse(rawBody); } catch { return json(req,{error:"INVALID_JSON"},400); }
     if (!body || typeof body !== "object" || Array.isArray(body)) return json(req,{error:"INVALID_JSON"},400);
 
-    const name=String(body?.name||"").trim();
+    const rawName=typeof body?.name==="string" ? body.name : "";
+    const name=rawName.normalize("NFKC").trim().replace(/[\u0000-\u001F\u007F]/g,"");
     const email=String(body?.email||"").trim().toLowerCase();
     const phone=normalizePhone(String(body?.phone||""));
     const planCode=String(body?.plan_code||"").trim().toLowerCase();
@@ -88,9 +94,9 @@ serve(async(req:Request)=>{
     const turnstileToken=typeof body?.turnstile_token === "string" ? body.turnstile_token.trim() : (typeof body?.captcha_token === "string" ? body.captcha_token.trim() : "");
 
     // Input validation
-    if(name.length<2||name.length>100) return json(req,{error:"Name must be between 2 and 100 characters"},400);
+    if(name.length<2||name.length>100||name!==rawName) return json(req,{error:"INVALID_INPUT"},400);
     if(!EMAIL_RE.test(email)||email.length>254) return json(req,{error:"Valid email address required"},400);
-    if(phone.replace(/\D/g,"").length<10) return json(req,{error:"Valid Egyptian phone number required"},400);
+    if(!phone) return json(req,{error:"INVALID_INPUT"},400);
     if(planCode!=="pro") return json(req,{error:"Only Pro is available for web payment"},400);
     if(!["monthly","annual"].includes(billingPeriod)) return json(req,{error:"INVALID_INPUT"},400);
     if(turnstileToken.length<20||turnstileToken.length>4096) return json(req,{error:"SECURITY_VERIFICATION_REQUIRED"},400);
@@ -99,7 +105,7 @@ serve(async(req:Request)=>{
     if(!turnstileSecret) return json(req,{error:"SECURITY_VERIFICATION_UNAVAILABLE"},503);
     const captchaBody=new URLSearchParams();
     captchaBody.set("secret",turnstileSecret);
-    captchaBody.set("response",captchaToken);
+    captchaBody.set("response",turnstileToken);
     const clientIp=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
     if(clientIp) captchaBody.set("remoteip",clientIp);
     const captchaRes=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{
@@ -222,7 +228,7 @@ serve(async(req:Request)=>{
 
     const checkoutUrl="https://accept.paymob.com/unifiedcheckout/?publicKey="+encodeURIComponent(paymobPublicKey)+"&clientSecret="+encodeURIComponent(String(paymobData.client_secret));
 
-    return json({
+    return json(req,{
       success:true,
       order_id:order.id,
       base_amount:baseAmount,
