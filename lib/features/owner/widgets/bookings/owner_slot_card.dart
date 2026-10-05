@@ -182,14 +182,18 @@ class OwnerSlotCard extends StatelessWidget {
                       if (isPaidInFull) {
                         badgeLabel = isAr ? 'مدفوع بالكامل' : 'Paid in Full';
                         badgeColor = VSPColors.success;
-                      } else if (isCompleted) {
-                        badgeLabel = isAr ? 'محصل' : 'Collected';
-                        badgeColor = VSPColors.success;
                       } else if (isPartiallyPaid) {
-                        badgeLabel = isAr
-                            ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م'
-                            : 'Rem. ${remaining.toStringAsFixed(0)} EGP';
-                        badgeColor = VSPColors.info;
+                        badgeLabel = isCompleted
+                            ? (isAr
+                                ? 'متبقي للتحصيل ${remaining.toStringAsFixed(0)} ج.م'
+                                : 'Past due ${remaining.toStringAsFixed(0)} EGP')
+                            : (isAr
+                                ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م'
+                                : 'Rem. ${remaining.toStringAsFixed(0)} EGP');
+                        badgeColor = isCompleted ? VSPColors.warning : VSPColors.info;
+                      } else if (isCompleted) {
+                        badgeLabel = isAr ? 'تحصيل متأخر' : 'Collection overdue';
+                        badgeColor = VSPColors.warning;
                       } else {
                         badgeLabel = isAr ? 'كاش مطلوب تحصيله' : 'Cash Pending';
                         badgeColor = VSPColors.warning;
