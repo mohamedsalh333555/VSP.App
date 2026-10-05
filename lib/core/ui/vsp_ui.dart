@@ -248,7 +248,7 @@ class VSPStateView extends StatelessWidget {
                 OutlinedButton(
                   onPressed: onRetry,
                   style: OutlinedButton.styleFrom(
-                    minimumSize: Size(
+                    minimumSize: const Size(
                       VSPDSizes.iconXl + VSPDSSpacing.section,
                       VSPDSizes.buttonHeight,
                     ),
