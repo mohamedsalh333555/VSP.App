@@ -113,18 +113,21 @@ class OwnerScheduleSlotsBuilder {
             'nightLabel': nightLabel,
           });
         } else {
+          final bool isMaintenance = booking.bookingType == BookingType.maintenance;
           final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
           slots.add({
             'time': timeStr,
             'hour': currentH,
             'minute': currentM,
-            'type': isManual ? 'manual' : 'player',
-            'name': (booking.playerTeamName?.trim().isNotEmpty == true
-                    ? booking.playerTeamName
-                    : (booking.hostName?.trim().isNotEmpty == true ? booking.hostName : null)) ??
-                (isArSlot ? 'حجز يدوي' : 'Manual Booking'),
+            'type': isMaintenance ? 'maintenance' : (isManual ? 'manual' : 'player'),
+            'name': isMaintenance
+                ? (isArSlot ? 'مغلق للصيانة' : 'Closed for maintenance')
+                : ((booking.playerTeamName?.trim().isNotEmpty == true
+                        ? booking.playerTeamName
+                        : (booking.hostName?.trim().isNotEmpty == true ? booking.hostName : null)) ??
+                    (isArSlot ? 'حجز يدوي' : 'Manual Booking')),
             'booking': booking,
-            'isManaged': true,
+            'isManaged': !isMaintenance,
             'slotTime': slotTime,
             'nightLabel': nightLabel,
           });
