@@ -293,6 +293,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       );
 
   Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
+    final parentContext = widget.parentContext;
+    final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -316,9 +319,6 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final parentContext = widget.parentContext;
-    final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
-    final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
     setState(() => _isSaving = true);
     try {
       await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
