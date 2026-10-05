@@ -88,9 +88,7 @@ class AuthService {
             password: password,
           );
           if (signInResponse.user != null) {
-            VSPLogger.i(
-              'Existing $role re-signed in automatically: $cleanEmail',
-            );
+            VSPLogger.i('Existing $role account re-signed in automatically');
             return {'success': true, 'user': signInResponse.user};
           }
         } catch (_) {
@@ -175,7 +173,7 @@ class AuthService {
 
       return {'success': true, 'user': response.user};
     } on AuthException catch (e) {
-      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', e.message);
+      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', 'auth_failure');
       return {
         'success': false,
         'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
