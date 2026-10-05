@@ -295,9 +295,9 @@ class StadiumCard extends StatelessWidget {
  const SizedBox(height: 8),
  // Price & Governorate
  Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- Text(
+ Expanded(
+ child: Text(
  Localizations.localeOf(context).languageCode == 'ar'
  ? 'السعر ${stadium.pricePerHour.toInt()} ج.م'
  : 'Price ${stadium.pricePerHour.toInt()} EGP',
@@ -306,12 +306,21 @@ class StadiumCard extends StatelessWidget {
  fontWeight: FontWeight.w900,
  fontSize: 16,
  ),
+ maxLines: 1,
+ overflow: TextOverflow.ellipsis,
  ),
- Text(
+ ),
+ const SizedBox(width: 10),
+ Flexible(
+ child: Text(
  stadium.governorate ?? stadium.location,
+ textAlign: TextAlign.end,
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
  color: VSPColors.textSecondary,
  fontWeight: FontWeight.bold,
+ ),
+ maxLines: 1,
+ overflow: TextOverflow.ellipsis,
  ),
  ),
  ],
