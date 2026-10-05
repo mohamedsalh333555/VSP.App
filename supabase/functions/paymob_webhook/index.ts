@@ -969,11 +969,13 @@ serve(async (req: Request) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error: any) {
-    console.error("Paymob Webhook Error:", error);
-    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
+  } catch (error: unknown) {
+    console.error("Paymob Webhook Error", {
+      reason: error instanceof Error ? error.name : "unknown",
+    });
+    return new Response(JSON.stringify({ error: "Webhook processing failed" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-Content-Type-Options": "nosniff" },
     });
   }
 });
