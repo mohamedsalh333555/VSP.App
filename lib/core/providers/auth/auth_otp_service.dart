@@ -1,5 +1,6 @@
 import 'auth_registration_form_state.dart';
 import 'auth_registration_service.dart';
+import '../../utils/app_error_handler.dart';
 
 /// Coordinates OTP sending, verification code matching, password resets, and token verification.
 class AuthOtpService {
@@ -19,7 +20,7 @@ class AuthOtpService {
         error: success ? null : 'Failed to send verification code',
       );
     } catch (e) {
-      return (success: false, error: e.toString());
+      return (success: false, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
@@ -42,7 +43,7 @@ class AuthOtpService {
         error: success ? null : 'رمز التحقق غير صحيح',
       );
     } catch (e) {
-      return (success: false, error: e.toString());
+      return (success: false, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
