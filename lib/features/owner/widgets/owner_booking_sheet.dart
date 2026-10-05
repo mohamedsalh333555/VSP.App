@@ -310,6 +310,8 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       booking: booking,
     );
 
+    final isAppCreatedBooking = flags.isEdit && !flags.isOwnerManual;
+
     final modalTitle = OwnerBookingSheetService.getModalTitle(
       isNewSlot: flags.isNewSlot,
       isPastCompleted: flags.isPastCompleted,
@@ -376,6 +378,68 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     ),
                   InputLabel(l10n.timeAndStadium),
                   BookingSheetTimeStadiumCard(formattedTime: formattedSlotTime),
+                  if (flags.isEdit) ...[
+                    const SizedBox(height: VSPDSSpacing.sm),
+                    Row(
+                      children: [
+                        VSPStatusPill(
+                          icon: isAppCreatedBooking
+                              ? Iconsax.mobile_copy
+                              : Iconsax.shop_copy,
+                          label: isAppCreatedBooking
+                              ? (isArabic ? 'حجز من التطبيق' : 'App booking')
+                              : (isArabic ? 'حجز يدوي' : 'Manual booking'),
+                          color: isAppCreatedBooking
+                              ? VSPDSSemanticColors.accent
+                              : VSPDSSemanticColors.textSecondary,
+                        ),
+                        const SizedBox(width: VSPDSSpacing.sm),
+                        if (isAppCreatedBooking &&
+                            booking?.playerPhone != null &&
+                            booking!.playerPhone!.trim().isNotEmpty)
+                          Expanded(
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                minHeight: VSPDSizes.touchTarget,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: VSPDSSpacing.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: VSPDSSemanticColors.surfaceRaised,
+                                borderRadius: BorderRadius.circular(
+                                  VSPDSRadius.md,
+                                ),
+                                border: Border.all(
+                                  color: VSPDSSemanticColors.border,
+                                ),
+                              ),
+                              child: Row(
+                                textDirection: Directionality.of(context),
+                                children: [
+                                  const Icon(
+                                    Iconsax.call_copy,
+                                    size: VSPDSizes.iconSm,
+                                    color: VSPDSSemanticColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: VSPDSSpacing.xs),
+                                  Expanded(
+                                    child: Text(
+                                      booking.playerPhone!,
+                                      textDirection: TextDirection.ltr,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: VSPDSTypography.bodyMedium.copyWith(
+                                        color: VSPDSSemanticColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                   if (!widget.isEdit) ...[
                     const SizedBox(height: 10),
                     SizedBox(
