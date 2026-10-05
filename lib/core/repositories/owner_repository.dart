@@ -270,6 +270,23 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     });
   }
 
+  /// قفل فترة للمالك للصيانة بدون إنشاء حجز مالي.
+  Future<dynamic> lockSlotForMaintenance({
+    required String ownerId,
+    required String stadiumId,
+    required DateTime startTime,
+    required DateTime endTime,
+    String reason = 'صيانة دورية',
+  }) async {
+    return _supabase.rpc('owner_lock_slot_atomic', params: {
+      'p_owner_id': ownerId,
+      'p_stadium_id': stadiumId,
+      'p_start_time': startTime.toUtc().toIso8601String(),
+      'p_end_time': endTime.toUtc().toIso8601String(),
+      'p_reason': reason,
+    });
+  }
+
   /// إنشاء حجز يدوي ذرياً بواسطة المالك
   Future<dynamic> createManualBookingAtomic({
     required String ownerId,
