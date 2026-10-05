@@ -198,6 +198,20 @@ class AppErrorHandler {
           : 'A system error occurred. Please try again later.';
     }
 
+    // Preserve explicitly user-facing strings while rejecting technical payloads.
+    if (error is String) {
+      final candidate = error.trim();
+      final isTechnical = candidate.isEmpty ||
+          candidate.startsWith('Exception:') ||
+          candidate.contains('PostgrestException') ||
+          candidate.contains('SocketException') ||
+          candidate.contains('StackTrace') ||
+          candidate.contains('SQLSTATE') ||
+          candidate.contains(' at ') ||
+          candidate.length > 180;
+      if (!isTechnical) return candidate;
+    }
+
     // Unknown technical messages must never be exposed to users.
     return isArabic
         ? 'حدث خطأ أثناء تنفيذ العملية. يرجى المحاولة لاحقاً.'
