@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../../core/repositories/match_repository.dart';
+import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -86,10 +87,30 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     ));
   }
 
-  void _openChat() {
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => ChatScreen(booking: widget.booking),
-    ));
+  Future<void> _openChat() async {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.uid;
+    if (userId == null) return;
+    final other = <String>[
+      widget.booking.ownerId,
+      widget.booking.createdByUserId,
+      ...widget.booking.joinedUserIds,
+    ].firstWhere((id) => id.isNotEmpty && id != userId, orElse: () => '');
+    if (other.isEmpty) return;
+    try {
+      final chat = await ChatRepository().getOrCreateDirectChat(
+        otherUserId: other,
+        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        contextType: 'booking',
+        contextId: widget.booking.id,
+      );
+      final chatId = chat['id']?.toString();
+      if (chatId == null || !mounted) return;
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => ChatScreen(booking: widget.booking, conversationId: chatId, otherUserId: other),
+      ));
+    } catch (e) {
+      debugPrint('Open Join chat unavailable: $e');
+    }
   }
 
   void _shareMatch() {
