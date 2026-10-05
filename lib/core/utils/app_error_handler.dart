@@ -88,6 +88,31 @@ class AppErrorHandler {
           : 'Your subscription plan has expired. Please renew to continue.';
     }
 
+    if (combined.contains('trial_start_failed')) {
+      return isArabic
+          ? 'تعذر تفعيل التجربة المجانية. ربما تم استخدامها من قبل.'
+          : 'Unable to activate the free trial. It may have already been used.';
+    }
+
+    if (combined.contains('subscription_order_failed')) {
+      return isArabic
+          ? 'تعذر إنشاء طلب الاشتراك. يرجى المحاولة لاحقاً.'
+          : 'Unable to create the subscription order. Please try again later.';
+    }
+
+    if (combined.contains('checkout_url_missing') ||
+        combined.contains('paymob_launch_failed')) {
+      return isArabic
+          ? 'تعذر فتح صفحة الدفع. يرجى المحاولة مرة أخرى.'
+          : 'Unable to open the payment page. Please try again.';
+    }
+
+    if (combined.contains('support_contact_not_configured')) {
+      return isArabic
+          ? 'بيانات تصعيد الدعم غير مُهيأة حالياً.'
+          : 'Support escalation contact is not configured.';
+    }
+
     if (combined.contains('match_is_full') ||
         combined.contains('match is full')) {
       return isArabic
@@ -173,19 +198,7 @@ class AppErrorHandler {
           : 'A system error occurred. Please try again later.';
     }
 
-    final cleaned = message
-        .replaceAll(RegExp(r'PostgrestException\(message:\s*'), '')
-        .replaceAll(RegExp(r',\s*code:\s*.*\)$'), '')
-        .replaceAll('Exception: ', '')
-        .replaceAll('Failed to create booking: ', '')
-        .replaceAll('(message:', '')
-        .replaceAll('hint: null)', '')
-        .trim();
-
-    if (cleaned.isNotEmpty) {
-      return cleaned;
-    }
-
+    // Unknown technical messages must never be exposed to users.
     return isArabic
         ? 'حدث خطأ أثناء تنفيذ العملية. يرجى المحاولة لاحقاً.'
         : 'An error occurred while processing your request. Please try again later.';
