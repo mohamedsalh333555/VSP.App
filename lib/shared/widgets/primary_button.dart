@@ -96,7 +96,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                         child: Text(
                           widget.text,
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: widget.textColor ?? VSPColors.background,
+                            color: widget.textColor ?? VSPDSSemanticColors.background,
                             fontSize: 16,
                           ),
                         ),
