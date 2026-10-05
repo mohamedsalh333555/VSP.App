@@ -27,7 +27,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
   int _selectedTab = 0; // 0: Coming, 1: Ongoing, 2: Finished
   String _selectedSport = 'All';
   String _selectedCategory = 'All';
-  bool _hasAnyChampionships = true;
 
   Stream<List<Championship>>? _championshipsStream;
   String? _lastSport;
@@ -116,17 +115,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 }
 
                 final championships = snapshot.data ?? [];
-                final hasAny = championships.isNotEmpty;
-                if (_hasAnyChampionships != hasAny) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) {
-                      setState(() {
-                        _hasAnyChampionships = hasAny;
-                      });
-                    }
-                  });
-                }
-
                 final filtered = championships.where((c) {
                   final isRightCategory = _selectedCategory == 'All' ||
                       c.type.toLowerCase() == _selectedCategory.toLowerCase();
