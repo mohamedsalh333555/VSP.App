@@ -9,9 +9,13 @@ class ChatDialogs {
   static void showReportDialog(
     BuildContext context, {
     required String currentUserId,
-    required String bookingId,
+    required String targetUserId,
+    required String contextId,
+    required String contextType,
+    String? bookingId,
+    String? conversationId,
   }) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
     final reasonController = TextEditingController();
     final detailsController = TextEditingController();
 
@@ -21,17 +25,22 @@ class ChatDialogs {
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
         title: Text(
-          isArabic ? 'إبلاغ عن المحادثة ' : 'Report Chat ',
+          ar ? 'إبلاغ عن المستخدم' : 'Report User',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Text(
+              ar ? 'سيتم ربط البلاغ بالمحادثة والحجز/المباراة كدليل سياقي. لن يتم حظر الطرف الآخر تلقائيًا.' : 'The report will include the chat and booking/match context. The other user will not be auto-blocked.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
             TextField(
               controller: reasonController,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: isArabic ? 'سبب الإبلاغ (مثال: سلوك غير لائق)' : 'Reason for report',
+                hintText: ar ? 'سبب الإبلاغ' : 'Reason for report',
                 hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
             ),
@@ -41,7 +50,7 @@ class ChatDialogs {
               maxLines: 2,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: isArabic ? 'تفاصيل إضافية (اختياري)...' : 'Additional details...',
+                hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)',
                 hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
             ),
@@ -50,7 +59,7 @@ class ChatDialogs {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dlgCtx),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+            child: Text(ar ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
             onPressed: () async {
@@ -59,20 +68,22 @@ class ChatDialogs {
               Navigator.pop(dlgCtx);
               final success = await ReportRepository().reportEntity(
                 reporterId: currentUserId,
-                targetId: bookingId,
-                targetType: 'chat',
+                targetId: targetUserId,
+                targetType: 'user',
                 reason: reason,
                 details: detailsController.text.trim(),
+                contextType: contextType,
+                contextId: contextId,
+                bookingId: bookingId,
+                conversationId: conversationId,
               );
               if (context.mounted) {
-                if (success) {
-                  VSPFeedback.showSuccess(context, isArabic ? 'تم إرسال بلاغك بنجاح وسيتولى الفريق مراجعته.' : 'Report submitted successfully.');
-                } else {
-                  VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء إرسال البلاغ.' : 'Error submitting report.');
-                }
+                success
+                    ? VSPFeedback.showSuccess(context, ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'The report was submitted for administrative review.')
+                    : VSPFeedback.showError(context, ar ? 'تعذر إرسال البلاغ.' : 'Could not submit the report.');
               }
             },
-            child: Text(isArabic ? 'إرسال البلاغ' : 'Submit Report', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+            child: Text(ar ? 'إرسال البلاغ' : 'Submit Report', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -87,35 +98,30 @@ class ChatDialogs {
     required String currentUserId,
     required String conversationId,
   }) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
-        title: Text(
-          isArabic ? 'حذف المحادثة' : 'Delete Conversation',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          isArabic ? 'هل أنت متأكد من رغبتك في حذف هذه المحادثة من طرفك؟' : 'Are you sure you want to delete this conversation?',
-          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-        ),
+        title: Text(ar ? 'حذف المحادثة' : 'Delete Conversation', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(ar ? 'ستختفي المحادثة من صندوقك فقط، ولن تُحذف من الطرف الآخر.' : 'The conversation will be hidden from your inbox only.', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dlgCtx),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(dlgCtx), child: Text(ar ? 'إلغاء' : 'Cancel')),
           TextButton(
             onPressed: () async {
               Navigator.pop(dlgCtx);
-              await ChatRepository().deleteConversationForUser(conversationId, currentUserId);
-              if (context.mounted) {
-                Navigator.pop(context, true);
-                VSPFeedback.showSuccess(context, isArabic ? 'تم حذف المحادثة.' : 'Conversation deleted.');
+              try {
+                await ChatRepository().deleteConversationForUser(conversationId, currentUserId);
+                if (context.mounted) {
+                  Navigator.pop(context, true);
+                  VSPFeedback.showSuccess(context, ar ? 'تم حذف المحادثة.' : 'Conversation removed.');
+                }
+              } catch (_) {
+                if (context.mounted) VSPFeedback.showError(context, ar ? 'تعذر حذف المحادثة.' : 'Could not remove conversation.');
               }
             },
-            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+            child: Text(ar ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -126,66 +132,12 @@ class ChatDialogs {
     BuildContext context, {
     required String currentUserId,
     required Booking booking,
+    required String conversationId,
   }) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    showDialog(
-      context: context,
-      builder: (dlgCtx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
-        title: Text(
-          isArabic ? 'حذف المحادثة ' : 'Delete Conversation ',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          isArabic ? 'هل أنت تأكد من رغبتك في حذف هذه المحادثة من طرفك؟' : 'Are you sure you want to delete this conversation?',
-          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dlgCtx),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(dlgCtx);
-
-              String otherUserId = booking.joinedUserIds.firstWhere(
-                (uid) => uid.isNotEmpty && uid != currentUserId,
-                orElse: () => '',
-              );
-
-              if (otherUserId.isEmpty) {
-                final isSupport = booking.stadiumId == 'support_chat' ||
-                    booking.notes == 'support_chat' ||
-                    booking.id.startsWith('support_chat_');
-                if (isSupport) {
-                  otherUserId = 'vsp_support_admin';
-                } else if (booking.createdByUserId.isNotEmpty && booking.createdByUserId != currentUserId) {
-                  otherUserId = booking.createdByUserId;
-                } else if (booking.ownerId.isNotEmpty && booking.ownerId != currentUserId) {
-                  otherUserId = booking.ownerId;
-                }
-              }
-
-              final bool isValidUuid = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(otherUserId);
-              final String? sanitizedContactId = (otherUserId.isNotEmpty && otherUserId != 'vsp_support_admin' && isValidUuid) ? otherUserId : null;
-
-              await ChatRepository().deleteConversationForUser(
-                booking.id,
-                currentUserId,
-                contactId: sanitizedContactId,
-              );
-
-              if (context.mounted) {
-                Navigator.pop(context, true);
-                VSPFeedback.showSuccess(context, isArabic ? 'تم حذف المحادثة.' : 'Conversation deleted.');
-              }
-            },
-            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+    showConfirmDeleteConversationDialog(
+      context,
+      currentUserId: currentUserId,
+      conversationId: conversationId,
     );
   }
 }
