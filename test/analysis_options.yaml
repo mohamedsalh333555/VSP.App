@@ -1,0 +1,15 @@
+include: ../analysis_options.yaml
+
+analyzer:
+  errors:
+    avoid_print: ignore
+    unused_local_variable: ignore
+    dead_code: ignore
+    prefer_const_declarations: ignore
+    prefer_const_constructors: ignore
+
+linter:
+  rules:
+    avoid_print: false
+    prefer_const_declarations: false
+    prefer_const_constructors: false
