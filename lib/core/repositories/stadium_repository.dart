@@ -118,7 +118,7 @@ class StadiumRepository {
                 );
               } else {
                 throw Exception(
-                    'وصلت للحد الأقصى للملاعب في باقتك الحالية (${userModel.maxStadiums} ملاعب).'
+                    'وصلت للحد الأقصى لعدد الملاعب المسموح به في حسابك (${userModel.maxStadiums} ملاعب).'
                 );
               }
             }
