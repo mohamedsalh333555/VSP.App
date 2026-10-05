@@ -14,6 +14,7 @@ import '../../screens/matchup_live_dashboard_screen.dart';
 import 'challenge_result_actions.dart';
 import 'player_booking_cancel_dialog.dart';
 import 'refund_badge_widget.dart';
+import '../../../../shared/widgets/refund_tracking_sheet.dart';
 import 'reschedule_action_banner.dart';
 
 /// Comprehensive individual booking card for upcoming and history bookings in player bookings screen.
@@ -303,22 +304,49 @@ class PlayerBookingCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: VSPSpacing.sm),
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: RefundBadgeWidget(
-                    refundInfo: RefundInfo.fromBookingRow({
-                      'refund_channel': booking.refundChannel,
-                      'refund_eta': booking.refundEta,
-                      'display_refund_ref': booking.displayRefundRef ??
-                          booking.refundTransactionId ??
-                          booking.paymentTransactionId,
-                      'refunded_at': booking.refundedAt?.toIso8601String(),
-                      'refund_payment_method':
-                          booking.refundPaymentMethod ?? booking.paymentMethod,
-                      'payment_method': booking.paymentMethod,
-                      'refund_amount': booking.refundAmount ??
-                          (booking.depositPaid > 0
-                              ? booking.depositPaid
-                              : booking.totalPrice),
-                    }),
+                  child: GestureDetector(
+                    onTap: () {
+                      final info = RefundInfo.fromBookingRow({
+                        'refund_channel': booking.refundChannel,
+                        'refund_eta': booking.refundEta,
+                        'display_refund_ref': booking.displayRefundRef ??
+                            booking.refundTransactionId ??
+                            booking.paymentTransactionId,
+                        'refunded_at': booking.refundedAt?.toIso8601String(),
+                        'refund_payment_method':
+                            booking.refundPaymentMethod ?? booking.paymentMethod,
+                        'payment_method': booking.paymentMethod,
+                        'refund_amount': booking.refundAmount ??
+                            (booking.depositPaid > 0
+                                ? booking.depositPaid
+                                : booking.totalPrice),
+                      });
+                      VSPRefundTrackingSheet.show(
+                        context,
+                        refundInfo: info,
+                        state: VSPRefundTrackingState.completed,
+                        bookingReference: booking.id.length >= 8
+                            ? booking.id.substring(0, 8).toUpperCase()
+                            : booking.id.toUpperCase(),
+                      );
+                    },
+                    child: RefundBadgeWidget(
+                      refundInfo: RefundInfo.fromBookingRow({
+                        'refund_channel': booking.refundChannel,
+                        'refund_eta': booking.refundEta,
+                        'display_refund_ref': booking.displayRefundRef ??
+                            booking.refundTransactionId ??
+                            booking.paymentTransactionId,
+                        'refunded_at': booking.refundedAt?.toIso8601String(),
+                        'refund_payment_method':
+                            booking.refundPaymentMethod ?? booking.paymentMethod,
+                        'payment_method': booking.paymentMethod,
+                        'refund_amount': booking.refundAmount ??
+                            (booking.depositPaid > 0
+                                ? booking.depositPaid
+                                : booking.totalPrice),
+                      }),
+                    ),
                   ),
                 ),
               );
@@ -327,7 +355,30 @@ class PlayerBookingCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: VSPSpacing.sm),
                 child: Align(
                   alignment: AlignmentDirectional.centerStart,
-                  child: _buildProcessingRefundBadge(context, isArabic),
+                  child: GestureDetector(
+                    onTap: () {
+                      final info = RefundInfo.fromBookingRow({
+                        'refund_channel': booking.refundChannel,
+                        'refund_eta': booking.refundEta,
+                        'refund_payment_method':
+                            booking.refundPaymentMethod ?? booking.paymentMethod,
+                        'payment_method': booking.paymentMethod,
+                        'refund_amount': booking.refundAmount ??
+                            (booking.depositPaid > 0
+                                ? booking.depositPaid
+                                : booking.totalPrice),
+                      });
+                      VSPRefundTrackingSheet.show(
+                        context,
+                        refundInfo: info,
+                        state: VSPRefundTrackingState.processing,
+                        bookingReference: booking.id.length >= 8
+                            ? booking.id.substring(0, 8).toUpperCase()
+                            : booking.id.toUpperCase(),
+                      );
+                    },
+                    child: _buildProcessingRefundBadge(context, isArabic),
+                  ),
                 ),
               );
             } else if (isUnconfirmedPayment) {
