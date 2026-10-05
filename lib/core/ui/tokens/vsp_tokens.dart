@@ -6,6 +6,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'vsp_design_tokens.dart';
+export 'vsp_design_tokens.dart';
 
 class VSPColors {
   static const background = VSPDSSemanticColors.background;
