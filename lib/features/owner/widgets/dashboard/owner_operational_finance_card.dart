@@ -371,26 +371,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     required double dueTotal,
     required bool hasDueMoney,
   }) {
-    if (!hasDueMoney) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-        decoration: BoxDecoration(
-          color: VSPColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(color: VSPColors.divider),
-        ),
-        child: Text(
-          isArabic
-              ? 'مع Pro تقدر تتابع الكاش المستحق والأونلاين المعلّق في مكان واحد.'
-              : 'With Pro, track cash due and pending online payments in one place.',
-          style: const TextStyle(
-            color: VSPColors.textSecondary,
-            fontSize: 11,
-            height: 1.35,
-          ),
-        ),
-      );
-    }
+    final previewValue = isArabic ? 'متاح مع Pro' : 'Available with Pro';
 
     return GestureDetector(
       onTap: onUpgrade,
@@ -404,38 +385,135 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             color: VSPColors.proAccent.withValues(alpha: 0.32),
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Iconsax.chart_square_copy,
-              size: 18,
-              color: VSPColors.proAccent,
-            ),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Text(
-                isArabic
-                    ? 'فيه فلوس لسه ما اتحصلتش. Pro يجمعها لك كاش وأونلاين ويبين لك محتاجة إجراء إيه.'
-                    : 'There is money still to collect. Pro breaks it down into cash and online and shows what needs action.',
-                style: const TextStyle(
-                  color: VSPColors.textPrimary,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
+            Row(
+              children: [
+                const Icon(
+                  Iconsax.money_remove_copy,
+                  size: 17,
+                  color: VSPColors.proAccent,
                 ),
-              ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    isArabic
+                        ? 'تفاصيل الفلوس اللي لسه ما اتحصلتش'
+                        : 'Uncollected money details',
+                    style: const TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const Text(
+                  'Pro',
+                  style: TextStyle(
+                    color: VSPColors.proAccent,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 7),
-            const Text(
-              'Pro',
-              style: TextStyle(
-                color: VSPColors.proAccent,
-                fontSize: 11.5,
-                fontWeight: FontWeight.w900,
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _LockedMoneyPreview(
+                    icon: Iconsax.money_3_copy,
+                    label: isArabic ? 'كاش مستحق' : 'Cash due',
+                    value: previewValue,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _LockedMoneyPreview(
+                    icon: Iconsax.card_copy,
+                    label: isArabic ? 'أونلاين غير محصل' : 'Online not collected',
+                    value: previewValue,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            Text(
+              hasDueMoney
+                  ? (isArabic
+                      ? 'فيه فلوس محتاجة متابعة. اشترك في Pro عشان تشوف القيمة والتفاصيل والإجراء المطلوب.'
+                      : 'Money needs attention. Subscribe to Pro to see the amounts, details, and required action.')
+                  : (isArabic
+                      ? 'مع Pro هتعرف الفلوس المستحقة عليك/لك فوراً بدل ما تكتشفها متأخر.'
+                      : 'With Pro, you can see collection gaps immediately instead of discovering them late.'),
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 10.5,
+                height: 1.35,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }}
+
+
+
+class _LockedMoneyPreview extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _LockedMoneyPreview({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: VSPColors.textMuted),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: VSPColors.proAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
       ),
     );
   }
