@@ -10,32 +10,21 @@ void main() {
       otpService = AuthOtpService();
     });
 
-    test('sendVerificationCode sets verificationCode to 123456 and returns success', () async {
+    test('sendVerificationCode no longer invents a local verification code', () async {
       final form = AuthRegistrationFormState();
       final res = await otpService.sendVerificationCode(form);
-      expect(res.success, isTrue);
-      expect(res.error, isNull);
-      expect(form.verificationCode, '123456');
-    });
-
-    test('verifyCode validates matching and non-matching codes', () {
-      final form = AuthRegistrationFormState();
-      form.verificationCode = '654321';
-
-      final successRes = otpService.verifyCode(form, '654321');
-      expect(successRes.success, isTrue);
-      expect(successRes.error, isNull);
-
-      final failRes = otpService.verifyCode(form, '000000');
-      expect(failRes.success, isFalse);
-      expect(failRes.error, isNotNull);
-    });
-
-    test('verifyCode returns false when verificationCode is null', () {
-      final form = AuthRegistrationFormState();
-      final res = otpService.verifyCode(form, '123456');
+      expect(form.verificationCode, isNull);
       expect(res.success, isFalse);
       expect(res.error, isNotNull);
     });
+
+    test('verifyCode requires an email before server verification', () async {
+      final form = AuthRegistrationFormState();
+      final res = await otpService.verifyCode(form, '654321');
+      expect(res.success, isFalse);
+      expect(res.error, isNotNull);
+    });
+
+    
   });
 }
