@@ -8,6 +8,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/app_error_handler.dart';
 import '../../../core/services/support_service.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -39,7 +40,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
       }
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e);
+      if (mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     }
   }
 
@@ -174,9 +175,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
             const SizedBox(height: VSPSpacing.lg),
 
             Text(
-              isOwner 
-                ? (isArabic ? 'أسئلة تهم أصحاب الملاعب:' : 'Stadium Owner FAQs:')
-                : (isArabic ? 'الأسئلة الأكثر شيوعاً:' : 'Frequently Asked Questions:'),
+              isOwner ? l10n.supportOwnerFaqHeading : l10n.supportPlayerFaqHeading,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
             ),
 
