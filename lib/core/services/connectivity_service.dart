@@ -54,7 +54,8 @@ class ConnectivityService {
       return online;
     } catch (e) {
       VSPLogger.w('Failed to check connectivity: $e');
-      return true; // Default to assuming online if check fails
+      // A failed connectivity probe is not evidence that the device is online.
+      return false;
     }
   }
 
