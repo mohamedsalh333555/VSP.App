@@ -31,7 +31,7 @@ class VSPFeedback {
  context: context,
  message: message,
  backgroundColor: VSPDSSemanticColors.error,
- textColor: VSPDSVSPDSColors.white,
+ textColor: VSPDSColors.white,
  icon: Iconsax.warning_2_copy,
  );
  }
@@ -111,7 +111,7 @@ class VSPFeedback {
  left: VSPDSSpacing.md,
  right: VSPDSSpacing.md,
  child: Material(
- color: Colors.transparent,
+ color: VSPDSColors.transparent,
  child: TweenAnimationBuilder<double>(
  tween: Tween(begin: 0.0, end: 1.0),
  duration: VSPDSFeedback.enter,
