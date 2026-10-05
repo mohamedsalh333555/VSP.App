@@ -166,23 +166,6 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  ),
  ),
  floatingActionButton: _currentIndex == 1
-     ? FloatingActionButton(
-         onPressed: () => showOwnerCupFormatModal(context),
-         backgroundColor: VSPColors.accent,
-         foregroundColor: VSPDSColors.black,
-         elevation: VSPDSElevation.none,
-         shape: const CircleBorder(),
-         tooltip: Localizations.localeOf(context).languageCode == 'ar'
-             ? 'إنشاء بطولة'
-             : 'Create tournament',
-         child: const Icon(Iconsax.add_copy, size: VSPDSizes.iconLg),
-       )
-     : null,
- floatingActionButtonLocation:
-     Localizations.localeOf(context).languageCode == 'ar'
-         ? FloatingActionButtonLocation.startFloat
-         : FloatingActionButtonLocation.endFloat,
- floatingActionButton: _currentIndex == 1
      ? Padding(
          padding: const EdgeInsets.only(bottom: VSPBottomNavBarMetrics.fabBottomOffset + 8),
          child: FloatingActionButton(
