@@ -5,7 +5,6 @@ declare const Deno: any;
 const ALLOWED_ORIGINS = new Set([
   "https://vspapp.online",
   "https://www.vspapp.online",
-  "http://localhost:3000",
 ]);
 const MAX_BODY_BYTES = 16384;
 
