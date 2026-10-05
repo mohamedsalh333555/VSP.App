@@ -123,6 +123,12 @@ class ChatRepository {
     throw Exception('SUPPORT_MESSAGE_SEND_FAILED');
   }
 
+  Future<void> markSupportTicketWhatsAppEscalated(String ticketId) async {
+    await _supabase.rpc('mark_support_ticket_whatsapp_escalation', params: {
+      'p_ticket_id': ticketId,
+    });
+  }
+
   Stream<List<Map<String, dynamic>>> streamSupportTickets(String userId) {
     return _supabase
         .from('support_tickets')
