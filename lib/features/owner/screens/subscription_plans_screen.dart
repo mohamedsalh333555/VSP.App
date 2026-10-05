@@ -536,7 +536,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         );
       }
     } catch (e) {
-      if (context.mounted) VSPFeedback.showError(context, e);
+      if (context.mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     } finally {
       if (mounted) setState(() => _isPaying = false);
     }
