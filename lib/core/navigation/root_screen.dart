@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/deep_link_helper.dart';
 import '../services/logger_service.dart';
 import '../../l10n/app_localizations.dart';
+import 'offline_error_screen.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -139,6 +140,11 @@ class _RootScreenState extends State<RootScreen> {
 
  if (remoteConfig.isMaintenanceMode) {
  return const MaintenanceScreen();
+ }
+
+ // The timeout flag is meaningful only when the authenticated profile never loaded.
+ if (auth.isAuthenticated && auth.userModel == null && _loadingTimedOut) {
+   return const OfflineErrorScreen();
  }
 
  // Reactive Deep Link recovery safety net
