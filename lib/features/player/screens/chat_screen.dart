@@ -42,20 +42,15 @@ class ChatScreen extends StatefulWidget {
 
   const ChatScreen.conversation({
     super.key,
-    required String conversationId,
+    required this.conversationId,
     required String title,
-    String? otherUserId,
-    String? reportContextType,
-    String? reportContextId,
-    String? reportBookingId,
+    this.otherUserId,
+    this.reportContextType,
+    this.reportContextId,
+    this.reportBookingId,
   })  : booking = null,
-        conversationId = conversationId,
         conversationTitle = title,
-        otherUserId = otherUserId,
-        isSupportChat = false,
-        reportContextType = reportContextType,
-        reportContextId = reportContextId,
-        reportBookingId = reportBookingId;
+        isSupportChat = false;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
