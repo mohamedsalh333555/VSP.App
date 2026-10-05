@@ -138,12 +138,13 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
       setState(() => _isSubmitting = true);
 
-      if (_teamMembers.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.friendsRequiredNote),
-            duration: const Duration(seconds: 4),
-          ),
+      if (_teamMembers.isEmpty && mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showSuccess(
+          context,
+          isArabic
+              ? 'يمكن إنشاء الفريق بالكابتن فقط. يمكنك إضافة اللاعبين لاحقاً قبل التسجيل في البطولة.'
+              : 'The team can be created with the captain only. You can add players before tournament registration.',
         );
       }
 
