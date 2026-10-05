@@ -115,7 +115,7 @@ class VSPFeedback {
  child: TweenAnimationBuilder<double>(
  tween: Tween(begin: 0.0, end: 1.0),
  duration: VSPDSFeedback.enter,
- curve: VSPDSMotion.standardCurve,
+ curve: Curves.easeOutBack,
  builder: (ctx, value, child) {
  return Transform.translate(
  offset: Offset(0, (1 - value) * -20),
@@ -127,7 +127,11 @@ class VSPFeedback {
  color: backgroundColor,
  borderRadius: BorderRadius.circular(VSPDSFeedback.cornerRadius),
  boxShadow: const [
- VSPDSComponentEffects.cardShadow,
+ BoxShadow(
+   color: Color(0x61000000),
+   blurRadius: VSPDSFeedback.shadowBlur,
+   offset: Offset(0, VSPDSFeedback.shadowOffsetY),
+ ),
  ],
  ),
  child: Row(
