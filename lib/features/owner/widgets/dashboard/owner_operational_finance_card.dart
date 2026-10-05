@@ -107,7 +107,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                '${collectedTotal.toStringAsFixed(0)}',
+                collectedTotal.toStringAsFixed(0),
                 style: const TextStyle(
                   fontSize: 38,
                   fontWeight: FontWeight.w900,
@@ -161,7 +161,6 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
             )
           else
             _buildFreeUpgradePreview(
-              dueTotal: dueTotal,
               hasDueMoney: hasDueMoney,
             ),
           const SizedBox(height: 14),
@@ -368,7 +367,6 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   }
 
   Widget _buildFreeUpgradePreview({
-    required double dueTotal,
     required bool hasDueMoney,
   }) {
     final previewValue = isArabic ? 'متاح مع Pro' : 'Available with Pro';
