@@ -2439,7 +2439,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get ownerFaq5_a =>
-      'الباقة الأساسية مجانية لإدارة ملعب واحد، بينما تضيف Pro سعة ملاعب أكبر ومزايا تشغيلية متقدمة وVSP Copilot.';
+      'الاستخدام مجاني لإدارة ملعب واحد، بينما تضيف Pro سعة ملاعب أكبر ومزايا تشغيلية متقدمة وVSP Copilot.';
 
   @override
   String get ownerFaq6_q => 'كيف يتم احتساب رسوم المنصة والتسوية؟';
