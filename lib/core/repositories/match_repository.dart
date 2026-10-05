@@ -46,27 +46,26 @@ class MatchRepository {
 
  /// Safe public-match detail read. The bookings table remains private; this RPC
  /// returns only fields required by the public match room.
- Future<Booking?> getPublicMatchDetails(String bookingId) async {
+ Future<Booking?> getPlayerMatchDetails(String bookingId) async {
    try {
      final response = await _supabase.rpc(
-       'get_public_match_details',
+       'get_player_match_details',
        params: {'p_booking_id': bookingId},
      );
      if (response is Map) {
-       return Booking.fromFirestore(
-         Map<String, dynamic>.from(response),
-         bookingId,
-       );
+       return Booking.fromFirestore(Map<String, dynamic>.from(response), bookingId);
      }
      return null;
    } on PostgrestException catch (e) {
-     VSPLogger.w('Public match details RPC failed: ${e.message}');
+     VSPLogger.w('Player booking details RPC failed: ${e.message}');
      return null;
    } catch (e, stack) {
-     VSPLogger.e('Error loading public match details', e, stack);
+     VSPLogger.e('Error loading player booking details', e, stack);
      return null;
    }
  }
+
+ Future<Booking?> getPublicMatchDetails(String bookingId) => getPlayerMatchDetails(bookingId);
 
  Future<Booking?> getPrivateCollectiveMatchDetails(String bookingId) async {
    try {
@@ -175,7 +174,7 @@ class MatchRepository {
  /// Realtime public match stream. The public feed drives updates while the
  /// RPC supplies the protected participant identifiers needed by the room.
  Stream<Booking?> streamPublicMatchDetails(String bookingId) async* {
-   final initial = await getPublicMatchDetails(bookingId);
+   final initial = await getPlayerMatchDetails(bookingId);
    if (initial != null) {
      yield initial;
    }
@@ -185,7 +184,7 @@ class MatchRepository {
        .stream(primaryKey: ['id'])
        .eq('id', bookingId)
        .map((rows) => rows.isEmpty ? null : rows.first)
-       .asyncMap((_) => getPublicMatchDetails(bookingId))
+       .asyncMap((_) => getPlayerMatchDetails(bookingId))
        .handleError((error) {
          VSPLogger.w('Handled public match details realtime error: \$error');
        });
