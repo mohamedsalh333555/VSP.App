@@ -509,6 +509,22 @@ class PlayerBookingCard extends StatelessWidget {
 );
   }
 
+  RefundInfo _buildRefundInfo() {
+    return RefundInfo.fromBookingRow({
+      'refund_channel': booking.refundChannel,
+      'refund_eta': booking.refundEta,
+      'display_refund_ref': booking.displayRefundRef ??
+          booking.refundTransactionId ??
+          booking.paymentTransactionId,
+      'refunded_at': booking.refundedAt?.toIso8601String(),
+      'refund_payment_method':
+          booking.refundPaymentMethod ?? booking.paymentMethod,
+      'payment_method': booking.paymentMethod,
+      'refund_amount': booking.refundAmount ??
+          (booking.depositPaid > 0 ? booking.depositPaid : booking.totalPrice),
+    });
+  }
+
   Widget _buildContactSupportRefundBadge(BuildContext context, bool isArabic) {
     return GestureDetector(
       onTap: () {
