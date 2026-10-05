@@ -148,7 +148,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               const SizedBox(height: VSPSpacing.md),
               _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
               _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
-              _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', booking.totalPrice.toInt().toString() + ' ' + booking.currency),
+              _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', '${booking.totalPrice.toInt()} ${booking.currency}'),
               _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', booking.status.name),
             ]),
           ),
@@ -180,7 +180,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       child: Row(children: [
         Icon(icon, size: 18, color: VSPColors.accent),
         const SizedBox(width: VSPSpacing.sm),
-        Text(label + ': ', style: const TextStyle(color: VSPColors.textSecondary)),
+        Text('$label: ', style: const TextStyle(color: VSPColors.textSecondary)),
         Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w800))),
       ]),
     );
