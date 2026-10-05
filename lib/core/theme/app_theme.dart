@@ -8,7 +8,7 @@ import '../ui/tokens/vsp_design_tokens.dart';
 /// remains outside the design-system layer.
 class AppTheme {
   static ThemeData get darkTheme {
-    final textTheme = TextTheme(
+    const textTheme = TextTheme(
       displayLarge: VSPDSTypography.displayLarge,
       displayMedium: VSPDSTypography.displayMedium,
       displaySmall: VSPDSTypography.displaySmall,
@@ -179,7 +179,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: VSPDSSemanticColors.accent,
-          minimumSize: Size(
+          minimumSize: const Size(
             0,
             VSPDSizes.textButtonMinHeight,
           ),
@@ -244,7 +244,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(VSPDSRadius.input),
-          borderSide: BorderSide(
+          borderSide: const BorderSide(
             color: VSPDSSemanticColors.accent,
             width: VSPDSBorders.fieldFocus,
           ),
