@@ -723,8 +723,8 @@
  "faq8_a": "Private matches are hidden. Ensure you select 'Public Match' during booking if you want others to find and join you.",
  "faq9_q": "How do I get a refund?",
  "faq9_a": "Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.",
- "faq10_q": "How do I contact support?",
- "faq10_a": "Tap 'Chat with Support' on this screen to start a WhatsApp conversation with our team directly.",
+ "faq10_q": "How do I contact technical support?",
+ "faq10_a": "Open In-App Support to create a support ticket and exchange messages with the support team. WhatsApp is available as an escalation channel when needed.",
  "totalCollectedGross": "Total Collected (Gross)",
  "netProfit": "NET PROFIT",
  "pendingRev": "PENDING REV",
@@ -1177,5 +1177,6 @@
   "ownerFaq5_q": "What are the subscription plans for stadium owners?",
   "ownerFaq5_a": "Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.",
   "ownerFaq6_q": "How do platform fees and settlement work?",
-  "ownerFaq6_a": "Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views."
+  "ownerFaq6_a": "Platform fees and payment processing are calculated by the server-side financial rules and reflected in the owner financial views.",
+  "skipButton": "Skip"
 }
