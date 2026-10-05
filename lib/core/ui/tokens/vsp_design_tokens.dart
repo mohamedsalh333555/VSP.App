@@ -131,6 +131,9 @@ abstract final class VSPDSizes {
   static const double navigationItemHeight = 58.0;
   static const double navigationIcon = 23.0;
   static const double notificationDot = 8.0;
+  static const double aiIcon = 22.0;
+  static const double aiIconSmall = 9.0;
+  static const double aiIconLarge = 14.0;
   static const double navigationNotificationTop = -1.0;
   static const double navigationNotificationRight = -2.0;
   static const double emptyIconSize = 28.0;
