@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/stadium_provider.dart';
