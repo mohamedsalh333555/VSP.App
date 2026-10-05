@@ -13,7 +13,7 @@ import 'package:vsp_application/features/player/widgets/home/book_tonight_sheet.
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 class _TestBookingRepository implements BookingRepository {
-  _TestBookingRepository([this.bookings = const []]);
+  _TestBookingRepository() : bookings = const [];
   final List<Booking> bookings;
 
   @override

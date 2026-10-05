@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/features/copilot/services/vsp_copilot_service.dart';
-import 'package:vsp_application/data/models/copilot_models.dart';
 
 void main() {
   group('VspCopilotService - Intelligent Response Generation', () {
