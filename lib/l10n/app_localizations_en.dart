@@ -2463,7 +2463,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ownerFaq5_a =>
-      'Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.';
+      'Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.';
 
   @override
   String get ownerFaq6_q => 'How do platform fees and settlement work?';
