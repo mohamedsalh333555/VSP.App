@@ -8,21 +8,42 @@ class AuthOtpService {
   AuthOtpService({AuthRegistrationService? registrationService})
       : _registrationService = registrationService ?? AuthRegistrationService();
 
-  /// Mock verification code sender (e.g. for development or testing).
-  Future<({bool success, String? error})> sendVerificationCode(AuthRegistrationFormState form) async {
-    await Future.delayed(const Duration(seconds: 1));
-    assert(() {
-      // TEST ONLY — يُحذف تلقائياً في release build
-      form.verificationCode = '123456';
-      return true;
-    }());
-    return (success: true, error: null);
+  /// Sends a real Supabase email verification/OTP message for the active session.
+  Future<({bool success, String? error})> sendVerificationCode(
+    AuthRegistrationFormState form,
+  ) async {
+    try {
+      final success = await _registrationService.resendOtp();
+      return (
+        success: success,
+        error: success ? null : 'Failed to send verification code',
+      );
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
   }
 
-  /// Validates entered code against saved form verification code.
-  ({bool success, String? error}) verifyCode(AuthRegistrationFormState form, String code) {
-    final match = code == form.verificationCode && form.verificationCode != null;
-    return (success: match, error: match ? null : 'رمز التحقق غير صحيح');
+  /// Verifies the entered email OTP against Supabase Auth.
+  Future<({bool success, String? error})> verifyCode(
+    AuthRegistrationFormState form,
+    String code,
+  ) async {
+    final email = form.email?.trim();
+    if (email == null || email.isEmpty || code.trim().isEmpty) {
+      return (success: false, error: 'رمز التحقق أو البريد الإلكتروني غير صالح.');
+    }
+    try {
+      final success = await _registrationService.verifyOtp(
+        email: email,
+        token: code.trim(),
+      );
+      return (
+        success: success,
+        error: success ? null : 'رمز التحقق غير صحيح',
+      );
+    } catch (e) {
+      return (success: false, error: e.toString());
+    }
   }
 
   /// Sends password reset instructions to user's email.
