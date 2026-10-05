@@ -213,11 +213,13 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       stream: _matchesStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'Error: ${snapshot.error}',
-              style: const TextStyle(color: VSPColors.error),
-            ),
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
+            message: isArabic
+                ? 'راجع الاتصال وحاول مرة تانية.'
+                : 'Check your connection and try again.',
           );
         }
 
