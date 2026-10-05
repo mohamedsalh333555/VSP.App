@@ -161,6 +161,47 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    backgroundColor: VSPColors.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(VSPRadius.dialog),
+                    ),
+                    title: Text(
+                      isArabic ? 'تأكيد الإغلاق الطارئ' : 'Confirm Emergency Closure',
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    content: Text(
+                      isArabic
+                          ? 'سيتم إيقاف الحجز على هذا الملعب لمدة 24 ساعة، وتحويل الحجوزات المتأثرة لمسار المراجعة والاسترداد الإداري. هل تريد المتابعة؟'
+                          : 'This stadium will be closed for 24 hours, and affected bookings will enter the administrative review/refund flow. Do you want to continue?',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        height: 1.45,
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.error,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(isArabic ? 'تأكيد الإغلاق' : 'Confirm Closure'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed != true || !context.mounted) return;
+
                 final res = await Provider.of<BookingProvider>(context, listen: false)
                     .requestEmergencyClosure(
                   stadiumId: booking.stadiumId,
