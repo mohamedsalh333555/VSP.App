@@ -97,7 +97,7 @@ class AuthRegistrationService {
         return (success: false, user: null, userModel: null, error: result['message']?.toString());
       }
     } catch (e) {
-      return (success: false, user: null, userModel: null, error: e.toString());
+      return (success: false, user: null, userModel: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
@@ -141,7 +141,7 @@ class AuthRegistrationService {
         return (success: false, user: null, userModel: null, error: result['message']?.toString());
       }
     } catch (e) {
-      return (success: false, user: null, userModel: null, error: e.toString());
+      return (success: false, user: null, userModel: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
@@ -195,7 +195,7 @@ class AuthRegistrationService {
 
       return (success: success, userModel: updatedModel, error: null);
     } catch (e) {
-      return (success: false, userModel: null, error: e.toString());
+      return (success: false, userModel: null, error: AppErrorHandler.formatError(e, isArabic: true));
     }
   }
 
