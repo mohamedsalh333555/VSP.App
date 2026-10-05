@@ -400,11 +400,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 if (_selectedDashboardTab == 0) ...[
                 // المالية أولاً: إجمالي المال المحقق ثم الكاش والأونلاين ثم الرصيد الجاهز للسحب.
                 OwnerOperationalFinanceCard(
-                  realizedTotal: _dashboardAnalytics.revenue.realizedRevenue,
-                  realizedCash: _dashboardAnalytics.revenue.realizedCash,
-                  realizedOnline: _dashboardAnalytics.revenue.realizedOnline,
+                  collectedCash: _dashboardAnalytics.revenue.cashCollected,
+                  collectedOnline: _dashboardAnalytics.revenue.onlineCollected,
+                  cashDue: _dashboardAnalytics.revenue.cashUncollected,
+                  onlinePending: _dashboardAnalytics.revenue.onlinePending,
+                  onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
                   availableBalance: availableBalance,
                   upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
+                  isProOwner: isProOwner,
+                  onUpgrade: () => _showProUpgradeSheet(context),
                   onOpenLedger: () {
                     Navigator.push(
                       context,
