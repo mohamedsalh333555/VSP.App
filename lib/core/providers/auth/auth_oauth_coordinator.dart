@@ -218,7 +218,8 @@ class AuthOAuthCoordinator {
         await prefs.remove('pending_oauth_role');
         await SecureStorageService.deleteSecure('pending_oauth_role');
       } catch (e, stackTrace) {
-        VSPLogger.w('Failed to clear pending OAuth role metadata', e, stackTrace);
+        VSPLogger.w('Failed to clear pending OAuth role metadata: ${e.runtimeType}');
+        VSPLogger.e('Pending OAuth role metadata cleanup failed', e, stackTrace);
       }
 
       return (success: true, userModel: updatedModel, error: null);
