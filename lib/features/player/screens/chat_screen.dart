@@ -22,6 +22,9 @@ class ChatScreen extends StatefulWidget {
   final String? conversationTitle;
   final String? otherUserId;
   final bool isSupportChat;
+  final String? reportContextType;
+  final String? reportContextId;
+  final String? reportBookingId;
 
   const ChatScreen({
     super.key,
@@ -30,6 +33,9 @@ class ChatScreen extends StatefulWidget {
     this.conversationTitle,
     this.otherUserId,
     this.isSupportChat = false,
+    this.reportContextType,
+    this.reportContextId,
+    this.reportBookingId,
   });
 
   const ChatScreen.conversation({
@@ -37,11 +43,17 @@ class ChatScreen extends StatefulWidget {
     required String conversationId,
     required String title,
     String? otherUserId,
+    String? reportContextType,
+    String? reportContextId,
+    String? reportBookingId,
   })  : booking = null,
         conversationId = conversationId,
         conversationTitle = title,
         otherUserId = otherUserId,
-        isSupportChat = false;
+        isSupportChat = false,
+        reportContextType = reportContextType,
+        reportContextId = reportContextId,
+        reportBookingId = reportBookingId;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -164,9 +176,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     context,
                     currentUserId: currentUserId,
                     targetUserId: targetUserId,
-                    contextId: widget.booking?.id ?? _conversationKey,
-                    contextType: widget.booking == null ? 'booking' : _reportContextType(),
-                    bookingId: widget.booking?.id,
+                    contextId: widget.reportContextId ?? widget.booking?.id ?? _conversationKey,
+                    contextType: widget.reportContextType ?? (widget.booking == null ? 'booking' : _reportContextType()),
+                    bookingId: widget.reportBookingId ?? widget.booking?.id,
                     conversationId: widget.conversationId,
                   );
                 } else if (value == 'delete') {
