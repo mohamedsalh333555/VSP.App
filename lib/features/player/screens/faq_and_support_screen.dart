@@ -7,6 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/support_service.dart';
 
 class FAQAndSupportScreen extends StatefulWidget {
@@ -25,18 +26,41 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!mounted) return;
-      final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
+      final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : settings.supportPhone;
+      if (phone.isEmpty) {
+        if (mounted) {
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'بيانات تصعيد الدعم غير مُهيأة حالياً.' : 'Support escalation contact is not configured.',
+          );
+        }
+        return;
+      }
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e);
+    }
   }
 
   Future<void> _launchPhoneCall() async {
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!mounted) return;
-      final phone = settings.supportPhone.isNotEmpty ? settings.supportPhone : '01100229462';
+      final phone = settings.supportPhone;
+      if (phone.isEmpty) {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'رقم الدعم غير مُهيأ حالياً.' : 'Support phone number is not configured.',
+          );
+        }
+        return;
+      }
       await VSPLauncherUtils.makePhoneCall(context, phone);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, e);
+    }
   }
 
   @override
