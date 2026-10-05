@@ -103,7 +103,7 @@ class _TimelineRow extends StatelessWidget {
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       SizedBox(width: VSPDSizes.iconLg, child: Column(children: [
         Icon(icon, size: VSPDSizes.iconMd, color: tint),
-        if (!isLast) Container(width: 1, height: VSPDSSpacing.lg, color: VSPDSSemanticColors.border),
+        if (!isLast) Container(width: VSPDSBorders.hairline, height: VSPDSSpacing.lg, color: VSPDSSemanticColors.border),
       ])),
       const SizedBox(width: VSPDSSpacing.sm),
       Expanded(child: Padding(padding: const EdgeInsets.only(bottom: VSPDSSpacing.sm), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
