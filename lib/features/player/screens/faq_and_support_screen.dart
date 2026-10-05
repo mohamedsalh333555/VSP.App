@@ -7,6 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
+import '../../../core/services/support_service.dart';
 
 class FAQAndSupportScreen extends StatefulWidget {
   const FAQAndSupportScreen({super.key});
@@ -87,50 +88,63 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Row(
+                  Column(
                     children: [
-                      Expanded(
+                      SizedBox(
+                        width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _launchWhatsApp,
-                          icon: const Icon(Iconsax.headphones_copy, size: 16, color: Colors.black),
-                          label: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              isArabic ? 'واتساب الدعم' : 'WhatsApp Support',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
-                              maxLines: 1,
-                            ),
+                          onPressed: () => SupportService().openSupport(context),
+                          icon: const Icon(Iconsax.messages_3_copy, size: 16, color: Colors.black),
+                          label: Text(
+                            isArabic ? 'الدعم داخل التطبيق' : 'In-App Support',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.accent,
                             foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                             elevation: 0,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _launchPhoneCall,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: VSPColors.accent),
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              isArabic ? 'اتصال مباشر' : 'Direct Call',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                              maxLines: 1,
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _launchWhatsApp,
+                              icon: const Icon(Iconsax.message_text_1_copy, size: 16),
+                              label: Text(isArabic ? 'واتساب كتصعيد' : 'WhatsApp Escalation'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: VSPColors.textPrimary,
+                                side: const BorderSide(color: VSPColors.divider),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _launchPhoneCall,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: VSPColors.divider),
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  isArabic ? 'اتصال كتصعيد' : 'Call Escalation',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+
                 ],
               ),
             ),
