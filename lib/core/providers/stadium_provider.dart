@@ -394,6 +394,7 @@ class StadiumProvider with ChangeNotifier {
  _isFilterActive = false;
  _currentFilters = null;
  _filteredStadiums = [];
+ _activeQuickFilter = null;
  notifyListeners();
  }
 
