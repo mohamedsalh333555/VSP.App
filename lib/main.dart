@@ -148,8 +148,17 @@ void main() async {
     return true;
   };
 
- // Custom Error Boundary Widget
  ErrorWidget.builder = (FlutterErrorDetails details) {
+ // Log to Crashlytics for internal tracking - never expose to UI
+ try {
+   FirebaseCrashlytics.instance.recordError(
+     details.exception,
+     details.stack,
+     reason: 'Flutter ErrorWidget caught',
+     fatal: false,
+   );
+ } catch (_) {}
+
  return Scaffold(
  backgroundColor: VSPColors.background,
  body: Center(
@@ -161,14 +170,15 @@ void main() async {
  const Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
  const SizedBox(height: VSPSpacing.xl),
  const Text(
- 'Something went wrong! ',
+ 'حدث خطأ غير متوقع',
  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
  textAlign: TextAlign.center,
  ),
- Text(
- details.exceptionAsString(),
+ const SizedBox(height: VSPSpacing.sm),
+ const Text(
+ 'حاول مرة أخرى أو تواصل مع الدعم الفني.',
  textAlign: TextAlign.center,
- style: const TextStyle(color: VSPColors.error, fontSize: 13, fontFamily: 'monospace'),
+ style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
  ),
  const SizedBox(height: VSPSpacing.md),
  const Text(

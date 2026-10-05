@@ -2,14 +2,56 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 declare const Deno: any;
 
-const corsHeaders={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
-const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});
+const ALLOWED_ORIGINS = [
+  "https://vspapp.online",
+  "https://www.vspapp.online",
+  "http://localhost:3000",
+];
+
+function getCorsHeaders(origin: string | null) {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
 const round2=(n:number)=>Math.round(n*100)/100;
 const normalizePhone=(raw:string)=>{const digits=String(raw||"").replace(/\D/g,"");if(digits.startsWith("20"))return "+"+digits;if(digits.startsWith("0"))return "+2"+digits;return "+20"+digits;};
 
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,255}$/;
+
+async function verifyTurnstile(token: string, secret: string, expectedHostname?: string): Promise<boolean> {
+  try {
+    const body = new URLSearchParams({ secret, response: token });
+    if (expectedHostname) body.set("remoteip", "");
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body,
+    });
+    const data: any = await res.json();
+    if (!data.success) return false;
+    if (expectedHostname && data.hostname && data.hostname !== expectedHostname) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 serve(async(req:Request)=>{
-  if(req.method==="OPTIONS") return new Response("ok",{headers:corsHeaders});
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+  const json=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{...corsHeaders,"Content-Type":"application/json"}});
+
+  if(req.method==="OPTIONS") return new Response("ok",{headers:{...corsHeaders,"Content-Length":"2"}});
   if(req.method!=="POST") return json({error:"Method not allowed"},405);
+
+  // Block non-allowed origins (for browser-originated requests)
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return json({ error: "Origin not allowed" }, 403);
+  }
 
   const supabaseUrl=Deno.env.get("SUPABASE_URL")||"";
   const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
@@ -17,6 +59,7 @@ serve(async(req:Request)=>{
   const paymobPublicKey=Deno.env.get("PAYMOB_PUBLIC_KEY")||"";
   const cardIntegration=Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")||0);
   const walletIntegration=Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")||0);
+  const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
 
   if(!serviceKey||!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration){
     return json({error:"Payment service configuration is incomplete"},500);
@@ -25,18 +68,39 @@ serve(async(req:Request)=>{
   const supabase=createClient(supabaseUrl,serviceKey);
 
   try{
-    const body=await req.json();
+    let rawBody: string;
+    try {
+      rawBody = await req.text();
+      if (rawBody.length > 8192) return json({error:"Request body too large"},413);
+    } catch {
+      return json({error:"Invalid request body"},400);
+    }
+    let body: any;
+    try { body = JSON.parse(rawBody); } catch { return json({error:"Invalid JSON"},400); }
+
     const name=String(body?.name||"").trim();
     const email=String(body?.email||"").trim().toLowerCase();
     const phone=normalizePhone(String(body?.phone||""));
     const planCode=String(body?.plan_code||"").trim().toLowerCase();
     const billingPeriod=String(body?.billing_period||"monthly").trim().toLowerCase();
+    const turnstileToken=typeof body?.turnstile_token === "string" ? body.turnstile_token : null;
 
-    if(name.length<2||!email.includes("@")||phone.replace(/\D/g,"").length<10){
-      return json({error:"Name, valid email and valid Egyptian phone are required"},400);
-    }
+    // Input validation
+    if(name.length<2||name.length>100) return json({error:"Name must be between 2 and 100 characters"},400);
+    if(!EMAIL_RE.test(email)||email.length>254) return json({error:"Valid email address required"},400);
+    if(phone.replace(/\D/g,"").length<10) return json({error:"Valid Egyptian phone number required"},400);
     if(planCode!=="pro") return json({error:"Only Pro is available for web payment"},400);
     if(!["monthly","annual"].includes(billingPeriod)) return json({error:"Invalid billing period"},400);
+
+    // Control characters check in name
+    if(/[\u0000-\u001F\u007F]/.test(name)) return json({error:"Invalid characters in name"},400);
+
+    // Turnstile verification (only if configured)
+    if(turnstileSecret) {
+      if(!turnstileToken) return json({error:"Security verification required"},400);
+      const turnstileOk = await verifyTurnstile(turnstileToken, turnstileSecret, "www.vspapp.online");
+      if(!turnstileOk) return json({error:"Security verification failed"},403);
+    }
 
     const {data:plan,error:planError}=await supabase
       .from("subscription_plans")
