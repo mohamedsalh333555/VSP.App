@@ -129,6 +129,7 @@ abstract final class VSPDSizes {
   static const double statusIcon = 14.0;
   static const double textButtonMinHeight = 44.0;
   static const double buttonProgress = 22.0;
+  static const double progressStroke = 2.0;
   static const double navigationItemHeight = 58.0;
   static const double navigationIcon = 23.0;
   static const double notificationDot = 8.0;
