@@ -134,7 +134,7 @@ serve(async (req: Request) => {
     }
 
     // 🔒 3. Verify HMAC Secret exists in Server Environment
-    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET");
+    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET") || Deno.env.get("PAYMOB_HMAC");
     if (!hmacSecret) {
       console.error("🚨 CRITICAL: PAYMOB_HMAC_SECRET environment variable is missing on server!");
       try {
@@ -180,7 +180,14 @@ serve(async (req: Request) => {
 
     // 🔒 5. Compute & verify HMAC signature
     const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
-    const isHmacValid = calculatedHmac.toLowerCase() === receivedHmac.toLowerCase();
+    const received = receivedHmac.toLowerCase();
+    const calculated = calculatedHmac.toLowerCase();
+    let diff = received.length ^ calculated.length;
+    const maxLen = Math.max(received.length, calculated.length);
+    for (let i = 0; i < maxLen; i++) {
+      diff |= (received.charCodeAt(i) || 0) ^ (calculated.charCodeAt(i) || 0);
+    }
+    const isHmacValid = diff === 0;
 
     if (!isHmacValid) {
       console.error("❌ Paymob Webhook HMAC Verification Failed! Signatures do not match.");
@@ -296,6 +303,38 @@ serve(async (req: Request) => {
         paidCents,
       };
     };
+
+    // Owner subscription payments: activate only after verified Paymob success and exact gross amount.
+    if (specialReference.startsWith("OWNER_SUB_")) {
+      if (!isSuccess) {
+        return new Response(JSON.stringify({ status: "processed", type: "owner_subscription", success: false }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+      const subscriptionOrderId = specialReference.substring("OWNER_SUB_".length);
+      const { data: subscriptionOrder, error: subscriptionOrderError } = await supabase
+        .from("owner_subscription_orders")
+        .select("id, owner_id, amount, status, paymob_order_id")
+        .eq("id", subscriptionOrderId)
+        .maybeSingle();
+      if (subscriptionOrderError || !subscriptionOrder) {
+        return new Response(JSON.stringify({ error: "Subscription payment order not found" }), { status: 404, headers: { "Content-Type": "application/json" } });
+      }
+      if (subscriptionOrder.paymob_order_id && String(subscriptionOrder.paymob_order_id) !== String(orderId)) {
+        return new Response(JSON.stringify({ error: "Invalid subscription payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      }
+      const actualGross = Math.round(Number(obj.amount_cents || 0)) / 100;
+      if (Math.abs(actualGross - Number(subscriptionOrder.amount || 0)) > 0.01) {
+        return new Response(JSON.stringify({ error: "Invalid subscription payment amount" }), { status: 400, headers: { "Content-Type": "application/json" } });
+      }
+      const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_owner_subscription_payment", {
+        p_order_id: subscriptionOrder.id,
+        p_paymob_transaction_id: transactionId,
+        p_gross_amount: actualGross,
+      });
+      if (confirmError || confirmResult?.success !== true) {
+        return new Response(JSON.stringify({ error: "Owner subscription payment confirmation failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ status: "processed", type: "owner_subscription", success: true }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
 
     // Team league payments: verify the server-created order, then atomically mark the team paid.
     if (specialReference.startsWith("LEAGUE_")) {
