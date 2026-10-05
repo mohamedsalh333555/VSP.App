@@ -312,7 +312,7 @@ serve(async (req: Request) => {
       const subscriptionOrderId = specialReference.substring("OWNER_SUB_".length);
       const { data: subscriptionOrder, error: subscriptionOrderError } = await supabase
         .from("owner_subscription_orders")
-        .select("id, owner_id, amount, status, paymob_order_id")
+        .select("id, owner_id, amount, gross_amount, status, paymob_order_id")
         .eq("id", subscriptionOrderId)
         .maybeSingle();
       if (subscriptionOrderError || !subscriptionOrder) {
@@ -322,7 +322,8 @@ serve(async (req: Request) => {
         return new Response(JSON.stringify({ error: "Invalid subscription payment order correlation" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
       const actualGross = Math.round(Number(obj.amount_cents || 0)) / 100;
-      if (Math.abs(actualGross - Number(subscriptionOrder.amount || 0)) > 0.01) {
+      const expectedGross = Number(subscriptionOrder.gross_amount ?? subscriptionOrder.amount ?? 0);
+      if (Math.abs(actualGross - expectedGross) > 0.01) {
         return new Response(JSON.stringify({ error: "Invalid subscription payment amount" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
       const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_owner_subscription_payment", {
