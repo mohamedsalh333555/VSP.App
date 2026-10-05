@@ -17,7 +17,8 @@ import '../widgets/chat/chat_dialogs.dart';
 import '../widgets/chat/chat_call_utils.dart';
 
 class ChatScreen extends StatefulWidget {
-  String? get activeBookingId => booking?.id;
+  static String? _activeBookingId;
+  static String? get activeBookingId => _activeBookingId;
   final Booking? booking;
   final String? conversationId;
   final String? conversationTitle;
@@ -100,6 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    ChatScreen._activeBookingId = widget.booking?.id;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final id = context.read<AuthProvider>().currentUser?.id;
       if (id == null) return;
@@ -110,6 +112,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    if (ChatScreen._activeBookingId == widget.booking?.id) {
+      ChatScreen._activeBookingId = null;
+    }
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
