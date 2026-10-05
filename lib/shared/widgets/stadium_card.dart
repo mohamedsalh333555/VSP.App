@@ -267,7 +267,10 @@ class StadiumCard extends StatelessWidget {
  final hasCafe = featuresList.any((f) => f.toLowerCase().contains('cafe'));
  final hasGarage = featuresList.any((f) => f.toLowerCase().contains('garage'));
  
- return Row(
+ return Wrap(
+ spacing: 10,
+ runSpacing: 4,
+ crossAxisAlignment: WrapCrossAlignment.center,
  children: [
  if (hasBaths) ...[
  const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
