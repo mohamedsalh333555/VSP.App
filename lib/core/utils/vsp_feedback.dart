@@ -6,10 +6,10 @@ import '../ui/tokens/vsp_design_tokens.dart';
 class VSPFeedback {
 
  // ─── نظام الألوان الموحد للتنبيهات اللحظية ───
- // أخضر = نجاح (VSPColors.accent)
- // أحمر = خطأ (VSPColors.error)
- // برتقالي = تحذير (VSPColors.warning / Orange)
- // أبيض = معلومة (Colors.white / textPrimary)
+ // أخضر = نجاح (VSPDSSemanticColors.accent)
+ // أحمر = خطأ (VSPDSSemanticColors.error)
+ // برتقالي = تحذير (VSPDSSemanticColors.warning / Orange)
+ // أبيض = معلومة (VSPDSColors.white / textPrimary)
 
  /// نجاح
  static void showSuccess(BuildContext context, String message) {
@@ -17,7 +17,7 @@ class VSPFeedback {
  _showOverlayToast(
  context: context,
  message: message,
- backgroundColor: VSPColors.accent,
+ backgroundColor: VSPDSSemanticColors.accent,
  textColor: VSPDSColors.black,
  icon: Iconsax.tick_circle_copy,
  );
@@ -30,8 +30,8 @@ class VSPFeedback {
  _showOverlayToast(
  context: context,
  message: message,
- backgroundColor: VSPColors.error,
- textColor: VSPDSColors.white,
+ backgroundColor: VSPDSSemanticColors.error,
+ textColor: VSPDSVSPDSColors.white,
  icon: Iconsax.warning_2_copy,
  );
  }
@@ -42,8 +42,8 @@ class VSPFeedback {
  _showOverlayToast(
  context: context,
  message: message,
- backgroundColor: VSPColors.warning,
- textColor: Colors.white,
+ backgroundColor: VSPDSSemanticColors.warning,
+ textColor: VSPDSColors.white,
  icon: Iconsax.warning_2_copy,
  );
  }
@@ -53,8 +53,8 @@ class VSPFeedback {
  _showOverlayToast(
  context: context,
  message: message,
- backgroundColor: VSPColors.surface,
- textColor: Colors.white,
+ backgroundColor: VSPDSSemanticColors.surface,
+ textColor: VSPDSColors.white,
  icon: Iconsax.info_circle_copy,
  );
  }
