@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
+import '../../../core/repositories/report_repository.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
@@ -22,6 +23,66 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       case BookingType.challenge: return ar ? 'تحدي' : 'Challenge';
       case BookingType.matchup: return ar ? 'مواجهة' : 'Matchup';
       case BookingType.openJoin: return ar ? 'مباراة تجميعية' : 'Open Join';
+    }
+  }
+
+  Future<void> _reportOwnerIssue(BuildContext context) async {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final reasonController = TextEditingController();
+    final detailsController = TextEditingController();
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: Text(ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              ar ? 'سيتم ربط البلاغ بهذا الحجز لإتاحة المراجعة الإدارية.' : 'The report will be linked to this booking for administrative review.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: VSPSpacing.md),
+            TextField(controller: reasonController, decoration: InputDecoration(hintText: ar ? 'سبب البلاغ' : 'Reason')),
+            const SizedBox(height: VSPSpacing.sm),
+            TextField(controller: detailsController, maxLines: 3, decoration: InputDecoration(hintText: ar ? 'تفاصيل إضافية (اختياري)' : 'Additional details (optional)')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ar ? 'إلغاء' : 'Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, reasonController.text.trim().isNotEmpty),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+            child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
+          ),
+        ],
+      ),
+    );
+    final reason = reasonController.text.trim();
+    final details = detailsController.text.trim();
+    reasonController.dispose();
+    detailsController.dispose();
+    if (submitted != true || reason.isEmpty || !context.mounted) return;
+
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (uid == null || booking.ownerId.isEmpty) return;
+    final ok = await ReportRepository().reportEntity(
+      reporterId: uid,
+      targetId: booking.ownerId,
+      targetType: 'user',
+      reason: reason,
+      details: details.isEmpty ? null : details,
+      contextType: 'booking',
+      contextId: booking.id,
+      bookingId: booking.id,
+    );
+    if (context.mounted) {
+      VSPFeedback.showSuccess(
+        context,
+        ok
+            ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
+            : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
+      );
     }
   }
 
@@ -97,6 +158,16 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
             icon: const Icon(Iconsax.message_copy, color: Colors.black),
             label: Text(ar ? 'المحادثة المرتبطة بالحجز' : 'Chat with the related participant'),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+          ),
+          const SizedBox(height: VSPSpacing.sm),
+          OutlinedButton.icon(
+            onPressed: () => _reportOwnerIssue(context),
+            icon: const Icon(Iconsax.flag_copy, color: VSPColors.warning),
+            label: Text(ar ? 'الإبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: VSPColors.warning,
+              side: const BorderSide(color: VSPColors.warning),
+            ),
           ),
         ],
       ),
