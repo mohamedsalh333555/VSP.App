@@ -4,6 +4,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_launcher_utils.dart';
+import '../../../../core/services/support_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../core/repositories/chat_repository.dart';
 import '../../../../core/services/sharing_service.dart';
@@ -497,40 +498,22 @@ class PlayerBookingCard extends StatelessWidget {
 
   Widget _buildContactSupportRefundBadge(BuildContext context, bool isArabic) {
     return GestureDetector(
-      onTap: () {
-        final cleanRef = booking.id.length >= 8
-            ? booking.id.substring(0, 8).toUpperCase()
-            : booking.id.toUpperCase();
-        final msg = isArabic
-            ? 'مرحباً فريق دعم VSP، قمت بسداد حجز رقم #$cleanRef في ${booking.stadiumName} وتم إلغاء الحجز، وأحتاج المساعدة للتحقق من استرداد المبلغ.'
-            : 'Hello VSP Support, I paid for booking #$cleanRef at ${booking.stadiumName} and the booking was cancelled. Please help verify my refund.';
-        VSPLauncherUtils.openWhatsApp(context, phone: '201100229462', message: msg);
-      },
+      onTap: () => SupportService().openSupport(context, category: 'refund', booking: booking),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: VSPColors.warning.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(VSPRadius.full),
-          border: Border.all(
-            color: VSPColors.warning.withValues(alpha: 0.45),
-          ),
+          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.45)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Iconsax.message_question_copy,
-              size: 13,
-              color: VSPColors.warning,
-            ),
+            const Icon(Iconsax.message_question_copy, size: 13, color: VSPColors.warning),
             const SizedBox(width: 5),
             Text(
-              isArabic ? 'تواصل معنا لاسترداد مبلغك' : 'Contact us for refund',
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: VSPColors.warning,
-              ),
+              isArabic ? 'فتح تذكرة لاسترداد المبلغ' : 'Open refund support ticket',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: VSPColors.warning),
             ),
           ],
         ),
