@@ -368,7 +368,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           const SizedBox(height: 14),
           ...[
             isArabic ? 'تشغيل وإدارة حتى 3 ملاعب (3 Stadiums)' : 'Operate up to 3 stadiums',
-            isArabic ? 'ذكاء تحصيل: كاش مستحق وأونلاين معلّق' : 'Collection intelligence: cash due & pending online',
+            isArabic ? 'ذكاء تحصيل: كاش غير محصل وأونلاين غير محصل' : 'Collection intelligence: cash not collected & online not collected',
             isArabic ? 'ذكاء اصطناعي VSP Copilot وقرارات تشغيلية' : 'VSP Copilot and operational decisions',
             isArabic ? 'تقارير إكسل ومقارنة أداء الملاعب' : 'Excel reports & stadium performance comparisons',
             isArabic ? 'أولوية ظهور الملاعب في نتائج البحث' : 'Priority visibility in search results',
