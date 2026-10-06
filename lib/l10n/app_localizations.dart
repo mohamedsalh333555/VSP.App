@@ -4601,7 +4601,7 @@ abstract class AppLocalizations {
   /// No description provided for @ownerFaq5_a.
   ///
   /// In en, this message translates to:
-  /// **'Basic is the free owner plan. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.'**
+  /// **'Free lets you manage one stadium. Pro adds higher stadium capacity, advanced operations, and VSP Copilot.'**
   String get ownerFaq5_a;
 
   /// No description provided for @ownerFaq6_q.
