@@ -27,6 +27,8 @@ class PublicMatchCardFormatter {
         return isArabic ? 'تحدي' : 'CHALLENGE';
       case BookingType.matchup:
         return isArabic ? 'مواجهات' : 'MATCHUP';
+      case BookingType.maintenance:
+        return isArabic ? 'صيانة' : 'MAINTENANCE';
     }
   }
 
