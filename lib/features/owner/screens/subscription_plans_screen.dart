@@ -303,7 +303,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
+                isArabic ? 'Pro' : 'Pro',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w900,
