@@ -367,7 +367,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
     setState(() => _isSaving = true);
-    final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+    final parentContext = widget.parentContext;
+    final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
+    final navigator = Navigator.of(context);
     try {
       final result = await OwnerRepository().lockSlotForMaintenance(
         ownerId: ownerId,
@@ -383,14 +385,13 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
       await bookingProvider.loadOwnerBookings(ownerId, forceRefresh: true);
 
-      if (mounted) {
-        Navigator.pop(context);
-        if (widget.parentContext.mounted) {
-          VSPFeedback.showSuccess(
-            widget.parentContext,
-            isArabic ? 'تم قفل الفترة للصيانة.' : 'Slot locked for maintenance.',
-          );
-        }
+      if (!mounted) return;
+      navigator.pop();
+      if (parentContext.mounted) {
+        VSPFeedback.showSuccess(
+          parentContext,
+          isArabic ? 'تم قفل الفترة للصيانة.' : 'Slot locked for maintenance.',
+        );
       }
     } catch (e) {
       if (mounted) {
