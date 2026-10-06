@@ -77,11 +77,12 @@ class UserModel {
       trialEndsAt != null &&
       DateTime.now().isBefore(trialEndsAt!);
 
+  /// Paid Pro entitlement only. Free owners keep core operations without this flag.
   bool get hasActiveSubscription =>
-      role == 'owner' ||
-      isInActiveTrial ||
-      (subscriptionExpiresAt != null &&
-       DateTime.now().isBefore(subscriptionExpiresAt!));
+      isOwner &&
+      subscriptionPlan == 'pro' &&
+      subscriptionExpiresAt != null &&
+      DateTime.now().isBefore(subscriptionExpiresAt!);
 
   /// مهلة سماح 3 أيام بعد انتهاء تجربة Pro أو الاشتراك لضمان استقرار التشغيل وعدم تعطيل المباريات
   bool get isInGracePeriod {
