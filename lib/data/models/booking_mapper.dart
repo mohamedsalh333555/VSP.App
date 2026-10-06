@@ -135,7 +135,11 @@ class BookingMapper {
           data['paymentTransactionId'] ?? data['payment_transaction_id'],
       status: () {
         if (statusVal == 'upcoming') return BookingStatus.confirmed;
-        final matched = BookingStatus.values.where((e) => e.name == statusVal);
+        final normalizedStatus = statusVal?.toString().toLowerCase().trim().replaceAll('-', '_');
+        if (normalizedStatus == 'no_show' || normalizedStatus == 'noshow') {
+          return BookingStatus.noShow;
+        }
+        final matched = BookingStatus.values.where((e) => e.name == normalizedStatus);
         if (matched.isNotEmpty) {
           return matched.first;
         }
