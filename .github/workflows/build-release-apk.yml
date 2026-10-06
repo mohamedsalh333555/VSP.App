@@ -1,0 +1,107 @@
+name: Build Android Release APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-release-apk:
+    name: Build VSP Release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare Firebase Android config
+        run: |
+          mkdir -p android/app
+          cat > android/app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "860837572098",
+              "project_id": "vsp-app-103b1",
+              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+                "android_client_info": {
+                  "package_name": "app.vsp.sports"
+                }
+              },
+              "api_key": [{
+                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
+              }]
+            }]
+          }
+          EOF
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate localizations
+        run: flutter gen-l10n
+
+      - name: Prepare production signing
+        shell: bash
+        run: |
+          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" || { echo "Missing ANDROID_KEYSTORE_BASE64"; exit 1; }
+          test -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" || { echo "Missing ANDROID_KEYSTORE_PASSWORD"; exit 1; }
+          test -n "${{ secrets.ANDROID_KEY_PASSWORD }}" || { echo "Missing ANDROID_KEY_PASSWORD"; exit 1; }
+          test -n "${{ secrets.ANDROID_KEY_ALIAS }}" || { echo "Missing ANDROID_KEY_ALIAS"; exit 1; }
+
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "${{ runner.temp }}/vsp-release-key.jks"
+
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=${{ runner.temp }}/vsp-release-key.jks
+          EOF
+
+      - name: Build Android Release APK
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
+            --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
+            --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
+            --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
+
+      - name: Locate generated APK
+        run: |
+          find build/app/outputs -type f -name "*.apk" -print
+          test -n "$(find build/app/outputs -type f -name "*.apk" -print -quit)"
+
+      - name: Upload VSP Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsp_app_release
+          path: |
+            build/app/outputs/**/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean sensitive signing files
+        if: always()
+        run: |
+          rm -f android/key.properties
+          rm -f "${{ runner.temp }}/vsp-release-key.jks"
