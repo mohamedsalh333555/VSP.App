@@ -58,7 +58,7 @@ class BookingCategorizationService {
     }).toList();
 
     final history = bookings.where((b) {
-      if (b.status == BookingStatus.completed) return true;
+      if (b.status == BookingStatus.completed || b.status == BookingStatus.noShow) return true;
       if (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)) return true;
       if (b.status == BookingStatus.pending && b.endTime.isBefore(now)) return true;
       if (b.status == BookingStatus.cancelled) {
