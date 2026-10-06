@@ -37,6 +37,8 @@ class BookingCreationCoordinator {
       case BookingType.matchup:
       case BookingType.personal:
         return 'personal';
+      case BookingType.maintenance:
+        throw StateError('Maintenance slots cannot be created through the player booking coordinator.');
     }
   }
 
