@@ -12,13 +12,13 @@ void main() {
         email: 'owner@test.com',
         role: 'owner',
         createdAt: now,
-        subscriptionPlan: 'basic',
+        subscriptionPlan: 'free',
         trialEndsAt: now.add(const Duration(days: 7)),
       );
 
       expect(user.isInActiveTrial, isTrue);
       expect(user.isProPlan, isTrue); // Pro entitlement during trial
-      expect(user.hasActiveSubscription, isTrue);
+      expect(user.hasActiveSubscription, isFalse); // Trial entitlement is separate from paid subscription expiry.
       expect(user.isPlanExpired, isFalse);
       expect(user.maxStadiums, equals(3)); // Unlocks 3 stadiums during trial
 
@@ -27,16 +27,16 @@ void main() {
       expect(diff, inInclusiveRange(6, 8));
     });
 
-    test('Basic subscription owner allows exactly 1 stadium and is perpetual free', () {
+    test('Free owner allows exactly 1 stadium and is perpetual free', () {
       final user = UserModel(
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
-        subscriptionPlan: 'basic',
-        subscriptionExpiresAt: null, // Basic is perpetual free (no expiry)
+        subscriptionPlan: 'free',
+        subscriptionExpiresAt: null, // Free is perpetual free (no expiry)
       );
 
-      expect(user.isBasicOrHigher, isTrue);
+      expect(user.isFreeOrHigher, isTrue);
       expect(user.isProPlan, isFalse);
       expect(user.hasActiveSubscription, isTrue);
       expect(user.isPlanExpired, isFalse);
@@ -62,17 +62,17 @@ void main() {
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 3), isFalse);
     });
 
-    test('Expired Pro owner automatically downgrades to Basic Free (1 stadium capacity, perpetual)', () {
+    test('Expired Pro owner automatically downgrades to Free (1 stadium capacity, perpetual)', () {
       final pastDate = DateTime.now().subtract(const Duration(days: 30));
       final user = UserModel(
         uid: 'owner-expired-pro',
         email: 'expired@test.com',
         role: 'owner',
-        subscriptionPlan: 'basic', // Downgraded to basic free tier
+        subscriptionPlan: 'free', // Downgraded to free tier
         subscriptionExpiresAt: null,
       );
 
-      expect(user.hasActiveSubscription, isTrue);
+      expect(user.hasActiveSubscription, isFalse);
       expect(user.isPlanExpired, isFalse);
       expect(user.isProPlan, isFalse);
       expect(user.maxStadiums, equals(1));
@@ -82,12 +82,12 @@ void main() {
   });
 
   group('Owner Journey SSOT - Stadium Reactivation Limit Invariants', () {
-    test('Basic owner with 1 active stadium cannot reactivate another soft-deleted stadium', () {
+    test('Free owner with 1 active stadium cannot reactivate another soft-deleted stadium', () {
       final user = UserModel(
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
-        subscriptionPlan: 'basic',
+        subscriptionPlan: 'free',
         subscriptionExpiresAt: null,
       );
 
@@ -122,7 +122,7 @@ void main() {
         uid: 'owner-basic',
         email: 'basic@test.com',
         role: 'owner',
-        subscriptionPlan: 'basic',
+        subscriptionPlan: 'free',
         subscriptionExpiresAt: null,
       );
 
@@ -348,7 +348,7 @@ void main() {
 
     test('public.subscription_plans schema columns verify accurately for commercial lock', () {
       final basicPlanRow = {
-        'code': 'basic',
+        'code': 'free',
         'trial_days': 0,
         'monthly_price': 0.0,
         'yearly_price': 0.0,
@@ -431,7 +431,7 @@ void main() {
     }
 
     test('Pro trial duration is strictly 7 days', () {
-      final plans = {'basic': 0, 'pro': 7};
+      final plans = {'free': 0, 'pro': 7};
       expect(resolveTrialDaysStrict(activePlans: plans), equals(7));
     });
 
@@ -659,7 +659,7 @@ void main() {
   });
 
   group('Owner Journey SSOT - Subscription Downgrade & Expiration Invariants', () {
-    test('Expired Pro owner downgrades to basic free perpetual plan', () {
+    test('Expired Pro owner downgrades to free perpetual plan', () {
       final now = DateTime(2026, 10, 1, 12, 0);
       final trialEndsAt = now.subtract(const Duration(days: 60)); // expired long ago
       final subExpiresAt = now.subtract(const Duration(days: 1)); // pro expired yesterday
@@ -672,7 +672,7 @@ void main() {
         if (trialEndsAt != null && trialEndsAt.isAfter(now)) {
           return 'basic'; // Still in 7-day trial with Pro benefits
         }
-        return 'basic'; // Automatic perpetual free basic plan
+        return 'basic'; // Automatic perpetual free free plan
       }
 
       final plan = computeDowngradedPlan(
@@ -681,7 +681,7 @@ void main() {
         subExpiresAt: subExpiresAt,
       );
 
-      expect(plan, equals('basic'), reason: 'Expired Pro account reverts to basic free plan');
+      expect(plan, equals('basic'), reason: 'Expired Pro account reverts to free plan');
     });
   });
 
