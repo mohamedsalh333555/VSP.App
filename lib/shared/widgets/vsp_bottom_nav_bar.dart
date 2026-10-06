@@ -19,8 +19,10 @@ class VspNavItem {
 
 /// Canonical VSP bottom navigation.
 ///
-/// Selected/unselected icon variants and notification semantics are preserved;
-/// only visual values are bound to Design System V2.
+/// Navigation visual contract:
+/// - selected item: bold/filled active glyph, accent color, stronger scale and bold label;
+/// - unselected item: outline/inactive glyph, secondary color and regular label.
+/// Call sites must provide the matching active/inactive Iconsax variants.
 class VspBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
