@@ -227,7 +227,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             isArabic ? 'تشغيل وإدارة ملعب واحد (1 Stadium)' : 'Operate & manage 1 stadium',
             isArabic ? 'إدارة الحجوزات النقدية والإلكترونية' : 'Manage cash & online bookings',
             isArabic ? 'إدارة الورديات وتعيين المواعيد' : 'Shift management & slot scheduling',
-            isArabic ? 'حماية من عدم الحضور وسجل حساب للملعب' : 'No-show protection & financial ledger',
+            isArabic ? 'حماية من عدم الحضور وسجل حجوزات أساسي' : 'No-show protection & basic booking ledger',
             isArabic ? 'دعم فني قياسي' : 'Standard customer support',
           ].map(
             (feature) => Padding(
@@ -368,6 +368,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           const SizedBox(height: 14),
           ...[
             isArabic ? 'تشغيل وإدارة حتى 3 ملاعب (3 Stadiums)' : 'Operate up to 3 stadiums',
+            isArabic ? 'ذكاء تحصيل: كاش مستحق وأونلاين معلّق' : 'Collection intelligence: cash due & pending online',
             isArabic ? 'ذكاء اصطناعي VSP Copilot وقرارات تشغيلية' : 'VSP Copilot and operational decisions',
             isArabic ? 'تقارير إكسل ومقارنة أداء الملاعب' : 'Excel reports & stadium performance comparisons',
             isArabic ? 'أولوية ظهور الملاعب في نتائج البحث' : 'Priority visibility in search results',
