@@ -522,7 +522,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     customerNameLabel: l10n.customerName,
                     internalNotesLabel: l10n.internalNotes,
                     collectedAmountController: _collectedAmountController,
-                    showCollectedAmount: !flags.isOwnerManual,
+                    showCollectedAmount: flags.isOwnerManual,
                   ),
                   if (!flags.isOwnerManual && booking != null && booking.depositPaid > 0 && booking.depositPaid < booking.totalPrice) ...[
                     const SizedBox(height: 14),
