@@ -820,6 +820,7 @@ void main() {
                 paymentState == 'partially_paid' ||
                 paymentState == 'fully_paid';
           case BookingStatus.completed:
+          case BookingStatus.noShow:
             return paymentState == 'unpaid' ||
                 paymentState == 'partially_paid' ||
                 paymentState == 'fully_paid';
