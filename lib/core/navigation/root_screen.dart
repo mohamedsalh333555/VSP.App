@@ -142,9 +142,13 @@ class _RootScreenState extends State<RootScreen> {
  return const MaintenanceScreen();
  }
 
- // The timeout flag is meaningful only when the authenticated profile never loaded.
- if (auth.isAuthenticated && auth.userModel == null && _loadingTimedOut) {
-   return const OfflineErrorScreen();
+ // Never choose the Player shell until the authenticated profile has resolved; this prevents an owner/player flicker.
+ if (auth.isAuthenticated && auth.userModel == null) {
+   if (_loadingTimedOut) return const OfflineErrorScreen();
+   return const VSPScaffold(
+     backgroundColor: VSPColors.background,
+     body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+   );
  }
 
  // Reactive Deep Link recovery safety net
@@ -187,15 +191,17 @@ class MaintenanceScreen extends StatelessWidget {
  const Icon(Iconsax.setting_2_copy, size: 80, color: VSPColors.accent),
  const SizedBox(height: VSPSpacing.xl),
  Text(
- 'We’ll be back soon!',
+ isArabic ? 'سنعود قريباً!' : 'We’ll be back soon!',
  style: Theme.of(context).textTheme.displaySmall,
  textAlign: TextAlign.center,
  ),
  const SizedBox(height: VSPSpacing.md),
- const Text(
- 'VSP is currently undergoing scheduled maintenance to improve your experience. We apologize for the inconvenience.',
+ Text(
+ isArabic
+     ? 'تجري حالياً صيانة مجدولة لتحسين تجربة الاستخدام. نعتذر عن الإزعاج.'
+     : 'VSP is currently undergoing scheduled maintenance to improve your experience. We apologize for the inconvenience.',
  textAlign: TextAlign.center,
- style: TextStyle(color: VSPColors.textSecondary),
+ style: const TextStyle(color: VSPColors.textSecondary),
  ),
  const SizedBox(height: VSPSpacing.xl),
  CircularProgressIndicator(color: VSPColors.accent.withValues(alpha: 0.5)),
