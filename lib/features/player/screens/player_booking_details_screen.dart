@@ -23,6 +23,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       case BookingType.challenge: return ar ? 'تحدي' : 'Challenge';
       case BookingType.matchup: return ar ? 'مواجهة' : 'Matchup';
       case BookingType.openJoin: return ar ? 'مباراة تجميعية' : 'Open Join';
+      case BookingType.maintenance: return ar ? 'صيانة' : 'Maintenance';
     }
   }
 
