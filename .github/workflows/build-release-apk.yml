@@ -5,9 +5,6 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
-
 jobs:
   build-release-apk:
     name: Build VSP Release APK
@@ -62,31 +59,19 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Prepare production signing
+      - name: Create temporary CI release keystore
         shell: bash
         run: |
-          test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" || { echo "Missing ANDROID_KEYSTORE_BASE64"; exit 1; }
-          test -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" || { echo "Missing ANDROID_KEYSTORE_PASSWORD"; exit 1; }
-          test -n "${{ secrets.ANDROID_KEY_PASSWORD }}" || { echo "Missing ANDROID_KEY_PASSWORD"; exit 1; }
-          test -n "${{ secrets.ANDROID_KEY_ALIAS }}" || { echo "Missing ANDROID_KEY_ALIAS"; exit 1; }
-
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "${{ runner.temp }}/vsp-release-key.jks"
-
+          keytool -genkeypair -v             -keystore "${{ runner.temp }}/vsp-ci-release.jks"             -storepass "vsp-ci-test"             -keypass "vsp-ci-test"             -alias "vsp-key"             -keyalg RSA             -keysize 2048             -validity 3650             -dname "CN=VSP CI Test, OU=VSP, O=VSP, L=Aswan, ST=Aswan, C=EG"
           cat > android/key.properties <<EOF
-          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=${{ runner.temp }}/vsp-release-key.jks
+          storePassword=vsp-ci-test
+          keyPassword=vsp-ci-test
+          keyAlias=vsp-key
+          storeFile=${{ runner.temp }}/vsp-ci-release.jks
           EOF
 
       - name: Build Android Release APK
-        run: |
-          flutter build apk --release \
-            --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" \
-            --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-            --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
-            --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
-            --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
+        run: flutter build apk --release
 
       - name: Locate generated APK
         run: |
@@ -97,13 +82,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vsp_app_release
-          path: |
-            build/app/outputs/**/*.apk
+          path: build/app/outputs/**/*.apk
           if-no-files-found: error
           retention-days: 30
 
-      - name: Clean sensitive signing files
+      - name: Clean CI signing files
         if: always()
+        shell: bash
         run: |
           rm -f android/key.properties
-          rm -f "${{ runner.temp }}/vsp-release-key.jks"
+          rm -f "${{ runner.temp }}/vsp-ci-release.jks"
