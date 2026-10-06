@@ -305,10 +305,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
   if (isHost)
   _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
-  else if (isEnded)
-  _buildStatusBadge(isArabic ? 'انتهت' : 'Ended', VSPColors.textSecondary)
   else if (isCancelled)
   _buildStatusBadge(isArabic ? 'ملغاة' : 'Cancelled', VSPColors.error)
+  else if (isEnded)
+  _buildStatusBadge(isArabic ? 'انتهت' : 'Ended', VSPColors.textSecondary)
   else if (hasJoined)
   _buildStatusBadge(AppLocalizations.of(context)!.joined, VSPColors.info)
   else if (isPending)
