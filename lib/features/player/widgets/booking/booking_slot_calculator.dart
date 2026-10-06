@@ -82,15 +82,9 @@ class BookingSlotCalculator {
 
       return slots;
     } catch (_) {
-      return List.generate(8, (i) {
-        final m = (14 + i) * 60;
-        return TimeSlotItem(
-          startTime: _formatMinutesToTime(m, isArabic),
-          endTime: _formatMinutesToTime(m + 30, isArabic),
-          key: _formatMinutesToTime(m, false),
-          startMinutes: m,
-        );
-      });
+      // Never fabricate booking times when stadium operating-hour data is invalid.
+      // An empty schedule is safer than offering impossible slots.
+      return const <TimeSlotItem>[];
     }
   }
 
