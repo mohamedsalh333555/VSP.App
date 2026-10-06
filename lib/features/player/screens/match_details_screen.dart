@@ -552,6 +552,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  statusColor = VSPColors.textSecondary;
  statusIcon = Iconsax.tick_circle_copy;
  break;
+ case BookingStatus.noShow:
+ statusLabel = isAr ? 'لم يحضر' : 'No-show';
+ statusColor = VSPColors.error;
+ statusIcon = Iconsax.close_circle_copy;
+ break;
  case BookingStatus.cancelled:
  statusLabel = isAr ? 'ملغاة' : 'Cancelled';
  statusColor = VSPColors.error;
