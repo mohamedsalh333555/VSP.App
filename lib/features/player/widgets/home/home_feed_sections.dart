@@ -173,7 +173,9 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
                               Icon(Iconsax.cup_copy, size: 40, color: VSPColors.textSecondary.withValues(alpha: 0.4)),
                               const SizedBox(height: 10),
                               Text(
-                                'لا توجد مباريات مفتوحة حالياً',
+                                Localizations.localeOf(context).languageCode == 'ar'
+                                    ? 'لا توجد مباريات مفتوحة حالياً'
+                                    : 'No open matches right now',
                                 style: TextStyle(
                                   color: VSPColors.textSecondary.withValues(alpha: 0.7),
                                   fontSize: 14,
@@ -181,7 +183,9 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'احجز ملعبك وافتح مباراة للجميع!',
+                                Localizations.localeOf(context).languageCode == 'ar'
+                                    ? 'احجز ملعبك وافتح مباراة للجميع!'
+                                    : 'Book a pitch and open a match for everyone!',
                                 style: TextStyle(
                                   color: VSPColors.textSecondary.withValues(alpha: 0.45),
                                   fontSize: 12,
