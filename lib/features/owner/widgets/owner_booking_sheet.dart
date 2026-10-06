@@ -367,6 +367,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
     setState(() => _isSaving = true);
+    final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
     try {
       final result = await OwnerRepository().lockSlotForMaintenance(
         ownerId: ownerId,
@@ -380,8 +381,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         throw Exception(result['error']?.toString() ?? 'Failed to lock slot');
       }
 
-      await Provider.of<BookingProvider>(widget.parentContext, listen: false)
-          .loadOwnerBookings(ownerId, forceRefresh: true);
+      await bookingProvider.loadOwnerBookings(ownerId, forceRefresh: true);
 
       if (mounted) {
         Navigator.pop(context);
