@@ -29,8 +29,8 @@ void main() {
 
     test('Free owner allows exactly 1 stadium and is perpetual free', () {
       final user = UserModel(
-        uid: 'owner-basic',
-        email: 'basic@test.com',
+        uid: 'owner-free',
+        email: 'free@test.com',
         role: 'owner',
         subscriptionPlan: 'free',
         subscriptionExpiresAt: null, // Free is perpetual free (no expiry)
@@ -84,8 +84,8 @@ void main() {
   group('Owner Journey SSOT - Stadium Reactivation Limit Invariants', () {
     test('Free owner with 1 active stadium cannot reactivate another soft-deleted stadium', () {
       final user = UserModel(
-        uid: 'owner-basic',
-        email: 'basic@test.com',
+        uid: 'owner-free',
+        email: 'free@test.com',
         role: 'owner',
         subscriptionPlan: 'free',
         subscriptionExpiresAt: null,
@@ -119,8 +119,8 @@ void main() {
 
     test('Reactivation succeeds when active stadium count is below allowed limit', () {
       final user = UserModel(
-        uid: 'owner-basic',
-        email: 'basic@test.com',
+        uid: 'owner-free',
+        email: 'free@test.com',
         role: 'owner',
         subscriptionPlan: 'free',
         subscriptionExpiresAt: null,
@@ -347,7 +347,7 @@ void main() {
     });
 
     test('public.subscription_plans schema columns verify accurately for commercial lock', () {
-      final basicPlanRow = {
+      final freePlanRow = {
         'code': 'free',
         'trial_days': 0,
         'monthly_price': 0.0,
@@ -365,9 +365,9 @@ void main() {
         'is_active': true,
       };
 
-      expect(basicPlanRow['trial_days'], equals(0));
-      expect(basicPlanRow['monthly_price'], equals(0.0));
-      expect(basicPlanRow['max_stadiums'], equals(1));
+      expect(freePlanRow['trial_days'], equals(0));
+      expect(freePlanRow['monthly_price'], equals(0.0));
+      expect(freePlanRow['max_stadiums'], equals(1));
 
       expect(proPlanRow['trial_days'], equals(7));
       expect(proPlanRow['monthly_price'], equals(1000.0));
@@ -670,9 +670,9 @@ void main() {
         required DateTime subExpiresAt,
       }) {
         if (trialEndsAt != null && trialEndsAt.isAfter(now)) {
-          return 'basic'; // Still in 7-day trial with Pro benefits
+          return 'free'; // Still in 7-day trial with Pro benefits
         }
-        return 'basic'; // Automatic perpetual free free plan
+        return 'free'; // Automatic perpetual free free plan
       }
 
       final plan = computeDowngradedPlan(
@@ -681,7 +681,7 @@ void main() {
         subExpiresAt: subExpiresAt,
       );
 
-      expect(plan, equals('basic'), reason: 'Expired Pro account reverts to free plan');
+      expect(plan, equals('free'), reason: 'Expired Pro account reverts to free plan');
     });
   });
 
