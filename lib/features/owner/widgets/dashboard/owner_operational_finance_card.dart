@@ -443,8 +443,8 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       ? 'فيه فلوس محتاجة متابعة. اشترك في Pro عشان تشوف القيمة والتفاصيل والإجراء المطلوب.'
                       : 'Money needs attention. Subscribe to Pro to see the amounts, details, and required action.')
                   : (isArabic
-                      ? 'مع Pro هتعرف الفلوس المستحقة عليك/لك فوراً بدل ما تكتشفها متأخر.'
-                      : 'With Pro, you can see collection gaps immediately instead of discovering them late.'),
+                      ? 'مع Pro هتعرف الفلوس اللي لسه ما اتحصلتش وقيمتها فوراً بدل ما تكتشفها متأخر.'
+                      : 'With Pro, you can see money not collected yet and its value immediately instead of discovering it late.'),
               style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontSize: 10.5,
