@@ -4,6 +4,7 @@ enum BookingStatus {
   confirmed, // After successful payment, before match starts
   upcoming, // Same as confirmed (alias)
   completed, // After match time has passed
+  noShow, // Match ended and player/participant was recorded absent
   cancelled, // User/owner cancelled
   expired, // Payment lock window elapsed without payment
 }
