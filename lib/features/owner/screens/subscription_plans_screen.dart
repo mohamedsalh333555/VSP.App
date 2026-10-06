@@ -227,7 +227,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             isArabic ? 'تشغيل وإدارة ملعب واحد (1 Stadium)' : 'Operate & manage 1 stadium',
             isArabic ? 'إدارة الحجوزات النقدية والإلكترونية' : 'Manage cash & online bookings',
             isArabic ? 'إدارة الورديات وتعيين المواعيد' : 'Shift management & slot scheduling',
-            isArabic ? 'حماية من عدم الحضور وسجل حجوزات أساسي' : 'No-show protection & basic booking ledger',
+            isArabic ? 'حماية من عدم الحضور وسجل الحجوزات' : 'No-show protection & booking ledger',
             isArabic ? 'دعم فني قياسي' : 'Standard customer support',
           ].map(
             (feature) => Padding(
