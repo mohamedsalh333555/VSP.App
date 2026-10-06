@@ -117,8 +117,10 @@ class UserModel {
 
   /// [H-07] Display-only gate: server RPC is the authoritative authority.
   /// Client may show/hide UI elements, but server enforces entitlement.
-  bool get canCreateTournaments =>
-      isOwner && (hasActiveSubscription || isInActiveTrial);
+  /// Tournament management is part of the Free owner experience.
+  /// Paid Pro controls only paid entitlements such as AI, enhanced reporting,
+  /// priority exposure and other premium capabilities.
+  bool get canCreateTournaments => isOwner && hasStadium;
 
   /// [H-07] Display-only gate: true if user has any paid or trial plan.
   /// Server is the canonical authority for security-sensitive decisions.
