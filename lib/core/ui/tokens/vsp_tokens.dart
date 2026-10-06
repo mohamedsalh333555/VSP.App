@@ -8,6 +8,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../utils/device_performance.dart';
+import 'vsp_design_tokens.dart';
 
 /// ⚠️ ممنوع استخدام Colors.green أو أي hex أخضر مباشر في أي مكان بالتطبيق.
 /// الأخضر الوحيد المعتمد هو accent (#9FDF02) أو accentSoft.
@@ -130,11 +131,12 @@ class VSPSpacing {
 
 /// Shared geometry for the floating bottom navigation and content that must clear it.
 /// Keeping these values in one place prevents nested Scaffolds from drifting apart.
+/// @deprecated Use VSPDSBottomNavMetrics. Retained only as a source-compatible alias.
 class VSPBottomNavBarMetrics {
-  static const double height = 64.0;
-  static const double bottomMargin = VSPSpacing.md; // 12px
-  static const double contentClearance = 8.0;
-  static const double fabBottomOffset = height + bottomMargin;
+  static const double height = VSPDSBottomNavMetrics.height;
+  static const double bottomMargin = VSPDSBottomNavMetrics.bottomMargin;
+  static const double contentClearance = VSPDSBottomNavMetrics.contentClearance;
+  static const double fabBottomOffset = VSPDSBottomNavMetrics.fabBottomOffset;
 }
 
 class VSPStates {
