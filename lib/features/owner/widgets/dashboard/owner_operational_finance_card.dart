@@ -330,7 +330,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               Expanded(
                 child: _MoneySplit(
                   icon: Iconsax.money_3_copy,
-                  label: isArabic ? 'كاش مستحق' : 'Cash due',
+                  label: isArabic ? 'كاش غير محصل' : 'Cash not collected',
                   value: cashDue,
                   currency: currency,
                   highlight: cashDue > 0.009,
@@ -340,7 +340,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
               Expanded(
                 child: _MoneySplit(
                   icon: Iconsax.card_copy,
-                  label: isArabic ? 'أونلاين معلق' : 'Online pending',
+                  label: isArabic ? 'أونلاين غير محصل' : 'Online not collected',
                   value: onlinePending,
                   currency: currency,
                   highlight: onlinePending > 0.009,
@@ -398,7 +398,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                   child: Text(
                     isArabic
                         ? 'تفاصيل الفلوس اللي لسه ما اتحصلتش'
-                        : 'Uncollected money details',
+                        : 'See money not collected yet',
                     style: const TextStyle(
                       color: VSPColors.textPrimary,
                       fontSize: 12.5,
@@ -422,7 +422,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                 Expanded(
                   child: _LockedMoneyPreview(
                     icon: Iconsax.money_3_copy,
-                    label: isArabic ? 'كاش مستحق' : 'Cash due',
+                    label: isArabic ? 'كاش غير محصل' : 'Cash not collected',
                     value: previewValue,
                   ),
                 ),
