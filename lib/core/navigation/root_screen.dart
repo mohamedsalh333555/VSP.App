@@ -180,6 +180,7 @@ class MaintenanceScreen extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  body: Center(
