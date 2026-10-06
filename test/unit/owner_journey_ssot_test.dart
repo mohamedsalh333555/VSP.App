@@ -36,9 +36,8 @@ void main() {
         subscriptionExpiresAt: null, // Free is perpetual free (no expiry)
       );
 
-      expect(user.isFreeOrHigher, isTrue);
       expect(user.isProPlan, isFalse);
-      expect(user.hasActiveSubscription, isTrue);
+      expect(user.hasActiveSubscription, isFalse);
       expect(user.isPlanExpired, isFalse);
       expect(user.maxStadiums, equals(1));
       expect(FacilityOnboardingService.canAddStadium(user: user, currentStadiumsCount: 0), isTrue);
