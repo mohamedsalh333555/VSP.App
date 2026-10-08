@@ -72,19 +72,52 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Create temporary CI release keystore
+      - name: Configure VSP Android release signing key
         shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          keytool -genkeypair -v             -keystore "${{ runner.temp }}/vsp-ci-release.jks"             -storepass "vsp-ci-test"             -keypass "vsp-ci-test"             -alias "vsp-key"             -keyalg RSA             -keysize 2048             -validity 3650             -dname "CN=VSP CI Test, OU=VSP, O=VSP, L=Aswan, ST=Aswan, C=EG"
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not configured in GitHub repository settings."
+            exit 1
+          fi
+          if [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::Release signing credentials (ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS) are not set!"
+            exit 1
+          fi
+
+          mkdir -p android/app
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
+
           cat > android/key.properties <<EOF
-          storePassword=vsp-ci-test
-          keyPassword=vsp-ci-test
-          keyAlias=vsp-key
-          storeFile=${{ runner.temp }}/vsp-ci-release.jks
+          storePassword=${STORE_PASSWORD}
+          keyPassword=${KEY_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          storeFile=vsp-release-key.jks
           EOF
 
       - name: Build Android Release APK
-        run: flutter build apk --release
+        run: |
+          DART_DEFINES=()
+          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then
+            DART_DEFINES+=(--dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}")
+          fi
+          if [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}")
+          fi
+          if [ -n "${{ secrets.PAYMOB_PUBLIC_KEY }}" ]; then
+            DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}")
+          fi
+          if [ -n "${{ secrets.GOOGLE_WEB_CLIENT_ID }}" ]; then
+            DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}")
+          fi
+          if [ -n "${{ secrets.GOOGLE_IOS_CLIENT_ID }}" ]; then
+            DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}")
+          fi
+          flutter build apk --release "${DART_DEFINES[@]}"
 
       - name: Locate generated APK
         run: |
@@ -95,7 +128,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vsp_app_release
-          path: build/app/outputs/**/*.apk
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -104,4 +139,4 @@ jobs:
         shell: bash
         run: |
           rm -f android/key.properties
-          rm -f "${{ runner.temp }}/vsp-ci-release.jks"
+          rm -f android/app/vsp-release-key.jks
