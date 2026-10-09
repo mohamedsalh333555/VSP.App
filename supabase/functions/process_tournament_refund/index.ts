@@ -22,8 +22,14 @@ serve(async (req: Request) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const apiKey = Deno.env.get("PAYMOB_API_KEY") || "";
-    if (!serviceKey || !apiKey) {
-      throw new Error("Server payment configuration is incomplete.");
+    const missingConfig: string[] = [];
+    if (!supabaseUrl) missingConfig.push("SUPABASE_URL");
+    if (!serviceKey) missingConfig.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (!apiKey) missingConfig.push("PAYMOB_API_KEY");
+    if (missingConfig.length > 0) {
+      // Diagnostic reports names only. Never log or return secret values.
+      console.error("Refund worker configuration missing variables:", missingConfig);
+      throw new Error("Server payment configuration is incomplete. Missing variables: " + missingConfig.join(", "));
     }
 
     const authHeader = req.headers.get("Authorization") || "";
