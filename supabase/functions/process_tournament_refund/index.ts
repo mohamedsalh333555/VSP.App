@@ -75,6 +75,27 @@ serve(async (req: Request) => {
       body = {};
     }
 
+    // Configuration-only diagnostic for the internal scheduler. Never calls Paymob or changes database rows.
+    if (body.action === "diagnose_config") {
+      if (!isServiceRole) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Forbidden" }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          success: true,
+          config_present: {
+            SUPABASE_URL: Boolean(supabaseUrl),
+            SUPABASE_SERVICE_ROLE_KEY: Boolean(serviceKey),
+            PAYMOB_API_KEY: Boolean(apiKey),
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     // ============================================================
     // MODE 1: Autonomous Cancellation Refund Queue Processing (Worker SSOT)
     // Strictly restricted to Internal Worker / Server Secret Callers
