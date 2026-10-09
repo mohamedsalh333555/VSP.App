@@ -9,6 +9,42 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+type RefundNotificationInput = {
+  userId: string | null | undefined;
+  queueId: string;
+  title: string;
+  body: string;
+  type?: "tournament_refund" | "tournament_refund_manual";
+  metadata?: Record<string, unknown>;
+};
+
+// Best-effort, idempotent notification per refund queue row. It never calls Paymob.
+async function ensureRefundNotification(adminClient: any, input: RefundNotificationInput): Promise<void> {
+  const userId = String(input.userId || "").trim();
+  const queueId = String(input.queueId || "").trim();
+  if (!userId || !queueId) return;
+  const type = input.type || "tournament_refund";
+  try {
+    const { data: existing, error: lookupError } = await adminClient
+      .from("notifications").select("id").eq("user_id", userId).eq("type", type)
+      .contains("metadata", { refund_queue_id: queueId }).limit(1);
+    if (lookupError) {
+      console.error("Refund notification idempotency check failed:", { queueId, error: lookupError.message });
+      return;
+    }
+    if (existing && existing.length > 0) return;
+    const { error: insertError } = await adminClient.from("notifications").insert({
+      user_id: userId, title: input.title, body: input.body, type, is_read: false,
+      metadata: { refund_queue_id: queueId, ...(input.metadata || {}) },
+      created_at: new Date().toISOString(),
+    });
+    if (insertError) console.error("Refund customer notification insert failed:", { queueId, error: insertError.message });
+  } catch (error: any) {
+    // Notification failure must never retry an already-confirmed financial refund.
+    console.error("Refund customer notification failed safely:", { queueId, error: error?.message || String(error) });
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") {
@@ -153,7 +189,7 @@ serve(async (req: Request) => {
         // 1. Data Integrity Assertion: gross_amount in order matches queue amount
         const { data: order, error: orderErr } = await adminClient
           .from("tournament_orders")
-          .select("id, order_reference, amount, base_amount, gross_amount, payment_status")
+          .select("id, order_reference, amount, base_amount, gross_amount, payment_status, captain_user_id")
           .eq("id", item.order_id)
           .single();
 
@@ -197,6 +233,7 @@ serve(async (req: Request) => {
             updated_at: nowIso,
           }).eq("id", item.id);
 
+          await ensureRefundNotification(adminClient, { userId: order.captain_user_id, queueId: item.id, title: "تم استرداد رسوم البطولة بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, championship_id: item.championship_id, refund_amount: queueAmount } });
           results.push({ id: item.id, order_id: item.order_id, success: true, note: "already_refunded" });
           continue;
         }
@@ -277,6 +314,7 @@ serve(async (req: Request) => {
             .eq("type", "refund_request")
             .eq("paymob_transaction_id", item.paymob_transaction_id);
 
+          await ensureRefundNotification(adminClient, { userId: order.captain_user_id, queueId: item.id, title: "تم استرداد رسوم البطولة بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, championship_id: item.championship_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, order_id: item.order_id, success: true, refund_id: refundId });
         } else {
           console.error(`Refund failed for queue item ${item.id}:`, refundError);
@@ -315,6 +353,7 @@ serve(async (req: Request) => {
             }).eq("championship_id", item.championship_id)
               .eq("type", "refund_request")
               .eq("paymob_transaction_id", item.paymob_transaction_id);
+            await ensureRefundNotification(adminClient, { userId: order.captain_user_id, queueId: item.id, type: "tournament_refund_manual", title: "استرداد رسوم البطولة يحتاج متابعة", body: "تعذر تأكيد الاسترداد تلقائيًا حتى الآن. تم إيقاف إعادة المحاولة الآلية لحماية المبلغ، ويجري التحقق من حالة الدفع.", metadata: { order_reference: order.order_reference, championship_id: item.championship_id, refund_amount: queueAmount } });
           } else {
             // Transient failure before dispatch: return to pending state for lease recovery
             await adminClient.from("cancellation_refund_queue").update({
@@ -399,6 +438,7 @@ serve(async (req: Request) => {
             updated_at: nowIso,
           }).eq("id", item.id);
 
+          await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم بطولة 1 ضد 1 بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, tournament_id: item.tournament_id, refund_amount: queueAmount } });
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, note: "already_refunded" });
           continue;
         }
@@ -478,6 +518,7 @@ serve(async (req: Request) => {
             .eq("type", "refund_request")
             .eq("paymob_transaction_id", item.paymob_transaction_id);
 
+          await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم بطولة 1 ضد 1 بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: order.order_reference, tournament_id: item.tournament_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, order_id: item.order_id, type: "1v1", success: true, refund_id: refundId });
         } else {
           console.error(`1v1 Refund failed for queue item ${item.id}:`, refundError);
@@ -509,6 +550,7 @@ serve(async (req: Request) => {
             }).eq("user_id", item.user_id)
               .eq("type", "refund_request")
               .eq("paymob_transaction_id", item.paymob_transaction_id);
+            await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, type: "tournament_refund_manual", title: "استرداد رسوم بطولة 1 ضد 1 يحتاج متابعة", body: "تعذر تأكيد الاسترداد تلقائيًا حتى الآن. تم إيقاف إعادة المحاولة الآلية لحماية المبلغ، ويجري التحقق من حالة الدفع.", metadata: { order_reference: order.order_reference, tournament_id: item.tournament_id, refund_amount: queueAmount } });
           } else {
             await adminClient.from("vsp_1v1_cancellation_refund_queue").update({
               status: "pending",
@@ -592,6 +634,7 @@ serve(async (req: Request) => {
             updated_at: nowIso,
           }).eq("id", item.id);
 
+          await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم دوري الفرق بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: payment.order_reference, championship_id: item.championship_id, refund_amount: queueAmount } });
           results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, note: "already_refunded" });
           continue;
         }
@@ -666,6 +709,7 @@ serve(async (req: Request) => {
             .eq("type", "refund_request")
             .eq("paymob_transaction_id", item.paymob_transaction_id);
 
+          await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, title: "تم استرداد رسوم دوري الفرق بنجاح 💳", body: `تم تأكيد استرداد مبلغ ${queueAmount.toFixed(2)} ج.م عبر بوابة الدفع. قد يستغرق ظهوره حسب البنك أو المحفظة.`, metadata: { order_reference: payment.order_reference, championship_id: item.championship_id, refund_amount: queueAmount, paymob_refund_id: refundId } });
           results.push({ id: item.id, payment_id: item.payment_id, type: "team_league", success: true, refund_id: refundId });
         } else {
           console.error(`Team League Refund failed for queue item ${item.id}:`, refundError);
@@ -696,6 +740,7 @@ serve(async (req: Request) => {
             }).eq("championship_id", item.championship_id)
               .eq("type", "refund_request")
               .eq("paymob_transaction_id", item.paymob_transaction_id);
+            await ensureRefundNotification(adminClient, { userId: item.user_id, queueId: item.id, type: "tournament_refund_manual", title: "استرداد رسوم دوري الفرق يحتاج متابعة", body: "تعذر تأكيد الاسترداد تلقائيًا حتى الآن. تم إيقاف إعادة المحاولة الآلية لحماية المبلغ، ويجري التحقق من حالة الدفع.", metadata: { order_reference: payment.order_reference, championship_id: item.championship_id, refund_amount: queueAmount } });
           } else {
             await adminClient.from("team_league_cancellation_refund_queue").update({
               status: "pending",
