@@ -31,7 +31,7 @@ serve(async (req: Request) => {
     if (missingConfig.length > 0) {
       // Diagnostic reports names only. Never log or return secret values.
       console.error("Booking refund configuration missing variables:", missingConfig);
-      return out({ success: false, message: "Server configuration error", missing_variables: missingConfig }, 500);
+      return out({ success: false, message: "Server configuration error" }, 500);
     }
 
     const authHeader = req.headers.get("Authorization") || "";
