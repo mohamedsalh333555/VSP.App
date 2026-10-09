@@ -29,7 +29,7 @@ serve(async (req: Request) => {
     if (missingConfig.length > 0) {
       // Diagnostic reports names only. Never log or return secret values.
       console.error("Refund worker configuration missing variables:", missingConfig);
-      throw new Error("Server payment configuration is incomplete. Missing variables: " + missingConfig.join(", "));
+      throw new Error("Server payment configuration is incomplete.");
     }
 
     const authHeader = req.headers.get("Authorization") || "";
