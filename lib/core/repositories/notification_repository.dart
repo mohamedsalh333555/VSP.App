@@ -28,10 +28,6 @@ class NotificationRepository {
         .eq('user_id', userId)
         .order('created_at', ascending: false)
         .limit(limit)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
         .map((list) => list
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
             .toList())
