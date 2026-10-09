@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -23,6 +24,9 @@ class NotificationService {
 
  FirebaseMessaging get _firebaseMessaging => FirebaseMessaging.instance;
  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+ StreamSubscription<AuthState>? _authStateSubscription;
+ StreamSubscription<String>? _tokenRefreshSubscription;
+ String? _latestFcmToken;
 
  Future<String?> getToken() async {
  if (kIsWeb) return null;
@@ -67,42 +71,55 @@ class NotificationService {
        }, onConflict: 'token');
  }
 
+ Future<void> _registerTokenForUser(String userId, String token) async {
+   await _storeDeviceToken(userId, token);
+   // Keep the legacy field used by the server-side FCM sender in sync.
+   await Supabase.instance.client
+       .from('users')
+       .update({'fcm_token': token.trim()})
+       .eq('id', userId);
+   VSPLogger.i('Registered FCM token for signed-in user.');
+ }
+
  Future<void> initialize(GlobalKey<NavigatorState> navKey) async {
  _navigatorKey = navKey;
  if (kIsWeb) return;
 
- // 1. Get & store token
+ // 1. Get and cache the device token even if auth has not finished restoring yet.
  try {
-   final token = await getToken();
+   _latestFcmToken = await getToken();
    final user = Supabase.instance.client.auth.currentUser;
-   if (token != null && user != null) {
-     await _storeDeviceToken(user.id, token);
-     // Keep the legacy single-token field for backward compatibility.
-     await Supabase.instance.client
-         .from('users')
-         .update({'fcm_token': token})
-         .eq('id', user.id);
-     VSPLogger.i('Silently stored initialized FCM token for user: ${user.id}');
+   if (_latestFcmToken != null && user != null) {
+     await _registerTokenForUser(user.id, _latestFcmToken!);
    }
  } catch (e) {
-   VSPLogger.w('Failed to initialize token: $e');
+   VSPLogger.w('Failed to initialize FCM token: $e');
  }
 
- // 2. Token refresh listener
- _firebaseMessaging.onTokenRefresh.listen((newToken) async {
- final user = Supabase.instance.client.auth.currentUser;
- if (user != null) {
- try {
- await _storeDeviceToken(user.id, newToken);
- await Supabase.instance.client
- .from('users')
- .update({'fcm_token': newToken})
- .eq('id', user.id);
- VSPLogger.i('Silently updated refreshed FCM token for user: ${user.id}');
- } catch (e) {
- VSPLogger.w('Failed to silently update refreshed FCM token: $e');
- }
- }
+ // App startup may happen before the user signs in. Register the cached token
+ // when Supabase emits its initial session or a later sign-in event.
+ _authStateSubscription ??= Supabase.instance.client.auth.onAuthStateChange.listen((authState) async {
+   final user = authState.session?.user ?? Supabase.instance.client.auth.currentUser;
+   if (user == null) return;
+   try {
+     final token = _latestFcmToken ?? await getToken();
+     _latestFcmToken = token;
+     if (token != null) await _registerTokenForUser(user.id, token);
+   } catch (e) {
+     VSPLogger.w('Failed to register FCM token after authentication: $e');
+   }
+ });
+
+ // 2. Keep the stored token fresh for the currently signed-in user.
+ _tokenRefreshSubscription ??= _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+   _latestFcmToken = newToken;
+   final user = Supabase.instance.client.auth.currentUser;
+   if (user == null) return;
+   try {
+     await _registerTokenForUser(user.id, newToken);
+   } catch (e) {
+     VSPLogger.w('Failed to update refreshed FCM token: $e');
+   }
  });
 
  // 3. Foreground Handler
