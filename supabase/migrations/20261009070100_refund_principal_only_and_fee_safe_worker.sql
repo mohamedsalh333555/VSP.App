@@ -59,7 +59,7 @@ begin
  end if;
  insert into public.notifications(user_id,title,body,type,created_at) values(v_caller,'تم تسجيل طلب إلغاء واسترداد رسوم البطولة 💳','تم إلغاء تسجيلك من '||coalesce(v_t.name,'بطولة 1v1')||' و'||case when v_manual then 'وضع طلب الاسترداد للمراجعة اليدوية.' else 'إنشاء طلب استرداد رسمي وسيتم تحديثك عند اكتماله.' end,'tournament_refund',v_now);
  return jsonb_build_object('success',true,'status',case when v_manual then 'refund_failed_manual_review' else 'refund_requested' end,'refund_amount',v_refund_amount,'manual_review',v_manual,'message',case when v_manual then 'تم إلغاء التسجيل ووضع الاسترداد للمراجعة اليدوية.' else 'تم إلغاء التسجيل وإنشاء طلب الاسترداد.' end);
-end; $function$
+end; $function$;
 
 
 CREATE OR REPLACE FUNCTION public.cancel_1v1_tournament_with_refund_requests(p_tournament_id uuid, p_reason text DEFAULT 'إلغاء البطولة'::text)
@@ -233,7 +233,7 @@ BEGIN
     'refunded_count', v_count
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.cancel_championship_atomic(p_championship_id uuid, p_reason text DEFAULT 'Cancelled by owner'::text)
@@ -330,7 +330,7 @@ BEGIN
     'queued_refunds_count', v_refunds_count
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.cancel_team_league(p_championship_id uuid)
@@ -468,7 +468,7 @@ BEGIN
     'refund_requests_count', v_paid_count
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.confirm_tournament_order_atomic(p_order_reference text, p_paymob_transaction_id text)
@@ -682,7 +682,7 @@ BEGIN
     'joined_count', v_joined_count + 1
   );
 END;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.record_1v1_refund_status_atomic(p_order_reference text, p_refund_success boolean, p_paymob_refund_id text DEFAULT NULL::text, p_error_message text DEFAULT NULL::text, p_refund_amount numeric DEFAULT NULL::numeric)
@@ -721,7 +721,7 @@ begin
    end loop;
  end if;
  return jsonb_build_object('success',true,'status',case when p_refund_success then 'refunded' else 'refund_failed_manual_review' end,'refund_amount',v_amount,'paymob_refund_id',p_paymob_refund_id);
-end; $function$
+end; $function$;
 
 
 -- One-time repair of old pending requests that recorded gross charge rather than refundable principal.
