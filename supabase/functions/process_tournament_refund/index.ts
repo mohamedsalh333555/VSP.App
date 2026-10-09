@@ -21,7 +21,7 @@ serve(async (req: Request) => {
   try {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const apiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
+    const apiKey = Deno.env.get("PAYMOB_API_KEY") || "";
     if (!serviceKey || !apiKey) {
       throw new Error("Server payment configuration is incomplete.");
     }
@@ -126,15 +126,16 @@ serve(async (req: Request) => {
         // 1. Data Integrity Assertion: gross_amount in order matches queue amount
         const { data: order, error: orderErr } = await adminClient
           .from("tournament_orders")
-          .select("id, order_reference, amount, gross_amount, payment_status")
+          .select("id, order_reference, amount, base_amount, gross_amount, payment_status")
           .eq("id", item.order_id)
           .single();
 
-        const orderGross = Number(order?.gross_amount ?? order?.amount ?? 0);
+        const orderPrincipal = Number(order?.base_amount ?? 0);
+        const orderGross = Number(order?.gross_amount ?? 0);
         const queueAmount = Number(item.amount);
 
-        if (orderErr || !order || Math.abs(orderGross - queueAmount) > 0.01) {
-          const reason = `Amount integrity mismatch: order=${orderGross} vs queue=${queueAmount}`;
+        if (orderErr || !order || orderPrincipal <= 0 || Math.abs(orderPrincipal - queueAmount) > 0.01) {
+          const reason = `Refund principal integrity mismatch: principal=${orderPrincipal}, originalGross=${orderGross}, queue=${queueAmount}`;
           console.error(`Item ${item.id} failed integrity check:`, reason);
           const nowIso = new Date().toISOString();
 
@@ -239,8 +240,9 @@ serve(async (req: Request) => {
             status: "completed",
             metadata: {
               paymob_refund_id: refundId,
-              amount: queueAmount,
-              gross_amount: orderGross,
+              refund_amount: queueAmount,
+              original_gross_amount: orderGross,
+              non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
               completed_at: nowIso,
             },
             updated_at: nowIso,
@@ -324,11 +326,12 @@ serve(async (req: Request) => {
           .eq("id", item.order_id)
           .single();
 
-        const orderGross = Number(order?.gross_amount ?? order?.amount ?? 0);
+        const orderPrincipal = Number(order?.amount ?? 0);
+        const orderGross = Number(order?.gross_amount ?? 0);
         const queueAmount = Number(item.amount);
 
-        if (orderErr || !order || Math.abs(orderGross - queueAmount) > 0.01) {
-          const reason = `Amount integrity mismatch: order=${orderGross} vs queue=${queueAmount}`;
+        if (orderErr || !order || orderPrincipal <= 0 || Math.abs(orderPrincipal - queueAmount) > 0.01) {
+          const reason = `Refund principal integrity mismatch: principal=${orderPrincipal}, originalGross=${orderGross}, queue=${queueAmount}`;
           console.error(`1v1 Item ${item.id} failed integrity check:`, reason);
           const nowIso = new Date().toISOString();
 
@@ -438,8 +441,9 @@ serve(async (req: Request) => {
             status: "completed",
             metadata: {
               paymob_refund_id: refundId,
-              amount: queueAmount,
-              gross_amount: orderGross,
+              refund_amount: queueAmount,
+              original_gross_amount: orderGross,
+              non_refundable_fee_amount: Number(Math.max(0, orderGross - queueAmount).toFixed(2)),
               completed_at: nowIso,
             },
             updated_at: nowIso,
@@ -515,11 +519,12 @@ serve(async (req: Request) => {
           .eq("id", item.payment_id)
           .single();
 
-        const paymentGross = Number(payment?.gross_amount ?? payment?.amount ?? 0);
+        const paymentPrincipal = Number(payment?.amount ?? 0);
+        const paymentGross = Number(payment?.gross_amount ?? 0);
         const queueAmount = Number(item.amount);
 
-        if (paymentErr || !payment || Math.abs(paymentGross - queueAmount) > 0.01) {
-          const reason = `Amount integrity mismatch: payment=${paymentGross} vs queue=${queueAmount}`;
+        if (paymentErr || !payment || paymentPrincipal <= 0 || Math.abs(paymentPrincipal - queueAmount) > 0.01) {
+          const reason = `Refund principal integrity mismatch: principal=${paymentPrincipal}, originalGross=${paymentGross}, queue=${queueAmount}`;
           console.error(`Team League Item ${item.id} failed integrity check:`, reason);
           const nowIso = new Date().toISOString();
 
@@ -624,8 +629,9 @@ serve(async (req: Request) => {
             status: "completed",
             metadata: {
               paymob_refund_id: refundId,
-              amount: queueAmount,
-              gross_amount: paymentGross,
+              refund_amount: queueAmount,
+              original_gross_amount: paymentGross,
+              non_refundable_fee_amount: Number(Math.max(0, paymentGross - queueAmount).toFixed(2)),
               completed_at: nowIso,
             },
             updated_at: nowIso,
