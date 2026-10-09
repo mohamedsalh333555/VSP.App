@@ -21,10 +21,7 @@ serve(async (req: Request) => {
   try {
     if (req.method !== "POST") return out({ success: false, message: "Method not allowed" }, 405);
 
-    const apiKey =
-      Deno.env.get("PAYMOB_API_KEY") ||
-      Deno.env.get("PAYMOB_SECRET_KEY") ||
-      "";
+    const apiKey = Deno.env.get("PAYMOB_API_KEY") || "";
     const url = Deno.env.get("SUPABASE_URL") || "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     if (!apiKey || !serviceKey) {
@@ -183,11 +180,11 @@ serve(async (req: Request) => {
       return out({ success: false, message: "تعذر تجهيز الاسترداد." }, 409);
     }
 
-    const paymobTxnId = String(claim.paymob_transaction_id || "").replace(/D/g, "");
+    const paymobTxnId = String(claim.paymob_transaction_id || "").replace(/\D/g, "");
     const refundAmount = Math.round(Number(claim.refund_amount || 0) * 100) / 100;
-    const refundGrossAmount = Math.round(Number(claim.refund_gross_amount || refundAmount) * 100) / 100;
+    const originalGrossAmount = Math.round(Number(claim.refund_gross_amount || refundAmount) * 100) / 100;
 
-    if (!paymobTxnId || refundAmount <= 0 || refundGrossAmount <= 0) {
+    if (!paymobTxnId || refundAmount <= 0 || originalGrossAmount <= 0) {
       return out({ success: false, message: "بيانات دفعة Paymob القابلة للاسترداد غير صالحة." }, 409);
     }
 
@@ -235,7 +232,7 @@ serve(async (req: Request) => {
         body: JSON.stringify({
           auth_token: authData.token,
           transaction_id: Number(paymobTxnId),
-          amount_cents: Math.round(refundGrossAmount * 100),
+          amount_cents: Math.round(refundAmount * 100),
         }),
       });
       refundHttpOk = rr.ok;
@@ -300,7 +297,7 @@ serve(async (req: Request) => {
       p_refund_payment_method: String(booking.payment_method || "card").toLowerCase().includes("wallet")
         ? "wallet"
         : "card",
-      p_refund_gross_amount: refundGrossAmount,
+      p_refund_gross_amount: refundAmount,
     });
 
     if (recordError || !recorded?.success) {
@@ -323,7 +320,8 @@ serve(async (req: Request) => {
     return out({
       success: true,
       refund_amount: refundAmount,
-      refund_gross_amount: refundGrossAmount,
+      refund_gross_amount: refundAmount,
+      original_gross_amount: originalGrossAmount,
       refund_txn_id: refundTxnId,
       message: "تم استرداد المبلغ بنجاح عبر Paymob.",
     });
