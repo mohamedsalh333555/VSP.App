@@ -24,8 +24,14 @@ serve(async (req: Request) => {
     const apiKey = Deno.env.get("PAYMOB_API_KEY") || "";
     const url = Deno.env.get("SUPABASE_URL") || "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    if (!apiKey || !serviceKey) {
-      return out({ success: false, message: "Server configuration error" }, 500);
+    const missingConfig: string[] = [];
+    if (!apiKey) missingConfig.push("PAYMOB_API_KEY");
+    if (!url) missingConfig.push("SUPABASE_URL");
+    if (!serviceKey) missingConfig.push("SUPABASE_SERVICE_ROLE_KEY");
+    if (missingConfig.length > 0) {
+      // Diagnostic reports names only. Never log or return secret values.
+      console.error("Booking refund configuration missing variables:", missingConfig);
+      return out({ success: false, message: "Server configuration error", missing_variables: missingConfig }, 500);
     }
 
     const authHeader = req.headers.get("Authorization") || "";
