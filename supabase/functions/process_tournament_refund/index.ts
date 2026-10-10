@@ -102,6 +102,21 @@ serve(async (req: Request) => {
         );
       }
       callerUser = caller;
+
+      // Strictly verify caller has administrator privileges in users table
+      const { data: userProfile } = await adminClient
+        .from("users")
+        .select("role")
+        .eq("id", callerUser.id)
+        .single();
+
+      const isAdmin = userProfile && ["admin", "super_admin", "co_founder", "cofounder"].includes(userProfile.role);
+      if (!isAdmin) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Forbidden: Only administrators or authorized internal services can execute refunds." }),
+          { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     let body: any = {};

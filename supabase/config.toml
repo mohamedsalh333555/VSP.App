@@ -16,4 +16,4 @@ verify_jwt = false
 
 # Internal refund worker authenticates with the dedicated database-stored secret.
 [functions.process_tournament_refund]
-verify_jwt = false
+verify_jwt = true
