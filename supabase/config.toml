@@ -3,3 +3,7 @@ verify_jwt = false
 
 [functions.get_owner_web_checkout_status]
 verify_jwt = false
+
+# The handler validates the stored high-entropy secret for internal DB-trigger calls.
+[functions.fcm_push]
+verify_jwt = false
