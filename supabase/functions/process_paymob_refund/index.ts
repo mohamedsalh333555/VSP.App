@@ -318,6 +318,33 @@ serve(async (req: Request) => {
       );
     }
 
+    // Notify the player only after Paymob confirms the refund and the
+    // accounting reconciliation RPC succeeds.
+    const refundRecipientId = booking.user_id || booking.created_by_user_id;
+    if (refundRecipientId) {
+      const refundBody = `تم استرداد مبلغ ${refundAmount.toFixed(2)} جنيه للحجز.`;
+      const { error: notificationError } = await admin.from("notifications").insert({
+        user_id: refundRecipientId,
+        title: "تم استرداد المبلغ",
+        body: refundBody,
+        message: refundBody,
+        type: "refund",
+        is_read: false,
+        created_at: new Date().toISOString(),
+        booking_id: bookingId,
+        metadata: {
+          refund_amount: refundAmount,
+          refund_transaction_id: refundTxnId,
+          refund_status: "confirmed",
+        },
+      });
+      if (notificationError) {
+        // The refund is already confirmed; notification failure must not misreport
+        // the financial operation as failed.
+        console.error("Refund confirmed but in-app notification insert failed:", notificationError);
+      }
+    }
+
     await admin
       .from("bookings")
       .update({ cancellation_reason: reason })
