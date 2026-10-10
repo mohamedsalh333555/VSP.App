@@ -1,4 +1,5 @@
 name: Build Android Release APK
+# QA build trigger: automatically create an installable test APK on main updates.
 
 on:
   workflow_dispatch:
