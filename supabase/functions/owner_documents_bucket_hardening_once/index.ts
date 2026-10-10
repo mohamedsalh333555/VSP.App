@@ -1,1 +1,0 @@
-Deno.serve(async (_req: Request) => new Response("Not found", { status: 404 }));
