@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-release-apk:
-    name: Build VSP Release APK
+    name: Build VSP Test Release APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -72,34 +72,10 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Configure VSP Android release signing key
-        shell: bash
+      - name: Build installable test Release APK
         env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not configured in GitHub repository settings."
-            exit 1
-          fi
-          if [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
-            echo "::error::Release signing credentials (ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_PASSWORD, ANDROID_KEY_ALIAS) are not set!"
-            exit 1
-          fi
-
-          mkdir -p android/app
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
-
-          cat > android/key.properties <<EOF
-          storePassword=${STORE_PASSWORD}
-          keyPassword=${KEY_PASSWORD}
-          keyAlias=${KEY_ALIAS}
-          storeFile=vsp-release-key.jks
-          EOF
-
-      - name: Build Android Release APK
+          VSP_TEST_RELEASE_APK: "true"
+        shell: bash
         run: |
           DART_DEFINES=()
           if [ -n "${{ secrets.SUPABASE_URL }}" ]; then
@@ -124,7 +100,7 @@ jobs:
           find build/app/outputs -type f -name "*.apk" -print
           test -n "$(find build/app/outputs -type f -name "*.apk" -print -quit)"
 
-      - name: Upload VSP Release APK
+      - name: Upload VSP Test Release APK
         uses: actions/upload-artifact@v4
         with:
           name: vsp_app_release
@@ -133,10 +109,3 @@ jobs:
             build/app/outputs/apk/release/*.apk
           if-no-files-found: error
           retention-days: 30
-
-      - name: Clean CI signing files
-        if: always()
-        shell: bash
-        run: |
-          rm -f android/key.properties
-          rm -f android/app/vsp-release-key.jks
