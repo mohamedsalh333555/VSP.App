@@ -7,3 +7,7 @@ verify_jwt = false
 # The handler validates the stored high-entropy secret for internal DB-trigger calls.
 [functions.fcm_push]
 verify_jwt = false
+
+# Internal refund worker authenticates with the dedicated database-stored secret.
+[functions.process_tournament_refund]
+verify_jwt = false
