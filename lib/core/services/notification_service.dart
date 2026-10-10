@@ -28,6 +28,15 @@ class NotificationService {
  StreamSubscription<String>? _tokenRefreshSubscription;
  String? _latestFcmToken;
 
+ /// Releases long-lived stream listeners when the app service is explicitly torn down.
+ Future<void> dispose() async {
+   await _authStateSubscription?.cancel();
+   _authStateSubscription = null;
+   await _tokenRefreshSubscription?.cancel();
+   _tokenRefreshSubscription = null;
+ }
+
+
  Future<String?> getToken() async {
  if (kIsWeb) return null;
  try {
