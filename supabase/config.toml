@@ -3,3 +3,8 @@ verify_jwt = false
 
 [functions.get_owner_web_checkout_status]
 verify_jwt = false
+
+# Database-triggered FCM requests use the function's own 64-character shared-secret check.
+# The Edge Function validates this secret in its handler, so gateway JWT verification is disabled.
+[functions.fcm_push]
+verify_jwt = false
