@@ -318,6 +318,34 @@ serve(async (req: Request) => {
       );
     }
 
+    // Persist an in-app notification for the player after the gateway refund
+    // has been confirmed and the refund ledger RPC has succeeded.
+    const refundRecipientId = booking.user_id || booking.created_by_user_id;
+    if (refundRecipientId) {
+      const refundTitle = "تم استرداد المبلغ";
+      const refundBody = `تم استرداد مبلغ ${refundAmount.toFixed(2)} جنيه للحجز.`;
+      const { error: notificationError } = await admin.from("notifications").insert({
+        user_id: refundRecipientId,
+        title: refundTitle,
+        body: refundBody,
+        message: refundBody,
+        type: "refund",
+        is_read: false,
+        created_at: new Date().toISOString(),
+        booking_id: bookingId,
+        metadata: {
+          refund_amount: refundAmount,
+          refund_transaction_id: refundTxnId,
+          refund_status: "confirmed",
+        },
+      });
+      if (notificationError) {
+        // Never turn a confirmed financial refund into an HTTP failure because
+        // notification delivery failed; retain a safe diagnostic for reconciliation.
+        console.error("Refund confirmed but in-app notification insert failed:", notificationError);
+      }
+    }
+
     await admin
       .from("bookings")
       .update({ cancellation_reason: reason })
