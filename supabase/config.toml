@@ -1,3 +1,12 @@
+[functions.create_paymob_intention]
+verify_jwt = true
+
+[functions.process_paymob_refund]
+verify_jwt = true
+
+[functions.owner_documents_bucket_hardening_once]
+verify_jwt = true
+
 [functions.create_owner_web_checkout]
 verify_jwt = false
 
