@@ -4,6 +4,15 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "android/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "supabase/config.toml"
+      - ".github/workflows/build-release-apk.yml"
 
 jobs:
   build-release-apk:
