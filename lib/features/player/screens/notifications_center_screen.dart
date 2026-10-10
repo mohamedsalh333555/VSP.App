@@ -320,6 +320,8 @@ class _NotificationCard extends StatelessWidget {
       case 'subscription':
         return Iconsax.crown_copy;
       case 'refund':
+      case 'tournament_refund':
+      case 'tournament_refund_manual':
       case 'payout':
         return Iconsax.wallet_3_copy;
       case 'challenge':
@@ -361,6 +363,8 @@ class _NotificationCard extends StatelessWidget {
       case 'subscription':
         return VSPColors.proAccent;
       case 'refund':
+      case 'tournament_refund':
+      case 'tournament_refund_manual':
         return VSPColors.success;
       case 'payout':
         return VSPColors.accent;
