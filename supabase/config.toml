@@ -1,5 +1,22 @@
+[functions.create_paymob_intention]
+verify_jwt = true
+
+[functions.process_paymob_refund]
+verify_jwt = true
+
+[functions.owner_documents_bucket_hardening_once]
+verify_jwt = true
+
 [functions.create_owner_web_checkout]
 verify_jwt = false
 
 [functions.get_owner_web_checkout_status]
+verify_jwt = false
+
+# The handler validates the stored high-entropy secret for internal DB-trigger calls.
+[functions.fcm_push]
+verify_jwt = false
+
+# Internal refund worker authenticates with the dedicated database-stored secret.
+[functions.process_tournament_refund]
 verify_jwt = false
