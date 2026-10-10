@@ -1,11 +1,9 @@
-// 🛡️ FIX: import must precede all block declarations in Kotlin DSL.
-// Having it after plugins{} causes the 17 Java/Kotlin build warnings.
+// 🛡️ Keep imports before the plugins block.
 import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
@@ -15,6 +13,10 @@ val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
+val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+val isTestReleaseApk = System.getenv("VSP_TEST_RELEASE_APK") == "true"
 
 android {
     namespace = "app.vsp.sports"
@@ -41,7 +43,6 @@ android {
     }
 
     defaultConfig {
-        // ✅ Production Unique Application ID for Google Play Store
         applicationId = "app.vsp.sports"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
@@ -56,20 +57,18 @@ android {
             }
         }
         release {
-            // RELEASE SIGNING: Uses the credentials loaded from android/key.properties.
-            // Strict invariant: release tasks must fail without the production keystore.
-            // Debug builds are allowed to use Android's default debug signing in CI/local development.
-            val isReleaseBuildRequested = gradle.startParameter.taskNames.any {
-                it.contains("release", ignoreCase = true)
-            }
-            if (keystorePropertiesFile.exists()) {
+            // Test-only APKs use the runner's debug key when explicitly opted in.
+            // This APK is installable for QA but is not Play Store/release-key signed.
+            if (isTestReleaseApk) {
+                signingConfig = signingConfigs.getByName("debug")
+            } else if (keystorePropertiesFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             } else if (isReleaseBuildRequested) {
                 throw org.gradle.api.GradleException(
-                    "FATAL: android/key.properties not found! Release builds MUST be signed with the production keystore."
+                    "Release signing key missing. For a test-only APK, set VSP_TEST_RELEASE_APK=true."
                 )
             }
-            isMinifyEnabled = false          // Disabled to prevent MethodChannel & reflection crashes
+            isMinifyEnabled = false
             isShrinkResources = false
         }
     }
