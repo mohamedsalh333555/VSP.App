@@ -28,6 +28,15 @@ class NotificationService {
  StreamSubscription<String>? _tokenRefreshSubscription;
  String? _latestFcmToken;
 
+ /// Releases the auth and FCM stream listeners when the singleton is torn down.
+ Future<void> dispose() async {
+   await _authStateSubscription?.cancel();
+   _authStateSubscription = null;
+   await _tokenRefreshSubscription?.cancel();
+   _tokenRefreshSubscription = null;
+ }
+
+
  Future<String?> getToken() async {
  if (kIsWeb) return null;
  try {
