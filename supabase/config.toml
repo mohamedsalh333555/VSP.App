@@ -3,3 +3,14 @@ verify_jwt = false
 
 [functions.get_owner_web_checkout_status]
 verify_jwt = false
+
+# Authenticated application endpoints: gateway JWT verification is enabled.
+[functions.create_paymob_intention]
+verify_jwt = true
+
+[functions.process_paymob_refund]
+verify_jwt = true
+
+# Retired one-off endpoint returns 404; keep it authenticated.
+[functions.owner_documents_bucket_hardening_once]
+verify_jwt = true
