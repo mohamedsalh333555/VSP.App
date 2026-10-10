@@ -112,6 +112,7 @@ class BookingCancellationCoordinator {
             playerIds: otherParticipants,
             stadiumName: booking.stadiumName,
             timeSlot: booking.formattedTimeRange,
+            bookingId: bookingId,
           );
         } catch (e) {
           VSPLogger.w('Failed to send cancellation notifications: $e');
@@ -126,6 +127,7 @@ class BookingCancellationCoordinator {
             stadiumName: booking.stadiumName,
             playerName: booking.playerTeamName ?? booking.hostName ?? 'اللاعب',
             timeSlot: booking.formattedTimeRange,
+            bookingId: bookingId,
           );
         } catch (e) {
           VSPLogger.w('Failed to send owner cancellation notification: $e');

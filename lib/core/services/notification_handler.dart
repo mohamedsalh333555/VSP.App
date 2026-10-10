@@ -60,12 +60,14 @@ class NotificationHandler {
     required String stadiumName,
     required String playerName,
     required String timeSlot,
+    required String bookingId,
   }) async {
     final notif = AppNotification(
       id: '',
       title: 'Booking Cancelled ',
       body: '$playerName cancelled their booking for $stadiumName at $timeSlot.',
       type: 'booking_cancelled',
+      bookingId: bookingId,
       createdAt: DateTime.now(),
     );
     await _notificationRepo.sendNotification(ownerId, notif);
@@ -344,6 +346,7 @@ class NotificationHandler {
     required List<String> playerIds,
     required String stadiumName,
     required String timeSlot,
+    required String bookingId,
   }) async {
     for (final uid in playerIds) {
       final notif = AppNotification(
@@ -351,6 +354,7 @@ class NotificationHandler {
         title: 'Match Cancelled ',
         body: 'The match at $stadiumName ($timeSlot) has been cancelled by the host.',
         type: 'booking_cancelled',
+        bookingId: bookingId,
         createdAt: DateTime.now(),
       );
       await _notificationRepo.sendNotification(uid, notif);

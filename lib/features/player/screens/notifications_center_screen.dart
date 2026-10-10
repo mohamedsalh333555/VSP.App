@@ -319,6 +319,7 @@ class _NotificationCard extends StatelessWidget {
         return Iconsax.shield_tick_copy;
       case 'subscription':
         return Iconsax.crown_copy;
+      case 'refund':
       case 'payout':
         return Iconsax.wallet_3_copy;
       case 'challenge':
@@ -359,6 +360,8 @@ class _NotificationCard extends StatelessWidget {
         return const Color(0xFFF59E0B); // Amber / Gold for system alerts
       case 'subscription':
         return VSPColors.proAccent;
+      case 'refund':
+        return VSPColors.success;
       case 'payout':
         return VSPColors.accent;
       case 'challenge':
