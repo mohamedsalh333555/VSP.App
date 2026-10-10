@@ -5,10 +5,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.create_owner_web_checkout]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get_owner_web_checkout_status]
-verify_jwt = false
+verify_jwt = true
 
 # The handler validates the stored high-entropy secret for internal DB-trigger calls.
 [functions.fcm_push]

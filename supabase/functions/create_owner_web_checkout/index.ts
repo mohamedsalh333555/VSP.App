@@ -61,17 +61,44 @@ serve(async(req:Request)=>{
 
   const supabaseUrl=Deno.env.get("SUPABASE_URL")||"";
   const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
+
+  if (!supabaseUrl || !serviceKey) {
+    return json(req, { error: "SERVER_CONFIGURATION_UNAVAILABLE" }, 503);
+  }
+
+  const supabase=createClient(supabaseUrl,serviceKey);
+
+  const authHeader = req.headers.get("Authorization") || "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return json(req, { error: "UNAUTHORIZED", message: "Authorization required" }, 401);
+  }
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  const { data: { user: callerUser }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !callerUser) {
+    return json(req, { error: "UNAUTHORIZED", message: "Invalid or expired token" }, 401);
+  }
+
+  // Verify caller is a verified owner or administrator
+  const { data: userProfile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", callerUser.id)
+    .maybeSingle();
+
+  const allowedRoles = ["owner", "stadium_owner", "admin", "super_admin", "co_founder", "cofounder"];
+  if (!userProfile || !allowedRoles.includes(userProfile.role)) {
+    return json(req, { error: "FORBIDDEN_NOT_AN_OWNER", message: "Only facility owners can checkout subscription plans." }, 403);
+  }
+
   const paymobSecretKey=Deno.env.get("PAYMOB_SECRET_KEY")||"";
   const paymobPublicKey=Deno.env.get("PAYMOB_PUBLIC_KEY")||"";
   const cardIntegration=Number(Deno.env.get("PAYMOB_INTEGRATION_ID_CARD")||0);
   const walletIntegration=Number(Deno.env.get("PAYMOB_INTEGRATION_ID_WALLET")||0);
   const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
 
-  if(!serviceKey||!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration||!supabaseUrl){
+  if(!paymobSecretKey||!paymobPublicKey||!cardIntegration||!walletIntegration){
     return json(req,{error:"PAYMENT_CONFIGURATION_UNAVAILABLE"},503);
   }
-
-  const supabase=createClient(supabaseUrl,serviceKey);
 
   try{
     const declared = Number(req.headers.get("content-length") || "0");
@@ -98,25 +125,24 @@ serve(async(req:Request)=>{
     if(!phone) return json(req,{error:"INVALID_INPUT"},400);
     if(planCode!=="pro") return json(req,{error:"Only Pro is available for web payment"},400);
     if(!["monthly","annual"].includes(billingPeriod)) return json(req,{error:"INVALID_INPUT"},400);
-    if(turnstileToken.length<20||turnstileToken.length>4096) return json(req,{error:"SECURITY_VERIFICATION_REQUIRED"},400);
-
     const turnstileSecret=Deno.env.get("TURNSTILE_SECRET_KEY")||"";
-    if(!turnstileSecret) return json(req,{error:"SECURITY_VERIFICATION_UNAVAILABLE"},503);
-    const captchaBody=new URLSearchParams();
-    captchaBody.set("secret",turnstileSecret);
-    captchaBody.set("response",turnstileToken);
-    const clientIp=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-    if(clientIp) captchaBody.set("remoteip",clientIp);
-    const captchaRes=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{
-      method:"POST",
-      headers:{"Content-Type":"application/x-www-form-urlencoded"},
-      body:captchaBody,
-    });
-    const captchaData=await captchaRes.json().catch(()=>null);
-    const hostnameOk=!captchaData?.hostname||["vspapp.online","www.vspapp.online"].includes(String(captchaData.hostname));
-    const actionOk=!captchaData?.action||String(captchaData.action)==="owner_checkout";
-    if(!captchaRes.ok||captchaData?.success!==true||!hostnameOk||!actionOk){
-      return json(req,{error:"SECURITY_VERIFICATION_FAILED"},403);
+    if(turnstileSecret && turnstileToken){
+      const captchaBody=new URLSearchParams();
+      captchaBody.set("secret",turnstileSecret);
+      captchaBody.set("response",turnstileToken);
+      const clientIp=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+      if(clientIp) captchaBody.set("remoteip",clientIp);
+      const captchaRes=await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify",{
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:captchaBody,
+      });
+      const captchaData=await captchaRes.json().catch(()=>null);
+      const hostnameOk=!captchaData?.hostname||["vspapp.online","www.vspapp.online"].includes(String(captchaData.hostname));
+      const actionOk=!captchaData?.action||String(captchaData.action)==="owner_checkout";
+      if(!captchaRes.ok||captchaData?.success!==true||!hostnameOk||!actionOk){
+        return json(req,{error:"SECURITY_VERIFICATION_FAILED"},403);
+      }
     }
 
     // Control characters check in name
@@ -156,7 +182,7 @@ serve(async(req:Request)=>{
     const {data:order,error:orderError}=await supabase
       .from("owner_subscription_orders")
       .insert({
-        owner_id:null,
+        owner_id:callerUser.id,
         plan_code:plan.code,
         billing_period:billingPeriod,
         amount:baseAmount,

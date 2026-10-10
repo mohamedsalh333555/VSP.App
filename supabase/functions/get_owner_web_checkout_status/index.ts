@@ -111,20 +111,45 @@ serve(async(req:Request)=>{
   if(req.method==="OPTIONS") return new Response("ok",{headers:corsHeaders(req)});
   if(req.method!=="POST") return out(req,{success:false,error:"METHOD_NOT_ALLOWED"},405);
 
-  try{
-    const body=await readJson(req);
-    const id=body.order_id;
-    if(!validUuid(id)) return out(req,{success:false,error:"INVALID_ORDER_ID"},400);
-
+  try {
     const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
     const supabaseUrl=Deno.env.get("SUPABASE_URL")||"";
     if(!serviceKey || !supabaseUrl) return out(req,{success:false,error:"STATUS_UNAVAILABLE"},503);
 
     const sb=createClient(supabaseUrl,serviceKey);
+
+    const authHeader = req.headers.get("Authorization") || "";
+    if (!authHeader.startsWith("Bearer ")) {
+      return out(req, { success: false, error: "UNAUTHORIZED", message: "Authorization required" }, 401);
+    }
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser }, error: authError } = await sb.auth.getUser(token);
+    if (authError || !callerUser) {
+      return out(req, { success: false, error: "UNAUTHORIZED", message: "Invalid or expired token" }, 401);
+    }
+
+    const body=await readJson(req);
+    const id=body.order_id;
+    if(!validUuid(id)) return out(req,{success:false,error:"INVALID_ORDER_ID"},400);
+
     const {data:order,error}=await sb.from("owner_subscription_orders")
-      .select("id,status,plan_code,billing_period,amount,vsp_fee_amount,paymob_fee_amount,gross_amount,paid_at,payment_source,paymob_order_id,paymob_transaction_id")
+      .select("id,owner_id,checkout_email,status,plan_code,billing_period,amount,vsp_fee_amount,paymob_fee_amount,gross_amount,paid_at,payment_source,paymob_order_id,paymob_transaction_id")
       .eq("id",id).maybeSingle();
     if(error||!order) return out(req,{success:false,error:"ORDER_NOT_FOUND"},404);
+
+    // Verify caller is the order owner or administrator
+    const { data: userProfile } = await sb
+      .from("users")
+      .select("role")
+      .eq("id", callerUser.id)
+      .maybeSingle();
+
+    const isAdmin = userProfile && ["admin", "super_admin", "co_founder", "cofounder"].includes(userProfile.role);
+    const isOrderOwner = (order.owner_id && order.owner_id === callerUser.id) || (order.checkout_email && callerUser.email && order.checkout_email.toLowerCase() === callerUser.email.toLowerCase());
+
+    if (!isAdmin && !isOrderOwner) {
+      return out(req, { success: false, error: "FORBIDDEN_NOT_ORDER_OWNER", message: "You are not authorized to view this order status." }, 403);
+    }
 
     if(order.status==="pending" && order.paymob_order_id){
       try{
