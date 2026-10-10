@@ -181,9 +181,16 @@ def main():
         ORDER BY tablename, policyname;
     """)
     for pol in policies:
-        output.append(f"DROP POLICY IF EXISTS \"{pol['policyname']}\" ON public.\"{pol['tablename']}\";")
         cmd = pol['cmd']
-        roles_str = ", ".join(pol['roles']) if pol['roles'] else "PUBLIC"
+        roles = pol['roles']
+        if isinstance(roles, str):
+            roles_str = roles.strip('{}')
+        elif isinstance(roles, list):
+            roles_str = ", ".join(roles)
+        else:
+            roles_str = "PUBLIC"
+        if not roles_str:
+            roles_str = "PUBLIC"
         permissive = "AS RESTRICTIVE" if pol['permissive'] == 'RESTRICTIVE' else "AS PERMISSIVE"
         
         pol_stmt = f"CREATE POLICY \"{pol['policyname']}\" ON public.\"{pol['tablename']}\" {permissive} FOR {cmd} TO {roles_str}"
