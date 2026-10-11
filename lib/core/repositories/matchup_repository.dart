@@ -91,11 +91,27 @@ class MatchupRepository {
     try {
       final response = await _supabase
           .from('matchup_teams')
-          .select('*, teams(id, name, logo_url, captain_id)')
+          .select('*')
           .eq('booking_id', bookingId)
           .order('joined_at', ascending: true);
 
-      return (response as List).map((row) => MatchupTeam.fromMap(row)).toList();
+      final rows = (response as List).cast<Map<String, dynamic>>();
+      if (rows.isEmpty) return [];
+
+      final teamIds = rows.map((r) => r['team_id']?.toString()).whereType<String>().toList();
+      final teamsRes = await _supabase
+          .from('teams_public')
+          .select('id, name, logo_url, captain_id')
+          .inFilter('id', teamIds);
+      final teamsMap = {for (var t in (teamsRes as List)) t['id'].toString(): t};
+
+      return rows.map((row) {
+        final teamId = row['team_id']?.toString();
+        final teamData = teamsMap[teamId];
+        final combined = Map<String, dynamic>.from(row);
+        if (teamData != null) combined['teams'] = teamData;
+        return MatchupTeam.fromMap(combined);
+      }).toList();
     } catch (e) {
       debugPrint('Error fetching matchup teams: $e');
       return [];

@@ -181,21 +181,8 @@ class TeamRepository {
  }
  }
 
- Future<Team?> getTeamByCaptainPhone(String phone) async {
- try {
- final response = await _supabase
- .from('teams')
- .select()
- .eq('captain_phone', phone)
- .maybeSingle();
- if (response == null) return null;
- 
- final teamId = response['id'].toString();
- return await getTeam(teamId);
- } catch (e) {
- return null;
- }
- }
+  @Deprecated('Use lookupChallengeCode or team ID instead of captain phone')
+  Future<Team?> getTeamByCaptainPhone(String phone) async => null;
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) =>
       _rosterCoordinator.addMemberToTeam(teamId, userId, imageUrl);
