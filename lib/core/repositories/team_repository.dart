@@ -84,33 +84,33 @@ class TeamRepository {
   if (response is Map && response['success'] == true) return response['team_id']?.toString();
   throw Exception(response is Map ? response['error'] ?? 'فشل إنشاء الفريق' : 'فشل إنشاء الفريق');
  }
- Future<Team?> getTeam(String id) async {
- try {
- final response = await _supabase
- .from('teams')
- .select()
- .eq('id', id)
- .maybeSingle();
- if (response == null) return null;
+  Future<Team?> getTeam(String id) async {
+    try {
+      final response = await _supabase
+          .from('teams_public')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (response == null) return null;
 
- final memberUids = await getTeamMemberUids(id);
- final playerImages = await getTeamPlayerImages(memberUids);
+      final memberUids = await getTeamMemberUids(id);
+      final playerImages = await getTeamPlayerImages(memberUids);
 
- final data = Map<String, dynamic>.from(response);
- data['memberUids'] = memberUids;
- data['playerImages'] = playerImages;
- data['playersCount'] = memberUids.length;
+      final data = Map<String, dynamic>.from(response);
+      data['memberUids'] = memberUids;
+      data['playerImages'] = playerImages;
+      data['playersCount'] = memberUids.length;
 
- return Team.fromFirestore(data, id);
- } catch (e) {
- debugPrint('Error getting team: $e');
- return null;
- }
- }
+      return Team.fromFirestore(data, id);
+    } catch (e) {
+      debugPrint('Error getting team: $e');
+      return null;
+    }
+  }
 
   Future<List<Team>> fetchTeamsDirectly({String? governorate}) async {
     try {
-      final response = await _supabase.from('teams').select().limit(50);
+      final response = await _supabase.from('teams_public').select().limit(50);
       return (response as List).map((data) {
         if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
           final dbGov = (data['governorate'] ?? '').toString().trim();
@@ -133,41 +133,24 @@ class TeamRepository {
   }
 
   Stream<List<Team>> getTeams({String? governorate}) async* {
-    // 1. Immediate REST fetch
     final direct = await fetchTeamsDirectly(governorate: governorate);
-    if (direct.isNotEmpty) yield direct;
+    yield direct;
+  }
 
-    // 2. Realtime Stream with safety timeout & error recovery
-    yield* _supabase
-        .from('teams')
-        .stream(primaryKey: ['id'])
-        .map((list) {
-          return list.map((data) {
-            if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
-              final dbGov = (data['governorate'] ?? '').toString().trim();
-              final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
-              final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
-
-              final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
-                  dbGov.toLowerCase() == governorate.toLowerCase();
-
-              if (!matches) {
-                return null;
-              }
-            }
-            return Team.fromFirestore(data, data['id'].toString());
-          }).whereType<Team>().toList();
-        })
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await fetchTeamsDirectly(governorate: governorate);
-            sink.add(refreshed);
-          },
-        )
-        .handleError((error) {
-          debugPrint('Handled realtime error in getTeams: $error');
-        });
+  /// جلب كود الدعوة النشط للفريق (للكابتن أو الأدمن فقط عبر RPC آمنة)
+  Future<String?> getTeamInviteCode(String teamId) async {
+    try {
+      final res = await _supabase.rpc('get_team_invite_code', params: {
+        'p_team_id': teamId,
+      });
+      if (res is Map && res['success'] == true) {
+        return res['invite_code']?.toString();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting team invite code: $e');
+      return null;
+    }
   }
 
   Future<List<Team>> searchOpponentTeams(String query) =>

@@ -20,7 +20,7 @@ class TournamentDrawNotifier {
     if (ids.isEmpty) return [];
     try {
       final response = await _supabase
-          .from('teams')
+          .from('teams_public')
           .select('*, team_members(user_id, users(profile_image_url))')
           .inFilter('id', ids);
 

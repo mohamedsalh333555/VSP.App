@@ -44,9 +44,9 @@ class TeamOpponentService {
   }) async {
     try {
       final response = await supabase
-          .from('teams')
+          .from('teams_public')
           .select('*, team_members(user_id, users(profile_image_url))')
-          .or('name.ilike.%$query%,captain_phone.ilike.%$query%');
+          .ilike('name', '%$query%');
 
       return parseTeamsWithMembers(response as List);
     } catch (e) {
@@ -66,7 +66,7 @@ class TeamOpponentService {
       if (team == null || team.playedOpponents.isEmpty) return [];
 
       final response = await supabase
-          .from('teams')
+          .from('teams_public')
           .select('*, team_members(user_id, users(profile_image_url))')
           .inFilter('id', team.playedOpponents);
 
