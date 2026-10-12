@@ -359,7 +359,7 @@ class _NotificationCard extends StatelessWidget {
     switch (type.toLowerCase()) {
       case 'system':
       case 'announcement':
-        return const Color(0xFFF59E0B); // Amber / Gold for system alerts
+        return VSPColors.warning; // Amber / Gold for system alerts
       case 'subscription':
         return VSPColors.proAccent;
       case 'refund':

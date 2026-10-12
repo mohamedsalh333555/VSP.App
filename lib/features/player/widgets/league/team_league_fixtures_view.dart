@@ -278,7 +278,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                           padding: EdgeInsets.only(top: 4),
                           child: Text(
                             'فوز 🟢',
-                            style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -338,7 +338,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                           padding: EdgeInsets.only(top: 4),
                           child: Text(
                             'فوز 🟢',
-                            style: TextStyle(color: Color(0xFF10B981), fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -399,31 +399,31 @@ class TeamLeagueFixturesView extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+          color: VSPColors.accentSoft,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0xFF10B981), width: 0.5),
+          border: Border.all(color: VSPColors.accent, width: 0.5),
         ),
-        child: const Text('نتيجة معتمدة 🔒', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('نتيجة معتمدة 🔒', style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     if (match.isConfirmed) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+          color: VSPColors.accentSoft,
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('معتمدة (مهلة تعديل ⏱️)', style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('معتمدة (مهلة تعديل ⏱️)', style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     if (match.isDisputed) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.15),
+          color: VSPColors.warning.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Text('اختلاف بالنتيجة', style: TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold)),
+        child: const Text('اختلاف بالنتيجة', style: TextStyle(color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold)),
       );
     }
     if (match.isAwaitingConfirmation) {

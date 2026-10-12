@@ -33,16 +33,28 @@ class TeamProfileStatsGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-        color: VSPColors.surface.withValues(alpha: 0.5),
+        border: Border.all(color: VSPColors.divider),
+        color: VSPColors.surface,
       ),
       child: Column(
         children: [
-          Text(value, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24)),
+          Text(
+            value,
+            style: const TextStyle(
+              color: VSPColors.textPrimary,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

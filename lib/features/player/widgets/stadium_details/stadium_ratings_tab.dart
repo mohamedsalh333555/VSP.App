@@ -23,7 +23,7 @@ class StadiumRatingsTab extends StatefulWidget {
 
 class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
   late final Stream<List<Map<String, dynamic>>> _reviewsStream;
-  static const Color _ratingUnselectedColor = Color(0xFF4A4F54);
+  static const Color _ratingUnselectedColor = VSPColors.surfaceAlt;
 
   @override
   void initState() {

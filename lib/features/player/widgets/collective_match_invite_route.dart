@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'collective_match_invite_sheet.dart';
 
 class CollectiveMatchInviteRoute extends StatefulWidget {
@@ -30,7 +31,7 @@ class _CollectiveMatchInviteRouteState extends State<CollectiveMatchInviteRoute>
 
   @override
   Widget build(BuildContext context) => const Scaffold(
-    backgroundColor: Color(0xFF101114),
-    body: Center(child: CircularProgressIndicator()),
+    backgroundColor: VSPColors.background,
+    body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
   );
 }

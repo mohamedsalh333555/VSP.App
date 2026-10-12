@@ -39,7 +39,7 @@ class TeamProfileHeroHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+              const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
               const SizedBox(width: 4),
               Text(
                 '${team.governorate} • ${team.sportType}',
@@ -51,9 +51,9 @@ class TeamProfileHeroHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.1),
+              color: VSPColors.accentSoft,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+              border: Border.all(color: VSPColors.borderAccent),
             ),
             child: Text(
               team.rankTitle,
@@ -65,24 +65,24 @@ class TeamProfileHeroHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: VSPColors.warning.withValues(alpha: 0.15),
+                color: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: VSPColors.warning, width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: VSPColors.warning.withValues(alpha: 0.25),
-                    blurRadius: 10,
-                    spreadRadius: 1,
+                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.6)),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Iconsax.crown_1_copy, color: VSPColors.warning, size: 13),
+                  SizedBox(width: 4),
+                  Text(
+                    'يضم بطل 1 ضد 1',
+                    style: TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
-              ),
-              child: const Text(
-                ' يضم بطل 1 ضد 1',
-                style: TextStyle(
-                  color: VSPColors.warning,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
           ],

@@ -34,8 +34,8 @@ class TeamLeagueDetailsView extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  VSPColors.medalGold.withValues(alpha: 0.25),
-                  const Color(0xFFB8860B).withValues(alpha: 0.1),
+                  VSPColors.medalGold.withValues(alpha: 0.2),
+                  VSPColors.surfaceAlt,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -189,12 +189,12 @@ class TeamLeagueDetailsView extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          color: VSPColors.accentSoft,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           'رسوم مشاركة الفريق: مدفوعة',
-                          style: TextStyle(color: Color(0xFF10B981), fontSize: 10.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: VSPColors.accent, fontSize: 10.5, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],

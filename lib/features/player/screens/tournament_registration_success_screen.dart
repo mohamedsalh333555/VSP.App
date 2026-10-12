@@ -365,8 +365,7 @@ class _TournamentRegistrationSuccessScreenState
                 colors: const [
                   VSPColors.accent,
                   VSPColors.white,
-                  Color(0xFFFFD700), // ذهبي
-                  Color(0xFF00E5FF), // سيان
+                  VSPColors.medalGold,
                 ],
               ),
             ),
@@ -593,7 +592,7 @@ class _TournamentRegistrationSuccessScreenState
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1F9FDF02),
+            color: VSPColors.accentGlow,
             blurRadius: 18,
             offset: Offset(0, 4),
           ),
@@ -773,7 +772,7 @@ class _TournamentRegistrationSuccessScreenState
               icon: Iconsax.moneys_copy,
               label: 'مجموع الجوائز:',
               value: '${_prizePool.toStringAsFixed(0)} ج.م',
-              valueColor: const Color(0xFFFFD700),
+              valueColor: VSPColors.medalGold,
               isBold: true,
             ),
             const SizedBox(height: 10),

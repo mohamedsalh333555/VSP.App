@@ -191,7 +191,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                             message: 'حساب موثق ومعتمد',
                             child: Icon(
                               Icons.verified,
-                              color: Color(0xFF1DA1F2),
+                              color: VSPColors.accent,
                               size: 16,
                             ),
                           ),
