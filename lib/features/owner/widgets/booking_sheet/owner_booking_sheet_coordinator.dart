@@ -39,10 +39,14 @@ class OwnerBookingSheetCoordinator {
         }
       }
 
+      final double remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
+      final double actualCashPaid = (remainingCash > 0 && booking.depositPaid > 0) ? remainingCash : totalPrice;
+
       final rpcRes = await repo.confirmCashBookingAtomic(
         bookingId: booking.id,
         ownerId: uid,
         totalPrice: totalPrice,
+        collectedAmount: actualCashPaid,
       );
 
       if (rpcRes is Map && rpcRes['success'] == false) {
@@ -52,8 +56,6 @@ class OwnerBookingSheetCoordinator {
       final isAlreadyConfirmed = rpcRes is Map && rpcRes['already_confirmed'] == true;
 
       if (!isAlreadyConfirmed) {
-        final double remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
-        final double actualCashPaid = (remainingCash > 0 && booking.depositPaid > 0) ? remainingCash : totalPrice;
         final String playerUserId = booking.userId;
         if (playerUserId.isNotEmpty && playerUserId != uid) {
           try {

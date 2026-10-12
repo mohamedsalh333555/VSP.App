@@ -225,9 +225,22 @@ class TeamRepository {
   Stream<List<Map<String, dynamic>>> streamUserMembership(String userId) =>
       _rosterCoordinator.streamUserMembership(userId);
 
-  /// Stream single team updates
-  Stream<List<Map<String, dynamic>>> streamTeam(String teamId) {
-    return _supabase
+  /// Stream single team updates (reads initially from public view, then listens to realtime)
+  Stream<List<Map<String, dynamic>>> streamTeam(String teamId) async* {
+    try {
+      final initialDoc = await _supabase
+          .from('teams_public')
+          .select()
+          .eq('id', teamId)
+          .maybeSingle();
+      if (initialDoc != null) {
+        yield [Map<String, dynamic>.from(initialDoc)];
+      }
+    } catch (e) {
+      VSPLogger.w('Initial public team fetch notice: $e');
+    }
+
+    yield* _supabase
         .from('teams')
         .stream(primaryKey: ['id'])
         .eq('id', teamId)

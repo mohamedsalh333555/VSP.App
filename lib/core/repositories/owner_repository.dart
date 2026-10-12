@@ -239,11 +239,13 @@ Future<Map<String, dynamic>> requestPayoutSettlement({
     required String bookingId,
     required String ownerId,
     required double totalPrice,
+    double? collectedAmount,
   }) async {
     return _supabase.rpc('confirm_cash_booking_atomic', params: {
       'p_booking_id': bookingId,
       'p_owner_id': ownerId,
       'p_total_price': totalPrice,
+      'p_collected_amount': collectedAmount ?? totalPrice,
     });
   }
 

@@ -14,6 +14,7 @@ class MockOwnerRepo extends OwnerRepository {
     required String bookingId,
     required String ownerId,
     required double totalPrice,
+    double? collectedAmount,
   }) async {
     cashConfirmed = true;
     return {'success': true};

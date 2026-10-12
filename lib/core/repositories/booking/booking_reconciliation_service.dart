@@ -4,7 +4,6 @@ import '../team_repository.dart';
 import '../user_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
-import '../../services/logger_service.dart';
 import 'booking_domain_rules.dart';
 
 /// Handles match result submissions, ratings, and background reconciliation cron operations.
@@ -115,12 +114,9 @@ class BookingReconciliationService {
 
   /// Automatically marks past confirmed bookings as completed via server RPC.
   Future<void> autoReconcilePastBookings() async {
-    try {
-      await _supabase.rpc('auto_reconcile_past_bookings');
-      VSPLogger.i('auto_reconcile_past_bookings RPC executed successfully');
-    } catch (e) {
-      VSPLogger.e('Error in autoReconcilePastBookings RPC', e);
-    }
+    // Reconciliation is handled exclusively by server cron; client sessions
+    // must not invoke bulk administrative updates.
+    return;
   }
 
   /// Automatically cancels pending challenges when expiration deadline is met.

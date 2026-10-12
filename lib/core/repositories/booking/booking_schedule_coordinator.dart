@@ -113,21 +113,10 @@ class BookingScheduleCoordinator {
     }
   }
 
-  /// Simulates test payment webhook during development.
+  /// Simulates test payment webhook during development (disabled in production client).
   Future<void> simulateTestPaymentWebhook(String bookingId) async {
-    if (!kDebugMode) return;
-    try {
-      await _supabase.rpc('process_paymob_webhook', params: {
-        'p_booking_id': bookingId,
-        'p_txn_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}',
-        'p_order_id': 'ORD_${DateTime.now().millisecondsSinceEpoch}',
-        'p_success': true,
-        'p_signature_verified': true,
-        'p_payload': {'source': 'paymob_test_client'},
-      });
-    } catch (rpcErr) {
-      debugPrint('process_paymob_webhook direct call note: $rpcErr');
-    }
+    // Webhook simulation is restricted to server-side Edge Functions with signed payloads.
+    return;
   }
 
   /// Releases database lock on pending booking if payment expired or aborted.

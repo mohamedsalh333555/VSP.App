@@ -216,10 +216,14 @@ class SupabaseBookingRepository implements BookingRepository {
       if (b == null) return false;
 
       if (isPaid) {
+        final double remainingCash = (b.totalPrice - b.depositPaid).clamp(0.0, 999999.0);
+        final double actualCashPaid = (remainingCash > 0 && b.depositPaid > 0) ? remainingCash : b.totalPrice;
+
         final rpcRes = await _supabase.rpc('confirm_cash_booking_atomic', params: {
           'p_booking_id': bookingId,
           'p_owner_id': b.ownerId,
           'p_total_price': b.totalPrice,
+          'p_collected_amount': actualCashPaid,
         });
 
         if (rpcRes is Map && rpcRes['success'] == false) {
@@ -227,8 +231,6 @@ class SupabaseBookingRepository implements BookingRepository {
           return false;
         }
 
-        final double remainingCash = (b.totalPrice - b.depositPaid).clamp(0.0, 999999.0);
-        final double actualCashPaid = (remainingCash > 0 && b.depositPaid > 0) ? remainingCash : b.totalPrice;
         final String playerUserId = b.userId;
 
         if (playerUserId.isNotEmpty && playerUserId != b.ownerId) {
