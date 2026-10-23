@@ -79,6 +79,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       return;
     }
 
+    final captainGovernorate = Provider.of<AuthProvider>(context, listen: false)
+        .userModel?.governorate?.trim();
     int addedCount = 0;
     setState(() {
       for (int i = 0; i < parsedNames.length; i++) {
@@ -90,7 +92,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             name: name,
             email: 'guest_$i@vsp.app',
             role: 'player',
-            governorate: 'Cairo',
+            governorate: (captainGovernorate == null || captainGovernorate.isEmpty)
+                ? ''
+                : captainGovernorate,
           ));
           addedCount++;
         }
