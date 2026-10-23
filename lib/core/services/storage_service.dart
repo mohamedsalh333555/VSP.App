@@ -147,14 +147,20 @@ class StorageService {
  }
 
  Future<String?> uploadProfilePicture({required XFile file, required String userId, String? oldImageUrl}) async {
- if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
- await deleteFile(oldImageUrl);
- }
- return await uploadFile(
- file: file, 
- bucket: 'profile-pictures', 
- path: '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg'
+ // Upload first so a failed replacement never destroys the currently visible photo.
+ final uploadedUrl = await uploadFile(
+ file: file,
+ bucket: 'profile-pictures',
+ path: '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
  );
+ if (uploadedUrl == null || uploadedUrl.isEmpty) return null;
+
+ if (oldImageUrl != null &&
+     oldImageUrl.isNotEmpty &&
+     oldImageUrl != uploadedUrl) {
+   await deleteFile(oldImageUrl);
+ }
+ return uploadedUrl;
  }
 
  Future<String?> uploadOwnerDocument({required XFile file, required String ownerId, required String documentType}) async {

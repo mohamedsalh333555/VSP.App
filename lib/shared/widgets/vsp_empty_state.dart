@@ -28,22 +28,20 @@ class VSPEmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(VSPDSizes.emptyIconPadding),
+              width: VSPDSizes.stateIconBox,
+              height: VSPDSizes.stateIconBox,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: VSPDSSemanticColors.accent.withValues(
-                  alpha: VSPDSOpacity.selectedSurface,
-                ),
-                shape: BoxShape.circle,
+                color: VSPDSColors.zinc800,
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
                 border: Border.all(
-                  color: VSPDSSemanticColors.accent.withValues(
-                    alpha: VSPDSOpacity.border,
-                  ),
-                  width: VSPDSBorders.focus,
+                  color: VSPDSColors.zinc750,
+                  width: VSPDSBorders.standard,
                 ),
               ),
               child: Icon(
                 icon,
-                color: VSPDSSemanticColors.accent,
+                color: VSPDSColors.zinc100,
                 size: VSPDSizes.emptyIconSize,
               ),
             ),

@@ -103,8 +103,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       VSPFeedback.showSuccess(
         context,
         isArabic
-            ? 'تمت إضافة $addedCount أعضاء من نص التشكيلة بنجاح! '
-            : 'Successfully added $addedCount members from WhatsApp text! ',
+            ? 'تمت إضافة $addedCount أعضاء من النص بنجاح.'
+            : 'Added $addedCount members from the pasted text.',
       );
     }
   }
@@ -232,19 +232,28 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.createTeamTitle, style: Theme.of(context).textTheme.displayMedium),
-                  const SizedBox(height: VSPSpacing.xs),
-                  Text(
-                    l10n.createTeamSubtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(color: VSPColors.textSecondary),
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.createTeamTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.displayMedium,
+                    ),
+                    const SizedBox(height: VSPSpacing.xs),
+                    Text(
+                      l10n.createTeamSubtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(color: VSPColors.textSecondary),
+                    ),
+                  ],
+                ),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),

@@ -158,16 +158,13 @@ class AuthProfileService {
       final uid = authUser.id;
       final oldUrl = currentUserModel?.profileImageUrl;
 
-      String? url;
-      if (kIsWeb) {
-        url = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150';
-      } else {
-        url = await _storage.uploadProfilePicture(
-          file: file,
-          userId: uid,
-          oldImageUrl: oldUrl,
-        );
-      }
+      // Upload the selected file on every platform. Never substitute a stock image
+      // for the user's actual profile photo.
+      final String? url = await _storage.uploadProfilePicture(
+        file: file,
+        userId: uid,
+        oldImageUrl: oldUrl,
+      );
       if (url == null) throw 'Upload returned null';
 
       return (success: true, imageUrl: url, error: null);
