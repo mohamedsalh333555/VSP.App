@@ -794,5 +794,12 @@
   "skipButton": "تخطي",
   "updateRequired": "يلزم تحديث التطبيق",
   "updateAvailableMessage": "يتوفر إصدار جديد من VSP مع تحسينات في الأداء وميزات جديدة.",
-  "updateNow": "تحديث الآن"
+  "updateNow": "تحديث الآن",
+ "sessionExpiredSignInAgain": "انتهت الجلسة. سجل الدخول مرة أخرى.",
+ "captainGovernorateRequired": "يجب تحديد محافظة الكابتن قبل إنشاء الفريق.",
+ "teamLogoUploadFailed": "تعذر رفع شعار الفريق. تحقق من الاتصال وحاول مرة أخرى.",
+ "teamCreationFailedRetry": "فشل إنشاء الفريق، يرجى إعادة المحاولة.",
+ "teamNameExampleHint": "مثال: فريق النجوم",
+ "teamBioLabel": "نبذة عن الفريق",
+ "teamBioHint": "اكتب نبذة قصيرة عن الفريق وطريقة لعبه..."
 }
