@@ -158,9 +158,13 @@ class VSPStateView extends StatelessWidget {
           VSPUiState.disabled => Icons.lock_outline_rounded,
         };
 
+    // Empty/neutral illustrations use the charcoal system. Reserve semantic
+    // red for errors/offline states; do not paint every empty state VSP green.
     final tint = isErrorLike
         ? VSPDSSemanticColors.error
-        : VSPDSSemanticColors.accent;
+        : state == VSPUiState.empty || state == VSPUiState.disabled
+            ? VSPDSColors.zinc400
+            : VSPDSSemanticColors.accent;
 
     if (state == VSPUiState.loading || state == VSPUiState.processing) {
       return Center(
@@ -208,14 +212,14 @@ class VSPStateView extends StatelessWidget {
                 width: VSPDSizes.stateIconBox,
                 height: VSPDSizes.stateIconBox,
                 decoration: BoxDecoration(
-                  color: tint.withValues(
-                    alpha: VSPDSOpacity.selectedSurface,
-                  ),
-                  shape: BoxShape.circle,
+                  color: (state == VSPUiState.empty || state == VSPUiState.disabled)
+                      ? VSPDSColors.zinc800
+                      : tint.withValues(alpha: VSPDSOpacity.selectedSurface),
+                  borderRadius: BorderRadius.circular(VSPDSRadius.md),
                   border: Border.all(
-                    color: tint.withValues(
-                      alpha: VSPDSOpacity.border,
-                    ),
+                    color: (state == VSPUiState.empty || state == VSPUiState.disabled)
+                        ? VSPDSColors.zinc750
+                        : tint.withValues(alpha: VSPDSOpacity.border),
                   ),
                 ),
                 child: Icon(
