@@ -103,8 +103,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       VSPFeedback.showSuccess(
         context,
         isArabic
-            ? 'تمت إضافة $addedCount أعضاء من نص التشكيلة بنجاح! '
-            : 'Successfully added $addedCount members from WhatsApp text! ',
+            ? 'تمت إضافة $addedCount أعضاء من النص بنجاح.'
+            : 'Added $addedCount members from the pasted text.',
       );
     }
   }
