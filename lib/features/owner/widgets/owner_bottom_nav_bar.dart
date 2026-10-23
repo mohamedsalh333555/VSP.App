@@ -46,29 +46,29 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
           onItemTapped: widget.onTap,
           items: [
             VspNavItem(
-              activeIcon: Iconsax.element_4,
               inactiveIcon: Iconsax.element_4_copy,
+            activeIcon: Iconsax.element_4,
               label: AppLocalizations.of(context)!.home,
             ),
             VspNavItem(
-              activeIcon: Iconsax.cup,
               inactiveIcon: Iconsax.cup_copy,
+            activeIcon: Iconsax.cup,
               label: AppLocalizations.of(context)!.tournamentsTab,
             ),
             VspNavItem(
-              activeIcon: Iconsax.messages_3,
               inactiveIcon: Iconsax.messages_3_copy,
+            activeIcon: Iconsax.messages_3,
               label: AppLocalizations.of(context)!.chat,
               hasNotification: hasUnread, // النقطة الحمراء
             ),
             VspNavItem(
-              activeIcon: Iconsax.calendar_1,
               inactiveIcon: Iconsax.calendar_1_copy,
+            activeIcon: Iconsax.calendar_1,
               label: AppLocalizations.of(context)!.bookedTab,
             ),
             VspNavItem(
-              activeIcon: Iconsax.user,
               inactiveIcon: Iconsax.user_copy,
+            activeIcon: Iconsax.user,
               label: AppLocalizations.of(context)!.profileTab,
             ),
           ],
