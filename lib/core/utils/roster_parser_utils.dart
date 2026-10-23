@@ -69,7 +69,7 @@ class RosterParserUtils {
  scrollable: true,
  backgroundColor: VSPColors.surface,
  title: Text(
- isArabic ? 'لصق نص تشكيلة واتساب ' : 'Paste WhatsApp Squad List ',
+ isArabic ? 'لصق قائمة الفريق' : 'Paste team list',
  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
  ),
  content: Column(
