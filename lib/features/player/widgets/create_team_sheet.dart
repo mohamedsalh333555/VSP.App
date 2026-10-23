@@ -110,6 +110,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   }
 
   Future<void> _handleCreateTeam() async {
+    if (_isSubmitting) return;
     final name = _nameController.text.trim();
     final l10n = AppLocalizations.of(context)!;
 
@@ -123,7 +124,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final uid = auth.currentUser?.uid;
 
       if (uid == null) {
-        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        VSPFeedback.showError(context, l10n.sessionExpiredSignInAgain);
         return;
       }
 
@@ -131,22 +132,12 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       if (captainGovernorate == null || captainGovernorate.isEmpty) {
         VSPFeedback.showError(
           context,
-          'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.',
+          l10n.captainGovernorateRequired,
         );
         return;
       }
 
       setState(() => _isSubmitting = true);
-
-      if (_teamMembers.isEmpty && mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(
-          context,
-          isArabic
-              ? 'يمكن إنشاء الفريق بالكابتن فقط. يمكنك إضافة اللاعبين لاحقاً قبل التسجيل في البطولة.'
-              : 'The team can be created with the captain only. You can add players before tournament registration.',
-        );
-      }
 
       if (_selectedLogo != null) {
         _uploadedLogoUrl = await StorageService().uploadFile(
@@ -154,6 +145,10 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           bucket: 'profile-pictures',
           path: 'teams/$uid/logos/team_logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
+        if (_uploadedLogoUrl == null || _uploadedLogoUrl!.trim().isEmpty) {
+          if (mounted) VSPFeedback.showError(context, l10n.teamLogoUploadFailed);
+          return;
+        }
       }
 
       final teamData = {
@@ -190,7 +185,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           ),
         );
       } else if (mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء الفريق، يرجى إعادة المحاولة.');
+        VSPFeedback.showError(context, l10n.teamCreationFailedRetry);
       }
     } catch (e) {
       if (mounted) {
@@ -277,7 +272,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     controller: _nameController,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'e.g. Star Team',
+                      hintText: l10n.teamNameExampleHint,
                       hintStyle: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -295,7 +290,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.md),
 
                   // Team bio
-                  Text('نبذة عن الفريق', style: Theme.of(context).textTheme.labelMedium),
+                  Text(l10n.teamBioLabel, style: Theme.of(context).textTheme.labelMedium),
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _bioController,
@@ -304,7 +299,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     maxLength: 160,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...',
+                      hintText: l10n.teamBioHint,
                       filled: true,
                       fillColor: VSPColors.surface,
                       border: OutlineInputBorder(
