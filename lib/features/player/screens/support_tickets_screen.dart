@@ -48,9 +48,11 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             VSPSpacing.lg,
             MediaQuery.of(ctx).viewInsets.bottom + VSPSpacing.lg,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               Text(
                 isArabic ? 'فتح تذكرة دعم' : 'Open Support Ticket',
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -112,7 +114,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   child: Text(isArabic ? 'فتح التذكرة' : 'Open Ticket'),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
