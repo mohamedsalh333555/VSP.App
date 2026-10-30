@@ -7,7 +7,7 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 class MatchResultModal extends StatefulWidget {
  final Booking booking;
  final String submittingTeamId;
- final Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
+ final Future<void> Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
 
  const MatchResultModal({
  super.key, 
@@ -23,6 +23,7 @@ class MatchResultModal extends StatefulWidget {
 class _MatchResultModalState extends State<MatchResultModal> {
  int _selectedIndex = -1; // -1: None, 0: We Won, 1: Draw, 2: We Lost
  double _rating = 0;
+ bool _isSubmitting = false;
  final TextEditingController _reviewController = TextEditingController();
 
  @override
@@ -78,7 +79,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  ),
  ),
  IconButton(
- onPressed: () => Navigator.pop(context),
+ onPressed: _isSubmitting ? null : () => Navigator.pop(context),
  icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
  padding: EdgeInsets.zero,
  constraints: const BoxConstraints(),
@@ -153,7 +154,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  height: 48,
  color: VSPColors.surfaceAlt,
  textColor: VSPColors.textPrimary,
- onPressed: () => Navigator.pop(context),
+ onPressed: _isSubmitting ? null : () => Navigator.pop(context),
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
@@ -161,8 +162,8 @@ class _MatchResultModalState extends State<MatchResultModal> {
  child: PrimaryButton(
  text: isArabic ? 'إرسال النتيجة' : 'Submit Result',
  height: 48,
- onPressed: _selectedIndex == -1 ? null : _handleSubmit,
- isLoading: false,
+ onPressed: _selectedIndex == -1 || _isSubmitting ? null : _handleSubmit,
+ isLoading: _isSubmitting,
  ),
  ),
  ],
@@ -174,27 +175,44 @@ class _MatchResultModalState extends State<MatchResultModal> {
  );
  }
 
- void _handleSubmit() {
- late MatchOutcome outcome;
+ Future<void> _handleSubmit() async {
+   if (_isSubmitting || _selectedIndex == -1) return;
 
- final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
+   late MatchOutcome outcome;
+   final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
 
- if (_selectedIndex == 0) { // We Won
- outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
- } else if (_selectedIndex == 1) { // Draw
- outcome = MatchOutcome.draw;
- } else { // We Lost
- outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
- }
+   if (_selectedIndex == 0) {
+     outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+   } else if (_selectedIndex == 1) {
+     outcome = MatchOutcome.draw;
+   } else {
+     outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+   }
 
- widget.onConfirm(
- outcome,
- _rating > 0 ? _rating : null,
- _reviewController.text.trim().isNotEmpty ? _reviewController.text.trim() : null,
- );
- 
- // Trigger rating update logic (could be passed back via the callback in a future iteration,
- // but for now, we assume the callback handles the outcome and the provider handles the rating)
+   setState(() => _isSubmitting = true);
+   try {
+     await widget.onConfirm(
+       outcome,
+       _rating > 0 ? _rating : null,
+       _reviewController.text.trim().isNotEmpty
+           ? _reviewController.text.trim()
+           : null,
+     );
+     if (mounted) Navigator.of(context).pop();
+   } catch (_) {
+     if (!mounted) return;
+     setState(() => _isSubmitting = false);
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(
+           isArabic
+               ? 'تعذر إرسال النتيجة. حاول مرة أخرى.'
+               : 'Could not submit the result. Please try again.',
+         ),
+       ),
+     );
+   }
  }
 
  Widget _buildRatingSection(bool isArabic) {
@@ -210,7 +228,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  mainAxisAlignment: MainAxisAlignment.center,
  children: List.generate(5, (index) {
  return GestureDetector(
- onTap: () {
+ onTap: _isSubmitting ? null : () {
  setState(() {
  _rating = index + 1.0;
  });
@@ -226,6 +244,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.md),
  TextField(
  controller: _reviewController,
+ enabled: !_isSubmitting,
  style: Theme.of(context).textTheme.bodySmall,
  maxLines: 2,
  decoration: InputDecoration(
@@ -247,7 +266,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  Widget _buildSelectionOption(int index, String label, IconData icon, Color activeColor) {
  final isSelected = _selectedIndex == index;
  return GestureDetector(
- onTap: () => setState(() => _selectedIndex = index),
+ onTap: _isSubmitting ? null : () => setState(() => _selectedIndex = index),
  child: Container(
  width: double.infinity,
  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
