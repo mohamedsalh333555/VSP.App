@@ -119,7 +119,7 @@ class CustomTextField extends StatelessWidget {
             prefixIcon: prefixIcon != null
                 ? Icon(
                     prefixIcon,
-                    color: VSPColors.textSecondary,
+                    color: VSPDSSemanticColors.textSecondary,
                     size: 20,
                   )
                 : null,
