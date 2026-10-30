@@ -57,6 +57,22 @@ class TeamRepository {
      rethrow;
    }
  }
+ Future<Set<String>> getUserCaptainTeamIds(String userId) async {
+   try {
+     final response = await _supabase
+         .from('teams_public')
+         .select('id')
+         .eq('captain_id', userId);
+     return (response as List)
+         .map((row) => row['id']?.toString() ?? '')
+         .where((id) => id.isNotEmpty)
+         .toSet();
+   } catch (e) {
+     debugPrint('Error getting user captain teams: $e');
+     return <String>{};
+   }
+ }
+
  Future<Team?> getUserTeam(String userId) async {
  try {
  final response = await _supabase
