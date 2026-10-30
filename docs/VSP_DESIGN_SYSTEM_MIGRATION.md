@@ -125,3 +125,10 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Found two root-level confirmation surfaces whose AlertDialog content/actions were not configured as scrollable: the owner account-verification celebration dialog and the forced-update dialog. Enabled scrollable dialog layout for both so the action remains reachable on compact viewports and with larger localized text.
 - The global offline banner is intentionally an overlay; its possible interaction with page headers requires runtime verification while offline and is not marked as passed from source inspection.
 - These are source-level changes only. No UXLP-44 rule is marked passed and no final test or APK build has been started.
+
+## Route-level asynchronous state review
+
+- Reviewed the championship deep-link route in `lib/core/navigation/app_router.dart`.
+- Fixed a terminal-state defect: a failed repository request or a completed request returning no championship previously fell through to the same loading spinner, leaving users with an indefinite loading screen.
+- The route now distinguishes loading, repository error, and unavailable/empty results, uses the shared `VSPStateView` component, localizes all user-facing state copy in Arabic and English, and provides a clear return-home action. Error guidance now matches the available action rather than promising an unavailable inline retry.
+- This is source-level behavior; route deep-link, network-failure, missing-record, and both-locale runtime checks remain pending.
