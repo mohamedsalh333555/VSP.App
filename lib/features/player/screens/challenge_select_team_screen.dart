@@ -213,6 +213,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
