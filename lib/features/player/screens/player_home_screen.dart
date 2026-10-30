@@ -173,10 +173,13 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
     return VSPScaffold(
       extendBody: true,
       backgroundColor: VSPDSSemanticColors.background,
-      body: VSPAmbientBackground(
-        showTopGlow: true,
-        showBottomGlow: true,
-        child: IndexedStack(
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: VSPAmbientBackground(
+          showTopGlow: true,
+          showBottomGlow: true,
+          child: IndexedStack(
           index: _selectedIndex,
           children: [
             HomeFeedContent(
@@ -194,6 +197,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
             const BookingsScreen(),
             const ProfileScreen(),
           ],
+          ),
         ),
       ),
       bottomNavigationBar: VspBottomNavBar(
