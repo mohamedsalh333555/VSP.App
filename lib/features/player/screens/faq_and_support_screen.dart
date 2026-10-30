@@ -82,8 +82,10 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,6 +199,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
 
             const SizedBox(height: VSPSpacing.xl),
           ],
+          ),
         ),
       ),
     );
