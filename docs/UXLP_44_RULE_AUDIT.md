@@ -38,8 +38,8 @@
 | 29 | No duplicate submission | source reviewed—runtime pending | Shared primary button has duplicate-tap protection; private collective-match early return now resets processing flags. Verify every async action and backend idempotency path. |
 | 30 | Predictable navigation | source reviewed—runtime pending | Root/router and both role shells reviewed; deep links, back stack, and restored tabs still need runtime verification. |
 | 31 | State-driven actions | not yet inspected | Audit contradictory actions across booking/payment/team/tournament states. |
-| 32 | Safe destructive actions | not yet inspected | Review confirmations, consequences, and recovery/undo behavior. |
-| 33 | Touch ergonomics | source reviewed—runtime pending | Shared bottom navigation items are 58dp high and back-button minimum target is 48dp; verify all controls and spacing. |
+| 32 | Safe destructive actions | source reviewed—runtime pending | Pending-booking cancellation now requires explicit confirmation and explains that the slot will be released; other destructive actions still require review. |
+| 33 | Touch ergonomics | source reviewed—runtime pending | Shared bottom navigation items are 58dp high; back button and pending-booking cancel icon have minimum 48dp targets. Verify all remaining controls and spacing. |
 | 34 | Form resilience | not yet inspected | Audit keyboard types, focus order, validation, autofill, and submit behavior. |
 | 35 | Scroll and modal safety | source reviewed—runtime pending | Scroll-safe dialogs/sheets and safe-area fixes applied in grouped batches; remaining surfaces and keyboard/device layouts need runtime validation. |
 | 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors and championship route failures now have explicit recovery states; post-match result failures now show localized retry guidance instead of false success. Verify all critical flows and draft preservation. |
@@ -101,3 +101,7 @@
 
 - `PendingBookingCard` previously showed a confirmed message when either the booking status was `confirmed` **or** the legacy boolean `isPaid` was true. This could misreport a pending booking with an inconsistent/stale payment flag. It now uses `PaymentCheckoutService.isPaymentConfirmed`, which requires a confirmed booking and a recognized paid/partially-paid status. It also handles query failures with localized error feedback and refreshes the booking list after confirmed status.
 - This aligns the UI with the canonical payment rule in `PaymentCheckoutService`; runtime validation against webhook-confirmed and still-pending records remains pending.
+### Pending-booking destructive action
+
+- The pending-booking trash action previously cancelled immediately on a single tap. It now presents a localized confirmation dialog explaining that the pending booking is cancelled and the slot released; success/failure feedback is explicit, and the touch target is at least 48dp.
+- Runtime verification of dialog layout, cancellation rejection, and refresh behavior remains pending.
