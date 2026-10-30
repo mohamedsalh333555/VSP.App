@@ -176,6 +176,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   onSelectDate: () => _selectDate(context, baseDate),
                   onDaySelected: (dayIdx) => setState(() => _selectedDayIndex = dayIdx),
                 ),
+                _buildBookingSyncWarning(context, bookingProvider),
                 Expanded(
                   child: VSPEmptyState(
                     icon: Iconsax.clock_copy,
@@ -200,6 +201,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 onSelectDate: () => _selectDate(context, baseDate),
                 onDaySelected: (dayIdx) => setState(() => _selectedDayIndex = dayIdx),
               ),
+              _buildBookingSyncWarning(context, bookingProvider),
               Expanded(
                 child: ListView.separated(
                   controller: _scrollController,
@@ -235,6 +237,67 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildBookingSyncWarning(
+    BuildContext context,
+    BookingProvider bookingProvider,
+  ) {
+    if (!bookingProvider.hasLoadedOwnerBookings ||
+        bookingProvider.ownerBookingsError == null) {
+      return const SizedBox.shrink();
+    }
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final errorColor = Theme.of(context).colorScheme.error;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(
+        VSPDSSpacing.md,
+        VSPDSSpacing.xs,
+        VSPDSSpacing.md,
+        VSPDSSpacing.xs,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPDSSpacing.sm,
+        vertical: VSPDSSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: errorColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPDSRadius.md),
+        border: Border.all(color: errorColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Iconsax.info_circle_copy, color: errorColor, size: 18),
+          const SizedBox(width: VSPDSSpacing.sm),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
+                  : 'Could not refresh bookings. Showing the last loaded data.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: errorColor,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final ownerId = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              ).currentUser?.id;
+              if (ownerId != null) {
+                await bookingProvider.loadOwnerBookings(
+                  ownerId,
+                  forceRefresh: true,
+                );
+              }
+            },
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
       ),
     );
   }
