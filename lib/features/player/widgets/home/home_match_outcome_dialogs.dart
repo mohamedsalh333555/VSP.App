@@ -57,7 +57,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
                     submittingTeamId: booking.playerTeamId ?? userId,
                     onConfirm: (outcome, rating, review) async {
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final success = await provider.submitMatchResult(
                         bookingId: booking.id,
                         teamId: booking.playerTeamId ?? userId,
                         outcome: outcome,
@@ -65,12 +65,21 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
                         review: review,
                       );
                       if (context.mounted) {
-                        VSPFeedback.showSuccess(
-                          context,
-                          isArabic
-                              ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.'
-                              : 'Result submitted & waiting opponent confirmation.',
-                        );
+                        if (success) {
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic
+                                ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.'
+                                : 'Result submitted & waiting opponent confirmation.',
+                          );
+                        } else {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.'
+                                : 'Could not submit the result. Please try again.',
+                          );
+                        }
                       }
                     },
                   ),
@@ -167,12 +176,12 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                     onPressed: () async {
                       Navigator.pop(ctx);
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final success = await provider.submitMatchResult(
                         bookingId: booking.id,
                         teamId: currentTeamId,
                         outcome: agreeOutcome,
                       );
-                      if (context.mounted) {
+                      if (context.mounted && success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             backgroundColor: VSPColors.accent,
@@ -188,6 +197,13 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                               onPressed: () => navigateToTeamsStandings(context),
                             ),
                           ),
+                        );
+                      } else if (context.mounted) {
+                        VSPFeedback.showError(
+                          context,
+                          isArabic
+                              ? 'تعذر تأكيد النتيجة. حاول مرة أخرى.'
+                              : 'Could not confirm the result. Please try again.',
                         );
                       }
                     },
@@ -209,16 +225,25 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                     onPressed: () async {
                       Navigator.pop(ctx);
                       final provider = Provider.of<BookingProvider>(context, listen: false);
-                      await provider.submitMatchResult(
+                      final success = await provider.submitMatchResult(
                         bookingId: booking.id,
                         teamId: currentTeamId,
                         outcome: disputeOutcome,
                       );
                       if (context.mounted) {
-                        VSPFeedback.showWarning(
-                          context,
-                          isArabic ? 'تم تسجيل النزاع للمراجعة الإدارية ' : 'Dispute recorded for review ',
-                        );
+                        if (success) {
+                          VSPFeedback.showWarning(
+                            context,
+                            isArabic ? 'تم تسجيل النزاع للمراجعة الإدارية ' : 'Dispute recorded for review ',
+                          );
+                        } else {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر تسجيل الاعتراض. حاول مرة أخرى.'
+                                : 'Could not submit the dispute. Please try again.',
+                          );
+                        }
                       }
                     },
                     child: Text(
