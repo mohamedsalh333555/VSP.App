@@ -183,8 +183,9 @@ class MaintenanceScreen extends StatelessWidget {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(
- child: Padding(
+ body: SafeArea(
+ child: Center(
+ child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
@@ -207,6 +208,8 @@ class MaintenanceScreen extends StatelessWidget {
  const SizedBox(height: VSPSpacing.xl),
  CircularProgressIndicator(color: VSPColors.accent.withValues(alpha: 0.5)),
  ],
+ ),
+ ),
  ),
  ),
  ),
