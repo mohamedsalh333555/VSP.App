@@ -8,7 +8,7 @@ concurrency:
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, uxlp-44-implementation]
 
 jobs:
   build-release-apk:
