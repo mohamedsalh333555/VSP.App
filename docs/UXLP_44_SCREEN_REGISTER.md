@@ -143,6 +143,10 @@ This register is the inventory of Dart files whose names indicate screens, pages
 
 ## Non-screen UI surfaces still requiring discovery
 
+| Surface | Status |
+|---|---|
+| `VspBottomNavBar` and `OwnerBottomNavBar` | Source reviewed: active/inactive icon variants, selected/unselected typography, semantic selected state, 48dp+ touch height, and bottom SafeArea are present; runtime pending |
+
 - Shared widgets and reusable cards
 - Navigation bars, drawers, app bars, tabs, and action menus
 - Notification delivery and notification persistence behavior
