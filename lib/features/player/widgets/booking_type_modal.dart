@@ -50,6 +50,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
             final created = await showModalBottomSheet<bool>(
               context: context,
               isScrollControlled: true,
+              useSafeArea: true,
               backgroundColor: Colors.transparent,
               builder: (_) => const CreateTeamSheet(),
             );
@@ -129,10 +130,15 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.82,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // This sheet is secondary to the normal booking CTA.
           // Drag handle
           Center(
@@ -194,7 +200,9 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                 : 'Competitive match between two teams to earn ELO rank points',
             iconData: Iconsax.cup_copy,
           ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
