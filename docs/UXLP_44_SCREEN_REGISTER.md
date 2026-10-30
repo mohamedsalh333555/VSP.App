@@ -157,3 +157,15 @@ This register is the inventory of Dart files whose names indicate screens, pages
 ## Audit acceptance criteria
 
 A screen passes only when its actual call sites and relevant states have been checked against all applicable rules in docs/UXLP_44_VSP_STANDARD.md. Source inspection alone cannot establish runtime visual correctness. One consolidated automated validation pass and a device-level UX pass are required after grouped fixes.
+### Embedded booking and match components inspected in this batch
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/player/widgets/user_bookings/pending_booking_card.dart` | player | source reviewed—runtime pending (server-confirmed payment predicate; status-query error handling; cancellation confirmation; 48dp cancel target) |
+| `lib/features/player/widgets/user_bookings/player_booking_card.dart` | player | source reviewed—runtime pending (booking lifecycle badges now use actual status; channel-neutral refund-pending copy) |
+| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited callback, submission lock, disabled dismissal/editing while submitting) |
+| `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (success/failure feedback reflects repository result for submit/confirm/dispute) |
+| `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective booking full-online-payment guard; bounded scroll-safe sheet) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule failure feedback; destructive closure confirmation) |
+| `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (awaited authoritative player booking snapshot; realtime merge behavior preserved) |
+| `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated concurrent-safe player booking loading state and snapshot result) |
