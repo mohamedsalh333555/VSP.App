@@ -140,3 +140,12 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Found that `getUserNotifications` attached a `handleError` callback that logged and consumed realtime stream errors. As a result, the screen could receive no notification data and render the empty state rather than an error state. Removed the swallowing handler so the UI can distinguish an actual empty list from a failed stream.
 - Added a localized error state with a retry action to the notifications screen and made its informational dialog scrollable.
 - Refund delivery and notification retention still require backend trigger/cron and runtime verification; no claim is made that the historical disappearance or missing-refund-notification issue is fully resolved by these client changes.
+
+### Notification retention and refund-path evidence (read-only backend inspection)
+
+- Inspected the active VSP Supabase project `mktqkddbcddrxjxabdua` without changing database state.
+- `public.notifications` has two non-internal triggers: `trg_sync_notification_message_body` (BEFORE INSERT/UPDATE) and `trigger_notification_fcm` (AFTER INSERT). No DELETE trigger exists on the table.
+- The active `pg_cron` jobs contain no notification-retention/delete job. The five-minute `auto_expire_stale_records()` worker updates expired bookings and team-challenge codes; it does not delete notifications. The notification query itself is capped at the latest 50 rows.
+- In the reviewed client flow, tapping a notification only calls `markNotificationAsRead`; swipe-to-dismiss is the explicit delete path. Therefore, source and database inspection do not support a claim that opening a notification deletes it or that a scheduled cleanup removes it. The historical disappearance report still needs runtime/log correlation; it is not marked resolved.
+- The deployed `process_paymob_refund` Edge Function v20 and `paymob_webhook` v45 both contain an in-app notification insert after the refund reconciliation succeeds. The booking refund RPC itself does not insert a notification, so the edge-function insert is essential. Whether a particular missing refund notification failed at that insert or at downstream delivery remains unproven without the corresponding execution log/row evidence.
+- No SQL, migration, function, trigger, cron job, payment rule, or database data was changed during this inspection.
