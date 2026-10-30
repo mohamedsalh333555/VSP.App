@@ -25,7 +25,7 @@ class NotificationsCenterScreen extends StatefulWidget {
 }
 
 class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
-  late final Stream<List<AppNotification>> _notificationsStream;
+  late Stream<List<AppNotification>> _notificationsStream;
   late final String _userId;
 
   @override
@@ -68,6 +68,23 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
               state: VSPUiState.loading,
               title: isArabic ? 'جاري تحميل الإشعارات' : 'Loading notifications',
               message: isArabic ? 'بنجهّز آخر التنبيهات والإجراءات المطلوبة.' : 'Refreshing your latest alerts and required actions.',
+            );
+          }
+
+          if (snapshot.hasError) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            return VSPStateView(
+              state: VSPUiState.error,
+              title: isArabic ? 'تعذر تحميل الإشعارات' : 'Could not load notifications',
+              message: isArabic
+                  ? 'تحقق من اتصالك بالإنترنت ثم أعد المحاولة.'
+                  : 'Check your internet connection and try again.',
+              onRetry: () {
+                setState(() {
+                  _notificationsStream =
+                      NotificationRepository().getUserNotifications(_userId);
+                });
+              },
             );
           }
 
@@ -288,6 +305,7 @@ class _NotificationCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.card)),
         title: Row(
