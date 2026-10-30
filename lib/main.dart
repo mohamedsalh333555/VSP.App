@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/ui/tokens/vsp_tokens.dart';
 import 'core/utils/device_performance.dart';
 import 'core/theme/app_theme.dart';
+import 'core/ui/components/vsp_button.dart';
 import 'core/providers/language_provider.dart';
 import 'core/providers/auth_provider.dart' as app_auth;
 import 'core/providers/stadium_provider.dart';
@@ -46,10 +47,11 @@ class _StartupFailureApp extends StatelessWidget {
       theme: AppTheme.darkTheme,
       home: const Scaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
-          child: Padding(
-            padding: EdgeInsets.all(VSPSpacing.xl),
-            child: Column(
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Iconsax.warning_2_copy, size: 72, color: VSPColors.error),
@@ -62,6 +64,7 @@ class _StartupFailureApp extends StatelessWidget {
                   style: TextStyle(color: VSPColors.textSecondary),
                   textAlign: TextAlign.center),
               ],
+              ),
             ),
           ),
         ),
@@ -161,8 +164,9 @@ void main() async {
 
  return Scaffold(
  backgroundColor: VSPColors.background,
- body: Center(
- child: Padding(
+ body: SafeArea(
+ child: Center(
+ child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
@@ -187,21 +191,18 @@ void main() async {
  style: TextStyle(color: VSPColors.textSecondary),
  ),
  const SizedBox(height: VSPSpacing.xl),
- ElevatedButton(
+ VSPPrimaryButton(
+ text: 'Try Again',
  onPressed: () {
  final ctx = navigatorKey.currentContext;
  if (ctx != null) {
  ctx.go('/');
  }
  },
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
- padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
- ),
- child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
  ),
  ],
+ ),
+ ),
  ),
  ),
  ),
