@@ -165,3 +165,4 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Post-match result entry, confirmation, and dispute dialogs no longer display success messages when the repository returns `false`; they show localized error feedback instead.
 - This source fix does not alter match-result eligibility, team identity, scoring, or league rules. Those require domain-level verification before any policy change.
 - No final test pass or APK build was run.
+- `MatchResultModal` now accepts an awaited async callback, disables the close/cancel/edit controls while submitting, prevents duplicate taps, and closes after the callback completes. If the callback throws, the modal remains available and shows localized error feedback. The caller's repository-result handling already shows success only when the server operation returns true.
