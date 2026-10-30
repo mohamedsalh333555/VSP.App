@@ -192,3 +192,10 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Runtime verification across both captains, matching outcomes, and mismatching outcomes remains pending.
 - Because `team_members` permits multiple memberships per user (composite primary key only), the captain resolver returns all team IDs where the authenticated user is captain. The player-home prompt selects the participating team for each booking instead of assuming the first team membership is the relevant one.
 - The challenge response dialog now handles a missing `pendingOutcome` with localized error feedback rather than force-unwrapping null.
+
+## Owner schedule loading and authoritative availability display
+
+- Added dedicated owner-booking loading, loaded, and error state to `BookingProvider`, separate from generic player/booking mutation loading.
+- Owner direct booking sync now emits an empty list as a valid completed snapshot and forwards fetch errors to the provider. Previous user/owner realtime subscriptions are cancelled before changing booking scope.
+- `OwnerBookingsScreen` starts its initial owner data loads before the first build and does not render generated time slots as available until the authoritative booking snapshot is loaded. Initial load failure shows a retry state. Subsequent force refreshes preserve the already-loaded schedule.
+- This is a client presentation/state correction only. Server-side availability, atomic booking, and conflict rules were not changed.
