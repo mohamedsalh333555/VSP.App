@@ -133,6 +133,10 @@ class BookingSyncCoordinator {
     required void Function(List<Booking> mergedBookings, CategorizedOwnerBookings categorized) onData,
     required void Function(String error) onError,
   }) async {
+    // Stop any previous user's/owner's stream before changing the booking scope.
+    await _subscription?.cancel();
+    _subscription = null;
+
     // 1. Direct REST fetch for immediate UI population
     try {
       final repo = _repository;
@@ -151,7 +155,6 @@ class BookingSyncCoordinator {
     }
 
     // 2. Realtime Stream subscription
-    _subscription?.cancel();
     _subscription = _repository.getOwnerBookings(ownerId, stadiumIds: stadiumIds).listen(
       (bookings) {
         final merged = BookingCategorizationService.mergeLocalManualBookings(
