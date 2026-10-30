@@ -155,15 +155,15 @@ void showPostMatchConfirmResultDialog(
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
-      var isSubmitting = false;
+      bool? submittingDifferentResult;
       return StatefulBuilder(
         builder: (dialogContext, setDialogState) {
           Future<void> submitOutcome({
             required MatchOutcome outcome,
             required bool isDifferentResult,
           }) async {
-            if (isSubmitting) return;
-            setDialogState(() => isSubmitting = true);
+            if (submittingDifferentResult != null) return;
+            setDialogState(() => submittingDifferentResult = isDifferentResult);
             final provider =
                 Provider.of<BookingProvider>(context, listen: false);
             final success = await provider.submitMatchResult(
@@ -174,7 +174,7 @@ void showPostMatchConfirmResultDialog(
             if (!context.mounted || !dialogContext.mounted) return;
 
             if (!success) {
-              setDialogState(() => isSubmitting = false);
+              setDialogState(() => submittingDifferentResult = null);
               VSPFeedback.showError(
                 context,
                 isArabic
@@ -283,13 +283,13 @@ void showPostMatchConfirmResultDialog(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                           ),
                         ),
-                        onPressed: isSubmitting
+                        onPressed: submittingDifferentResult != null
                             ? null
                             : () => submitOutcome(
                                   outcome: agreeOutcome,
                                   isDifferentResult: false,
                                 ),
-                        child: isSubmitting
+                        child: submittingDifferentResult == false
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
@@ -318,13 +318,13 @@ void showPostMatchConfirmResultDialog(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                           ),
                         ),
-                        onPressed: isSubmitting
+                        onPressed: submittingDifferentResult != null
                             ? null
                             : () => submitOutcome(
                                   outcome: differentOutcome,
                                   isDifferentResult: true,
                                 ),
-                        child: isSubmitting
+                        child: submittingDifferentResult == true
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
@@ -348,7 +348,7 @@ void showPostMatchConfirmResultDialog(
                 ),
                 const SizedBox(height: 6),
                 TextButton(
-                  onPressed: isSubmitting
+                  onPressed: submittingDifferentResult != null
                       ? null
                       : () => Navigator.pop(dialogContext),
                   child: Text(
