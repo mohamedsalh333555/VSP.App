@@ -61,24 +61,24 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/booking_sheet/owner_booking_modal.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart` | owner | source reviewed—runtime pending (confirmation AlertDialog uses standard safe-area route) |
 | `lib/features/owner/widgets/brackets/tournament_score_modal.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
-| `lib/features/owner/widgets/documentation/doc_image_source_sheet.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/documentation/doc_under_review_dialog.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/documentation/doc_image_source_sheet.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/documentation/doc_under_review_dialog.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/documentation/doc_wizard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
-| `lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/ledger/owner_payout_dialog.dart` | owner | source reviewed—runtime pending (AlertDialog safe-area and scrollable payout form) |
 | `lib/features/owner/widgets/owner_booking_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/quick_phone_booking_modal.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
@@ -122,7 +122,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | not yet inspected |
+| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/widgets/filter_bottom_sheet.dart` | player | not yet inspected |
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | not yet inspected |
