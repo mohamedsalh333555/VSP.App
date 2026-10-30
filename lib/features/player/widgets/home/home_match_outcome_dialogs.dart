@@ -109,6 +109,15 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
 void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {required String currentTeamId}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   final pending = booking.pendingOutcome;
+  if (pending == null) {
+    VSPFeedback.showError(
+      context,
+      isArabic
+          ? 'لا توجد نتيجة معلّقة لمراجعتها حالياً.'
+          : 'There is no pending result to review.',
+    );
+    return;
+  }
   final isHome = currentTeamId == booking.playerTeamId;
 
   String claimText;
@@ -121,7 +130,7 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {re
     disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
   } else if ((pending == MatchOutcome.homeWin && !isHome) || (pending == MatchOutcome.awayWin && isHome)) {
     claimText = isArabic ? 'أدخل كابتن الخصم أن فريقه فاز بالمباراة ' : 'Opponent reported THEY WON ';
-    agreeOutcome = pending!;
+    agreeOutcome = pending;
     disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
   } else {
     claimText = isArabic ? 'أدخل كابتن الخصم أن فريقك هو الفائز ' : 'Opponent reported YOU WON ';
