@@ -106,14 +106,17 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
         } else {
           stadiumProvider.applyGovernorateFilter(gov);
         }
-        // Load user bookings to populate Live Match Radar
-        final userId = auth.currentUser?.uid;
+        // Await the authoritative booking snapshot before checking post-match actions.
+        // Otherwise the popup check can run against an empty/stale list on first launch.
+        final userId = auth.currentUser?.id;
         if (userId != null && mounted) {
-          Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+          final bookingsLoaded =
+              await Provider.of<BookingProvider>(context, listen: false)
+                  .loadUserBookings(userId);
+          if (mounted && bookingsLoaded) {
+            _checkPendingChallengeResultPopup(context);
+          }
         }
-
-        // Check for any pending challenge match result popup automatically on app launch
-        if (mounted) _checkPendingChallengeResultPopup(context);
       } else {
         stadiumProvider.fetchStadiums(isRefresh: true);
       }
@@ -129,7 +132,6 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
     if (userId == null) return;
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    bookingProvider.loadUserBookings(userId);
 
     if (!context.mounted) return;
     final now = DateTime.now();
