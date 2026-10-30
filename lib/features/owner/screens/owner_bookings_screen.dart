@@ -98,7 +98,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
           if (stadiums.isEmpty && stadiumProvider.errorMessage != null) {
             return VSPErrorState(
-              customMessage: stadiumProvider.errorMessage,
+              customMessage: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'تعذر تحميل ملاعبك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                  : 'Could not load your stadiums. Check your connection and try again.',
               onRetry: () {
                 final ownerId = Provider.of<AuthProvider>(context, listen: false)
                     .currentUser?.id;
@@ -123,7 +125,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           if (!bookingProvider.hasLoadedOwnerBookings) {
             if (bookingProvider.ownerBookingsError != null) {
               return VSPErrorState(
-                customMessage: bookingProvider.ownerBookingsError,
+                customMessage: Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'تعذر تحميل حجوزات ملاعبك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                    : 'Could not load your stadium bookings. Check your connection and try again.',
                 onRetry: () async {
                   final ownerId = Provider.of<AuthProvider>(context, listen: false)
                       .currentUser?.id;
