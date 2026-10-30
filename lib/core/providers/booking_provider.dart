@@ -189,8 +189,9 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load user's bookings
-  void loadUserBookings(String userId) {
-    _syncCoordinator.syncUserBookings(
+  Future<bool> loadUserBookings(String userId) {
+    _errorMessage = null;
+    return _syncCoordinator.syncUserBookings(
       userId: userId,
       onData: (userBookings, _) {
         _userBookings = userBookings;
