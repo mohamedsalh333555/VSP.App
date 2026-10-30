@@ -86,3 +86,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Confirmed the roster editor's sticky save action includes the bottom system inset and the stadium filter sheet is scrollable and safe-area aware.
 - Constrained the booking-type selection sheet to the viewport and made its option list scrollable; enabled safe-area handling for the nested create-team sheet and the challenge-code bottom sheet.
 - These changes address layout resilience only and do not alter booking or tournament eligibility/payment rules. Runtime verification remains pending.
+
+
+## Owner booking and location-picker review batch
+
+- Reviewed the owner stadium location picker, booking action panels/actions, booking details and form fields, duration selector, header/time card, WhatsApp receipt utilities, booking domain service, owner booking sheet, and quick phone booking modal.
+- The owner booking sheet already constrains its height, scrolls its form content, accounts for keyboard/system bottom insets, and disposes all four controllers; the quick-phone sheet similarly scrolls and disposes its controllers.
+- Added safe-area handling to the stadium location picker, disposed its search controller after dismissal, and guarded the asynchronous search result from updating a dismissed sheet.
+- No booking price, duration policy, cash collection, or WhatsApp receipt business logic was changed. Runtime checks remain pending.
