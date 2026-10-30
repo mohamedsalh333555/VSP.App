@@ -191,3 +191,4 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Read-only trigger inspection confirmed Elo/league points are processed once when the result is confirmed, supporting the existing rankings-updated confirmation.
 - Runtime verification across both captains, matching outcomes, and mismatching outcomes remains pending.
 - Because `team_members` permits multiple memberships per user (composite primary key only), the captain resolver returns all team IDs where the authenticated user is captain. The player-home prompt selects the participating team for each booking instead of assuming the first team membership is the relevant one.
+- The challenge response dialog now handles a missing `pendingOutcome` with localized error feedback rather than force-unwrapping null.
