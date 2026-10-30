@@ -90,6 +90,28 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           final stadiums = stadiumProvider.stadiums;
           final selectedStadium = _getEffectiveStadium(stadiums);
 
+          if (stadiums.isEmpty && stadiumProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            );
+          }
+
+          if (stadiums.isEmpty && stadiumProvider.errorMessage != null) {
+            return VSPErrorState(
+              customMessage: stadiumProvider.errorMessage,
+              onRetry: () {
+                final ownerId = Provider.of<AuthProvider>(context, listen: false)
+                    .currentUser?.id;
+                if (ownerId != null) {
+                  stadiumProvider.listenToOwnerStadiums(
+                    ownerId,
+                    forceRefresh: true,
+                  );
+                }
+              },
+            );
+          }
+
           if (selectedStadium == null) {
             return VSPEmptyState(
               icon: Iconsax.building_copy,
