@@ -131,7 +131,10 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  return VSPScaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
- body: VSPAmbientBackground(
+ body: SafeArea(
+ top: true,
+ bottom: false,
+ child: VSPAmbientBackground(
  showTopGlow: true,
  showBottomGlow: true,
  child: Stack(
@@ -161,6 +164,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  ),
  ),
  ],
+ ),
  ),
  ),
  bottomNavigationBar: OwnerBottomNavBar(
