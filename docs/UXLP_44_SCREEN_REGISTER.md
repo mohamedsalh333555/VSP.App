@@ -84,16 +84,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
-| `lib/features/player/screens/booking_success_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/booking_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/screens/challenge_select_team_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (AppBar, scrollable checkout, shared bottom action bar adds system bottom inset) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea notification list; standard AlertDialog for informational details) |
@@ -104,23 +104,23 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected) |
 | `lib/features/player/screens/support_tickets_screen.dart` | player | source reviewed—runtime pending (new-ticket sheet uses useSafeArea, keyboard insets, and scrollable content) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
-| `lib/features/player/screens/tournament_registration_success_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/tournament_registration_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/add_player_sheet.dart` | player | source reviewed—runtime pending (scrollable content; accounts for keyboard and bottom system inset; caller sheet configuration still to verify) |
-| `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | not yet inspected |
+| `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | source reviewed—runtime pending (Dialog safe-area defaults; fixed-height calendar needs small-screen runtime check) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/widgets/booking_type_modal.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | not yet inspected |
+| `lib/features/player/widgets/booking_type_modal.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | not yet inspected |
 | `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
