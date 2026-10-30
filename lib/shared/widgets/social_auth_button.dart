@@ -16,9 +16,19 @@ class SocialAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: CustomPaint(
+    return Semantics(
+      button: true,
+      enabled: onPressed != null,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(VSPDSRadius.button),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: VSPDSAccessibility.minimumTapTarget,
+            ),
+            child: CustomPaint(
         painter: GradientBorderPainter(
           strokeWidth: VSPDSBorders.fieldFocus,
           radius: VSPDSRadius.button,
@@ -44,6 +54,8 @@ class SocialAuthButton extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.inputHorizontal),
               child: iconWidget,
+            ),
+          ),
             ),
           ),
         ),
