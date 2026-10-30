@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// حقل إدخال نص مخصص بتصميم داكن مع دعم التحقق المباشر (Inline Live Validation)
 class CustomTextField extends StatelessWidget {
@@ -78,7 +78,7 @@ class CustomTextField extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Icon(
               Iconsax.tick_circle_copy,
-              color: VSPColors.success,
+              color: VSPDSSemanticColors.success,
               size: 20,
             ),
           );
@@ -111,10 +111,10 @@ class CustomTextField extends StatelessWidget {
             hintText: hintText,
             errorText: errorText,
             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: VSPColors.textSecondary.withValues(alpha: 0.5),
+                  color: VSPDSSemanticColors.textSecondary.withValues(alpha: 0.5),
                 ),
             filled: true,
-            fillColor: VSPColors.surfaceAlt,
+            fillColor: VSPDSSemanticColors.inputFill,
             counterText: "",
             prefixIcon: prefixIcon != null
                 ? Icon(
@@ -125,38 +125,38 @@ class CustomTextField extends StatelessWidget {
                 : null,
             suffixIcon: effectiveSuffix != null
                 ? AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
+                    duration: VSPDSMotion.fast,
                     child: effectiveSuffix,
                   )
                 : null,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderRadius: BorderRadius.circular(VSPDSRadius.input),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
-                color: VSPColors.divider,
-                width: 1,
+                color: VSPDSSemanticColors.border,
+                width: VSPDSBorders.standard,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
-                color: VSPColors.accent,
-                width: 1.5,
+                color: VSPDSSemanticColors.accent,
+                width: VSPDSBorders.fieldFocus,
               ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               borderSide: const BorderSide(
-                color: VSPColors.error,
-                width: 1,
+                color: VSPDSSemanticColors.error,
+                width: VSPDSBorders.standard,
               ),
             ),
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
+              horizontal: VSPDSSpacing.inputHorizontal,
+              vertical: VSPDSSpacing.md,
             ),
           ),
         );
@@ -166,7 +166,7 @@ class CustomTextField extends StatelessWidget {
         }
 
         return ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: VSPSize.inputHeight),
+          constraints: const BoxConstraints(minHeight: VSPDSizes.inputHeight),
           child: fieldWidget,
         );
       },
