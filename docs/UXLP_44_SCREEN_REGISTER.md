@@ -129,7 +129,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (post-match add/confirm/dispute feedback now reflects repository success/failure; scroll-safe dialogs) |
 | `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited result submission; duplicate taps and dismissal are guarded while submitting; scrollable result form) |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (standard AlertDialog safe-area layout) |
 | `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | source reviewed—runtime pending (showDialog safe-area route; centered custom content needs short-screen runtime check) |
