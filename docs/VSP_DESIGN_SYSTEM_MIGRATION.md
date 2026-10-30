@@ -102,3 +102,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Goal-scorer custom-name input already disposes its controller when the dialog closes. Facility-upgrade and cup-format sheets already enable safe-area handling; collective invite sheets already use safe-area-aware modal routes.
 - Enabled safe-area handling for the document source picker and scrollable content for tournament bracket preview dialogs so their bilingual confirmation/content remains reachable on compact screens.
 - Source review only; runtime layout and end-to-end booking/tournament behavior remain pending.
+
+
+## Player home, team, payment, and shared modal review batch
+
+- Reviewed player filtering, book-tonight, governorate selection, post-match outcome prompts, team-league result dialog, match result entry, team leave/delete dialogs, Paymob waiting prompt, team matchup invite, terms/privacy modal, and match participant management.
+- The book-tonight, governorate, team-invite, and participant-management sheets already use safe-area/scroll protection; the legal modal uses an internally scrollable content region.
+- Made the post-match, team-league, team lifecycle, and Paymob waiting AlertDialogs scrollable to keep content/actions reachable on compact screens.
+- No match scoring, team membership, payment verification, or notification-retention business rules were changed. Runtime/device verification remains outstanding.
