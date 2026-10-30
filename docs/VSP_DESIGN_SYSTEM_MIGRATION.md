@@ -132,3 +132,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Fixed a terminal-state defect: a failed repository request or a completed request returning no championship previously fell through to the same loading spinner, leaving users with an indefinite loading screen.
 - The route now distinguishes loading, repository error, and unavailable/empty results, uses the shared `VSPStateView` component, localizes all user-facing state copy in Arabic and English, and provides a clear return-home action. Error guidance now matches the available action rather than promising an unavailable inline retry.
 - This is source-level behavior; route deep-link, network-failure, missing-record, and both-locale runtime checks remain pending.
+
+## Notifications center and realtime failure-state review
+
+- Reviewed the notification-center screen, its Supabase repository stream, and the app notification service.
+- Confirmed from the client flow that opening a notification marks it as read; it does not delete the row. The only explicit client-side delete in the reviewed screen is the swipe-to-dismiss action, with an Undo action that reinserts the notification. This source review does not yet establish whether a database trigger, scheduled job, or another backend path removes older notifications.
+- Found that `getUserNotifications` attached a `handleError` callback that logged and consumed realtime stream errors. As a result, the screen could receive no notification data and render the empty state rather than an error state. Removed the swallowing handler so the UI can distinguish an actual empty list from a failed stream.
+- Added a localized error state with a retry action to the notifications screen and made its informational dialog scrollable.
+- Refund delivery and notification retention still require backend trigger/cron and runtime verification; no claim is made that the historical disappearance or missing-refund-notification issue is fully resolved by these client changes.
