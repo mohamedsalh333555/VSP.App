@@ -73,10 +73,11 @@ class _PrimaryButtonState extends State<PrimaryButton> {
       onPressed: isDisabled ? null : _handleTap,
       isLoading: widget.isLoading,
       color: widget.color,
-      textColor: widget.textColor,
+      textColor: widget.textColor ?? VSPDSSemanticColors.background,
       width: widget.width,
       height: widget.height ?? VSPDSizes.buttonHeight,
-      padding: widget.padding,
+      padding: widget.padding ??
+          const EdgeInsets.symmetric(horizontal: VSPDSSpacing.md),
       icon: widget.icon,
     );
   }
