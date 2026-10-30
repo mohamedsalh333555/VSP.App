@@ -46,21 +46,21 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
-| `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_cancel_dialog.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_details_form.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_form_fields.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_header.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_time_stadium_card.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/booking_sheet/booking_sheet_whatsapp_utils.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_details_form.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_form_fields.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_header.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_time_stadium_card.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/booking_sheet/booking_sheet_whatsapp_utils.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_modal.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
-| `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | not yet inspected |
@@ -74,9 +74,9 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/ledger/owner_payout_dialog.dart` | owner | source reviewed—runtime pending (AlertDialog safe-area and scrollable payout form) |
-| `lib/features/owner/widgets/owner_booking_sheet.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/owner_booking_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/quick_phone_booking_modal.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/quick_phone_booking_modal.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
