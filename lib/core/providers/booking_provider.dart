@@ -21,6 +21,7 @@ class BookingProvider with ChangeNotifier {
   String? _activeOwnerId;
 
   bool _isLoading = false;
+  int _userBookingLoadCount = 0;
   bool _isLoadingPublicMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;
@@ -58,6 +59,7 @@ class BookingProvider with ChangeNotifier {
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
+  bool get isLoadingUserBookings => _userBookingLoadCount > 0;
   bool get isLoadingPublicMatches => _isLoadingPublicMatches;
   bool get isLoadingMoreMatches => _isLoadingPublicMatches;
   bool get hasMoreMatches => _hasMoreMatches;
@@ -189,20 +191,27 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load user's bookings
-  Future<bool> loadUserBookings(String userId) {
+  Future<bool> loadUserBookings(String userId) async {
+    _userBookingLoadCount++;
     _errorMessage = null;
-    return _syncCoordinator.syncUserBookings(
-      userId: userId,
-      onData: (userBookings, _) {
-        _userBookings = userBookings;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = e;
-        notifyListeners();
-      },
-    );
+    notifyListeners();
+    try {
+      return await _syncCoordinator.syncUserBookings(
+        userId: userId,
+        onData: (userBookings, _) {
+          _userBookings = userBookings;
+          _errorMessage = null;
+          notifyListeners();
+        },
+        onError: (e) {
+          _errorMessage = e;
+          notifyListeners();
+        },
+      );
+    } finally {
+      if (_userBookingLoadCount > 0) _userBookingLoadCount--;
+      notifyListeners();
+    }
   }
 
   /// Load owner's bookings (for stadium owners)
