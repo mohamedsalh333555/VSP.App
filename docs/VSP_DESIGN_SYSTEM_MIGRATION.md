@@ -190,3 +190,4 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - The different-result action no longer claims an administrative dispute was created. The deployed RPC explicitly keeps a mismatch in `waitingOpponent` and makes the other captain the next reviewer. No backend policy or scoring behavior was changed.
 - Read-only trigger inspection confirmed Elo/league points are processed once when the result is confirmed, supporting the existing rankings-updated confirmation.
 - Runtime verification across both captains, matching outcomes, and mismatching outcomes remains pending.
+- Because `team_members` permits multiple memberships per user (composite primary key only), the captain resolver returns all team IDs where the authenticated user is captain. The player-home prompt selects the participating team for each booking instead of assuming the first team membership is the relevant one.
