@@ -165,7 +165,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Post-match result entry, confirmation, and dispute dialogs no longer display success messages when the repository returns `false`; they show localized error feedback instead.
 - This source fix does not alter match-result eligibility, team identity, scoring, or league rules. Those require domain-level verification before any policy change.
 - No final test pass or APK build was run.
-- `MatchResultModal` now accepts an awaited async callback, disables the close/cancel/edit controls while submitting, prevents duplicate taps, and closes after the callback completes. If the callback throws, the modal remains available and shows localized error feedback. The caller's repository-result handling already shows success only when the server operation returns true.
+- `MatchResultModal` now accepts an awaited async callback, disables the close/cancel/edit controls while submitting, prevents duplicate taps, and closes only when the callback returns success. A false result re-enables the form and preserves the user's selection/review for retry; thrown errors also keep the modal available with localized error feedback. The caller's repository-result handling already shows success only when the server operation returns true.
 
 ## Booking detail and owner reschedule recovery feedback
 
@@ -204,3 +204,4 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - If the owner booking realtime stream fails after an initial successful load, the schedule keeps its last known slots and displays a localized, non-blocking warning with a Retry action instead of silently hiding the refresh failure.
 - Player `BookingsScreen` now keeps the last loaded booking list visible while a refresh is running, and shows a localized non-blocking warning with Retry if synchronization fails. Initial load errors use generic localized copy instead of exposing raw backend error text.
 - The player-home result prompt now only considers challenge bookings in `confirmed`, `completed`, or legacy `upcoming` states. Read-only inspection found the deployed `submit_challenge_result_atomic` RPC checks that the match has ended and is not cancelled, but does not explicitly require the booking status to be confirmed/completed. Proposed server-side guard: require `status IN ('confirmed','completed')` before accepting a result. This is recorded for product approval; no SQL or RPC change was made.
+- The post-match result callback now returns the repository's boolean result to `MatchResultModal`; failed submissions keep the form open for retry rather than closing after an error message.
