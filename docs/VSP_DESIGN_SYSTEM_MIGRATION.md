@@ -182,3 +182,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Player booking cards now use channel-neutral refund-pending copy (`جاري معالجة الاسترداد...` / `Refund processing...`) rather than implying all refunds are bank transfers; the state can cover card and wallet refund channels.
 - Player booking cards now render badges from the actual booking lifecycle enum: pending/awaiting payment verification, confirmed/upcoming, expired, no-show, cancelled, in-progress, and completed. A stale `isPaid` flag no longer makes a pending booking appear confirmed.
 - Pending-booking cancellation is no longer an immediate trash-icon action. It now requires a localized confirmation that explains the slot will be released, provides success/failure feedback, and uses a 48dp minimum hit target.
+## Challenge-result captain eligibility and truthful mismatch feedback
+
+- Player-home challenge result prompts now load the current user's team and require that the signed-in user is that team's captain and the team is one of the two teams in the booking.
+- First-result submission now sends the current captain's team ID rather than always sending `playerTeamId`. The second-captain response prompt compares `resultSubmittedByTeamId` with the current team ID (team-to-team), not with the user ID.
+- Read-only Supabase function inspection confirmed `submit_challenge_result_atomic` enforces both team membership in the booking and `teams.captain_id = auth.uid()`.
+- The different-result action no longer claims an administrative dispute was created. The deployed RPC explicitly keeps a mismatch in `waitingOpponent` and makes the other captain the next reviewer. No backend policy or scoring behavior was changed.
+- Read-only trigger inspection confirmed Elo/league points are processed once when the result is confirmed, supporting the existing rankings-updated confirmation.
+- Runtime verification across both captains, matching outcomes, and mismatching outcomes remains pending.
