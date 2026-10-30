@@ -117,3 +117,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - The 128-path candidate register now has source-review notes for all 128 entries; there are no entries left marked `not yet inspected`.
 - This is a source-review checkpoint only. It is not a 44-rule pass result: runtime states, locale/device combinations, embedded widgets not represented as candidate files, keyboard behavior, and visual overflow still require consolidated device validation and targeted screen-by-screen evidence.
 - No APK build or manual test suite was intentionally started as part of this checkpoint. Do not build the release artifact until the remaining UXLP implementation and grouped source fixes are complete.
+
+## Shared root and owner confirmation dialog review
+
+- Rechecked the canonical player and owner application shells, shared bottom-navigation renderer, shared state/scaffold components, global network banner, router/root screen, and global theme/token layer.
+- Confirmed both player and owner shells delegate bottom navigation to the shared safe-area-aware renderer; selected and unselected glyphs are supplied as separate Iconsax variants and use the shared semantic color/typography states.
+- Found two root-level confirmation surfaces whose AlertDialog content/actions were not configured as scrollable: the owner account-verification celebration dialog and the forced-update dialog. Enabled scrollable dialog layout for both so the action remains reachable on compact viewports and with larger localized text.
+- The global offline banner is intentionally an overlay; its possible interaction with page headers requires runtime verification while offline and is not marked as passed from source inspection.
+- These are source-level changes only. No UXLP-44 rule is marked passed and no final test or APK build has been started.
