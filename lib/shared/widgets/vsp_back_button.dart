@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// زر الرجوع الموحد لتطبيق VSP (تصميم زجاجي دائري مع أنيميشن ولمس تفاعلي)
 class VSPBackButton extends StatefulWidget {
@@ -33,7 +34,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 120),
+      duration: VSPDSMotion.fast,
       vsync: this,
       lowerBound: 0.90,
       upperBound: 1.0,
@@ -50,7 +51,9 @@ class _VSPBackButtonState extends State<VSPBackButton>
   @override
   Widget build(BuildContext context) {
     final isRtl = Directionality.of(context) == TextDirection.rtl;
-    final effectiveSize = widget.size > 44.0 ? widget.size : 44.0;
+    final effectiveSize = widget.size > VSPDSAccessibility.minimumTapTarget
+        ? widget.size
+        : VSPDSAccessibility.minimumTapTarget;
 
     return Container(
       margin: widget.margin,
@@ -76,15 +79,15 @@ class _VSPBackButtonState extends State<VSPBackButton>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: widget.backgroundColor ?? Colors.white.withValues(alpha: 0.08),
+              color: widget.backgroundColor ?? VSPDSColors.white08,
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: VSPDSColors.white12,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: VSPDSColors.black80.withValues(alpha: 0.15),
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -95,7 +98,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
                 isRtl
                     ? Iconsax.arrow_right_3_copy
                     : Iconsax.arrow_left_2_copy,
-                color: widget.iconColor ?? Colors.white,
+                color: widget.iconColor ?? VSPDSemanticColors.textPrimary,
                 size: (widget.size * 0.46).clamp(14.0, 18.0),
               ),
             ),
