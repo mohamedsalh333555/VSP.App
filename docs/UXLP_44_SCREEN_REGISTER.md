@@ -30,20 +30,20 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/copilot/screens/copilot_test_playground.dart` | shared | source reviewed—runtime pending (body bottom safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | source reviewed—runtime pending (owner-only screen gate; chat body and composer safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets) |
-| `lib/features/owner/screens/add_stadium_wizard.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/create_tournament_wizard.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/add_stadium_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps owner stadium stream and onboarding states) |
-| `lib/features/owner/screens/owner_account_management_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (booking list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
-| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (inbox list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
-| `lib/features/owner/screens/owner_profile_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/subscription_plans_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | not yet inspected |
@@ -87,11 +87,11 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/booking_success_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/champion_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (AppBar, scrollable checkout, shared bottom action bar adds system bottom inset) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/faq_and_support_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
