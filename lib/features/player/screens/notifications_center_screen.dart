@@ -56,8 +56,11 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: StreamBuilder<List<AppNotification>>(
-        stream: _notificationsStream,
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: StreamBuilder<List<AppNotification>>(
+          stream: _notificationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -136,7 +139,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
               );
             },
           );
-        },
+          },
+        ),
       ),
     );
   }
