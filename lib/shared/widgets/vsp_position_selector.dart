@@ -53,7 +53,7 @@ class VSPPositionSelector extends StatelessWidget {
                       color: isSelected
                           ? VSPDSSemanticColors.accentSoft
                           : VSPDSSemanticColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      borderRadius: BorderRadius.circular(VSPDSRadius.md),
                       border: Border.all(
                         color: isSelected ? VSPDSSemanticColors.accent : VSPDSColors.white15,
                         width: isSelected ? VSPDSBorders.fieldFocus : VSPDSBorders.standard,
@@ -75,9 +75,9 @@ class VSPPositionSelector extends StatelessWidget {
                           label,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? VSPColors.accent : VSPDSSemanticColors.textPrimary,
+                            color: isSelected ? VSPDSSemanticColors.accent : VSPDSSemanticColors.textPrimary,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            fontSize: 13,
+                            fontSize: VSPDSTypography.bodySmall.fontSize ?? 13,
                           ),
                         ),
                       ),
