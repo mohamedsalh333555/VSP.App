@@ -195,7 +195,7 @@
  "loss": "Loss",
  "disputed": "Disputed",
  "cancelBooking": "Cancel Booking?",
- "cancelBookingConfirm": "Are you sure you want to cancel this booking? This action cannot be undone.",
+ "cancelBookingConfirm": "Are you sure you want to cancel this booking? Review the refund details below before confirming.",
  "keepBooking": "Keep Booking",
  "cancelling": "Cancelling booking...",
  "cancelSuccess": "Booking cancelled successfully",
