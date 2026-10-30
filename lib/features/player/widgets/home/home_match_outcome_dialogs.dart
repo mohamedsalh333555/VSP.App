@@ -81,6 +81,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
                           );
                         }
                       }
+                      return success;
                     },
                   ),
                 );
