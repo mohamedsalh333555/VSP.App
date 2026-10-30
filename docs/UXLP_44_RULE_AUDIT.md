@@ -15,7 +15,7 @@
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
 | 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
-| 9 | State visibility | source reviewed—runtime pending | Shared `VSPStateView` distinguishes loading/empty/error/offline/pending/success/disabled; player bookings now has a dedicated loading state tied to the awaited server refresh, preventing a premature empty state. Verify actual state usage. |
+| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens now distinguish initial loading from authoritative empty results; owner schedule shows an error/retry state rather than presenting all slots as free before booking data arrives. Verify other screens/states. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
@@ -44,7 +44,7 @@
 | 35 | Scroll and modal safety | source reviewed—runtime pending | Scroll-safe dialogs/sheets and safe-area fixes applied in grouped batches; remaining surfaces and keyboard/device layouts need runtime validation. |
 | 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors and championship route failures now have explicit recovery states; post-match result failures now show localized retry guidance instead of false success. Verify all critical flows and draft preservation. |
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
-| 38 | Single source of truth | not yet inspected | Verify displayed booking, payment, refund, team, and tournament values against authoritative Supabase records. |
+| 38 | Single source of truth | source reviewed—runtime pending | Player and owner booking initial states now wait for authoritative Supabase snapshots before presenting empty/free schedules; owner direct fetch now delivers confirmed empty results and reports fetch errors. Verify all displayed booking/payment/refund values against server records. |
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; automatic challenge result prompts now require the signed-in user to be the captain of a team participating in that booking, and use that team's ID for submission/response. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
@@ -117,3 +117,8 @@
 
 - Read-only inspection also confirmed `trg_calculate_elo` processes league points once when a challenge reaches `match_result_status='confirmed'` with a final outcome. The existing 'rankings updated' confirmation is therefore supported by the database trigger.
 - No SQL, RPC, trigger, scoring, captain permission, or league rule was changed. Runtime verification across both captains and matching/mismatching outcomes remains pending.
+### Owner schedule initial booking data state
+
+- `OwnerBookingsScreen` previously rendered its generated time slots before the owner booking fetch had completed. During the initial network window, booked slots could therefore appear visually free. The screen now shows a loading state until the authoritative owner booking snapshot is received and an error/retry state if the initial fetch fails.
+- The owner sync now treats an authoritative empty list as a completed load (rather than ignoring it), reports direct-fetch errors, and cancels the prior owner/user stream before changing scope. Force refreshes after quick booking preserve the already-loaded schedule instead of blanking it.
+- No availability, booking, or server-side conflict policy was changed. Runtime validation with existing bookings, empty schedule, network failure, and account switching remains pending.
