@@ -192,8 +192,8 @@ class AppRouter {
                : (isArabic ? 'البطولة غير متاحة' : 'Championship unavailable'),
            message: hasError
                ? (isArabic
-                   ? 'تحقق من اتصالك بالإنترنت ثم حاول مرة أخرى.'
-                   : 'Check your internet connection and try again.')
+                   ? 'يمكنك العودة للرئيسية والمحاولة لاحقاً.'
+                   : 'Return home and try again later.')
                : (isArabic
                    ? 'قد تكون البطولة حُذفت أو لم تعد متاحة.'
                    : 'This championship may have been removed or is no longer available.'),
