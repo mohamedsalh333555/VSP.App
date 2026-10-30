@@ -478,5 +478,5 @@ void showTournamentScoreModal(
         ),
       );
     },
-  );
+  ).whenComplete(reasonController.dispose);
 }
