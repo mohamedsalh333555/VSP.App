@@ -47,6 +47,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     Future.microtask(() => _fetchAutoLocation());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       if (displayName != null && displayName.trim().isNotEmpty) {
@@ -59,10 +60,13 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
   }
 
   Future<void> _fetchAutoLocation() async {
+    if (!mounted) return;
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
+      if (!mounted) return;
+
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result)) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;
@@ -72,6 +76,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
         HapticFeedback.lightImpact();
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLocationFallbackActive = true);
       HapticFeedback.lightImpact();
     } finally {
