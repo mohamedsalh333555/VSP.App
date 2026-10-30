@@ -7,13 +7,13 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Current status: inventory generated; detailed per-rule inspection not yet completed.
 - Static source scan: all 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
-- Status values: not yet inspected / pass / fail / needs product decision / not applicable.
+- Status values: not yet inspected / source reviewed—runtime pending / pass / fail / needs product decision / not applicable.
 - Do not mark a file complete until Arabic and English, role, loading/empty/error/success states, keyboard, safe area, and navigation have been considered where applicable.
 
 | File | Role | Status |
 |---|---|---|
-| `lib/core/navigation/offline_error_screen.dart` | player/owner/mixed — classify during review | not yet inspected |
-| `lib/core/navigation/root_screen.dart` | player/owner/mixed — classify during review | not yet inspected |
+| `lib/core/navigation/offline_error_screen.dart` | player/owner/mixed — classify during review | source reviewed—runtime pending (safe-area + primary action updated) |
+| `lib/core/navigation/root_screen.dart` | player/owner/mixed — classify during review | source reviewed—runtime pending (maintenance content safe-area/scroll updated) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner/mixed — classify during review | not yet inspected |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner/mixed — classify during review | not yet inspected |
 | `lib/features/auth/screens/login_screen.dart` | player/owner/mixed — classify during review | not yet inspected |
