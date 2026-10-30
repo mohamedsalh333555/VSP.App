@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// Reusable social login/signup button with gradient border
 class SocialAuthButton extends StatelessWidget {
@@ -20,13 +20,13 @@ class SocialAuthButton extends StatelessWidget {
       onTap: onPressed,
       child: CustomPaint(
         painter: GradientBorderPainter(
-          strokeWidth: 1.5,
-          radius: VSPRadius.button,
+          strokeWidth: VSPDSBorders.fieldFocus,
+          radius: VSPDSRadius.button,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withValues(alpha: 0.30),
+              VSPDSColors.white15,
               Colors.transparent,
               Colors.white.withValues(alpha: 0.30),
             ],
@@ -35,14 +35,14 @@ class SocialAuthButton extends StatelessWidget {
         ),
         child: Container(
           width: double.infinity,
-          height: height ?? VSPSize.buttonHeight,
+          height: height ?? VSPDSizes.buttonHeight,
           decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.button),
+            color: VSPDSSemanticColors.surface,
+            borderRadius: BorderRadius.circular(VSPDSRadius.button),
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.inputHorizontal),
               child: iconWidget,
             ),
           ),
