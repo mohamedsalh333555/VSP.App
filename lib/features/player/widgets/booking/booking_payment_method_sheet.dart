@@ -81,9 +81,14 @@ void showBookingPaymentMethodSheet({
                 20,
                 MediaQuery.of(ctx).padding.bottom > 0 ? 8 : 20,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                   Container(
                     width: 36,
                     height: 4,
@@ -295,7 +300,9 @@ void showBookingPaymentMethodSheet({
                             },
                     ),
                   ],
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           );
