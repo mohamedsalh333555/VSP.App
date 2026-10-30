@@ -168,4 +168,5 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective booking full-online-payment guard; bounded scroll-safe sheet) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule failure feedback; destructive closure confirmation) |
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (awaited authoritative player booking snapshot; realtime merge behavior preserved) |
+| `lib/core/repositories/team_repository.dart` | shared | source reviewed—runtime pending (added lookup for all teams captained by the current user to support multi-team result eligibility) |
 | `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated concurrent-safe player booking loading state and snapshot result) |
