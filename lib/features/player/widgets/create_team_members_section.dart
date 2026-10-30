@@ -54,7 +54,7 @@ class CreateTeamMembersSection extends StatelessWidget {
                   onPressed: onPasteWhatsApp,
                   icon: const Icon(Iconsax.copy_copy, size: 16, color: VSPColors.accent),
                   label: Text(
-                    isArabic ? 'لصق واتساب ' : 'Paste WhatsApp ',
+                    isArabic ? 'لصق' : 'Paste',
                     style: const TextStyle(
                       color: VSPColors.accent,
                       fontWeight: FontWeight.bold,
