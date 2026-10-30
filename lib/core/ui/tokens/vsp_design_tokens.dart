@@ -250,6 +250,12 @@ abstract final class VSPDSComponentEffects {
     spreadRadius: 1.0,
   );
 
+  static const BoxShadow networkBannerShadow = BoxShadow(
+    color: Color(0x59000000),
+    blurRadius: 12.0,
+    offset: Offset(0, 4),
+  );
+
   static const BoxShadow glassShadow = BoxShadow(
     color: VSPDSColors.glassGlow,
     blurRadius: 16.0,
