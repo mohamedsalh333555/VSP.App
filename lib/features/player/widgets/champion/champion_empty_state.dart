@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/tokens/vsp_design_tokens.dart';
 
 class ChampionEmptyState extends StatelessWidget {
   final IconData icon;
@@ -23,42 +23,33 @@ class ChampionEmptyState extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+        padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.lg, vertical: VSPDSSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 76,
-              height: 76,
+              width: VSPDSSizes.stateIconBox,
+              height: VSPDSSizes.stateIconBox,
               decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(22),
+                color: VSPDSColors.zinc800,
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
                 border: Border.all(
-                  color: VSPColors.divider.withValues(alpha: 0.28),
+                  color: VSPDSColors.zinc750,
                 ),
               ),
-              child: Icon(icon, size: 38, color: VSPColors.textSecondary),
+              child: Icon(icon, size: VSPDSizes.emptyIconSize, color: VSPDSColors.zinc400),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: VSPDSSpacing.md),
             Text(
               isArabic ? titleArabic : titleEnglish,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                height: 1.3,
-              ),
+              style: VSPDSTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: VSPDSSpacing.xs),
             Text(
               isArabic ? descriptionArabic : descriptionEnglish,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: VSPColors.textSecondary,
-                fontSize: 12,
-                height: 1.55,
-              ),
+              style: VSPDSTypography.stateBody,
             ),
           ],
         ),
@@ -97,15 +88,12 @@ class ChampionshipsEmptyState extends StatelessWidget {
         ),
         if (showReturnButton && onReturn != null)
           Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+            padding: const EdgeInsets.only(left: VSPDSSpacing.md, right: VSPDSSpacing.md, bottom: VSPDSSpacing.md),
             child: TextButton(
               onPressed: onReturn,
               child: Text(
                 isArabic ? 'العودة لمحافظتي' : 'Return to my location',
-                style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: VSPDSTypography.actionLabel,
               ),
             ),
           ),
