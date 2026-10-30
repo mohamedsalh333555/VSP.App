@@ -121,6 +121,8 @@
 
 - Owner booking schedule also now distinguishes an empty stadium list from stadium data still loading or a failed stadium stream; retry restarts the owner-stadium subscription instead of showing the no-stadium empty state prematurely.
 
+- After the owner schedule has loaded, realtime refresh errors now show a localized non-blocking warning with Retry while preserving the last loaded slots; the screen no longer silently hides a stream failure or blanks the schedule.
+
 ### Owner schedule initial booking data state
 
 - `OwnerBookingsScreen` previously rendered its generated time slots before the owner booking fetch had completed. During the initial network window, booked slots could therefore appear visually free. The screen now shows a loading state until the authoritative owner booking snapshot is received and an error/retry state if the initial fetch fails.
