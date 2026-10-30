@@ -121,7 +121,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
-            body: Center(
+            body: SafeArea(top: false, bottom: true, child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -143,14 +143,14 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   ),
                 ],
               ),
-            ),
+            )),
           );
         }
 
         if (!snapshot.hasData) {
           return const VSPScaffold(
             backgroundColor: VSPColors.background,
-            body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+            body: SafeArea(top: false, bottom: true, child: Center(child: CircularProgressIndicator(color: VSPColors.accent))),
           );
         }
 
@@ -159,7 +159,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
-            body: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary))),
+            body: SafeArea(top: false, bottom: true, child: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary)))),
           );
         }
 
@@ -222,7 +222,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                 ],
               ),
             ),
-            body: TabBarView(
+            body: SafeArea(top: false, bottom: true, child: TabBarView(
               children: [
                 if (isStandingsEligible)
                   RefreshIndicator(
@@ -297,7 +297,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   );
                 }),
               ],
-            ),
+            )),
           ),
         );
       },

@@ -17,7 +17,7 @@ class SuspendedAccountScreen extends StatelessWidget {
 
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(
+ body: SafeArea(top: true, bottom: true, child: Center(
  child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Column(
@@ -121,7 +121,7 @@ class SuspendedAccountScreen extends StatelessWidget {
  ],
  ),
  ),
- ),
+ )),
  );
  }
 }

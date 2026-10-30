@@ -152,7 +152,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
         ),
         centerTitle: true,
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
+      body: SafeArea(top: false, bottom: true, child: StreamBuilder<List<Map<String), dynamic>>>(
         stream: _transactionsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {

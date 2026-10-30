@@ -27,7 +27,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
@@ -225,7 +225,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
             const SizedBox(height: VSPSpacing.xl),
           ],
         ),
-      ),
+      )),
     );
   }
 

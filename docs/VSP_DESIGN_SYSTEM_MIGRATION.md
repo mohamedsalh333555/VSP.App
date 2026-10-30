@@ -44,6 +44,7 @@ This is a shared-foundation migration, not a completed screen audit.
 - Shared component audit: initial pass and the changes above applied.
 - Static source scan of all 128 registered candidates: completed for legacy/V2 token imports, raw color/text-style declarations, hard-coded motion durations, safe-area markers, and modal entry points.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
+- Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
 - Rule-by-rule screen review across player and owner roles: still in progress; static scan does not establish a pass.
 - Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
 - Added regression tests for token alias equivalence, primary-button interaction, and back-button touch-target size.

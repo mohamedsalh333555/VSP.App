@@ -179,18 +179,18 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     if (_isLoadingTeam) {
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
+        body: SafeArea(top: false, bottom: true, child: Center(
           child: CircularProgressIndicator(color: VSPColors.accent),
-        ),
+        )),
       );
     }
 
     if (widget.team == null && _fetchedTeam == null) {
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(
+        body: SafeArea(top: false, bottom: true, child: Center(
           child: Text('Team not found ', style: TextStyle(color: Colors.white)),
-        ),
+        )),
       );
     }
 
@@ -209,7 +209,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
@@ -295,7 +295,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
+      )),
     );
   }
 }
