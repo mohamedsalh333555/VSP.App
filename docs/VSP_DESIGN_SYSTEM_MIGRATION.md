@@ -156,3 +156,12 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Added `docs/UXLP_44_RULE_AUDIT.md` as the rule-level evidence matrix. It records the shared-foundation source evidence, findings fixed in this batch, and what remains unverified for each rule.
 - Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 128-path register remains the screen inventory; it does not prove per-rule coverage.
 - No final validation or APK build has been run. Continue grouped implementation first, then perform one consolidated validation pass.
+
+## Player post-match result flow source fixes
+
+- `BookingSyncCoordinator.syncUserBookings` now awaits the initial direct server snapshot and returns whether it loaded successfully. A confirmed empty response is delivered as an empty loaded state rather than leaving old data or appearing perpetually uninitialized. The previous user's realtime subscription is cancelled before starting the next user's refresh.
+- `BookingProvider.loadUserBookings` now exposes that completion result and clears a stale error after successful data arrives.
+- `PlayerHomeScreen` now waits for the authoritative snapshot before scanning for post-match challenge actions and avoids issuing a second booking load inside the popup checker.
+- Post-match result entry, confirmation, and dispute dialogs no longer display success messages when the repository returns `false`; they show localized error feedback instead.
+- This source fix does not alter match-result eligibility, team identity, scoring, or league rules. Those require domain-level verification before any policy change.
+- No final test pass or APK build was run.
