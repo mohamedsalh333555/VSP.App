@@ -6,6 +6,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
+import '../ui/tokens/vsp_design_tokens.dart';
 import '../ui/components/vsp_card.dart';
 import '../ui/components/vsp_button.dart';
 
@@ -175,6 +176,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
        },
  ),
  ],
+ ),
  ),
  ),
  ),
