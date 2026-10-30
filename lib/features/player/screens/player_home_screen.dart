@@ -115,9 +115,13 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               await Provider.of<BookingProvider>(context, listen: false)
                   .loadUserBookings(userId);
           if (mounted && bookingsLoaded) {
-            final myTeam = await TeamRepository().getUserTeam(userId);
+            final captainTeamIds =
+                await TeamRepository().getUserCaptainTeamIds(userId);
             if (mounted) {
-              _checkPendingChallengeResultPopup(context, myTeam: myTeam);
+              _checkPendingChallengeResultPopup(
+                context,
+                captainTeamIds: captainTeamIds,
+              );
             }
           }
         }
@@ -131,13 +135,12 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   void _checkPendingChallengeResultPopup(
     BuildContext context, {
-    required Team? myTeam,
+    required Set<String> captainTeamIds,
   }) {
     if (_hasShownPostMatchPopupThisSession) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userId = auth.currentUser?.id;
-    final myTeamId = myTeam?.id;
-    if (userId == null || myTeamId == null || myTeam!.captainId != userId) return;
+    if (userId == null || captainTeamIds.isEmpty) return;
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
@@ -151,9 +154,12 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       // Must be ended within past 30 days and belong to the current captain's team.
       if (booking.endTime.isAfter(now)) continue;
       if (booking.endTime.add(const Duration(days: 30)).isBefore(now)) continue;
-      final isMyTeamInBooking =
-          myTeamId == booking.playerTeamId || myTeamId == booking.opponentTeamId;
-      if (!isMyTeamInBooking) continue;
+      final myTeamId = captainTeamIds.firstWhere(
+        (teamId) =>
+            teamId == booking.playerTeamId || teamId == booking.opponentTeamId,
+        orElse: () => '',
+      );
+      if (myTeamId.isEmpty) continue;
 
       // Either participating captain may submit the first result.
       if (booking.matchResultStatus == MatchResultStatus.noResult) {
