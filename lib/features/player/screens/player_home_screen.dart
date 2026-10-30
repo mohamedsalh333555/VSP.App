@@ -149,7 +149,11 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
     for (final booking in bookingProvider.userBookings) {
       if (booking.bookingType != BookingType.challenge) continue;
-      if (booking.status == BookingStatus.cancelled) continue;
+      if (booking.status != BookingStatus.confirmed &&
+          booking.status != BookingStatus.completed &&
+          booking.status != BookingStatus.upcoming) {
+        continue;
+      }
 
       // Must be ended within past 30 days and belong to the current captain's team.
       if (booking.endTime.isAfter(now)) continue;
