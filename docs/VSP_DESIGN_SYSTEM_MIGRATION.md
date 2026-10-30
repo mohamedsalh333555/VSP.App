@@ -110,3 +110,10 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - The book-tonight, governorate, team-invite, and participant-management sheets already use safe-area/scroll protection; the legal modal uses an internally scrollable content region.
 - Made the post-match, team-league, team lifecycle, and Paymob waiting AlertDialogs scrollable to keep content/actions reachable on compact screens.
 - No match scoring, team membership, payment verification, or notification-retention business rules were changed. Runtime/device verification remains outstanding.
+
+
+## Source inventory checkpoint
+
+- The 128-path candidate register now has source-review notes for all 128 entries; there are no entries left marked `not yet inspected`.
+- This is a source-review checkpoint only. It is not a 44-rule pass result: runtime states, locale/device combinations, embedded widgets not represented as candidate files, keyboard behavior, and visual overflow still require consolidated device validation and targeted screen-by-screen evidence.
+- No APK build or manual test suite was intentionally started as part of this checkpoint. Do not build the release artifact until the remaining UXLP implementation and grouped source fixes are complete.
