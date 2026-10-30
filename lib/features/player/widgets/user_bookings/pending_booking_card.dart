@@ -79,25 +79,48 @@ class PendingBookingCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     final bp = Provider.of<BookingProvider>(context, listen: false);
-                    final updated = await bp.getBookingById(pendingBooking.id);
-                    if (context.mounted) {
-                      if (updated != null && (updated.status == BookingStatus.confirmed || updated.isPaid)) {
+                    try {
+                      final updated = await bp.getBookingById(pendingBooking.id);
+                      if (!context.mounted) return;
+                      final isConfirmed = updated != null &&
+                          PaymentCheckoutService.isPaymentConfirmed(
+                            status: updated.status.toDbValue(),
+                            paymentStatus: updated.paymentStatus,
+                          );
+                      if (isConfirmed) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(isArabic ? ' تم تأكيد حجزك بنجاح!' : ' Booking Confirmed!'),
+                            content: Text(isArabic ? 'تم تأكيد حجزك بنجاح!' : 'Booking confirmed.'),
                             backgroundColor: VSPColors.accent,
                           ),
                         );
+                        final userId = Provider.of<app_auth.AuthProvider>(
+                          context,
+                          listen: false,
+                        ).currentUser?.id;
+                        if (userId != null) {
+                          await bp.loadUserBookings(userId);
+                        }
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(isArabic
-                                ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.'
-                                : 'Payment pending. Complete checkout.'),
+                                ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية الدفع.'
+                                : 'Payment is not confirmed yet. Please complete checkout.'),
                             backgroundColor: VSPColors.warning,
                           ),
                         );
                       }
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isArabic
+                              ? 'تعذر التحقق من حالة الحجز. حاول مرة أخرى.'
+                              : 'Could not check booking status. Please try again.'),
+                          backgroundColor: VSPColors.error,
+                        ),
+                      );
                     }
                   },
                   icon: const Icon(Iconsax.refresh_copy, size: 14, color: Colors.white),
