@@ -97,10 +97,9 @@ class PendingBookingCard extends StatelessWidget {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(
-                        bp.errorMessage ??
-                            (isArabic
-                                ? 'تعذر إلغاء الحجز. حاول مرة أخرى.'
-                                : 'Could not cancel booking. Please try again.'),
+                        isArabic
+                            ? 'تعذر إلغاء الحجز. حاول مرة أخرى.'
+                            : 'Could not cancel booking. Please try again.',
                       ),
                       backgroundColor: VSPColors.error,
                     ));
