@@ -51,3 +51,12 @@ This is a shared-foundation migration, not a completed screen audit.
 - Flutter analyze, automated tests, and release APK: intentionally deferred until the grouped implementation batch is complete.
 
 Do not mark a screen as passing UXLP-44 solely because it uses one of these shared components. Check the actual screen composition, role, locale, state, navigation, and runtime layout.
+
+
+## Additional owner-flow review batch
+
+- Reviewed owner booking modal/coordinator/cancellation dialog, tournament score and auto-schedule surfaces, stadium wizard dialogs, tournament dashboard/manual-team/prize-delivery surfaces, and documentation upload confirmation.
+- Both manual-team controllers already dispose when the sheet completes; no duplicate disposal change was needed.
+- Added scrollable AlertDialog content for the two manual-booking cancellation choices so long bilingual content remains reachable on short screens.
+- Disposed the prize-handover notes controller after the dialog closes and the tournament score edit-reason controller after its bottom sheet completes.
+- These source-level corrections do not constitute runtime verification; all affected surfaces remain runtime pending.
