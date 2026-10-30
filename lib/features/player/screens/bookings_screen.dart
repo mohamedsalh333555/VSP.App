@@ -39,7 +39,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
-      bookingProvider.loadUserBookings(userId);
+      await bookingProvider.loadUserBookings(userId);
+      if (!mounted) return;
       final team = await TeamRepository().getUserTeam(userId);
       if (mounted) {
         setState(() => _myTeamId = team?.id);
@@ -88,7 +89,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             upcoming: provider.upcomingBookings,
             history: provider.historyBookings,
             pending: provider.pendingBookings,
-            loading: provider.isLoading,
+            loading: provider.isLoadingUserBookings,
             error: provider.errorMessage,
           ),
           builder: (context, data, child) {
@@ -112,8 +113,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                   final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
                   final userId = authProvider.currentUser?.uid;
                   if (userId != null) {
-                    Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                    await Future.delayed(const Duration(seconds: 1));
+                    await Provider.of<BookingProvider>(context, listen: false)
+                        .loadUserBookings(userId);
                   }
                 },
                 color: VSPDSSemanticColors.accent,
@@ -137,7 +138,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
                 final userId = authProvider.currentUser?.uid;
                 if (userId != null) {
-                  Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+                  await Provider.of<BookingProvider>(context, listen: false)
+                      .loadUserBookings(userId);
                 }
               },
               color: VSPDSSemanticColors.accent,
