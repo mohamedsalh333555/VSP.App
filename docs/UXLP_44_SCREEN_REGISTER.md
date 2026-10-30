@@ -99,7 +99,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
 | `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
-| `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (report dialog scroll-safe; report success/failure feedback now matches repository result) |
+| `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (report dialog scroll-safe; report success/failure feedback correct; booking lifecycle statuses localized in Arabic/English) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (top safe-area protected; pending post-match review waits for authoritative booking snapshot; floating nav preserved) |
 | `lib/features/player/screens/profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
