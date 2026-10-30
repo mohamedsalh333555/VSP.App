@@ -19,6 +19,7 @@ class BookingProvider with ChangeNotifier {
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
   String? _activeOwnerId;
+  String? _activeUserId;
 
   bool _isLoading = false;
   int _userBookingLoadCount = 0;
@@ -198,6 +199,13 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   Future<bool> loadUserBookings(String userId) async {
+    if (_activeUserId != userId) {
+      _activeUserId = userId;
+      _activeOwnerId = null;
+      _userBookings = [];
+      _hasLoadedOwnerBookings = false;
+      _ownerBookingsError = null;
+    }
     _userBookingLoadCount++;
     _errorMessage = null;
     notifyListeners();
@@ -205,11 +213,13 @@ class BookingProvider with ChangeNotifier {
       return await _syncCoordinator.syncUserBookings(
         userId: userId,
         onData: (userBookings, _) {
+          if (_activeUserId != userId) return;
           _userBookings = userBookings;
           _errorMessage = null;
           notifyListeners();
         },
         onError: (e) {
+          if (_activeUserId != userId) return;
           _errorMessage = e;
           notifyListeners();
         },
@@ -228,11 +238,13 @@ class BookingProvider with ChangeNotifier {
   }) async {
     if (!forceRefresh && _activeOwnerId == ownerId) return;
 
-    if (_activeOwnerId != ownerId) {
+    if (_activeOwnerId != ownerId || _activeUserId != null) {
+      _activeUserId = null;
+      _activeOwnerId = ownerId;
+      _userBookings = [];
       _hasLoadedOwnerBookings = false;
       _ownerBookingsError = null;
     }
-    _activeOwnerId = ownerId;
     _ownerBookingLoadCount++;
     _ownerBookingsError = null;
     notifyListeners();
@@ -244,12 +256,14 @@ class BookingProvider with ChangeNotifier {
         getCurrentBookings: () => _userBookings,
         cancellingIds: _cancellingIds,
         onData: (merged, _) {
+          if (_activeOwnerId != ownerId) return;
           _userBookings = merged;
           _hasLoadedOwnerBookings = true;
           _ownerBookingsError = null;
           notifyListeners();
         },
         onError: (e) {
+          if (_activeOwnerId != ownerId) return;
           _ownerBookingsError = e;
           notifyListeners();
         },
