@@ -37,7 +37,8 @@ This is a shared-foundation migration, not a completed screen audit.
 - UXLP-44 standard: written.
 - Candidate screen register: 128 Dart paths.
 - Shared component audit: initial pass and the changes above applied.
-- Screen-by-screen review across player and owner roles: still in progress.
+- Static source scan of all 128 registered candidates: completed for legacy/V2 token imports, raw color/text-style declarations, hard-coded motion durations, safe-area markers, and modal entry points.
+- Rule-by-rule screen review across player and owner roles: still in progress; static scan does not establish a pass.
 - Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
 - Flutter analyze, automated tests, and release APK: intentionally deferred until the grouped implementation batch is complete.
 
