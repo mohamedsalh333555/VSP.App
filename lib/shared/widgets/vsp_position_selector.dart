@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../core/ui/tokens/vsp_tokens.dart' show SportPositionsRegistry;
 
 /// محدد المركز المفضل الموحد لتطبيق VSP لضمان تطابق التصميم والبيانات عبر كل شاشات التسجيل
 class VSPPositionSelector extends StatelessWidget {

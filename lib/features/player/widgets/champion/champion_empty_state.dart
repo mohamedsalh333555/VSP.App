@@ -28,8 +28,8 @@ class ChampionEmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: VSPDSSizes.stateIconBox,
-              height: VSPDSSizes.stateIconBox,
+              width: VSPDSizes.stateIconBox,
+              height: VSPDSizes.stateIconBox,
               decoration: BoxDecoration(
                 color: VSPDSColors.zinc800,
                 borderRadius: BorderRadius.circular(VSPDSRadius.md),

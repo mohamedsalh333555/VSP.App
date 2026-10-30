@@ -212,7 +212,6 @@ class MaintenanceScreen extends StatelessWidget {
  ),
  ),
  ),
- ),
  );
  }
 }

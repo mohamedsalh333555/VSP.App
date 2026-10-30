@@ -70,11 +70,8 @@ class VSPNetworkBanner extends StatelessWidget {
                                   isArabic
                                       ? 'لا يوجد اتصال بالإنترنت — البيانات قد تكون غير محدثة'
                                       : 'No internet connection — data may be outdated',
-                                  style: const TextStyle(
+                                  style: VSPDSTypography.bodySmall.copyWith(
                                     color: VSPDSSemanticColors.textPrimary,
-                                    fontSize: VSPDSTypography.bodySmall.fontSize,
-                                    fontWeight: VSPDSTypography.bodySmall.fontWeight,
-                                    height: VSPDSTypography.bodySmall.height,
                                   ),
                                 ),
                               ),
