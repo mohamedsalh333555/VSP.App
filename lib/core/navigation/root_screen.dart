@@ -94,6 +94,7 @@ class _RootScreenState extends State<RootScreen> {
  context: context,
  barrierDismissible: false,
  builder: (dialogContext) => AlertDialog(
+      scrollable: true,
  backgroundColor: VSPColors.surface,
  title: Text(
  l10n.updateRequired,
