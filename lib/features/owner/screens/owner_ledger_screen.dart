@@ -245,6 +245,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           );
         },
       ),
+      ),
     );
   }
 }
