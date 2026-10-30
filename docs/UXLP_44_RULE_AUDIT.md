@@ -113,5 +113,7 @@
 - Additional read-only schema check: `team_members` has a composite primary key `(team_id, user_id)` and no uniqueness constraint on `user_id`, so one user may belong to multiple teams. The UI therefore does not rely on `getUserTeam()`'s first membership; it resolves all teams the user captains and matches the relevant booking team.
 
 - Backend mismatch behavior: when the second captain submits a different outcome, the RPC updates the pending outcome and submitter team and leaves the match in `waitingOpponent`; it does not create an administrative dispute. The UI action and warning copy now say that a different result is sent to the other captain for review, not that an admin dispute was filed.
+- The challenge result-response dialog now guards against a missing `pendingOutcome` and shows a localized recovery message rather than force-unwrapping null and crashing.
+
 - Read-only inspection also confirmed `trg_calculate_elo` processes league points once when a challenge reaches `match_result_status='confirmed'` with a final outcome. The existing 'rankings updated' confirmation is therefore supported by the database trigger.
 - No SQL, RPC, trigger, scoring, captain permission, or league rule was changed. Runtime verification across both captains and matching/mismatching outcomes remains pending.
