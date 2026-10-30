@@ -31,6 +31,18 @@ class VSPPrimaryButton extends StatelessWidget {
     final resolvedColor = color ?? VSPDSSemanticColors.accent;
     final resolvedTextColor = textColor ?? VSPDSColors.black;
     final isDisabled = onPressed == null || isLoading;
+    final effectiveTextColor = isDisabled
+        ? resolvedTextColor.withValues(
+            alpha: resolvedTextColor.a * VSPDSOpacity.disabled,
+          )
+        : resolvedTextColor;
+    final effectiveGradientColors = gradientColors?.map((gradientColor) {
+      return isDisabled
+          ? gradientColor.withValues(
+              alpha: gradientColor.a * VSPDSOpacity.disabled,
+            )
+          : gradientColor;
+    }).toList(growable: false);
 
     return SizedBox(
       height: resolvedHeight,
@@ -41,7 +53,7 @@ class VSPPrimaryButton extends StatelessWidget {
           gradient: gradientColors == null
               ? null
               : LinearGradient(
-                  colors: gradientColors!,
+                  colors: effectiveGradientColors!,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -58,7 +70,7 @@ class VSPPrimaryButton extends StatelessWidget {
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.transparent,
-            foregroundColor: resolvedTextColor,
+            foregroundColor: effectiveTextColor,
             disabledForegroundColor:
                 resolvedTextColor.withValues(alpha: VSPDSOpacity.disabled),
             elevation: VSPDSElevation.none,
@@ -74,13 +86,13 @@ class VSPPrimaryButton extends StatelessWidget {
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: resolvedTextColor,
+                    color: effectiveTextColor,
                   ),
                 )
               : Text(
                   text,
                   style: VSPDSTypography.button.copyWith(
-                    color: resolvedTextColor,
+                    color: effectiveTextColor,
                   ),
                 ),
         ),
