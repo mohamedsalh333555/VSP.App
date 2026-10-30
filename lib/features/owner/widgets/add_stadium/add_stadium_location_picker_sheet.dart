@@ -31,19 +31,22 @@ class AddStadiumLocationPickerSheet {
     bool isSearching = false;
     bool isResolving = false;
     bool hasTriggeredGps = false;
+    bool isSheetOpen = true;
 
     Future<void> performSearch(String query, StateSetter setSheetState) async {
       if (query.trim().isEmpty) return;
       setSheetState(() => isSearching = true);
       final results = await StadiumLocationGeocoder.searchLocation(query, isArabic ? 'ar' : 'en');
+      if (!isSheetOpen) return;
       setSheetState(() {
         searchResults = results;
         isSearching = false;
       });
     }
 
-    return await showModalBottomSheet<LocationResult>(
+    final result = await showModalBottomSheet<LocationResult>(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
@@ -599,5 +602,8 @@ class AddStadiumLocationPickerSheet {
         );
       },
     );
+    isSheetOpen = false;
+    searchController.dispose();
+    return result;
   }
 }
