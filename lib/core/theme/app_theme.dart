@@ -218,6 +218,10 @@ class AppTheme {
           foregroundColor: VSPDSColors.black,
           elevation: VSPDSElevation.none,
           shape: const StadiumBorder(),
+          minimumSize: const Size(
+            0,
+            VSPDSAccessibility.minimumTapTarget,
+          ),
           textStyle: VSPDSTypography.button,
         ),
       ),
