@@ -61,29 +61,26 @@ class BookingSyncCoordinator {
   /// SSOT Rule: Realtime = transport, not source of truth.
   /// Incoming stream results are MERGED with last known state, never blindly replacing it.
   /// On error/timeout, existing bookings are preserved; the UI shows an error state.
-  void syncUserBookings({
+  Future<void> syncUserBookings({
     required String userId,
     required void Function(List<Booking> userBookings, CategorizedUserBookings categorized) onData,
     required void Function(String error) onError,
-  }) {
-    // 1. Direct REST fetch (trusted) — populates UI immediately and sets baseline.
+  }) async {
+    // 1. Direct REST fetch (trusted) — await the first authoritative snapshot so
+    // callers that need booking state before continuing can do so safely.
     try {
-      _repository.getUserBookingsDirectly(userId).then((directList) {
-        if (directList.isNotEmpty) {
-          // Full server refresh → update last-known baseline.
-          _lastKnownUserBookings = directList;
-          final categorized = BookingCategorizationService.categorizeUserBookings(
-            bookings: directList,
-            now: DateTime.now(),
-          );
-          onData(directList, categorized);
-        }
-      }).catchError((e) {
-        // Direct fetch failed — do NOT clear existing state.
-        VSPLogger.w('Direct user bookings fetch failed (keeping existing state): $e');
-      });
+      final directList = await _repository.getUserBookingsDirectly(userId);
+      _lastKnownUserBookings = directList;
+      final categorized = BookingCategorizationService.categorizeUserBookings(
+        bookings: directList,
+        now: DateTime.now(),
+      );
+      // An empty authoritative list is still a completed load, not "still loading".
+      onData(directList, categorized);
     } catch (e, stack) {
+      // Preserve current state if the direct fetch fails.
       VSPLogger.e('Error loading direct user bookings in BookingSyncCoordinator', e, stack);
+      onError('Failed to load bookings: $e');
     }
 
     // 2. Realtime Stream — transport only, results merged with last-known state.
