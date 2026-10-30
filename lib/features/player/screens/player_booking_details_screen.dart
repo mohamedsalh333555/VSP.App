@@ -27,6 +27,25 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     }
   }
 
+  String _statusLabel(BuildContext context) {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    switch (booking.status) {
+      case BookingStatus.pending:
+        return ar ? 'قيد الانتظار' : 'Pending';
+      case BookingStatus.confirmed:
+      case BookingStatus.upcoming:
+        return ar ? 'مؤكد' : 'Confirmed';
+      case BookingStatus.completed:
+        return ar ? 'مكتمل' : 'Completed';
+      case BookingStatus.noShow:
+        return ar ? 'عدم حضور' : 'No-show';
+      case BookingStatus.cancelled:
+        return ar ? 'ملغي' : 'Cancelled';
+      case BookingStatus.expired:
+        return ar ? 'انتهت مهلة الدفع' : 'Payment expired';
+    }
+  }
+
   Future<void> _reportOwnerIssue(BuildContext context) async {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final reasonController = TextEditingController();
@@ -156,7 +175,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
               _row(Iconsax.calendar_1_copy, ar ? 'التاريخ' : 'Date', booking.formattedDate),
               _row(Iconsax.clock_copy, ar ? 'الوقت' : 'Time', booking.formattedTimeRange),
               _row(Iconsax.wallet_1_copy, ar ? 'الإجمالي' : 'Total', '${booking.totalPrice.toInt()} ${booking.currency}'),
-              _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', booking.status.name),
+              _row(Iconsax.info_circle_copy, ar ? 'الحالة' : 'Status', _statusLabel(context)),
             ]),
           ),
           const SizedBox(height: VSPSpacing.md),
