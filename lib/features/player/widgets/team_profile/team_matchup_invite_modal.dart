@@ -11,7 +11,12 @@ Future<void> showTeamMatchupInviteModal(BuildContext context, String code) async
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
-      padding: const EdgeInsets.all(VSPSpacing.xl),
+      padding: EdgeInsets.fromLTRB(
+        VSPSpacing.xl,
+        VSPSpacing.xl,
+        VSPSpacing.xl,
+        MediaQuery.of(ctx).viewPadding.bottom + VSPSpacing.xl,
+      ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),

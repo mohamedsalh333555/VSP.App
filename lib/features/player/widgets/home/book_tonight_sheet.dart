@@ -96,6 +96,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),

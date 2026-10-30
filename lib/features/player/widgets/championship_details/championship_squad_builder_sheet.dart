@@ -26,7 +26,12 @@ Future<void> showIncompleteSquadBridgeSheet({
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
       return Container(
-        padding: const EdgeInsets.all(VSPSpacing.lg),
+        padding: EdgeInsets.fromLTRB(
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          VSPSpacing.lg,
+          MediaQuery.of(sheetCtx).viewPadding.bottom + VSPSpacing.lg,
+        ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.only(
@@ -50,9 +55,13 @@ Future<void> showIncompleteSquadBridgeSheet({
               children: [
                 const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 24),
                 const SizedBox(width: 10),
-                Text(
-                  isArabic ? 'استكمال تشكيلة البطولة ' : 'Tournament Squad Builder ',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                Expanded(
+                  child: Text(
+                    isArabic ? 'استكمال تشكيلة البطولة' : 'Tournament Squad Builder',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -94,6 +103,7 @@ Future<void> showIncompleteSquadBridgeSheet({
                   final created = await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
+                    useSafeArea: true,
                     backgroundColor: Colors.transparent,
                     builder: (ctx) => const CreateTeamSheet(),
                   );

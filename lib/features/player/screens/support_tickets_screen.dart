@@ -46,7 +46,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             VSPSpacing.lg,
             VSPSpacing.lg,
             VSPSpacing.lg,
-            MediaQuery.of(ctx).viewInsets.bottom + VSPSpacing.lg,
+            MediaQuery.of(ctx).padding.bottom +
+                MediaQuery.of(ctx).viewInsets.bottom +
+                VSPSpacing.lg,
           ),
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
