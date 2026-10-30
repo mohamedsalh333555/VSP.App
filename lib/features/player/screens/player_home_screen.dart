@@ -165,6 +165,12 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       );
       if (myTeamId.isEmpty) continue;
 
+      final isCaptainOfBothTeams =
+          booking.playerTeamId != null &&
+          booking.opponentTeamId != null &&
+          captainTeamIds.contains(booking.playerTeamId) &&
+          captainTeamIds.contains(booking.opponentTeamId);
+
       // Either participating captain may submit the first result.
       if (booking.matchResultStatus == MatchResultStatus.noResult) {
         _hasShownPostMatchPopupThisSession = true;
@@ -173,7 +179,8 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       }
 
       // Only the other team's captain may respond to an existing submission.
-      if ((booking.matchResultStatus == MatchResultStatus.waitingOpponent ||
+      if (!isCaptainOfBothTeams &&
+          (booking.matchResultStatus == MatchResultStatus.waitingOpponent ||
               booking.matchResultStatus == MatchResultStatus.disputed) &&
           booking.resultSubmittedByTeamId != null &&
           booking.resultSubmittedByTeamId != myTeamId) {
