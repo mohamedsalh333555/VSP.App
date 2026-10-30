@@ -78,3 +78,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Verified that stadium/documentation step pages use scrollable content where needed, the tournament wizard content scrolls, and the tournament wizard/dashboard fixed action bars explicitly account for the bottom system inset.
 - The documentation wizard blocks accidental exit during active uploads and presents a confirmation before discarding progress.
 - No business-policy, payment, subscription, or account-permission changes were made in this source-review batch. All surfaces remain runtime pending.
+
+
+## Player tournament and booking-entry review batch
+
+- Reviewed booking success, challenge-team selection, tournament roster management, language and notification preferences, tournament registration success, stadium filtering, booking-type selection, governorate confirmation, and the incomplete-squad bridge.
+- Confirmed the roster editor's sticky save action includes the bottom system inset and the stadium filter sheet is scrollable and safe-area aware.
+- Constrained the booking-type selection sheet to the viewport and made its option list scrollable; enabled safe-area handling for the nested create-team sheet and the challenge-code bottom sheet.
+- These changes address layout resilience only and do not alter booking or tournament eligibility/payment rules. Runtime verification remains pending.
