@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../../../../shared/widgets/primary_button.dart';
 import '../champion_podium_components.dart';
 import '../champion_empty_state.dart';
 
@@ -17,49 +18,41 @@ class League1v1NoGovernorateState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(VSPDSSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 76,
-              height: 76,
+              width: VSPDSizes.stateIconBox,
+              height: VSPDSizes.stateIconBox,
               decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+                color: VSPDSColors.zinc800,
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
+                border: Border.all(color: VSPDSColors.zinc750),
               ),
-              child: const Icon(Iconsax.location_slash_copy, size: 38, color: VSPColors.accent),
+              child: const Icon(Iconsax.location_slash_copy, size: VSPDSizes.emptyIconSize, color: VSPDSColors.zinc400),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPDSSpacing.md),
             Text(
               isArabic ? 'يرجى تحديد محافظتك من الملف الشخصي' : 'Please set your governorate in profile',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: VSPDSTypography.titleMedium,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: VSPDSSpacing.xs),
             Text(
               isArabic
                   ? 'حدد محافظتك لمشاهدة بطولات منطقتك والمشاركة بها'
                   : 'Set your home governorate to view and join local 1v1 tournaments',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              style: VSPDSTypography.stateBody,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(context, '/edit-profile');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              icon: const Icon(Iconsax.edit_2_copy, size: 16, color: Colors.black),
-              label: Text(
-                isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            const SizedBox(height: VSPDSSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                text: isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
+                icon: Iconsax.edit_2_copy,
+                onPressed: () => Navigator.pushNamed(context, '/edit-profile'),
               ),
             ),
           ],
@@ -104,33 +97,33 @@ class League1v1GovernorateBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(VSPDSSpacing.md, VSPDSSpacing.xs, VSPDSSpacing.md, VSPDSSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.sm, vertical: VSPDSSpacing.xs),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+        color: VSPDSSemanticColors.surface,
+        borderRadius: BorderRadius.circular(VSPDSRadius.lg),
+        border: Border.all(color: VSPDSSemanticColors.accentBorder),
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 16),
-          const SizedBox(width: 8),
+          const Icon(Iconsax.location_copy, color: VSPDSSemanticColors.accent, size: VSPDSizes.iconSm),
+          const SizedBox(width: VSPDSSpacing.xs),
           Expanded(
             child: Text(
               isArabic
                   ? 'تتصفح بطولات: ${championTranslateItem(context, selectedLocation)}'
                   : 'Viewing: ${championTranslateItem(context, selectedLocation)}',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: VSPDSTypography.bodyMedium.copyWith(color: VSPDSSemanticColors.textPrimary, fontWeight: FontWeight.w700),
             ),
           ),
           InkWell(
             onTap: onReturnToHomeGov,
-            borderRadius: BorderRadius.circular(VSPRadius.sm),
+            borderRadius: BorderRadius.circular(VSPDSRadius.sm),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xs, vertical: VSPDSSpacing.xxs),
               child: Text(
                 isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
-                style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                style: VSPDSTypography.actionLabel,
               ),
             ),
           ),
