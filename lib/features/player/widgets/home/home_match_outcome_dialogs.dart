@@ -52,6 +52,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
                 Navigator.pop(ctx);
                 showDialog(
                   context: context,
+                  barrierDismissible: false,
                   builder: (_) => MatchResultModal(
                     booking: booking,
                     submittingTeamId: myTeamId,
