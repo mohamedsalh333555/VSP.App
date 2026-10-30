@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// محدد المركز المفضل الموحد لتطبيق VSP لضمان تطابق التصميم والبيانات عبر كل شاشات التسجيل
 class VSPPositionSelector extends StatelessWidget {
@@ -32,9 +32,9 @@ class VSPPositionSelector extends StatelessWidget {
 
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xxs),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: VSPDSMotion.fast,
               curve: Curves.easeOutCubic,
               child: Material(
                 color: Colors.transparent,
@@ -43,24 +43,24 @@ class VSPPositionSelector extends StatelessWidget {
                     HapticFeedback.selectionClick();
                     onPositionSelected(code);
                   },
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  borderRadius: BorderRadius.circular(VSPDSRadius.md),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: VSPDSSpacing.sm, horizontal: VSPDSSpacing.xxs),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? VSPColors.accent.withValues(alpha: 0.15)
-                          : VSPColors.surface,
+                          ? VSPDSSemanticColors.accentSoft
+                          : VSPDSSemanticColors.surface,
                       borderRadius: BorderRadius.circular(VSPRadius.md),
                       border: Border.all(
-                        color: isSelected ? VSPColors.accent : VSPColors.borderLight,
-                        width: isSelected ? 1.8 : 1.0,
+                        color: isSelected ? VSPDSSemanticColors.accent : VSPDSColors.white15,
+                        width: isSelected ? VSPDSBorders.fieldFocus : VSPDSBorders.standard,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: VSPColors.accent.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
+                                color: VSPDSComponentEffects.buttonShadow.color,
+                                blurRadius: VSPDSComponentEffects.buttonShadow.blurRadius,
+                                offset: VSPDSComponentEffects.buttonShadow.offset,
                               ),
                             ]
                           : [],
@@ -72,7 +72,7 @@ class VSPPositionSelector extends StatelessWidget {
                           label,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                            color: isSelected ? VSPColors.accent : VSPDSSemanticColors.textPrimary,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                             fontSize: 13,
                           ),
