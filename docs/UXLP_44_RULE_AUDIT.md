@@ -15,7 +15,7 @@
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
 | 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
-| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens now distinguish initial loading from authoritative empty results; owner schedule shows an error/retry state rather than presenting all slots as free before booking data arrives. Verify other screens/states. |
+| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; owner schedule now distinguishes stadium loading/failure from a genuinely empty stadium list, and booking loading from free slots. Verify other screens/states. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
@@ -118,6 +118,8 @@
 - Read-only inspection also confirmed `trg_calculate_elo` processes league points once when a challenge reaches `match_result_status='confirmed'` with a final outcome. The existing 'rankings updated' confirmation is therefore supported by the database trigger.
 - No SQL, RPC, trigger, scoring, captain permission, or league rule was changed. Runtime verification across both captains and matching/mismatching outcomes remains pending.
 - `BookingProvider` now scopes player/owner booking state to the active user/owner ID. Switching account or role clears the previous scope's cached bookings, and late direct-fetch/realtime callbacks from a previous scope are ignored instead of overwriting the active account's list.
+
+- Owner booking schedule also now distinguishes an empty stadium list from stadium data still loading or a failed stadium stream; retry restarts the owner-stadium subscription instead of showing the no-stadium empty state prematurely.
 
 ### Owner schedule initial booking data state
 
