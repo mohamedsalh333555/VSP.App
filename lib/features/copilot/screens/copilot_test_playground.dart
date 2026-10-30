@@ -180,8 +180,10 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
           ),
         ],
       ),
-      body: Column(
-        children: [
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
           // Summary Header Banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -256,7 +258,8 @@ class _CopilotTestPlaygroundState extends State<CopilotTestPlayground> {
               },
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -25,6 +25,7 @@ class VspCopilotSheet extends StatefulWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => VspCopilotSheet(isArabic: isArabic),
     );

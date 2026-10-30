@@ -25,11 +25,11 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
 | `lib/features/auth/screens/verify_email_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/welcome_screen.dart` | player/owner | not yet inspected |
-| `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | not yet inspected |
-| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | player/owner | not yet inspected |
-| `lib/features/copilot/screens/copilot_test_playground.dart` | shared | not yet inspected |
+| `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
+| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
+| `lib/features/copilot/screens/copilot_test_playground.dart` | shared | source reviewed—runtime pending (body bottom safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | not yet inspected |
-| `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | not yet inspected |
+| `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets) |
 | `lib/features/owner/screens/add_stadium_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | not yet inspected |
