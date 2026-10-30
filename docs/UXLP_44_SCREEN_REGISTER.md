@@ -34,7 +34,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps owner stadium stream and onboarding states) |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (initial schedule waits for authoritative booking snapshot; load failures show retry instead of displaying free slots) |
+| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (stadium and booking streams distinguish loading/error from empty/free states; retry paths added) |
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
