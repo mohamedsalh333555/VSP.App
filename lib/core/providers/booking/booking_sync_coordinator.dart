@@ -138,16 +138,16 @@ class BookingSyncCoordinator {
       final repo = _repository;
       if (repo is SupabaseBookingRepository) {
         final directBookings = await repo.fetchOwnerBookingsDirectly(ownerId);
-        if (directBookings.isNotEmpty) {
-          final categorized = BookingCategorizationService.categorizeOwnerBookings(
-            bookings: directBookings,
-            now: DateTime.now(),
-          );
-          onData(directBookings, categorized);
-        }
+        final categorized = BookingCategorizationService.categorizeOwnerBookings(
+          bookings: directBookings,
+          now: DateTime.now(),
+        );
+        // An authoritative empty result is still a completed initial load.
+        onData(directBookings, categorized);
       }
     } catch (e, stack) {
       VSPLogger.e('Error loading direct owner bookings in BookingSyncCoordinator', e, stack);
+      onError('Failed to load owner bookings: $e');
     }
 
     // 2. Realtime Stream subscription
