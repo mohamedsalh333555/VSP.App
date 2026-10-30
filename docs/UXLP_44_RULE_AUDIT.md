@@ -49,7 +49,7 @@
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
 | 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
-| 43 | Operational observability | not yet inspected | Verify critical failures are traceable without exposing secrets or sensitive details. |
+| 43 | Operational observability | source reviewed—runtime pending | Booking screen/owner schedule/pending-cancel surfaces now use generic localized failure copy instead of raw backend exception strings; repository/provider diagnostics remain separate. Audit all critical failure surfaces. |
 | 44 | Optimal cognitive load | not yet inspected | Review information density, urgency, animation, and feedback intensity for each task. |
 
 ## Findings fixed in this batch (runtime pending)
@@ -94,6 +94,8 @@
 - `BookingsScreen` now waits for the initial booking snapshot before completing its initial data load, uses the dedicated loading state, and awaits the actual refresh operation from pull-to-refresh. Removed the previous fixed one-second delay from the empty-state refresh path.
 - Runtime checks for slow network, confirmed empty list, failed fetch, and concurrent refreshes remain pending.
 - Player booking cards now branch on the actual lifecycle enum instead of treating every non-history item as confirmed. Pending (including inconsistent `isPaid=true`) remains visibly pending/under verification; expired and no-show states receive their own badges.
+
+- Owner schedule initial-load errors and pending-booking cancellation failures now show generic localized recovery copy rather than exposing raw Supabase/exception text. Player booking list initial-load errors already use the same pattern; full error-surface audit remains pending.
 
 ### Player booking lifecycle copy
 
