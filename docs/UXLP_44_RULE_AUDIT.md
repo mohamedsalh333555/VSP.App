@@ -24,7 +24,7 @@
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
 | 17 | Transparent cost | not yet inspected | Audit total price, fees, payment timing, cancellation, and refund conditions before commitment. |
-| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows show success only after repository success; pending-booking check uses the canonical server-confirmed payment predicate; booking cards no longer infer confirmation from `isPaid` alone. Audit remaining critical success surfaces. |
+| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows show success only after repository success; alternate-result copy now reflects the backend's opponent-review flow, not an admin dispute that is not created. Pending payment checks use canonical server confirmation. Audit remaining critical success surfaces. |
 | 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
 | 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
@@ -45,8 +45,8 @@
 | 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors and championship route failures now have explicit recovery states; post-match result failures now show localized retry guidance instead of false success. Verify all critical flows and draft preservation. |
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
 | 38 | Single source of truth | not yet inspected | Verify displayed booking, payment, refund, team, and tournament values against authoritative Supabase records. |
-| 39 | Role-based relevance | source reviewed—runtime pending | Copilot route is owner-gated and root selects role shell; audit every owner/player action and deep-link boundary. |
-| 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details and booking cards now explicitly distinguish pending, confirmed, completed, no-show, cancelled, and expired states; cross-screen vocabulary and backend transition consistency remain to be verified. |
+| 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; automatic challenge result prompts now require the signed-in user to be the captain of a team participating in that booking, and use that team's ID for submission/response. Audit other role boundaries. |
+| 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
 | 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | not yet inspected | Verify critical failures are traceable without exposing secrets or sensitive details. |
@@ -105,3 +105,11 @@
 
 - The pending-booking trash action previously cancelled immediately on a single tap. It now presents a localized confirmation dialog explaining that the pending booking is cancelled and the slot released; success/failure feedback is explicit, and the touch target is at least 48dp.
 - Runtime verification of dialog layout, cancellation rejection, and refresh behavior remains pending.
+
+### Challenge-result captain eligibility and backend contract
+
+- Root cause: the player-home popup previously compared `resultSubmittedByTeamId` (a team UUID) against `auth.currentUser.id` (a user UUID). This comparison is not a valid way to determine whether the current side submitted the result. The same code also hard-coded `playerTeamId` when opening the first-result modal, so an opponent captain could be prompted to submit as the wrong team.
+- Read-only inspection of `public.submit_challenge_result_atomic` confirmed the server requires `auth.uid()` to be the `captain_id` of `p_team_id`, and that team must be one of the two teams in the booking. The client now resolves the user's team, requires captain identity, verifies the team participates in the booking, passes that team ID to the submission/response dialog, and shows the response prompt only when the other team submitted.
+- Backend mismatch behavior: when the second captain submits a different outcome, the RPC updates the pending outcome and submitter team and leaves the match in `waitingOpponent`; it does not create an administrative dispute. The UI action and warning copy now say that a different result is sent to the other captain for review, not that an admin dispute was filed.
+- Read-only inspection also confirmed `trg_calculate_elo` processes league points once when a challenge reaches `match_result_status='confirmed'` with a final outcome. The existing 'rankings updated' confirmation is therefore supported by the database trigger.
+- No SQL, RPC, trigger, scoring, captain permission, or league rule was changed. Runtime verification across both captains and matching/mismatching outcomes remains pending.
