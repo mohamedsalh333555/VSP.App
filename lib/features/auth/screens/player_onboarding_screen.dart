@@ -91,7 +91,8 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
       minYear: 1940,
       maxYear: DateTime.now().year - 18,
     );
-    if (picked != null) setState(() => _dateOfBirth = picked);
+    if (!mounted || picked == null) return;
+    setState(() => _dateOfBirth = picked);
   }
 
   @override
