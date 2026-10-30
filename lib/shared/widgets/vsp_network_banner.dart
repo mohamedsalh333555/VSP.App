@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/services/connectivity_service.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/ui/tokens/vsp_design_tokens.dart';
 
 /// Global network banner wrapper that floats at the top of the entire application
 /// whenever the device loses internet connection.
@@ -27,11 +27,11 @@ class VSPNetworkBanner extends StatelessWidget {
               child: IgnorePointer(
                 ignoring: isOnline,
                 child: AnimatedSlide(
-                  duration: const Duration(milliseconds: 350),
+                  duration: VSPDSMotion.emphasis,
                   curve: Curves.easeInOutCubic,
                   offset: isOnline ? const Offset(0, -1.5) : Offset.zero,
                   child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 250),
+                    duration: VSPDSMotion.standard,
                     curve: Curves.easeInOut,
                     opacity: isOnline ? 0.0 : 1.0,
                     child: Material(
@@ -39,25 +39,25 @@ class VSPNetworkBanner extends StatelessWidget {
                       child: SafeArea(
                         bottom: false,
                         child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          margin: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.sm, vertical: VSPDSSpacing.xxs),
+                          padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.md, vertical: VSPDSSpacing.xs),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [VSPColors.error, VSPColors.error.withValues(alpha: 0.8)],
+                              colors: [VSPDSSemanticColors.error, VSPColors.error.withValues(alpha: 0.8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
-                            borderRadius: BorderRadius.circular(VSPRadius.lg),
+                            borderRadius: BorderRadius.circular(VSPDSRadius.lg),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                color: VSPDSElevation.subtle.color,
+                                blurRadius: VSPDSElevation.subtle.blurRadius,
+                                offset: VSPDSElevation.subtle.offset,
                               ),
                             ],
                             border: Border.all(
-                              color: VSPColors.borderLight,
-                              width: 1,
+                              color: VSPDSColors.white15,
+                              width: VSPDSBorders.standard,
                             ),
                           ),
                           child: Row(
@@ -65,8 +65,8 @@ class VSPNetworkBanner extends StatelessWidget {
                             children: [
                               const Icon(
                                 Iconsax.wifi_square_copy,
-                                color: VSPColors.textPrimary,
-                                size: 20,
+                                color: VSPDSSemanticColors.textPrimary,
+                                size: VSPDSSizes.iconMd,
                               ),
                               const SizedBox(width: 10),
                               Expanded(
