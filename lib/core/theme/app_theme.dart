@@ -222,6 +222,90 @@ class AppTheme {
         ),
       ),
 
+      iconTheme: const IconThemeData(
+        color: VSPDSSemanticColors.textSecondary,
+        size: VSPDSizes.iconMd,
+      ),
+
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: VSPDSSemanticColors.accent,
+        selectionColor: VSPDSSemanticColors.accentSoft,
+        selectionHandleColor: VSPDSSemanticColors.accent,
+      ),
+
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return VSPDSSemanticColors.surfaceRaised;
+          }
+          if (states.contains(WidgetState.selected)) {
+            return VSPDSSemanticColors.accent;
+          }
+          return VSPDSColors.transparent;
+        }),
+        checkColor: const WidgetStatePropertyAll(VSPDSColors.black),
+        side: const BorderSide(
+          color: VSPDSSemanticColors.textSecondary,
+          width: VSPDSBorders.standard,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VSPDSRadius.xs),
+        ),
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+      ),
+
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? VSPDSSemanticColors.accent
+                : VSPDSSemanticColors.textSecondary),
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? VSPDSColors.black
+                : VSPDSSemanticColors.textSecondary),
+        trackColor: WidgetStateProperty.resolveWith((states) =>
+            states.contains(WidgetState.selected)
+                ? VSPDSSemanticColors.accent
+                : VSPDSSemanticColors.surfaceRaised),
+        trackOutlineColor: WidgetStatePropertyAll(
+          VSPDSSemanticColors.border,
+        ),
+      ),
+
+      sliderTheme: SliderThemeData(
+        activeTrackColor: VSPDSSemanticColors.accent,
+        inactiveTrackColor: VSPDSSemanticColors.surfaceRaised,
+        thumbColor: VSPDSSemanticColors.accent,
+        overlayColor: VSPDSSemanticColors.accentSoft,
+        valueIndicatorColor: VSPDSSemanticColors.surfaceElevated,
+        valueIndicatorTextStyle: VSPDSTypography.bodySmall.copyWith(
+          color: VSPDSSemanticColors.textPrimary,
+        ),
+        trackHeight: VSPDSBorders.standard + 2.0,
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: VSPDSSemanticColors.accent,
+        foregroundColor: VSPDSColors.black,
+        elevation: VSPDSElevation.none,
+        shape: CircleBorder(),
+      ),
+
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: VSPDSSemanticColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(VSPDSRadius.sm),
+          border: const Border.fromBorderSide(VSPDSBorders.subtle),
+        ),
+        textStyle: VSPDSTypography.bodySmall.copyWith(
+          color: VSPDSSemanticColors.textPrimary,
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: VSPDSSemanticColors.inputFill,
