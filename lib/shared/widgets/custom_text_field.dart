@@ -134,21 +134,21 @@ class CustomTextField extends StatelessWidget {
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderRadius: BorderRadius.circular(VSPDSRadius.input),
               borderSide: const BorderSide(
                 color: VSPDSSemanticColors.border,
                 width: VSPDSBorders.standard,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderRadius: BorderRadius.circular(VSPDSRadius.input),
               borderSide: const BorderSide(
                 color: VSPDSSemanticColors.accent,
                 width: VSPDSBorders.fieldFocus,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderRadius: BorderRadius.circular(VSPDSRadius.input),
               borderSide: const BorderSide(
                 color: VSPDSSemanticColors.error,
                 width: VSPDSBorders.standard,
