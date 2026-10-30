@@ -22,6 +22,9 @@ class BookingProvider with ChangeNotifier {
 
   bool _isLoading = false;
   int _userBookingLoadCount = 0;
+  int _ownerBookingLoadCount = 0;
+  bool _hasLoadedOwnerBookings = false;
+  String? _ownerBookingsError;
   bool _isLoadingPublicMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;
@@ -60,6 +63,9 @@ class BookingProvider with ChangeNotifier {
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
   bool get isLoadingUserBookings => _userBookingLoadCount > 0;
+  bool get isLoadingOwnerBookings => _ownerBookingLoadCount > 0;
+  bool get hasLoadedOwnerBookings => _hasLoadedOwnerBookings;
+  String? get ownerBookingsError => _ownerBookingsError;
   bool get isLoadingPublicMatches => _isLoadingPublicMatches;
   bool get isLoadingMoreMatches => _isLoadingPublicMatches;
   bool get hasMoreMatches => _hasMoreMatches;
@@ -215,26 +221,43 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load owner's bookings (for stadium owners)
-  Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds, bool forceRefresh = false}) async {
-    if (!forceRefresh && _activeOwnerId == ownerId) {
-      return;
+  Future<void> loadOwnerBookings(
+    String ownerId, {
+    List<String>? stadiumIds,
+    bool forceRefresh = false,
+  }) async {
+    if (!forceRefresh && _activeOwnerId == ownerId) return;
+
+    if (_activeOwnerId != ownerId) {
+      _hasLoadedOwnerBookings = false;
+      _ownerBookingsError = null;
     }
     _activeOwnerId = ownerId;
+    _ownerBookingLoadCount++;
+    _ownerBookingsError = null;
+    notifyListeners();
 
-    await _syncCoordinator.syncOwnerBookings(
-      ownerId: ownerId,
-      stadiumIds: stadiumIds,
-      getCurrentBookings: () => _userBookings,
-      cancellingIds: _cancellingIds,
-      onData: (merged, _) {
-        _userBookings = merged;
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = e;
-        notifyListeners();
-      },
-    );
+    try {
+      await _syncCoordinator.syncOwnerBookings(
+        ownerId: ownerId,
+        stadiumIds: stadiumIds,
+        getCurrentBookings: () => _userBookings,
+        cancellingIds: _cancellingIds,
+        onData: (merged, _) {
+          _userBookings = merged;
+          _hasLoadedOwnerBookings = true;
+          _ownerBookingsError = null;
+          notifyListeners();
+        },
+        onError: (e) {
+          _ownerBookingsError = e;
+          notifyListeners();
+        },
+      );
+    } finally {
+      if (_ownerBookingLoadCount > 0) _ownerBookingLoadCount--;
+      notifyListeners();
+    }
   }
 
   /// Cancel a booking
