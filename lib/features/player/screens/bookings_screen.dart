@@ -26,11 +26,18 @@ class BookingsScreen extends StatefulWidget {
 
 class _BookingsScreenState extends State<BookingsScreen> {
   String? _myTeamId;
+  bool _isInitialLoadPending = true;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await _loadData();
+      } finally {
+        if (mounted) setState(() => _isInitialLoadPending = false);
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -134,7 +141,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             final hasBookings =
                 data.upcoming.isNotEmpty || data.history.isNotEmpty || data.pending.isNotEmpty;
 
-            if (data.loading && !hasBookings) {
+            if (_isInitialLoadPending || (data.loading && !hasBookings)) {
               return const Center(
                 child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
               );
