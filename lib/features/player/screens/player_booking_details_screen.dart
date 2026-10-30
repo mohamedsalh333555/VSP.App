@@ -34,6 +34,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     final submitted = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue'),
         content: Column(
@@ -78,12 +79,17 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
       bookingId: booking.id,
     );
     if (context.mounted) {
-      VSPFeedback.showSuccess(
-        context,
-        ok
-            ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
-            : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
-      );
+      if (ok) {
+        VSPFeedback.showSuccess(
+          context,
+          ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.',
+        );
+      } else {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر إرسال البلاغ. حاول مرة أخرى.' : 'Could not submit the report. Please try again.',
+        );
+      }
     }
   }
 
