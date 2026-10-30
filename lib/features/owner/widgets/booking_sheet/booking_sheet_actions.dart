@@ -132,7 +132,8 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   newStartTime: newStart,
                   newEndTime: newEnd,
                 );
-                if (ok && context.mounted) {
+                if (!context.mounted) return;
+                if (ok) {
                   VSPFeedback.showSuccess(
                     context,
                     isArabic
@@ -143,6 +144,13 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                     launchUrl(Uri.parse('tel:${booking.playerPhone}'));
                   }
                   Navigator.pop(context);
+                } else {
+                  VSPFeedback.showError(
+                    context,
+                    isArabic
+                        ? 'تعذر إرسال اقتراح الموعد الجديد. حاول مرة أخرى.'
+                        : 'Could not send the reschedule proposal. Please try again.',
+                  );
                 }
               },
             ),
