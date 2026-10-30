@@ -22,6 +22,7 @@ class BookingSheetCancelDialog {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -49,6 +50,7 @@ class BookingSheetCancelDialog {
     final result = await showDialog<ManualBookingCancelDecision>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
