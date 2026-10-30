@@ -34,7 +34,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps owner stadium stream and onboarding states) |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (booking list uses shared bottom-navigation scroll padding) |
+| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (initial schedule waits for authoritative booking snapshot; load failures show retry instead of displaying free slots) |
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
@@ -168,5 +168,6 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective booking full-online-payment guard; bounded scroll-safe sheet) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule failure feedback; destructive closure confirmation) |
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (awaited authoritative player booking snapshot; realtime merge behavior preserved) |
+| `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (owner/player streams are cancelled before changing scope; owner empty snapshots and direct-fetch errors are delivered explicitly) |
 | `lib/core/repositories/team_repository.dart` | shared | source reviewed—runtime pending (added lookup for all teams captained by the current user to support multi-team result eligibility) |
 | `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated concurrent-safe player booking loading state and snapshot result) |
