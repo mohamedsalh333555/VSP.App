@@ -23,6 +23,8 @@ The compatibility layer preserves existing numeric geometry (including the legac
 | `VSPPositionSelector` | Migrated to V2 tokens and enforces the 48dp minimum interactive height |
 | `VSPIconBadge` | Uses canonical badge background, dimensions and border-opacity tokens; remains circular because it is not an empty-state illustration |
 | `VSPEmptyState`, `VSPStateView`, `VspBottomNavBar` | Existing V2-based patterns reviewed; their screen-specific usage still requires verification |
+| `ChampionEmptyState` and `League1v1NoGovernorateState` | Aligned to the shared 56dp charcoal square state tile, semantic typography and canonical action button |
+| `OfflineErrorScreen` and `MaintenanceScreen` | Content now respects safe-area insets; offline retry uses the canonical primary button |
 
 ## Token consistency corrections
 
@@ -40,6 +42,7 @@ This is a shared-foundation migration, not a completed screen audit.
 - Static source scan of all 128 registered candidates: completed for legacy/V2 token imports, raw color/text-style declarations, hard-coded motion durations, safe-area markers, and modal entry points.
 - Rule-by-rule screen review across player and owner roles: still in progress; static scan does not establish a pass.
 - Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
+- Added regression tests for token alias equivalence, primary-button interaction, and back-button touch-target size.
 - Flutter analyze, automated tests, and release APK: intentionally deferred until the grouped implementation batch is complete.
 
 Do not mark a screen as passing UXLP-44 solely because it uses one of these shared components. Check the actual screen composition, role, locale, state, navigation, and runtime layout.
