@@ -180,7 +180,7 @@ class _RoleCard extends StatelessWidget {
                 ),
                 const SizedBox(width: VSPDSSpacing.xs),
                 Icon(
-                  isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_2_copy,
+                  isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                   color: VSPDSSemanticColors.textSecondary,
                   size: VSPDSizes.iconSm,
                 ),
