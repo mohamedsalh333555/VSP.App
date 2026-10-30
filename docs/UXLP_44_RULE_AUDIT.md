@@ -24,7 +24,7 @@
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
 | 17 | Transparent cost | not yet inspected | Audit total price, fees, payment timing, cancellation, and refund conditions before commitment. |
-| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows now show success only when their repository operation succeeds; pending-booking status check uses the canonical server-confirmed payment predicate, not `isPaid` alone. Audit remaining payment/booking/refund/tournament success surfaces. |
+| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows show success only after repository success; pending-booking check uses the canonical server-confirmed payment predicate; booking cards no longer infer confirmation from `isPaid` alone. Audit remaining critical success surfaces. |
 | 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
 | 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
@@ -46,7 +46,7 @@
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
 | 38 | Single source of truth | not yet inspected | Verify displayed booking, payment, refund, team, and tournament values against authoritative Supabase records. |
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot route is owner-gated and root selects role shell; audit every owner/player action and deep-link boundary. |
-| 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details now localizes pending/confirmed/completed/no-show/cancelled/expired statuses; cross-screen lifecycle label mapping and backend transition consistency remain to be verified. |
+| 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details and booking cards now explicitly distinguish pending, confirmed, completed, no-show, cancelled, and expired states; cross-screen vocabulary and backend transition consistency remain to be verified. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
 | 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | not yet inspected | Verify critical failures are traceable without exposing secrets or sensitive details. |
@@ -89,6 +89,8 @@
 - `BookingProvider` now exposes a dedicated player-bookings loading counter so concurrent refreshes do not prematurely clear the loading state and unrelated booking mutations do not drive the bookings screen spinner.
 - `BookingsScreen` now waits for the initial booking snapshot before completing its initial data load, uses the dedicated loading state, and awaits the actual refresh operation from pull-to-refresh. Removed the previous fixed one-second delay from the empty-state refresh path.
 - Runtime checks for slow network, confirmed empty list, failed fetch, and concurrent refreshes remain pending.
+- Player booking cards now branch on the actual lifecycle enum instead of treating every non-history item as confirmed. Pending (including inconsistent `isPaid=true`) remains visibly pending/under verification; expired and no-show states receive their own badges.
+
 ### Player booking lifecycle copy
 
 - `PlayerBookingDetailsScreen` previously rendered `booking.status.name` directly, exposing enum identifiers such as `noShow` in the UI and English-only status values in Arabic mode. Added explicit Arabic/English labels for pending, confirmed/upcoming, completed, no-show, cancelled, and expired.
