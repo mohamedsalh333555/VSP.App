@@ -14,7 +14,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 |---|---|---|
 | `lib/core/navigation/offline_error_screen.dart` | player/owner | source reviewed—runtime pending (safe-area + primary action updated) |
 | `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance content safe-area/scroll updated) |
-| `lib/core/navigation/suspended_account_screen.dart` | player/owner | not yet inspected |
+| `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | not yet inspected |
@@ -39,12 +39,12 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_inbox_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_ledger_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
 | `lib/features/owner/screens/owner_profile_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | not yet inspected |
@@ -111,8 +111,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/support_ticket_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/support_tickets_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/team_profile_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/terms_and_privacy_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
+| `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/tournament_registration_success_screen.dart` | player | not yet inspected |
 | `lib/features/player/widgets/add_player_sheet.dart` | player | not yet inspected |
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | not yet inspected |
