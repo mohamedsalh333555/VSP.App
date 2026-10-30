@@ -34,6 +34,7 @@ void showTournamentBracketPreviewDialog(
     builder: (ctx) {
       final l10n = AppLocalizations.of(context)!;
       return AlertDialog(
+      scrollable: true,
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -125,6 +126,7 @@ Future<void> showInteractiveDrawRoomDialog(
     builder: (dialogCtx) => StatefulBuilder(
       builder: (ctx, setModalState) {
         return AlertDialog(
+      scrollable: true,
           backgroundColor: VSPColors.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
