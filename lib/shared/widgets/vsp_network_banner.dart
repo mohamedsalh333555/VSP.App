@@ -49,11 +49,7 @@ class VSPNetworkBanner extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(VSPDSRadius.lg),
                             boxShadow: [
-                              BoxShadow(
-                                color: VSPDSElevation.subtle.color,
-                                blurRadius: VSPDSElevation.subtle.blurRadius,
-                                offset: VSPDSElevation.subtle.offset,
-                              ),
+                              VSPDSComponentEffects.networkBannerShadow,
                             ],
                             border: Border.all(
                               color: VSPDSColors.white15,
