@@ -5,6 +5,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Base: main at d91a3f1a607043d878f6f5d86abb1b49b54136c4
 - Candidate files: 128
 - Current status: inventory generated; detailed per-rule inspection not yet completed.
+- Static source scan: all 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points.
+- Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
 - Status values: not yet inspected / pass / fail / needs product decision / not applicable.
 - Do not mark a file complete until Arabic and English, role, loading/empty/error/success states, keyboard, safe area, and navigation have been considered where applicable.
 
