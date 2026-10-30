@@ -17,7 +17,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware safe-area scroll layout) |
-| `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | not yet inspected |
+| `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (safe-area form and sticky footer; async location/date callbacks guarded against disposal) |
 | `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback now guard against disposal) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected form scroll layout) |
@@ -32,7 +32,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets) |
 | `lib/features/owner/screens/add_stadium_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps owner stadium stream and onboarding states) |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (booking list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
@@ -83,12 +83,12 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | not yet inspected |
 | `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/booking_confirmation_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
 | `lib/features/player/screens/booking_success_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/bookings_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/champion_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/championship_checkout_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (AppBar, scrollable checkout, shared bottom action bar adds system bottom inset) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | not yet inspected |
@@ -96,9 +96,9 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/match_details_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/notifications_center_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/payment_gateway_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/paymob_web_view_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea notification list; standard AlertDialog for informational details) |
+| `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
+| `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
 | `lib/features/player/screens/profile_screen.dart` | player | not yet inspected |
