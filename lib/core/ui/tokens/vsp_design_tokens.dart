@@ -76,6 +76,7 @@ abstract final class VSPDSSemanticColors {
   static const Color textMuted = VSPDSColors.gray500;
 
   static const Color border = Color(0xFF262626);
+  static const Color borderMedium = Color(0x33262626);
   static const Color borderSubtle = VSPDSColors.white05;
 
   static const Color error = VSPDSColors.red500;
