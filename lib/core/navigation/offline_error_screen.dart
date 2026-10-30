@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import '../ui/components/vsp_card.dart';
+import '../ui/components/vsp_button.dart';
 
 class OfflineErrorScreen extends StatefulWidget {
  const OfflineErrorScreen({super.key});
@@ -82,7 +83,8 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  ),
 
  // ── Content ──
- Center(
+ SafeArea(
+ child: Center(
  child: SingleChildScrollView(
  padding: const EdgeInsets.symmetric(horizontal: 24),
  child: ScaleTransition(
@@ -161,41 +163,16 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  const SizedBox(height: 32),
 
  // ── Primary Retry Button ──
- SizedBox(
- width: double.infinity,
- height: 52,
- child: ElevatedButton(
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- foregroundColor: VSPColors.background,
- shadowColor: VSPColors.accent.withValues(alpha: 0.3),
- elevation: 8,
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.md),
- ),
- ),
- onPressed: auth.isLoading ? null : () {
- HapticFeedback.lightImpact();
- auth.retryDataFetch();
- },
- child: auth.isLoading
- ? const SizedBox(
- width: 24,
- height: 24,
- child: CircularProgressIndicator(
- strokeWidth: 2.5,
- valueColor: AlwaysStoppedAnimation<Color>(VSPColors.background),
- ),
- )
- : Text(
- isAr ? 'إعادة المحاولة ' : 'Retry Connection ',
- style: const TextStyle(
- fontWeight: FontWeight.bold,
- fontSize: 15,
- letterSpacing: 0.5,
- ),
- ),
- ),
+ VSPPrimaryButton(
+ text: isAr ? 'إعادة المحاولة' : 'Retry Connection',
+ height: VSPDSizes.buttonHeight,
+ isLoading: auth.isLoading,
+ onPressed: auth.isLoading
+     ? null
+     : () {
+         HapticFeedback.lightImpact();
+         auth.retryDataFetch();
+       },
  ),
  ],
  ),
