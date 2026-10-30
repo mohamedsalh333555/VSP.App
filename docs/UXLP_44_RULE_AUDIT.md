@@ -44,7 +44,7 @@
 | 35 | Scroll and modal safety | source reviewed—runtime pending | Scroll-safe dialogs/sheets and safe-area fixes applied in grouped batches; remaining surfaces and keyboard/device layouts need runtime validation. |
 | 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors and championship route failures now have explicit recovery states; post-match result failures now show localized retry guidance instead of false success. Verify all critical flows and draft preservation. |
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
-| 38 | Single source of truth | source reviewed—runtime pending | Player and owner booking initial states now wait for authoritative Supabase snapshots before presenting empty/free schedules; owner direct fetch now delivers confirmed empty results and reports fetch errors. Verify all displayed booking/payment/refund values against server records. |
+| 38 | Single source of truth | source reviewed—runtime pending | Player/owner booking views wait for authoritative snapshots; owner empty/error snapshots are explicit; provider ignores late callbacks from a previous account/role scope and clears stale booking data when scope changes. Verify all displayed booking/payment/refund values against server records. |
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; automatic challenge result prompts now require the signed-in user to be the captain of a team participating in that booking, and use that team's ID for submission/response. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
@@ -117,6 +117,8 @@
 
 - Read-only inspection also confirmed `trg_calculate_elo` processes league points once when a challenge reaches `match_result_status='confirmed'` with a final outcome. The existing 'rankings updated' confirmation is therefore supported by the database trigger.
 - No SQL, RPC, trigger, scoring, captain permission, or league rule was changed. Runtime verification across both captains and matching/mismatching outcomes remains pending.
+- `BookingProvider` now scopes player/owner booking state to the active user/owner ID. Switching account or role clears the previous scope's cached bookings, and late direct-fetch/realtime callbacks from a previous scope are ignored instead of overwriting the active account's list.
+
 ### Owner schedule initial booking data state
 
 - `OwnerBookingsScreen` previously rendered its generated time slots before the owner booking fetch had completed. During the initial network window, booked slots could therefore appear visually free. The screen now shows a loading state until the authoritative owner booking snapshot is received and an error/retry state if the initial fetch fails.
