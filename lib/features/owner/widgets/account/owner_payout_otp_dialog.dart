@@ -15,6 +15,7 @@ class OwnerPayoutOtpDialog extends StatefulWidget {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => const OwnerPayoutOtpDialog(),
     );
@@ -69,13 +70,20 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
     final email = Provider.of<AuthProvider>(context, listen: false).currentUser?.email ?? '';
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       decoration: const BoxDecoration(
         color: VSPColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         border: Border(top: BorderSide(color: VSPColors.divider, width: 1)),
       ),
-      child: Column(
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -137,6 +145,7 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
         ],
+        ),
       ),
     );
   }
