@@ -21,6 +21,8 @@ The compatibility layer preserves existing numeric geometry (including the legac
 | `SocialAuthButton` | Migrated to V2 radius, color, border, spacing and size tokens |
 | `VSPNetworkBanner` | Migrated to semantic colors, typography, spacing, radius, border, shadow and motion tokens |
 | `VSPPositionSelector` | Migrated to V2 tokens and enforces the 48dp minimum interactive height |
+| `VSPNetworkBanner` | Migrated remaining semantic colors, typography, and spacing to V2 tokens |
+| `SocialAuthButton` | Uses semantic button state and Material ink interaction with a 48dp minimum height |
 | `VSPIconBadge` | Uses canonical badge background, dimensions and border-opacity tokens; remains circular because it is not an empty-state illustration |
 | `VSPEmptyState`, `VSPStateView`, `VspBottomNavBar` | Existing V2-based patterns reviewed; their screen-specific usage still requires verification |
 | `ChampionEmptyState` and `League1v1NoGovernorateState` | Aligned to the shared 56dp charcoal square state tile, semantic typography and canonical action button |
@@ -41,6 +43,7 @@ This is a shared-foundation migration, not a completed screen audit.
 - Candidate screen register: 128 Dart paths.
 - Shared component audit: initial pass and the changes above applied.
 - Static source scan of all 128 registered candidates: completed for legacy/V2 token imports, raw color/text-style declarations, hard-coded motion durations, safe-area markers, and modal entry points.
+- Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Rule-by-rule screen review across player and owner roles: still in progress; static scan does not establish a pass.
 - Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
 - Added regression tests for token alias equivalence, primary-button interaction, and back-button touch-target size.
