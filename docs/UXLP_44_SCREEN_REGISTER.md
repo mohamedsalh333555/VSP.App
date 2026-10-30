@@ -96,7 +96,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea notification list; standard AlertDialog for informational details) |
+| `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
 | `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
