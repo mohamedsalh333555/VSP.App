@@ -34,11 +34,11 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_cup_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (booking list uses shared bottom-navigation scroll padding) |
+| `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | not yet inspected |
-| `lib/features/owner/screens/owner_inbox_screen.dart` | owner | not yet inspected |
+| `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (inbox list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
 | `lib/features/owner/screens/owner_profile_screen.dart` | owner | not yet inspected |
