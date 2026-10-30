@@ -136,11 +136,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 },
               );
             }
-            if (bookingProvider.isLoadingOwnerBookings) {
-              return const Center(
-                child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
-              );
-            }
+            return const Center(
+              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            );
           }
 
           final baseDate = OwnerScheduleSlotsBuilder.getOperationalBaseDate(selectedStadium, context);
