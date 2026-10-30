@@ -64,49 +64,49 @@ class _VSPBackButtonState extends State<VSPBackButton>
         label: isRtl ? 'رجوع' : 'Back',
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-        onTapDown: (_) => _controller.reverse(),
-        onTapUp: (_) => _controller.forward(),
-        onTapCancel: () => _controller.forward(),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          if (widget.onTap != null) {
-            widget.onTap!();
-          } else {
-            Navigator.maybePop(context);
-          }
-        },
-        child: Center(
-          child: ScaleTransition(
-            scale: _scale,
-            child: Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: widget.backgroundColor ?? VSPDSColors.white08,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: VSPDSColors.white12,
-                  width: VSPDSBorders.standard,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: VSPDSColors.black80.withValues(alpha: 0.15),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+          onTapDown: (_) => _controller.reverse(),
+          onTapUp: (_) => _controller.forward(),
+          onTapCancel: () => _controller.forward(),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            if (widget.onTap != null) {
+              widget.onTap!();
+            } else {
+              Navigator.maybePop(context);
+            }
+          },
+          child: Center(
+            child: ScaleTransition(
+              scale: _scale,
+              child: Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: widget.backgroundColor ?? VSPDSColors.white08,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: VSPDSColors.white12,
+                    width: VSPDSBorders.standard,
                   ),
-                ],
-              ),
-              child: Center(
-                child: Icon(
-                  isRtl
-                      ? Iconsax.arrow_right_3_copy
-                      : Iconsax.arrow_left_2_copy,
-                  color: widget.iconColor ?? VSPDSSemanticColors.textPrimary,
-                  size: (widget.size * 0.46).clamp(14.0, 18.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: VSPDSColors.black80.withValues(alpha: 0.15),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Icon(
+                    isRtl
+                        ? Iconsax.arrow_right_3_copy
+                        : Iconsax.arrow_left_2_copy,
+                    color: widget.iconColor ?? VSPDSSemanticColors.textPrimary,
+                    size: (widget.size * 0.46).clamp(14.0, 18.0),
+                  ),
                 ),
               ),
             ),
-          ),
           ),
         ),
       ),
