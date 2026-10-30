@@ -70,3 +70,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Constrained the payment-method sheet to the available viewport and made its options scrollable instead of allowing a fixed-height column to overflow on short devices.
 - Chat report controllers already dispose on dialog completion; team creation controllers already dispose on sheet completion. These were verified and left unchanged.
 - Runtime/device checks remain pending; this source review does not mark these surfaces as passed.
+
+
+## Owner dashboard and onboarding review batch
+
+- Reviewed owner add-stadium and tournament wizards, account management, dashboard, documentation wizard, profile, tournament dashboard, and subscription plans; also reviewed player champion and FAQ/support screens.
+- Verified that stadium/documentation step pages use scrollable content where needed, the tournament wizard content scrolls, and the tournament wizard/dashboard fixed action bars explicitly account for the bottom system inset.
+- The documentation wizard blocks accidental exit during active uploads and presents a confirmation before discarding progress.
+- No business-policy, payment, subscription, or account-permission changes were made in this source-review batch. All surfaces remain runtime pending.
