@@ -260,27 +260,61 @@ class PlayerBookingCard extends StatelessWidget {
                     ),
                   ),
                   if (booking.status == BookingStatus.cancelled) ...[
-                    ChallengeResultActions.buildStatusBadge(isArabic ? 'ملغي' : 'Cancelled', VSPColors.error),
-                  ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
-                    ChallengeResultActions.buildStatusBadge(isArabic ? 'بانتظار السداد' : 'Pending Payment', VSPColors.warning),
-                  ] else if (!isHistory) ...[
-                    ChallengeResultActions.buildStatusBadge(l10n.confirmed, VSPColors.accent),
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'ملغي' : 'Cancelled',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.status == BookingStatus.expired) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'انتهت مهلة الدفع' : 'Payment expired',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.status == BookingStatus.pending) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      booking.isPaid
+                          ? (isArabic ? 'قيد تأكيد الدفع' : 'Payment verification')
+                          : (isArabic ? 'بانتظار السداد' : 'Pending payment'),
+                      VSPColors.warning,
+                    ),
+                  ] else if (!isHistory &&
+                      (booking.status == BookingStatus.confirmed ||
+                          booking.status == BookingStatus.upcoming)) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.confirmed,
+                      VSPColors.accent,
+                    ),
+                  ] else if (booking.status == BookingStatus.noShow) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      isArabic ? 'عدم حضور' : 'No-show',
+                      VSPColors.error,
+                    ),
+                  ] else if (booking.endTime.isAfter(DateTime.now())) ...[
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.inProgress,
+                      VSPColors.accent,
+                    ),
+                  ] else if (booking.bookingType == BookingType.challenge) ...[
+                    Builder(
+                      builder: (ctx) {
+                        final badge = ChallengeResultActions.buildChallengeStatusBadge(
+                          context,
+                          booking: booking,
+                          myTeamId: myTeamId,
+                        );
+                        if (badge is SizedBox) {
+                          return ChallengeResultActions.buildStatusBadge(
+                            l10n.completed,
+                            VSPColors.textSecondary,
+                          );
+                        }
+                        return badge;
+                      },
+                    ),
                   ] else ...[
-                    if (booking.endTime.isAfter(DateTime.now()))
-                      ChallengeResultActions.buildStatusBadge(l10n.inProgress, VSPColors.accent)
-                    else if (booking.bookingType == BookingType.challenge) ...[
-                      Builder(
-                        builder: (ctx) {
-                          final badge = ChallengeResultActions.buildChallengeStatusBadge(context, booking: booking, myTeamId: myTeamId);
-                          if (badge is SizedBox) {
-                            return ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary);
-                          }
-                          return badge;
-                        },
-                      ),
-                    ] else ...[
-                      ChallengeResultActions.buildStatusBadge(l10n.completed, VSPColors.textSecondary),
-                    ],
+                    ChallengeResultActions.buildStatusBadge(
+                      l10n.completed,
+                      VSPColors.textSecondary,
+                    ),
                   ],
                 ],
               ),
