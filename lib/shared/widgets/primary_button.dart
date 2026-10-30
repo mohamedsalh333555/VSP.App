@@ -56,7 +56,7 @@ class _PrimaryButtonState extends State<PrimaryButton> {
     widget.onPressed?.call();
 
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(VSPDSMotion.standard * 6, () {
+    _debounceTimer = Timer(VSPDSMotion.buttonDebounce, () {
       if (mounted) {
         setState(() => _isDebouncing = false);
       }
