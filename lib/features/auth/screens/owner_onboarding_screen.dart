@@ -46,6 +46,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     Future.microtask(() => _fetchAutoLocation());
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       if (displayName != null && displayName.trim().isNotEmpty) {
@@ -58,10 +59,13 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   }
 
   Future<void> _fetchAutoLocation() async {
+    if (!mounted) return;
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
+      if (!mounted) return;
+
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result)) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;
@@ -71,6 +75,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         HapticFeedback.lightImpact();
       }
     } catch (_) {
+      if (!mounted) return;
       setState(() => _isLocationFallbackActive = true);
       HapticFeedback.lightImpact();
     } finally {
@@ -85,7 +90,8 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       minYear: 1940,
       maxYear: DateTime.now().year - 18,
     );
-    if (picked != null) setState(() => _dateOfBirth = picked);
+    if (!mounted || picked == null) return;
+    setState(() => _dateOfBirth = picked);
   }
 
   @override
