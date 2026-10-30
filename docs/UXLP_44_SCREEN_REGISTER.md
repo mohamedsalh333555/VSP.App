@@ -15,20 +15,20 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/navigation/offline_error_screen.dart` | player/owner | source reviewed—runtime pending (safe-area + primary action updated) |
 | `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance content safe-area/scroll updated) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
-| `lib/features/auth/screens/create_account_screen.dart` | player/owner | not yet inspected |
-| `lib/features/auth/screens/login_screen.dart` | player/owner | not yet inspected |
+| `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
+| `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware safe-area scroll layout) |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback now guard against disposal) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
-| `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | not yet inspected |
-| `lib/features/auth/screens/signup_screen.dart` | player/owner | not yet inspected |
+| `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected form scroll layout) |
+| `lib/features/auth/screens/signup_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware safe-area scroll layout) |
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
-| `lib/features/auth/screens/verify_email_screen.dart` | player/owner | not yet inspected |
-| `lib/features/auth/screens/welcome_screen.dart` | player/owner | not yet inspected |
+| `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
+| `lib/features/auth/screens/welcome_screen.dart` | player/owner | source reviewed—runtime pending (top and bottom controls individually safe-area protected) |
 | `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
 | `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
 | `lib/features/copilot/screens/copilot_test_playground.dart` | shared | source reviewed—runtime pending (body bottom safe-area protected) |
-| `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | not yet inspected |
+| `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | source reviewed—runtime pending (owner-only screen gate; chat body and composer safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets) |
 | `lib/features/owner/screens/add_stadium_wizard.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | not yet inspected |
