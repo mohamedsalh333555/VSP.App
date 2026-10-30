@@ -333,6 +333,26 @@ class AppTheme {
             width: VSPDSBorders.fieldFocus,
           ),
         ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(VSPDSRadius.input),
+          borderSide: VSPDSBorders.subtle,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(VSPDSRadius.input),
+          borderSide: const BorderSide(
+            color: VSPDSSemanticColors.error,
+            width: VSPDSBorders.standard,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(VSPDSRadius.input),
+          borderSide: const BorderSide(
+            color: VSPDSSemanticColors.error,
+            width: VSPDSBorders.fieldFocus,
+          ),
+        ),
+        labelStyle: VSPDSTypography.bodyMedium,
+        floatingLabelStyle: VSPDSTypography.actionLabel,
       ),
 
       pageTransitionsTheme: const PageTransitionsTheme(
