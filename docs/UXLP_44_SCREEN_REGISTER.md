@@ -85,7 +85,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
 | `lib/features/player/screens/booking_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated awaited loading state; pull-to-refresh awaits server response; premature empty-state flash removed) |
+| `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated loading state; refresh awaits server response; cached list stays visible on refresh failure with localized retry warning) |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (AppBar, scrollable checkout, shared bottom action bar adds system bottom inset) |
