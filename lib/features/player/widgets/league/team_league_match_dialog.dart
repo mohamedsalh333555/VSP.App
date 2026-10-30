@@ -272,6 +272,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: const Text('اعتماد نتيجة المباراة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
