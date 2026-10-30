@@ -15,7 +15,7 @@
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
 | 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
-| 9 | State visibility | source reviewed—runtime pending | Shared `VSPStateView` distinguishes loading/empty/error/offline/pending/success/disabled; verify actual state usage. |
+| 9 | State visibility | source reviewed—runtime pending | Shared `VSPStateView` distinguishes loading/empty/error/offline/pending/success/disabled; player bookings now has a dedicated loading state tied to the awaited server refresh, preventing a premature empty state. Verify actual state usage. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
@@ -84,3 +84,8 @@
 - `PlayerBookingDetailsScreen._reportOwnerIssue` previously routed both success and failure copy through the success feedback style. It now uses success styling only when `reportEntity` returns true and an error state otherwise; its report dialog is scrollable.
 - `UpcomingOnlinePaidActions` previously gave no feedback when `requestReschedule` returned false. It now presents a localized failure message and only offers the optional phone call/close action after the request succeeds.
 - These are source-level findings; failure/success behavior and compact-screen dialog layout remain runtime pending.
+### Player bookings loading and refresh behavior
+
+- `BookingProvider` now exposes a dedicated player-bookings loading counter so concurrent refreshes do not prematurely clear the loading state and unrelated booking mutations do not drive the bookings screen spinner.
+- `BookingsScreen` now waits for the initial booking snapshot before completing its initial data load, uses the dedicated loading state, and awaits the actual refresh operation from pull-to-refresh. Removed the previous fixed one-second delay from the empty-state refresh path.
+- Runtime checks for slow network, confirmed empty list, failed fetch, and concurrent refreshes remain pending.
