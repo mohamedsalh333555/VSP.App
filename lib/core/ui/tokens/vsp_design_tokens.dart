@@ -110,6 +110,7 @@ abstract final class VSPDSSpacing {
   static const double listGap = sm;
 
   // The existing design uses 20px for text-field horizontal padding.
+  static const double compact = 20.0;
   static const double inputHorizontal = 20.0;
   static const double navigationBottomPadding = 6.0;
 }
