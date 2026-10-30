@@ -60,3 +60,13 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Added scrollable AlertDialog content for the two manual-booking cancellation choices so long bilingual content remains reachable on short screens.
 - Disposed the prize-handover notes controller after the dialog closes and the tournament score edit-reason controller after its bottom sheet completes.
 - These source-level corrections do not constitute runtime verification; all affected surfaces remain runtime pending.
+
+
+## Player booking and account-flow review batch
+
+- Reviewed player bookings, match details, profile/edit profile, player team, stadium details, team dashboard, team creation, booking payment selection, chat dialogs, booking cancellation, and refund tracking.
+- Fixed a private collective-match early-return path that previously left the join button/action state stuck in loading after showing the invitation-only message.
+- Made the player booking-cancellation confirmation scrollable for compact screens and bilingual content.
+- Constrained the payment-method sheet to the available viewport and made its options scrollable instead of allowing a fixed-height column to overflow on short devices.
+- Chat report controllers already dispose on dialog completion; team creation controllers already dispose on sheet completion. These were verified and left unchanged.
+- Runtime/device checks remain pending; this source review does not mark these surfaces as passed.
