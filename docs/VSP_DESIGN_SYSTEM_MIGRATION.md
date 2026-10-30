@@ -172,3 +172,9 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - Player booking issue reports now display success styling only when the report repository returns true; failed submissions display an error state. The report dialog is scrollable.
 - Owner reschedule requests now provide explicit localized failure feedback when the repository rejects the request. The follow-up phone action and sheet close occur only after a successful request.
 - No booking policy, payment rule, or backend state transition was changed.
+
+## Player bookings initial/refresh loading state
+
+- Added a dedicated concurrent-safe `isLoadingUserBookings` state to `BookingProvider`, separate from the generic mutation loading flag.
+- `BookingsScreen` now awaits the initial server snapshot before completing its load sequence and binds its loading indicator to the dedicated state. Pull-to-refresh awaits the actual booking refresh instead of returning immediately; removed a fixed one-second delay previously used to mask refresh timing in the empty state.
+- This avoids briefly presenting the empty-state message before the authoritative query completes and gives real feedback during slow requests.
