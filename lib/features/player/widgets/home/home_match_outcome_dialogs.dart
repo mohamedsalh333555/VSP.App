@@ -9,7 +9,7 @@ import '../../screens/player_home_screen.dart';
 import '../match_result_modal.dart';
 
 /// يعرض نافذة منبثقة لإدخال نتيجة المباراة بعد انتهائها (للكابتن الأول)
-void showPostMatchAddResultDialog(BuildContext context, Booking booking, String userId) {
+void showPostMatchAddResultDialog(BuildContext context, Booking booking, {required String myTeamId}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   showDialog(
     context: context,
@@ -54,12 +54,12 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
                   context: context,
                   builder: (_) => MatchResultModal(
                     booking: booking,
-                    submittingTeamId: booking.playerTeamId ?? userId,
+                    submittingTeamId: myTeamId,
                     onConfirm: (outcome, rating, review) async {
                       final provider = Provider.of<BookingProvider>(context, listen: false);
                       final success = await provider.submitMatchResult(
                         bookingId: booking.id,
-                        teamId: booking.playerTeamId ?? userId,
+                        teamId: myTeamId,
                         outcome: outcome,
                         rating: rating,
                         review: review,
@@ -106,10 +106,9 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
 }
 
 /// يعرض نافذة منبثقة لتأكيد أو الاعتراض على نتيجة المباراة المسجلة (للكابتن الخصم)
-void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, String userId) {
+void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {required String currentTeamId}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   final pending = booking.pendingOutcome;
-  final currentTeamId = booking.opponentTeamId ?? userId;
   final isHome = currentTeamId == booking.playerTeamId;
 
   String claimText;
@@ -234,7 +233,7 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                         if (success) {
                           VSPFeedback.showWarning(
                             context,
-                            isArabic ? 'تم تسجيل النزاع للمراجعة الإدارية ' : 'Dispute recorded for review ',
+                            isArabic ? 'تم إرسال نتيجة مختلفة للطرف الآخر للتأكيد.' : 'A different result was submitted for the other captain to review.',
                           );
                         } else {
                           VSPFeedback.showError(
@@ -247,7 +246,7 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
                       }
                     },
                     child: Text(
-                      isArabic ? ' اعتراض' : ' Dispute',
+                      isArabic ? ' إرسال نتيجة مختلفة' : ' Submit Different Result',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
