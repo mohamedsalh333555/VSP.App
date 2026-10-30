@@ -582,7 +582,7 @@ abstract final class VSPDSAccessibility {
   static const double minimumTapTarget = VSPDSizes.touchTarget;
   static const double focusStroke = VSPDSBorders.focus;
   static const double stateMaxWidth = 420.0;
-  static const double progressStroke = 2.5;
+  static const double progressStroke = VSPDSizes.progressStroke;
   static const bool supportsReducedMotion = true;
 }
 
