@@ -162,7 +162,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     if (_isLoading) {
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+        body: SafeArea(top: false, bottom: true, child: Center(child: CircularProgressIndicator(color: VSPColors.accent))),
       );
     }
 
@@ -178,7 +178,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(top: false, bottom: true, child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +228,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
             const SizedBox(height: VSPSpacing.lg),
           ],
         ),
-      ),
+      )),
     );
   }
 }

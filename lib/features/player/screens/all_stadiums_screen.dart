@@ -107,7 +107,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(top: false, bottom: true, child: Column(
         children: [
           // 1. Search Bar & Quick Filters
           _buildSearchHeader(context, isArabic),
@@ -232,7 +232,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

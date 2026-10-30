@@ -30,7 +30,7 @@ class FavoritesScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
-      body: Consumer<AuthProvider>(
+      body: SafeArea(top: false, bottom: true, child: Consumer<AuthProvider>(
         builder: (context, auth, child) {
           final favoriteIds = auth.userModel?.favoriteStadiums ?? [];
           
@@ -81,7 +81,7 @@ class FavoritesScreen extends StatelessWidget {
             },
           );
         },
-      ),
+      )),
     );
   }
 }

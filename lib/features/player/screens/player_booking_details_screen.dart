@@ -132,7 +132,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(ar ? 'تفاصيل الحجز' : 'Booking Details'),
       ),
-      body: ListView(
+      body: SafeArea(top: false, bottom: true, child: ListView(
         padding: const EdgeInsets.all(VSPSpacing.md),
         children: [
           Container(
@@ -171,7 +171,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

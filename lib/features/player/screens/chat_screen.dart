@@ -211,7 +211,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
         ],
       ),
-      body: Column(children: [
+      body: SafeArea(top: false, bottom: true, child: Column(children: [
         if (_checkingPolicy) const LinearProgressIndicator(minHeight: 2, color: VSPColors.accent),
         Expanded(
           child: StreamBuilder<List<ChatMessage>>(
@@ -246,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
           isSending: _isSending,
           onSendMessage: _sendMessage,
         ),
-      ]),
+      ])),
     );
   }
 }

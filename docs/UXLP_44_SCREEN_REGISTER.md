@@ -82,28 +82,28 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | not yet inspected |
-| `lib/features/player/screens/all_stadiums_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/booking_success_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/bookings_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/champion_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/championship_details_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/chat_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
+| `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/global_search_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/match_details_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/payment_gateway_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/player_booking_details_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
 | `lib/features/player/screens/profile_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | not yet inspected |

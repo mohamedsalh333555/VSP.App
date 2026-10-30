@@ -220,7 +220,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               ),
             ],
           ),
-          body: Column(
+          body: SafeArea(top: false, bottom: true, child: Column(
             children: [
               if (isTeamRegistered && _myTeam != null) ...[
                 Container(
@@ -315,7 +315,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                 onJoin: () => _handleJoin(championship),
               ),
             ],
-          ),
+          )),
         );
       },
     );

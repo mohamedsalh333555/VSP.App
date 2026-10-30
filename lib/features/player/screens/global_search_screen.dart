@@ -161,7 +161,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             ),
         ],
       ),
-      body: _isSearching
+      body: SafeArea(top: false, bottom: true, child: _isSearching
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
           : SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
@@ -237,7 +237,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                   ],
                 ],
               ),
-            ),
+            )),
     );
   }
 
