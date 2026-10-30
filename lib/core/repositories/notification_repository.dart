@@ -30,10 +30,7 @@ class NotificationRepository {
         .limit(limit)
         .map((list) => list
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
-            .toList())
-        .handleError((e) {
-          debugPrint('Handled realtime error in getUserNotifications: $e');
-        });
+            .toList());
   }
 
   Future<void> sendNotification(String userId, AppNotification notification) async {
