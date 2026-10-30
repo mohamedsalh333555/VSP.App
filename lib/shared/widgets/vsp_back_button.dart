@@ -59,8 +59,11 @@ class _VSPBackButtonState extends State<VSPBackButton>
       margin: widget.margin,
       width: effectiveSize,
       height: effectiveSize,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
+      child: Semantics(
+        button: true,
+        label: isRtl ? 'رجوع' : 'Back',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
         onTapDown: (_) => _controller.reverse(),
         onTapUp: (_) => _controller.forward(),
         onTapCancel: () => _controller.forward(),
@@ -103,6 +106,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
                 ),
               ),
             ),
+          ),
           ),
         ),
       ),
