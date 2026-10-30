@@ -100,7 +100,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (top safe-area protected; floating nav preserved) |
+| `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (top safe-area protected; pending post-match review waits for authoritative booking snapshot; floating nav preserved) |
 | `lib/features/player/screens/profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
@@ -127,7 +127,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/filter_bottom_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (post-match add/confirm/dispute feedback now reflects repository success/failure; scroll-safe dialogs) |
 | `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
