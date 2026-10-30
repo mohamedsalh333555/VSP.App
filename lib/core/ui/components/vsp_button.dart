@@ -91,7 +91,7 @@ class VSPPrimaryButton extends StatelessWidget {
                   width: VSPDSizes.buttonProgress,
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
-                    strokeWidth: VSPDSSizes.progressStroke,
+                    strokeWidth: VSPDSizes.progressStroke,
                     color: effectiveTextColor,
                   ),
                 )
