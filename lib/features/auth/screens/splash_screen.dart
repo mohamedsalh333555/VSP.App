@@ -51,11 +51,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: VSPColors.background,
-        child: Center(
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: VSPColors.background,
+          child: Center(
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Image.asset(
@@ -76,6 +77,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
           ),
         ),
+      ),
       ),
     );
   }
