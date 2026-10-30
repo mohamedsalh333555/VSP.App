@@ -546,7 +546,7 @@ class PlayerBookingCard extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            isArabic ? 'جاري الاسترداد البنكي...' : 'Bank refund processing...',
+            isArabic ? 'جاري معالجة الاسترداد...' : 'Refund processing...',
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
