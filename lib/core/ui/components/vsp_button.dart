@@ -13,6 +13,9 @@ class VSPPrimaryButton extends StatelessWidget {
   final Color? textColor;
   final double? height;
   final List<Color>? gradientColors;
+  final double? width;
+  final EdgeInsetsGeometry? padding;
+  final IconData? icon;
 
   const VSPPrimaryButton({
     super.key,
@@ -23,6 +26,9 @@ class VSPPrimaryButton extends StatelessWidget {
     this.textColor,
     this.height,
     this.gradientColors,
+    this.width,
+    this.padding,
+    this.icon,
   });
 
   @override
@@ -46,7 +52,7 @@ class VSPPrimaryButton extends StatelessWidget {
 
     return SizedBox(
       height: resolvedHeight,
-      width: double.infinity,
+      width: width ?? double.infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(VSPDSRadius.button),
@@ -76,7 +82,7 @@ class VSPPrimaryButton extends StatelessWidget {
             elevation: VSPDSElevation.none,
             shadowColor: Colors.transparent,
             minimumSize: Size.zero,
-            padding: EdgeInsets.zero,
+            padding: padding ?? EdgeInsets.zero,
             shape: const StadiumBorder(),
             overlayColor: VSPDSColors.white12,
           ),
@@ -85,15 +91,30 @@ class VSPPrimaryButton extends StatelessWidget {
                   width: VSPDSizes.buttonProgress,
                   height: VSPDSizes.buttonProgress,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2,
+                    strokeWidth: VSPDSSizes.progressStroke,
                     color: effectiveTextColor,
                   ),
                 )
-              : Text(
-                  text,
-                  style: VSPDSTypography.button.copyWith(
-                    color: effectiveTextColor,
-                  ),
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: VSPDSizes.iconMd, color: effectiveTextColor),
+                      const SizedBox(width: VSPDSSpacing.xs),
+                    ],
+                    Flexible(
+                      child: Text(
+                        text,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: VSPDSTypography.button.copyWith(
+                          color: effectiveTextColor,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
