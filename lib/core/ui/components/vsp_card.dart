@@ -49,29 +49,32 @@ class VSPCard extends StatelessWidget {
       );
     }
 
+    final glassContent = Container(
+      padding: resolvedPadding,
+      decoration: BoxDecoration(
+        color: color ?? VSPDSColors.glassSurface,
+        borderRadius: BorderRadius.circular(radius),
+        border: border ?? const Border.fromBorderSide(VSPDSBorders.subtle),
+        boxShadow: const <BoxShadow>[VSPDSComponentEffects.glassShadow],
+      ),
+      child: child,
+    );
+
     return Container(
       width: width,
       height: height,
       margin: margin,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: VSPDSBlur.glassSigma,
-            sigmaY: VSPDSBlur.glassSigma,
-          ),
-          child: Container(
-            padding: resolvedPadding,
-            decoration: BoxDecoration(
-              color: color ?? VSPDSColors.glassSurface,
-              borderRadius: BorderRadius.circular(radius),
-              border: border ??
-                  const Border.fromBorderSide(VSPDSBorders.subtle),
-              boxShadow: const <BoxShadow>[VSPDSComponentEffects.glassShadow],
-            ),
-            child: child,
-          ),
-        ),
+        child: VSPDSGlass.shouldUseBlur
+            ? BackdropFilter(
+                filter: ImageFilter.blur(
+                  sigmaX: VSPDSBlur.glassSigma,
+                  sigmaY: VSPDSBlur.glassSigma,
+                ),
+                child: glassContent,
+              )
+            : glassContent,
       ),
     );
   }
