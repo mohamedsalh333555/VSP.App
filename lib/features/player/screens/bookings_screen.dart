@@ -48,6 +48,43 @@ class _BookingsScreenState extends State<BookingsScreen> {
     }
   }
 
+  Widget _buildSyncWarning(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final errorColor = Theme.of(context).colorScheme.error;
+    return Container(
+      margin: const EdgeInsets.only(bottom: VSPDSSpacing.sm),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPDSSpacing.sm,
+        vertical: VSPDSSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: errorColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPDSRadius.md),
+        border: Border.all(color: errorColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(Iconsax.info_circle_copy, color: errorColor, size: 18),
+          const SizedBox(width: VSPDSSpacing.sm),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
+                  : 'Could not refresh bookings. Showing the last loaded data.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: errorColor,
+                  ),
+            ),
+          ),
+          TextButton(
+            onPressed: _loadData,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;
     return VSPEmptyState(
@@ -94,15 +131,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
           ),
           builder: (context, data, child) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-            if (data.loading) {
+            final hasBookings =
+                data.upcoming.isNotEmpty || data.history.isNotEmpty || data.pending.isNotEmpty;
+
+            if (data.loading && !hasBookings) {
               return const Center(
                 child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
               );
             }
 
-            if (data.error != null && data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
+            if (data.error != null && !hasBookings) {
               return VSPErrorState(
-                customMessage: data.error,
+                customMessage: isArabic
+                    ? 'تعذر تحميل حجوزاتك. تحقق من اتصالك ثم حاول مرة أخرى.'
+                    : 'Could not load your bookings. Check your connection and try again.',
                 onRetry: _loadData,
               );
             }
@@ -150,15 +192,19 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 final historyCount = data.history.length;
                 final hasUpcoming = upcomingCount > 0;
                 final hasHistory = historyCount > 0;
+                final hasSyncError = data.error != null;
 
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: VSPDSScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPDSSpacing.sm),
-                  itemCount: pendingCount +
+                  itemCount: (hasSyncError ? 1 : 0) + pendingCount +
                       (hasUpcoming ? 1 + upcomingCount : 0) +
                       (hasHistory ? 1 + historyCount : 0),
                   itemBuilder: (context, index) {
-                    var cursor = index;
+                    if (hasSyncError && index == 0) {
+                      return _buildSyncWarning(context);
+                    }
+                    var cursor = hasSyncError ? index - 1 : index;
 
                     // Visual priority: Upcoming → Pending → History.
                     if (hasUpcoming) {
