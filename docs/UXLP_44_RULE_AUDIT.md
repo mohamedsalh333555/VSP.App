@@ -19,7 +19,7 @@
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
-| 13 | Plain language | not yet inspected | Audit all visible Arabic and English copy, including labels, helper text, errors, and notifications. |
+| 13 | Plain language | source reviewed—runtime pending | Player booking details now maps every booking lifecycle status to explicit Arabic/English labels rather than exposing raw enum identifiers; full app copy audit remains. |
 | 14 | One primary decision | not yet inspected | Identify competing primary actions on each decision surface. |
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
@@ -46,7 +46,7 @@
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
 | 38 | Single source of truth | not yet inspected | Verify displayed booking, payment, refund, team, and tournament values against authoritative Supabase records. |
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot route is owner-gated and root selects role shell; audit every owner/player action and deep-link boundary. |
-| 40 | Lifecycle consistency | not yet inspected | Map status transitions and labels across booking, payment, refund, tournament, team, and notification surfaces. |
+| 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details now localizes pending/confirmed/completed/no-show/cancelled/expired statuses; cross-screen lifecycle label mapping and backend transition consistency remain to be verified. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
 | 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | not yet inspected | Verify critical failures are traceable without exposing secrets or sensitive details. |
@@ -89,3 +89,7 @@
 - `BookingProvider` now exposes a dedicated player-bookings loading counter so concurrent refreshes do not prematurely clear the loading state and unrelated booking mutations do not drive the bookings screen spinner.
 - `BookingsScreen` now waits for the initial booking snapshot before completing its initial data load, uses the dedicated loading state, and awaits the actual refresh operation from pull-to-refresh. Removed the previous fixed one-second delay from the empty-state refresh path.
 - Runtime checks for slow network, confirmed empty list, failed fetch, and concurrent refreshes remain pending.
+### Player booking lifecycle copy
+
+- `PlayerBookingDetailsScreen` previously rendered `booking.status.name` directly, exposing enum identifiers such as `noShow` in the UI and English-only status values in Arabic mode. Added explicit Arabic/English labels for pending, confirmed/upcoming, completed, no-show, cancelled, and expired.
+- Cross-screen consistency of the same lifecycle states remains pending; this change is limited to the booking details surface.
