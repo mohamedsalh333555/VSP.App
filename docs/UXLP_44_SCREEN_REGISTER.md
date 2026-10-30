@@ -18,7 +18,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | not yet inspected |
-| `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | not yet inspected |
+| `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback now guard against disposal) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | not yet inspected |
 | `lib/features/auth/screens/signup_screen.dart` | player/owner | not yet inspected |
