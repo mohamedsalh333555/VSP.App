@@ -105,7 +105,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
   );
 }
 
-/// يعرض نافذة منبثقة لتأكيد أو الاعتراض على نتيجة المباراة المسجلة (للكابتن الخصم)
+/// يعرض نافذة للكابتن الآخر لتأكيد النتيجة المسجلة أو إرسال نتيجة مختلفة.
 void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {required String currentTeamId}) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   final pending = booking.pendingOutcome;
@@ -216,8 +216,8 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {re
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: VSPColors.error,
-                      side: const BorderSide(color: VSPColors.error),
+                      foregroundColor: VSPColors.warning,
+                      side: const BorderSide(color: VSPColors.warning),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
@@ -239,8 +239,8 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, {re
                           VSPFeedback.showError(
                             context,
                             isArabic
-                                ? 'تعذر تسجيل الاعتراض. حاول مرة أخرى.'
-                                : 'Could not submit the dispute. Please try again.',
+                                ? 'تعذر إرسال النتيجة المختلفة. حاول مرة أخرى.'
+                                : 'Could not submit the different result. Please try again.',
                           );
                         }
                       }
