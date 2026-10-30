@@ -61,13 +61,14 @@ class BookingSyncCoordinator {
   /// SSOT Rule: Realtime = transport, not source of truth.
   /// Incoming stream results are MERGED with last known state, never blindly replacing it.
   /// On error/timeout, existing bookings are preserved; the UI shows an error state.
-  Future<void> syncUserBookings({
+  Future<bool> syncUserBookings({
     required String userId,
     required void Function(List<Booking> userBookings, CategorizedUserBookings categorized) onData,
     required void Function(String error) onError,
   }) async {
     // 1. Direct REST fetch (trusted) — await the first authoritative snapshot so
     // callers that need booking state before continuing can do so safely.
+    var initialSnapshotLoaded = false;
     try {
       final directList = await _repository.getUserBookingsDirectly(userId);
       _lastKnownUserBookings = directList;
@@ -77,6 +78,7 @@ class BookingSyncCoordinator {
       );
       // An empty authoritative list is still a completed load, not "still loading".
       onData(directList, categorized);
+      initialSnapshotLoaded = true;
     } catch (e, stack) {
       // Preserve current state if the direct fetch fails.
       VSPLogger.e('Error loading direct user bookings in BookingSyncCoordinator', e, stack);
@@ -116,6 +118,7 @@ class BookingSyncCoordinator {
         onError('Failed to load bookings: $e');
       },
     );
+    return initialSnapshotLoaded;
   }
 
   /// Syncs owner bookings via instant direct REST fetch and persistent Realtime Stream.
