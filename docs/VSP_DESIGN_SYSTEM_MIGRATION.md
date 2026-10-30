@@ -25,6 +25,7 @@ The compatibility layer preserves existing numeric geometry (including the legac
 | `VSPEmptyState`, `VSPStateView`, `VspBottomNavBar` | Existing V2-based patterns reviewed; their screen-specific usage still requires verification |
 | `ChampionEmptyState` and `League1v1NoGovernorateState` | Aligned to the shared 56dp charcoal square state tile, semantic typography and canonical action button |
 | `OfflineErrorScreen` and `MaintenanceScreen` | Content now respects safe-area insets; offline retry uses the canonical primary button |
+| App startup and global error fallbacks (`lib/main.dart`) | Failure content now scrolls inside safe areas; retry uses the canonical primary button |
 
 ## Token consistency corrections
 
