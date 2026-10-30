@@ -43,7 +43,7 @@ class VSPNetworkBanner extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.md, vertical: VSPDSSpacing.xs),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [VSPDSSemanticColors.error, VSPColors.error.withValues(alpha: 0.8)],
+                              colors: [VSPDSSemanticColors.error, VSPDSSemanticColors.error.withValues(alpha: 0.8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -62,19 +62,19 @@ class VSPNetworkBanner extends StatelessWidget {
                               const Icon(
                                 Iconsax.wifi_square_copy,
                                 color: VSPDSSemanticColors.textPrimary,
-                                size: VSPDSSizes.iconMd,
+                                size: VSPDSizes.iconMd,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: VSPDSSpacing.xs),
                               Expanded(
                                 child: Text(
                                   isArabic
                                       ? 'لا يوجد اتصال بالإنترنت — البيانات قد تكون غير محدثة'
                                       : 'No internet connection — data may be outdated',
                                   style: const TextStyle(
-                                    color: VSPColors.textPrimary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    height: 1.2,
+                                    color: VSPDSSemanticColors.textPrimary,
+                                    fontSize: VSPDSTypography.bodySmall.fontSize,
+                                    fontWeight: VSPDSTypography.bodySmall.fontWeight,
+                                    height: VSPDSTypography.bodySmall.height,
                                   ),
                                 ),
                               ),
