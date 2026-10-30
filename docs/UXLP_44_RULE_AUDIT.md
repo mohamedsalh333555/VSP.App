@@ -24,7 +24,7 @@
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
 | 17 | Transparent cost | not yet inspected | Audit total price, fees, payment timing, cancellation, and refund conditions before commitment. |
-| 18 | No misleading promises | not yet inspected | Verify success states only follow authoritative backend confirmation. |
+| 18 | No misleading promises | source reviewed—runtime pending | Post-match result entry, confirmation, and dispute flows now show success feedback only when `submitMatchResult` returns true; failures receive explicit localized errors. Audit other payment/booking/refund/tournament success surfaces. |
 | 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
 | 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
@@ -34,7 +34,7 @@
 | 25 | Error prevention | not yet inspected | Review input validation and invalid state-transition prevention. |
 | 26 | Decision reversibility | not yet inspected | Verify irreversible/costly actions and safe exits. |
 | 27 | Affordance clarity | not yet inspected | Inspect whether each interactive control visually matches its behavior. |
-| 28 | Immediate feedback | not yet inspected | Audit tap, submit, loading, success, and failure feedback across all flows. |
+| 28 | Immediate feedback | source reviewed—runtime pending | Post-match result entry/confirmation/dispute now distinguish backend success from failure; loading/disabled states and feedback timing remain to be checked across all flows. |
 | 29 | No duplicate submission | source reviewed—runtime pending | Shared primary button has duplicate-tap protection; private collective-match early return now resets processing flags. Verify every async action and backend idempotency path. |
 | 30 | Predictable navigation | source reviewed—runtime pending | Root/router and both role shells reviewed; deep links, back stack, and restored tabs still need runtime verification. |
 | 31 | State-driven actions | not yet inspected | Audit contradictory actions across booking/payment/team/tournament states. |
@@ -42,7 +42,7 @@
 | 33 | Touch ergonomics | source reviewed—runtime pending | Shared bottom navigation items are 58dp high and back-button minimum target is 48dp; verify all controls and spacing. |
 | 34 | Form resilience | not yet inspected | Audit keyboard types, focus order, validation, autofill, and submit behavior. |
 | 35 | Scroll and modal safety | source reviewed—runtime pending | Scroll-safe dialogs/sheets and safe-area fixes applied in grouped batches; remaining surfaces and keyboard/device layouts need runtime validation. |
-| 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors now surface separately from empty state with retry; championship route distinguishes loading/error/unavailable. Verify all critical flows and draft preservation. |
+| 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors and championship route failures now have explicit recovery states; post-match result failures now show localized retry guidance instead of false success. Verify all critical flows and draft preservation. |
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
 | 38 | Single source of truth | not yet inspected | Verify displayed booking, payment, refund, team, and tournament values against authoritative Supabase records. |
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot route is owner-gated and root selects role shell; audit every owner/player action and deep-link boundary. |
@@ -70,3 +70,10 @@
 5. Only after the audit and consolidated validation pass, build and verify one test APK.
 
 **No final test pass or APK build is authorized by this checkpoint.**
+
+### Player post-match result flow findings
+
+- The player home previously started booking synchronization without awaiting its first direct Supabase snapshot, then immediately scanned the provider's current list for completed challenge matches. On first launch this could scan an empty or stale list and skip the pending result dialog. The coordinator now awaits the direct snapshot, reports whether it loaded successfully, and treats a confirmed empty server response as a completed load. The home screen checks pending results only after a successful snapshot and no longer starts a duplicate load inside the popup checker.
+- The post-match add-result, confirm-result, and dispute callbacks previously displayed success/warning feedback regardless of the boolean returned by `submitMatchResult`. They now show success only after a successful repository result and display localized error feedback on failure.
+- The team identity/eligibility logic that determines which side may submit or confirm a challenge result has not been changed. It requires a separate domain-level review against the booking/team membership model before modifying any business rule.
+- Runtime checks for first-launch delayed network, empty bookings, stream reconnect, duplicate taps, success, and server rejection remain pending.
