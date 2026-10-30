@@ -170,4 +170,4 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (awaited authoritative player booking snapshot; realtime merge behavior preserved) |
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (owner/player streams are cancelled before changing scope; owner empty snapshots and direct-fetch errors are delivered explicitly) |
 | `lib/core/repositories/team_repository.dart` | shared | source reviewed—runtime pending (added lookup for all teams captained by the current user to support multi-team result eligibility) |
-| `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated concurrent-safe player booking loading state and snapshot result) |
+| `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated player/owner loading states; owner empty/error snapshot handling; concurrent refresh counters) |
