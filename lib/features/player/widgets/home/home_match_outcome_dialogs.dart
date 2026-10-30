@@ -16,6 +16,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, String 
     barrierDismissible: true,
     builder: (ctx) {
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
         title: Column(
@@ -125,6 +126,7 @@ void showPostMatchConfirmResultDialog(BuildContext context, Booking booking, Str
     barrierDismissible: true,
     builder: (ctx) {
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
         title: Column(
