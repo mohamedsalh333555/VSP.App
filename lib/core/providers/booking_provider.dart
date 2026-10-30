@@ -195,6 +195,7 @@ class BookingProvider with ChangeNotifier {
       userId: userId,
       onData: (userBookings, _) {
         _userBookings = userBookings;
+        _errorMessage = null;
         notifyListeners();
       },
       onError: (e) {
