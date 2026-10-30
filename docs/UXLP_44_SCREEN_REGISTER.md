@@ -45,7 +45,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | not yet inspected |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
-| `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart` | owner | not yet inspected |
@@ -108,8 +108,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/support_ticket_screen.dart` | player | not yet inspected |
-| `lib/features/player/screens/support_tickets_screen.dart` | player | not yet inspected |
+| `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected) |
+| `lib/features/player/screens/support_tickets_screen.dart` | player | source reviewed—runtime pending (new-ticket sheet uses useSafeArea, keyboard insets, and scrollable content) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | not yet inspected |
 | `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
