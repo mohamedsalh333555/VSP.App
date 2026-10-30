@@ -24,7 +24,7 @@
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
 | 17 | Transparent cost | not yet inspected | Audit total price, fees, payment timing, cancellation, and refund conditions before commitment. |
-| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows now show success only when their repository operation succeeds; failures receive localized error feedback. Audit remaining payment/booking/refund/tournament success surfaces. |
+| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows now show success only when their repository operation succeeds; pending-booking status check uses the canonical server-confirmed payment predicate, not `isPaid` alone. Audit remaining payment/booking/refund/tournament success surfaces. |
 | 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
 | 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
@@ -93,3 +93,7 @@
 
 - `PlayerBookingDetailsScreen` previously rendered `booking.status.name` directly, exposing enum identifiers such as `noShow` in the UI and English-only status values in Arabic mode. Added explicit Arabic/English labels for pending, confirmed/upcoming, completed, no-show, cancelled, and expired.
 - Cross-screen consistency of the same lifecycle states remains pending; this change is limited to the booking details surface.
+### Pending-booking payment status verification
+
+- `PendingBookingCard` previously showed a confirmed message when either the booking status was `confirmed` **or** the legacy boolean `isPaid` was true. This could misreport a pending booking with an inconsistent/stale payment flag. It now uses `PaymentCheckoutService.isPaymentConfirmed`, which requires a confirmed booking and a recognized paid/partially-paid status. It also handles query failures with localized error feedback and refreshes the booking list after confirmed status.
+- This aligns the UI with the canonical payment rule in `PaymentCheckoutService`; runtime validation against webhook-confirmed and still-pending records remains pending.
