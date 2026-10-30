@@ -124,20 +124,20 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/widgets/filter_bottom_sheet.dart` | player | not yet inspected |
-| `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | not yet inspected |
-| `lib/features/player/widgets/home/home_governorate_modal.dart` | player | not yet inspected |
-| `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | not yet inspected |
-| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | not yet inspected |
-| `lib/features/player/widgets/match_result_modal.dart` | player | not yet inspected |
-| `lib/features/player/widgets/my_team/team_dialogs.dart` | player | not yet inspected |
+| `lib/features/player/widgets/filter_bottom_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (standard AlertDialog safe-area layout) |
 | `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | source reviewed—runtime pending (showDialog safe-area route; centered custom content needs short-screen runtime check) |
-| `lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart` | player | not yet inspected |
-| `lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart` | player | not yet inspected |
+| `lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | not yet inspected |
-| `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | not yet inspected |
+| `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (Dialog safe-area, bounded height, internally scrollable year/day steps) |
 
