@@ -8,6 +8,7 @@ import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../owner_notification_button.dart';
+import '../../../../shared/widgets/vsp_ai_spark_icon.dart';
 
 /// Sleek header for Owner Dashboard with glow avatar, profile edit badge,
 /// owner name, subscription plan badge, and notification button.
@@ -250,7 +251,7 @@ class OwnerDashboardHeader extends StatelessWidget {
 
         // VSP Copilot — always visible; access is decided by the owner's plan.
         IconButton(
-          icon: const Icon(Iconsax.flash_copy, color: VSPColors.accent, size: 20),
+          icon: const VSPAiSparkIcon(size: 20),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
           tooltip: 'VSP Copilot',
@@ -274,6 +275,7 @@ class OwnerDashboardHeader extends StatelessWidget {
   void _showCopilotUpgradeModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
