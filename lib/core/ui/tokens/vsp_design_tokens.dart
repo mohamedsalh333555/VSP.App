@@ -560,6 +560,7 @@ abstract final class VSPDSMotion {
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration navigationSwitch = Duration(milliseconds: 180);
+  static const Duration buttonDebounce = Duration(milliseconds: 1500);
 
   static const Curve standardCurve = Curves.easeOutCubic;
 }
