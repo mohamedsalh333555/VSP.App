@@ -66,14 +66,14 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart` | owner | source reviewed—runtime pending (confirmation AlertDialog uses standard safe-area route) |
 | `lib/features/owner/widgets/brackets/tournament_score_modal.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/documentation/doc_image_source_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/documentation/doc_under_review_dialog.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/documentation/doc_wizard_dialogs.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/ledger/owner_payout_dialog.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/ledger/owner_payout_dialog.dart` | owner | source reviewed—runtime pending (AlertDialog safe-area and scrollable payout form) |
 | `lib/features/owner/widgets/owner_booking_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart` | owner | not yet inspected |
 | `lib/features/owner/widgets/quick_phone_booking_modal.dart` | owner | not yet inspected |
@@ -114,9 +114,9 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/tournament_registration_success_screen.dart` | player | not yet inspected |
-| `lib/features/player/widgets/add_player_sheet.dart` | player | not yet inspected |
+| `lib/features/player/widgets/add_player_sheet.dart` | player | source reviewed—runtime pending (scrollable content; accounts for keyboard and bottom system inset; caller sheet configuration still to verify) |
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | not yet inspected |
-| `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | not yet inspected |
+| `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | source reviewed—runtime pending (Dialog safe-area defaults; fixed-height calendar needs small-screen runtime check) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | not yet inspected |
 | `lib/features/player/widgets/booking_type_modal.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | not yet inspected |
@@ -131,15 +131,15 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | not yet inspected |
 | `lib/features/player/widgets/match_result_modal.dart` | player | not yet inspected |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | not yet inspected |
-| `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | not yet inspected |
-| `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | not yet inspected |
+| `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (standard AlertDialog safe-area layout) |
+| `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | source reviewed—runtime pending (showDialog safe-area route; centered custom content needs short-screen runtime check) |
 | `lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart` | player | not yet inspected |
 | `lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart` | player | not yet inspected |
 | `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | not yet inspected |
 | `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | not yet inspected |
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | not yet inspected |
 | `lib/shared/widgets/refund_tracking_sheet.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (Dialog safe-area, bounded height, internally scrollable year/day steps) |
 
 ## Non-screen UI surfaces still requiring discovery
 
