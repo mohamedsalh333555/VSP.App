@@ -34,7 +34,7 @@
 | 25 | Error prevention | not yet inspected | Review input validation and invalid state-transition prevention. |
 | 26 | Decision reversibility | not yet inspected | Verify irreversible/costly actions and safe exits. |
 | 27 | Affordance clarity | not yet inspected | Inspect whether each interactive control visually matches its behavior. |
-| 28 | Immediate feedback | source reviewed—runtime pending | Post-match result entry/confirmation/dispute now distinguish backend success from failure; the result modal awaits submission, disables repeat taps, and closes after the callback completes. Loading/disabled states and feedback timing remain to be checked across all flows. |
+| 28 | Immediate feedback | source reviewed—runtime pending | Post-match result entry/confirmation/dispute now distinguish backend success from failure; the result modal awaits submission, disables repeat taps, closes only after a successful submission, and preserves the form for retry after a failed submission. Loading/disabled states and feedback timing remain to be checked across all flows. |
 | 29 | No duplicate submission | source reviewed—runtime pending | Shared primary button has duplicate-tap protection; private collective-match early return now resets processing flags. Verify every async action and backend idempotency path. |
 | 30 | Predictable navigation | source reviewed—runtime pending | Root/router and both role shells reviewed; deep links, back stack, and restored tabs still need runtime verification. |
 | 31 | State-driven actions | not yet inspected | Audit contradictory actions across booking/payment/team/tournament states. |
@@ -62,6 +62,8 @@
 - Rule 42: V2 shared tokens/components remain the canonical foundation; the screen register is still an inventory/source-review aid, not a pass report.
 
 - Rule 35: match-result dialog now disables dismissal and form edits while the submission callback is running, preventing a still-running request from being hidden behind a dismissed modal.
+
+- Rule 36: the post-match result modal now receives the repository success boolean; a failed submission re-enables the form and keeps the selected outcome/review available for retry rather than closing the only result-entry surface.
 
 ## Gates still open
 
