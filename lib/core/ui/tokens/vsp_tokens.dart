@@ -82,7 +82,7 @@ class VSPSpacing {
   static const double sm = VSPDSSpacing.xs;
   static const double md = VSPDSSpacing.sm;
   static const double lg = VSPDSSpacing.md;
-  static const double xl = VSPDSSpacing.inputHorizontal;
+  static const double xl = VSPDSSpacing.compact;
   static const double xxl = VSPDSSpacing.lg;
   static const double xxxl = VSPDSSpacing.xl;
   static const double grid1 = VSPDSSpacing.xs;
