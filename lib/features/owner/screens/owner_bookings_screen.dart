@@ -30,6 +30,7 @@ class OwnerBookingsScreen extends StatefulWidget {
 
 class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0;
+  bool _isInitialLoadPending = true;
   Stadium? _selectedStadium;
   final ScrollController _scrollController = ScrollController();
 
@@ -46,12 +47,16 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.id;
-    if (uid != null) {
-      Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-      Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.currentUser?.id;
+      if (uid != null) {
+        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+      }
+      setState(() => _isInitialLoadPending = false);
+    });
   }
 
   @override
@@ -89,6 +94,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         builder: (context, bookingProvider, stadiumProvider, _) {
           final stadiums = stadiumProvider.stadiums;
           final selectedStadium = _getEffectiveStadium(stadiums);
+
+          if (_isInitialLoadPending) {
+            return const Center(
+              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            );
+          }
 
           if (stadiums.isEmpty && stadiumProvider.isLoading) {
             return const Center(
