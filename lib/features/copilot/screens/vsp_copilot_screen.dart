@@ -290,15 +290,17 @@ class _VspCopilotScreenState extends State<VspCopilotScreen> {
     if (auth?.isOwner != true) {
       return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: VSPStateView(
-          state: VSPUiState.disabled,
-          title: isArabic ? 'مساعد المالك غير متاح' : 'Owner Copilot unavailable',
-          message: isArabic
-              ? 'هذا المساعد مخصص حصرياً لصاحب الملعب.'
-              : 'This assistant is exclusively for stadium owners.',
-          action: OutlinedButton(
-            onPressed: () => context.go('/player'),
-            child: Text(isArabic ? 'العودة' : 'Go back'),
+        body: SafeArea(
+          child: VSPStateView(
+            state: VSPUiState.disabled,
+            title: isArabic ? 'مساعد المالك غير متاح' : 'Owner Copilot unavailable',
+            message: isArabic
+                ? 'هذا المساعد مخصص حصرياً لصاحب الملعب.'
+                : 'This assistant is exclusively for stadium owners.',
+            action: OutlinedButton(
+              onPressed: () => context.go('/player'),
+              child: Text(isArabic ? 'العودة' : 'Go back'),
+            ),
           ),
         ),
       );
