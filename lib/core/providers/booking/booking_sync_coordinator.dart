@@ -66,6 +66,10 @@ class BookingSyncCoordinator {
     required void Function(List<Booking> userBookings, CategorizedUserBookings categorized) onData,
     required void Function(String error) onError,
   }) async {
+    // Stop any previous user's stream before waiting on the next authoritative snapshot.
+    await _subscription?.cancel();
+    _subscription = null;
+
     // 1. Direct REST fetch (trusted) — await the first authoritative snapshot so
     // callers that need booking state before continuing can do so safely.
     var initialSnapshotLoaded = false;
@@ -86,7 +90,6 @@ class BookingSyncCoordinator {
     }
 
     // 2. Realtime Stream — transport only, results merged with last-known state.
-    _subscription?.cancel();
     _subscription = _repository.getUserBookings(userId).listen(
       (incoming) {
         // Merge incoming with last known — never replace if incoming is partial.
