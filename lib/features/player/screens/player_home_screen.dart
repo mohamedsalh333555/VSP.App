@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -114,7 +115,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               await Provider.of<BookingProvider>(context, listen: false)
                   .loadUserBookings(userId);
           if (mounted && bookingsLoaded) {
-            _checkPendingChallengeResultPopup(context);
+            final myTeam = await TeamRepository().getUserTeam(userId);
+            if (mounted) {
+              _checkPendingChallengeResultPopup(context, myTeam: myTeam);
+            }
           }
         }
       } else {
@@ -125,11 +129,15 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   static bool _hasShownPostMatchPopupThisSession = false;
 
-  void _checkPendingChallengeResultPopup(BuildContext context) {
+  void _checkPendingChallengeResultPopup(
+    BuildContext context, {
+    required Team? myTeam,
+  }) {
     if (_hasShownPostMatchPopupThisSession) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userId = auth.currentUser?.id;
-    if (userId == null) return;
+    final myTeamId = myTeam?.id;
+    if (userId == null || myTeamId == null || myTeam!.captainId != userId) return;
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
@@ -140,24 +148,31 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
       if (booking.bookingType != BookingType.challenge) continue;
       if (booking.status == BookingStatus.cancelled) continue;
 
-      // Must be ended within past 30 days
+      // Must be ended within past 30 days and belong to the current captain's team.
       if (booking.endTime.isAfter(now)) continue;
       if (booking.endTime.add(const Duration(days: 30)).isBefore(now)) continue;
+      final isMyTeamInBooking =
+          myTeamId == booking.playerTeamId || myTeamId == booking.opponentTeamId;
+      if (!isMyTeamInBooking) continue;
 
-      // Condition 1: No result submitted yet -> Open popup for First Captain to submit
+      // Either participating captain may submit the first result.
       if (booking.matchResultStatus == MatchResultStatus.noResult) {
         _hasShownPostMatchPopupThisSession = true;
-        showPostMatchAddResultDialog(context, booking, userId);
+        showPostMatchAddResultDialog(context, booking, myTeamId: myTeamId);
         break;
       }
 
-      // Condition 2: Opponent submitted result -> Open popup for Second Captain to confirm / dispute
+      // Only the other team's captain may respond to an existing submission.
       if ((booking.matchResultStatus == MatchResultStatus.waitingOpponent ||
               booking.matchResultStatus == MatchResultStatus.disputed) &&
           booking.resultSubmittedByTeamId != null &&
-          booking.resultSubmittedByTeamId != userId) {
+          booking.resultSubmittedByTeamId != myTeamId) {
         _hasShownPostMatchPopupThisSession = true;
-        showPostMatchConfirmResultDialog(context, booking, userId);
+        showPostMatchConfirmResultDialog(
+          context,
+          booking,
+          currentTeamId: myTeamId,
+        );
         break;
       }
     }
