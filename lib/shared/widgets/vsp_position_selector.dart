@@ -45,6 +45,9 @@ class VSPPositionSelector extends StatelessWidget {
                   },
                   borderRadius: BorderRadius.circular(VSPDSRadius.md),
                   child: Container(
+                    constraints: const BoxConstraints(
+                      minHeight: VSPDSAccessibility.minimumTapTarget,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: VSPDSSpacing.sm, horizontal: VSPDSSpacing.xxs),
                     decoration: BoxDecoration(
                       color: isSelected
