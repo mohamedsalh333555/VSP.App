@@ -61,6 +61,7 @@ class PlayerBookingCancelDialog {
     return showDialog<void>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.xl)),
