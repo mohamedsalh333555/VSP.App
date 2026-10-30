@@ -143,4 +143,5 @@ Future<void> showTournamentPrizeDeliveryDialog(
       );
     },
   );
+  notesController.dispose();
 }
