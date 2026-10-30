@@ -77,6 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const CreateTeamSheet(),
     );
@@ -383,6 +384,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final created = await showModalBottomSheet<bool>(
    context: context,
    isScrollControlled: true,
+   useSafeArea: true,
    backgroundColor: Colors.transparent,
    builder: (_) => const CreateTeamSheet(),
  );

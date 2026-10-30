@@ -8,6 +8,7 @@ void showOwnerCupFormatModal(BuildContext context) {
 
   showModalBottomSheet(
     context: context,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (ctx) {

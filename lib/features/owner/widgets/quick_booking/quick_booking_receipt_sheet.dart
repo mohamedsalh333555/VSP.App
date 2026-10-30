@@ -32,6 +32,7 @@ void showQuickBookingReceiptSheet({
 
   showModalBottomSheet(
     context: context,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
       final bottomPadding = MediaQuery.of(sheetCtx).padding.bottom;

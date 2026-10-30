@@ -8,6 +8,7 @@ import '../../../../shared/widgets/primary_button.dart';
 Future<void> showTeamMatchupInviteModal(BuildContext context, String code) async {
   return showModalBottomSheet(
     context: context,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (ctx) => Container(
       padding: const EdgeInsets.all(VSPSpacing.xl),

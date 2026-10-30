@@ -32,6 +32,7 @@ class BookTonightSheet extends StatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => BookTonightSheet(
         stadiums: stadiums,

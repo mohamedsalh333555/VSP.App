@@ -22,6 +22,7 @@ Future<void> showIncompleteSquadBridgeSheet({
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
       return Container(
