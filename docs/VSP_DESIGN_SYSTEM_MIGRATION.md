@@ -149,3 +149,10 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - In the reviewed client flow, tapping a notification only calls `markNotificationAsRead`; swipe-to-dismiss is the explicit delete path. Therefore, source and database inspection do not support a claim that opening a notification deletes it or that a scheduled cleanup removes it. The historical disappearance report still needs runtime/log correlation; it is not marked resolved.
 - The deployed `process_paymob_refund` Edge Function v20 and `paymob_webhook` v45 both contain an in-app notification insert after the refund reconciliation succeeds. The booking refund RPC itself does not insert a notification, so the edge-function insert is essential. Whether a particular missing refund notification failed at that insert or at downstream delivery remains unproven without the corresponding execution log/row evidence.
 - No SQL, migration, function, trigger, cron job, payment rule, or database data was changed during this inspection.
+
+## UXLP-44 rule-by-rule audit checkpoint
+
+- The exact adopted standard is `docs/UXLP_44_VSP_STANDARD.md` (44 rules across perception, decision processing, interaction, system coherence, and cognitive load).
+- Added `docs/UXLP_44_RULE_AUDIT.md` as the rule-level evidence matrix. It records the shared-foundation source evidence, findings fixed in this batch, and what remains unverified for each rule.
+- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 128-path register remains the screen inventory; it does not prove per-rule coverage.
+- No final validation or APK build has been run. Continue grouped implementation first, then perform one consolidated validation pass.
