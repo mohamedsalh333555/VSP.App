@@ -27,7 +27,6 @@ import 'root_screen.dart';
 import '../../features/player/screens/championship_details_screen.dart';
 import '../../core/repositories/tournament_repository.dart';
 import '../../data/models.dart';
-import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/copilot/screens/vsp_copilot_screen.dart';
 import '../../features/copilot/screens/copilot_test_playground.dart';
 
