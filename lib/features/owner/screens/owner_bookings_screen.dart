@@ -12,6 +12,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/bookings/owner_bookings_filter_bar.dart';
 import '../widgets/bookings/owner_schedule_slots_builder.dart';
 import '../widgets/bookings/owner_time_slot_row.dart';
@@ -45,15 +46,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        bookingProvider.loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-      }
-    });
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.id;
+    if (uid != null) {
+      Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+      Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+    }
   }
 
   @override
@@ -98,6 +96,29 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               title: l10n.stadiumsEmptyTitle,
               subtitle: l10n.stadiumsEmptySubtitle,
             );
+          }
+
+          if (!bookingProvider.hasLoadedOwnerBookings) {
+            if (bookingProvider.ownerBookingsError != null) {
+              return VSPErrorState(
+                customMessage: bookingProvider.ownerBookingsError,
+                onRetry: () async {
+                  final ownerId = Provider.of<AuthProvider>(context, listen: false)
+                      .currentUser?.id;
+                  if (ownerId != null) {
+                    await bookingProvider.loadOwnerBookings(
+                      ownerId,
+                      forceRefresh: true,
+                    );
+                  }
+                },
+              );
+            }
+            if (bookingProvider.isLoadingOwnerBookings) {
+              return const Center(
+                child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+              );
+            }
           }
 
           final baseDate = OwnerScheduleSlotsBuilder.getOperationalBaseDate(selectedStadium, context);
