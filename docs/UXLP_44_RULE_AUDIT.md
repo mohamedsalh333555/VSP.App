@@ -19,7 +19,7 @@
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
-| 13 | Plain language | source reviewed—runtime pending | Player booking details now maps every booking lifecycle status to explicit Arabic/English labels rather than exposing raw enum identifiers; full app copy audit remains. |
+| 13 | Plain language | source reviewed—runtime pending | Player booking details maps lifecycle statuses to explicit Arabic/English labels; refund-pending badge now uses channel-neutral copy instead of incorrectly implying every refund is bank-based. Full app copy audit remains. |
 | 14 | One primary decision | not yet inspected | Identify competing primary actions on each decision surface. |
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
@@ -93,6 +93,8 @@
 
 - `PlayerBookingDetailsScreen` previously rendered `booking.status.name` directly, exposing enum identifiers such as `noShow` in the UI and English-only status values in Arabic mode. Added explicit Arabic/English labels for pending, confirmed/upcoming, completed, no-show, cancelled, and expired.
 - Cross-screen consistency of the same lifecycle states remains pending; this change is limited to the booking details surface.
+- Refund-pending status on player booking cards now uses neutral Arabic/English wording (`Refund processing`) rather than `Bank refund processing`, because the same state can represent card or wallet channels.
+
 ### Pending-booking payment status verification
 
 - `PendingBookingCard` previously showed a confirmed message when either the booking status was `confirmed` **or** the legacy boolean `isPaid` was true. This could misreport a pending booking with an inconsistent/stale payment flag. It now uses `PaymentCheckoutService.isPaymentConfirmed`, which requires a confirmed booking and a recognized paid/partially-paid status. It also handles query failures with localized error feedback and refreshes the booking list after confirmed status.
