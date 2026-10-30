@@ -94,3 +94,11 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - The owner booking sheet already constrains its height, scrolls its form content, accounts for keyboard/system bottom insets, and disposes all four controllers; the quick-phone sheet similarly scrolls and disposes its controllers.
 - Added safe-area handling to the stadium location picker, disposed its search controller after dismissal, and guarded the asynchronous search result from updating a dismissed sheet.
 - No booking price, duration policy, cash collection, or WhatsApp receipt business logic was changed. Runtime checks remain pending.
+
+
+## Tournament scoring, document upload, and invitation review batch
+
+- Reviewed the four score-entry subcomponents, document source selection and under-review dialog, documentation step pager, facility upgrade sheet, quick-booking receipt, cup format selector, bracket preview dialogs, and collective-match invitation surfaces.
+- Goal-scorer custom-name input already disposes its controller when the dialog closes. Facility-upgrade and cup-format sheets already enable safe-area handling; collective invite sheets already use safe-area-aware modal routes.
+- Enabled safe-area handling for the document source picker and scrollable content for tournament bracket preview dialogs so their bilingual confirmation/content remains reachable on compact screens.
+- Source review only; runtime layout and end-to-end booking/tournament behavior remain pending.
