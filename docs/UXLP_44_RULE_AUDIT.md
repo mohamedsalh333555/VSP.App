@@ -15,7 +15,7 @@
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
 | 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
-| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; owner schedule now distinguishes stadium loading/failure from a genuinely empty stadium list, and booking loading from free slots. Verify other screens/states. |
+| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; both preserve loaded lists/schedules during refresh and expose stream failures with retry. Verify other screens/states. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
@@ -84,6 +84,8 @@
 - `PlayerBookingDetailsScreen._reportOwnerIssue` previously routed both success and failure copy through the success feedback style. It now uses success styling only when `reportEntity` returns true and an error state otherwise; its report dialog is scrollable.
 - `UpcomingOnlinePaidActions` previously gave no feedback when `requestReschedule` returned false. It now presents a localized failure message and only offers the optional phone call/close action after the request succeeds.
 - These are source-level findings; failure/success behavior and compact-screen dialog layout remain runtime pending.
+- Player `BookingsScreen` now preserves already-loaded bookings during a refresh and displays a localized non-blocking sync warning with Retry if the realtime/direct refresh fails. Initial load failures show a generic localized recovery message rather than raw backend details.
+
 ### Player bookings loading and refresh behavior
 
 - `BookingProvider` now exposes a dedicated player-bookings loading counter so concurrent refreshes do not prematurely clear the loading state and unrelated booking mutations do not drive the bookings screen spinner.
