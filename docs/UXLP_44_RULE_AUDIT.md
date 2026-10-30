@@ -110,6 +110,8 @@
 - The pending-booking trash action previously cancelled immediately on a single tap. It now presents a localized confirmation dialog explaining that the pending booking is cancelled and the slot released; success/failure feedback is explicit, and the touch target is at least 48dp.
 - Runtime verification of dialog layout, cancellation rejection, and refresh behavior remains pending.
 
+- The second-captain result dialog now disables both response actions and Later while a submission is in progress, shows loading only on the selected action, blocks barrier dismissal, and stays open with retry enabled after a server rejection.
+
 ### Challenge-result captain eligibility and backend contract
 
 - Root cause: the player-home popup previously compared `resultSubmittedByTeamId` (a team UUID) against `auth.currentUser.id` (a user UUID). This comparison is not a valid way to determine whether the current side submitted the result. The same code also hard-coded `playerTeamId` when opening the first-result modal, so an opponent captain could be prompted to submit as the wrong team.
