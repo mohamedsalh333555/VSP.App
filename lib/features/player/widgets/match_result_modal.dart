@@ -7,7 +7,7 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 class MatchResultModal extends StatefulWidget {
  final Booking booking;
  final String submittingTeamId;
- final Future<void> Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
+ final Future<bool> Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
 
  const MatchResultModal({
  super.key, 
@@ -191,14 +191,19 @@ class _MatchResultModalState extends State<MatchResultModal> {
 
    setState(() => _isSubmitting = true);
    try {
-     await widget.onConfirm(
+     final success = await widget.onConfirm(
        outcome,
        _rating > 0 ? _rating : null,
        _reviewController.text.trim().isNotEmpty
            ? _reviewController.text.trim()
            : null,
      );
-     if (mounted) Navigator.of(context).pop();
+     if (!mounted) return;
+     if (success) {
+       Navigator.of(context).pop();
+     } else {
+       setState(() => _isSubmitting = false);
+     }
    } catch (_) {
      if (!mounted) return;
      setState(() => _isSubmitting = false);
