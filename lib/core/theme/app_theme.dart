@@ -275,7 +275,7 @@ class AppTheme {
             states.contains(WidgetState.selected)
                 ? VSPDSSemanticColors.accent
                 : VSPDSSemanticColors.surfaceRaised),
-        trackOutlineColor: WidgetStatePropertyAll(
+        trackOutlineColor: const WidgetStatePropertyAll(
           VSPDSSemanticColors.border,
         ),
       ),
