@@ -24,7 +24,7 @@
 | 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
 | 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
 | 17 | Transparent cost | not yet inspected | Audit total price, fees, payment timing, cancellation, and refund conditions before commitment. |
-| 18 | No misleading promises | source reviewed—runtime pending | Post-match result entry, confirmation, and dispute flows now show success feedback only when `submitMatchResult` returns true; failures receive explicit localized errors. Audit other payment/booking/refund/tournament success surfaces. |
+| 18 | No misleading promises | source reviewed—runtime pending | Post-match result, booking-issue report, and owner reschedule flows now show success only when their repository operation succeeds; failures receive localized error feedback. Audit remaining payment/booking/refund/tournament success surfaces. |
 | 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
 | 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
@@ -79,3 +79,8 @@
 - The post-match add-result, confirm-result, and dispute callbacks previously displayed success/warning feedback regardless of the boolean returned by `submitMatchResult`. They now show success only after a successful repository result and display localized error feedback on failure.
 - The team identity/eligibility logic that determines which side may submit or confirm a challenge result has not been changed. It requires a separate domain-level review against the booking/team membership model before modifying any business rule.
 - Runtime checks for first-launch delayed network, empty bookings, stream reconnect, duplicate taps, success, and server rejection remain pending.
+### Booking details and owner reschedule feedback
+
+- `PlayerBookingDetailsScreen._reportOwnerIssue` previously routed both success and failure copy through the success feedback style. It now uses success styling only when `reportEntity` returns true and an error state otherwise; its report dialog is scrollable.
+- `UpcomingOnlinePaidActions` previously gave no feedback when `requestReschedule` returned false. It now presents a localized failure message and only offers the optional phone call/close action after the request succeeds.
+- These are source-level findings; failure/success behavior and compact-screen dialog layout remain runtime pending.
