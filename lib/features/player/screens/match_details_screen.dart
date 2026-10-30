@@ -95,6 +95,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isActionProcessing = true;
  });
  if (_booking?.isOpenJoin == true) {
+   if (mounted) {
+     setState(() {
+       _isJoining = false;
+       _isActionProcessing = false;
+     });
+   }
    VSPFeedback.showInfo(context, Localizations.localeOf(context).languageCode == 'ar' ? 'هذه تجميعية خاصة. استخدم رابط الدعوة للانضمام.' : 'This is a private collective match. Use the invitation link to join.');
    return;
  }
