@@ -242,3 +242,12 @@ The canonical shared bottom navigation now uses focusable InkWell interaction wh
 ## Nested championship detail discovery — 2026-10-31
 
 Reconciled the nine Dart components under `lib/features/player/widgets/championship_details`. Two were already registered; seven were newly tracked. The bottom action bar has source evidence for the open/ongoing/completed/cancelled/full state gates; six newly tracked components remain `not yet inspected`. This raises the inventory to 181 unique Dart screen/surface paths. The original 128-path static scan does not cover 53 added paths until a complete rescan is recorded.
+
+
+## V2 token facade and shared interaction corrections — 2026-10-31
+
+- Expanded the compatibility facade to expose the complete V2 size scale and typography roles, plus canonical black/transparent/white-alpha color primitives. Existing feature code can now reference the same source-of-truth values without adding local token definitions.
+- Applied the 48dp target to the terms checkbox and removed compact visual density from the public-match and championship share actions.
+- Hardened public-match action feedback, owner notification stream-error visibility, phone clipboard feedback, and countdown timer lifecycle.
+- Corrected championship card lifecycle labels/CTA state so ongoing, cancelled, completed, full, and unknown statuses do not appear as open registration.
+- These are source changes only. The 181-path inventory still has six nested championship detail components marked `not yet inspected`; 53 paths are not proven to be covered by the original 128-path static scan. All 44 UXLP rules remain runtime-pending.
