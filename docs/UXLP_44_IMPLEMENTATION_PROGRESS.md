@@ -445,3 +445,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - Leaving an open match and cancelling a join request previously displayed raw caught exception text directly to the player. Both actions now show concise Arabic/English recovery guidance and keep technical details in diagnostic logs.
 - No match membership or join-request business logic was changed. Source-only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+
+## Cancelled-booking action-state correction — 2026-10-31
+
+- Active-list booking cards previously rendered the Cancel action for every non-history booking, including records already in `BookingStatus.cancelled`. The cancellation control is now omitted for cancelled records; existing chat/share actions are unchanged.
+- This is a presentation/state-guard correction only. Cancellation eligibility, refund calculation, server RPCs, and financial rules were not modified. Source-only; no tests, analyzer, CI, runtime checks, migrations, or APK build were run.
