@@ -38,7 +38,8 @@ class VspDatePickerYearStep extends StatelessWidget {
         final year = years[index];
         final isSelected = selectedYear == year;
 
-        return GestureDetector(
+        return InkWell(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onYearSelected(year);
@@ -113,7 +114,8 @@ class VspDatePickerMonthStep extends StatelessWidget {
         final isSelected = selectedMonth == monthNum;
         final monthName = VspDatePickerCalculator.getMonthName(monthNum, isArabic: isAr);
 
-        return GestureDetector(
+        return InkWell(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onMonthSelected(monthNum);
@@ -213,7 +215,8 @@ class VspDatePickerDayStep extends StatelessWidget {
         final day = days[index];
         final isSelected = selectedDay == day;
 
-        return GestureDetector(
+        return InkWell(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onDaySelected(day);

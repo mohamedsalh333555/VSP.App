@@ -29,7 +29,8 @@ class VspDatePickerStepChip extends StatelessWidget {
     final isDone = value != null;
 
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         onTap: isEnabled
             ? () {
                 VSPFeedback.triggerTap();
