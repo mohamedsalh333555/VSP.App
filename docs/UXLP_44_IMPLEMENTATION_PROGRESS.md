@@ -597,3 +597,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Championship roster validation and paste feedback now support Arabic and English. The paste flow checks that the screen is still mounted after the import dialog returns. Registration failures use localized recovery copy rather than raw exception details.
 - Match leave failures now use localized recovery feedback rather than rendering the raw exception. Championship detail error dialogs are scrollable.
 - These are source-level changes only. The server-side matchup result authorization/closure rules and tournament scoring logic were not modified. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+## Live matchup dashboard recovery state — 2026-10-31
+
+- A failed matchup teams/results read previously only stopped the loading spinner, leaving empty lists that could be mistaken for a valid empty matchup. The screen now renders a distinct localized error state with Retry.
+- Match result submission and matchup closure success/error messages now support Arabic and English. Raw repository exceptions are not shown to users, and the close-confirmation dialog is scrollable.
+- The result calculation, points/scoring behavior, and repository write operations were not changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
