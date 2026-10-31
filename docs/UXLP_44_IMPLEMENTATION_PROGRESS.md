@@ -503,3 +503,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - Payout request and tournament prize-handover dialogs now allocate flexible width between descriptive labels and monetary values. Long Arabic labels wrap to two lines, while amounts stay single-line and ellipsize when needed on narrow dialog widths.
 - Display-only layout changes; payout amounts, prize-pool source values, settlement, and prize-delivery behavior are unchanged. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner booking action banner compact-width correction — 2026-10-31
+
+- The ongoing-match banner previously placed an intrinsic-width status label and an extension action side by side without constraining the label. The label now receives only the remaining flexible width and is bounded to two lines with ellipsis, preserving the extension action on narrow screens.
+- No extension duration, booking eligibility, or booking state behavior changed. Source-only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
