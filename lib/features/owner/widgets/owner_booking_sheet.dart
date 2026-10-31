@@ -424,8 +424,16 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       manualBookingTitle: l10n.manualBookingTitle,
     );
 
-    final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
-    final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    final double systemBottomPadding = media.padding.bottom;
+    final double keyboardPadding = media.viewInsets.bottom;
+    final double availableSheetHeight = (media.size.height -
+            keyboardPadding -
+            media.padding.top -
+            systemBottomPadding -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
     final int maxMins = _getMaxAvailableMinutes();
 
     final formattedSlotTime = OwnerBookingSheetService.formatSlotTime(
@@ -438,13 +446,13 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: availableSheetHeight,
       ),
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.md,
         VSPSpacing.md,
-        systemBottomPadding + keyboardPadding + 16,
+        systemBottomPadding + 16,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
