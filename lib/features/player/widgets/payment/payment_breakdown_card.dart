@@ -203,8 +203,8 @@ class PaymentBreakdownCard extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 isArabic
-                    ? 'تشمل المصاريف الإدارية تأكيد الحجز الفوري، ومصاريف المعاملات البنكية المعتمدة، والدعم الفني المباشر على مدار الساعة.'
-                    : 'Administrative fees cover instant booking confirmation, certified banking processing, and 24/7 customer support.',
+                    ? 'تتكوّن المصاريف الإدارية من رسوم المنصة ورسوم معالجة الدفع الإلكتروني، ويتم حسابها وفق سياسة الرسوم الحالية قبل تأكيد الدفع.'
+                    : 'Administrative fees combine the VSP platform fee and Paymob processing fee, calculated from the current fee policy before checkout.',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
               ),
               const SizedBox(height: 20),
