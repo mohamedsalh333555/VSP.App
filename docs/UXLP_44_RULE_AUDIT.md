@@ -88,6 +88,7 @@
 - `UpcomingOnlinePaidActions` previously gave no feedback when `requestReschedule` returned false. It now presents a localized failure message and only offers the optional phone call/close action after the request succeeds.
 - These are source-level findings; failure/success behavior and compact-screen dialog layout remain runtime pending.
 - Player `BookingsScreen` now preserves already-loaded bookings during a refresh and displays a localized non-blocking sync warning with Retry if the realtime/direct refresh fails. Initial load failures show a generic localized recovery message rather than raw backend details.
+- Critical source finding: the direct booking query methods previously caught Supabase errors and returned `[]`, making a network/query failure indistinguishable from a verified empty schedule. Added strict direct-fetch variants for player and owner sync that propagate errors to the coordinator while retaining compatibility fallbacks for non-critical query callers. Realtime booking streams now allow errors to reach the coordinator instead of swallowing them. The player/owner screens can therefore preserve the last snapshot and show retry/error states rather than treating a failed request as no bookings. Runtime verification remains pending.
 
 ### Player bookings loading and refresh behavior
 
