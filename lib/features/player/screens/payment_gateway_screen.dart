@@ -176,7 +176,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
       if (!mounted ||
           _hasAccountChanged ||
-          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) return;
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+        return;
+      }
       setState(() {
         _booking = booking;
         _isLoading = false;
@@ -214,7 +216,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       bookingId: bookingId,
       onStatusUpdated: (bookingData) async {
         if (!mounted || _hasAccountChanged ||
-            Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+          return;
+        }
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
@@ -397,7 +401,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               },
               onPaid: (_) {
                 if (!mounted || _hasAccountChanged || _paymentCompleted ||
-                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+                  return;
+                }
                 _paymentCompleted = true;
                 _coordinator.cancelAllTimers();
                 Navigator.pop(context, true);
@@ -407,7 +413,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               timeout: const Duration(seconds: 90),
               onTimeout: () {
                 if (!mounted || _hasAccountChanged || _paymentCompleted ||
-                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+                  return;
+                }
                 _coordinator.cancelAllTimers();
                 setState(() {
                   _isAwaitingWebhook = false;

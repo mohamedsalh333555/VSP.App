@@ -105,7 +105,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       final team = await TeamRepository().getUserTeamStrict(uid);
       if (!mounted ||
           generation != _teamRequestGeneration ||
-          context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
       setState(() {
         _userTeam = team;
         _isLoadingUserTeam = false;

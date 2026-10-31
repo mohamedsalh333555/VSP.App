@@ -81,7 +81,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         isArabic ? 'دقيقة' : 'min',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,

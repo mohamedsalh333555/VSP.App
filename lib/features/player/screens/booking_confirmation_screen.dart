@@ -47,8 +47,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isLoading = false;
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
-  String? _activeUserTeamScope;
-  bool _hasObservedUserTeamScope = false;
   int _userTeamRequestGeneration = 0;
   final int _currentPlayers = 1;
   int _initialPlayersCount = 1;

@@ -163,7 +163,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       );
 
       if (!mounted || requestGeneration != _analyticsRequestGeneration ||
-          context.read<AuthProvider>().currentUser?.id != uid) return;
+          context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
 
       final analytics = DashboardAnalytics.fromJson(
         Map<String, dynamic>.from(response as Map),

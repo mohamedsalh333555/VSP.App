@@ -1065,7 +1065,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                         isArabic
                             ? 'تعذر التحقق من حالة رسوم الفريق. أعد المحاولة قبل الدفع.'
                             : 'Could not verify the team fee status. Retry before paying.',
-                        style: TextStyle(color: VSPColors.warning, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.warning, fontSize: 12),
                       ),
                     ),
                     TextButton(
