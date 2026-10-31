@@ -77,12 +77,16 @@ void showTournamentManualTeamSheet(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      isArabic ? 'إضافة فريق يدويًا' : 'Add Team Manually',
-                      style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Expanded(
+                      child: Text(
+                        isArabic ? 'إضافة فريق يدويًا' : 'Add Team Manually',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
