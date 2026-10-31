@@ -81,20 +81,29 @@ class TeamRepository {
  }
 
  Future<Team?> getUserTeam(String userId) async {
- try {
- final response = await _supabase
- .from('team_members')
- .select('team_id')
- .eq('user_id', userId);
- final List membership = response as List;
- if (membership.isEmpty) return null;
- 
- final teamId = membership.first['team_id'];
- return await getTeam(teamId);
- } catch (e) {
- debugPrint('Error getting user team: $e');
- return null;
+   try {
+     return await getUserTeamStrict(userId);
+   } catch (e) {
+     debugPrint('Error getting user team: $e');
+     return null;
+   }
  }
+
+ /// Strict lookup for screens that must distinguish no membership from a
+ /// failed membership/team query.
+ Future<Team?> getUserTeamStrict(String userId) async {
+   final response = await _supabase
+       .from('team_members')
+       .select('team_id')
+       .eq('user_id', userId);
+   final List membership = response as List;
+   if (membership.isEmpty) return null;
+
+   // Existing behavior selects the first membership. Multiple-team selection
+   // policy remains a product decision; no ordering is inferred here.
+   final teamId = membership.first['team_id']?.toString();
+   if (teamId == null || teamId.isEmpty) return null;
+   return await getTeamStrict(teamId);
  }
 
  Future<String?> createTeam(Map<String, dynamic> data) async {
