@@ -303,6 +303,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
         title: Text(isArabic ? 'تسجيل عدم حضور اللاعب' : 'Report Player No-Show'),
