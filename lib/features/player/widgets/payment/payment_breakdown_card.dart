@@ -102,6 +102,7 @@ class PaymentBreakdownCard extends StatelessWidget {
             value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
             isBold: false,
             onInfoTap: () => showFeeTransparencyModal(context, isArabic),
+            infoTooltip: isArabic ? 'تفاصيل المصاريف الإدارية' : 'Fee details',
           ),
           const SizedBox(height: 6),
           _buildFeeRow(
@@ -233,6 +234,7 @@ class PaymentBreakdownCard extends StatelessWidget {
     required String value,
     bool isBold = false,
     VoidCallback? onInfoTap,
+    String? infoTooltip,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,11 +252,14 @@ class PaymentBreakdownCard extends StatelessWidget {
             ),
             if (onInfoTap != null) ...[
               const SizedBox(width: 6),
-              GestureDetector(
-                onTap: onInfoTap,
-                child: const Icon(
+              IconButton(
+                tooltip: infoTooltip,
+                onPressed: onInfoTap,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                icon: const Icon(
                   Iconsax.info_circle_copy,
-                  size: 14,
+                  size: 16,
                   color: VSPColors.accent,
                 ),
               ),
