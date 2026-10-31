@@ -36,6 +36,7 @@ class ManageParticipantsModal extends StatefulWidget {
 
 class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   bool _isLoading = true;
+  bool _hasLoadError = false;
   bool _isProcessing = false; // click lock state
   List<UserModel> _participants = [];
   List<UserModel> _pending = [];
@@ -61,13 +62,16 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
           _participants = users.where((u) => widget.booking.joinedUserIds.contains(u.uid)).toList();
           _pending = users.where((u) => widget.booking.pendingUserIds.contains(u.uid)).toList();
           _isLoading = false;
+          _hasLoadError = false;
         });
       }
     } catch (e, stack) {
       VSPLogger.e('Error fetching participants in bulk', e, stack);
       if (mounted) {
-        setState(() => _isLoading = false);
-        VSPFeedback.showError(context, e.toString());
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
       }
     }
   }
@@ -88,8 +92,12 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(e.toString().contains('match_is_full')
-            ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد'
-            : 'Error'),
+            ? (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد.'
+                : 'The match is full. No more players can be accepted.')
+            : (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'تعذر قبول طلب الانضمام. حاول مرة أخرى.'
+                : 'Could not accept the join request. Please try again.')),
       ));
     } finally {
       if (mounted) {
@@ -110,7 +118,12 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
       _fetchUsers();
     } catch (e) {
       if (!mounted) return;
-      VSPFeedback.showError(context, e.toString());
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'تعذر رفض طلب الانضمام. حاول مرة أخرى.'
+            : 'Could not reject the join request. Please try again.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -126,7 +139,12 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
       _fetchUsers();
     } catch (e) {
       if (!mounted) return;
-      VSPFeedback.showError(context, e.toString());
+      VSPFeedback.showError(
+        context,
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'تعذر إزالة اللاعب من المباراة. حاول مرة أخرى.'
+            : 'Could not remove the player from the match. Please try again.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -160,12 +178,18 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomInset = MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 16;
+    final media = MediaQuery.of(context);
+    final bottomInset = media.padding.bottom + 16;
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height * 0.88)
+        .toDouble();
 
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
-      ),
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: VSPColors.surfaceAlt,
@@ -188,8 +212,17 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(AppLocalizations.of(context)!.manageMatch, style: Theme.of(context).textTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.manageMatch,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                ),
                 IconButton(
+                  tooltip: isArabic ? 'إغلاق' : 'Close',
+                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -200,7 +233,35 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-                : SingleChildScrollView(
+                : _hasLoadError
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(VSPSpacing.lg),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                isArabic
+                                    ? 'تعذر تحميل قائمة اللاعبين.'
+                                    : 'Could not load the player list.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: VSPColors.textSecondary),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isLoading = true;
+                                    _hasLoadError = false;
+                                  });
+                                  _fetchUsers();
+                                },
+                                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SingleChildScrollView,
                     child: Column(
                       children: [
                         if (_pending.isNotEmpty) ...[
@@ -251,6 +312,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                     ),
                                     if (u.phone != null && u.phone!.isNotEmpty)
                                       IconButton(
+                                        tooltip: isArabic ? 'اتصال' : 'Call',
+                                        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                         icon: const Icon(Iconsax.call_copy, color: Colors.blue, size: 16),
                                         onPressed: _isProcessing
                                             ? null
@@ -265,10 +328,14 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                               },
                                       ),
                                     IconButton(
+                                      tooltip: isArabic ? 'قبول الطلب' : 'Accept request',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 18),
                                       onPressed: _isProcessing ? null : () => _acceptUser(u.uid),
                                     ),
                                     IconButton(
+                                      tooltip: isArabic ? 'رفض الطلب' : 'Reject request',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 18),
                                       onPressed: _isProcessing ? null : () => _rejectUser(u.uid),
                                     ),
@@ -362,6 +429,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                   ),
                                   if (!isHost)
                                     IconButton(
+                                      tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
+                                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                       icon: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 16),
                                       onPressed: _isProcessing ? null : () => _removeUser(u.uid),
                                     ),
