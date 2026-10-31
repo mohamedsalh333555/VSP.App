@@ -246,3 +246,10 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
 
 The source fixes above are not runtime passes. The 181 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
+
+
+### Additional shared upload surface inspected
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source reviewed—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent) |
