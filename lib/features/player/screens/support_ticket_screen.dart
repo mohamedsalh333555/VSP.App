@@ -76,7 +76,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
               !ticketSnapshot.hasData) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
-          if (ticketSnapshot.hasError) {
+          if (ticketSnapshot.hasError && !ticketSnapshot.hasData) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(VSPSpacing.lg),
@@ -158,7 +158,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                       !snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                   }
-                  if (snapshot.hasError) {
+                  if (snapshot.hasError && !snapshot.hasData) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(VSPSpacing.lg),

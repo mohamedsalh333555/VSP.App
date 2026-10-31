@@ -174,7 +174,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                 }
-                if (snapshot.hasError) {
+                if (snapshot.hasError && !snapshot.hasData) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(VSPSpacing.lg),
