@@ -57,8 +57,44 @@ class BookingQueryCoordinator {
   /// Strict direct fetch for synchronization paths that must distinguish an
   /// authoritative empty result from a failed request.
   Future<List<Booking>> getUserBookingsDirectlyStrict(String userId) async {
-    final bool isValidId = RegExp(r'^[0-9a-fA-F-]{36}
+    if (userId.trim().isEmpty) return [];
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}')
+        .order('start_time', ascending: false)
+        .limit(100);
+    final lowerUserId = userId.trim().toLowerCase();
+    final bookings = (response as List)
+        .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+        .where((b) =>
+            b.createdByUserId.trim().toLowerCase() == lowerUserId ||
+            b.userId.trim().toLowerCase() == lowerUserId ||
+            b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(lowerUserId))
+        .toList();
+    VSPLogger.i('getUserBookingsDirectlyStrict returned ${bookings.length} bookings');
+    return bookings;
+  }
 
+  /// Direct REST query fetching owner stadium bookings.
+  Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
+    try {
+      return await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
+    } catch (e) {
+      VSPLogger.e('Error fetching owner bookings directly: $e');
+      return [];
+    }
+  }
+
+  /// Strict owner fetch used by the booking sync coordinator.
+  Future<List<Booking>> fetchOwnerBookingsDirectlyStrict(String ownerId, {List<String>? stadiumIds}) async {
+    final response = await (stadiumIds != null && stadiumIds.isNotEmpty
+        ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
+        : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
+    return (response as List)
+        .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+        .toList();
+  }
   /// Real-time stream of stadium owner bookings.
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) async* {
     final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
