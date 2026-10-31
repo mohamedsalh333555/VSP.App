@@ -113,6 +113,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   Future<void> _handleLookupCode() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final code = _challengeCodeController.text.trim();
     if (code.isEmpty) {
       VSPFeedback.showInfo(
@@ -174,7 +175,6 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       if (!mounted) return;
       setState(() => _isLookingUpCode = false);
       final err = res['error']?.toString() ?? '';
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       String errorMsg;
       if (err == 'CODE_INVALID_OR_USED') {
         errorMsg = isArabic ? 'كود التحدي غير صالح أو تم استخدامه مسبقاً.' : 'This challenge code is invalid or has already been used.';
@@ -209,6 +209,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
   Future<void> _showMyChallengeCodeModal() async {
     if (_userTeam == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     setState(() => _isGeneratingCode = true);
 
     try {
