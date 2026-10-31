@@ -38,7 +38,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   bool _isJoining = false;
   Team? _myTeam;
   late final Stream<Championship?> _singleChampionshipStream;
-  late final Stream<List<TournamentMatch>> _matchesStream;
+  late Stream<List<TournamentMatch>> _matchesStream;
 
   @override
   void initState() {
@@ -76,6 +76,15 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _refreshChampionshipData() {
+    if (!mounted) return;
+    setState(() {
+      _matchesStream = TournamentRepository()
+          .getTournamentMatches(widget.championship.id)
+          .asBroadcastStream();
+    });
   }
 
   Future<void> _handleJoin([Championship? liveChamp]) async {
@@ -278,10 +287,14 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     ChampionshipMatchesTab(
                       championship: championship,
                       matchesStream: _matchesStream,
+                      onRetry: _refreshChampionshipData,
                     ),
 
                     // TAB 2: Top Scorers
-                    ChampionshipTopScorersTab(championshipId: championship.id),
+                    ChampionshipTopScorersTab(
+                      championshipId: championship.id,
+                      onRetry: _refreshChampionshipData,
+                    ),
 
                     // TAB 3: Rules & Details
                     ChampionshipRulesTab(championship: championship),
