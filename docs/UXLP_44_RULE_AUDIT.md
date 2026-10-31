@@ -587,7 +587,7 @@ The 181-path inventory has no `not yet inspected` rows at this checkpoint, but t
 | `PublicMatchCard` | 28, 36, 43 | Raw backend exceptions could reach users; request-cancel false result was ignored; share failure was unhandled. | Localized safe messages, diagnostic logging, boolean result handling, and share catch path. | fail — corrected in source; runtime pending |
 | `OwnerNotificationButton` | 9, 36 | Unread-count stream failure could look like zero unread. | Warning indicator and localized tooltip on stream error. | fail — corrected in source; runtime pending |
 | `VSPTermsCheckbox` | 27, 33 | The checkbox hit area was only 22dp. | 48dp interactive target with checked/button semantics. | fail — corrected in source; runtime pending |
-| `CopyablePhoneText` | 27, 28, 36, 37 | Clipboard failure had no localized recovery feedback or explicit semantic label. | Semantic label and localized failure feedback. | fail — corrected in source; runtime pending |
+| `CopyablePhoneText` | 27, 28, 36, 37 | Clipboard failure had no localized recovery feedback, explicit semantic label, or guaranteed minimum target. | Semantic label, localized failure feedback, and 48dp minimum hit area. | fail — corrected in source; runtime pending |
 | `VSPCountdownTimer` | 44 | Timer continued rebuilding after reaching zero and did not reset its timer when targetDate changed. | Stops at zero, restarts for a changed target, and disposes the timer. | fail — corrected in source; runtime pending |
 | Shared V2 token facade | 42 | Feature surfaces lacked direct compatibility aliases for the complete V2 size and typography roles. | Exposed V2 size, typography, and canonical color aliases. | fail — corrected in source; runtime pending |
 
