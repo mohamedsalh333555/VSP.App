@@ -17,11 +17,11 @@ class PaymentCancelDialog {
 
     final dialogContent = isChampionship
         ? (isArabic
-            ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل في البطولة وسيمكنك العودة في أي وقت.'
-            : 'If you go back now, your tournament registration will not be completed.')
+            ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل. يمكنك بدء التسجيل من جديد لاحقاً.'
+            : 'If you go back now, registration will stop. You can start again later.')
         : (isArabic
-            ? 'إذا تراجعت الآن، لن يتم خصم أي مبالغ وسيمكنك مراجعة حجزك وتعديله في أي وقت.'
-            : 'If you go back now, no charges will be made and you can review your checkout anytime.');
+            ? 'إذا رجعت الآن، لن تستكمل الدفع وسيتم تحرير تثبيت الموعد المؤقت. يمكنك اختيار موعد جديد لاحقاً.'
+            : 'If you go back now, checkout will stop and the temporary slot hold will be released. You can choose another time later.');
 
     final dialogContinueText = isChampionship
         ? (isArabic ? 'متابعة التسجيل' : 'Continue Registration')
