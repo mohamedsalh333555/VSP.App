@@ -38,7 +38,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                 child: stadiums.isEmpty
                     ? const SizedBox.shrink()
                     : Container(
-                        height: 44,
+                        constraints: const BoxConstraints(minHeight: 48),
                         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                         decoration: BoxDecoration(
                           color: VSPColors.surface,
@@ -76,7 +76,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                 onTap: onSelectDate,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 child: Container(
-                  height: 44,
+                  constraints: const BoxConstraints(minHeight: 48),
                   padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   decoration: BoxDecoration(
                     color: VSPColors.surface,
@@ -118,9 +118,14 @@ class OwnerBookingsFilterBar extends StatelessWidget {
               final String dayName =
                   DateFormat('E', Localizations.localeOf(context).toString()).format(date).toUpperCase();
 
-              return GestureDetector(
-                onTap: () => onDaySelected(index),
-                child: Container(
+              return Semantics(
+                button: true,
+                selected: isSelected,
+                label: DateFormat('EEEE d MMMM', Localizations.localeOf(context).toString()).format(date),
+                child: InkWell(
+                  onTap: () => onDaySelected(index),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  child: Container(
                   width: 60,
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
@@ -154,6 +159,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           ),

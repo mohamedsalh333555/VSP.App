@@ -115,9 +115,18 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: SafeArea(
       bottom: true,
-      child: Padding(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+        ),
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -205,6 +214,8 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
         ],
           ),
         ),
+      ),
+      ),
       ),
     );
   }

@@ -42,10 +42,15 @@ class FilterCategorySidebar extends StatelessWidget {
             final title = categoryTitles[key] ?? key;
             final icon = categoryIcons[key] ?? Iconsax.category_copy;
 
-            return InkWell(
-              onTap: () => onSelectCategory(key),
-              child: AnimatedContainer(
+            return Semantics(
+              button: true,
+              selected: isSelected,
+              label: title,
+              child: InkWell(
+                onTap: () => onSelectCategory(key),
+                child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
+                constraints: const BoxConstraints(minHeight: 48),
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
                 decoration: BoxDecoration(
                   color: isSelected ? VSPColors.surface : Colors.transparent,
@@ -90,6 +95,7 @@ class FilterCategorySidebar extends StatelessWidget {
                   ],
                 ),
               ),
+            ),
             );
           }).toList(),
         ),
