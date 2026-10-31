@@ -276,7 +276,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _coordinator.startWebhookTimeout(
       timeout: const Duration(minutes: 5),
       onTimeout: () {
-        if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId &&
+            _isAwaitingWebhook && !_paymentCompleted) {
           if (_isVerificationModalShowing) {
             debugPrint('Webhook timeout elapsed but verification modal is still showing.');
             return;
@@ -421,7 +423,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _showVerificationModal(bookingId, isArabic);
             _startFallbackPollingTimer(bookingId);
           }
-        } else if (mounted && !_paymentCompleted) {
+        } else if (mounted && !_hasAccountChanged && !_paymentCompleted &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
@@ -436,7 +439,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         }
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
-        if (mounted) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           if (!_paymentCompleted) _startCountdownTimer();
           setState(() {
             _isAwaitingWebhook = false;
