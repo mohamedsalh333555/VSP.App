@@ -126,6 +126,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  builder: (sheetContext) {
  return Container(
+ constraints: BoxConstraints(
+   maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.85,
+ ),
  padding: const EdgeInsets.all(16),
  child: Column(
  mainAxisSize: MainAxisSize.min,
@@ -325,12 +328,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  RepaintBoundary(
  key: _teamCardKey,
- child: GestureDetector(
+ child: Material(
+ color: Colors.transparent,
+ borderRadius: BorderRadius.circular(VSPRadius.xl),
+ child: InkWell(
+ borderRadius: BorderRadius.circular(VSPRadius.xl),
  onTap: () async {
  await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
  if (mounted) setState(() {});
  },
  child: TeamCardHero(team: team),
+ ),
  ),
  ),
  const SizedBox(height: VSPSpacing.md),
