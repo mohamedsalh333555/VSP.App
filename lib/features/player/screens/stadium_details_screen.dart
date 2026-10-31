@@ -22,7 +22,11 @@ class StadiumDetailsScreen extends StatefulWidget {
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late final List<String> _displayImages;
-  late final Stream<List<Map<String, dynamic>>> _stadiumStream;
+  late Stream<List<Map<String, dynamic>>> _stadiumStream;
+
+  void _subscribeToStadium() {
+    _subscribeToStadium();
+  }
 
   @override
   void initState() {
@@ -94,16 +98,70 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       stream: _stadiumStream,
       builder: (context, snapshot) {
         Stadium stadium = widget.stadium;
+        var parseFailed = false;
         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
           try {
             stadium = Stadium.fromFirestore(snapshot.data!.first, widget.stadium.id);
-          } catch (_) {}
+          } catch (_) {
+            parseFailed = true;
+          }
         }
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        final hasStreamIssue = snapshot.hasError ||
+            (snapshot.hasData && snapshot.data!.isEmpty) ||
+            parseFailed;
 
         return VSPScaffold(
           backgroundColor: VSPColors.background,
           body: Column(
             children: [
+              if (hasStreamIssue)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: VSPSpacing.md,
+                      vertical: VSPSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: VSPColors.warning.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(
+                        color: VSPColors.warning.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline,
+                          color: VSPColors.warning,
+                          size: 18,
+                        ),
+                        const SizedBox(width: VSPSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'تعذر تحديث بيانات الملعب. نعرض آخر بيانات متاحة.'
+                                : 'Could not refresh stadium details. Showing the last available information.',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => setState(_subscribeToStadium),
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               StadiumImageCarousel(
                 stadium: stadium,
                 displayImages: _displayImages,
