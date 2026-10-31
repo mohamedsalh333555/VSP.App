@@ -290,3 +290,14 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - No notification retention, cancellation, or refund business rules were changed.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Analyzer remediation and truthful plan-copy follow-up — 2026-10-31
+
+- Existing PR CI run 41221229970 reached `flutter analyze` and reported three errors: async BuildContext use in the owner payout dialog, an invalid const localized Text in the add-player sheet, and a missing closing delimiter in the stadium filter sheet. It also reported a write-only auth state field and two style infos.
+- Fixed the payout context guard, dynamic invite label, stadium filter sheet delimiter, challenge retry-guard braces, unused auth flag, and date-picker label interpolation.
+- The next PR CI run 41222072722 reached Analyze and reported only one remaining informational `prefer_const_constructors` finding in the add-player sheet. Added the missing const to its static TextStyle in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`; not yet revalidated.
+- Removed the hardcoded `1,000 EGP/month` from the owner dashboard Pro teaser. The subscription screen remains the source for prices loaded from the public plan catalog.
+- Both CI runs stopped at Analyze; automated tests and the workflow debug APK step were skipped. No Release APK workflow was dispatched.
+
+The source batch remains open. All 44 UXLP rule statuses are still runtime pending, and the final consolidated review has not started.
