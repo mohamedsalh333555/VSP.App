@@ -86,7 +86,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       onExpired: () async {
         if (!_paymentCompleted && _booking != null && mounted) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final userId = authProvider.currentUser?.uid;
+          final userId = authProvider.currentUser?.id;
           if (widget.isTournamentPayment) {
             await _coordinator.releaseBookingSafely(
               isTournamentPayment: true,
@@ -128,7 +128,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final userId = authProvider.currentUser?.uid;
+    final userId = authProvider.currentUser?.id;
 
     setState(() => _isLoading = true);
 
@@ -403,7 +403,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
     if (!widget.isTournamentPayment && mounted) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.currentUser?.uid;
+      final userId = authProvider.currentUser?.id;
       if (userId != null && mounted) {
         Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
       }
