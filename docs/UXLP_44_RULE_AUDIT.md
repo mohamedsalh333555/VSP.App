@@ -350,3 +350,11 @@ All entries in the 44-rule matrix remain source reviewed—runtime pending; thes
 ### Support retry lifecycle follow-up — 2026-10-31
 
 - **Rules 9, 36, 38 — support recovery:** retry controls in support-ticket detail now recreate the retained account-scoped ticket and message streams rather than rebuilding against the same failed stream instances. The support-ticket list's stale-data retry also creates a new stream subscription. This closes a source-level retry wiring gap found while tracing the reported support flow; runtime reconnection remains pending.
+
+
+### Support and date-picker interaction follow-up — 2026-10-31
+
+- **Rules 10, 13, 36, 43 — support escalation and collective match feedback:** support contact fallback no longer exposes an internal localization key; it now gives a clear Arabic/English message. Collective match join/leave/manual-player update/remove/cancel failures now show localized recovery copy while logging technical exceptions separately. Support ticket creation exceptions are logged separately from its user-facing error message.
+- **Rules 27, 33, 34 — date picker and phone lookup:** date-picker year/month/day rows and step chips now use focusable Material InkWell interactions. Add-player phone lookup uses LTR input direction and the keyboard Search action invokes the same guarded lookup.
+
+These are additional source touchpoints only; no rule is promoted to whole-app complete and runtime evidence remains pending.

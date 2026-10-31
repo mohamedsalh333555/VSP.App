@@ -120,3 +120,14 @@ All changes are source-only. The 44 rules are not marked complete; screen-wide a
 - Corrected the support-ticket list stale-data banner to replace the stream subscription on retry instead of calling setState with the same failed stream.
 
 Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+
+## Additional copy and interaction corrections
+
+- FAQ/support page now shows readable localized fallback copy when the configured WhatsApp/phone contact is missing, rather than exposing the internal localization key.
+- Collective match action failures (join, leave, manual-player count, remove participant, cancel) now display localized actionable copy and log the technical exception separately.
+- Support ticket creation failures now preserve generic localized user copy while writing technical details to the app logger.
+- Date picker year/month/day options and step chips use InkWell for keyboard/focus support.
+- Add-player phone search forces LTR entry and submits from the keyboard Search action.
+
+No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
