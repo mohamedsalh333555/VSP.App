@@ -94,7 +94,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   if (context.mounted) {
                     VSPFeedback.showError(
                       context,
-                      isArabic ? 'حدث خطأ أثناء تصعيد المتأهلين: $e' : 'Error advancing qualifiers: $e',
+                      isArabic ? 'تعذر تصعيد الفرق المتأهلة. حاول تحديث الجدول ثم أعد المحاولة.' : 'Could not advance the qualifiers. Refresh the bracket and try again.',
                     );
                   }
                 }
