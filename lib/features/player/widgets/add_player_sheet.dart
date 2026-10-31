@@ -105,11 +105,18 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  @override
  Widget build(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final bottomPadding = MediaQuery.of(context).padding.bottom;
+ final media = MediaQuery.of(context);
+ final bottomPadding = media.padding.bottom;
+ final availableHeight = (media.size.height -
+         media.viewInsets.bottom -
+         media.padding.top -
+         media.padding.bottom -
+         24)
+     .clamp(0.0, media.size.height)
+     .toDouble();
 
- return Padding(
- padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
- child: Container(
+ return Container(
+ constraints: BoxConstraints(maxHeight: availableHeight),
  padding: EdgeInsets.only(
  top: VSPSpacing.lg,
  left: VSPSpacing.md,
@@ -215,7 +222,6 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  _buildInviteCard(),
  const SizedBox(height: 16),
  ],
- ),
  ),
  ),
  );
