@@ -24,6 +24,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (matches.isEmpty) {
       return Center(
         child: Padding(
@@ -33,8 +34,10 @@ class TeamLeagueFixturesView extends StatelessWidget {
             children: [
               Icon(Iconsax.calendar_copy, size: 60, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
               const SizedBox(height: 12),
-              const Text(
-                'سيتم توليد جدول المباريات فور اكتمال فرق الدوري',
+              Text(
+                isArabic
+                    ? 'سيتم توليد جدول المباريات فور اكتمال فرق الدوري'
+                    : 'The fixture schedule will be generated when all league teams have joined',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
               ),
@@ -60,7 +63,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
       children: [
         // 🚨 Section for Creator when action is needed: "يحتاج تدخلك"
         if (isCreator && pendingCreatorMatches.isNotEmpty) ...[
-          _buildCreatorReviewHeader(pendingCreatorMatches.length),
+          _buildCreatorReviewHeader(pendingCreatorMatches.length, isArabic),
           ...pendingCreatorMatches.map((m) => _buildCreatorReviewCard(context, m)),
           const SizedBox(height: VSPSpacing.md),
           const Divider(color: VSPColors.divider, height: 24),
@@ -72,7 +75,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildRoundHeader('الجولة $round'),
+              _buildRoundHeader(isArabic ? 'الجولة $round' : 'Round $round'),
               ...roundMatches.map((m) => _buildMatchCard(context, m)),
               const SizedBox(height: VSPSpacing.md),
             ],
@@ -82,7 +85,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
     );
   }
 
-  Widget _buildCreatorReviewHeader(int count) {
+  Widget _buildCreatorReviewHeader(int count, bool isArabic) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -95,8 +98,14 @@ class TeamLeagueFixturesView extends StatelessWidget {
         children: [
           const Icon(Iconsax.judge_copy, color: Colors.amber, size: 20),
           const SizedBox(width: 8),
-          const Text(
-            'مباريات بانتظار اعتمادك (منشئ الدوري)',
+          Expanded(
+            child: Text(
+              isArabic ? 'مباريات بانتظار اعتمادك (منشئ الدوري)' : 'Matches awaiting your approval (league creator)',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
+            ),
+          ),
             style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
           ),
           const Spacer(),
@@ -117,6 +126,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
   }
 
   Widget _buildCreatorReviewCard(BuildContext context, TeamLeagueMatch match) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isConflict = match.isDisputed;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -134,9 +144,13 @@ class TeamLeagueFixturesView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '${match.homeTeamName} × ${match.awayTeamName}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              Expanded(
+                child: Text(
+                  '${match.homeTeamName} × ${match.awayTeamName}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -145,7 +159,9 @@ class TeamLeagueFixturesView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  isConflict ? 'اختلاف نتيجتين' : 'بانتظار الاعتماد',
+                  isConflict
+                      ? (isArabic ? 'اختلاف نتيجتين' : 'Conflicting results')
+                      : (isArabic ? 'بانتظار الاعتماد' : 'Awaiting approval'),
                   style: TextStyle(
                     color: isConflict ? Colors.amber : VSPColors.accent,
                     fontSize: 11,
@@ -160,8 +176,12 @@ class TeamLeagueFixturesView extends StatelessWidget {
             alignment: AlignmentDirectional.centerStart,
             child: Text(
               isConflict
-                  ? 'الفريقان سجلا نتيجتين مختلفتين ويحتاج تدخلك لحسم النتيجة.'
-                  : 'الفريقان سجلا النتيجة بتطابق، اضغط للاعتماد النهائي وبدء عداد الـ 15 دقيقة.',
+                  ? (isArabic
+                      ? 'الفريقان سجلا نتيجتين مختلفتين ويحتاج تدخلك لحسم النتيجة.'
+                      : 'The teams submitted different results. Review and resolve the outcome.')
+                  : (isArabic
+                      ? 'الفريقان سجلا النتيجة بتطابق، اضغط للاعتماد النهائي وبدء عداد الـ 15 دقيقة.'
+                      : 'Both teams submitted the same result. Approve it to start the 15-minute correction window.'),
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
             ),
           ),
@@ -177,7 +197,9 @@ class TeamLeagueFixturesView extends StatelessWidget {
               ),
               icon: const Icon(Iconsax.judge_copy, size: 18),
               label: Text(
-                isConflict ? 'مراجعة النزاع وحسم النتيجة' : 'اعتماد نتيجة المباراة',
+                isConflict
+                    ? (isArabic ? 'مراجعة النزاع وحسم النتيجة' : 'Review and resolve dispute')
+                    : (isArabic ? 'اعتماد نتيجة المباراة' : 'Approve match result'),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
