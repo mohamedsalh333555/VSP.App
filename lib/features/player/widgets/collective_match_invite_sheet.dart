@@ -142,6 +142,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(ar ? 'مغادرة التجميعية؟' : 'Leave collective match?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Text(ar ? 'سيتم إتاحة مكانك مرة أخرى.' : 'Your place will become available again.', style: const TextStyle(color: VSPColors.textSecondary)),
@@ -195,6 +196,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -261,6 +263,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(ar ? 'إلغاء التجميعية؟' : 'Cancel collective match?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Text(ar ? 'سيتم إلغاء الحجز وإيقاف رابط الدعوة.' : 'The booking will be cancelled and the invitation will stop working.', style: const TextStyle(color: VSPColors.textSecondary)),

@@ -65,9 +65,12 @@ class VSPTermsAndPrivacyModal {
                         IconButton(
                           onPressed: () => Navigator.pop(dialogContext),
                           icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 20),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: 20,
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(
+                            minWidth: 48,
+                            minHeight: 48,
+                          ),
+                          splashRadius: 24,
                         ),
                       ],
                     ),
