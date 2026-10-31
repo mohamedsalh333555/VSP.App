@@ -117,7 +117,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       debugPrint('Failed to verify challenge captain team: $e');
       if (!mounted ||
           generation != _teamRequestGeneration ||
-          context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) {
+        return;
+      }
       setState(() {
         _userTeam = null;
         _isLoadingUserTeam = false;
