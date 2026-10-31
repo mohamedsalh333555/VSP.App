@@ -92,13 +92,15 @@ class TeamLeagueDetailsView extends StatelessWidget {
                 children: [
                   const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    league.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  Expanded(
+                    child: Text(
+                      league.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
