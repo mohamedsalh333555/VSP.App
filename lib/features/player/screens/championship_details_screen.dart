@@ -58,7 +58,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser != null) {
-        final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+        final team = await TeamRepository().getUserTeam(auth.currentUser!.id);
         if (team != null && mounted) {
           setState(() {
             _myTeam = team;
