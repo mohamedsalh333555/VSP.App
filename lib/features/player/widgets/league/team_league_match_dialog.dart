@@ -297,7 +297,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
         scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
+        content: Text(
           isArabic ? 'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.' : 'This result will be confirmed and the league table will be updated.',
           style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
@@ -462,7 +462,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
           ),
           const SizedBox(height: 18),
 
-          const Text(
+          Text(
             isArabic ? 'اختر النتيجة المعتمدة للمباراة:' : 'Choose the final match result:', 
             style: TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
           ),
