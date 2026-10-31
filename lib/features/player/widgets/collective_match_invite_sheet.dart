@@ -270,17 +270,26 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final booking = _booking;
     if (booking == null) return;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
-    final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
-    final token = credentials?['invite_token']?.toString();
-    final code = credentials?['invite_code']?.toString();
-    final active = credentials?['active'] == true && credentials?['status'] == 'confirmed';
-    if (token == null || token.isEmpty || code == null || code.isEmpty || !active) {
-      if (mounted) VSPFeedback.showInfo(context, ar ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invitation becomes available after confirmation.');
-      return;
-    }
-    _inviteToken = token;
-    _inviteCode = code;
     try {
+      final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
+      final token = credentials?['invite_token']?.toString();
+      final code = credentials?['invite_code']?.toString();
+      final active = credentials?['active'] == true &&
+          credentials?['status'] == 'confirmed';
+      if (token == null || token.isEmpty || code == null || code.isEmpty || !active) {
+        if (mounted) {
+          VSPFeedback.showInfo(
+            context,
+            ar
+                ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.'
+                : 'The invitation becomes available after confirmation.',
+          );
+        }
+        return;
+      }
+
+      _inviteToken = token;
+      _inviteCode = code;
       await SharingService.shareCollectiveInvite(
         inviteToken: token,
         inviteCode: code,
@@ -293,7 +302,9 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       if (mounted) {
         VSPFeedback.showError(
           context,
-          ar ? 'تعذرت مشاركة الدعوة. حاول مرة أخرى.' : 'Could not share the invitation. Please try again.',
+          ar
+              ? 'تعذرت مشاركة الدعوة. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not prepare or share the invitation. Check your connection and try again.',
         );
       }
     }
@@ -338,8 +349,24 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   Future<void> _openLocation() async {
     final url = _stadium?.googleMapsUrl;
     if (url == null || url.isEmpty) return;
-    final uri = Uri.tryParse(url);
-    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
+    try {
+      final uri = Uri.tryParse(url);
+      if (uri == null ||
+          !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw StateError('No application could open the stadium location');
+      }
+    } catch (e) {
+      VSPLogger.w('Collective stadium location launch failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          ar
+              ? 'تعذر فتح موقع الملعب. حاول مرة أخرى.'
+              : 'Could not open the stadium location. Please try again.',
+        );
+      }
+    }
   }
 
   @override
