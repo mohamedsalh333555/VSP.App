@@ -331,7 +331,7 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 
 ## Shared-component and tournament lifecycle correction batch — 2026-10-31
 
-- Expanded the screen/surface inventory from 139 to 181 unique Dart paths by reconciling shared widget/core component directories and nested championship detail components. The register now has 191 path records with 10 repeated entries; six newly tracked nested championship components remain `not yet inspected`.
+- Expanded the screen/surface inventory from 139 to 181 unique Dart paths by reconciling shared widget/core component directories and nested championship detail components. The register now has 191 path records with 10 repeated entries; all 181 paths now have source-review notes, while rule-by-rule/state coverage and runtime validation remain pending.
 - Exposed the full V2 size and typography roles through the compatibility facade (`VSPSize`, `VSPTypography`) and added canonical black/transparent/white-alpha color aliases. This is a token API change; it does not alter existing screens by itself.
 - Increased the terms checkbox hit area to the 48dp design-system minimum and added explicit checked/button semantics.
 - Public match card actions now check the boolean result of request cancellation, log technical details, show localized safe error messages for join/leave/share failures, and keep the share target at the standard 48dp.
