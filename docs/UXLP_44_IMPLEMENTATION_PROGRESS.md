@@ -627,3 +627,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Owner account deletion confirmation is now scrollable for short screens and large text. Its password controller is disposed after the dialog closes, and failed deletion no longer exposes raw AuthProvider error details.
 - Password reauthentication remains required before the existing delete-account operation; no account deletion, financial, or backend behavior was changed.
 - Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+
+## Owner emergency-closure dialog refinement — 2026-10-31
+
+- The owner emergency-closure confirmation is now scrollable. Confirmation copy remains explicit that affected bookings enter administrative review/refund handling; the success message states the 24-hour closure duration without implying an immediate refund. Technical failure payloads are replaced with localized recovery guidance.
+- The operation's 24-hour duration, booking selection, and server-side administrative review/refund behavior were not changed.
