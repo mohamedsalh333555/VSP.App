@@ -165,13 +165,22 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
- GestureDetector(
+ Tooltip(
+ message: isArabic ? 'البحث عن اللاعب' : 'Search for player',
+ child: Semantics(
+ button: true,
+ label: isArabic ? 'البحث عن اللاعب' : 'Search for player',
+ child: InkWell(
  onTap: _isSearching ? null : _searchPlayer,
- child: Container(
+ borderRadius: BorderRadius.circular(VSPRadius.md),
+ child: SizedBox(
  height: 50,
  width: 50,
+ child: DecoratedBox(
  decoration: BoxDecoration(
- color: VSPColors.accent,
+ color: _isSearching
+ ? VSPColors.accent.withValues(alpha: 0.55)
+ : VSPColors.accent,
  borderRadius: BorderRadius.circular(VSPRadius.md),
  ),
  child: _isSearching
@@ -180,6 +189,9 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
  )
  : const Icon(Iconsax.search_normal_copy, color: VSPColors.background),
+ ),
+ ),
+ ),
  ),
  ),
  ],
