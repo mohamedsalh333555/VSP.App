@@ -532,3 +532,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Tournament-format selection sheet now has a viewport-based maximum height and scrollable content, preserving access to all format choices on short displays and with enlarged text.
 - Manual stadium-address entry now opts into the modal safe-area behavior and adds the remaining bottom system inset alongside keyboard spacing, keeping the address field and confirmation action clear of system UI.
 - These are layout-only changes. Tournament format selection, stadium coordinates, geocoding, booking, and backend behavior were not changed. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+## Team-league and result-dialog accessibility/copy follow-up — 2026-10-31
+
+- Team-league result entry and dispute review now provide Arabic/English labels, options, confirmations, and error guidance rather than Arabic-only visible copy.
+- Long team names and submitted-result labels in dispute review now share available row width and truncate safely; resolution option labels are bounded to two lines.
+- Match-result dialog close control now exposes a localized tooltip and a 48dp minimum hit target instead of a compact zero-constraint IconButton.
+- No team-league scoring values, win/draw/loss mapping, dispute authority, match outcome rules, or backend behavior changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
