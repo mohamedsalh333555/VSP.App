@@ -551,3 +551,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Quick phone-booking no longer forwards an unrecognized raw exception string to the owner; known conflict/amount/time/authorization cases retain their specific localized guidance, while unknown failures use safe retry copy and diagnostic logging.
 - Manual tournament-team registration, cash booking confirmation, and tournament score submission now log technical exception/stack details separately while retaining localized user-facing recovery messages. Dialog loading state is reset only while the sheet context remains mounted.
 - No booking price, slot lock, payment, tournament registration, scoring, or prize policy was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Participant-management observability follow-up — 2026-10-31
+
+- Accept, reject, and remove-participant failures now write technical exception and stack details to diagnostics while preserving the existing localized, actionable user messages (including the explicit match-full case).
+- Notification delivery failures remain separately logged and do not reverse a successful join decision. No participant authorization, capacity, or match-membership rules were changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
