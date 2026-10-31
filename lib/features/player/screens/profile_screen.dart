@@ -40,6 +40,15 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
  final GlobalKey _teamCardKey = GlobalKey();
  bool _isSharing = false;
+ Future<Team?>? _teamFuture;
+ String? _teamFutureUserId;
+
+ void _refreshTeam(String? userId) {
+  _teamFutureUserId = userId;
+  _teamFuture = userId == null
+      ? Future<Team?>.value(null)
+      : TeamRepository().getUserTeam(userId);
+ }
 
  Future<void> _shareTeamCard(String teamName) async {
  setState(() => _isSharing = true);
@@ -82,7 +91,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => const CreateTeamSheet(),
     );
   }
-  if (mounted) setState(() {});
+  if (mounted) {
+    _refreshTeam(uid);
+    setState(() {});
+  }
  }
 
  void _showLocationPicker(BuildContext context, AuthProvider auth) {
@@ -170,6 +182,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final l10n = AppLocalizations.of(context)!;
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  final auth = context.watch<AuthProvider>();
+ final currentUserId = auth.currentUser?.id;
+ if (_teamFutureUserId != currentUserId) {
+   _refreshTeam(currentUserId);
+ }
  final String? userProfileUrl = auth.userModel?.profileImageUrl;
  final String userName = auth.userModel?.name ?? l10n.player;
  final String userPosition = auth.userModel?.position?.trim() ?? '';
@@ -198,17 +214,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
  children: [
  // 1. Team Card Section
  FutureBuilder<Team?>(
- future: auth.currentUser == null
- ? Future.value(null)
- : TeamRepository().getUserTeam(auth.currentUser!.id),
+ key: ValueKey(currentUserId),
+ future: _teamFuture,
  builder: (context, teamSnapshot) {
- if (teamSnapshot.connectionState == ConnectionState.waiting) {
+ if (teamSnapshot.connectionState == ConnectionState.waiting && !teamSnapshot.hasData) {
  return const Center(
  child: Padding(
  padding: EdgeInsets.all(40),
  child: CircularProgressIndicator(color: VSPColors.accent),
  ),
  );
+ }
+
+ if (teamSnapshot.hasError) {
+   return VSPStateView(
+     state: VSPUiState.error,
+     title: isArabic ? 'تعذر تحميل بيانات الفريق' : 'Could not load team details',
+     message: isArabic
+         ? 'بيانات الفريق لم تتأكد. أعد المحاولة بدل عرض حالة فريق فارغة.'
+         : 'Team data could not be verified. Retry instead of showing a false no-team state.',
+     onRetry: () => setState(() => _refreshTeam(currentUserId)),
+   );
  }
 
  final team = teamSnapshot.data;
@@ -388,7 +414,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
    backgroundColor: Colors.transparent,
    builder: (_) => const CreateTeamSheet(),
  );
- if (created == true && mounted) setState(() {});
+ if (created == true && mounted) {
+   _refreshTeam(currentUserId);
+   setState(() {});
+ }
  },
  ),
  ],
