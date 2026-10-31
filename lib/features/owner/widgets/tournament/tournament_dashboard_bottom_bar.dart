@@ -52,7 +52,7 @@ class TournamentDashboardBottomBar extends StatelessWidget {
             PrimaryButton(
               text: isAr ? 'بدء المنافسة' : 'Kickoff Competition',
               isLoading: isLoading,
-              onPressed: onActivateCompetition ?? () {},
+              onPressed: onActivateCompetition,
             ),
             const SizedBox(height: 8),
             PrimaryButton(
@@ -104,14 +104,19 @@ class TournamentDashboardBottomBar extends StatelessWidget {
                 children: [
                   const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
                   const SizedBox(width: 10),
-                  Text(
-                    isAr
-                        ? 'بطل البطولة: ${championship.championTeamName ?? ""}'
-                        : 'Champion: ${championship.championTeamName ?? ""}',
-                    style: const TextStyle(
-                      color: VSPColors.accent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'بطل البطولة: ${championship.championTeamName ?? ""}'
+                          : 'Champion: ${championship.championTeamName ?? ""}',
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],
