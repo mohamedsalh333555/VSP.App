@@ -633,3 +633,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The owner emergency-closure confirmation is now scrollable. Confirmation copy remains explicit that affected bookings enter administrative review/refund handling; the success message states the 24-hour closure duration without implying an immediate refund. Technical failure payloads are replaced with localized recovery guidance.
 - The operation's 24-hour duration, booking selection, and server-side administrative review/refund behavior were not changed.
 - Follow-up: owner deletion reauthentication/delete exceptions are caught in the dialog; loading is restored and localized retry feedback is shown instead of leaving the destructive-action modal stuck.
+
+## Live matchup embedded widgets localization and density — 2026-10-31
+
+- The matchup result-entry card, standings table, results timeline, and outcome/validation service now use the active Arabic/English locale, including empty states and fallback team names.
+- The standings statistics and timeline team/outcome labels are width-bounded to avoid narrow-card overflow. Timeline results are reversed once per build rather than rebuilding the reversed list for every row.
+- Matchup scoring values remain unchanged (win = 3, draw = 1, loss = 0); this is presentation and rendering only. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
