@@ -228,7 +228,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
     final isUserMatch = match.homeTeamId == userTeamId || match.awayTeamId == userTeamId;
     final hasBooking = match.bookingId != null;
     final now = DateTime.now();
-    final matchTime = match.scheduledTime ?? match.matchDay;
+    final matchTime = match.scheduledTime;
     final isPastMatchTime = matchTime != null && now.isAfter(matchTime);
 
     // Format Match Day (e.g. السبت، 10 أكتوبر)
@@ -609,24 +609,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
       );
     }
 
-    // 6. If user hasn't submitted yet:
-    if (isUserMatch && match.myTeamSubmission == null) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => onRecordScore(match),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: VSPColors.accent,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-          ),
-          icon: const Icon(Iconsax.tick_circle_copy, size: 16),
-          label: Text(isArabic ? 'تسجيل نتيجة فريقك' : 'Submit your team’s result', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        ),
-      );
-    }
-
-    // 5. If Match not booked yet:
+    // A match must be booked before its result can be submitted.
     if (!hasBooking && isUserMatch) {
       return SizedBox(
         width: double.infinity,
@@ -640,6 +623,41 @@ class TeamLeagueFixturesView extends StatelessWidget {
           ),
           icon: const Icon(Iconsax.calendar_tick_copy, size: 16, color: VSPColors.accent),
           label: Text(isArabic ? 'حجز موعد المباراة' : 'Book match time', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        ),
+      );
+    }
+
+    // Result submission is exposed only after the scheduled kickoff time.
+    if (isUserMatch && match.myTeamSubmission == null) {
+      if (!isPastMatchTime) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: VSPColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+          ),
+          child: Text(
+            match.scheduledTime == null
+                ? (isArabic ? 'سيظهر تسجيل النتيجة بعد تحديد موعد المباراة.' : 'Result submission opens after a match time is scheduled.')
+                : (isArabic ? 'يمكن تسجيل النتيجة بعد موعد المباراة.' : 'You can submit the result after the scheduled match time.'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
+          ),
+        );
+      }
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => onRecordScore(match),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: VSPColors.accent,
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+          ),
+          icon: const Icon(Iconsax.tick_circle_copy, size: 16),
+          label: Text(isArabic ? 'تسجيل نتيجة فريقك' : 'Submit your team’s result', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ),
       );
     }
