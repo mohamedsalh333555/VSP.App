@@ -247,7 +247,8 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
           isAr ? 'تم تأكيد حجز $customerName بنجاح' : 'Booking confirmed for $customerName',
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Owner quick phone booking failed: $e\n$stackTrace');
       if (mounted) {
         setState(() => _isSaving = false);
         final err = e.toString().toLowerCase();
@@ -261,8 +262,12 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         } else if (err.contains('unauthorized') || err.contains('owner_mismatch')) {
           VSPFeedback.showError(context, isAr ? 'غير مصرح لك، يرجى إعادة تسجيل الدخول' : 'Unauthorized operation');
         } else {
-          final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
-          VSPFeedback.showError(context, cleanMsg.isNotEmpty ? cleanMsg : (isAr ? 'حدث خطأ أثناء حفظ الحجز' : 'Failed to save phone booking'));
+          VSPFeedback.showError(
+            context,
+            isAr
+                ? 'تعذر حفظ الحجز الهاتفي. تحقق من البيانات والاتصال ثم حاول مرة أخرى.'
+                : 'Could not save the phone booking. Check the details and connection, then retry.',
+          );
         }
       }
     }
