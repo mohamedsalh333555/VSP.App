@@ -556,3 +556,12 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - Accept, reject, and remove-participant failures now write technical exception and stack details to diagnostics while preserving the existing localized, actionable user messages (including the explicit match-full case).
 - Notification delivery failures remain separately logged and do not reverse a successful join decision. No participant authorization, capacity, or match-membership rules were changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Team-league end-to-end source refinement — 2026-10-31
+
+- League creation and join flows now use bilingual labels and feedback; both modal-owned text controllers are disposed after their routes close.
+- Creation, payment-options, join, and stadium-selection surfaces now account for safe-area insets; the stadium chooser and result/dispute sheets keep their content/actions reachable on constrained viewports.
+- League payment option copy now derives the per-team fee from the loaded configured fee instead of displaying a hardcoded 30 EGP label. Where the join RPC omits the amount, the client uses the same already-loaded configured fee rather than a separate hardcoded value.
+- Team-league cancellation confirmation no longer promises that every paid fee will be refunded. It now states that only policy-eligible amounts are reviewed and explicitly says administrative fees are non-refundable; the cancellation RPC and refund processing were not changed.
+- Team-league join/cancel/create/payment setup failures now use localized recovery messages and diagnostic logging rather than exposing raw exception text. Empty-team guidance, tabs, and stadium selection copy now support Arabic and English.
+- No league fee configuration, RPC, authorization, payment amount calculation, refund worker, administrative fee rule, or database behavior was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
