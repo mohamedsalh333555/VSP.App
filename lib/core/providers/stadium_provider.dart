@@ -497,6 +497,10 @@ class StadiumProvider with ChangeNotifier {
 
  @override
  void dispose() {
+ // Invalidate in-flight discovery and owner-stream callbacks before canceling.
+ _scopeGeneration++;
+ _discoveryRequestGeneration++;
+ _listeningOwnerId = null;
  _stadiumSubscription?.cancel();
  super.dispose();
  }
