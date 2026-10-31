@@ -88,6 +88,7 @@ class ChampionshipCard extends StatelessWidget {
                 Builder(builder: (context) {
                   final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
                   final isCompleted = championship.status == 'completed';
+                  final isOngoing = championship.status == 'ongoing';
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   String badgeText;
@@ -96,6 +97,9 @@ class ChampionshipCard extends StatelessWidget {
                   if (isCompleted) {
                     badgeText = isArabic ? 'مكتملة' : 'COMPLETED';
                     badgeColor = VSPColors.accent;
+                  } else if (isOngoing) {
+                    badgeText = isArabic ? 'جارية' : 'ONGOING';
+                    badgeColor = VSPColors.info;
                   } else if (isFull) {
                     badgeText = AppLocalizations.of(context)!.full.toUpperCase();
                     badgeColor = VSPColors.warning;
@@ -212,6 +216,25 @@ class ChampionshipCard extends StatelessWidget {
                           ),
                         ],
                       );
+                    } else if (isOngoing) {
+                      return Row(
+                        children: [
+                          const Icon(Iconsax.play_circle_copy, color: VSPColors.info, size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              isArabic ? 'البطولة جارية الآن' : 'Tournament in progress',
+                              style: const TextStyle(
+                                color: VSPColors.info,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      );
                     } else if (isFull) {
                       return Text(
                         isArabic ? 'البطولة مكتملة العدد ' : 'Tournament Full ',
@@ -261,7 +284,8 @@ class ChampionshipCard extends StatelessWidget {
                   final isFull =
                       championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
                   final isCompleted = championship.status == 'completed';
-                  final isClosed = isFull || isCompleted;
+                  final isOngoing = championship.status == 'ongoing';
+                  final isClosed = isFull || isCompleted || isOngoing;
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   return Container(
