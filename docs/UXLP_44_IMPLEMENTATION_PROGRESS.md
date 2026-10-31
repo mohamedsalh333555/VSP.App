@@ -131,3 +131,13 @@ Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or AP
 - Add-player phone search forces LTR entry and submits from the keyboard Search action.
 
 No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+
+## Profile/support follow-up
+
+- Profile governorate picker receives a viewport max-height to keep its list scrollable on compact displays; profile team card uses InkWell for focusable navigation.
+- Support-ticket detail retry callbacks now create new ticket/message stream instances; list stale-data retry also reconnects.
+- Support contact fallback copy is localized and no longer leaks an internal key.
+- Technical exceptions for support ticket creation and collective match actions are logged separately from concise localized user messages.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.

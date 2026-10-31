@@ -358,3 +358,12 @@ All entries in the 44-rule matrix remain source reviewed—runtime pending; thes
 - **Rules 27, 33, 34 — date picker and phone lookup:** date-picker year/month/day rows and step chips now use focusable Material InkWell interactions. Add-player phone lookup uses LTR input direction and the keyboard Search action invokes the same guarded lookup.
 
 These are additional source touchpoints only; no rule is promoted to whole-app complete and runtime evidence remains pending.
+
+
+### Profile and support surface follow-up — 2026-10-31
+
+- **Rules 11, 27, 33, 35 — profile interaction/sheet:** profile team-card navigation now uses focusable Material interaction; the governorate picker is bounded to the visible viewport so its internal list can scroll.
+- **Rules 9, 36, 43 — support retry and diagnostics:** support-ticket detail/list retries now recreate the failed stream subscriptions rather than rebuilding around the same stream; ticket creation and collective-match action failures log technical details separately from localized user copy.
+- **Rules 10, 13 — support copy:** missing support contact configuration now produces explicit Arabic/English user-facing text instead of an internal localization key.
+
+Source touchpoints only; no whole-app rule is marked complete and runtime validation remains pending.
