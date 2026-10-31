@@ -117,7 +117,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
       );
     } catch (e) {
       if (context.mounted) {
-        VSPFeedback.showError(context, isAr ? 'خطأ في تصدير السجل: $e' : 'Error exporting ledger: $e');
+        VSPFeedback.showError(context, isAr ? 'تعذر تصدير السجل المالي. حاول مرة أخرى.' : 'Could not export the financial ledger. Please try again.');
       }
     }
   }
