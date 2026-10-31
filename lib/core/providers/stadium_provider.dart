@@ -348,6 +348,9 @@ class StadiumProvider with ChangeNotifier {
  final double? maxPrice = (filters['maxPrice'] as num?)?.toDouble();
  final bool noDepositOnly = filters['noDepositOnly'] == true;
  final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
+ final String? floorType = filters['floorType'] as String?;
+ final String? searchQuery = filters['searchQuery'] as String?;
+ final String? sortBy = filters['sortBy'] as String?;
 
  // Fetch filtered data directly from Supabase
  fetchStadiumsWithParams(
@@ -360,6 +363,9 @@ class StadiumProvider with ChangeNotifier {
  noDepositOnly: noDepositOnly,
  amenities: amenities,
  quickFilter: _activeQuickFilter,
+ floorType: floorType,
+ searchQuery: searchQuery,
+ sortBy: sortBy,
  );
  }
 
@@ -374,6 +380,9 @@ class StadiumProvider with ChangeNotifier {
  double? maxPrice,
  bool? noDepositOnly,
  List<String>? amenities,
+ String? floorType,
+ String? searchQuery,
+ String? sortBy,
  }) async {
  if (_listeningOwnerId != null) return;
  final requestGeneration = isRefresh ? ++_discoveryRequestGeneration : _discoveryRequestGeneration;
@@ -403,6 +412,9 @@ class StadiumProvider with ChangeNotifier {
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
  amenities: amenities,
+ floorType: floorType,
+ searchQuery: searchQuery,
+ sortBy: sortBy,
  );
 
  if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;

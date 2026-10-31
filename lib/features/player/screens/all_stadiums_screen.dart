@@ -52,7 +52,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     // Refresh stadiums on screen load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<StadiumProvider>(context, listen: false);
-      provider.fetchStadiums(isRefresh: true);
+      _applyServerFilters(provider);
     });
   }
 
@@ -62,14 +62,33 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     super.dispose();
   }
 
-  List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) {
-    return StadiumFilterSortService.filterAndSortStadiums(
-      allStadiums: allStadiums,
-      selectedGovernorate: _selectedGovernorate,
-      selectedFloorType: _selectedFloorType,
-      searchQuery: _searchQuery,
-      sortOption: _sortOption,
-    );
+  List<Stadium> _filterAndSortStadiums(List<Stadium> allStadiums) => allStadiums;
+
+  Map<String, dynamic> _serverFilterMap() => {
+    'sports': <String>[],
+    'location': _selectedGovernorate,
+    'sizes': <String>[],
+    'minPrice': 0.0,
+    'maxPrice': 0.0,
+    'noDepositOnly': false,
+    'amenities': <String>[],
+    'floorType': _selectedFloorType,
+    'searchQuery': _searchQuery,
+    'sortBy': _sortOption.name,
+  };
+
+  void _applyServerFilters(StadiumProvider provider, {bool isRefresh = true}) {
+    if (isRefresh) {
+      provider.applyFilters(_serverFilterMap());
+    } else {
+      provider.fetchStadiumsWithParams(
+        isRefresh: false,
+        governorate: _selectedGovernorate,
+        floorType: _selectedFloorType,
+        searchQuery: _searchQuery,
+        sortBy: _sortOption.name,
+      );
+    }
   }
 
   void _resetFilters() {
@@ -80,6 +99,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
       _selectedFloorType = 'All';
       _sortOption = StadiumSortOption.featured;
     });
+    _applyServerFilters(context.read<StadiumProvider>());
   }
 
   @override
@@ -158,7 +178,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                               if (provider.isFilterActive && filters != null) {
                                 provider.applyFilters(filters);
                               } else {
-                                provider.fetchStadiums(isRefresh: true);
+                                _applyServerFilters(provider);
                               }
                             },
                             child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
@@ -207,7 +227,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 return RefreshIndicator(
                   color: VSPColors.accent,
                   backgroundColor: VSPColors.surface,
-                  onRefresh: () => provider.fetchStadiums(isRefresh: true),
+                  onRefresh: () async => _applyServerFilters(provider),
                   child: Column(
                     children: [
                       if (provider.errorMessage != null)
@@ -277,8 +297,19 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                       Expanded(
                         child: ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                          itemCount: filteredStadiums.length,
+                          itemCount: filteredStadiums.length + (provider.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
+                            if (index >= filteredStadiums.length) {
+                              if (!provider.isLoadingMore && provider.hasMore) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) _applyServerFilters(provider, isRefresh: false);
+                                });
+                              }
+                              return const Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                              );
+                            }
                             final stadium = filteredStadiums[index];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
@@ -341,6 +372,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                     _searchQuery = val;
                   });
                 },
+                onSubmitted: (_) => _applyServerFilters(context.read<StadiumProvider>()),
               ),
             ),
             if (_searchController.text.isNotEmpty)
@@ -351,6 +383,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                     _searchController.clear();
                     _searchQuery = '';
                   });
+                  _applyServerFilters(context.read<StadiumProvider>());
                 },
               ),
           ],
@@ -374,6 +407,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           _sortOption = sortOption;
           _selectedFloorType = floorType;
         });
+        _applyServerFilters(context.read<StadiumProvider>());
       },
       onReset: _resetFilters,
     );

@@ -227,6 +227,9 @@ class StadiumRepository {
     bool? noDepositOnly,
     List<String>? amenities,
     String? quickFilter,
+    String? floorType,
+    String? searchQuery,
+    String? sortBy,
   }) async {
     try {
       dynamic query = _supabase
@@ -267,6 +270,22 @@ class StadiumRepository {
         query = query.eq('size', pitchSize);
       }
 
+      // 3b. Floor type and text search are applied before pagination.
+      final cleanFloorType = floorType?.trim() ?? '';
+      if (cleanFloorType.isNotEmpty && cleanFloorType != 'All') {
+        query = query.ilike('features->>floorType', '%$cleanFloorType%');
+      }
+      final cleanSearch = (searchQuery ?? '')
+          .trim()
+          .replaceAll(RegExp(r'[%_,()|]'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      if (cleanSearch.isNotEmpty) {
+        query = query.or(
+          'name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
+          'area.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%',
+        );
+      }
+
       // 4. Price Range Filter
       if (minPrice != null && minPrice > 0) {
         query = query.gte('price_per_hour', minPrice);
@@ -300,9 +319,21 @@ class StadiumRepository {
         query = query.or(expression);
       }
       
-      query = query
-          .order('is_featured', ascending: false)
-          .order('created_at', ascending: false);
+      switch (sortBy) {
+        case 'priceLowToHigh':
+          query = query.order('price_per_hour', ascending: true);
+          break;
+        case 'priceHighToLow':
+          query = query.order('price_per_hour', ascending: false);
+          break;
+        case 'topRated':
+          query = query.order('rating', ascending: false);
+          break;
+        default:
+          query = query
+              .order('is_featured', ascending: false)
+              .order('created_at', ascending: false);
+      }
 
       final int startIndex = (startAfter is int) ? startAfter : 0;
       final int endIndex = startIndex + limit - 1;
