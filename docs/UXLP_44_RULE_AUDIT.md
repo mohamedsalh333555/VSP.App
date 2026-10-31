@@ -502,3 +502,8 @@ Until each decision is supplied, affected rule/screen pairs must retain the `nee
 ### Add-player sheet header resilience — 2026-10-31
 
 - **Rules 11, 27, 33 — add-player sheet:** the title now flexes within the available header width, wraps to two lines, and cannot push the close action outside the row. The close action has a localized tooltip. Compact-width and enlarged-text runtime checks remain pending.
+
+
+### Add-player sheet keyboard viewport correction — 2026-10-31
+
+- **Rules 11, 35 — add-player sheet:** its maximum height now uses the available viewport after keyboard and system insets; the duplicate outer keyboard padding was removed and the content remains scrollable. Keyboard-open and device-inset runtime checks remain pending.
