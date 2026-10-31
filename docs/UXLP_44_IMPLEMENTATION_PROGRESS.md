@@ -307,3 +307,9 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 
 - The add-player sheet title now uses the available header width beside the close action, wraps to at most two lines, and truncates only beyond that bound. The close action also exposes a localized tooltip.
 - This is a source-level responsive/accessibility correction for Rules 11, 27, and 33. Runtime rendering remains pending; no CI, analyzer, tests, device checks, migration, or APK build was run.
+
+
+## Add-player sheet keyboard viewport correction — 2026-10-31
+
+- The add-player sheet now constrains its maximum height to the viewport remaining after keyboard and top/bottom system insets. Removed the separate outer keyboard padding so the keyboard inset is accounted for once, while the content remains vertically scrollable and the action/content stays reachable.
+- Source-level correction for Rules 11 and 35. Runtime keyboard and device-inset verification remains pending; no CI, analyzer, tests, migrations, or APK build was run.
