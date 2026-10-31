@@ -417,7 +417,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
-          isAr ? 'حدث خطأ غير متوقع: $e' : 'Error: $e',
+          isAr ? 'تعذر إنشاء البطولة. راجع البيانات وحاول مرة أخرى.' : 'Could not create the tournament. Review the details and try again.',
         );
       }
     } finally {
