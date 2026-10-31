@@ -189,3 +189,18 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source reviewed—runtime pending (server-matching fee policy; no false zero; localized retry; fee-info action has 48dp touch target) |
 | `lib/features/player/widgets/payment/payment_countdown_header.dart` | player | source reviewed—runtime pending (base amount is not labeled as final total when fee policy is unavailable) |
 | `lib/features/player/widgets/payment/payment_security_footer.dart` | player | source reviewed—runtime pending (checkout disabled until fee policy is valid; accurate Paymob checkout guidance) |
+
+
+## Latest grouped source remediation — 2026-10-31
+
+| Surface | Source change | Status |
+|---|---|---|
+| `lib/features/owner/widgets/ledger/owner_payout_dialog.dart` | Async payout failure feedback now checks `context.mounted` before reusing the dialog context. | source reviewed—runtime pending |
+| `lib/features/player/widgets/add_player_sheet.dart` | Dynamic localized invite label is non-const; its static TextStyle is const to satisfy the analyzer. | source reviewed—runtime pending |
+| `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | Restored the missing close delimiter in the nested safe-area/scroll container. | source reviewed—runtime pending |
+| `lib/features/player/screens/challenge_select_team_screen.dart` | Retry guard now uses an explicit block. | source reviewed—runtime pending |
+| `lib/core/providers/auth_provider.dart` | Removed the write-only user-fetch flag and assignments. | source reviewed—runtime pending |
+| `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
+| `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
+
+The source fixes above are not runtime passes. The 137 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
