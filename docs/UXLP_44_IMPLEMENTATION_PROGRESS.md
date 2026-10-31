@@ -349,3 +349,11 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The upload-selection card now exposes a labeled button semantic and Material ink interaction while remaining disabled during upload.
 - The uploaded-file delete action now has a localized tooltip and a 48dp minimum target. Blank thumbnail URLs are treated as missing rather than being passed to `NetworkImage` or shown as a successful uploaded image.
 - Source-level corrections for Rules 17, 27, and 33. Runtime screen-reader, touch, and upload-flow checks remain pending; no CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Join-request acceptance notification correction — 2026-10-31
+
+- The host's accept action previously called the host-facing `notifyPlayerJoinedMatch` method with the requesting player's ID and an empty player name. That could send the player an incorrect “player joined your match” message.
+- Added a dedicated localized `join_request_accepted` notification addressed to the requesting player and linked to the booking; the notification center now renders it with a success icon/color.
+- Notification delivery is now best-effort after the server-side accept/reject action. A notification transport failure is logged separately and no longer falsely reports that the join decision itself failed. The booking RPC and authorization rules are unchanged.
+- Source-level correction; notification delivery and tap-through runtime verification remain pending. No CI, analyzer, tests, migrations, or APK build was run.
