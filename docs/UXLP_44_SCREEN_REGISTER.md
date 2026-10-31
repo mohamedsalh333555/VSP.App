@@ -165,7 +165,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
 | `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height documented; runtime pending) |
 | `lib/shared/widgets/banner_slider_widget.dart` | shared | source reviewed—runtime pending (REST and realtime banner sources, autoplay/pointer lifecycle, image fallback; optional banner fetch failure hides the carousel without blocking the screen) |
-| `lib/shared/widgets/copyable_phone_text.dart` | shared | source reviewed—runtime pending (long-press copy now has semantic label and localized clipboard failure feedback; touch target/call-site runtime pending) |
+| `lib/shared/widgets/copyable_phone_text.dart` | shared | source reviewed—runtime pending (long-press copy now has semantic label, localized clipboard failure feedback, and a 48dp minimum hit area; call-site runtime pending) |
 | `lib/shared/widgets/public_match_card.dart` | player | source reviewed—runtime pending (join/leave/request/share failures are localized; backend details are logged; request result is checked; share action retains 48dp target) |
 | `lib/shared/widgets/vsp_ai_spark_icon.dart` | shared | source reviewed—runtime pending (custom unequal four-point spark geometry; visual identity and contrast runtime pending) |
 | `lib/shared/widgets/vsp_ambient_background.dart` | shared | source reviewed—runtime pending (shared ambient decoration uses the compatibility token facade; contrast and low-performance rendering pending) |
