@@ -210,6 +210,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final bottomInset = MediaQuery.of(context).padding.bottom +
         MediaQuery.of(context).viewInsets.bottom +
         16;
@@ -277,7 +278,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     controller: _nameController,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'e.g. Star Team',
+                      hintText: isArabic ? 'مثال: فريق النجوم' : 'e.g. Star Team',
                       hintStyle: Theme.of(context)
                           .textTheme
                           .bodyMedium
@@ -295,7 +296,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.md),
 
                   // Team bio
-                  Text('نبذة عن الفريق', style: Theme.of(context).textTheme.labelMedium),
+                  Text(isArabic ? 'نبذة عن الفريق' : 'Team description', style: Theme.of(context).textTheme.labelMedium),
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _bioController,
@@ -304,7 +305,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     maxLength: 160,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...',
+                      hintText: isArabic
+                        ? 'اكتب نبذة قصيرة عن الفريق وطريقة لعبه...'
+                        : 'Add a short description of your team and playing style...',
                       filled: true,
                       fillColor: VSPColors.surface,
                       border: OutlineInputBorder(
