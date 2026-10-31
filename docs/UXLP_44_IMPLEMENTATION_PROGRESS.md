@@ -327,3 +327,18 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 - A failed participant lookup now has an explicit localized error/retry state rather than appearing as a successful empty roster. Action failures no longer expose raw exception strings; accept/reject/remove and call feedback are localized.
 - The title can wrap beside its close action. Close/call/accept/reject/remove controls now expose localized tooltips and 48dp minimum hit targets.
 - These are source-level corrections for Rules 11, 17, 27, 33, 35, and 42. Runtime/device confirmation remains pending; no CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Shared-component and tournament lifecycle correction batch — 2026-10-31
+
+- Expanded the screen/surface inventory from 139 to 181 unique Dart paths by reconciling shared widget/core component directories and nested championship detail components. The register now has 191 path records with 10 repeated entries; six newly tracked nested championship components remain `not yet inspected`.
+- Exposed the full V2 size and typography roles through the compatibility facade (`VSPSize`, `VSPTypography`) and added canonical black/transparent/white-alpha color aliases. This is a token API change; it does not alter existing screens by itself.
+- Increased the terms checkbox hit area to the 48dp design-system minimum and added explicit checked/button semantics.
+- Public match card actions now check the boolean result of request cancellation, log technical details, show localized safe error messages for join/leave/share failures, and keep the share target at the standard 48dp.
+- Owner notification unread-stream failures now render a warning indicator and localized tooltip instead of silently appearing as zero unread.
+- Phone-number copy now has a semantic label and localized clipboard failure feedback.
+- Countdown timers stop their periodic timer at zero, restart when the target date changes, and still cancel on disposal.
+- Championship cards now distinguish `open`, `ongoing`, `cancelled`, `completed`, `full`, and unknown/closed states; only `open` cards present the registration CTA. The details bottom bar already enforces the same open-only registration gate. Share icon buttons no longer use compact visual density.
+- The team member import action already uses the requested concise Arabic label `لصق` and English `Paste`; no copy change was needed.
+
+No test or analyzer run was started for this batch. The last observed PR CI runs remain failed at Analyze; tests and the debug APK step were skipped. All changes remain source-reviewed/runtime-pending, and the final consolidated review gate remains closed.
