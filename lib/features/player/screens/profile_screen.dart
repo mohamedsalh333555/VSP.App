@@ -223,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
      clipBehavior: Clip.antiAlias,
      child: hasProfileImage
          ? CachedNetworkImage(
-             imageUrl: userProfileUrl!,
+             imageUrl: userProfileUrl,
              width: size,
              height: size,
              fit: BoxFit.cover,
