@@ -27,30 +27,50 @@ class BookingsScreen extends StatefulWidget {
 class _BookingsScreenState extends State<BookingsScreen> {
   String? _myTeamId;
   bool _isInitialLoadPending = true;
+  String? _activeUserScope;
+  bool _hasObservedUserScope = false;
+  int _userScopeGeneration = 0;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        await _loadData();
-      } finally {
-        if (mounted) setState(() => _isInitialLoadPending = false);
-      }
-    });
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserScope || userId != _activeUserScope) {
+      _hasObservedUserScope = true;
+      _activeUserScope = userId;
+      final generation = ++_userScopeGeneration;
+      _myTeamId = null;
+      _isInitialLoadPending = userId != null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _userScopeGeneration) return;
+        if (userId == null) {
+          setState(() => _isInitialLoadPending = false);
+          return;
+        }
+        _loadDataForUser(userId, generation);
+      });
+    }
   }
 
-  Future<void> _loadData() async {
-    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-
-    final userId = authProvider.currentUser?.id;
-    if (userId != null) {
-      await bookingProvider.loadUserBookings(userId);
-      if (!mounted) return;
-      final team = await TeamRepository().getUserTeam(userId);
-      if (mounted) {
+  Future<void> _loadDataForUser(String userId, int generation) async {
+    try {
+      await context.read<BookingProvider>().loadUserBookings(userId);
+      if (!mounted ||
+          generation != _userScopeGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
+      final team = await TeamRepository().getUserTeamStrict(userId);
+      if (mounted &&
+          generation == _userScopeGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
         setState(() => _myTeamId = team?.id);
+      }
+    } catch (e) {
+      debugPrint('Error loading player bookings/team context: $e');
+    } finally {
+      if (mounted && generation == _userScopeGeneration) {
+        setState(() => _isInitialLoadPending = false);
       }
     }
   }
