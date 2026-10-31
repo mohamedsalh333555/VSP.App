@@ -342,7 +342,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
 
     if (!mounted || _hasAccountChanged ||
-        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+      return;
+    }
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (paymobUrl != null && paymobUrl.isNotEmpty) {
