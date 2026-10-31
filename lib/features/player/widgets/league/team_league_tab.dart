@@ -916,21 +916,25 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   }
 
   Future<void> _cancelLeague(String leagueId) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('إلغاء الدوري', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'هل أنت متأكد من إلغاء هذا الدوري؟ سيتم رفع طلب استرداد رسمي عبر باي موب لأي رسوم تم سدادها لإعادتها إلى وسيلة الدفع الأصلية.',
-          style: TextStyle(color: VSPColors.textSecondary, height: 1.4),
+        title: Text(isArabic ? 'إلغاء الدوري' : 'Cancel league', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          isArabic
+              ? 'هل أنت متأكد من إلغاء هذا الدوري؟ ستتم مراجعة المبالغ المؤهلة للاسترداد وفق سياسة الاسترداد. المصاريف الإدارية غير قابلة للاسترداد.'
+              : 'Are you sure you want to cancel this league? Only amounts eligible under the refund policy will be reviewed for refund. Administrative fees are non-refundable.',
+          style: const TextStyle(color: VSPColors.textSecondary, height: 1.4),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('تراجع')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'تراجع' : 'Go back')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: const Text('نعم، إلغاء', style: TextStyle(color: Colors.white)),
+            child: Text(isArabic ? 'نعم، إلغاء' : 'Yes, cancel', style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -941,9 +945,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         await _leagueRepo.cancelTeamLeague(leagueId);
         VSPFeedback.triggerSuccess();
         await _loadLeague();
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('Team league cancellation failed: $e\\n$stackTrace');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(isArabic
+                ? 'تعذر إلغاء الدوري. حاول مرة أخرى.'
+                : 'Could not cancel the league. Please try again.'),
+          ));
         }
       }
     }
