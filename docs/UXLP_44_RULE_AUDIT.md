@@ -312,3 +312,17 @@ All 44 UXLP rule statuses remain **source reviewed—runtime pending**. No CI, a
 - **Rules 27, 33 — accessible controls:** add-player search now has a localized semantic label, tooltip and focusable InkWell target.
 
 **Important boundary:** these client changes improve persistence visibility and error feedback. They do not prove the root cause of the previously reported notification disappearance has been eliminated; that requires evidence from the actual database/realtime session, which is not being run in this implementation phase.
+
+
+## Phase 2 continuation — support, notification delivery, and shared interaction polish
+
+Additional source changes committed after the prior batch:
+
+- **Rules 9, 36, 38, 43 — support ticket stream truthfulness:** support-ticket list stream is now retained between widget rebuilds, rebound on account changes, and recreated only on explicit retry. An initial empty error is no longer presented as a verified empty list. A refresh error preserves previously loaded tickets and shows a localized warning/retry.
+- **Rules 10, 13, 41 — notification bilingual integrity:** notification detail dialogs now use the same locale-specific metadata as notification cards; long titles can wrap to two lines instead of being truncated after one.
+- **Rules 27, 33 — shared touch and keyboard affordance:** language rows now use focusable InkWell, selected semantics and 56dp minimum height; the shared back button uses InkWell while retaining a 48dp-or-larger hit area, localized semantics and haptics. The shared animated button now visibly enters its disabled appearance during the existing debounce window rather than appearing active while rejecting taps.
+- **Rules 18, 36, 41, 43 — push dispatch reliability:** the FCM queue worker now checks the push function's HTTP result and leaves failed dispatch messages unarchived for PGMQ visibility-timeout retry. The sender returns HTTP 502 when every device send fails. Queue notification identifiers are preserved in FCM data using the trigger's `notification_id` field when no row `id` is present.
+
+**Delivery semantics note:** the queue remains at-least-once; if a push succeeds but archiving fails, a later retry can duplicate the push. This batch does not alter queue schema, retry limits, notification retention, or user-facing notification deletion policy.
+
+All 44 rule entries remain source reviewed/runtime pending. No CI, analyzer, tests, runtime checks, migration, or APK build were run.
