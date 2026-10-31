@@ -338,7 +338,7 @@ class StadiumRepository {
         return 'features->>garage.eq.true,features->>hasGarage.eq.true,features->>parking.eq.true';
       case 'مقاعد':
       case 'spectator seats':
-        return 'hasSeats.eq.true,features->>hasSeats.eq.true,features->>seats.gt.0';
+        return 'features->>hasSeats.eq.true,features->>seats.gt.0';
       default:
         return null;
     }
