@@ -26,13 +26,23 @@ class NotificationsCenterScreen extends StatefulWidget {
 
 class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
   late Stream<List<AppNotification>> _notificationsStream;
-  late final String _userId;
+  late String _userId;
 
   @override
   void initState() {
     super.initState();
     _userId = context.read<AuthProvider>().currentUser?.id ?? '';
     _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentUserId = context.watch<AuthProvider>().currentUser?.id ?? '';
+    if (currentUserId != _userId) {
+      _userId = currentUserId;
+      _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+    }
   }
 
   @override
