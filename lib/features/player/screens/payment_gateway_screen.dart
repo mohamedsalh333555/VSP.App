@@ -62,6 +62,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   BuildContext? _verificationModalContext;
   final String _selectedMethod = 'card';
   PaymobFeePolicy? _feePolicy;
+  bool _isFeePolicyLoading = true;
 
   @override
   void initState() {
@@ -72,9 +73,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _loadFeePolicy() async {
+    if (mounted) setState(() => _isFeePolicyLoading = true);
     final policy = await PaymobService.fetchFeePolicy();
     if (!mounted) return;
-    setState(() => _feePolicy = policy);
+    setState(() {
+      _feePolicy = policy;
+      _isFeePolicyLoading = false;
+    });
   }
 
   void _startCountdownTimer() {
@@ -220,6 +225,16 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   Future<void> _startPaymobCheckout() async {
     if (_booking == null && !widget.isTournamentPayment) return;
+    if (_isFeePolicyLoading || _feePolicy?.isValidForElectronicCheckout != true) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من رسوم الدفع. أعد تحميل تفاصيل الرسوم قبل المتابعة.'
+            : 'Payment fees could not be verified. Reload the fee details before continuing.',
+      );
+      return;
+    }
     if (_isLoading || _isAwaitingWebhook) return;
     setState(() {
       _isLoading = true;
@@ -490,7 +505,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final effectiveForceFullPayment = widget.forceFullPayment;
     final hasDeposit = !effectiveForceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
-    final double? totalWithFees = _feePolicy?.total(amountToPay);
+    final double? totalWithFees = _feePolicy?.isValidForElectronicCheckout == true
+        ? _feePolicy!.total(amountToPay)
+        : null;
 
     return PopScope(
       canPop: false,
@@ -528,6 +545,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       hasDeposit: hasDeposit,
                       amountToPay: amountToPay,
                       isArabic: isArabic,
+                      feePolicy: _feePolicy,
+                      isFeePolicyLoading: _isFeePolicyLoading,
+                      onRetryFeePolicy: _loadFeePolicy,
                     ),
                     const SizedBox(height: VSPSpacing.md),
                     Container(
@@ -583,7 +603,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       isLoading: _isLoading,
                       isAwaitingWebhook: _isAwaitingWebhook,
                       isArabic: isArabic,
-                      canProceed: !(_booking == null && !widget.isTournamentPayment),
+                      canProceed: !(_booking == null && !widget.isTournamentPayment) &&
+                          !_isFeePolicyLoading &&
+                          _feePolicy?.isValidForElectronicCheckout == true,
                       totalAmount: totalWithFees,
                       onProceed: _startPaymobCheckout,
                     ),
