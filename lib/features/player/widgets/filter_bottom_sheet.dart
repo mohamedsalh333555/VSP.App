@@ -124,13 +124,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     count += _amenitiesFilters.values.where((v) => v).length;
     if (_selectedGov != null) count++;
     if (_noDepositOnly) count++;
+    if (context.read<StadiumProvider>().activeQuickFilter != null) count++;
     final maxDb = context.read<StadiumProvider>().maxStadiumPrice;
     if (_priceRange.start > 0 || _priceRange.end < maxDb) count++;
     return count;
   }
 
   void _resetAll() {
-    final maxDb = context.read<StadiumProvider>().maxStadiumPrice;
+    final provider = context.read<StadiumProvider>();
+    final maxDb = provider.maxStadiumPrice;
     setState(() {
       _sportsFilters.updateAll((key, value) => false);
       _sizeFilters.updateAll((key, value) => false);
@@ -139,6 +141,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       _noDepositOnly = false;
       _priceRange = RangeValues(0, maxDb);
     });
+    final activeQuickFilter = provider.activeQuickFilter;
+    if (activeQuickFilter != null) provider.toggleQuickFilter(activeQuickFilter);
   }
 
   @override

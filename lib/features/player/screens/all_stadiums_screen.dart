@@ -131,6 +131,44 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
 
                 final filteredStadiums = _filterAndSortStadiums(provider.stadiums);
 
+                if (provider.errorMessage != null && provider.stadiums.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 42),
+                          const SizedBox(height: 12),
+                          Text(
+                            isArabic ? 'تعذر تحميل الملاعب' : 'Could not load stadiums',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isArabic ? 'تحقق من اتصالك بالإنترنت ثم أعد المحاولة.' : 'Check your connection and try again.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          ),
+                          const SizedBox(height: 14),
+                          ElevatedButton(
+                            onPressed: () {
+                              final filters = provider.currentFilters;
+                              if (provider.isFilterActive && filters != null) {
+                                provider.applyFilters(filters);
+                              } else {
+                                provider.fetchStadiums(isRefresh: true);
+                              }
+                            },
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
                 if (filteredStadiums.isEmpty) {
                   return Center(
                     child: SingleChildScrollView(
@@ -172,6 +210,40 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                   onRefresh: () => provider.fetchStadiums(isRefresh: true),
                   child: Column(
                     children: [
+                      if (provider.errorMessage != null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: VSPColors.warning.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    isArabic ? 'تعذر تحديث القائمة. نعرض آخر بيانات متاحة.' : 'Could not refresh the list. Showing the last available results.',
+                                    style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final filters = provider.currentFilters;
+                                    if (provider.isFilterActive && filters != null) {
+                                      provider.applyFilters(filters);
+                                    } else {
+                                      provider.fetchStadiums(isRefresh: true);
+                                    }
+                                  },
+                                  child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       // Results Counter
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

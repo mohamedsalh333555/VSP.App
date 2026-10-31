@@ -225,6 +225,7 @@ class StadiumRepository {
     double? minPrice,
     double? maxPrice,
     bool? noDepositOnly,
+    List<String>? amenities,
   }) async {
     try {
       dynamic query = _supabase
@@ -275,7 +276,14 @@ class StadiumRepository {
 
       // 5. No Deposit Filter
       if (noDepositOnly == true) {
-        query = query.eq('needs_deposit', false);
+        query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
+      }
+
+      // Apply each selected amenity before range pagination.
+      for (final amenity in amenities ?? const <String>[]) {
+        final expression = _amenityOrExpression(amenity);
+        if (expression == null) throw ArgumentError('Unsupported stadium amenity filter');
+        query = query.or(expression);
       }
       
       query = query
@@ -296,7 +304,29 @@ class StadiumRepository {
       };
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH STADIUMS', e);
-      return {'items': <Stadium>[], 'lastDoc': null};
+      rethrow;
+    }
+  }
+
+  String? _amenityOrExpression(String amenity) {
+    switch (amenity.trim().toLowerCase()) {
+      case 'دش وحمام':
+      case 'showers & baths':
+        return 'baths.gt.0,features->>bathOption.eq.Yes,features->>hasShower.eq.true,features->>shower.eq.true';
+      case 'غرف تغيير ملابس':
+      case 'changing rooms':
+        return 'features->>changingRoom.eq.true,features->>changingRooms.eq.true,features->>hasChangingRooms.eq.true';
+      case 'كافتيريا ومشروبات':
+      case 'cafeteria & drinks':
+        return 'cafeteria.gt.0,features->>cafeteria.eq.true,features->>hasCafeteria.eq.true';
+      case 'جراج سيارات':
+      case 'garage & parking':
+        return 'features->>garage.eq.true,features->>hasGarage.eq.true,features->>parking.eq.true';
+      case 'مقاعد':
+      case 'spectator seats':
+        return 'hasSeats.eq.true,features->>hasSeats.eq.true,features->>seats.gt.0';
+      default:
+        return null;
     }
   }
 

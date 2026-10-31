@@ -5,6 +5,7 @@ import '../repositories/stadium_repository.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/fast_cache_service.dart';
+import '../services/logger_service.dart';
 import '../services/stadium/stadium_filter_service.dart';
 
 class StadiumProvider with ChangeNotifier {
@@ -194,7 +195,8 @@ class StadiumProvider with ChangeNotifier {
  notifyListeners();
  } catch (e) {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
-   _setError('Failed to fetch stadiums: ${e.toString()}');
+   VSPLogger.e('Failed to fetch stadiums', e);
+   _setError('stadium_load_failed');
  }
  } finally {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
@@ -401,13 +403,13 @@ class StadiumProvider with ChangeNotifier {
  minPrice: minPrice,
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
+ amenities: amenities,
  );
 
  if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  final List<Stadium> rawItems = result['items'];
- final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
- ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
- : rawItems;
+ // Amenity filters are already applied by the repository before pagination.
+ final List<Stadium> newStadiums = rawItems;
  _lastDocument = result['lastDoc'];
 
  if (isRefresh) {
