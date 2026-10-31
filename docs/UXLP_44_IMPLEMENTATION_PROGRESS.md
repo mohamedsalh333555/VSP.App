@@ -462,3 +462,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Maintenance-slot secondary copy now uses the remaining flexible width and ellipsizes instead of forcing the row wider than its card.
 - Available, break, and expired slot labels now share the row's remaining width with the state badge and truncate safely on narrow screens and long localized labels.
 - Source implementation only; no CI, analyzer, tests, runtime checks, database changes, or APK build were run.
+
+## Owner schedule time-column text bounds
+
+- Start time, merged-slot end time, and night labels are now single-line ellipsized within the fixed time column. This prevents long localized/night labels from painting outside the 75dp column or pushing the adjacent slot card.
+- Source-only; no tests, analyzer, CI, runtime validation, database changes, or APK build were run.
