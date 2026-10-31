@@ -147,16 +147,16 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
     });
   }
 
-  bool _hasShownPostMatchPopupThisSession = false;
+  String? _popupShownForUserId;
 
   void _checkPendingChallengeResultPopup(
     BuildContext context, {
     required Set<String> captainTeamIds,
   }) {
-    if (_hasShownPostMatchPopupThisSession) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final userId = auth.currentUser?.id;
     if (userId == null || captainTeamIds.isEmpty) return;
+    if (_popupShownForUserId == userId) return;
 
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
@@ -189,7 +189,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
       // Either participating captain may submit the first result.
       if (booking.matchResultStatus == MatchResultStatus.noResult) {
-        _hasShownPostMatchPopupThisSession = true;
+        _popupShownForUserId = userId;
         showPostMatchAddResultDialog(context, booking, myTeamId: myTeamId);
         break;
       }
