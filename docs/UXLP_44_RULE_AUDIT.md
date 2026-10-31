@@ -497,3 +497,8 @@ These findings are explicitly classified as **needs product decision**. They are
 | 18, 36, 41, 43 | Refund notification reconciliation | Decide the required durable notification/reconciliation behavior when Paymob confirms a refund but ledger recording or notification insertion fails. | Existing refund/ledger flow remains unchanged; no outbox table or migration was applied. |
 
 Until each decision is supplied, affected rule/screen pairs must retain the `needs product decision` status rather than being marked `pass` or changed by assumption.
+
+
+### Add-player sheet header resilience — 2026-10-31
+
+- **Rules 11, 27, 33 — add-player sheet:** the title now flexes within the available header width, wraps to two lines, and cannot push the close action outside the row. The close action has a localized tooltip. Compact-width and enlarged-text runtime checks remain pending.
