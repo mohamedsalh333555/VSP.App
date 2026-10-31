@@ -61,14 +61,24 @@ Future<void> showTournamentPrizeDeliveryDialog(
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              isAr ? 'مبلغ الجائزة (الوعاء الفعلي):' : 'Prize Pool:',
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                            Expanded(
+                              child: Text(
+                                isAr ? 'مبلغ الجائزة (الوعاء الفعلي):' : 'Prize Pool:',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              ),
                             ),
-                            Text(
-                              '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
-                              style: const TextStyle(
-                                  color: VSPColors.success, fontWeight: FontWeight.bold, fontSize: 13),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                '${prizeAmount.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                    color: VSPColors.success, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
                             ),
                           ],
                         ),
