@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/owner_repository.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -336,8 +337,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
+      VSPLogger.w('Owner no-show report failed: $e');
       if (mounted) {
-        VSPFeedback.showError(context, isArabic ? 'تعذر تسجيل عدم الحضور: $e' : 'Could not record no-show: $e');
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر تسجيل عدم الحضور. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not record the no-show. Check your connection and try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
