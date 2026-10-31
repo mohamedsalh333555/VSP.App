@@ -158,3 +158,10 @@ Source only. No CI, analyzer, tests, runtime checks, migrations, or APK build we
 - Collective invite share now catches credential-fetch and platform-share failures; stadium map launch checks the returned launch status and displays localized feedback on failure.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Support message account-race correction
+
+- Support composer send now captures account identity/generation; late responses from an old account cannot clear a new user's draft or alter a newer send's loading state. Error feedback is scoped to the originating active account, with technical details sent to the logger.
+
+Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.

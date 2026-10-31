@@ -379,3 +379,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 
 - **Rules 11, 35 — owner booking viewport:** owner manual-booking sheet now accounts for keyboard and both safe-area edges in its maximum height and avoids double-counting keyboard inset in bottom padding.
 - **Rules 18, 36, 43 — collective action recovery:** invite share credential lookup, external share launch, and stadium-map launch now have guarded failure handling, technical logs, and localized user-facing recovery copy.
+
+
+### Support send account-race correction — 2026-10-31
+
+- **Rules 38, 39, 41, 43 — support message ownership:** support message submission now captures the originating account generation. A response from an earlier account cannot clear a newly active account's draft, surface stale errors in that account, or reset a newer send's loading state. Technical send failures are logged separately.
