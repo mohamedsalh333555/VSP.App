@@ -39,6 +39,8 @@ class TeamLeagueTab extends StatefulWidget {
 class _TeamLeagueTabState extends State<TeamLeagueTab> {
   final TeamLeagueRepository _leagueRepo = TeamLeagueRepository();
   bool _isLoading = true;
+  bool _hasLeagueLoadError = false;
+  bool _hasPaymentStatusError = false;
   TeamLeagueData? _leagueData;
   String _leaguePaymentStatus = 'not_created';
   double _configuredFee = 30.0;
@@ -60,15 +62,29 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
   Future<void> _loadLeague() async {
     if (widget.userTeam == null) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _leagueData = null;
+          _hasLeagueLoadError = false;
+          _hasPaymentStatusError = false;
+        });
+      }
       return;
     }
 
-    if (mounted) setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _hasLeagueLoadError = false;
+        _hasPaymentStatusError = false;
+      });
+    }
     try {
       final data = await _leagueRepo.getTeamActiveLeague(widget.userTeam!.id);
       final fee = await _leagueRepo.getTeamLeagueEntryFee();
       var paymentStatus = 'not_created';
+      var paymentStatusError = false;
       if (data != null) {
         try {
           final payment = await _leagueRepo.getTeamLeaguePaymentStatus(
@@ -76,19 +92,31 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
             teamId: widget.userTeam!.id,
           );
           paymentStatus = payment['status']?.toString() ?? 'not_created';
-        } catch (_) {}
+        } catch (e) {
+          // Unknown payment state must never be treated as unpaid/eligible to pay.
+          debugPrint('Error loading team league payment status: $e');
+          paymentStatusError = true;
+        }
       }
       if (mounted) {
         setState(() {
           _leagueData = data;
           _leaguePaymentStatus = paymentStatus;
           _configuredFee = fee;
+          _hasPaymentStatusError = paymentStatusError;
+          _hasLeagueLoadError = false;
           _isLoading = false;
         });
       }
     } catch (e) {
+      debugPrint('Error loading team league: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _leagueData = null;
+          _hasLeagueLoadError = true;
+          _hasPaymentStatusError = false;
+          _isLoading = false;
+        });
       }
     }
   }
@@ -956,6 +984,30 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
     }
 
+    if (_hasLeagueLoadError) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(VSPSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isArabic ? 'تعذر تحميل بيانات الدوري' : 'Could not load league data',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              TextButton(
+                onPressed: _loadLeague,
+                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final league = _leagueData;
 
     // 3. Not in any league -> Show onboarding card
@@ -986,11 +1038,31 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
+            if (_hasPaymentStatusError)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'تعذر التحقق من حالة رسوم الفريق. أعد المحاولة قبل الدفع.',
+                        style: TextStyle(color: VSPColors.warning, fontSize: 12),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _loadLeague,
+                      child: const Text('إعادة المحاولة'),
+                    ),
+                  ],
+                ),
+              ),
             TeamLeagueGatheringCard(
               league: league,
               onRefresh: _loadLeague,
               onCancelLeague: () => _cancelLeague(league.id),
-              onPayFee: _leaguePaymentStatus == 'paid' ? null : _payCurrentLeague,
+              onPayFee: (_hasPaymentStatusError || _leaguePaymentStatus == 'paid')
+                  ? null
+                  : _payCurrentLeague,
             ),
           ],
         ),
