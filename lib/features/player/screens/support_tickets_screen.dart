@@ -72,7 +72,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               DropdownButtonFormField<String>(
                 value: category,
                 decoration: InputDecoration(labelText: isArabic ? 'التصنيف' : 'Category'),
-                items: const [
+                items: [
                   DropdownMenuItem(value: 'account', child: Text(isArabic ? 'الحساب' : 'Account')),
                   DropdownMenuItem(value: 'booking', child: Text(isArabic ? 'الحجز' : 'Booking')),
                   DropdownMenuItem(value: 'payment', child: Text(isArabic ? 'الدفع' : 'Payment')),
@@ -181,7 +181,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 32),
+                          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 32),
                           const SizedBox(height: VSPSpacing.md),
                           Text(
                             isArabic ? 'تعذر تحميل تذاكر الدعم.' : 'Could not load support tickets.',
