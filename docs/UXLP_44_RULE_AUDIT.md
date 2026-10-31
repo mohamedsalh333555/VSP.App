@@ -552,3 +552,15 @@ The team roster import control already displays `لصق` / `Paste`. The inventor
 ### Join-request acceptance notification correction — 2026-10-31
 
 - **Rules 18, 27, 41 — public-match join request:** acceptance now sends a dedicated localized notification to the requesting player with the related booking ID. The former host-oriented notification was being sent to the player with an empty player name. Notification delivery failure is logged separately from the already completed accept/reject action. Runtime delivery/tap-through checks remain pending.
+
+
+## Championship detail loading and recovery states — 2026-10-31
+
+The nested championship detail flow now has explicit source-level state handling:
+
+- Match fixtures: initial loading is no longer shown as “no matches”; initial stream errors show the shared retry state; a stream failure after data preserves the last data and shows a stale/live-updates warning with Retry.
+- Standings and top scorers: FutureBuilder errors now show localized shared error states with Retry rather than being interpreted as empty results.
+- Retry is wired to recreate the matches stream and rebuild the standings/top-scorers futures from the parent screen.
+- The nested header, pill tab bar, rules tab, governorate confirmation dialog, squad-builder sheet, matches tab, standings table, and top-scorers tab have source-review notes. Runtime, large-text, focus, and device layout evidence remain pending.
+
+The 181-path inventory has no `not yet inspected` rows at this checkpoint, but this does not satisfy the per-rule/per-state coverage requirement. All 44 rule rows remain runtime-pending; no final consolidated review has started.
