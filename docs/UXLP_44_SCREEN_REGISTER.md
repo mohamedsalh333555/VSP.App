@@ -130,7 +130,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (captain-scoped team IDs; accurate alternate-result copy; both result dialogs lock during submission and preserve retry on failure) |
-| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (result and dispute sheets are keyboard-safe and scrollable; result errors use localized recovery copy with diagnostics separated) |
+| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (result/dispute sheets are keyboard-safe and scrollable; visible copy is bilingual; long team labels are bounded; failures use localized recovery copy) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited boolean result; closes only on success; failed submission preserves form for retry; duplicate taps/dismissal guarded) |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (exit copy distinguishes unsubmitted payment from a submitted attempt awaiting server confirmation) |
@@ -199,7 +199,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 |---|---|---|
 | `lib/features/player/widgets/user_bookings/pending_booking_card.dart` | player | source reviewed—runtime pending (server-confirmed payment predicate; duplicate-checkout guard while payment awaits confirmation; refreshed status guidance; cancellation confirmation; 48dp cancel target) |
 | `lib/features/player/widgets/user_bookings/player_booking_card.dart` | player | source reviewed—runtime pending (booking lifecycle badges now use actual status; channel-neutral refund-pending copy) |
-| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited callback, submission lock, disabled dismissal/editing while submitting) |
+| `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited callback, submission lock, disabled dismissal/editing while submitting; close control has localized tooltip and 48dp target) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (success/failure feedback reflects repository result for submit/confirm/dispute) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective full-online-payment guard; localized generic failures instead of backend exception text; bounded scroll-safe sheet) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule failure feedback; destructive closure confirmation) |
