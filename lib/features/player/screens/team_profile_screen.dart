@@ -37,6 +37,7 @@ class TeamProfileScreen extends StatefulWidget {
 class _TeamProfileScreenState extends State<TeamProfileScreen> {
   final List<UserModel> _teamMembers = [];
   bool _isLoadingMembers = true;
+  bool _hasMemberLoadError = false;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
   bool _hasTeamLoadError = false;
@@ -116,24 +117,55 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   Future<void> _loadMemberDetails() async {
-    if (team.memberUids.length > 1) {
-      final memberIds = team.memberUids.sublist(1);
-      try {
-        final members = await UserRepository().getUsersByIds(memberIds);
-        if (mounted) {
-          setState(() {
-            _teamMembers.clear();
-            _teamMembers.addAll(members);
-            _isLoadingMembers = false;
-          });
-        }
-      } catch (e) {
-        debugPrint('Error loading team members: $e');
-        if (mounted) setState(() => _isLoadingMembers = false);
+    // team_members has no guaranteed row order; never assume the captain is
+    // the first returned UID. Exclude the captain by identity instead.
+    final memberIds = team.memberUids
+        .where((id) => id.isNotEmpty && id != team.captainId)
+        .toSet()
+        .toList();
+    if (memberIds.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _teamMembers.clear();
+          _isLoadingMembers = false;
+          _hasMemberLoadError = false;
+        });
       }
-    } else {
-      if (mounted) setState(() => _isLoadingMembers = false);
+      return;
     }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingMembers = true;
+        _hasMemberLoadError = false;
+      });
+    }
+    try {
+      final members = await UserRepository().getUsersByIdsStrict(memberIds);
+      if (mounted) {
+        setState(() {
+          _teamMembers
+            ..clear()
+            ..addAll(members);
+          _isLoadingMembers = false;
+          _hasMemberLoadError = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading team members: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingMembers = false;
+          _hasMemberLoadError = true;
+        });
+      }
+    }
+  }
+
+  int get _teamMemberCount {
+    final ids = team.memberUids.where((id) => id.isNotEmpty).toSet();
+    if (team.captainId.isNotEmpty) ids.add(team.captainId);
+    return ids.length;
   }
 
   Future<void> _generateMatchupInviteCode() async {
@@ -279,7 +311,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 2. Stats Grid
             TeamProfileStatsGrid(
               team: team,
-              totalMembersCount: 1 + _teamMembers.length,
+              totalMembersCount: _teamMemberCount,
             ),
 
             const SizedBox(height: 32),
@@ -296,6 +328,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             TeamProfileRosterSection(
               members: _teamMembers,
               isLoading: _isLoadingMembers,
+              hasError: _hasMemberLoadError,
+              onRetry: _loadMemberDetails,
             ),
 
             const SizedBox(height: 32),
