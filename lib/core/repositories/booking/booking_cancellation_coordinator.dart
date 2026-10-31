@@ -70,6 +70,24 @@ class BookingCancellationCoordinator {
             if (data is Map && data['success'] == true) {
               VSPLogger.i('Paymob refund processed successfully for booking: $bookingId');
               paymobProcessed = true;
+            } else if (data is Map &&
+                data['refund_pending'] == true &&
+                data['manual_review'] != true) {
+              // The refund Edge Function can return success:false after it has
+              // already cancelled the booking and queued/manualized the refund.
+              // Confirm the persisted booking state before reporting cancellation success.
+              final persisted = await _supabase
+                  .from('bookings')
+                  .select('status,payment_status')
+                  .eq('id', bookingId)
+                  .maybeSingle();
+              if (persisted?['status'] == 'cancelled') {
+                VSPLogger.w('Booking cancelled; refund remains pending for booking: $bookingId');
+                paymobProcessed = true;
+              } else {
+                final msg = data['message']?.toString();
+                throw Exception(sanitizeCancellationError(null, msg));
+              }
             } else {
               final msg = data is Map ? data['message']?.toString() : null;
               throw Exception(sanitizeCancellationError(null, msg));
