@@ -522,3 +522,8 @@ A top-level directory reconciliation found 35 shared/embedded Dart surfaces that
 ## Nested championship detail surfaces — 2026-10-31
 
 Recursive directory inspection of `lib/features/player/widgets/championship_details` found nine component files. Two were already represented in the register; seven were newly tracked. The bottom action bar source confirms that only `open` championships expose registration; `ongoing`, `completed`, `cancelled`, and full states route to view/disabled actions. Six newly tracked nested components remain `not yet inspected`. The championship card was corrected to show ongoing/cancelled/unknown statuses without presenting them as joinable. These remain source-only changes; runtime and caller-state validation are pending.
+
+
+### Match participant manager resilience — 2026-10-31
+
+- **Rules 11, 17, 27, 33, 35, 42 — `ManageParticipantsModal`: keyboard-safe bounded height; explicit retryable lookup failure distinct from an empty list; localized action errors instead of raw exception text; wrapping header; localized tooltips and 48dp hit targets. Runtime validation remains pending.
