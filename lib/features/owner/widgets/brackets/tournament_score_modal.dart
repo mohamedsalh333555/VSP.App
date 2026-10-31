@@ -459,8 +459,11 @@ void showTournamentScoreModal(
                                                 : 'Match score, goal scorers saved & $finalWinnerName advanced successfully.',
                                           );
                                         }
-                                      } catch (e) {
-                                        setModalState(() => isSubmitting = false);
+                                      } catch (e, stackTrace) {
+                                        debugPrint('Tournament score submission failed: $e\n$stackTrace');
+                                        if (sheetContext.mounted) {
+                                          setModalState(() => isSubmitting = false);
+                                        }
                                         if (sheetContext.mounted) {
                                           VSPFeedback.showError(
                                             sheetContext,
