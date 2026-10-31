@@ -138,6 +138,12 @@ class PendingBookingCard extends StatelessWidget {
                     try {
                       final updated = await bp.getBookingById(pendingBooking.id);
                       if (!context.mounted) return;
+                      final updatedPaymentState = updated?.paymentStatus?.toLowerCase().trim();
+                      final isAwaitingPaymentConfirmation = updated != null &&
+                          (updated.isPaid ||
+                              updatedPaymentState == 'paid' ||
+                              updatedPaymentState == 'partially_paid' ||
+                              updatedPaymentState == 'refund_pending');
                       final isConfirmed = updated != null &&
                           PaymentCheckoutService.isPaymentConfirmed(
                             status: updated.status.toDbValue(),
@@ -160,9 +166,15 @@ class PendingBookingCard extends StatelessWidget {
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(isArabic
-                                ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية الدفع.'
-                                : 'Payment is not confirmed yet. Please complete checkout.'),
+                            content: Text(
+                              isAwaitingPaymentConfirmation
+                                  ? (isArabic
+                                      ? 'الدفع ما زال قيد التحقق. لا تكرر الدفع؛ انتظر تأكيد الخادم.'
+                                      : 'Payment is still being verified. Do not pay again; wait for server confirmation.')
+                                  : (isArabic
+                                      ? 'لم يتم تأكيد السداد بعد، يمكنك استكمال عملية الدفع.'
+                                      : 'Payment is not confirmed yet. You can complete checkout.'),
+                            ),
                             backgroundColor: VSPColors.warning,
                           ),
                         );
