@@ -74,7 +74,13 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
     if (parsedNames.isEmpty) {
       if (mounted) {
-        VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'لم يتم العثور على أسماء واضحة في النص الملصوق.'
+            : 'No clear player names were found in the pasted text.',
+      );
       }
       return;
     }
@@ -120,33 +126,30 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid;
+      final uid = auth.currentUser?.id;
 
       if (uid == null) {
-        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Session expired. Please sign in again.',
+        );
         return;
       }
 
       final captainGovernorate = auth.userModel?.governorate?.trim();
       if (captainGovernorate == null || captainGovernorate.isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
-          'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.',
+          isArabic
+              ? 'يجب تحديد محافظة الكابتن قبل إنشاء الفريق.'
+              : 'Set the captain’s governorate before creating the team.',
         );
         return;
       }
 
       setState(() => _isSubmitting = true);
-
-      if (_teamMembers.isEmpty && mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(
-          context,
-          isArabic
-              ? 'يمكن إنشاء الفريق بالكابتن فقط. يمكنك إضافة اللاعبين لاحقاً قبل التسجيل في البطولة.'
-              : 'The team can be created with the captain only. You can add players before tournament registration.',
-        );
-      }
 
       if (_selectedLogo != null) {
         _uploadedLogoUrl = await StorageService().uploadFile(
@@ -190,7 +193,11 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           ),
         );
       } else if (mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء الفريق، يرجى إعادة المحاولة.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'فشل إنشاء الفريق. حاول مرة أخرى.' : 'Team creation failed. Please try again.',
+        );
       }
     } catch (e) {
       if (mounted) {
