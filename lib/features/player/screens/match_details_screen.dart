@@ -471,7 +471,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isActionProcessing = false);
-        VSPFeedback.showError(context, '$e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر مغادرة المباراة. حاول مرة أخرى.' : 'Could not leave the match. Please try again.',
+        );
       }
     }
   }
