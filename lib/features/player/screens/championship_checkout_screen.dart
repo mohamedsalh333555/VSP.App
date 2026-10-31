@@ -127,6 +127,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
   Future<void> _pasteFromWhatsApp() async {
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
+    if (!mounted) return;
     if (parsedNames.isEmpty) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (mounted) {
