@@ -286,3 +286,5 @@ The source fixes above are not runtime passes. The 181 unique registered paths s
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (load failure distinct from empty state with retry; bilingual result/closure feedback; scrollable close confirmation) |
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (creation exception localized and sanitized) |
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (team-list failure distinct from empty roster with retry; kickoff async lifecycle guard and scrollable confirmation) |
+| `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (profile save/delete errors are localized and sanitized; delete confirmation scrollable) |
+| `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (participating-team lookup failure has retry; kickoff async state guarded) |
