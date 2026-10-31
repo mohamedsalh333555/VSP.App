@@ -203,6 +203,29 @@ class NotificationHandler {
     await _notificationRepo.sendNotification(playerId, notif);
   }
 
+  /// Notify a player that the host accepted their open-match join request.
+  static Future<void> notifyJoinRequestAccepted({
+    required String playerId,
+    required String stadiumName,
+    required String bookingId,
+  }) async {
+    final notif = AppNotification(
+      id: '',
+      title: 'Join Request Accepted',
+      body: 'Your request to join the match at $stadiumName was accepted.',
+      type: 'join_request_accepted',
+      bookingId: bookingId,
+      createdAt: DateTime.now(),
+      metadata: _localizedCopy(
+        titleAr: 'تم قبول طلب الانضمام',
+        titleEn: 'Join request accepted',
+        bodyAr: 'تم قبول طلبك للانضمام إلى المباراة في $stadiumName.',
+        bodyEn: 'Your request to join the match at $stadiumName was accepted.',
+      ),
+    );
+    await _notificationRepo.sendNotification(playerId, notif);
+  }
+
   // --------------------------------------------------------------------------
   // 3. CHALLENGES (Code-driven instant confirmation SSOT)
   // --------------------------------------------------------------------------
