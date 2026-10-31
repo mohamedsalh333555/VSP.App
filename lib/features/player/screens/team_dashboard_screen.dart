@@ -30,6 +30,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
+  String? _activeUserTeamScope;
+  bool _hasObservedUserTeamScope = false;
+  int _userTeamRequestGeneration = 0;
   final ScrollController _scrollController = ScrollController();
   late final Stream<List<Booking>> _matchesStream;
   int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
@@ -38,7 +41,19 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   void initState() {
     super.initState();
     _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
-    _fetchUserTeam();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserTeamScope || userId != _activeUserTeamScope) {
+      _hasObservedUserTeamScope = true;
+      _activeUserTeamScope = userId;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fetchUserTeamFor(userId);
+      });
+    }
   }
 
   @override
@@ -47,9 +62,14 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchUserTeam() async {
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    if (!auth.isAuthenticated || auth.currentUser == null) {
+  Future<void> _fetchUserTeam() {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    return _fetchUserTeamFor(userId);
+  }
+
+  Future<void> _fetchUserTeamFor(String? userId) async {
+    final generation = ++_userTeamRequestGeneration;
+    if (userId == null || userId.isEmpty) {
       if (mounted) {
         setState(() {
           _userTeam = null;
@@ -67,8 +87,12 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       });
     }
     try {
-      final team = await TeamRepository().getUserTeamStrict(auth.currentUser!.id);
-      if (!mounted) return;
+      final team = await TeamRepository().getUserTeamStrict(userId);
+      if (!mounted ||
+          generation != _userTeamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       setState(() {
         _userTeam = team;
         _isLoadingUserTeam = false;
@@ -77,7 +101,10 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       if (team != null) {
         try {
           final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
-          if (mounted && activeLeague != null &&
+          if (mounted &&
+              generation == _userTeamRequestGeneration &&
+              context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
+              activeLeague != null &&
               (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
             setState(() => _selectedMainTab = 1);
           }
@@ -87,7 +114,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       }
     } catch (e) {
       debugPrint('Error loading user team: $e');
-      if (mounted) {
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
         setState(() {
           _isLoadingUserTeam = false;
           _hasUserTeamLoadError = true;
