@@ -138,7 +138,8 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                 }
 
-                if (snapshot.hasError && !snapshot.hasData) {
+                if (snapshot.hasError &&
+                    (snapshot.data == null || snapshot.data!.isEmpty)) {
                   return VSPErrorState(
                     onRetry: () {
                       setState(() {
@@ -188,6 +189,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 });
 
                 if (filtered.isEmpty) {
+                  if (snapshot.hasError) {
+                    return VSPErrorState(
+                      onRetry: () {
+                        setState(() {
+                          _championshipsStream = null;
+                          _lastSport = null;
+                          _lastOwnerId = null;
+                        });
+                      },
+                    );
+                  }
                   return OwnerCupEmptyView(
                     selectedTab: _selectedTab,
                     hasAnyChampionships: championships.isNotEmpty,
@@ -196,21 +208,68 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: VSPScrollPadding.forList(
-                    context,
-                    hasFloatingNavBar: true,
-                    top: 0,
-                    horizontal: VSPSpacing.md,
-                  ),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return VSPFadeInItem(
-                      index: index,
-                      child: OwnerCupCard(tournament: filtered[index]),
-                    );
-                  },
+                return Column(
+                  children: [
+                    if (snapshot.hasError)
+                      Material(
+                        color: VSPColors.surfaceAlt,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: VSPSpacing.md,
+                            vertical: VSPSpacing.sm,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Iconsax.warning_2_copy,
+                                color: VSPColors.warning,
+                                size: 18,
+                              ),
+                              const SizedBox(width: VSPSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  isArabic
+                                      ? 'تعذر تحديث البطولات. نعرض آخر بيانات تم تحميلها.'
+                                      : 'Could not refresh tournaments. Showing the last loaded data.',
+                                  style: const TextStyle(
+                                    color: VSPColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _championshipsStream = null;
+                                    _lastSport = null;
+                                    _lastOwnerId = null;
+                                  });
+                                },
+                                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: VSPScrollPadding.forList(
+                          context,
+                          hasFloatingNavBar: true,
+                          top: 0,
+                          horizontal: VSPSpacing.md,
+                        ),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          return VSPFadeInItem(
+                            index: index,
+                            child: OwnerCupCard(tournament: filtered[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
