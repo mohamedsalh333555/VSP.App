@@ -511,7 +511,7 @@ Until each decision is supplied, affected rule/screen pairs must retain the `nee
 
 ## Newly discovered shared and embedded surfaces — 2026-10-31
 
-A top-level directory reconciliation found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They are now tracked explicitly: 16 have documented source changes and remain runtime-pending; 19 are marked `not yet inspected`. The 19 uninspected paths are listed in `docs/UXLP_44_SCREEN_REGISTER.md` and must be reviewed before the final gate. This discovery expands the current inventory to 174 unique paths; it does not promote any rule to pass.
+A top-level directory reconciliation initially found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They were added to the inventory and reviewed in subsequent batches. The current register contains 181 unique Dart paths; six newly tracked nested championship-detail components remain `not yet inspected` and must be reviewed before the final gate. This inventory update does not promote any rule to pass.
 
 
 ### Support ticket sheet action visibility correction — 2026-10-31
