@@ -21,6 +21,12 @@ class PendingBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final paymentState = pendingBooking.paymentStatus?.toLowerCase().trim();
+    final isPaymentAwaitingConfirmation = pendingBooking.isPaid ||
+        paymentState == 'paid' ||
+        paymentState == 'partially_paid' ||
+        paymentState == 'refund_pending';
+
     return Container(
       margin: const EdgeInsets.only(bottom: VSPSpacing.md),
       padding: const EdgeInsets.all(14),
@@ -38,7 +44,9 @@ class PendingBookingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment',
+                  isPaymentAwaitingConfirmation
+                      ? (isArabic ? 'تم استلام الدفع وجارٍ التحقق منه' : 'Payment received — verification pending')
+                      : (isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment'),
                   style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
@@ -111,9 +119,13 @@ class PendingBookingCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            isArabic
-                ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
-                : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.',
+            isPaymentAwaitingConfirmation
+                ? (isArabic
+                    ? 'تم تسجيل عملية الدفع، لكن تأكيد الحجز من الخادم لم يصل بعد. لا تكرر الدفع؛ استخدم «استعلم عن الحالة» للتحقق.'
+                    : 'Your payment has been received, but the server has not confirmed the booking yet. Do not pay again; use Check Status.')
+                : (isArabic
+                    ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
+                    : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.'),
             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -180,7 +192,24 @@ class PendingBookingCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: ElevatedButton.icon(
+                child: isPaymentAwaitingConfirmation
+                    ? ElevatedButton.icon(
+                        onPressed: null,
+                        icon: const Icon(Iconsax.shield_tick_copy, size: 14),
+                        label: Text(
+                          isArabic ? 'جارٍ التحقق من الدفع' : 'Payment verification',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.surfaceAlt,
+                          disabledForegroundColor: VSPColors.textSecondary,
+                          disabledBackgroundColor: VSPColors.surfaceAlt,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.chip),
+                          ),
+                        ),
+                      )
+                    : ElevatedButton.icon(
                   onPressed: () {
                     final draft = BookingDraft(
                       stadiumId: pendingBooking.stadiumId,
