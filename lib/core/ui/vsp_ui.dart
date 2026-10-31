@@ -175,37 +175,39 @@ class VSPStateView extends StatelessWidget {
               maxWidth: VSPDSAccessibility.stateMaxWidth,
             ),
             child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(
-              width: VSPDSizes.stateLoadingIndicator,
-              height: VSPDSizes.stateLoadingIndicator,
-              child: CircularProgressIndicator(
-                strokeWidth: VSPDSizes.progressStroke,
-                color: VSPDSSemanticColors.accent,
-              ),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: VSPDSizes.stateLoadingIndicator,
+                  height: VSPDSizes.stateLoadingIndicator,
+                  child: CircularProgressIndicator(
+                    strokeWidth: VSPDSizes.progressStroke,
+                    color: VSPDSSemanticColors.accent,
+                  ),
+                ),
+                const SizedBox(height: VSPDSSpacing.md),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: VSPDSTypography.stateTitle,
+                ),
+                if (message != null) ...[
+                  const SizedBox(height: VSPDSSpacing.xxs),
+                  Text(
+                    message!,
+                    textAlign: TextAlign.center,
+                    style: VSPDSTypography.stateMessage,
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: VSPDSSpacing.md),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.stateTitle,
-            ),
-            if (message != null) ...[
-              const SizedBox(height: VSPDSSpacing.xxs),
-              Text(
-                message!,
-                textAlign: TextAlign.center,
-                style: VSPDSTypography.stateMessage,
-              ),
-            ],
-          ],
+          ),
         ),
       );
     }
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPDSSpacing.lg),
         child: ConstrainedBox(
           constraints: const BoxConstraints(
