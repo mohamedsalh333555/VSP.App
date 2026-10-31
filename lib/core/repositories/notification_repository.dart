@@ -33,7 +33,24 @@ class NotificationRepository {
             .toList());
   }
 
-  Future<bool> sendNotification(String userId, AppNotification notification) async {
+  Future<void> sendNotification(String userId, AppNotification notification) async {
+    try {
+      await _supabase.from('notifications').insert({
+        'user_id': userId,
+        'title': notification.title,
+        'body': notification.body,
+        'type': notification.type,
+        'is_read': notification.isRead,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+        'booking_id': (notification.bookingId != null && notification.bookingId!.trim().isNotEmpty) ? notification.bookingId : null,
+        'metadata': notification.metadata,
+      });
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+    }
+  }
+
+  Future<bool> restoreNotification(String userId, AppNotification notification) async {
     try {
       final inserted = await _supabase.from('notifications').insert({
         'user_id': userId,
@@ -41,7 +58,7 @@ class NotificationRepository {
         'body': notification.body,
         'type': notification.type,
         'is_read': notification.isRead,
-        // Restore the original timestamp when the user undoes a swipe deletion.
+        // Preserve the original timestamp when Undo restores a dismissed item.
         'created_at': notification.createdAt.toUtc().toIso8601String(),
         'booking_id': (notification.bookingId != null && notification.bookingId!.trim().isNotEmpty) ? notification.bookingId : null,
         'metadata': notification.metadata,
