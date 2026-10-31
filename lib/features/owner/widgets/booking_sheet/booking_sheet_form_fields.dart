@@ -109,15 +109,21 @@ class PlayerCounterField extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Iconsax.user_tag_copy, color: VSPColors.accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isArabic ? "إجمالي اللاعبين:" : "Total Players:",
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-              ),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Iconsax.user_tag_copy, color: VSPColors.accent, size: 18),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    isArabic ? "إجمالي اللاعبين:" : "Total Players:",
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
           Row(
             children: [
