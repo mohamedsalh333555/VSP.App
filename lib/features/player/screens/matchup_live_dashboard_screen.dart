@@ -83,6 +83,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     final validationError = MatchupDashboardService.validateResultSubmission(
       teamAId: _selectedTeamAId,
       teamBId: _selectedTeamBId,
+      isArabic: isArabic,
     );
 
     if (validationError != null) {
