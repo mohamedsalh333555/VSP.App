@@ -150,8 +150,8 @@ class CreateTeamMembersSection extends StatelessWidget {
                         tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
                         onPressed: () => onRemoveMember(member),
                         constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
+                          minWidth: 48,
+                          minHeight: 48,
                         ),
                         padding: const EdgeInsets.all(8),
                         visualDensity: VisualDensity.compact,
