@@ -41,6 +41,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   bool _isLoading = true;
   bool _hasLeagueLoadError = false;
   bool _hasPaymentStatusError = false;
+  int _leagueLoadGeneration = 0;
   TeamLeagueData? _leagueData;
   String _leaguePaymentStatus = 'not_created';
   double _configuredFee = 30.0;
@@ -61,7 +62,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   }
 
   Future<void> _loadLeague() async {
-    if (widget.userTeam == null) {
+    final teamId = widget.userTeam?.id;
+    final generation = ++_leagueLoadGeneration;
+    if (teamId == null) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -81,15 +84,17 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       });
     }
     try {
-      final data = await _leagueRepo.getTeamActiveLeague(widget.userTeam!.id);
+      final data = await _leagueRepo.getTeamActiveLeague(teamId);
+      if (!mounted || generation != _leagueLoadGeneration || widget.userTeam?.id != teamId) return;
       final fee = await _leagueRepo.getTeamLeagueEntryFee();
+      if (!mounted || generation != _leagueLoadGeneration || widget.userTeam?.id != teamId) return;
       var paymentStatus = 'not_created';
       var paymentStatusError = false;
       if (data != null) {
         try {
           final payment = await _leagueRepo.getTeamLeaguePaymentStatus(
             championshipId: data.id,
-            teamId: widget.userTeam!.id,
+            teamId: teamId,
           );
           paymentStatus = payment['status']?.toString() ?? 'not_created';
         } catch (e) {
@@ -98,7 +103,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           paymentStatusError = true;
         }
       }
-      if (mounted) {
+      if (mounted && generation == _leagueLoadGeneration && widget.userTeam?.id == teamId) {
         setState(() {
           _leagueData = data;
           _leaguePaymentStatus = paymentStatus;
@@ -110,7 +115,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       }
     } catch (e) {
       debugPrint('Error loading team league: $e');
-      if (mounted) {
+      if (mounted && generation == _leagueLoadGeneration && widget.userTeam?.id == teamId) {
         setState(() {
           _leagueData = null;
           _hasLeagueLoadError = true;
@@ -132,8 +137,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       );
       if (payment['prepaid_by_creator'] == true) {
         VSPFeedback.triggerSuccess();
+        if (!mounted || widget.userTeam?.id != team.id) return;
         await _loadLeague();
-        if (mounted) {
+        if (mounted && widget.userTeam?.id == team.id) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('رسوم مشاركة الفريق: مدفوعة')),
           );
@@ -143,7 +149,8 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       final reference = payment['payment_reference']?.toString();
       final amount = (payment['amount'] as num?)?.toDouble() ?? 30.0;
       if (reference == null || reference.isEmpty) throw Exception('تعذر إنشاء عملية الدفع');
-      await _openLeaguePayment(paymentReference: reference, amount: amount);
+      if (!mounted || widget.userTeam?.id != team.id) return;
+      await _openLeaguePayment(paymentReference: reference, amount: amount, team: team);
     } catch (e) {
       debugPrint('Error starting team league payment: $e');
       if (mounted) {
@@ -158,9 +165,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     }
   }
 
-  Future<void> _openLeaguePayment({required String paymentReference, required double amount}) async {
-    final team = widget.userTeam;
-    if (team == null) return;
+  Future<void> _openLeaguePayment({required String paymentReference, required double amount, required Team team}) async {
     final now = DateTime.now();
     final result = await Navigator.push<bool>(
       context,
@@ -187,7 +192,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         ),
       ),
     );
-    if (mounted) {
+    if (mounted && widget.userTeam?.id == team.id) {
       if (result == true) {
         VSPFeedback.triggerSuccess();
         Navigator.push(
