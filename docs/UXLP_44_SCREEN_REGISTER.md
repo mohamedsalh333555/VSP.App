@@ -178,3 +178,12 @@ A screen passes only when its actual call sites and relevant states have been ch
 | Component | Role | Source finding / status |
 |---|---|---|
 | `lib/features/player/widgets/league/team_league_tab.dart` | player | source reviewed—runtime pending (league query failures now have retry; failed fee-status lookup disables payment until rechecked; payment error copy localized) |
+
+
+### Additional payment surfaces inspected
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source reviewed—runtime pending (server-matching local gateway fee; no false zero fee; verified total only; localized retry) |
+| `lib/features/player/widgets/payment/payment_countdown_header.dart` | player | source reviewed—runtime pending (base amount is not labeled as final total when fee policy is unavailable) |
+| `lib/features/player/widgets/payment/payment_security_footer.dart` | player | source reviewed—runtime pending (checkout disabled until fee policy is valid; accurate Paymob checkout guidance) |
