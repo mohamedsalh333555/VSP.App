@@ -219,3 +219,8 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 ## Phase 2 implementation note — canonical bottom navigation token access
 
 The legacy `vsp_tokens.dart` facade re-exports `VSPBottomNavMetrics` from the canonical `vsp_design_tokens.dart` file. This is a compatibility export only: the values remain defined once in the V2 token source. Feature files may migrate to direct V2 imports independently without creating duplicate geometry.
+
+
+## Phase 2 implementation — state surfaces
+
+The shared `VSPStateView` now uses a bounded-width, scrollable content region for loading and terminal states so localized text and recovery actions remain reachable on compact viewports. The owner tournament stream now distinguishes initial failure from a successful empty list and preserves the last non-empty snapshot on refresh failure with a bilingual retry affordance. These are implementation changes, not runtime validation results.

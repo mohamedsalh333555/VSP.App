@@ -265,3 +265,14 @@ The following additional source-level corrections were made on `uxlp-44-implemen
 - **Rule 11 / Rule 35 — responsive and modal-safe state recovery:** the owner tournament error surface reuses the shared scroll-safe state component instead of a bespoke fixed-height error dialog. Runtime sizing remains part of the later approved validation phase.
 
 These are source changes only. They do not change tournament eligibility, status mapping, database behavior, or business policy. No CI, analyzer, automated tests, runtime tests, or APK build were run.
+
+
+## Phase 2 implementation continuation — compact state views
+
+- **Rule 11 — Responsive legibility:** the shared `VSPStateView` loading, error, offline, empty, pending, processing, success, and disabled presentations now use a bounded-width scroll container. Long bilingual copy and enlarged text can scroll instead of forcing the state column to fit a short viewport.
+- **Rule 35 — Scroll and modal safety:** the same shared state component now preserves access to retry/action controls when the available height is constrained. This is a source-level layout correction; no runtime pass is claimed.
+- **Rule 3 / Rule 6 — Contrast and color semantics:** existing neutral empty/disabled charcoal treatment and semantic error/offline tint remain centralized and unchanged; the responsive wrapper does not introduce feature-level colors.
+
+The owner tournament screen also now keeps its last non-empty tournament snapshot visible after a realtime refresh error and shows a localized retry warning; an initial failure or an empty snapshot followed by failure uses the shared error state instead of presenting a false empty result.
+
+No automated checks, CI, runtime tests, or APK build were run.
