@@ -116,14 +116,22 @@ class League1v1GovernorateBanner extends StatelessWidget {
               style: VSPDSTypography.bodyMedium.copyWith(color: VSPDSSemanticColors.textPrimary, fontWeight: FontWeight.w700),
             ),
           ),
-          InkWell(
-            onTap: onReturnToHomeGov,
-            borderRadius: BorderRadius.circular(VSPDSRadius.sm),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.xs, vertical: VSPDSSpacing.xxs),
-              child: Text(
-                isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
-                style: VSPDSTypography.actionLabel,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: InkWell(
+              onTap: onReturnToHomeGov,
+              borderRadius: BorderRadius.circular(VSPDSRadius.sm),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: VSPDSSpacing.sm,
+                  vertical: VSPDSSpacing.sm,
+                ),
+                child: Center(
+                  child: Text(
+                    isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
+                    style: VSPDSTypography.actionLabel,
+                  ),
+                ),
               ),
             ),
           ),
