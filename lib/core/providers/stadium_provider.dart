@@ -329,8 +329,7 @@ class StadiumProvider with ChangeNotifier {
  return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
  }
 
-  List<String> get availableSportTypes =>
-      StadiumFilterService.getAvailableSportTypes(_stadiums, VSPConstants.activeSports);
+  List<String> get availableSportTypes => List<String>.from(VSPConstants.activeSports);
 
  // Apply complex filters with server-side pagination support
  void applyFilters(Map<String, dynamic> filters) {

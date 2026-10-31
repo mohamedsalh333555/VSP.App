@@ -370,7 +370,7 @@ class StadiumRepository {
     switch (amenity.trim().toLowerCase()) {
       case 'دش وحمام':
       case 'showers & baths':
-        return 'features->>bathOption.eq.Yes,features->>hasShower.eq.true,features->>shower.eq.true';
+        return 'features->>bathOption.ilike.%yes%,features->>hasShower.eq.true,features->>shower.eq.true';
       case 'غرف تغيير ملابس':
       case 'changing rooms':
         return 'features->>changingRoom.eq.true,features->>changingRooms.eq.true,features->>hasChangingRooms.eq.true';
