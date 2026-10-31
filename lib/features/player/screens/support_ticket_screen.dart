@@ -303,11 +303,28 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                       ),
                     ),
                     const SizedBox(width: VSPSpacing.sm),
-                    IconButton(
-                      onPressed: _sending ? null : _send,
-                      icon: _sending
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Icon(Iconsax.send_2_copy, color: VSPColors.accent),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _controller,
+                      builder: (context, value, _) => IconButton(
+                        tooltip: ar ? 'إرسال الرسالة' : 'Send message',
+                        onPressed: _sending || value.text.trim().isEmpty
+                            ? null
+                            : _send,
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        icon: _sending
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(
+                                Iconsax.send_2_copy,
+                                color: VSPColors.accent,
+                              ),
+                      ),
                     ),
                   ]),
                 ),
