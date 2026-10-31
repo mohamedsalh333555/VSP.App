@@ -173,7 +173,7 @@ class OwnerProfileScreen extends StatelessWidget {
 
                     // Managed Stadiums Count
                     StreamBuilder<List<Stadium>>(
-                      stream: auth.currentUser?.uid.isNotEmpty == true
+                      stream: auth.currentUser?.id.isNotEmpty == true
                           ? StadiumRepository().getOwnerStadiums(auth.currentUser!.uid)
                           : Stream.value([]),
                       builder: (context, snapshot) {
