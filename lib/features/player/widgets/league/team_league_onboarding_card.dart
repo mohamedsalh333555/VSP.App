@@ -10,7 +10,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
 
   const TeamLeagueOnboardingCard({
     super.key,
-    this.entryFee = 30.0,
+    required this.entryFee,
     required this.onCreateLeague,
     required this.onJoinLeague,
   });
