@@ -384,3 +384,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Support send account-race correction — 2026-10-31
 
 - **Rules 38, 39, 41, 43 — support message ownership:** support message submission now captures the originating account generation. A response from an earlier account cannot clear a newly active account's draft, surface stale errors in that account, or reset a newer send's loading state. Technical send failures are logged separately.
+
+
+### Authentication retry/realtime account isolation — 2026-10-31
+
+- **Rules 38, 39, 41 — auth profile ownership:** profile retry responses now carry a request generation and are discarded if the authenticated account changes before completion. Returned profile UID must match the requested Supabase user ID. Realtime profile callbacks also verify the active auth ID and payload UID before updating the shared user model.

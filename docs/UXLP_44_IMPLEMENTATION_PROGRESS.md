@@ -165,3 +165,11 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Support composer send now captures account identity/generation; late responses from an old account cannot clear a new user's draft or alter a newer send's loading state. Error feedback is scoped to the originating active account, with technical details sent to the logger.
 
 Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+
+## Authentication account-isolation follow-up
+
+- Auth profile retry now invalidates older profile requests and ignores late responses after account switches; it accepts only a model whose UID matches the requested Supabase user.
+- Realtime user-profile callbacks verify both the active auth identity and incoming profile UID before mutating AuthProvider state.
+
+No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
