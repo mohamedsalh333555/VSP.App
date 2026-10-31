@@ -137,9 +137,13 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                widget.isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  widget.isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               TextButton(
                 onPressed: () {
