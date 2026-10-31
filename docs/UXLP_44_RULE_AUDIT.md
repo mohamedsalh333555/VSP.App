@@ -454,3 +454,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Shared control semantic de-duplication — 2026-10-31
 
 - **Rules 27, 33, 42 — accessibility semantics:** shared back navigation and add-player search now expose one explicit localized semantic control each; nested InkWell semantics are excluded to avoid duplicate announcements.
+
+
+### Notification list safe-area and RTL swipe correction — 2026-10-31
+
+- **Rules 7, 10, 11, 32, 42 — notification center:** removed duplicate bottom safe-area spacing because the list is already inside SafeArea; retained intentional list breathing room. Swipe-to-delete background now uses directional alignment and padding so its affordance mirrors correctly between Arabic RTL and English LTR. This does not alter notification retention or deletion policy.

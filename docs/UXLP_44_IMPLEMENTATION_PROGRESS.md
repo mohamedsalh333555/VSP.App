@@ -272,3 +272,12 @@ No payout business rules, RPCs, database policy, CI, analyzer, tests, runtime ch
 - Shared back button and add-player search now expose one explicit semantic button label each without duplicate nested InkWell announcements.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Notification center safe-area and RTL correction
+
+- Removed duplicate bottom system inset from notification list padding; its enclosing SafeArea already accounts for the device inset.
+- Changed swipe-to-delete background alignment/padding to directional end so the gesture affordance mirrors correctly in RTL and LTR.
+- No notification retention/deletion business rule or database behavior was changed.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
