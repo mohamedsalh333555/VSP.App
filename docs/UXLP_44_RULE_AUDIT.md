@@ -512,3 +512,8 @@ Until each decision is supplied, affected rule/screen pairs must retain the `nee
 ## Newly discovered shared and embedded surfaces — 2026-10-31
 
 A top-level directory reconciliation found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They are now tracked explicitly: 16 have documented source changes and remain runtime-pending; 19 are marked `not yet inspected`. The 19 uninspected paths are listed in `docs/UXLP_44_SCREEN_REGISTER.md` and must be reviewed before the final gate. This discovery expands the current inventory to 174 unique paths; it does not promote any rule to pass.
+
+
+### Support ticket sheet action visibility correction — 2026-10-31
+
+- **Rules 11, 35 — support ticket creation modal:** the maximum-height constraint now contains the outer padding and bottom safe-area inset, preventing those insets from being added beyond the available keyboard-safe viewport. The content remains scrollable. Compact-device and keyboard-open runtime checks remain pending.
