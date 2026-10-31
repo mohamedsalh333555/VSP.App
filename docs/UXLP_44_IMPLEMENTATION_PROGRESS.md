@@ -641,3 +641,7 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Matchup scoring values remain unchanged (win = 3, draw = 1, loss = 0); this is presentation and rendering only. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
 - Follow-up in the owner tournament dashboard: kickoff preparation, draw generation, competition activation, and related lifecycle failures now pass through the shared localized error handler instead of displaying raw exception text. Tournament state transitions are unchanged.
 - Penalty shootout team labels now localize the “pens” suffix and fallback team names.
+
+## Approval-required legal and policy copy findings — 2026-10-31
+
+Source review found four material conflicts in `terms_and_privacy_screen.dart`, in both Arabic and English: owner/signatory age 21 (lines 72–73) vs the current 18+ registration rule; player age 16/guardian exception (147–148) vs 18+ for all roles; a 100% refund promise plus a 20-minute grace/90-day request window (157–158) vs non-refundable administrative/payment fees; and a 150m no-show GPS appeal radius (178–179) vs the current 200m/≤50m accuracy rule. Proposed corrections and exact source locations are recorded in `UXLP_44_RULE_AUDIT.md`. These legal/financial eligibility statements were deliberately not changed pending explicit approval; the existing 60-minute appeal window also needs confirmation before changing.
