@@ -197,7 +197,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/features/player/widgets/user_bookings/pending_booking_card.dart` | player | source reviewed—runtime pending (server-confirmed payment predicate; status-query error handling; cancellation confirmation; 48dp cancel target) |
+| `lib/features/player/widgets/user_bookings/pending_booking_card.dart` | player | source reviewed—runtime pending (server-confirmed payment predicate; duplicate-checkout guard while payment awaits confirmation; refreshed status guidance; cancellation confirmation; 48dp cancel target) |
 | `lib/features/player/widgets/user_bookings/player_booking_card.dart` | player | source reviewed—runtime pending (booking lifecycle badges now use actual status; channel-neutral refund-pending copy) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited callback, submission lock, disabled dismissal/editing while submitting) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (success/failure feedback reflects repository result for submit/confirm/dispute) |
