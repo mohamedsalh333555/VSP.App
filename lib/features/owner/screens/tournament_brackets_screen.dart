@@ -235,7 +235,11 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (canAdvanceGroups) _buildAdvanceGroupsBanner(context, isArabic),
-                          ChampionshipStandingsSection(championship: widget.championship),
+                          ChampionshipStandingsSection(
+                            championship: widget.championship,
+                            refreshVersion: _refreshKey,
+                            onRetry: _refreshMatches,
+                          ),
                         ],
                       ),
                     ),
