@@ -65,6 +65,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isFeePolicyLoading = true;
   String? _paymentUserId;
   bool _hasAccountChanged = false;
+  int _feePolicyRequestGeneration = 0;
 
   @override
   void initState() {
@@ -87,11 +88,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _loadFeePolicy() async {
-    if (mounted && !_isFeePolicyLoading) {
-      setState(() => _isFeePolicyLoading = true);
+    final requestGeneration = ++_feePolicyRequestGeneration;
+    if (mounted) {
+      setState(() {
+        _isFeePolicyLoading = true;
+        _feePolicy = null;
+      });
     }
     final policy = await PaymobService.fetchFeePolicy();
-    if (!mounted) return;
+    if (!mounted || requestGeneration != _feePolicyRequestGeneration) return;
     setState(() {
       _feePolicy = policy;
       _isFeePolicyLoading = false;
