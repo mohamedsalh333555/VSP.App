@@ -48,7 +48,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (plan prices, trial days, stadium limits, descriptions, and feature flags now load from public_subscription_plans; monthly/annual choices use server billing periods; retry state on read failure) |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
-| `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | source reviewed—runtime pending (manual-address controller lifecycle; manual-entry sheet now opts into safe-area behavior and accounts for keyboard plus bottom system inset) |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints and lifecycle reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart` | owner | source reviewed—runtime pending (step pager and page composition reviewed; child steps are independently scrollable) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
@@ -79,7 +79,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/owner_booking_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/quick_phone_booking_modal.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | source reviewed—runtime pending (format selection sheet now has viewport-bounded scrollable content; tournament preview and invite surfaces remain runtime pending) |
 | `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | source reviewed—runtime pending (manual team flow reviewed; Supabase auth ID access corrected to User.id) |
@@ -130,7 +130,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (captain-scoped team IDs; accurate alternate-result copy; both result dialogs lock during submission and preserve retry on failure) |
-| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
+| `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (result and dispute sheets are keyboard-safe and scrollable; result errors use localized recovery copy with diagnostics separated) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited boolean result; closes only on success; failed submission preserves form for retry; duplicate taps/dismissal guarded) |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (exit copy distinguishes unsubmitted payment from a submitted attempt awaiting server confirmation) |
@@ -140,7 +140,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | source reviewed—runtime pending (refund amount is not guessed from total_price; distinguishes unpaid, confirmed, and pending server calculation) |
 | `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (keyboard-safe height; retryable load error distinct from empty roster; localized action errors; 48dp labeled controls; header wrapping; correct player-facing acceptance notification) |
-| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown amount shows server-confirmation state; long timeline content is bounded and scrollable within device height) |
+| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown amount shows server-confirmation state; long timeline is bounded/scrollable and close action includes bottom system inset) |
 | `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (Dialog safe-area, bounded height, internally scrollable year/day steps) |
 
 ## Non-screen UI surfaces still requiring discovery
