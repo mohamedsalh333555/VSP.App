@@ -38,7 +38,6 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isInitializing = true;
   String? _errorMessage;
-  bool _isFetchingUser = false;
   int _userFetchGeneration = 0;
   bool _dataFetchError = false;
   bool _isGhostUser = false;
@@ -120,7 +119,6 @@ class AuthProvider with ChangeNotifier {
     if (user?.id != _supabaseUser?.id) {
       // Invalidate any profile fetch started for the previous auth identity.
       _userFetchGeneration++;
-      _isFetchingUser = false;
       _c.realtime.stopRealtimeUserListener();
       _userModel = null;
       _form.userType = null;
@@ -177,7 +175,6 @@ class AuthProvider with ChangeNotifier {
       _dataFetchError = false;
     }
     final requestGeneration = ++_userFetchGeneration;
-    _isFetchingUser = true;
     _isLoading = true;
     notifyListeners();
 
@@ -193,7 +190,6 @@ class AuthProvider with ChangeNotifier {
       return;
     }
 
-    _isFetchingUser = false;
     _isLoading = false;
     _isInitializing = false;
 
