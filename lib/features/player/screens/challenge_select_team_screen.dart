@@ -44,6 +44,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isGeneratingCode = false;
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
   final Map<String, bool> _championStatusMap = {};
 
   @override
@@ -61,13 +63,38 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   Future<void> _loadUserTeam() async {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.id;
-    if (uid != null) {
-      final team = await TeamRepository().getUserTeam(uid);
+    if (mounted) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    if (uid == null) {
       if (mounted) {
         setState(() {
-          _userTeam = team;
+          _userTeam = null;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
         });
       }
+      return;
+    }
+    try {
+      final team = await TeamRepository().getUserTeamStrict(uid);
+      if (!mounted || context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      setState(() {
+        _userTeam = team;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = false;
+      });
+    } catch (e) {
+      debugPrint('Failed to verify challenge captain team: $e');
+      if (!mounted || context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      setState(() {
+        _userTeam = null;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = true;
+      });
     }
   }
 
@@ -135,7 +162,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           if (mounted) {
             VSPFeedback.showSuccess(
               context,
-              'تم التحقق بنجاح من الفريق المنافس: ${oppTeam.name}',
+              isArabic
+                  ? 'تم التحقق من الفريق المنافس: ${oppTeam.name}'
+                  : 'Opponent team verified: ${oppTeam.name}',
             );
           }
           return;
@@ -145,19 +174,20 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       if (!mounted) return;
       setState(() => _isLookingUpCode = false);
       final err = res['error']?.toString() ?? '';
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       String errorMsg;
       if (err == 'CODE_INVALID_OR_USED') {
-        errorMsg = 'كود التحدي غير صالح أو تم استخدامه مسبقاً.';
+        errorMsg = isArabic ? 'كود التحدي غير صالح أو تم استخدامه مسبقاً.' : 'This challenge code is invalid or has already been used.';
       } else if (err == 'CODE_EXPIRED') {
-        errorMsg = 'كود التحدي منتهي الصلاحية.';
+        errorMsg = isArabic ? 'كود التحدي منتهي الصلاحية.' : 'This challenge code has expired.';
       } else if (err == 'CALLER_NOT_A_CAPTAIN') {
-        errorMsg = 'يجب أن تكون كابتن فريق لتحدي هذا الكود.';
+        errorMsg = isArabic ? 'يجب أن تكون كابتن فريق لتحدي هذا الكود.' : 'Only a team captain can use this challenge code.';
       } else if (err == 'CANNOT_CHALLENGE_OWN_TEAM') {
-        errorMsg = 'لا يمكنك إدخال كود فريقك نفسه.';
+        errorMsg = isArabic ? 'لا يمكنك إدخال كود فريقك نفسه.' : 'You cannot enter your own team code.';
       } else if (err == 'TEAM_NOT_FOUND') {
-        errorMsg = 'تعذر العثور على الفريق التابع لهذا الكود.';
+        errorMsg = isArabic ? 'تعذر العثور على الفريق التابع لهذا الكود.' : 'The team linked to this code could not be found.';
       } else {
-        errorMsg = 'تعذر التحقق من كود التحدي. تأكد من الكود وأعد المحاولة.';
+        errorMsg = isArabic ? 'تعذر التحقق من كود التحدي. تأكد من الكود وأعد المحاولة.' : 'Could not verify the challenge code. Check it and retry.';
       }
       VSPFeedback.showError(context, errorMsg);
     } catch (e) {
@@ -191,8 +221,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         VSPFeedback.showError(
           context,
           err == 'CAPTAIN_ONLY'
-              ? 'توليد الكود متاح لكابتن الفريق فقط.'
-              : 'تعذر توليد كود التحدي حالياً.',
+              ? (isArabic ? 'توليد الكود متاح لكابتن الفريق فقط.' : 'Only the team captain can generate a code.')
+              : (isArabic ? 'تعذر توليد كود التحدي حالياً.' : 'Could not generate the challenge code right now.'),
         );
         return;
       }
@@ -202,7 +232,10 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isGeneratingCode = false);
-        VSPFeedback.showError(context, 'حدث خطأ أثناء توليد الكود');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء توليد الكود.' : 'An error occurred while generating the code.',
+        );
       }
     }
   }
