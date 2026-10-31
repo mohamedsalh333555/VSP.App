@@ -38,8 +38,13 @@ class VspDatePickerYearStep extends StatelessWidget {
         final year = years[index];
         final isSelected = selectedYear == year;
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: '$year',
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onYearSelected(year);
@@ -82,6 +87,7 @@ class VspDatePickerYearStep extends StatelessWidget {
               ],
             ),
           ),
+          ),
         );
       },
     );
@@ -114,8 +120,13 @@ class VspDatePickerMonthStep extends StatelessWidget {
         final isSelected = selectedMonth == monthNum;
         final monthName = VspDatePickerCalculator.getMonthName(monthNum, isArabic: isAr);
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: monthName,
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onMonthSelected(monthNum);
@@ -177,6 +188,7 @@ class VspDatePickerMonthStep extends StatelessWidget {
               ],
             ),
           ),
+          ),
         );
       },
     );
@@ -215,8 +227,13 @@ class VspDatePickerDayStep extends StatelessWidget {
         final day = days[index];
         final isSelected = selectedDay == day;
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        return Semantics(
+          button: true,
+          selected: isSelected,
+          label: '${day.toString().padLeft(2, '0')}',
+          child: InkWell(
+            excludeFromSemantics: true,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           onTap: () {
             VSPFeedback.triggerTap();
             onDaySelected(day);
@@ -257,6 +274,7 @@ class VspDatePickerDayStep extends StatelessWidget {
                   const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 20),
               ],
             ),
+          ),
           ),
         );
       },
