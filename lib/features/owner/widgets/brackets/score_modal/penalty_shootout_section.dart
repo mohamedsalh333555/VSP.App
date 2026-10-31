@@ -87,7 +87,7 @@ class PenaltyShootoutSection extends StatelessWidget {
             children: [
               Expanded(
                 child: ScoreCounterColumn(
-                  teamName: '${match.homeTeamName ?? "Home"} (ركلات)',
+                  teamName: '${match.homeTeamName ?? (isArabic ? "الفريق الأول" : "Home team")} ${isArabic ? "(ركلات)" : "(pens)"}',
                   score: homePenalties,
                   onIncrement: onIncrementHome,
                   onDecrement: onDecrementHome,
@@ -96,7 +96,7 @@ class PenaltyShootoutSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: ScoreCounterColumn(
-                  teamName: '${match.awayTeamName ?? "Away"} (ركلات)',
+                  teamName: '${match.awayTeamName ?? (isArabic ? "الفريق الثاني" : "Away team")} ${isArabic ? "(ركلات)" : "(pens)"}',
                   score: awayPenalties,
                   onIncrement: onIncrementAway,
                   onDecrement: onDecrementAway,
