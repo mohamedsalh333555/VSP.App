@@ -112,3 +112,11 @@ Additional source commits on branch uxlp-44-implementation:
 - primary_button.dart / vsp_button.dart: debounce lock is released even if a synchronous callback throws; long button labels can wrap to two lines.
 
 All changes are source-only. The 44 rules are not marked complete; screen-wide and runtime evidence is still pending. No CI, analyzer, automated tests, runtime checks, database migrations, or APK build were run.
+
+
+## Support retry wiring follow-up
+
+- Corrected all support-ticket detail retry affordances to rebind both ticket and message streams for the active account, including the top-level stale warning and message-stream empty/error recovery states.
+- Corrected the support-ticket list stale-data banner to replace the stream subscription on retry instead of calling setState with the same failed stream.
+
+Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.

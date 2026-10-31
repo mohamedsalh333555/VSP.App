@@ -345,3 +345,8 @@ All changes are source-level. Rule statuses remain runtime pending; no CI, analy
 - **Rules 11, 34, 35 — create-team sheet:** the available sheet height now subtracts keyboard and top safe-area insets before laying out the scrollable form and fixed actions; bottom padding no longer adds the keyboard inset twice. Subtitle wrapping is explicit.
 
 All entries in the 44-rule matrix remain source reviewed—runtime pending; these touchpoints do not constitute whole-app rule completion. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+
+### Support retry lifecycle follow-up — 2026-10-31
+
+- **Rules 9, 36, 38 — support recovery:** retry controls in support-ticket detail now recreate the retained account-scoped ticket and message streams rather than rebuilding against the same failed stream instances. The support-ticket list's stale-data retry also creates a new stream subscription. This closes a source-level retry wiring gap found while tracing the reported support flow; runtime reconnection remains pending.
