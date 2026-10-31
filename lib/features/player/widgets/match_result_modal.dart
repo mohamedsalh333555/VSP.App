@@ -118,11 +118,12 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.md),
  // Details
  Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- _buildDetailItem(isArabic ? 'التاريخ' : 'Date', widget.booking.formattedDate),
- _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName),
- _buildDetailItem(isArabic ? 'السعر' : 'Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}'),
+ Expanded(child: _buildDetailItem(isArabic ? 'التاريخ' : 'Date', widget.booking.formattedDate)),
+ const SizedBox(width: 8),
+ Expanded(child: _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName)),
+ const SizedBox(width: 8),
+ Expanded(child: _buildDetailItem(isArabic ? 'السعر' : 'Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}')),
  ],
  ),
  ],
@@ -344,6 +345,8 @@ class _MatchResultModalState extends State<MatchResultModal> {
  const SizedBox(height: VSPSpacing.xs),
  Text(
  value,
+ maxLines: 2,
+ overflow: TextOverflow.ellipsis,
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
  color: VSPColors.textPrimary,
  fontWeight: FontWeight.bold,
