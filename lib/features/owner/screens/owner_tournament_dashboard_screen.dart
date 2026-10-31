@@ -117,8 +117,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     setState(() => _isLoading = true);
     try {
       final teams = await TournamentRepository().getTeamsByIds(_currentChampionship.joinedTeams);
-      setState(() => _isLoading = false);
       if (!mounted) return;
+      setState(() => _isLoading = false);
 
       final unpaidTeams = teams.where((t) => !_currentChampionship.paidTeams.contains(t.id)).toList();
       if (unpaidTeams.isNotEmpty) {
@@ -145,8 +145,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         );
       }
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         AppErrorHandler.showError(context, e);
       }
     }
@@ -193,6 +193,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
