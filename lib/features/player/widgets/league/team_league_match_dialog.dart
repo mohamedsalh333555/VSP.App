@@ -61,21 +61,31 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
     final myTeamName = isHome ? widget.match.homeTeamName : widget.match.awayTeamName;
     final opponentName = isHome ? widget.match.awayTeamName : widget.match.homeTeamName;
 
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
     return Container(
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(
         top: 24,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: media.padding.bottom + 24,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             children: [
@@ -188,7 +198,8 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
             isLoading: _isLoading,
             onPressed: _selectedResult == null ? null : _submit,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -289,7 +300,8 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('اعتماد النتيجة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
-        ],
+          ],
+        ),
       ),
     );
 
@@ -310,21 +322,31 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
     return Container(
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.only(
         top: 24,
         left: 20,
         right: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: media.padding.bottom + 24,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Row(
             children: [
@@ -426,7 +448,8 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
             isLoading: _isLoading,
             onPressed: _selectedResolution == null ? null : _confirmAndResolve,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
