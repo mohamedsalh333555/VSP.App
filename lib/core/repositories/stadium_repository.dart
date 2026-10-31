@@ -238,13 +238,14 @@ class StadiumRepository {
           .eq('is_verified', true)
           .eq('is_blocked', false)
           .eq('is_deleted_by_owner', false);
+      final orGroups = <String>[];
 
       // 1. Governorate Filter
       if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
         if (standardGov != null) {
           final String arGov = EgyptGovernorates.governorateToArabic[standardGov] ?? standardGov;
-          query = query.or('governorate.eq.$standardGov,governorate.eq.$arGov');
+          orGroups.add('or(governorate.eq.$standardGov,governorate.eq.$arGov)');
         }
       }
 
@@ -258,11 +259,11 @@ class StadiumRepository {
           final safeSport = sport.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
           return 'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%';
         }).join(',');
-        query = query.or(sportExpressions);
+        orGroups.add('or($sportExpressions)');
       } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
         final safeSport = sportType.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
-        query = query.or(
-          'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%',
+        orGroups.add(
+          'or(description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%)',
         );
       }
 
@@ -289,9 +290,9 @@ class StadiumRepository {
           .replaceAll(RegExp(r'[%_,()|]'), ' ')
           .replaceAll(RegExp(r'\s+'), ' ');
       if (cleanSearch.isNotEmpty) {
-        query = query.or(
-          'name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
-          'city.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%',
+        orGroups.add(
+          'or(name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
+          'city.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%)',
         );
       }
 
@@ -305,13 +306,13 @@ class StadiumRepository {
 
       // 5. No Deposit Filter
       if (noDepositOnly == true) {
-        query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
       }
 
       if (quickFilter == 'night_shift') {
         // closing_time is a PostgreSQL TIME column, not text.
-        query = query.or(
-          'closing_time.lt.06:00:00,'
+        orGroups.add(
+          'or(closing_time.lt.06:00:00,'
           'features->workingHours->>end.ilike.%AM%,'
           'features->workingHours->>end.ilike.%صباحاً%,'
           'features->workingHours->>end.ilike.%00:%,'
@@ -319,7 +320,7 @@ class StadiumRepository {
           'features->workingHours->>end.ilike.%02:%,'
           'features->workingHours->>end.ilike.%03:%,'
           'features->workingHours->>end.ilike.%04:%,'
-          'features->workingHours->>end.ilike.%05:%',
+          'features->workingHours->>end.ilike.%05:%)',
         );
       } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
         query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
@@ -329,9 +330,14 @@ class StadiumRepository {
       for (final amenity in amenities ?? const <String>[]) {
         final expression = _amenityOrExpression(amenity);
         if (expression == null) throw ArgumentError('Unsupported stadium amenity filter');
-        query = query.or(expression);
+        orGroups.add('or($expression)');
       }
       
+      // One nested PostgREST expression combines every OR group with AND semantics.
+      if (orGroups.isNotEmpty) {
+        query = query.or('and(${orGroups.join(',')})');
+      }
+
       switch (sortBy) {
         case 'priceLowToHigh':
           query = query
