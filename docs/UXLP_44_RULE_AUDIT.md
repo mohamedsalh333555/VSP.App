@@ -547,3 +547,8 @@ The team roster import control already displays `لصق` / `Paste`. The inventor
 ### Shared upload widget accessibility and resilience — 2026-10-31
 
 - **Rules 17, 27, 33 — `VspUploadMainCard` / `VspUploadedItemRow`: semantic upload action with Material interaction; localized delete tooltip and 48dp hit target; empty thumbnail URLs treated as absent. Runtime assistive-technology and upload-flow validation remains pending.
+
+
+### Join-request acceptance notification correction — 2026-10-31
+
+- **Rules 18, 27, 41 — public-match join request:** acceptance now sends a dedicated localized notification to the requesting player with the related booking ID. The former host-oriented notification was being sent to the player with an empty player name. Notification delivery failure is logged separately from the already completed accept/reject action. Runtime delivery/tap-through checks remain pending.
