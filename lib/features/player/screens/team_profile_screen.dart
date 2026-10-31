@@ -148,7 +148,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             ..clear()
             ..addAll(members);
           _isLoadingMembers = false;
-          _hasMemberLoadError = false;
+          // Membership IDs exist, so an empty profile response is not a
+          // verified empty roster.
+          _hasMemberLoadError = members.isEmpty;
         });
       }
     } catch (e) {
