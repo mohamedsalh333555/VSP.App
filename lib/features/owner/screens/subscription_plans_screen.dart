@@ -21,6 +21,92 @@ class SubscriptionPlansScreen extends StatefulWidget {
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   bool _isPaying = false;
   final OwnerSubscriptionRepository _subscriptionRepository = OwnerSubscriptionRepository();
+  Map<String, dynamic>? _freePlan;
+  Map<String, dynamic>? _proPlan;
+  bool _isPlansLoading = true;
+  bool _hasPlansError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlans();
+  }
+
+  Future<void> _loadPlans() async {
+    if (mounted) {
+      setState(() {
+        _isPlansLoading = true;
+        _hasPlansError = false;
+      });
+    }
+    try {
+      final plans = await _subscriptionRepository.fetchPublicPlans();
+      Map<String, dynamic>? freePlan;
+      Map<String, dynamic>? proPlan;
+      for (final plan in plans) {
+        if (plan['code'] == 'basic') freePlan = plan;
+        if (plan['code'] == 'pro') proPlan = plan;
+      }
+      if (freePlan == null || proPlan == null) {
+        throw StateError('subscription_plan_missing');
+      }
+      if (!mounted) return;
+      setState(() {
+        _freePlan = freePlan;
+        _proPlan = proPlan;
+        _isPlansLoading = false;
+        _hasPlansError = false;
+      });
+    } catch (e) {
+      debugPrint('Failed to load public subscription plans: $e');
+      if (!mounted) return;
+      setState(() {
+        _isPlansLoading = false;
+        _hasPlansError = true;
+      });
+    }
+  }
+
+  List<String> _featureLabels(Map<String, dynamic>? rawFeatures, bool isArabic) {
+    final features = rawFeatures ?? const <String, dynamic>{};
+    final labels = <String>[];
+    const featureCopy = <String, List<String>>{
+      'cash_booking': ['إدارة الحجوزات النقدية', 'Manage cash bookings'],
+      'online_booking': ['إدارة الحجوزات الإلكترونية', 'Manage online bookings'],
+      'shift_management': ['إدارة الورديات والمواعيد', 'Shift and slot management'],
+      'no_show_protection': ['الحماية من عدم الحضور', 'No-show protection'],
+      'tournament_management': ['إدارة البطولات', 'Tournament management'],
+      'ai_insights': ['تحليلات ذكية وVSP Copilot', 'AI insights and VSP Copilot'],
+      'excel_reports': ['تقارير Excel', 'Excel reports'],
+      'search_priority_boost': ['أولوية الظهور في البحث', 'Priority search visibility'],
+      'whatsapp_confirmation': ['تأكيدات عبر واتساب', 'WhatsApp confirmations'],
+      'atomic_booking': ['تأكيد حجوزات ذري', 'Atomic booking confirmation'],
+    };
+    for (final entry in featureCopy.entries) {
+      if (features[entry.key] == true) {
+        labels.add(entry.value[isArabic ? 0 : 1]);
+      }
+    }
+    final support = features['support']?.toString();
+    if (support == 'priority_24_7') {
+      labels.add(isArabic ? 'دعم فني بأولوية على مدار الساعة' : '24/7 priority support');
+    } else if (support == 'standard') {
+      labels.add(isArabic ? 'دعم فني قياسي' : 'Standard support');
+    }
+    return labels;
+  }
+
+  String _planDescription(Map<String, dynamic> plan, bool isArabic) {
+    final value = plan[isArabic ? 'description_ar' : 'description_en']?.toString().trim();
+    return value == null || value.isEmpty
+        ? (isArabic ? 'تفاصيل الباقة غير متاحة حالياً.' : 'Plan details are currently unavailable.')
+        : value;
+  }
+
+  int _planNumber(Map<String, dynamic> plan, String key, {int fallback = 0}) {
+    final value = plan[key];
+    return value is num ? value.toInt() : int.tryParse(value?.toString() ?? '') ?? fallback;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,12 +136,39 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       ),
       body: SafeArea(
         bottom: true,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: _isPlansLoading
+            ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+            : _hasPlansError || _freePlan == null || _proPlan == null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(VSPSpacing.xl),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 32),
+                          const SizedBox(height: VSPSpacing.md),
+                          Text(
+                            isArabic
+                                ? 'تعذر تحميل أسعار ومزايا الباقات من النظام. لن نعرض أسعاراً قديمة.'
+                                : 'Could not load current plan prices and features. Outdated prices will not be shown.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: VSPSpacing.md),
+                          TextButton(
+                            onPressed: _loadPlans,
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
               // ── COMMERCIAL STRATEGY BANNER ──
               Container(
                 width: double.infinity,
@@ -128,20 +241,25 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               const SizedBox(height: 18),
 
               // ── FREE CARD (0 EGP - 1 STADIUM) ──
-              _buildFreePlanCard(context, isArabic, isPro),
+              _buildFreePlanCard(context, isArabic, isPro, _freePlan!),
 
               const SizedBox(height: 18),
 
               // ── PRO PLAN CARD (1000 EGP / MONTH - 3 STADIUMS - 7-DAY TRIAL) ──
-              _buildProPlanCard(context, isArabic, isPro, isTrialActive),
-            ],
-          ),
-        ),
+              _buildProPlanCard(context, isArabic, isPro, isTrialActive, _proPlan!),
+                      ],
+                    ),
+                  ),
       ),
     );
   }
 
-  Widget _buildFreePlanCard(BuildContext context, bool isArabic, bool isPro) {
+  Widget _buildFreePlanCard(
+    BuildContext context,
+    bool isArabic,
+    bool isPro,
+    Map<String, dynamic> plan,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -187,9 +305,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            isArabic
-                ? 'إدارة كاملة لملعبك وحجوزاتك بدون أي رسوم اشتراك مدى الحياة.'
-                : 'Complete stadium & booking management with zero subscription fees for life.',
+            _planDescription(plan, isArabic),
             style: const TextStyle(
               color: VSPColors.textSecondary,
               fontSize: 12.5,
@@ -202,7 +318,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                isArabic ? '0 جنيه' : '0 EGP',
+                isArabic
+                    ? '${_planNumber(plan, 'monthly_price')} جنيه'
+                    : '${_planNumber(plan, 'monthly_price')} EGP',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 28,
@@ -224,11 +342,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 14),
           ...[
-            isArabic ? 'تشغيل وإدارة ملعب واحد (1 Stadium)' : 'Operate & manage 1 stadium',
-            isArabic ? 'إدارة الحجوزات النقدية والإلكترونية' : 'Manage cash & online bookings',
-            isArabic ? 'إدارة الورديات وتعيين المواعيد' : 'Shift management & slot scheduling',
-            isArabic ? 'حماية من عدم الحضور وسجل الحجوزات' : 'No-show protection & booking ledger',
-            isArabic ? 'دعم فني قياسي' : 'Standard customer support',
+            ..._featureLabels(plan['features'] is Map ? Map<String, dynamic>.from(plan['features'] as Map) : null, isArabic),
           ].map(
             (feature) => Padding(
               padding: const EdgeInsets.only(bottom: 9),
@@ -284,6 +398,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     bool isArabic,
     bool isPro,
     bool isTrialActive,
+    Map<String, dynamic> plan,
   ) {
     return Container(
       width: double.infinity,
@@ -318,7 +433,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.45)),
                 ),
                 child: Text(
-                  isArabic ? '3 ملاعب + Copilot' : '3 Stadiums + Copilot',
+                  isArabic
+                      ? '${_planNumber(plan, 'max_stadiums')} ملاعب + Copilot'
+                      : '${_planNumber(plan, 'max_stadiums')} Stadiums + Copilot',
                   style: const TextStyle(
                     color: VSPColors.proAccent,
                     fontWeight: FontWeight.w800,
@@ -330,9 +447,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            isArabic
-                ? 'أقصى طاقة تشغيلية مع المزايا الذكية لإدارة حتى 3 ملاعب.'
-                : 'Maximum operational capacity with smart features to operate up to 3 stadiums.',
+            _planDescription(plan, isArabic),
             style: const TextStyle(
               color: VSPColors.textSecondary,
               fontSize: 12.5,
@@ -345,7 +460,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                isArabic ? '1000 جنيه' : '1000 EGP',
+                isArabic
+                    ? '${_planNumber(plan, 'monthly_price')} جنيه'
+                    : '${_planNumber(plan, 'monthly_price')} EGP',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontSize: 30,
@@ -367,12 +484,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 14),
           ...[
-            isArabic ? 'تشغيل وإدارة حتى 3 ملاعب (3 Stadiums)' : 'Operate up to 3 stadiums',
-            isArabic ? 'ذكاء تحصيل: كاش غير محصل وأونلاين غير محصل' : 'Collection intelligence: cash not collected & online not collected',
-            isArabic ? 'ذكاء اصطناعي VSP Copilot وقرارات تشغيلية' : 'VSP Copilot and operational decisions',
-            isArabic ? 'تقارير إكسل ومقارنة أداء الملاعب' : 'Excel reports & stadium performance comparisons',
-            isArabic ? 'أولوية ظهور الملاعب في نتائج البحث' : 'Priority visibility in search results',
-            isArabic ? 'دعم فني مخصص على مدار الساعة' : '24/7 dedicated support',
+            ..._featureLabels(plan['features'] is Map ? Map<String, dynamic>.from(plan['features'] as Map) : null, isArabic),
           ].map(
             (feature) => Padding(
               padding: const EdgeInsets.only(bottom: 9),
@@ -431,7 +543,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     ),
                   ),
                   child: Text(
-                    isArabic ? 'جرّب Pro لمدة 7 أيام مجاناً' : 'Try Pro 7 Days for Free',
+                    isArabic
+                        ? 'جرّب Pro لمدة ${_planNumber(plan, 'trial_days')} أيام مجاناً'
+                        : 'Try Pro for ${_planNumber(plan, 'trial_days')} days free',
                     style: const TextStyle(
                       fontWeight: FontWeight.w900,
                       fontSize: 13,
@@ -466,7 +580,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         ),
                       )
                     : Text(
-                        isArabic ? 'اشترك الآن (1000 جنيه / شهر)' : 'Subscribe Now (1000 EGP/mo)',
+                        isArabic
+                            ? 'اشترك الآن (${_planNumber(plan, 'monthly_price')} جنيه / شهر)'
+                            : 'Subscribe Now (${_planNumber(plan, 'monthly_price')} EGP/mo)',
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
                           fontSize: 13,
@@ -493,8 +609,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         VSPFeedback.showSuccess(
           context,
           isArabic
-              ? 'تم تفعيل تجربة Pro لمدة 7 أيام بنجاح.'
-              : 'Your 7-day Pro trial is now active.',
+              ? 'تم تفعيل تجربة Pro لمدة ${_planNumber(_proPlan ?? const {}, 'trial_days')} أيام بنجاح.'
+              : 'Your ${_planNumber(_proPlan ?? const {}, 'trial_days')}-day Pro trial is now active.',
         );
       }
     } catch (e) {
