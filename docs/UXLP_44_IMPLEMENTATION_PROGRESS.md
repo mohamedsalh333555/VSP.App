@@ -301,3 +301,9 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Both CI runs stopped at Analyze; automated tests and the workflow debug APK step were skipped. No Release APK workflow was dispatched.
 
 The source batch remains open. All 44 UXLP rule statuses are still runtime pending, and the final consolidated review has not started.
+
+
+## Add-player sheet header resilience — 2026-10-31
+
+- The add-player sheet title now uses the available header width beside the close action, wraps to at most two lines, and truncates only beyond that bound. The close action also exposes a localized tooltip.
+- This is a source-level responsive/accessibility correction for Rules 11, 27, and 33. Runtime rendering remains pending; no CI, analyzer, tests, device checks, migration, or APK build was run.
