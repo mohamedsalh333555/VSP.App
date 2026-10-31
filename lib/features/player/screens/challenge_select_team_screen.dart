@@ -491,6 +491,65 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  if (_isLoadingUserTeam)
+                    const LinearProgressIndicator(
+                      minHeight: 2,
+                      color: VSPColors.accent,
+                      backgroundColor: VSPColors.surfaceAlt,
+                    )
+                  else if (_hasUserTeamLoadError)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isArabic
+                                  ? 'تعذر التحقق من فريقك. أعد المحاولة قبل متابعة الحجز.'
+                                  : 'Could not verify your team. Retry before continuing.',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loadUserTeam,
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (_userTeam == null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic
+                                ? 'تحتاج إلى الانضمام لفريق قبل متابعة مباراة التحدي.'
+                                : 'Join or create a team before continuing with a challenge match.',
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          ),
+                          const SizedBox(height: VSPSpacing.sm),
+                          TextButton(
+                            onPressed: _openCreateTeam,
+                            child: Text(isArabic ? 'إنشاء فريق' : 'Create team'),
+                          ),
+                        ],
+                      ),
+                    ),
+
                   // كرت كود فريق الكابتن الحالي للمشاركة
                   if (_userTeam != null) ...[
                     Container(
