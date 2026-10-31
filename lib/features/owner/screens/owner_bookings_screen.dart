@@ -101,6 +101,23 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final auth = context.watch<AuthProvider>();
+    if (!auth.isOwner || auth.currentUser == null) {
+      return VSPScaffold(
+        backgroundColor: VSPDSSemanticColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Text(
+              isArabic
+                  ? 'هذه الشاشة متاحة لحسابات أصحاب الملاعب فقط.'
+                  : 'This screen is available to stadium-owner accounts only.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      );
+    }
 
     return VSPScaffold(
       backgroundColor: VSPDSSemanticColors.background,
