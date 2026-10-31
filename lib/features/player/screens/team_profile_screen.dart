@@ -273,7 +273,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    // Rebuild captain-only actions when the authenticated account changes.
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: true);
     final currentUid = auth.currentUser?.id;
     // Membership query order is not guaranteed; captain-only UI must use
     // the authoritative captain_id field, never the first roster row.
