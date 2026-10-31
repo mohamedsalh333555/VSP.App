@@ -329,7 +329,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
                 // 3. شريط التبديل بين [ التشغيل اليومي ] و [ التحليلات والقرارات ]
                 Container(
-                  height: 42,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: VSPColors.surfaceAlt,
                     borderRadius: BorderRadius.circular(21),
