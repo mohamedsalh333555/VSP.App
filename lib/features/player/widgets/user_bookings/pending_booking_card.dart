@@ -21,7 +21,7 @@ class PendingBookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paymentState = pendingBooking.paymentStatus?.toLowerCase().trim();
+    final paymentState = pendingBooking.paymentStatus.toLowerCase().trim();
     final isPaymentAwaitingConfirmation = pendingBooking.isPaid ||
         paymentState == 'paid' ||
         paymentState == 'partially_paid' ||
@@ -138,7 +138,7 @@ class PendingBookingCard extends StatelessWidget {
                     try {
                       final updated = await bp.getBookingById(pendingBooking.id);
                       if (!context.mounted) return;
-                      final updatedPaymentState = updated?.paymentStatus?.toLowerCase().trim();
+                      final updatedPaymentState = updated?.paymentStatus.toLowerCase().trim();
                       final isAwaitingPaymentConfirmation = updated != null &&
                           (updated.isPaid ||
                               updatedPaymentState == 'paid' ||
