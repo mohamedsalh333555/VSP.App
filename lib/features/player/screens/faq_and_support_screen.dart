@@ -33,7 +33,9 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic
+                ? 'رقم الدعم غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+                : 'Support contact is not configured yet. Please try again later.',
           );
         }
         return;
@@ -54,7 +56,9 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context,
-            isArabic ? 'support_contact_not_configured' : 'support_contact_not_configured',
+            isArabic
+                ? 'رقم الدعم غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+                : 'Support contact is not configured yet. Please try again later.',
           );
         }
         return;
