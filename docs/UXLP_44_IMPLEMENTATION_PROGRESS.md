@@ -357,3 +357,12 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Added a dedicated localized `join_request_accepted` notification addressed to the requesting player and linked to the booking; the notification center now renders it with a success icon/color.
 - Notification delivery is now best-effort after the server-side accept/reject action. A notification transport failure is logged separately and no longer falsely reports that the join decision itself failed. The booking RPC and authorization rules are unchanged.
 - Source-level correction; notification delivery and tap-through runtime verification remain pending. No CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Championship detail data-state recovery — 2026-10-31
+
+- The matches tab previously treated a stream with no data as an empty schedule, including while the stream was still loading or after an error. It now distinguishes initial loading, true empty results, initial stream failure, and stale data with paused live updates; the stale-data warning exposes Retry.
+- The standings and top-scorers FutureBuilders now render the shared localized error/retry state instead of presenting a failed query as “no matches/goals”.
+- The championship details screen now recreates the matches stream on retry and rebuilds the standings/top-scorers queries through the same refresh callback. No repository contract or database behavior changed.
+- Source-reviewed the nested championship details header, pill tab bar, rules tab, governorate confirmation dialog, squad-builder bridge sheet, matches tab, standings table, and top-scorers tab. Their runtime status remains pending.
+- The six newly tracked nested championship files are now source-reviewed; the 181-path register currently has no entries marked `not yet inspected`. This is inventory/source coverage only, not completion of the 44-rule screen/state audit.
