@@ -574,3 +574,11 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Fixture dates now format using the active locale; long match names, status labels, and date/venue metadata are bounded. Result submission is no longer presented before a match is booked and its scheduled kickoff time has passed; the user sees localized guidance while waiting.
 - Backend limitation retained for approval: source review of submit_team_league_match_result found no server-side booking/scheduled-time gate. The new restriction is client presentation only; no RPC or migration was changed. Server enforcement requires a separately approved SQL change.
 - No league points/scoring formula, result reconciliation, captain/team authorization, entry-fee calculation, booking RPC, or refund policy was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Team-league embedded card and fixture follow-up — 2026-10-31
+
+- The onboarding and gathering cards now display the loaded configured fee consistently, including share copy; when fee data is unavailable, the invite text directs users to check the app instead of showing a misleading dash.
+- The standings screen is bilingual and its league title/info rows now share available width; the English table uses compact P/W/D/L/Pts headings to preserve the seven-column layout.
+- Fixture cards now localize all match states/actions and use the active locale for dates. The result-entry action is shown only after a booking exists and the scheduled kickoff has passed; before then the card shows the appropriate next action or waiting guidance.
+- The server-side submit-result RPC currently does not enforce the same booking/time gate. This is explicitly documented as an approval-required backend follow-up; no migration/RPC was changed.
+- Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
