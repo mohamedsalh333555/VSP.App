@@ -174,7 +174,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                 }
-                if (snapshot.hasError && !snapshot.hasData) {
+                if (snapshot.hasError &&
+                    (snapshot.data == null || snapshot.data!.isEmpty)) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(VSPSpacing.lg),
@@ -199,7 +200,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   );
                 }
                 final tickets = snapshot.data ?? [];
-                if (tickets.isEmpty) {
+                if (tickets.isEmpty && !snapshot.hasError) {
                   return VSPEmptyState(
                     icon: Iconsax.messages_3_copy,
                     title: isArabic ? 'لا توجد تذاكر دعم' : 'No support tickets',
@@ -208,38 +209,111 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                     onButtonPressed: _newTicket,
                   );
                 }
-                return ListView.separated(
-                  padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true),
-                  itemCount: tickets.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: VSPSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final ticket = tickets[index];
-                    final status = ticket['status']?.toString().toLowerCase() ?? 'open';
-                    final statusLabel = switch (status) {
-                      'in_progress' => isArabic ? 'قيد المتابعة' : 'In progress',
-                      'waiting_user' => isArabic ? 'في انتظار ردك' : 'Waiting for you',
-                      'resolved' => isArabic ? 'تم الحل' : 'Resolved',
-                      'closed' => isArabic ? 'مغلقة' : 'Closed',
-                      _ => isArabic ? 'مفتوحة' : 'Open',
-                    };
-                    final title = ticket['subject']?.toString() ?? (isArabic ? 'تذكرة دعم' : 'Support Ticket');
-                    return ListTile(
-                      tileColor: VSPColors.surface,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.card)),
-                      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(
-                        isArabic ? 'الحالة: $statusLabel' : 'Status: $statusLabel',
-                        style: const TextStyle(color: VSPColors.textSecondary),
-                      ),
-                      trailing: const Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SupportTicketScreen(ticketId: ticket['id'].toString(), title: title),
+                return Column(
+                  children: [
+                    if (snapshot.hasError)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.fromLTRB(
+                          VSPSpacing.md,
+                          VSPSpacing.sm,
+                          VSPSpacing.md,
+                          0,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: VSPSpacing.md,
+                          vertical: VSPSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(
+                            color: VSPColors.warning.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Iconsax.warning_2_copy,
+                              color: VSPColors.warning,
+                              size: 17,
+                            ),
+                            const SizedBox(width: VSPSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                isArabic
+                                    ? 'تعذر تحديث التذاكر. نعرض آخر بيانات تم تحميلها.'
+                                    : 'Could not refresh tickets. Showing the last loaded data.',
+                                style: const TextStyle(
+                                  color: VSPColors.textSecondary,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() {}),
+                              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
+                    Expanded(
+                      child: ListView.separated(
+                        padding: VSPScrollPadding.forList(
+                          context,
+                          hasFloatingNavBar: true,
+                        ),
+                        itemCount: tickets.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: VSPSpacing.sm),
+                        itemBuilder: (context, index) {
+                          final ticket = tickets[index];
+                          final status =
+                              ticket['status']?.toString().toLowerCase() ?? 'open';
+                          final statusLabel = switch (status) {
+                            'in_progress' =>
+                              isArabic ? 'قيد المتابعة' : 'In progress',
+                            'waiting_user' =>
+                              isArabic ? 'في انتظار ردك' : 'Waiting for you',
+                            'resolved' => isArabic ? 'تم الحل' : 'Resolved',
+                            'closed' => isArabic ? 'مغلقة' : 'Closed',
+                            _ => isArabic ? 'مفتوحة' : 'Open',
+                          };
+                          final title = ticket['subject']?.toString() ??
+                              (isArabic ? 'تذكرة دعم' : 'Support Ticket');
+                          return ListTile(
+                            tileColor: VSPColors.surface,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(VSPRadius.card),
+                            ),
+                            title: Text(
+                              title,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              isArabic
+                                  ? 'الحالة: $statusLabel'
+                                  : 'Status: $statusLabel',
+                              style: const TextStyle(color: VSPColors.textSecondary),
+                            ),
+                            trailing: const Icon(
+                              Iconsax.arrow_right_3_copy,
+                              color: VSPColors.textSecondary,
+                            ),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => SupportTicketScreen(
+                                  ticketId: ticket['id'].toString(),
+                                  title: title,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 );
               },
             ),
