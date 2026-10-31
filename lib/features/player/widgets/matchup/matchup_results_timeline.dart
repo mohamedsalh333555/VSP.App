@@ -17,12 +17,13 @@ class MatchupResultsTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (results.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(VSPSpacing.lg),
         alignment: Alignment.center,
-        child: const Text(
-          'لم تُسجل أي مباريات في هذه المواجهة بعد',
+        child: Text(
+          isArabic ? 'لم تُسجل أي مباريات في هذه المواجهة بعد' : 'No matches have been recorded in this matchup yet',
           style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
       );
@@ -32,7 +33,7 @@ class MatchupResultsTimeline extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'سجل مباريات الجلسة (${results.length})',
+          isArabic ? 'سجل مباريات الجلسة (${results.length})' : 'Session match history (${results.length})',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
@@ -49,7 +50,7 @@ class MatchupResultsTimeline extends StatelessWidget {
                 id: '',
                 bookingId: '',
                 teamId: result.teamAId,
-                teamName: 'فريق أ',
+                teamName: isArabic ? 'فريق أ' : 'Team A',
                 addedByUserId: '',
                 joinedAt: DateTime.now(),
               ),
@@ -60,7 +61,7 @@ class MatchupResultsTimeline extends StatelessWidget {
                 id: '',
                 bookingId: '',
                 teamId: result.teamBId,
-                teamName: 'فريق ب',
+                teamName: isArabic ? 'فريق ب' : 'Team B',
                 addedByUserId: '',
                 joinedAt: DateTime.now(),
               ),
@@ -70,6 +71,7 @@ class MatchupResultsTimeline extends StatelessWidget {
               outcome: result.outcome,
               teamAName: tA.teamName,
               teamBName: tB.teamName,
+              isArabic: isArabic,
             );
 
             return Container(
@@ -85,7 +87,7 @@ class MatchupResultsTimeline extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${tA.teamName} ضد ${tB.teamName}',
+                      '${tA.teamName} ${isArabic ? 'ضد' : 'vs'} ${tB.teamName}',
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
