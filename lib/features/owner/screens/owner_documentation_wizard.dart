@@ -118,7 +118,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
       if (uid == null) {
         setState(() => _uploadingStatus[key] = false);
         VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
@@ -165,7 +165,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
       if (uid == null) {
         setState(() => _uploadingStatus[key] = false);
         VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
