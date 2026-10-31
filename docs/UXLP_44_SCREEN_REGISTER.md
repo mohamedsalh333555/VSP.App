@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
-- Registered Dart screen/surface paths: 184 unique paths
+- Registered Dart screen/surface paths: 181 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 194, including 10 repeated paths that document separate embedded-component findings
+- Table records: 191, including 10 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Static source scan: all 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -227,11 +227,9 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | `lib/features/player/widgets/championship_details/championship_bottom_bar.dart` | player | source reviewed—runtime pending (only open championships expose registration; ongoing/completed/cancelled/full states route to view/disabled actions) |
 | `lib/features/player/widgets/championship_details/championship_details_header.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_rules_tab.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | not yet inspected |
 | `lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart` | player | not yet inspected |
 
@@ -247,4 +245,4 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
 
-The source fixes above are not runtime passes. The 184 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
+The source fixes above are not runtime passes. The 181 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
