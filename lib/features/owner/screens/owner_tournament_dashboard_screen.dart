@@ -459,8 +459,11 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             ),
         ],
       ),
-      body: Column(
-        children: [
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: Column(
+          children: [
           TournamentOverviewCard(
             championship: _currentChampionship,
             onRecordPrizeDelivery: () {
@@ -487,7 +490,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 ),
                 const Spacer(),
                 if (_currentChampionship.status == 'open' && _currentChampionship.joinedTeams.length < _currentChampionship.maxTeams)
-                  GestureDetector(
+                  InkWell(
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
                     onTap: () {
                       showTournamentManualTeamSheet(
                         context,
@@ -503,27 +507,34 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         },
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(VSPRadius.full),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: VSPSize.touchTarget,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.addTeam,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: VSPColors.accent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 10,
-                                ),
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(VSPRadius.full),
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                AppLocalizations.of(context)!.addTeam,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      color: VSPColors.accent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -577,7 +588,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             onStartTournament: _handleStartTournament,
             onActivateCompetition: _handleActivateCompetition,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
