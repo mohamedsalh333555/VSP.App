@@ -21,10 +21,44 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
   final _repo = ChatRepository();
   final _controller = TextEditingController();
   bool _sending = false;
+  String? _streamUserId;
+  late Stream<Map<String, dynamic>?> _ticketStream;
+  late Stream<List<Map<String, dynamic>>> _messagesStream;
+
+  void _bindStreams(String userId) {
+    _streamUserId = userId;
+    _ticketStream = userId.isEmpty
+        ? const Stream<Map<String, dynamic>?>.empty()
+        : _repo.streamSupportTicket(widget.ticketId);
+    _messagesStream = userId.isEmpty
+        ? const Stream<List<Map<String, dynamic>>>.empty()
+        : _repo.streamSupportTicketMessages(widget.ticketId);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _bindStreams(context.read<AuthProvider>().currentUser?.id ?? '');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final activeUserId = context.watch<AuthProvider>().currentUser?.id ?? '';
+    if (activeUserId == _streamUserId) return;
+    _bindStreams(activeUserId);
+    _controller.clear();
+    _sending = false;
+  }
 
   Future<void> _send() async {
     final body = _controller.text.trim();
-    if (body.isEmpty || _sending) return;
+    if (body.isEmpty || _sending ||
+        _streamUserId == null ||
+        _streamUserId!.isEmpty ||
+        context.read<AuthProvider>().currentUser?.id != _streamUserId) {
+      return;
+    }
     setState(() => _sending = true);
     try {
       await _repo.sendSupportTicketMessage(ticketId: widget.ticketId, body: body);
@@ -106,7 +140,8 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         actions: [IconButton(tooltip: ar ? 'تصعيد عبر واتساب' : 'Escalate via WhatsApp', onPressed: _whatsappFallback, icon: const Icon(Iconsax.message_text_1_copy, color: VSPColors.accent))],
       ),
       body: StreamBuilder<Map<String, dynamic>?>(
-        stream: _repo.streamSupportTicket(widget.ticketId),
+        key: ValueKey(_streamUserId),
+        stream: _ticketStream,
         builder: (context, ticketSnapshot) {
           if (ticketSnapshot.connectionState == ConnectionState.waiting &&
               ticketSnapshot.data == null) {
@@ -125,7 +160,9 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                       style: const TextStyle(color: VSPColors.textSecondary),
                     ),
                     TextButton(
-                      onPressed: () => setState(() {}),
+                      onPressed: () => setState(() {
+                        _bindStreams(userId);
+                      }),
                       child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
                     ),
                   ],
@@ -193,7 +230,8 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
               ),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _repo.streamSupportTicketMessages(widget.ticketId),
+                key: ValueKey('$_streamUserId-messages'),
+                stream: _messagesStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       (snapshot.data == null || snapshot.data!.isEmpty)) {
@@ -212,7 +250,9 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                               style: const TextStyle(color: VSPColors.textSecondary),
                             ),
                             TextButton(
-                              onPressed: () => setState(() {}),
+                              onPressed: () => setState(() {
+                                _bindStreams(userId);
+                              }),
                               child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
                             ),
                           ],
