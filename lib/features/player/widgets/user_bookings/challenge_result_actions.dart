@@ -28,7 +28,7 @@ class ChallengeResultActions extends StatelessWidget {
     required String? myTeamId,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final currentTeamId = myTeamId ?? booking.playerTeamId;
+    final currentTeamId = myTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
     final isHome = currentTeamId == booking.playerTeamId;
@@ -139,7 +139,7 @@ class ChallengeResultActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final currentTeamId = myTeamId ?? booking.playerTeamId;
+    final currentTeamId = myTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
