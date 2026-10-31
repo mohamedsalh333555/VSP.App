@@ -92,7 +92,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
     final support = features['support']?.toString();
     if (support == 'priority_24_7') {
-      labels.add(isArabic ? 'دعم فني بأولوية على مدار الساعة' : '24/7 priority support');
+      labels.add(isArabic ? 'أولوية في التواصل مع الدعم الفني' : 'Priority access to technical support');
     } else if (support == 'standard') {
       labels.add(isArabic ? 'دعم فني قياسي' : 'Standard support');
     }
