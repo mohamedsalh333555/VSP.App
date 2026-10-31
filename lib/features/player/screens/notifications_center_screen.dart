@@ -72,7 +72,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         child: StreamBuilder<List<AppNotification>>(
           stream: _notificationsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             return VSPStateView(
               state: VSPUiState.loading,
@@ -81,7 +81,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             );
           }
 
-          if (snapshot.hasError) {
+          if (snapshot.hasError &&
+              (snapshot.data == null || snapshot.data!.isEmpty)) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             return VSPStateView(
               state: VSPUiState.error,
@@ -114,7 +115,49 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             );
           }
 
-          return ListView.separated(
+          return Column(
+            children: [
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VSPSpacing.md,
+                    vertical: VSPSpacing.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 17),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر تحديث الإشعارات. نعرض آخر قائمة تم تحميلها.'
+                              : 'Could not refresh notifications. Showing the last loaded list.',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() {
+                          _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+                        }),
+                        child: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: ListView.separated(
             padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
             physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
@@ -203,6 +246,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 ),
               );
             },
+          ),
+              ),
+            ],
           );
           },
         ),
