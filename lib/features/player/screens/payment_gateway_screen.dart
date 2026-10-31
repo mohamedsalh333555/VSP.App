@@ -305,8 +305,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? widget.bookingDraft
         : widget.bookingDraft.copyWith(
             totalPrice: _booking!.totalPrice,
-            needsDeposit: _booking!.needsDeposit,
-            depositPaid: _booking!.depositAmount,
+            needsDeposit: !effectiveForceFullPayment && _booking!.needsDeposit,
+            depositPaid: effectiveForceFullPayment ? 0 : _booking!.depositAmount,
           );
     final isFullPayment = widget.forceFullPayment ||
         widget.isTournamentPayment ||
@@ -629,8 +629,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? widget.bookingDraft
         : widget.bookingDraft.copyWith(
             totalPrice: _booking!.totalPrice,
-            needsDeposit: _booking!.needsDeposit,
-            depositPaid: _booking!.depositAmount,
+            needsDeposit: !widget.forceFullPayment && _booking!.needsDeposit,
+            depositPaid: widget.forceFullPayment ? 0 : _booking!.depositAmount,
           );
     final bookingNeedsDeposit = _booking?.needsDeposit ?? widget.bookingDraft.needsDeposit;
     final bookingDepositAmount = _booking?.depositAmount ?? widget.bookingDraft.depositPaid;
