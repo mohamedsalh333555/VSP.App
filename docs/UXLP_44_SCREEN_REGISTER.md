@@ -121,8 +121,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | source reviewed—runtime pending (Dialog safe-area defaults; fixed-height calendar needs small-screen runtime check) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/widgets/booking_type_modal.dart` | player | source reviewed—runtime pending (challenge creation now uses strict team lookup; failed membership read shows retry-safe error rather than falsely prompting team creation) |
-| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (cross-governorate registration confirmation; dialog dismissal and localized copy pending) |
+| `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (incomplete-squad bridge and nested add-team sheet use scroll control and SafeArea; team lookup/runtime pending) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (invite actions reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (Arabic/English helper copy, keyboard behavior, async lifecycle, and premature success feedback corrected; auth ID reads use User.id) |
@@ -226,12 +226,12 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 
 | `lib/features/player/widgets/championship_details/championship_bottom_bar.dart` | player | source reviewed—runtime pending (only open championships expose registration; ongoing/completed/cancelled/full states route to view/disabled actions) |
-| `lib/features/player/widgets/championship_details/championship_details_header.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_rules_tab.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | not yet inspected |
-| `lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart` | player | not yet inspected |
+| `lib/features/player/widgets/championship_details/championship_details_header.dart` | player | source reviewed—runtime pending (live championship status, date, prize, fee, and registration metrics; text wrapping/locale pending) |
+| `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | source reviewed—runtime pending (stream loading/empty/error/stale-data states with retry; brackets navigation and standings child) |
+| `lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart` | player | source reviewed—runtime pending (selected-tab semantics and tap handling; Arabic/English width and keyboard focus pending) |
+| `lib/features/player/widgets/championship_details/championship_rules_tab.dart` | player | source reviewed—runtime pending (long rules content is scrollable; localized headings and long-text rendering pending) |
+| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | source reviewed—runtime pending (FutureBuilder loading/error/empty states with retry; horizontal table scroll and stat columns) |
+| `lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart` | player | source reviewed—runtime pending (FutureBuilder loading/error/empty states with retry; scorer rank and goals presentation) |
 
 ## Latest grouped source remediation — 2026-10-31
 
