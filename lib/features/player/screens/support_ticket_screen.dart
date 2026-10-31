@@ -72,8 +72,41 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       body: StreamBuilder<Map<String, dynamic>?>(
         stream: _repo.streamSupportTicket(widget.ticketId),
         builder: (context, ticketSnapshot) {
+          if (ticketSnapshot.connectionState == ConnectionState.waiting &&
+              !ticketSnapshot.hasData) {
+            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          }
+          if (ticketSnapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(VSPSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      ar ? 'تعذر تحميل بيانات التذكرة.' : 'Could not load ticket details.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() {}),
+                      child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
           final ticket = ticketSnapshot.data;
-          final status = ticket?['status']?.toString().toLowerCase() ?? 'open';
+          if (ticket == null) {
+            return Center(
+              child: Text(
+                ar ? 'التذكرة غير متاحة.' : 'This ticket is unavailable.',
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+            );
+          }
+          final status = ticket['status']?.toString().toLowerCase() ?? 'open';
           final canReply = status != 'closed' && status != 'resolved';
           String statusLabel() {
             switch (status) {
@@ -121,6 +154,31 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _repo.streamSupportTicketMessages(widget.ticketId),
                 builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(VSPSpacing.lg),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              ar ? 'تعذر تحميل الرسائل.' : 'Could not load messages.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: VSPColors.textSecondary),
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() {}),
+                              child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
                   final messages = snapshot.data ?? [];
                   if (messages.isEmpty) {
                     return Center(
