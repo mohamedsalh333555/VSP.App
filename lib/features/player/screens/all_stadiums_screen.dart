@@ -91,6 +91,17 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
     }
   }
 
+  // Refresh the current query without clearing the last authoritative page.
+  void _refreshServerFilters(StadiumProvider provider) {
+    provider.fetchStadiumsWithParams(
+      isRefresh: true,
+      governorate: _selectedGovernorate,
+      floorType: _selectedFloorType,
+      searchQuery: _searchQuery,
+      sortBy: _sortOption.name,
+    );
+  }
+
   void _resetFilters() {
     setState(() {
       _searchController.clear();
@@ -176,7 +187,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                             onPressed: () {
                               final filters = provider.currentFilters;
                               if (provider.isFilterActive && filters != null) {
-                                provider.applyFilters(filters);
+                                _refreshServerFilters(provider);
                               } else {
                                 _applyServerFilters(provider);
                               }
@@ -227,7 +238,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                 return RefreshIndicator(
                   color: VSPColors.accent,
                   backgroundColor: VSPColors.surface,
-                  onRefresh: () async => _applyServerFilters(provider),
+                  onRefresh: () async => _refreshServerFilters(provider),
                   child: Column(
                     children: [
                       if (provider.errorMessage != null)
@@ -253,9 +264,9 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   onPressed: () {
                                     final filters = provider.currentFilters;
                                     if (provider.isFilterActive && filters != null) {
-                                      provider.applyFilters(filters);
+                                      _refreshServerFilters(provider);
                                     } else {
-                                      provider.fetchStadiums(isRefresh: true);
+                                      _refreshServerFilters(provider);
                                     }
                                   },
                                   child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
