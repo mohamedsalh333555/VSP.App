@@ -335,3 +335,13 @@ All 44 rule entries remain source reviewed/runtime pending. No CI, analyzer, tes
 - **Rules 38, 39, 40 — account and role isolation:** player tab restoration is now stored per authenticated Supabase user; switching player accounts resets the tab and loads only that account's saved selection. Deep-link tab navigation persists under the active account. Owner shell navigation resets to its dashboard when the owner identity changes.
 
 All changes are source-level. Rule statuses remain runtime pending; no CI, analyzer, automated tests, runtime validation, migrations, or APK build were run.
+
+
+## Phase 2 implementation additions — 2026-10-31 (source only)
+
+- **Rules 3, 6, 27, 33 — team roster affordances:** the create-team member empty state now uses a charcoal square icon container and readable secondary text rather than near-transparent foregrounds. Member removal now has a localized tooltip and 48dp target.
+- **Rules 9, 10, 11, 35, 36 — invitation and modal recovery:** private collective invitation loading now distinguishes a failed backend read from a genuinely unavailable invitation. Failed refreshes preserve an initial booking snapshot with a localized stale-data banner and retry; a failed initial read has a dedicated localized retry state. Leave/remove/cancel confirmation dialogs are scrollable. Terms/privacy dialog height now accounts for keyboard insets, and payment-exit copy is scrollable.
+- **Rules 11, 27, 30, 33, 42 — shared navigation and action components:** bottom navigation exposes one selected/button semantic node instead of duplicate wrapper/InkWell announcements. Terms/privacy close action now has a 48dp hit target. Canonical primary-button labels can wrap to two lines. Shared PrimaryButton always releases its debounce state even if a synchronous callback throws.
+- **Rules 11, 34, 35 — create-team sheet:** the available sheet height now subtracts keyboard and top safe-area insets before laying out the scrollable form and fixed actions; bottom padding no longer adds the keyboard inset twice. Subtitle wrapping is explicit.
+
+All entries in the 44-rule matrix remain source reviewed—runtime pending; these touchpoints do not constitute whole-app rule completion. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.

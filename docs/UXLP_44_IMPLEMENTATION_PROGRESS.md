@@ -97,3 +97,18 @@ These changes are source implementation only. All 44 rule statuses remain runtim
 - The player no-team card uses explicit localized fallback text when the player's position is unset.
 
 These are source-only changes. No CI, analyzer, tests, runtime checks, migrations, or APK build were run; all 44 rule statuses remain runtime pending.
+
+
+## Continued source implementation — responsive sheets, recovery, and shared controls
+
+Additional source commits on branch uxlp-44-implementation:
+
+- create_team_sheet.dart: sheet height responds to keyboard and top safe-area insets; fixed action row remains within the visible viewport; removed duplicate keyboard inset from bottom padding; subtitle wraps within its header column.
+- create_team_members_section.dart: roster empty state now uses a charcoal square icon container and readable secondary copy; remove-member action has localized tooltip and 48dp target.
+- collective_match_invite_sheet.dart: failed initial invite reads now show a retryable load-error state rather than a false unavailable-invite state; failed refreshes preserve any supplied booking snapshot and label it as stale; destructive confirmation dialogs are scrollable.
+- vsp_terms_and_privacy_modal.dart: dialog height accounts for keyboard insets and close action has a 48dp target.
+- payment_cancel_dialog.dart: exit confirmation copy is scrollable.
+- vsp_bottom_nav_bar.dart: avoids duplicate semantic announcements from nested navigation wrapper and InkWell.
+- primary_button.dart / vsp_button.dart: debounce lock is released even if a synchronous callback throws; long button labels can wrap to two lines.
+
+All changes are source-only. The 44 rules are not marked complete; screen-wide and runtime evidence is still pending. No CI, analyzer, automated tests, runtime checks, database migrations, or APK build were run.
