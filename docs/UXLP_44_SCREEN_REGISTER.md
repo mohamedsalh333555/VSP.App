@@ -260,3 +260,12 @@ The source fixes above are not runtime passes. The 181 unique registered paths s
 | Component | Role | Source finding / status |
 |---|---|---|
 | `lib/features/player/widgets/user_bookings/open_join_booking_card.dart` | player | source reviewed—runtime pending (zero-capacity state now displays Full rather than Open to join; terminal-state, host, joined, and pending status precedence reviewed) |
+
+### Team-league embedded surfaces reviewed in this continuation
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/player/widgets/league/team_league_onboarding_card.dart` | player | source reviewed—runtime pending (bilingual onboarding/features/actions; team-entry fee comes from configured value) |
+| `lib/features/player/widgets/league/team_league_gathering_card.dart` | player | source reviewed—runtime pending (bilingual gathering/progress/share copy; fee text uses configured entry-fee value) |
+| `lib/features/player/widgets/league/team_league_standings_view.dart` | player | source reviewed—runtime pending (bilingual league detail/standings labels; long title and metadata rows bounded) |
+| `lib/features/player/widgets/league/team_league_fixtures_view.dart` | player | source reviewed—runtime pending (bilingual fixture/status copy; dates use active locale; result entry waits for booking and scheduled kickoff; server-side gate remains approval-required) |
