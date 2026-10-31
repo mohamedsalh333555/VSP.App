@@ -171,3 +171,10 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (owner/player streams are cancelled before changing scope; owner empty snapshots and direct-fetch errors are delivered explicitly) |
 | `lib/core/repositories/team_repository.dart` | shared | source reviewed—runtime pending (added lookup for all teams captained by the current user to support multi-team result eligibility) |
 | `lib/core/providers/booking_provider.dart` | shared | source reviewed—runtime pending (dedicated player/owner loading states; owner empty/error snapshot handling; concurrent refresh counters) |
+
+
+### Additional embedded league surface inspected
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/player/widgets/league/team_league_tab.dart` | player | source reviewed—runtime pending (league query failures now have retry; failed fee-status lookup disables payment until rechecked; payment error copy localized) |
