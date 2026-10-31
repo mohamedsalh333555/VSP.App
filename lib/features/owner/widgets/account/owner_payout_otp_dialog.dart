@@ -69,12 +69,22 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final email = Provider.of<AuthProvider>(context, listen: false).currentUser?.email ?? '';
 
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
+
     return Container(
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.fromLTRB(
         20,
         20,
         20,
-        MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 20,
+        media.padding.bottom + 20,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.background,

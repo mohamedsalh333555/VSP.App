@@ -35,9 +35,17 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.padding.top -
+            media.padding.bottom -
+            24)
+        .clamp(0.0, media.size.height)
+        .toDouble();
+
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
+        maxHeight: availableHeight,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -50,9 +58,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
         24,
         20,
         24,
-        MediaQuery.of(context).padding.bottom > 0
-            ? MediaQuery.of(context).padding.bottom + 16
-            : 36,
+        media.padding.bottom + 16,
       ),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),

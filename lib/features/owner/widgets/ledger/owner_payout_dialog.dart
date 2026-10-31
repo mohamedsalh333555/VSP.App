@@ -33,6 +33,7 @@ class OwnerPayoutDialog {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
+          scrollable: true,
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           title: Text(
@@ -195,6 +196,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
     );
 
     return AlertDialog(
+      scrollable: true,
       backgroundColor: VSPColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
       title: Text(
