@@ -399,3 +399,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The card previously prioritized the host badge over cancelled/ended status, so a host could see “My Match” instead of the actual terminal state.
 - Tapping an ended/cancelled open-join card also opened the active collective-invite sheet even though its action button was disabled. Terminal-state taps now open booking details; cancelled/ended badges take precedence for hosts and players alike.
 - Source-level state correction; tap-through and lifecycle regression checks remain pending the one consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Open-join booking capacity status — 2026-10-31
+
+- The open-join booking card previously fell through to “Open to join” even when its computed remaining capacity was zero. The card now shows a localized “Full” state in that case.
+- This is a presentation correction only; booking capacity enforcement and server-side join authorization are unchanged. Runtime state refresh and full-capacity regression checks remain pending. No CI, analyzer, tests, migrations, or APK build was run.
