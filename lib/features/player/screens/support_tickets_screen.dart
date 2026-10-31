@@ -31,6 +31,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final subjectController = TextEditingController();
     String category = widget.initialCategory ?? 'general';
+    bool isSubmitting = false;
 
     final result = await showModalBottomSheet<String>(
       context: context,
@@ -87,33 +88,45 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () async {
-                    final subject = subjectController.text.trim();
-                    if (subject.isEmpty) return;
-                    try {
-                      final booking = widget.contextBooking;
-                      final ticket = await _repo.createSupportTicket(
-                        subject: subject,
-                        category: category,
-                        contextType: booking == null ? null : 'booking',
-                        contextId: booking?.id,
-                        bookingId: booking?.id,
-                        priority: category == 'refund' || category == 'payment' ? 'high' : 'normal',
-                      );
-                      if (ctx.mounted) Navigator.pop(ctx, ticket['id']?.toString());
-                    } catch (e) {
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text(isArabic ? 'تعذر فتح التذكرة.' : 'Could not create the ticket.')),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final subject = subjectController.text.trim();
+                          if (subject.isEmpty) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(content: Text(isArabic ? 'اكتب عنوان المشكلة أولاً.' : 'Enter an issue subject first.')),
+                            );
+                            return;
+                          }
+                          setSheetState(() => isSubmitting = true);
+                          try {
+                            final booking = widget.contextBooking;
+                            final ticket = await _repo.createSupportTicket(
+                              subject: subject,
+                              category: category,
+                              contextType: booking == null ? null : 'booking',
+                              contextId: booking?.id,
+                              bookingId: booking?.id,
+                              priority: category == 'refund' || category == 'payment' ? 'high' : 'normal',
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx, ticket['id']?.toString());
+                          } catch (e) {
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text(isArabic ? 'تعذر فتح التذكرة.' : 'Could not create the ticket.')),
+                              );
+                            }
+                          } finally {
+                            if (ctx.mounted) setSheetState(() => isSubmitting = false);
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
                     foregroundColor: Colors.black,
                   ),
-                  child: Text(isArabic ? 'فتح التذكرة' : 'Open Ticket'),
+                  child: isSubmitting
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : Text(isArabic ? 'فتح التذكرة' : 'Open Ticket'),
                 ),
               ),
               ],
@@ -158,6 +171,33 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           : StreamBuilder<List<Map<String, dynamic>>>(
               stream: _repo.streamSupportTickets(userId),
               builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(VSPSpacing.lg),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 32),
+                          const SizedBox(height: VSPSpacing.md),
+                          Text(
+                            isArabic ? 'تعذر تحميل تذاكر الدعم.' : 'Could not load support tickets.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: VSPColors.textSecondary),
+                          ),
+                          const SizedBox(height: VSPSpacing.md),
+                          TextButton(
+                            onPressed: () => setState(() {}),
+                            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
                 final tickets = snapshot.data ?? [];
                 if (tickets.isEmpty) {
                   return VSPEmptyState(
