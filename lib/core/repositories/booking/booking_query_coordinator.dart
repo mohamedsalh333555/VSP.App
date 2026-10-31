@@ -129,17 +129,19 @@ class BookingQueryCoordinator {
   }
 
   /// Fetches a single booking by ID.
+  Future<Booking?> getBookingByIdStrict(String bookingId) async {
+    final response = await _supabase
+        .from('bookings')
+        .select()
+        .eq('id', bookingId)
+        .maybeSingle();
+    if (response == null) return null;
+    return Booking.fromFirestore(response, response['id'].toString());
+  }
+
   Future<Booking?> getBookingById(String bookingId) async {
     try {
-      final response = await _supabase
-          .from('bookings')
-          .select()
-          .eq('id', bookingId)
-          .maybeSingle();
-      if (response != null) {
-        return Booking.fromFirestore(response, response['id'].toString());
-      }
-      return null;
+      return await getBookingByIdStrict(bookingId);
     } catch (e) {
       debugPrint('Error getting booking: $e');
       return null;
