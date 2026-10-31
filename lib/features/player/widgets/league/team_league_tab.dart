@@ -934,7 +934,6 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       );
     }
     if (widget.hasUserTeamLoadError) {
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -1004,7 +1003,6 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     }
 
     if (_hasLeagueLoadError) {
-      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(VSPSpacing.xl),

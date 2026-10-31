@@ -200,6 +200,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               booking.matchResultStatus == MatchResultStatus.disputed) &&
           booking.resultSubmittedByTeamId != null &&
           booking.resultSubmittedByTeamId != myTeamId) {
+        _popupShownForUserId = userId;
         showPostMatchConfirmResultDialog(
           context,
           booking,
