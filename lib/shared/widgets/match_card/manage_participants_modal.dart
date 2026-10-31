@@ -81,12 +81,20 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
-      await NotificationHandler.notifyJoinRequestAccepted(
-        playerId: userId,
-        stadiumName: widget.booking.stadiumName,
-        bookingId: widget.booking.id,
-      );
-      _fetchUsers();
+      try {
+        await NotificationHandler.notifyJoinRequestAccepted(
+          playerId: userId,
+          stadiumName: widget.booking.stadiumName,
+          bookingId: widget.booking.id,
+        );
+      } catch (notificationError, stackTrace) {
+        VSPLogger.e(
+          'Failed to notify player that their join request was accepted',
+          notificationError,
+          stackTrace,
+        );
+      }
+      await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -110,11 +118,19 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      await NotificationHandler.notifyJoinRequestRejected(
-        playerId: userId,
-        stadiumName: widget.booking.stadiumName,
-      );
-      _fetchUsers();
+      try {
+        await NotificationHandler.notifyJoinRequestRejected(
+          playerId: userId,
+          stadiumName: widget.booking.stadiumName,
+        );
+      } catch (notificationError, stackTrace) {
+        VSPLogger.e(
+          'Failed to notify player that their join request was rejected',
+          notificationError,
+          stackTrace,
+        );
+      }
+      await _fetchUsers();
     } catch (e) {
       if (!mounted) return;
       VSPFeedback.showError(
