@@ -120,9 +120,13 @@ void showTournamentScoreModal(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            isArabic ? 'تسجيل نتيجة وهدافي المباراة ' : 'Submit Score & Goal Scorers ',
-                            style: Theme.of(modalContext).textTheme.displaySmall,
+                          Expanded(
+                            child: Text(
+                              isArabic ? 'تسجيل نتيجة وهدافي المباراة' : 'Submit Score & Goal Scorers',
+                              style: Theme.of(modalContext).textTheme.displaySmall,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           IconButton(
                             icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
