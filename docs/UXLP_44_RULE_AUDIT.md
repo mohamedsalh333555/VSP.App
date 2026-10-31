@@ -434,3 +434,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### RTL alignment corrections — 2026-10-31
 
 - **Rules 7, 10, 30, 42 — directional layout:** owner booking form labels and owner venue-chip spacing now use directional start insets. Shared bottom-navigation unread badge now anchors to logical end, mirroring correctly in Arabic RTL and English LTR.
+
+
+### Upgrade benefit promise correction — 2026-10-31
+
+- **Rules 13, 18 — truthful subscription copy:** facility-upgrade benefits no longer promise 24/7 owner support; the Arabic and English descriptions now state priority access without asserting an unsupported service-level guarantee.

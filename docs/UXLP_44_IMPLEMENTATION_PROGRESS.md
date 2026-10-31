@@ -244,3 +244,10 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Shared bottom-navigation notification dot now uses directional end positioning so its placement mirrors in RTL.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Subscription benefit copy correction
+
+- Removed the unsupported 24/7 owner support promise from the facility-upgrade sheet; replaced it with bilingual priority-support-access wording.
+
+No plan entitlement, price, trial, backend rule, CI, analyzer, tests, runtime checks, migration, or APK build was changed/run.
