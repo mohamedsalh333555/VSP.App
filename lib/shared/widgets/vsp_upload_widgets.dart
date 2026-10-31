@@ -20,11 +20,22 @@ class VspUploadMainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      enabled: !isLoading,
+      label: title,
+      hint: helper,
       onTap: isLoading ? null : onTap,
-      child: Container(
-        width: double.infinity,
-        height: 160,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        child: InkWell(
+          excludeFromSemantics: true,
+          onTap: isLoading ? null : onTap,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          child: Container(
+            width: double.infinity,
+            height: 160,
         decoration: BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -69,6 +80,8 @@ class VspUploadMainCard extends StatelessWidget {
                   ),
                 ],
               ),
+          ),
+        ),
       ),
     );
   }
@@ -100,7 +113,7 @@ class VspUploadedItemRow extends StatelessWidget {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
-          color: thumbnailUrl != null || imageFile != null
+          color: (thumbnailUrl?.isNotEmpty ?? false) || imageFile != null
               ? VSPColors.accent.withValues(alpha: 0.3)
               : VSPColors.divider,
         ),
@@ -117,7 +130,7 @@ class VspUploadedItemRow extends StatelessWidget {
               image: DecorationImage(
                 image: (!kIsWeb && imageFile != null)
                     ? FileImage(imageFile!)
-                    : (thumbnailUrl != null
+                    : ((thumbnailUrl?.isNotEmpty ?? false)
                             ? NetworkImage(thumbnailUrl!)
                             : const AssetImage('assets/images/logo.png'))
                         as ImageProvider,
@@ -153,10 +166,13 @@ class VspUploadedItemRow extends StatelessWidget {
                 if (onDelete != null) ...[
                   const SizedBox(width: 8),
                   IconButton(
+                    tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'حذف الملف'
+                        : 'Delete file',
                     icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                     onPressed: onDelete,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   ),
                 ],
               ],
