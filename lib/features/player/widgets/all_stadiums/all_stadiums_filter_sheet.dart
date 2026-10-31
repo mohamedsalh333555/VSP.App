@@ -212,6 +212,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
             ),
           ),
         ],
+              ),
             ),
           ),
         ),
