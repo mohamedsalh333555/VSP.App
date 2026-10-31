@@ -140,8 +140,16 @@ class SupabaseBookingRepository implements BookingRepository {
   Future<List<Booking>> getUserBookingsDirectly(String userId) =>
       _queryCoordinator.getUserBookingsDirectly(userId);
 
+  /// Strict sync fetch: propagates transport/query failures instead of returning
+  /// an empty list that could be mistaken for an authoritative no-bookings state.
+  Future<List<Booking>> getUserBookingsDirectlyStrict(String userId) =>
+      _queryCoordinator.getUserBookingsDirectlyStrict(userId);
+
   Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) =>
       _queryCoordinator.fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+
+  Future<List<Booking>> fetchOwnerBookingsDirectlyStrict(String ownerId, {List<String>? stadiumIds}) =>
+      _queryCoordinator.fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
 
   @override
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) =>
