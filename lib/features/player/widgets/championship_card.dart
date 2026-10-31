@@ -230,7 +230,7 @@ class ChampionshipCard extends StatelessWidget {
                     } else if (isOngoing) {
                       return Row(
                         children: [
-                          const Icon(Iconsax.play_circle_copy, color: VSPColors.info, size: 16),
+                          const Icon(Icons.play_circle_outline, color: VSPColors.info, size: 16),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
