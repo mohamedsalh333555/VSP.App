@@ -46,11 +46,17 @@ class BookingCancellationCoordinator {
 
       if (isManual) {
         try {
-          await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
+          final manualResult = await _supabase.rpc('owner_cancel_manual_booking_atomic', params: {
             'p_booking_id': bookingId,
             'p_owner_id': booking.ownerId,
             'p_refund_deposit': false,
           });
+          if (manualResult is Map && manualResult['success'] == false) {
+            throw Exception(sanitizeCancellationError(
+              null,
+              manualResult['message']?.toString(),
+            ));
+          }
         } catch (e) {
           // Never fall back to a direct bookings UPDATE: cancellation must pass
           // the server-side authorization/state/financial rules atomically.
