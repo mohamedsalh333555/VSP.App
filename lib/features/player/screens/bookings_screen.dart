@@ -25,7 +25,8 @@ class BookingsScreen extends StatefulWidget {
 }
 
 class _BookingsScreenState extends State<BookingsScreen> {
-  String? _myTeamId;
+  Set<String> _myTeamIds = <String>{};
+  Set<String> _myCaptainTeamIds = <String>{};
   bool _isInitialLoadPending = true;
   String? _activeUserScope;
   bool _hasObservedUserScope = false;
@@ -39,7 +40,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
       _hasObservedUserScope = true;
       _activeUserScope = userId;
       final generation = ++_userScopeGeneration;
-      _myTeamId = null;
+      _myTeamIds = <String>{};
+      _myCaptainTeamIds = <String>{};
       _isInitialLoadPending = userId != null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || generation != _userScopeGeneration) return;
@@ -60,11 +62,16 @@ class _BookingsScreenState extends State<BookingsScreen> {
           context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
         return;
       }
-      final team = await TeamRepository().getUserTeamStrict(userId);
+      final teamRepository = TeamRepository();
+      final teamIds = await teamRepository.getUserTeamIdsStrict(userId);
+      final captainTeamIds = await teamRepository.getUserCaptainTeamIdsStrict(userId);
       if (mounted &&
           generation == _userScopeGeneration &&
           context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
-        setState(() => _myTeamId = team?.id);
+        setState(() {
+          _myTeamIds = teamIds;
+          _myCaptainTeamIds = captainTeamIds;
+        });
       }
     } catch (e) {
       debugPrint('Error loading player bookings/team context: $e');
@@ -73,6 +80,27 @@ class _BookingsScreenState extends State<BookingsScreen> {
         setState(() => _isInitialLoadPending = false);
       }
     }
+  }
+
+  String? _myTeamIdForBooking(Booking booking) {
+    final playerTeamId = booking.playerTeamId;
+    final opponentTeamId = booking.opponentTeamId;
+    if (playerTeamId == null || opponentTeamId == null) return null;
+    final isHome = _myTeamIds.contains(playerTeamId);
+    final isAway = _myTeamIds.contains(opponentTeamId);
+    if (isHome == isAway) return null;
+    return isHome ? playerTeamId : opponentTeamId;
+  }
+
+  String? _myCaptainTeamIdForBooking(Booking booking) {
+    final playerTeamId = booking.playerTeamId;
+    final opponentTeamId = booking.opponentTeamId;
+    if (playerTeamId == null || opponentTeamId == null) return null;
+    final isHomeCaptain = _myCaptainTeamIds.contains(playerTeamId);
+    final isAwayCaptain = _myCaptainTeamIds.contains(opponentTeamId);
+    // One account cannot submit for both sides of the same match.
+    if (isHomeCaptain == isAwayCaptain) return null;
+    return isHomeCaptain ? playerTeamId : opponentTeamId;
   }
 
   Widget _buildSyncWarning(BuildContext context) {
@@ -276,7 +304,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                 : PlayerBookingCard(
                                     booking: booking,
                                     isHistory: false,
-                                    myTeamId: _myTeamId,
+                                    myTeamId: _myTeamIdForBooking(booking),
+                                    myCaptainTeamId: _myCaptainTeamIdForBooking(booking),
                                   ),
                           ),
                         );
