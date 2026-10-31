@@ -265,7 +265,12 @@ void showTournamentManualTeamSheet(
                             } catch (e) {
                               setDialogState(() => isSubmitting = false);
                               if (context.mounted) {
-                                VSPFeedback.showError(context, e.toString());
+                                VSPFeedback.showError(
+                                  context,
+                                  isArabic
+                                      ? 'تعذر إضافة الفريق للبطولة. حاول مرة أخرى.'
+                                      : 'Could not add the team to the tournament. Please try again.',
+                                );
                               }
                             }
                           },
