@@ -59,18 +59,25 @@ class TeamRepository {
  }
  Future<Set<String>> getUserCaptainTeamIds(String userId) async {
    try {
-     final response = await _supabase
-         .from('teams_public')
-         .select('id')
-         .eq('captain_id', userId);
-     return (response as List)
-         .map((row) => row['id']?.toString() ?? '')
-         .where((id) => id.isNotEmpty)
-         .toSet();
+     return await getUserCaptainTeamIdsStrict(userId);
    } catch (e) {
      debugPrint('Error getting user captain teams: $e');
      return <String>{};
    }
+ }
+
+ /// Strict variant for flows where an empty result has business meaning.
+ /// Propagates query failures so callers can distinguish "not a captain"
+ /// from "could not verify captain access".
+ Future<Set<String>> getUserCaptainTeamIdsStrict(String userId) async {
+   final response = await _supabase
+       .from('teams_public')
+       .select('id')
+       .eq('captain_id', userId);
+   return (response as List)
+       .map((row) => row['id']?.toString() ?? '')
+       .where((id) => id.isNotEmpty)
+       .toSet();
  }
 
  Future<Team?> getUserTeam(String userId) async {
