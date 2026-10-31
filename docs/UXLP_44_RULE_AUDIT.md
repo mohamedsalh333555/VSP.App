@@ -615,3 +615,8 @@ The championship refresh callback also increments a parent refresh version. The 
 ### Open-join booking capacity status — 2026-10-31
 
 - **Rules 18, 27 — `OpenJoinBookingCard`:** zero remaining places now renders a localized Full state instead of the inaccurate Open to join label. Runtime full-capacity and stale-data checks remain pending.
+
+
+### Pending payment duplicate-charge guard — 2026-10-31
+
+- **Rules 18, 27, 41 — `PendingBookingCard`:** when the payment row is already paid/partially paid but the booking is still awaiting server confirmation, the card disables Resume Checkout and directs the player to status refresh without repeating payment. The booking is still considered confirmed only by the existing server-backed `PaymentCheckoutService.isPaymentConfirmed` contract. Runtime webhook/retry validation remains pending.
