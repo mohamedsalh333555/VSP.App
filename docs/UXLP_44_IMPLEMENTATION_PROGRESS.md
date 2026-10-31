@@ -313,3 +313,9 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 
 - The add-player sheet now constrains its maximum height to the viewport remaining after keyboard and top/bottom system insets. Removed the separate outer keyboard padding so the keyboard inset is accounted for once, while the content remains vertically scrollable and the action/content stays reachable.
 - Source-level correction for Rules 11 and 35. Runtime keyboard and device-inset verification remains pending; no CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Support ticket sheet action visibility correction — 2026-10-31
+
+- The new-support-ticket sheet's maximum-height constraint now wraps the complete padded sheet, rather than only its scroll view. The bottom safe-area padding is therefore included inside the keyboard-safe viewport instead of increasing the sheet's total height beyond that bound; the form remains scrollable.
+- This addresses the source-level cause of a bottom action potentially falling outside the visible sheet on compact/keyboard-open layouts (Rules 11 and 35). Device/runtime confirmation remains pending; no CI, analyzer, tests, migrations, or APK build was run.
