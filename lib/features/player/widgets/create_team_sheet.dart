@@ -221,12 +221,20 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomInset = MediaQuery.of(context).padding.bottom +
-        MediaQuery.of(context).viewInsets.bottom +
-        16;
+    final media = MediaQuery.of(context);
+    // Reduce the available sheet height when the keyboard opens instead of
+    // adding the keyboard inset inside a fixed-height sheet (which can push
+    // the header or action buttons outside the visible viewport).
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            24)
+        .clamp(280.0, media.size.height)
+        .toDouble();
+    final bottomInset = media.padding.bottom + 16;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
+      constraints: BoxConstraints(maxHeight: availableHeight),
       padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.lg, VSPSpacing.md, bottomInset),
       decoration: const BoxDecoration(
         color: VSPColors.background,
@@ -256,12 +264,17 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                     const SizedBox(height: VSPSpacing.xs),
                     Text(
                       l10n.createTeamSubtitle,
+                      softWrap: true,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: isArabic ? TextAlign.start : TextAlign.start,
                       style: Theme.of(context)
                           .textTheme
                           .labelSmall
-                          ?.copyWith(color: VSPColors.textSecondary),
+                          ?.copyWith(
+                            color: VSPColors.textSecondary,
+                            height: 1.35,
+                          ),
                     ),
                   ],
                 ),
