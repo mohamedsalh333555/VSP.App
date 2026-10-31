@@ -18,6 +18,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../services/challenge_team_service.dart';
 import '../widgets/challenge/challenge_team_card.dart';
 import 'booking_confirmation_screen.dart';
+import '../widgets/create_team_sheet.dart';
 
 /// الشاشة الرسمية لحجز مباريات التحدي (Challenge Match)
 /// المسار المعتمد الوحيد: إدخال كود التحدي -> التحقق من السيرفر -> ظهور بطاقة الخصم -> المتابعة للحجز
@@ -46,6 +47,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isLoadingH2H = false;
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
+  bool _isContinuing = false;
   final Map<String, bool> _championStatusMap = {};
 
   @override
@@ -95,6 +97,83 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         _isLoadingUserTeam = false;
         _hasUserTeamLoadError = true;
       });
+    }
+  }
+
+  Future<void> _openCreateTeam() async {
+    final created = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateTeamSheet(),
+    );
+    if (!mounted || created != true) return;
+    await _loadUserTeam();
+  }
+
+  Future<void> _continueWithChallenge() async {
+    if (_isContinuing || _selectedTeam == null || _appliedChallengeCode == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final auth = context.read<app_auth.AuthProvider>();
+    final uid = auth.currentUser?.id;
+    if (uid == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة. سجّل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
+
+    setState(() => _isContinuing = true);
+    try {
+      final team = await TeamRepository().getUserTeamStrict(uid);
+      if (!mounted) return;
+      if (context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      if (team == null) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'يجب أن تكون عضواً في فريق قبل تأكيد مباراة التحدي.'
+              : 'You must belong to a team before confirming a challenge match.',
+        );
+        return;
+      }
+      if (!ChallengeTeamService.isFairPlayEligible(team) ||
+          !ChallengeTeamService.isFairPlayEligible(_selectedTeam)) {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.fairPlayBannedError);
+        return;
+      }
+
+      context.read<BookingProvider>().updateDraft(
+        opponentTeamId: _selectedTeam!.id,
+        opponentTeamName: _selectedTeam!.name,
+        playerTeamId: team.id,
+        playerTeamName: team.name,
+        challengeCode: _appliedChallengeCode,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingConfirmationScreen(
+            stadium: widget.stadium,
+            bookingType: widget.bookingType,
+            opponentTeam: _selectedTeam,
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Failed to verify team before challenge booking: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من فريقك. أعد المحاولة قبل متابعة الحجز.'
+              : 'Could not verify your team. Retry before continuing.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isContinuing = false);
     }
   }
 
@@ -674,68 +753,15 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             child: SafeArea(
               child: PrimaryButton(
                 text: AppLocalizations.of(context)!.continueButton,
-                onPressed: (_selectedTeam == null || _appliedChallengeCode == null)
+                isLoading: _isContinuing,
+                onPressed: (_selectedTeam == null ||
+                        _appliedChallengeCode == null ||
+                        _isLoadingUserTeam ||
+                        _hasUserTeamLoadError ||
+                        _userTeam == null ||
+                        _isContinuing)
                     ? null
-                    : () async {
-                        // Server-side FairPlay is authoritative, but show quick user feedback if ineligible
-                        if (!ChallengeTeamService.isFairPlayEligible(_selectedTeam)) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                backgroundColor: VSPColors.error,
-                              ),
-                            );
-                          }
-                          return;
-                        }
-
-                        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                        final uid = auth.currentUser?.id;
-                        if (uid != null) {
-                          final team = await TeamRepository().getUserTeam(uid);
-                          if (team != null) {
-                            if (!ChallengeTeamService.isFairPlayEligible(team)) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                    backgroundColor: VSPColors.error,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              context.read<BookingProvider>().updateDraft(
-                                    opponentTeamId: _selectedTeam!.id,
-                                    opponentTeamName: _selectedTeam!.name,
-                                    playerTeamId: team.id,
-                                    playerTeamName: team.name,
-                                    challengeCode: _appliedChallengeCode,
-                                  );
-                            }
-                          }
-                        } else if (context.mounted) {
-                          context.read<BookingProvider>().updateDraft(
-                                opponentTeamId: _selectedTeam!.id,
-                                opponentTeamName: _selectedTeam!.name,
-                                challengeCode: _appliedChallengeCode,
-                              );
-                        }
-
-                        if (!context.mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingConfirmationScreen(
-                              stadium: widget.stadium,
-                              bookingType: widget.bookingType,
-                              opponentTeam: _selectedTeam,
-                            ),
-                          ),
-                        );
-                      },
+                    : _continueWithChallenge,
               ),
             ),
           ),
