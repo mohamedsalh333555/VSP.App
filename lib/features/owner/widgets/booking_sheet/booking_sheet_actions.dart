@@ -39,19 +39,25 @@ class OngoingMatchBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              const Icon(Iconsax.timer_start_copy, color: VSPColors.accent, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isArabic ? 'المباراة جارية الآن ' : 'Match Ongoing Now ',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Iconsax.timer_start_copy, color: VSPColors.accent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isArabic ? 'المباراة جارية الآن' : 'Match Ongoing Now',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           ElevatedButton.icon(
             onPressed: isSaving ? null : onExtendMatch,
