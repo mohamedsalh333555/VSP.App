@@ -412,6 +412,7 @@ class StadiumProvider with ChangeNotifier {
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
  amenities: amenities,
+ quickFilter: _activeQuickFilter,
  floorType: floorType,
  searchQuery: searchQuery,
  sortBy: sortBy,
