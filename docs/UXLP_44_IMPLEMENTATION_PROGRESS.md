@@ -509,3 +509,13 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - The ongoing-match banner previously placed an intrinsic-width status label and an extension action side by side without constraining the label. The label now receives only the remaining flexible width and is bounded to two lines with ellipsis, preserving the extension action on narrow screens.
 - No extension duration, booking eligibility, or booking state behavior changed. Source-only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+## Continued dialog and sheet compact-viewport fixes — 2026-10-31
+
+- Stadium deletion confirmation now uses a scrollable AlertDialog so its long bilingual explanation remains reachable on short displays.
+- Owner manual-booking deposit cancellation title now shares the dialog header width with its warning icon and is bounded to two lines.
+- Player stadium filter/sort header and the main filter-sheet heading now constrain long localized titles instead of allowing the title to compete with adjacent controls.
+- Quick phone-booking stadium/date/time metadata now uses flexible, single-line ellipsized fields so long stadium names and localized dates cannot force horizontal overflow.
+- Owner Copilot sheet height now subtracts keyboard and top safe-area insets before applying its preferred 78% height, preventing the keyboard from pushing the sheet beyond the available viewport.
+- Owner no-show confirmation now uses a scrollable AlertDialog for compact-height and enlarged-text layouts.
+- These are source-level presentation/lifecycle corrections only. No booking, cancellation, refund, payout, authorization, or database rules were changed. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
