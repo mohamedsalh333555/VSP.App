@@ -149,7 +149,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final safeBottomInset = MediaQuery.paddingOf(context).bottom;
+    final bottomPadding = safeBottomInset > keyboardInset
+        ? safeBottomInset
+        : keyboardInset;
+    final availableHeight =
+        (MediaQuery.sizeOf(context).height - keyboardInset).clamp(0.0, double.infinity).toDouble();
     final maxDbPrice = context.watch<StadiumProvider>().maxStadiumPrice;
     final activeCount = _activeFiltersCount;
 
@@ -171,7 +177,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.72,
+        maxHeight: availableHeight * 0.82,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
