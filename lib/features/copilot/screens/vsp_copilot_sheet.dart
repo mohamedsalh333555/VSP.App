@@ -122,9 +122,19 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    final bottomInset = media.viewInsets.bottom;
+    final availableHeight = (media.size.height -
+            bottomInset -
+            media.padding.top -
+            16)
+        .clamp(0.0, media.size.height)
+        .toDouble();
+    final sheetHeight = (media.size.height * 0.78)
+        .clamp(0.0, availableHeight)
+        .toDouble();
     return Container(
-      height: MediaQuery.of(context).size.height * 0.78,
+      height: sheetHeight,
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: VSPColors.surface,
