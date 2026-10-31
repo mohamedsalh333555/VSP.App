@@ -189,7 +189,8 @@ class BookingSyncCoordinator {
         onData(merged, categorized);
       },
       onError: (e) {
-        onError('Failed to load bookings: $e');
+        if (generation != _syncGeneration) return;
+        onError('Failed to load owner bookings: $e');
       },
     );
   }
