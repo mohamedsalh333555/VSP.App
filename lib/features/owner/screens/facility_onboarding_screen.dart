@@ -141,7 +141,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () async {
-                  final uid = authProvider.currentUser?.uid ?? authProvider.userModel?.uid;
+                  final uid = authProvider.currentUser?.id ?? authProvider.userModel?.uid;
                   if (uid != null) {
                     await UserRepository().updateOnboardingConfirmed(uid, true);
                   }
@@ -336,7 +336,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  width: double.infinity, height: 56,
  child: ElevatedButton(
  onPressed: () async {
- final uid = authProvider.currentUser?.uid;
+ final uid = authProvider.currentUser?.id;
  final updatedAdditional =
  FacilityOnboardingService.buildOnboardingConfirmedPayload(
  authProvider.userModel?.additionalData,
