@@ -28,6 +28,8 @@ class TeamDashboardScreen extends StatefulWidget {
 
 class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
   final ScrollController _scrollController = ScrollController();
   late final Stream<List<Booking>> _matchesStream;
   int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
@@ -47,16 +49,49 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
 
   Future<void> _fetchUserTeam() async {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    if (auth.isAuthenticated) {
-      final team = await TeamRepository().getUserTeam(auth.currentUser!.id);
+    if (!auth.isAuthenticated || auth.currentUser == null) {
       if (mounted) {
-        setState(() => _userTeam = team);
-        if (team != null) {
+        setState(() {
+          _userTeam = null;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    try {
+      final team = await TeamRepository().getUserTeamStrict(auth.currentUser!.id);
+      if (!mounted) return;
+      setState(() {
+        _userTeam = team;
+        _isLoadingUserTeam = false;
+        _hasUserTeamLoadError = false;
+      });
+      if (team != null) {
+        try {
           final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
-          if (mounted && activeLeague != null && (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
+          if (mounted && activeLeague != null &&
+              (activeLeague.status == 'ongoing' || activeLeague.status == 'open')) {
             setState(() => _selectedMainTab = 1);
           }
+        } catch (e) {
+          debugPrint('Error loading active team league: $e');
         }
+      }
+    } catch (e) {
+      debugPrint('Error loading user team: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
+        });
       }
     }
   }
@@ -198,6 +233,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   TeamLeagueTab(
                     userTeam: _userTeam,
                     onTeamCreated: _fetchUserTeam,
+                    isLoadingUserTeam: _isLoadingUserTeam,
+                    hasUserTeamLoadError: _hasUserTeamLoadError,
+                    onRetryUserTeam: _fetchUserTeam,
                   ),
                 ],
               ),
