@@ -417,3 +417,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - `SupportTicketsScreen._newTicket()` now captures the submitted subject and disposes its locally-created `TextEditingController` after the bottom sheet closes, including dismissal without submission. The captured subject is passed to the ticket details route, so navigation does not read a disposed controller.
 - Source-level change only; no tests, analyzer, CI, or APK build were run. Runtime validation remains part of the single final pass.
 - Follow-up review caught and removed a duplicate `subjectController.dispose()` left at the end of the support-sheet method; the controller is now disposed exactly once after the sheet returns. No runtime checks were run.
+### Focused lifecycle and inset review — 2026-10-31
+
+- Re-reviewed the support-ticket creation and detail screens after the controller-lifecycle correction: the creation controller is now disposed once after the modal returns; the detail composer controller is disposed by the screen state; its composer uses a safe-area-aware bottom region. No additional source change was justified in those paths.
+- Reviewed `CreateTeamSheet`: its name/bio controllers are disposed by the state, and its modal opts into `useSafeArea`.
+- Reviewed `AddPlayerSheet`: its phone controller is disposed by the state; the sheet bounds its height against the viewport after keyboard/system insets and keeps its content scrollable. Compact-device/keyboard runtime checks remain pending; no runtime pass is claimed.
