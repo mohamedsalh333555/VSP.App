@@ -181,7 +181,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -243,7 +243,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -320,7 +320,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -361,7 +361,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       }
     } catch (e) {
       if (mounted) {
-        VSPFeedback.showError(context, e.toString().replaceFirst('Exception: ', ''));
+        AppErrorHandler.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
