@@ -44,7 +44,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
     final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-    final userId = authProvider.currentUser?.uid;
+    final userId = authProvider.currentUser?.id;
     if (userId != null) {
       await bookingProvider.loadUserBookings(userId);
       if (!mounted) return;
@@ -160,7 +160,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               return RefreshIndicator(
                 onRefresh: () async {
                   final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                  final userId = authProvider.currentUser?.uid;
+                  final userId = authProvider.currentUser?.id;
                   if (userId != null) {
                     await Provider.of<BookingProvider>(context, listen: false)
                         .loadUserBookings(userId);
@@ -185,7 +185,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             return RefreshIndicator(
               onRefresh: () async {
                 final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                final userId = authProvider.currentUser?.uid;
+                final userId = authProvider.currentUser?.id;
                 if (userId != null) {
                   await Provider.of<BookingProvider>(context, listen: false)
                       .loadUserBookings(userId);
