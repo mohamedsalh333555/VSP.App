@@ -424,3 +424,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Payout re-authentication recovery — 2026-10-31
 
 - **Rules 10, 18, 28, 36, 43 — financial security form:** payout password empty/incorrect/network feedback is now bilingual. A thrown re-authentication error is logged and restores the form's retryable state rather than leaving the verification button stuck loading; incorrect-password copy explicitly states that no financial change was saved.
+
+
+### Payout submission exception recovery — 2026-10-31
+
+- **Rules 28, 29, 36, 43 — payout request action:** if the payout repository call throws, the payout dialog now restores the submit control, logs the technical exception, and displays localized retry guidance instead of remaining indefinitely in a loading state.

@@ -229,3 +229,10 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Thrown re-authentication failures are logged, return the form to an actionable state, and show localized retry guidance instead of leaving the verification control loading.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Payout request action recovery
+
+- Payout submission exceptions now restore the dialog to an actionable state, log the technical exception, and show localized retry copy rather than leaving the confirmation action stuck loading.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
