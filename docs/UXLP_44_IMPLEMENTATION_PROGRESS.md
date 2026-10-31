@@ -439,3 +439,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Player booking card date/time/price metadata previously placed three intrinsic-width columns directly in a Row. Long localized time values or enlarged text could demand more width than a narrow card provides.
 - Each metadata column is now constrained with Expanded, allowing its text to wrap within the available card width while retaining the existing three-column hierarchy and separators.
 - Source-only correction. No booking/payment/refund behavior was changed. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+
+## Open-match action error copy correction — 2026-10-31
+
+- Leaving an open match and cancelling a join request previously displayed raw caught exception text directly to the player. Both actions now show concise Arabic/English recovery guidance and keep technical details in diagnostic logs.
+- No match membership or join-request business logic was changed. Source-only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
