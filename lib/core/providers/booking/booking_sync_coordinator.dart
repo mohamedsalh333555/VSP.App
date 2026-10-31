@@ -74,7 +74,9 @@ class BookingSyncCoordinator {
     // callers that need booking state before continuing can do so safely.
     var initialSnapshotLoaded = false;
     try {
-      final directList = await _repository.getUserBookingsDirectly(userId);
+      final directList = _repository is SupabaseBookingRepository
+          ? await _repository.getUserBookingsDirectlyStrict(userId)
+          : await _repository.getUserBookingsDirectly(userId);
       _lastKnownUserBookings = directList;
       final categorized = BookingCategorizationService.categorizeUserBookings(
         bookings: directList,
@@ -141,7 +143,7 @@ class BookingSyncCoordinator {
     try {
       final repo = _repository;
       if (repo is SupabaseBookingRepository) {
-        final directBookings = await repo.fetchOwnerBookingsDirectly(ownerId);
+        final directBookings = await repo.fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
         final categorized = BookingCategorizationService.categorizeOwnerBookings(
           bookings: directBookings,
           now: DateTime.now(),
