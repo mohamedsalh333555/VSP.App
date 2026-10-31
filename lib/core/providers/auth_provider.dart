@@ -121,6 +121,7 @@ class AuthProvider with ChangeNotifier {
       // Invalidate any profile fetch started for the previous auth identity.
       _userFetchGeneration++;
       _isFetchingUser = false;
+      _c.realtime.stopRealtimeUserListener();
       _userModel = null;
       _form.userType = null;
       _isGhostUser = false;
