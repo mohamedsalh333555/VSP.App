@@ -406,6 +406,7 @@ class AddStadiumLocationPickerSheet {
     final result = await showModalBottomSheet<LocationResult>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
         return StatefulBuilder(
@@ -415,7 +416,9 @@ class AddStadiumLocationPickerSheet {
                 left: 20,
                 right: 20,
                 top: 16,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                    MediaQuery.of(ctx).padding.bottom +
+                    24,
               ),
               decoration: const BoxDecoration(
                 color: VSPColors.background,
