@@ -32,6 +32,7 @@ class MatchupRecordResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (teams.length < 2) return const SizedBox.shrink();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final teamA = teams.firstWhere(
       (t) => t.teamId == selectedTeamAId,
@@ -52,13 +53,17 @@ class MatchupRecordResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Iconsax.direct_up_copy, color: VSPColors.accent, size: 20),
               SizedBox(width: 8),
-              Text(
-                'تسجيل نتيجة مباراة جديدة',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              Expanded(
+                child: Text(
+                  isArabic ? 'تسجيل نتيجة مباراة جديدة' : 'Record a new match result',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ],
           ),
@@ -73,7 +78,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   dropdownColor: VSPColors.surfaceAlt,
                   style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'الفريق الأول',
+                    labelText: isArabic ? 'الفريق الأول' : 'Team A',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     filled: true,
                     fillColor: VSPColors.surfaceAlt,
@@ -94,7 +99,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   dropdownColor: VSPColors.surfaceAlt,
                   style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'الفريق الثاني',
+                    labelText: isArabic ? 'الفريق الثاني' : 'Team B',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     filled: true,
                     fillColor: VSPColors.surfaceAlt,
@@ -111,13 +116,13 @@ class MatchupRecordResultCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Outcome Selector Chips
-          const Text('النتيجة:', style: TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+          Text(isArabic ? 'النتيجة:' : 'Outcome:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
           const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: _buildOutcomeChip(
-                  label: 'فوز ${teamA.teamName}',
+                  label: isArabic ? 'فوز ${teamA.teamName}' : '${teamA.teamName} win',
                   value: 'team_a_win',
                   isSelected: selectedOutcome == 'team_a_win',
                 ),
@@ -125,7 +130,7 @@ class MatchupRecordResultCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: _buildOutcomeChip(
-                  label: 'تعادل',
+                  label: isArabic ? 'تعادل' : 'Draw',
                   value: 'draw',
                   isSelected: selectedOutcome == 'draw',
                 ),
@@ -133,7 +138,7 @@ class MatchupRecordResultCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: _buildOutcomeChip(
-                  label: 'فوز ${teamB.teamName}',
+                  label: isArabic ? 'فوز ${teamB.teamName}' : '${teamB.teamName} win',
                   value: 'team_b_win',
                   isSelected: selectedOutcome == 'team_b_win',
                 ),
@@ -144,7 +149,7 @@ class MatchupRecordResultCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           PrimaryButton(
-            text: 'تسجيل النتيجة واعتماد الترتيب',
+            text: isArabic ? 'تسجيل النتيجة واعتماد الترتيب' : 'Record result and update standings',
             onPressed: isSubmitting ? null : onSubmit,
           ),
         ],
