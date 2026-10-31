@@ -42,6 +42,7 @@ class PlayerHomeScreen extends StatefulWidget {
 class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   int _selectedIndex = 0;
   String? _tabPreferenceUserId;
+  bool _hasObservedTabUser = false;
 
   String _selectedTabKeyFor(String userId) => 'player_last_selected_tab_$userId';
 
@@ -74,23 +75,24 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final activeUserId = context.watch<AuthProvider>().currentUser?.id;
-    if (activeUserId == _tabPreferenceUserId) return;
+    if (_hasObservedTabUser && activeUserId == _tabPreferenceUserId) return;
 
+    _hasObservedTabUser = true;
     _tabPreferenceUserId = activeUserId;
     _selectedIndex = 0;
     _popupShownForUserId = null;
-    if (activeUserId == null) return;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && context.read<AuthProvider>().currentUser?.id == activeUserId) {
-        _restoreSelectedTab(activeUserId);
-      }
-    });
-  }
+    if (activeUserId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted &&
+            context.read<AuthProvider>().currentUser?.id == activeUserId) {
+          _restoreSelectedTab(activeUserId);
+        }
+      });
+    }
 
-  @override
-  void initState() {
-    super.initState();
+    // Rebind first-load work whenever the signed-in player changes. This also
+    // covers a session that resolves after the root screen has already opened.
     _fetchInitialData();
   }
 
