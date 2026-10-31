@@ -140,7 +140,6 @@ class ChampionshipCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  visualDensity: VisualDensity.compact,
                   icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18),
                   onPressed: () =>
                       SharingService.shareChampionshipObject(context: context, championship: championship),
