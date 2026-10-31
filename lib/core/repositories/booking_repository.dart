@@ -20,6 +20,7 @@ abstract class BookingRepository {
   Future<List<Booking>> getUserBookingsDirectly(String userId);
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds});
   Future<Booking?> getBookingById(String bookingId);
+  Future<Booking?> getBookingByIdStrict(String bookingId);
   Future<bool> updateBookingStatus(String bookingId, BookingStatus status);
   Future<bool> cancelBooking(String bookingId);
   Stream<List<Booking>> getUpcomingBookings(String userId);
@@ -158,6 +159,10 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<Booking?> getBookingById(String bookingId) =>
       _queryCoordinator.getBookingById(bookingId);
+
+  @override
+  Future<Booking?> getBookingByIdStrict(String bookingId) =>
+      _queryCoordinator.getBookingByIdStrict(bookingId);
 
   @override
   Future<bool> updateBookingStatus(String bookingId, BookingStatus status) async {
