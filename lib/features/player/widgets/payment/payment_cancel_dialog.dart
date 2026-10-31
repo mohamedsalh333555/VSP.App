@@ -20,8 +20,8 @@ class PaymentCancelDialog {
             ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل. يمكنك بدء التسجيل من جديد لاحقاً.'
             : 'If you go back now, registration will stop. You can start again later.')
         : (isArabic
-            ? 'إذا رجعت الآن، لن تستكمل الدفع وسيتم تحرير تثبيت الموعد المؤقت. يمكنك اختيار موعد جديد لاحقاً.'
-            : 'If you go back now, checkout will stop and the temporary slot hold will be released. You can choose another time later.');
+            ? 'إذا لم تكن قد أكملت الدفع، فلن يتم تحصيل مبلغ عند الرجوع. إذا أرسلت عملية الدفع بالفعل، انتظر تأكيد الخادم قبل محاولة الدفع مرة أخرى.'
+            : 'If you have not completed payment, no charge will be taken when you leave. If you already submitted a payment, wait for server confirmation before trying again.');
 
     final dialogContinueText = isChampionship
         ? (isArabic ? 'متابعة التسجيل' : 'Continue Registration')
