@@ -385,3 +385,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 
 - Follow-up: a monotonically increasing championship refresh version now invalidates cached standings futures whenever either the match or header stream is retried. This prevents a failed standings future from remaining cached after a different child error triggers the parent retry.
+
+
+## Create-team member chip text bounds — 2026-10-31
+
+- Team member chips previously rendered the full player name in an unconstrained `Text` inside a compact `Row`. Long names could consume the remove-action space or overflow the chip.
+- The name now has a bounded width, one-line ellipsis, and a localized fallback for blank names. The remove action remains separately tappable.
+- Source correction only; narrow-device and large-text rendering remain pending the consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
