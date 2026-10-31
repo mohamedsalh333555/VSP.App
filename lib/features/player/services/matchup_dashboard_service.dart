@@ -56,7 +56,7 @@ class MatchupDashboardService {
         color: VSPColors.success,
       );
     } else {
-      return const MatchupOutcomePresentation(
+      return MatchupOutcomePresentation(
         text: isArabic ? 'تعادل' : 'Draw',
         color: VSPColors.warning,
       );
