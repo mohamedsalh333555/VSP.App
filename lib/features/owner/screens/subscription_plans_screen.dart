@@ -399,6 +399,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     bool isTrialActive,
     Map<String, dynamic> plan,
   ) {
+    final monthlyPrice = _planNumber(plan, 'monthly_price');
+    final annualPrice = _planNumber(plan, 'yearly_price');
+    final annualSavings = monthlyPrice * 12 - annualPrice;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -589,6 +592,47 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       ),
               ),
             ),
+            if (annualPrice > 0) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: OutlinedButton(
+                  onPressed: _isPaying
+                      ? null
+                      : () => _startSubscriptionPayment(context, 'annual', isArabic),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: VSPColors.textPrimary,
+                    side: const BorderSide(color: VSPColors.divider),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                  ),
+                  child: Text(
+                    isArabic
+                        ? 'اشتراك سنوي • $annualPrice جنيه'
+                        : 'Annual subscription • $annualPrice EGP',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+              ),
+              if (annualSavings > 0) ...[
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(
+                    isArabic
+                        ? 'وفّر $annualSavings جنيه مقارنة بالدفع الشهري'
+                        : 'Save $annualSavings EGP compared with monthly billing',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ],
         ],
       ),
