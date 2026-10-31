@@ -79,11 +79,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
  ),
  ),
  IconButton(
+ tooltip: isArabic ? 'إغلاق' : 'Close',
  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
  icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
  padding: EdgeInsets.zero,
- constraints: const BoxConstraints(),
- visualDensity: VisualDensity.compact,
+ constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
  ),
  ],
  ),
