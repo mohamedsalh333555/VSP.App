@@ -86,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
      setState(() => _isLoading = false);
      VSPFeedback.showError(
        context,
-       auth.errorMessage ?? AppLocalizations.of(context)!.profileUpdateFailed,
+       AppLocalizations.of(context)!.profileUpdateFailed,
      );
    }
    return;
@@ -116,7 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  } catch (e) {
  if (mounted) {
  setState(() => _isLoading = false);
- VSPFeedback.showError(context, AppLocalizations.of(context)!.errorOccurred(e.toString()));
+ VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
  }
  }
  }
@@ -365,6 +365,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) {
  return AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
  title: Text(
@@ -412,7 +413,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  );
  } else {
  setDialogState(() => _isDeleting = false);
- VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));
+ VSPFeedback.showError(context, isArabic ? "تعذر حذف الحساب. حاول مرة أخرى." : "Could not delete the account. Please try again.");
  Navigator.pop(context);
  }
  },
