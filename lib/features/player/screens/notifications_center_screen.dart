@@ -324,7 +324,7 @@ class _NotificationCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          _localizeText(context, notification.title),
+                          _localizeNotificationText(context, notification, isTitle: true),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -341,7 +341,7 @@ class _NotificationCard extends StatelessWidget {
                   ),
                   const SizedBox(height: VSPSpacing.xs),
                   Text(
-                    _localizeText(context, notification.body),
+                    _localizeNotificationText(context, notification, isTitle: false),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: notification.isRead ? VSPColors.textSecondary.withValues(alpha: 0.6) : VSPColors.textSecondary,
                     ),
@@ -571,6 +571,24 @@ class _NotificationCard extends StatelessWidget {
     if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minutesAgo(diff.inMinutes);
     if (diff.inHours < 24) return AppLocalizations.of(context)!.hoursAgo(diff.inHours);
     return AppDateFormatter.formatDayMonth(dt, isArabic ? 'ar' : 'en');
+  }
+
+  String _localizeNotificationText(
+    BuildContext context,
+    AppNotification notification, {
+    required bool isTitle,
+  }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final metadata = notification.metadata ?? const <String, dynamic>{};
+    final key = isTitle
+        ? (isArabic ? 'title_ar' : 'title_en')
+        : (isArabic ? 'body_ar' : 'body_en');
+    final localized = metadata[key]?.toString().trim();
+    if (localized != null && localized.isNotEmpty) return localized;
+    return _localizeText(
+      context,
+      isTitle ? notification.title : notification.body,
+    );
   }
 
   String _localizeText(BuildContext context, String text) {
