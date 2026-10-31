@@ -114,6 +114,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final userModel = context.watch<AuthProvider>().userModel;
     final isPro = userModel?.isProPlan == true;
     final isTrialActive = userModel?.isInActiveTrial == true;
+    final hasProAccess = isPro || isTrialActive;
     final trialDaysRemaining = isTrialActive && userModel?.trialEndsAt != null
         ? userModel!.trialEndsAt!.difference(DateTime.now()).inDays + 1
         : 0;
@@ -241,11 +242,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               const SizedBox(height: 18),
 
               // Free and Pro plan content is sourced from public_subscription_plans.
-              _buildFreePlanCard(context, isArabic, isPro, _freePlan!),
+              _buildFreePlanCard(context, isArabic, hasProAccess, _freePlan!),
 
               const SizedBox(height: 18),
 
-              _buildProPlanCard(context, isArabic, isPro, isTrialActive, _proPlan!),
+              _buildProPlanCard(context, isArabic, hasProAccess, isTrialActive, _proPlan!),
                       ],
                     ),
                   ),
