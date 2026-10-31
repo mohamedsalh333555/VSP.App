@@ -296,6 +296,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
    Widget _buildInviteCard() {
     final phone = _phoneController.text.trim();
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -312,14 +313,16 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 8),
               Text(
-                "رقم غير مسجل في VSP",
+                isArabic ? 'رقم غير مسجل في VSP' : 'This number is not registered on VSP',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            "هذا الرقم لم يسجل حسابه بعد في تطبيق VSP. أرسل له دعوة سريعة عبر واتساب ليحمّل التطبيق وتسجله فوراً في تشكيلة فريقك:",
+            isArabic
+                ? 'الرقم ده لسه مش مسجل في VSP. ابعت له دعوة عشان ينزّل التطبيق وتقدر تضيفه لفريقك.'
+                : 'This number is not registered on VSP yet. Send an invitation so they can install the app and join your team.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           const SizedBox(height: 16),
@@ -329,7 +332,9 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             child: ElevatedButton.icon(
               onPressed: () async {
                 final normalizedPhone = PhoneUtils.normalize(phone) ?? phone;
-                const message = 'يا كابتن! حمل تطبيق VSP الرياضي وسجل برقمك عشان أضيفك في تشكيلة فريقي ونلعب مباريات وتحديات سوى! حمل التطبيق من هنا: https://vsp.app';
+                final message = isArabic
+                    ? 'يا كابتن! حمّل تطبيق VSP وسجّل برقمك عشان أضيفك لفريقي. حمّل التطبيق من هنا: https://vsp.app'
+                    : 'Join my team on VSP. Install the app and register with this phone number: https://vsp.app';
                 await VSPLauncherUtils.openWhatsApp(context, phone: normalizedPhone, message: message);
               },
               style: ElevatedButton.styleFrom(
@@ -340,7 +345,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 20),
               label: const Text(
-                'إرسال دعوة للاعب عبر واتساب',
+                isArabic ? 'إرسال دعوة عبر واتساب' : 'Send WhatsApp invitation',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
