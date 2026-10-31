@@ -346,7 +346,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
                               : PlayerBookingCard(
                                   booking: booking,
                                   isHistory: true,
-                                  myTeamId: _myTeamId,
+                                  myTeamId: _myTeamIdForBooking(booking),
+                                  myCaptainTeamId: _myCaptainTeamIdForBooking(booking),
                                 ),
                         ),
                       );
