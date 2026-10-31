@@ -250,7 +250,7 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Applied the 48dp target to the terms checkbox and removed compact visual density from the public-match and championship share actions.
 - Hardened public-match action feedback, owner notification stream-error visibility, phone clipboard feedback, and countdown timer lifecycle.
 - Corrected championship card lifecycle labels/CTA state so ongoing, cancelled, completed, full, and unknown statuses do not appear as open registration.
-- These are source changes only. The 181-path inventory still has six nested championship detail components marked `not yet inspected`; 53 paths are not proven to be covered by the original 128-path static scan. All 44 UXLP rules remain runtime-pending.
+- These are source changes only. The 181-path inventory now has no entries marked `not yet inspected`; 53 paths are not proven to be covered by the original 128-path static scan. All 44 UXLP rules remain runtime-pending.
 
 
 ## Championship detail state/retry implementation — 2026-10-31
