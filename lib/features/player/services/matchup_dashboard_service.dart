@@ -21,12 +21,13 @@ class MatchupDashboardService {
   static String? validateResultSubmission({
     required String? teamAId,
     required String? teamBId,
+    bool isArabic = true,
   }) {
     if (teamAId == null || teamBId == null) {
-      return 'يرجى اختيار الفريقين المتنافسين';
+      return isArabic ? 'يرجى اختيار الفريقين المتنافسين' : 'Select both competing teams.';
     }
     if (teamAId == teamBId) {
-      return 'لا يمكن تسجيل مباراة بين نفس الفريق';
+      return isArabic ? 'لا يمكن تسجيل مباراة بين نفس الفريق' : 'A team cannot play against itself.';
     }
     return null;
   }
@@ -42,20 +43,21 @@ class MatchupDashboardService {
     required String outcome,
     required String teamAName,
     required String teamBName,
+    bool isArabic = true,
   }) {
     if (outcome == 'team_a_win') {
       return MatchupOutcomePresentation(
-        text: 'فوز $teamAName',
+        text: isArabic ? 'فوز $teamAName' : '$teamAName win',
         color: VSPColors.success,
       );
     } else if (outcome == 'team_b_win') {
       return MatchupOutcomePresentation(
-        text: 'فوز $teamBName',
+        text: isArabic ? 'فوز $teamBName' : '$teamBName win',
         color: VSPColors.success,
       );
     } else {
       return const MatchupOutcomePresentation(
-        text: 'تعادل',
+        text: isArabic ? 'تعادل' : 'Draw',
         color: VSPColors.warning,
       );
     }
