@@ -609,3 +609,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Tournament creation no longer interpolates raw exception details into the user-facing error; it presents localized retry guidance.
 - Owner tournament dashboard now separates a failed participating-team lookup from a genuinely empty team list and offers a retry action, instead of rendering the failure as “No teams joined yet.”
 - No tournament lifecycle, team membership, kickoff authorization, or scoring rule was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+
+## Owner tournament kickoff lifecycle follow-up — 2026-10-31
+
+- The owner tournament dashboard now checks `mounted` before updating loading state after the team lookup completes, including the error path. This prevents a disposed dashboard from receiving `setState` after an asynchronous kickoff preparation request.
+- The kickoff confirmation dialog is scrollable for compact-height/large-text layouts. Existing kickoff authorization and tournament state transitions are unchanged.
+- Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
