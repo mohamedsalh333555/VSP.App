@@ -131,11 +131,17 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- Text(
+ Expanded(
+ child: Text(
  isArabic ? 'إضافة لاعب للفريق' : 'Add Team Member',
+ maxLines: 2,
+ overflow: TextOverflow.ellipsis,
+ softWrap: true,
  style: Theme.of(context).textTheme.displaySmall,
  ),
+ ),
  IconButton(
+ tooltip: isArabic ? 'إغلاق' : 'Close',
  onPressed: () => Navigator.pop(context),
  icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
  ),
