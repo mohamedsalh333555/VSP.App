@@ -99,7 +99,7 @@ class StadiumWizardDialogs {
         if (!context.mounted) return;
         if (success) {
           final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-          final uid = auth.currentUser?.uid;
+          final uid = auth.currentUser?.id;
           if (uid != null) {
             final bool stillHas = await StadiumRepository().checkOwnerHasRemainingStadiums(uid);
             await auth.updateProfile({'hasStadium': stillHas});
