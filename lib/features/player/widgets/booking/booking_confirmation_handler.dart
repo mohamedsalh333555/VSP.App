@@ -66,11 +66,14 @@ class BookingConfirmationHandler {
     onLoadingChanged(true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.id;
     final currentUserModel = authProvider.userModel;
-    if (currentUserModel == null) {
+    if (currentUserModel == null || userId == null || currentUserModel.uid != userId) {
       onLoadingChanged(false);
       return;
     }
+    bool isSameUser() =>
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId;
 
     final nav = Navigator.of(context);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
@@ -84,6 +87,10 @@ class BookingConfirmationHandler {
       final (position, resolvedGovernorate) =
           await LocationService().getThrottledLocation(force: true);
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (resolvedGovernorate == 'mock_location_detected') {
@@ -145,6 +152,14 @@ class BookingConfirmationHandler {
       }
 
       if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
 
       final sortedCheck = List<String>.from(selectedTimeSlots)
         ..sort((a, b) => BookingSlotCalculator.getSlotDateTime(
@@ -305,8 +320,12 @@ class BookingConfirmationHandler {
     // any additional booking must be paid in full online. This is mirrored
     // by the database trigger as the final authority.
     final directRepo = SupabaseBookingRepository();
-    final existingUserBookings = await directRepo.getUserBookingsDirectly(currentUserModel.uid);
+    final existingUserBookings = await directRepo.getUserBookingsDirectly(userId);
     if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
+    }
 
     final hasActiveCashBooking = existingUserBookings.any((b) =>
         b.paymentMethod.toLowerCase() == 'cash' &&
