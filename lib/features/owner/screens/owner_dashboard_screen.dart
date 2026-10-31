@@ -134,11 +134,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   DashboardAnalytics _dashboardAnalytics = const DashboardAnalytics();
   bool _isLoadingAnalytics = false;
   String? _analyticsError;
+  int _analyticsRequestGeneration = 0;
 
   Future<void> _loadDashboardAnalytics({String? ownerId, DashboardFilter? filter}) async {
     final uid = ownerId ?? Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
     if (uid == null) return;
     final activeFilter = filter ?? _currentFilter;
+    final requestGeneration = ++_analyticsRequestGeneration;
 
     if (mounted) {
       setState(() {
@@ -157,6 +159,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
           'p_court_id': activeFilter.courtId,
         },
       );
+
+      if (!mounted || requestGeneration != _analyticsRequestGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) return;
 
       final analytics = DashboardAnalytics.fromJson(
         Map<String, dynamic>.from(response as Map),
@@ -178,10 +183,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       }
     } catch (e) {
       VSPLogger.w('Failed to load dashboard analytics: $e');
-      if (mounted) {
+      if (mounted && requestGeneration == _analyticsRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
         setState(() {
           _isLoadingAnalytics = false;
-          _analyticsError = 'تعذر تحميل البيانات، تحقق من الاتصال وحاول مجدداً';
+          _analyticsError = 'failed';
         });
       }
     }
@@ -309,9 +315,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _analyticsError!,
+                            isArabic
+                                ? 'تعذر تحميل التحليلات. تحقق من الاتصال وحاول مرة أخرى.'
+                                : 'Could not load analytics. Check your connection and retry.',
                             style: const TextStyle(color: VSPColors.error, fontSize: 11.5),
                           ),
+                        ),
+                        TextButton(
+                          onPressed: _isLoadingAnalytics ? null : () => _loadDashboardAnalytics(),
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                         ),
                       ],
                     ),
