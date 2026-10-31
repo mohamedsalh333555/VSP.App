@@ -178,6 +178,7 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
+                    scrollable: true,
                     backgroundColor: VSPColors.surface,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(VSPRadius.dialog),
@@ -220,7 +221,7 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                     .requestEmergencyClosure(
                   stadiumId: booking.stadiumId,
                   ownerId: booking.ownerId,
-                  reason: 'عطل طارئ وصيانة بالملعب',
+                  reason: isArabic ? 'عطل طارئ وصيانة بالملعب' : 'Emergency fault and stadium maintenance',
                   durationHours: 24,
                 );
                 if (context.mounted) {
@@ -228,14 +229,16 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                     VSPFeedback.showSuccess(
                       context,
                       isArabic
-                          ? 'تم إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد للأدمن '
-                          : 'Stadium temporarily closed for emergency ',
+                          ? 'تم إغلاق الملعب مؤقتاً لمدة 24 ساعة.'
+                          : 'The stadium has been temporarily closed for 24 hours.', 
                     );
                     Navigator.pop(context);
                   } else {
                     VSPFeedback.showError(
                       context,
-                      res['message'] ?? 'فشل طلب الإغلاق الطارئ',
+                      isArabic
+                          ? 'تعذر تنفيذ الإغلاق الطارئ. حاول مرة أخرى.'
+                          : 'Could not complete the emergency closure. Please try again.',
                     );
                   }
                 }
