@@ -398,9 +398,7 @@ class BookingQueryCoordinator {
             sink.add(refreshed);
           },
         )
-        .handleError((error) {
-          VSPLogger.w('Handled realtime error in getOwnerBookings: $error');
-        });
+        ;
   }
 
   /// Fetches a single booking by ID.
