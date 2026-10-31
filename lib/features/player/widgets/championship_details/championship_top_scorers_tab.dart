@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 
 /// تبويب ترتيب هدافي البطولة مع تكريم المراتب الثلاث الأولى
 class ChampionshipTopScorersTab extends StatelessWidget {
   final String championshipId;
+  final VoidCallback onRetry;
 
-  const ChampionshipTopScorersTab({super.key, required this.championshipId});
+  const ChampionshipTopScorersTab({
+    super.key,
+    required this.championshipId,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +22,15 @@ class ChampionshipTopScorersTab extends StatelessWidget {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: TournamentRepository().getTopScorersForChampionship(championshipId),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPErrorState(
+            customMessage: isArabic
+                ? 'تعذر تحميل ترتيب الهدافين. حاول مرة أخرى.'
+                : 'Could not load top scorers. Try again.',
+            onRetry: onRetry,
+            retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
