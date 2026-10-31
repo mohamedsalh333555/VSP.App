@@ -131,7 +131,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
     });
   }
 
-  static bool _hasShownPostMatchPopupThisSession = false;
+  bool _hasShownPostMatchPopupThisSession = false;
 
   void _checkPendingChallengeResultPopup(
     BuildContext context, {
