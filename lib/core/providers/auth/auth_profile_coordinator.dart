@@ -45,7 +45,14 @@ class AuthProfileCoordinator {
         userType: currentUserModel?.role,
         data: {'profileImageUrl': res.imageUrl},
       );
-      if (updateRes.success && updateRes.updatedModel != null) {
+      if (!updateRes.success) {
+        return (
+          success: false,
+          error: updateRes.error ?? 'Failed to save profile image URL',
+          updatedModel: null,
+        );
+      }
+      if (updateRes.updatedModel != null) {
         updated = updateRes.updatedModel;
       }
       return (success: true, error: null, updatedModel: updated);
