@@ -100,7 +100,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       });
       if (team != null) {
         try {
-          final activeLeague = await TeamLeagueRepository().getTeamActiveLeague(team.id);
+          final activeLeague = await TeamLeagueRepository().getTeamActiveLeagueStrict(team.id);
           if (mounted &&
               generation == _userTeamRequestGeneration &&
               context.read<app_auth.AuthProvider>().currentUser?.id == userId &&
@@ -110,6 +110,13 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           }
         } catch (e) {
           debugPrint('Error loading active team league: $e');
+          if (mounted &&
+              generation == _userTeamRequestGeneration &&
+              context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+            // Surface the league tab's strict retry state rather than silently
+            // leaving the user on a tab that implies no active league.
+            setState(() => _selectedMainTab = 1);
+          }
         }
       }
     } catch (e) {
