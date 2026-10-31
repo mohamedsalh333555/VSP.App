@@ -226,6 +226,7 @@ class StadiumRepository {
     double? maxPrice,
     bool? noDepositOnly,
     List<String>? amenities,
+    String? quickFilter,
   }) async {
     try {
       dynamic query = _supabase
@@ -276,6 +277,19 @@ class StadiumRepository {
 
       // 5. No Deposit Filter
       if (noDepositOnly == true) {
+        query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
+      }
+
+      if (quickFilter == 'night_shift') {
+        query = query.or(
+          'closing_time.ilike.%AM%,closing_time.ilike.%صباحاً%,'
+          'closing_time.ilike.%00:%,closing_time.ilike.%01:%,'
+          'closing_time.ilike.%02:%,closing_time.ilike.%03:%,'
+          'closing_time.ilike.%04:%,closing_time.ilike.%05:%,'
+          'features->workingHours->>end.ilike.%AM%,'
+          'features->workingHours->>end.ilike.%صباحاً%',
+        );
+      } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
         query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
       }
 

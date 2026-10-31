@@ -34,10 +34,7 @@ class StadiumProvider with ChangeNotifier {
  // Getters
  String? get activeQuickFilter => _activeQuickFilter;
 
- List<Stadium> get stadiums {
-    final baseList = _isFilterActive ? _filteredStadiums : _stadiums;
-    return StadiumFilterService.applyQuickFilter(baseList, _activeQuickFilter);
-  }
+ List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
 
  void toggleQuickFilter(String filterKey) {
  if (_activeQuickFilter == filterKey) {
@@ -45,7 +42,11 @@ class StadiumProvider with ChangeNotifier {
  } else {
  _activeQuickFilter = filterKey;
  }
- notifyListeners();
+ if (_isFilterActive && _currentFilters != null) {
+   applyFilters(_currentFilters!);
+ } else {
+   fetchStadiums(isRefresh: true);
+ }
  }
 
  List<Stadium> get allStadiums => _stadiums;
@@ -130,7 +131,7 @@ class StadiumProvider with ChangeNotifier {
 
  // Governorate Filter Priority: If a specific governorate is selected by user,
  // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
- if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
+ if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null && _activeQuickFilter == null) {
  final limit = isRefresh ? 10 : _stadiums.length + 10;
  final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
  userPosition.latitude,
@@ -148,6 +149,7 @@ class StadiumProvider with ChangeNotifier {
  limit: 10,
  startAfter: _lastDocument,
  governorate: _selectedGovernorate,
+ quickFilter: _activeQuickFilter,
  );
 
  if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
@@ -329,11 +331,6 @@ class StadiumProvider with ChangeNotifier {
   List<String> get availableSportTypes =>
       StadiumFilterService.getAvailableSportTypes(_stadiums, VSPConstants.activeSports);
 
- // Private helper to check dynamic features mapping safely
- bool _checkAmenity(Stadium stadium, String amenity) {
-    return StadiumFilterService.checkAmenity(stadium, amenity);
- }
-
  // Apply complex filters with server-side pagination support
  void applyFilters(Map<String, dynamic> filters) {
  _currentFilters = filters;
@@ -361,6 +358,7 @@ class StadiumProvider with ChangeNotifier {
  maxPrice: maxPrice,
  noDepositOnly: noDepositOnly,
  amenities: amenities,
+ quickFilter: _activeQuickFilter,
  );
  }
 
@@ -428,7 +426,8 @@ class StadiumProvider with ChangeNotifier {
  notifyListeners();
  } catch (e) {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
-   _setError('Failed to fetch stadiums: ${e.toString()}');
+   VSPLogger.e('Failed to fetch filtered stadiums', e);
+   _setError('stadium_load_failed');
  }
  } finally {
  if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
