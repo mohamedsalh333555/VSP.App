@@ -610,3 +610,8 @@ The championship refresh callback also increments a parent refresh version. The 
 ### Public match card lifecycle state correction — 2026-10-31
 
 - **Rules 18, 27, 41 — `PublicMatchCard`:** cancelled/ended badges now override the host “My Match” badge, and terminal open-join cards route to booking details rather than the active invite sheet. Runtime terminal-state/tap-through validation remains pending.
+
+
+### Open-join booking capacity status — 2026-10-31
+
+- **Rules 18, 27 — `OpenJoinBookingCard`:** zero remaining places now renders a localized Full state instead of the inaccurate Open to join label. Runtime full-capacity and stale-data checks remain pending.
