@@ -319,3 +319,11 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 
 - The new-support-ticket sheet's maximum-height constraint now wraps the complete padded sheet, rather than only its scroll view. The bottom safe-area padding is therefore included inside the keyboard-safe viewport instead of increasing the sheet's total height beyond that bound; the form remains scrollable.
 - This addresses the source-level cause of a bottom action potentially falling outside the visible sheet on compact/keyboard-open layouts (Rules 11 and 35). Device/runtime confirmation remains pending; no CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Match participant manager resilience — 2026-10-31
+
+- `ManageParticipantsModal` now limits its height to the remaining viewport after keyboard and system insets, and no longer adds the keyboard inset a second time inside its bottom padding.
+- A failed participant lookup now has an explicit localized error/retry state rather than appearing as a successful empty roster. Action failures no longer expose raw exception strings; accept/reject/remove and call feedback are localized.
+- The title can wrap beside its close action. Close/call/accept/reject/remove controls now expose localized tooltips and 48dp minimum hit targets.
+- These are source-level corrections for Rules 11, 17, 27, 33, 35, and 42. Runtime/device confirmation remains pending; no CI, analyzer, tests, migrations, or APK build was run.
