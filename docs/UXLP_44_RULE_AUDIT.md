@@ -600,3 +600,8 @@ The 181-path inventory has no `not yet inspected` rows at this checkpoint, but t
 
 
 The championship refresh callback also increments a parent refresh version. The standings child invalidates its per-group Future cache when that version changes, so retrying a match/header stream error cannot leave a prior standings failure cached.
+
+
+### Create-team member chip text bounds — 2026-10-31
+
+- **Rules 11, 17 — `CreateTeamMembersSection`: member names now have a bounded one-line display with ellipsis so long names cannot displace the remove control; blank names use localized fallback text. Runtime narrow-width/large-text checks remain pending.
