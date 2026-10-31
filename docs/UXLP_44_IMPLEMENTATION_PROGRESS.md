@@ -539,3 +539,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Long team names and submitted-result labels in dispute review now share available row width and truncate safely; resolution option labels are bounded to two lines.
 - Match-result dialog close control now exposes a localized tooltip and a 48dp minimum hit target instead of a compact zero-constraint IconButton.
 - No team-league scoring values, win/draw/loss mapping, dispute authority, match outcome rules, or backend behavior changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Owner tournament and stadium-location error recovery — 2026-10-31
+
+- Tournament prize-handover failures now keep technical exception/stack details in diagnostics and show concise Arabic/English retry guidance; the notes controller continues to be disposed after the dialog closes.
+- Stadium current-location lookup now logs technical failure separately, shows localized permission/retry guidance, and avoids updating the sheet's loading state after its modal context has been disposed.
+- No prize ledger entry, payout, GPS permission, stadium coordinate, geocoding, or booking business behavior was changed. Source-only; no CI, analyzer, tests, runtime checks, migrations, or APK build were run.
