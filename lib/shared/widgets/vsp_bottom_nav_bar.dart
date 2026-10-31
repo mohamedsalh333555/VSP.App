@@ -73,12 +73,12 @@ class VspBottomNavBar extends StatelessWidget {
               button: true,
               selected: isSelected,
               label: item.label,
-              child: GestureDetector(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(VSPDSRadius.md),
                 onTap: () {
                   HapticFeedback.lightImpact();
                   onItemTapped(index);
                 },
-                behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   height: VSPDSizes.navigationItemHeight,
                   child: Center(
