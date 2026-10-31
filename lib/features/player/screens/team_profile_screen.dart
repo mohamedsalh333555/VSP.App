@@ -39,6 +39,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingMembers = true;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
+  bool _hasTeamLoadError = false;
   bool _has1v1Champion = false;
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
@@ -89,13 +90,15 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _loadTeamAndMembers() async {
     setState(() {
       _isLoadingTeam = true;
+      _hasTeamLoadError = false;
     });
     try {
-      final t = await TeamRepository().getTeam(widget.teamId!);
+      final t = await TeamRepository().getTeamStrict(widget.teamId!);
       if (mounted) {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
+          _hasTeamLoadError = false;
         });
         if (t != null) {
           _loadMemberDetails();
@@ -106,6 +109,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       if (mounted) {
         setState(() {
           _isLoadingTeam = false;
+          _hasTeamLoadError = true;
         });
       }
     }
@@ -186,11 +190,37 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
 
     if (widget.team == null && _fetchedTeam == null) {
-      return const VSPScaffold(
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: SafeArea(top: false, bottom: true, child: Center(
-          child: Text('Team not found ', style: TextStyle(color: Colors.white)),
-        )),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _hasTeamLoadError
+                        ? (isArabic ? 'تعذر تحميل بيانات الفريق' : 'Could not load team')
+                        : (isArabic ? 'الفريق غير متاح' : 'Team not found'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  if (_hasTeamLoadError && widget.teamId != null) ...[
+                    const SizedBox(height: VSPSpacing.md),
+                    TextButton(
+                      onPressed: _loadTeamAndMembers,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 
