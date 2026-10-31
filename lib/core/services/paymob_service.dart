@@ -19,7 +19,7 @@ class PaymobFeePolicy {
   factory PaymobFeePolicy.fromMap(Map<String, dynamic> map) => PaymobFeePolicy(
     vspRate: (map['booking_vsp_rate'] as num?)?.toDouble() ?? double.nan,
     gatewayRate: (map['booking_paymob_local_rate'] as num?)?.toDouble() ??
-        (map['booking_paymob_rate'] as num?)?.toDouble() ?? 0,
+        (map['booking_paymob_rate'] as num?)?.toDouble() ?? double.nan,
     fixedGatewayFee: (map['booking_paymob_fixed_fee'] as num?)?.toDouble() ?? double.nan,
     vspAppliesToCash: map['vsp_applies_to_cash'] == true,
     paymobAppliesToElectronic: map['paymob_applies_to_electronic'] == true,
