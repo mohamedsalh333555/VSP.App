@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/utils/geo_helper.dart';
+import '../../core/services/stadium/stadium_filter_service.dart';
 import '../../data/models.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -259,37 +260,33 @@ class StadiumCard extends StatelessWidget {
  // Amenities (Baths, Cafeteria, Garage, etc.)
  Builder(builder: (context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final List<String> featuresList = stadium.features is List 
- ? List<String>.from(stadium.features)
- : Stadium.parseFeatures(stadium.features);
- 
- final hasBaths = featuresList.any((f) => f.toLowerCase().contains('bath'));
- final hasCafe = featuresList.any((f) => f.toLowerCase().contains('cafe'));
- final hasGarage = featuresList.any((f) => f.toLowerCase().contains('garage'));
- 
+ final hasBaths = StadiumFilterService.checkAmenity(stadium, 'showers & baths');
+ final hasCafe = StadiumFilterService.checkAmenity(stadium, 'cafeteria & drinks');
+ final hasGarage = StadiumFilterService.checkAmenity(stadium, 'garage & parking');
+
+ Widget amenity(IconData icon, String label) => Row(
+   mainAxisSize: MainAxisSize.min,
+   children: [
+     Icon(icon, color: VSPColors.accent, size: 14),
+     const SizedBox(width: 4),
+     Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+   ],
+ );
+
  return Wrap(
- spacing: 10,
- runSpacing: 4,
- crossAxisAlignment: WrapCrossAlignment.center,
- children: [
- if (hasBaths) ...[
- const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'حمامات ' : 'Baths ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (hasCafe) ...[
- const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'كافتيريا ' : 'Cafeteria ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (hasGarage) ...[
- const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
- const SizedBox(width: 4),
- Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
- ],
- if (!hasBaths && !hasCafe && !hasGarage)
- Text(isArabic ? 'لا توجد خدمات مضافة ' : 'No amenities listed ', style: const TextStyle(color: Colors.white38, fontSize: 11)),
- ],
+   spacing: 10,
+   runSpacing: 4,
+   crossAxisAlignment: WrapCrossAlignment.center,
+   children: [
+     if (hasBaths) amenity(Iconsax.drop, isArabic ? 'حمامات' : 'Baths'),
+     if (hasCafe) amenity(Iconsax.coffee_copy, isArabic ? 'كافتيريا' : 'Cafeteria'),
+     if (hasGarage) amenity(Iconsax.car_copy, isArabic ? 'جراج' : 'Parking'),
+     if (!hasBaths && !hasCafe && !hasGarage)
+       Text(
+         isArabic ? 'لا توجد خدمات مضافة' : 'No amenities listed',
+         style: const TextStyle(color: Colors.white38, fontSize: 11),
+       ),
+   ],
  );
  }),
  const SizedBox(height: 8),

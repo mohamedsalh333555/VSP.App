@@ -66,8 +66,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   String _generateMetricsCacheKey(List<Booking> bookings) {
-    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:');
-    for (final b in bookings.take(50)) {
+    final buffer = StringBuffer('$_selectedTimePeriod:$_selectedStadiumFilter:${bookings.length}:');
+    // Every loaded booking contributes to the cache key; truncating at 50 can
+    // leave owner totals stale when records outside the first page change.
+    for (final b in bookings) {
       buffer.write(
         '${b.id}:'
         '${b.effectivePaymentState}:'
