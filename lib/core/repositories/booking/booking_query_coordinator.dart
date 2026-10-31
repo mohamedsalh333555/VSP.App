@@ -36,11 +36,10 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await getUserBookingsDirectly(userId);
+            final refreshed = await getUserBookingsDirectlyStrict(userId);
             sink.add(refreshed);
           },
-        )
-        ;
+        );
   }
 
   /// Direct REST query fetching user bookings. This compatibility method
@@ -123,7 +122,7 @@ class BookingQueryCoordinator {
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
-            final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+            final refreshed = await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
             sink.add(refreshed);
           },
         )
