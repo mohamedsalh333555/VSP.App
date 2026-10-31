@@ -37,7 +37,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   late TabController _tabController;
   bool _isJoining = false;
   Team? _myTeam;
-  late final Stream<Championship?> _singleChampionshipStream;
+  late Stream<Championship?> _singleChampionshipStream;
   late Stream<List<TournamentMatch>> _matchesStream;
 
   @override
@@ -81,7 +81,11 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void _refreshChampionshipData() {
     if (!mounted) return;
     setState(() {
-      _matchesStream = TournamentRepository()
+      final repository = TournamentRepository();
+      _singleChampionshipStream = repository
+          .getSingleChampionshipStream(widget.championship.id)
+          .asBroadcastStream();
+      _matchesStream = repository
           .getTournamentMatches(widget.championship.id)
           .asBroadcastStream();
     });
@@ -240,6 +244,52 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
           ),
           body: SafeArea(top: false, bottom: true, child: Column(
             children: [
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: VSPSpacing.md,
+                    vertical: VSPSpacing.sm,
+                  ),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.30),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: VSPColors.warning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isArabic
+                              ? 'توقفت التحديثات المباشرة للبطولة. قد تكون البيانات المعروضة قديمة.'
+                              : 'Live championship updates paused. Displayed data may be out of date.',
+                          style: const TextStyle(
+                            color: VSPColors.warning,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _refreshChampionshipData,
+                        child: Text(isArabic ? 'تحديث' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
               if (isTeamRegistered && _myTeam != null) ...[
                 Container(
                   width: double.infinity,
