@@ -311,9 +311,19 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                           itemCount: filteredStadiums.length + (provider.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index >= filteredStadiums.length) {
+                              if (provider.errorMessage != null) {
+                                return Center(
+                                  child: TextButton(
+                                    onPressed: () => _applyServerFilters(provider, isRefresh: false),
+                                    child: Text(isArabic ? 'تعذر تحميل المزيد — إعادة المحاولة' : 'Could not load more — Retry'),
+                                  ),
+                                );
+                              }
                               if (!provider.isLoadingMore && provider.hasMore) {
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (mounted) _applyServerFilters(provider, isRefresh: false);
+                                  if (mounted && provider.errorMessage == null) {
+                                    _applyServerFilters(provider, isRefresh: false);
+                                  }
                                 });
                               }
                               return const Padding(
