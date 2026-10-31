@@ -6,6 +6,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -31,6 +32,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   String? _activeUserScope;
   bool _hasObservedUserScope = false;
   int _userScopeGeneration = 0;
+  bool _hasTeamContextError = false;
 
   @override
   void didChangeDependencies() {
@@ -42,6 +44,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       final generation = ++_userScopeGeneration;
       _myTeamIds = <String>{};
       _myCaptainTeamIds = <String>{};
+      _hasTeamContextError = false;
       _isInitialLoadPending = userId != null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || generation != _userScopeGeneration) return;
@@ -71,15 +74,39 @@ class _BookingsScreenState extends State<BookingsScreen> {
         setState(() {
           _myTeamIds = teamIds;
           _myCaptainTeamIds = captainTeamIds;
+          _hasTeamContextError = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading player bookings/team context: $e');
+      if (mounted &&
+          generation == _userScopeGeneration &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
+        setState(() {
+          _myTeamIds = <String>{};
+          _myCaptainTeamIds = <String>{};
+          _hasTeamContextError = true;
+        });
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من عضوية الفريق وصلاحية القائد. اسحب للتحديث قبل تسجيل النتيجة.'
+              : 'Could not verify team membership/captain access. Refresh before recording a result.',
+        );
+      }
     } finally {
       if (mounted && generation == _userScopeGeneration) {
         setState(() => _isInitialLoadPending = false);
       }
     }
+  }
+
+  Future<void> _refreshData() async {
+    final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
+    if (userId == null) return;
+    final generation = ++_userScopeGeneration;
+    await _loadDataForUser(userId, generation);
   }
 
   String? _myTeamIdForBooking(Booking booking) {
@@ -220,14 +247,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
 
             if (data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
               return RefreshIndicator(
-                onRefresh: () async {
-                  final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                  final userId = authProvider.currentUser?.id;
-                  if (userId != null) {
-                    await Provider.of<BookingProvider>(context, listen: false)
-                        .loadUserBookings(userId);
-                  }
-                },
+                onRefresh: _refreshData,
                 color: VSPDSSemanticColors.accent,
                 backgroundColor: VSPDSSemanticColors.surface,
                 child: SingleChildScrollView(
@@ -245,14 +265,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
             }
 
             return RefreshIndicator(
-              onRefresh: () async {
-                final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                final userId = authProvider.currentUser?.id;
-                if (userId != null) {
-                  await Provider.of<BookingProvider>(context, listen: false)
-                      .loadUserBookings(userId);
-                }
-              },
+              onRefresh: _refreshData,
               color: VSPDSSemanticColors.accent,
               backgroundColor: VSPDSSemanticColors.surface,
               child: Builder(builder: (context) {
