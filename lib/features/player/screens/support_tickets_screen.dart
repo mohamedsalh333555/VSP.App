@@ -26,6 +26,25 @@ class SupportTicketsScreen extends StatefulWidget {
 
 class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   final ChatRepository _repo = ChatRepository();
+  late Stream<List<Map<String, dynamic>>> _ticketsStream;
+  String _streamUserId = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _streamUserId = context.read<AuthProvider>().currentUser?.id ?? '';
+    _ticketsStream = _repo.streamSupportTickets(_streamUserId);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final activeUserId = context.watch<AuthProvider>().currentUser?.id ?? '';
+    if (activeUserId != _streamUserId) {
+      _streamUserId = activeUserId;
+      _ticketsStream = _repo.streamSupportTickets(activeUserId);
+    }
+  }
 
   Future<void> _newTicket() async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -169,7 +188,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               subtitle: isArabic ? 'يجب تسجيل الدخول لاستخدام الدعم داخل التطبيق.' : 'Sign in to use in-app support.',
             )
           : StreamBuilder<List<Map<String, dynamic>>>(
-              stream: _repo.streamSupportTickets(userId),
+              key: ValueKey(userId),
+              stream: _ticketsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -191,7 +211,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                           ),
                           const SizedBox(height: VSPSpacing.md),
                           TextButton(
-                            onPressed: () => setState(() {}),
+                            onPressed: () => setState(() {
+                              _ticketsStream = _repo.streamSupportTickets(userId);
+                            }),
                             child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                           ),
                         ],
