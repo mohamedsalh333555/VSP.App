@@ -40,7 +40,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
     try {
       final authProvider = context.read<app_auth.AuthProvider>();
       final bookingProvider = context.read<BookingProvider>();
-      final uid = authProvider.currentUser?.uid;
+      final uid = authProvider.currentUser?.id;
 
       if (typeId == 'Challenge Match') {
         if (uid != null) {
