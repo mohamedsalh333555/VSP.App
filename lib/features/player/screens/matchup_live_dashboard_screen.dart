@@ -71,6 +71,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _submitMatchResult() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final validationError = MatchupDashboardService.validateResultSubmission(
       teamAId: _selectedTeamAId,
       teamBId: _selectedTeamBId,
@@ -96,12 +97,18 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       );
 
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!');
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!' : 'Match result recorded and standings updated successfully!',
+      );
       await _loadMatchupData();
     } catch (e) {
       debugPrint('Error submitting match result: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'فشل تسجيل النتيجة: $e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر تسجيل النتيجة. حاول مرة أخرى.' : 'Could not record the result. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -109,29 +116,36 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _closeMatchup() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (!MatchupDashboardService.canCloseMatchup(_results.length)) {
-      VSPFeedback.showWarning(context, 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة');
+      VSPFeedback.showWarning(
+        context,
+        isArabic ? 'يجب تسجيل نتيجة مباراة واحدة على الأقل قبل إغلاق المواجهة' : 'Record at least one match result before closing the matchup.',
+      );
       return;
     }
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('إغلاق المواجهة؟', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
-          'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.',
+          isArabic
+              ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
+              : 'After closing, no more results can be added to this session and the final standings will be locked.',
           style: TextStyle(color: VSPColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('تراجع', style: TextStyle(color: VSPColors.textSecondary)),
+            child: Text(isArabic ? 'تراجع' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: const Text('إغلاق المواجهة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'إغلاق المواجهة' : 'Close matchup', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -143,12 +157,18 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     try {
       await _matchupRepo.closeMatchup(widget.bookingId);
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!');
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!' : 'Matchup closed and final standings confirmed!',
+      );
       Navigator.pop(context);
     } catch (e) {
       debugPrint('Error closing matchup: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'تعذر إغلاق المواجهة: $e');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر إغلاق المواجهة. حاول مرة أخرى.' : 'Could not close the matchup. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
