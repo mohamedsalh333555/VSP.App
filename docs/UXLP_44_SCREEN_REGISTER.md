@@ -43,7 +43,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved; account-verification dialog scroll-safe) |
 | `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (profile/role flow reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (plan prices, trial days, stadium limits, descriptions, and feature flags now load from public_subscription_plans; monthly/annual choices use server billing periods; retry state on read failure) |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
@@ -93,7 +93,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
-| `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (roster load failure now distinct from empty roster with retry; save disabled until verified; raw backend errors hidden) |
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match report snapshots reporter ID, guards duplicate taps, and anchors feedback to parent screen after dialog close) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
@@ -165,7 +165,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/user_bookings/player_booking_card.dart` | player | source reviewed—runtime pending (booking lifecycle badges now use actual status; channel-neutral refund-pending copy) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited callback, submission lock, disabled dismissal/editing while submitting) |
 | `lib/features/player/widgets/home/home_match_outcome_dialogs.dart` | player | source reviewed—runtime pending (success/failure feedback reflects repository result for submit/confirm/dispute) |
-| `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective booking full-online-payment guard; bounded scroll-safe sheet) |
+| `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (collective full-online-payment guard; localized generic failures instead of backend exception text; bounded scroll-safe sheet) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule failure feedback; destructive closure confirmation) |
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (awaited authoritative player booking snapshot; realtime merge behavior preserved) |
 | `lib/core/providers/booking/booking_sync_coordinator.dart` | shared | source reviewed—runtime pending (owner/player streams are cancelled before changing scope; owner empty snapshots and direct-fetch errors are delivered explicitly) |
