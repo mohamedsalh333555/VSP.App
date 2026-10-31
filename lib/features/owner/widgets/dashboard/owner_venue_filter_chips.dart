@@ -35,7 +35,7 @@ class OwnerVenueFilterChips extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           ...stadiums.map((s) => Padding(
-            padding: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsetsDirectional.only(start: 8),
             child: _buildVenueChip(
               id: s.id,
               label: s.name,
