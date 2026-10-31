@@ -480,11 +480,11 @@ class TeamLeagueFixturesView extends StatelessWidget {
           color: VSPColors.accentSoft,
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Iconsax.tick_circle_copy, size: 12, color: VSPColors.accent),
-            SizedBox(width: 4),
+            const Icon(Iconsax.tick_circle_copy, size: 12, color: VSPColors.accent),
+            const SizedBox(width: 4),
             Text(isArabic ? 'تم الحجز' : 'Booked', style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)), 
           ],
         ),
