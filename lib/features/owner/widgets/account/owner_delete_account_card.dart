@@ -94,37 +94,47 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                               }
 
                               setDialogState(() => isDeleting = true);
-                              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                              final verified = await authProvider.reauthenticateWithPassword(passwordController.text);
-                              if (!dialogCtx.mounted) return;
+                              try {
+                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                                final verified = await authProvider.reauthenticateWithPassword(passwordController.text);
+                                if (!dialogCtx.mounted) return;
 
-                              if (!verified) {
+                                if (!verified) {
+                                  setDialogState(() => isDeleting = false);
+                                  VSPFeedback.showError(
+                                    dialogCtx,
+                                    isArabic ? 'كلمة المرور غير صحيحة. لم يتم حذف الحساب.' : 'Incorrect password. The account was not deleted.',
+                                  );
+                                  return;
+                                }
+
+                                final success = await authProvider.deleteAccount();
+                                if (!dialogCtx.mounted) return;
+
+                                if (success) {
+                                  Navigator.of(dialogCtx).pushAndRemoveUntil(
+                                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                                    (route) => false,
+                                  );
+                                } else {
+                                  setDialogState(() => isDeleting = false);
+                                  VSPFeedback.showError(
+                                    dialogCtx,
+                                    isArabic
+                                        ? 'تعذر حذف الحساب. حاول مرة أخرى.'
+                                        : 'Could not delete the account. Please try again.',
+                                  );
+                                  Navigator.pop(dialogCtx);
+                                }
+                              } catch (e) {
+                                if (!dialogCtx.mounted) return;
                                 setDialogState(() => isDeleting = false);
                                 VSPFeedback.showError(
                                   dialogCtx,
-                                  isArabic ? 'كلمة المرور غير صحيحة. لم يتم حذف الحساب.' : 'Incorrect password. The account was not deleted.',
-                                );
-                                return;
-                              }
-
-                              final success = await authProvider.deleteAccount();
-
-                              if (!context.mounted) return;
-
-                              if (success) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                                  (route) => false,
-                                );
-                              } else {
-                                setDialogState(() => isDeleting = false);
-                                VSPFeedback.showError(
-                                  context,
                                   isArabic
-                                      ? 'تعذر حذف الحساب. حاول مرة أخرى.'
-                                      : 'Could not delete the account. Please try again.',
+                                      ? 'تعذر حذف الحساب. تحقق من الاتصال وحاول مرة أخرى.'
+                                      : 'Could not delete the account. Check your connection and try again.',
                                 );
-                                Navigator.pop(dialogCtx);
                               }
                             },
                     ),
