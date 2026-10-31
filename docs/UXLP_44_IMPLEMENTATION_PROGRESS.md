@@ -86,3 +86,14 @@ The exact touched rule groups are 3, 5, 6, 9, 11, 17, 18, 25, 27, 28, 33, 35, 36
 The FCM queue remains at-least-once, so a successful push followed by an archive failure can be delivered again on retry. No queue schema, retry policy, notification retention, RLS, migration, or business rule was changed.
 
 These changes are source implementation only. All 44 rule statuses remain runtime pending. No CI, analyzer, automated tests, runtime validation, database migration, or APK build was run.
+
+
+## Latest implementation continuation — account scope and support interaction
+
+- Player navigation preference is now keyed by authenticated user ID; account switching resets/restores the correct user's tab and clears the prior user's pending-result prompt suppression.
+- Owner shell resets its selected tab to dashboard when the authenticated owner changes.
+- Support ticket message send has a localized tooltip, a minimum 48dp target, and is disabled until a non-empty message is entered and while a send is active.
+- FAQ question headings now use the shared theme typography role.
+- The player no-team card uses explicit localized fallback text when the player's position is unset.
+
+These are source-only changes. No CI, analyzer, tests, runtime checks, migrations, or APK build were run; all 44 rule statuses remain runtime pending.

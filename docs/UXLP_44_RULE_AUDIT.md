@@ -326,3 +326,12 @@ Additional source changes committed after the prior batch:
 **Delivery semantics note:** the queue remains at-least-once; if a push succeeds but archiving fails, a later retry can duplicate the push. This batch does not alter queue schema, retry limits, notification retention, or user-facing notification deletion policy.
 
 All 44 rule entries remain source reviewed/runtime pending. No CI, analyzer, tests, runtime checks, migration, or APK build were run.
+
+
+## Phase 2 continuation — account-scoped navigation and support form affordance
+
+- **Rules 4, 13 — typography and copy consistency:** FAQ question titles now use the shared theme title role; the no-team player profile uses the same explicit localized missing-position copy as the player header.
+- **Rules 27, 28, 33 — message composer affordance:** support-ticket send action now has a localized tooltip, a 48dp minimum target, and remains visibly disabled until non-whitespace text is entered or while a send is in progress.
+- **Rules 38, 39, 40 — account and role isolation:** player tab restoration is now stored per authenticated Supabase user; switching player accounts resets the tab and loads only that account's saved selection. Deep-link tab navigation persists under the active account. Owner shell navigation resets to its dashboard when the owner identity changes.
+
+All changes are source-level. Rule statuses remain runtime pending; no CI, analyzer, automated tests, runtime validation, migrations, or APK build were run.
