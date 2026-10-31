@@ -80,6 +80,18 @@ class TeamRepository {
        .toSet();
  }
 
+ /// Returns every team membership for the signed-in user.
+ Future<Set<String>> getUserTeamIdsStrict(String userId) async {
+   final response = await _supabase
+       .from('team_members')
+       .select('team_id')
+       .eq('user_id', userId);
+   return (response as List)
+       .map((row) => row['team_id']?.toString() ?? '')
+       .where((id) => id.isNotEmpty)
+       .toSet();
+ }
+
  Future<Team?> getUserTeam(String userId) async {
    try {
      return await getUserTeamStrict(userId);
