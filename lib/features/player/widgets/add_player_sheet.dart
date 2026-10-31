@@ -44,14 +44,37 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  });
 
  final normalized = PhoneUtils.normalize(phone);
- final user = normalized != null ? await UserRepository().getUserByPhone(normalized) : null;
+ if (normalized == null) {
+   if (mounted) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     setState(() => _isSearching = false);
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Text(isArabic ? 'أدخل رقم هاتف صحيحاً.' : 'Enter a valid phone number.')),
+     );
+   }
+   return;
+ }
+
+ UserModel? user;
+ try {
+   user = await UserRepository().getUserByPhoneStrict(normalized);
+ } catch (_) {
+   if (mounted) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     setState(() => _isSearching = false);
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
+     );
+   }
+   return;
+ }
 
  if (mounted) {
  if (user != null) {
  final currentUid = context.read<AuthProvider>().currentUser?.id;
  if (user.uid == currentUid) {
  ScaffoldMessenger.of(context).showSnackBar(
- const SnackBar(content: Text('كما تعلم.. أنت الكابتن بالفعل! \n(You are the captain!)'), backgroundColor: VSPColors.accent),
+ SnackBar(content: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'أنت قائد الفريق بالفعل.' : 'You are already the team captain.'), backgroundColor: VSPColors.accent),
  );
  setState(() {
  _isSearching = false;

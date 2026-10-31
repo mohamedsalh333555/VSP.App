@@ -22,20 +22,26 @@ class UserRepository {
 
   Future<UserModel?> getUserByPhone(String phone) async {
     try {
-      final cleanPhone = phone.trim();
-      if (cleanPhone.isEmpty) return null;
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('phone', cleanPhone)
-          .maybeSingle();
-
-      if (response == null) return null;
-      return UserModel.fromFirestore(response);
+      return await getUserByPhoneStrict(phone);
     } catch (e) {
       VSPLogger.e('Error getting user by phone', e);
       return null;
     }
+  }
+
+  /// Strict lookup for flows where "not registered" must be distinguished
+  /// from a failed phone search.
+  Future<UserModel?> getUserByPhoneStrict(String phone) async {
+    final cleanPhone = phone.trim();
+    if (cleanPhone.isEmpty) return null;
+    final response = await _supabase
+        .from('users')
+        .select()
+        .eq('phone', cleanPhone)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return UserModel.fromFirestore(response);
   }
 
   Future<Map<String, dynamic>?> getUserData(String uid) async {
