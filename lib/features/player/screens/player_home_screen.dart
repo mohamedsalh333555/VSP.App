@@ -41,7 +41,9 @@ class PlayerHomeScreen extends StatefulWidget {
 
 class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   int _selectedIndex = 0;
-  static const _selectedTabKey = 'player_last_selected_tab';
+  String? _tabPreferenceUserId;
+
+  String _selectedTabKeyFor(String userId) => 'player_last_selected_tab_$userId';
 
   void switchToTab(int index) {
     if (index < 0 || index > 4) return;
@@ -50,16 +52,40 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   }
 
   Future<void> _persistSelectedTab(int index) async {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    if (userId == null) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_selectedTabKey, index);
+    await prefs.setInt(_selectedTabKeyFor(userId), index);
   }
 
-  Future<void> _restoreSelectedTab() async {
+  Future<void> _restoreSelectedTab(String userId) async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getInt(_selectedTabKey);
-    if (saved != null && saved >= 0 && saved <= 4 && mounted) {
+    final saved = prefs.getInt(_selectedTabKeyFor(userId));
+    if (saved != null &&
+        saved >= 0 &&
+        saved <= 4 &&
+        mounted &&
+        context.read<AuthProvider>().currentUser?.id == userId) {
       setState(() => _selectedIndex = saved);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final activeUserId = context.watch<AuthProvider>().currentUser?.id;
+    if (activeUserId == _tabPreferenceUserId) return;
+
+    _tabPreferenceUserId = activeUserId;
+    _selectedIndex = 0;
+    _popupShownForUserId = null;
+    if (activeUserId == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == activeUserId) {
+        _restoreSelectedTab(activeUserId);
+      }
+    });
   }
 
   @override
@@ -70,7 +96,6 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   void _fetchInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _restoreSelectedTab();
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
@@ -236,6 +261,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               onNavigate: (index, {arguments}) {
                 setState(() {
                   _selectedIndex = index;
+                  _persistSelectedTab(index);
                   if (index == 2 && arguments != null && arguments['initialTab'] != null) {
                     championScreenKey.currentState?.switchToTab(arguments['initialTab']);
                   }
