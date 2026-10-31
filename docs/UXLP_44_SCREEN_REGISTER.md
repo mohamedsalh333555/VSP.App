@@ -86,18 +86,18 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
 | `lib/features/player/screens/booking_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated loading state; refresh awaits server response; cached list stays visible on refresh failure with localized retry warning) |
-| `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (strict account-scoped team lookup; loading/empty/error/retry states; create-team recovery; challenge continuation re-verifies team and blocks duplicate/stale actions) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (checkout layout and insets reviewed; Supabase auth ID reads corrected to User.id) |
-| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
+| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup before registration; generic localized failure rather than treating read failure as no team or exposing backend exception) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (roster load failure now distinct from empty roster with retry; save disabled until verified; raw backend errors hidden) |
-| `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match report snapshots reporter ID, guards duplicate taps, and anchors feedback to parent screen after dialog close) |
+| `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match report submission guarded; join failures mapped to localized safe copy; actions remain lifecycle-gated) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
-| `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
+| `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (fee policy fails closed; server-created booking is authoritative; account-bound checkout; initialization errors localized without raw backend text) |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (report dialog scroll-safe; report success/failure feedback correct; booking lifecycle statuses localized in Arabic/English) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (post-match prompts require participating captain, eligible booking state, and independent opposing captain for second review) |
