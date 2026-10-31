@@ -226,7 +226,9 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
             if (ticketSnapshot.hasError)
               _SupportStreamWarning(
                 isArabic: ar,
-                onRetry: () => setState(() {}),
+                onRetry: () => setState(() {
+                  _bindStreams(userId);
+                }),
               ),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
@@ -274,7 +276,9 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                               style: const TextStyle(color: VSPColors.textSecondary),
                             ),
                             TextButton(
-                              onPressed: () => setState(() {}),
+                              onPressed: () => setState(() {
+                                _bindStreams(userId);
+                              }),
                               child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
                             ),
                           ],
@@ -297,7 +301,9 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                       if (snapshot.hasError && i == 0) {
                         return _SupportStreamWarning(
                           isArabic: ar,
-                          onRetry: () => setState(() {}),
+                          onRetry: () => setState(() {
+                  _bindStreams(userId);
+                }),
                         );
                       }
                       final messageIndex = i - (snapshot.hasError ? 1 : 0);

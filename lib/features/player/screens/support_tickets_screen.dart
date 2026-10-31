@@ -273,7 +273,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                               ),
                             ),
                             TextButton(
-                              onPressed: () => setState(() {}),
+                              onPressed: () => setState(() {
+                                _ticketsStream = _repo.streamSupportTickets(userId);
+                              }),
                               child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                             ),
                           ],
