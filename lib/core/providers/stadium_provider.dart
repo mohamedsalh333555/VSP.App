@@ -212,7 +212,6 @@ class StadiumProvider with ChangeNotifier {
     }
 
     if (scopeChanged) {
-      _scopeGeneration++;
       // A different owner must never see the previous owner's stadium cache.
       _stadiums = [];
       _filteredStadiums = [];
@@ -223,6 +222,7 @@ class StadiumProvider with ChangeNotifier {
       _isLoadingMore = false;
     }
 
+    final ownerGeneration = ++_scopeGeneration;
     _listeningOwnerId = ownerId;
     _stadiumSubscription?.cancel();
 
@@ -231,13 +231,13 @@ class StadiumProvider with ChangeNotifier {
 
     _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
       (data) {
-        if (_listeningOwnerId != ownerId) return;
+        if (_listeningOwnerId != ownerId || ownerGeneration != _scopeGeneration) return;
         _stadiums = data;
         _errorMessage = null;
         _setLoading(false);
       },
       onError: (error) {
-        if (_listeningOwnerId != ownerId) return;
+        if (_listeningOwnerId != ownerId || ownerGeneration != _scopeGeneration) return;
         // Preserve the last authoritative snapshot if a realtime refresh fails.
         // Initial failures still surface because the lists start empty.
         _setError('Failed to fetch your stadiums: ${error.toString()}');
@@ -368,6 +368,7 @@ class StadiumProvider with ChangeNotifier {
  bool? noDepositOnly,
  List<String>? amenities,
  }) async {
+ final requestGeneration = _scopeGeneration;
  if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
  if (isRefresh) {
@@ -393,6 +394,7 @@ class StadiumProvider with ChangeNotifier {
  noDepositOnly: noDepositOnly,
  );
 
+ if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  final List<Stadium> rawItems = result['items'];
  final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
  ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
@@ -414,8 +416,11 @@ class StadiumProvider with ChangeNotifier {
  _errorMessage = null;
  notifyListeners();
  } catch (e) {
- _setError('Failed to fetch stadiums: ${e.toString()}');
+ if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+   _setError('Failed to fetch stadiums: ${e.toString()}');
+ }
  } finally {
+ if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  if (isRefresh) {
  _setLoading(false);
  } else {
