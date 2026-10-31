@@ -3,7 +3,7 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
-- Registered Dart screen/surface paths: 139 unique paths
+- Registered Dart screen/surface paths: 174 unique paths
 - Additional shared navigation component entry: 1
 - Table records: 143, including 5 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
@@ -145,9 +145,42 @@ This register is the inventory of Dart files whose names indicate screens, pages
 
 ## Non-screen UI surfaces still requiring discovery
 
-| Surface | Status |
-|---|---|
-| `VspBottomNavBar` and `OwnerBottomNavBar` | Source reviewed: active/inactive icon variants, selected/unselected typography, semantic selected state, 48dp+ touch height, and bottom SafeArea are present; runtime pending |
+| Surface path | Role | Status |
+|---|---|---|
+| `lib/shared/widgets/custom_text_field.dart` | shared | source reviewed—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
+| `lib/shared/widgets/primary_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton adapter, haptics and debounce documented; call-site/runtime pending) |
+| `lib/shared/widgets/social_auth_button.dart` | shared | source reviewed—runtime pending (V2 semantic button state and 48dp target documented; provider/auth error runtime pending) |
+| `lib/shared/widgets/stadium_card.dart` | shared | source reviewed—runtime pending (V2 semantic color/radius migration documented; content-density and locale runtime pending) |
+| `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
+| `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
+| `lib/shared/widgets/vsp_back_button.dart` | shared | source reviewed—runtime pending (48dp hit area and semantic interaction documented; navigation/back-stack runtime pending) |
+| `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, focusable selection and SafeArea documented; selected/unselected runtime pending) |
+| `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (shared state/empty pattern documented; every screen usage and state runtime pending) |
+| `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) |
+| `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
+| `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
+| `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
+| `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
+| `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
+| `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height documented; runtime pending) |
+| `lib/shared/widgets/banner_slider_widget.dart` | shared | not yet inspected |
+| `lib/shared/widgets/copyable_phone_text.dart` | shared | not yet inspected |
+| `lib/shared/widgets/public_match_card.dart` | player | not yet inspected |
+| `lib/shared/widgets/vsp_ai_spark_icon.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_ambient_background.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_auth_header.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_countdown_timer.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | not yet inspected |
+| `lib/core/ui/components/vsp_menu_item.dart` | shared | not yet inspected |
+| `lib/core/ui/components/vsp_section_title.dart` | shared | not yet inspected |
+| `lib/features/player/widgets/championship_card.dart` | player | not yet inspected |
+| `lib/features/player/widgets/collective_match_invite_route.dart` | player | not yet inspected |
+| `lib/features/player/widgets/create_team_logo_picker_row.dart` | player | not yet inspected |
+| `lib/features/player/widgets/create_team_members_section.dart` | player | not yet inspected |
+| `lib/features/player/widgets/vsp_1v1_trophy_badge.dart` | player | not yet inspected |
+| `lib/features/owner/widgets/owner_notification_button.dart` | owner | not yet inspected |
+| `lib/features/owner/widgets/radial_tick_gauge_painter.dart` | owner | not yet inspected |
 
 - Shared widgets and reusable cards
 - Navigation bars, drawers, app bars, tabs, and action menus
@@ -203,4 +236,4 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
 
-The source fixes above are not runtime passes. The 139 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
+The source fixes above are not runtime passes. The 174 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
