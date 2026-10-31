@@ -140,8 +140,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         if (!mounted || widget.userTeam?.id != team.id) return;
         await _loadLeague();
         if (mounted && widget.userTeam?.id == team.id) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('رسوم مشاركة الفريق: مدفوعة')),
+            SnackBar(content: Text(isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team participation fee is paid.')),
           );
         }
         return;
@@ -153,7 +154,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       await _openLeaguePayment(paymentReference: reference, amount: amount, team: team);
     } catch (e) {
       debugPrint('Error starting team league payment: $e');
-      if (mounted) {
+      if (mounted && widget.userTeam?.id == team.id) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
