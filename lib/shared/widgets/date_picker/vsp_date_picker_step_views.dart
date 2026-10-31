@@ -230,7 +230,7 @@ class VspDatePickerDayStep extends StatelessWidget {
         return Semantics(
           button: true,
           selected: isSelected,
-          label: '${day.toString().padLeft(2, '0')}',
+          label: day.toString().padLeft(2, '0'),
           child: InkWell(
             excludeFromSemantics: true,
             borderRadius: BorderRadius.circular(VSPRadius.lg),
