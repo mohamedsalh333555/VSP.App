@@ -240,12 +240,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
               const SizedBox(height: 18),
 
-              // ── FREE CARD (0 EGP - 1 STADIUM) ──
+              // Free and Pro plan content is sourced from public_subscription_plans.
               _buildFreePlanCard(context, isArabic, isPro, _freePlan!),
 
               const SizedBox(height: 18),
 
-              // ── PRO PLAN CARD (1000 EGP / MONTH - 3 STADIUMS - 7-DAY TRIAL) ──
               _buildProPlanCard(context, isArabic, isPro, isTrialActive, _proPlan!),
                       ],
                     ),
@@ -528,7 +527,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               ),
             )
           else ...[
-            if (!isTrialActive) ...[
+            if (!isTrialActive && _planNumber(plan, 'trial_days') > 0) ...[
               SizedBox(
                 width: double.infinity,
                 height: 46,
