@@ -6,6 +6,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/booking/booking_bottom_bar.dart';
@@ -57,6 +58,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       AppDateFormatter.getOperationalDate(DateTime.now());
 
   bool get _isOpenJoin => BookingConfirmationHandler.isOpenJoin(widget.bookingType);
+  bool get _requiresTeamContext => widget.bookingType.toLowerCase().contains('team') ||
+      BookingConfirmationHandler.isChallenge(widget.bookingType);
 
   double get _slotPrice => widget.stadium.basePrice / 2;
   double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
@@ -102,7 +105,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       return;
     }
 
-    if (mounted) {
+    if (mounted && !_isLoadingUserTeam) {
       setState(() {
         _isLoadingUserTeam = true;
         _hasUserTeamLoadError = false;
@@ -157,10 +160,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _handleBookingConfirmation() async {
-    final normalizedType = widget.bookingType.toLowerCase();
-    final requiresTeam = normalizedType.contains('team') ||
-        BookingConfirmationHandler.isChallenge(widget.bookingType);
-    if (requiresTeam && _isLoadingUserTeam) {
+    if (_requiresTeamContext && _isLoadingUserTeam) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showInfo(
         context,
@@ -168,7 +168,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       );
       return;
     }
-    if (requiresTeam && _userTeamId == null) {
+    if (_requiresTeamContext && _userTeamId == null) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (_hasUserTeamLoadError) {
         VSPFeedback.showError(
@@ -277,7 +277,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         depositAmount: deposit,
         needsDeposit: widget.stadium.needsDeposit,
         isSlotSelected: isSlotSelected,
-        isLoading: _isLoading || _isLoadingUserTeam,
+        isLoading: _isLoading || (_requiresTeamContext && _isLoadingUserTeam),
         onConfirmPressed: _handleBookingConfirmation,
       ),
     );
