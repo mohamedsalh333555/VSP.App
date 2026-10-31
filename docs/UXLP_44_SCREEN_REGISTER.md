@@ -31,23 +31,23 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | source reviewed—runtime pending (owner-only screen gate; chat body and composer safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets) |
 | `lib/features/owner/screens/add_stadium_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps owner stadium stream and onboarding states) |
-| `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard layout reviewed; Supabase auth ID access corrected to User.id) |
+| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps onboarding states; Supabase auth ID reads corrected to User.id) |
+| `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (form lifecycle reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (stadium/booking streams distinguish loading/error from empty/free; owner stream reloads on authenticated owner-scope changes) |
-| `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding) |
-| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding; auth ID read corrected to User.id) |
+| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (analytics errors localized with retry; stale responses invalidated by request generation; tab switcher meets 48dp minimum height) |
+| `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard flow reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (inbox list uses shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved; account-verification dialog scroll-safe) |
-| `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (profile/role flow reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/tournament_brackets_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | owner | source reviewed—runtime pending (sheet now uses safe-area, keyboard-aware scroll container, and bottom inset) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
+| `lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints and lifecycle reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart` | owner | source reviewed—runtime pending (step pager and page composition reviewed; child steps are independently scrollable) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (reschedule request now shows backend failure; confirmation/destructive actions and safe-area remain runtime pending) |
@@ -80,7 +80,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
-| `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
+| `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart` | owner | source reviewed—runtime pending (manual team flow reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
@@ -88,13 +88,13 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated loading state; refresh awaits server response; cached list stays visible on refresh failure with localized retry warning) |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (AppBar, scrollable checkout, shared bottom action bar adds system bottom inset) |
+| `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (checkout layout and insets reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
+| `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match report snapshots reporter ID, guards duplicate taps, and anchors feedback to parent screen after dialog close) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
 | `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (safe-area scrollable payment body; confirmation dialog via showDialog) |
@@ -105,7 +105,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
+| `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (team actions reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected) |
@@ -114,7 +114,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (strict team/roster fetches with retry; captain identified by `captain_id`; invite modal opens only after a non-empty successful RPC code) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/tournament_registration_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/widgets/add_player_sheet.dart` | player | source reviewed—runtime pending (scrollable content; accounts for keyboard and bottom system inset; caller sheet configuration still to verify) |
+| `lib/features/player/widgets/add_player_sheet.dart` | player | source reviewed—runtime pending (scrollable keyboard-aware content; auth ID read corrected to User.id; caller sheet configuration still to verify) |
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | source reviewed—runtime pending (Dialog safe-area defaults; fixed-height calendar needs small-screen runtime check) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
@@ -122,8 +122,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
-| `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
+| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (invite actions reviewed; Supabase auth ID reads corrected to User.id) |
+| `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (Arabic/English helper copy, keyboard behavior, async lifecycle, and premature success feedback corrected; auth ID reads use User.id) |
 | `lib/features/player/widgets/filter_bottom_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/home_governorate_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
