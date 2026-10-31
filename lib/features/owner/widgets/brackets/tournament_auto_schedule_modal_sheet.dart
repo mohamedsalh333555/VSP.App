@@ -85,13 +85,17 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
     );
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
       decoration: const BoxDecoration(
         color: VSPColors.background,
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
@@ -389,7 +393,8 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
               },
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
