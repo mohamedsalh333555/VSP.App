@@ -54,6 +54,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   bool _leaving = false;
   bool _updatingManual = false;
   bool _cancelling = false;
+  bool _loadFailed = false;
 
   @override
   void initState() {
@@ -73,6 +74,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   }
 
   Future<void> _load() async {
+    _loadFailed = false;
     try {
       if (_inviteToken != null && _inviteToken!.isNotEmpty) {
         final data = await _repo.getPrivateCollectiveInviteDetails(_inviteToken!);
@@ -92,6 +94,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         }
       }
     } catch (e) {
+      _loadFailed = true;
       VSPLogger.w('Collective invite load failed: $e');
     }
     if (mounted) setState(() => _loading = false);
@@ -293,7 +296,9 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final booking = _booking;
     final uid = context.read<AuthProvider>().currentUser?.id;
     if (_loading && booking == null) return const SizedBox(height: 420, child: Center(child: CircularProgressIndicator(color: VSPColors.accent)));
-    if (booking == null) return _empty(ar);
+    if (booking == null) {
+      return _loadFailed ? _loadFailure(ar) : _empty(ar);
+    }
     final isHost = uid != null && booking.createdByUserId == uid;
     final joined = uid != null && booking.joinedUserIds.contains(uid);
     final full = booking.currentPlayers >= booking.totalFieldCapacity;
@@ -383,5 +388,69 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   Widget _sectionHeader(String title, String count) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)), Text(count, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900))]);
   Widget _badge(String text) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: .12), borderRadius: BorderRadius.circular(VSPRadius.full), border: Border.all(color: VSPColors.accent.withValues(alpha: .35))), child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.w800)));
   Widget _infoRow(IconData icon, String label, String value) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: VSPColors.accent, size: 18), const SizedBox(width: 10), Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)), const SizedBox(width: 8), Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)))]));
+  Widget _loadFailure(bool ar) => SizedBox(
+        height: 360,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: const Icon(
+                    Iconsax.wifi_square_copy,
+                    color: VSPColors.textSecondary,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  ar ? 'تعذر تحميل بيانات الدعوة' : 'Could not load invitation',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  ar
+                      ? 'تحقق من اتصالك بالإنترنت وحاول مرة أخرى.'
+                      : 'Check your connection and try again.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _loading
+                        ? null
+                        : () {
+                            setState(() {
+                              _loading = true;
+                              _loadFailed = false;
+                            });
+                            _load();
+                          },
+                    icon: const Icon(Iconsax.refresh_copy, size: 18),
+                    label: Text(ar ? 'إعادة المحاولة' : 'Try again'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
   Widget _empty(bool ar) => SizedBox(height: 320, child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [Container(width: 76, height: 76, decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: VSPColors.divider)), child: const Icon(Iconsax.link_2_copy, color: VSPColors.textSecondary, size: 38)), const SizedBox(height: 18), Text(ar ? 'الدعوة غير متاحة' : 'Invitation unavailable', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)), const SizedBox(height: 8), Text(ar ? 'قد يكون الحجز أُلغي أو انتهى أو لم يعد الرابط صالحاً.' : 'The booking may be cancelled, ended, or the invitation is no longer valid.', textAlign: TextAlign.center, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.55))]))));
 }
