@@ -48,7 +48,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
  if (mounted) {
  if (user != null) {
- final currentUid = context.read<AuthProvider>().currentUser?.uid;
+ final currentUid = context.read<AuthProvider>().currentUser?.id;
  if (user.uid == currentUid) {
  ScaffoldMessenger.of(context).showSnackBar(
  const SnackBar(content: Text('كما تعلم.. أنت الكابتن بالفعل! \n(You are the captain!)'), backgroundColor: VSPColors.accent),
