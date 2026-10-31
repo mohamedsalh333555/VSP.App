@@ -263,10 +263,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final metrics = _getOrCalculateMetrics(allBookings);
 
-    final bool balanceVerified = _financialSummary?['success'] == true;
-    final double availableBalance = balanceVerified
-        ? ((_financialSummary?['available_balance'] as num?)?.toDouble() ?? 0.0)
-        : 0.0;
+    final rawAvailableBalance = _financialSummary?['available_balance'];
+    final parsedAvailableBalance = rawAvailableBalance is num
+        ? rawAvailableBalance.toDouble()
+        : double.tryParse(rawAvailableBalance?.toString() ?? '');
+    final bool balanceVerified = _financialSummary?['success'] == true && parsedAvailableBalance != null;
+    final double availableBalance = parsedAvailableBalance ?? 0.0;
 
     return VSPScaffold(
       backgroundColor: VSPColors.background,
