@@ -28,6 +28,8 @@ class OwnerMainScreen extends StatefulWidget {
 
 class OwnerMainScreenState extends State<OwnerMainScreen> {
  int _currentIndex = 0;
+ String? _activeOwnerId;
+ bool _hasObservedOwner = false;
  late final ConfettiController _confettiController;
  StreamSubscription? _celebrationSubscription;
 
@@ -36,6 +38,18 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  super.initState();
  _confettiController = ConfettiController(duration: const Duration(seconds: 5));
  _startCelebrationListener();
+ }
+
+ @override
+ void didChangeDependencies() {
+ super.didChangeDependencies();
+ final ownerId = context.watch<AuthProvider>().isOwner
+     ? context.read<AuthProvider>().currentUser?.id
+     : null;
+ if (_hasObservedOwner && ownerId == _activeOwnerId) return;
+ _hasObservedOwner = true;
+ _activeOwnerId = ownerId;
+ _currentIndex = 0;
  }
 
  @override
