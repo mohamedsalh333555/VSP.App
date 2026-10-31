@@ -117,8 +117,8 @@ class RefundInfo {
   };
 
   String refundNoticeText(String amountFormatted) {
-    if (hasNoPaidAmount) {
-      return 'لم يتم سداد أي مبلغ لهذا الحجز، لذلك لن ينتج عن الإلغاء استرداد مالي.';
+    if (hasNoPaidAmount || (amountConfirmed && refundAmount <= 0)) {
+      return 'لا يوجد مبلغ مسترد مستحق وفق بيانات الدفع المسجلة لهذا الحجز.';
     }
     if (!amountConfirmed) {
       return 'سيتم تأكيد مبلغ الاسترداد من الخادم بعد إلغاء الحجز.';
@@ -138,10 +138,10 @@ class RefundInfo {
   }
 
   String localizedNoticeText(AppLocalizations l10n, String typeText, String amountFormatted) {
-    if (hasNoPaidAmount) {
+    if (hasNoPaidAmount || (amountConfirmed && refundAmount <= 0)) {
       return l10n.localeName == 'ar'
-          ? 'لم يتم سداد أي مبلغ لهذا الحجز، لذلك لن ينتج عن الإلغاء استرداد مالي.'
-          : 'No payment was collected for this booking, so no refund is due.';
+          ? 'لا يوجد مبلغ مسترد مستحق وفق بيانات الدفع المسجلة لهذا الحجز.'
+          : 'No refund is due according to the recorded payment details.';
     }
     if (!amountConfirmed) {
       return l10n.localeName == 'ar'
@@ -156,8 +156,8 @@ class RefundInfo {
   }
 
   String refundSuccessText() {
-    if (hasNoPaidAmount) {
-      return 'تم إلغاء الحجز. لم يتم تحصيل مبلغ، لذلك لا يوجد استرداد مستحق.';
+    if (hasNoPaidAmount || (amountConfirmed && refundAmount <= 0)) {
+      return 'تم إلغاء الحجز. لا يوجد مبلغ مسترد مستحق وفق بيانات الدفع المسجلة.';
     }
     if (!amountConfirmed) {
       return 'تم إلغاء الحجز. سيتم تأكيد مبلغ الاسترداد من الخادم بعد معالجة الطلب.';
@@ -177,10 +177,10 @@ class RefundInfo {
   }
 
   String localizedSuccessText(AppLocalizations l10n) {
-    if (hasNoPaidAmount) {
+    if (hasNoPaidAmount || (amountConfirmed && refundAmount <= 0)) {
       return l10n.localeName == 'ar'
-          ? 'تم إلغاء الحجز. لم يتم تحصيل مبلغ، لذلك لا يوجد استرداد مستحق.'
-          : 'Booking cancelled. No payment was collected, so no refund is due.';
+          ? 'تم إلغاء الحجز. لا يوجد مبلغ مسترد مستحق وفق بيانات الدفع المسجلة.'
+          : 'Booking cancelled. No refund is due according to the recorded payment details.';
     }
     if (!amountConfirmed) {
       return l10n.localeName == 'ar'
