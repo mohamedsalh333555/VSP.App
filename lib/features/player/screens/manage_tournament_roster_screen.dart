@@ -34,6 +34,7 @@ class ManageTournamentRosterScreen extends StatefulWidget {
 class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _hasLoadError = false;
 
   List<String> _selectedPlayerIds = [];
   List<String> _guestNames = [];
@@ -65,7 +66,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
   }
 
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() { _isLoading = true; _hasLoadError = false; });
     try {
       final roster = await TournamentRepository().getSingleTeamRoster(
         widget.championship.id,
@@ -92,11 +93,12 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
             _guestNames = loadedGuests;
           }
           _isLoading = false;
+          _hasLoadError = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading tournament roster data: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoading = false; _hasLoadError = true; });
     }
   }
 
@@ -173,6 +175,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
     }
 
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
+    if (!mounted) return;
     if (parsedNames.isEmpty) {
       if (mounted) {
         VSPFeedback.showError(
@@ -264,7 +267,13 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
         );
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'Error: $e');
+      debugPrint('Failed to save tournament roster: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isAr ? 'تعذر حفظ التشكيلة. حاول مرة أخرى.' : 'Could not save the roster. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -288,7 +297,32 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : SingleChildScrollView(
+          : _hasLoadError
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(VSPSpacing.lg),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 32),
+                        const SizedBox(height: VSPSpacing.md),
+                        Text(
+                          isAr
+                              ? 'تعذر تحميل بيانات التشكيلة. لم نغيّر أي بيانات محفوظة.'
+                              : 'Could not load roster data. No saved data has been changed.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: VSPSpacing.md),
+                        TextButton(
+                          onPressed: _loadData,
+                          child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : SingleChildScrollView(
               padding: const EdgeInsets.all(VSPSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,7 +391,9 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
           child: PrimaryButton(
             text: isAr ? 'حفظ وتأكيد تشكيلة البطولة ' : 'Save & Confirm Roster ',
             isLoading: _isSaving,
-            onPressed: (_isSaving || !_canEdit || _isLoading) ? () {} : () => _handleSaveRoster(isAr),
+            onPressed: (_isSaving || !_canEdit || _isLoading || _hasLoadError)
+                ? null
+                : () => _handleSaveRoster(isAr),
           ),
         ),
       ),
