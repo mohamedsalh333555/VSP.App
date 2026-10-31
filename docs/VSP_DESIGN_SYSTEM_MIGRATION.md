@@ -42,7 +42,7 @@ This is a shared-foundation migration, not a completed screen audit.
 - UXLP-44 standard: written.
 - Initial candidate screen register: 128 Dart paths; the current register contains 139 unique Dart screen/surface paths.
 - Shared component audit: initial pass and the changes above applied.
-- A recorded static source scan covers 128 candidate paths. The current register now contains 137 unique Dart screen/surface paths; therefore 11 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 137 paths before calling this gate complete.
+- A recorded static source scan covers 128 candidate paths. The current register now contains 139 unique Dart screen/surface paths; therefore 11 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 139 paths before calling this gate complete.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
 - Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
@@ -236,4 +236,4 @@ The canonical shared bottom navigation now uses focusable InkWell interaction wh
 - Fixed the analyzer findings reported by PR CI run 41221229970 in the payout dialog, add-player invitation sheet, stadium filter sheet, challenge team-selection retry guard, auth provider, and date-picker semantics.
 - PR CI run 41222072722 then reported only one remaining informational const-constructor lint in the add-player sheet. The style was corrected in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`; this commit has not been analyzer-verified.
 - Removed a hardcoded Pro monthly amount from the owner dashboard teaser so it cannot diverge from the current public subscription-plan catalog.
-- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 137-path screen/state rule audit and device/runtime review remain incomplete.
+- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 139-path screen/state rule audit and device/runtime review remain incomplete.
