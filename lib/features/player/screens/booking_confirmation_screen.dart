@@ -47,6 +47,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isLoading = false;
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
+  String? _activeUserTeamScope;
+  bool _hasObservedUserTeamScope = false;
+  int _userTeamRequestGeneration = 0;
   final int _currentPlayers = 1;
   int _initialPlayersCount = 1;
   String? _userTeamId;
@@ -90,9 +93,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
   }
 
-  Future<void> _fetchUserTeam() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.currentUser?.id;
+  Future<void> _fetchUserTeam() {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    return _fetchUserTeamFor(userId);
+  }
+
+  Future<void> _fetchUserTeamFor(String? userId) async {
+    final generation = ++_userTeamRequestGeneration;
     if (userId == null) {
       if (mounted) {
         setState(() {
@@ -113,7 +120,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
     try {
       final team = await TeamRepository().getUserTeamStrict(userId);
-      if (mounted && Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == userId) {
         setState(() {
           _userTeamId = team?.id;
           _userTeamName = team?.name;
@@ -123,7 +132,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       }
     } catch (e) {
       debugPrint('Error loading booking team context: $e');
-      if (mounted && Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
+      if (mounted &&
+          generation == _userTeamRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == userId) {
         setState(() {
           _userTeamId = null;
           _userTeamName = null;
@@ -132,31 +143,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         });
       }
     }
-  }
-
-  void _generateDynamicTimeSlots() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    setState(() {
-      _timeSlots = BookingSlotCalculator.generateDynamicTimeSlots(
-        stadium: widget.stadium,
-        isArabic: isArabic,
-      );
-    });
-  }
-
-  void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
-    setState(() {
-      final updated = BookingSlotCalculator.calculateNewSelectedSlots(
-        slotKey: slotKey,
-        currentSelectedSlots: _selectedTimeSlots,
-        timeSlots: _timeSlots,
-        stadium: widget.stadium,
-        selectedDate: _selectedDate,
-        existingBookings: existingBookings,
-      );
-      _selectedTimeSlots.clear();
-      _selectedTimeSlots.addAll(updated);
-    });
   }
 
   Future<void> _handleBookingConfirmation() async {
