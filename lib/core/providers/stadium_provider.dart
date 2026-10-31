@@ -70,6 +70,23 @@ class StadiumProvider with ChangeNotifier {
 
  // Fetch stadiums with pagination
  Future<void> fetchStadiums({bool isRefresh = false}) async {
+ // Discovery belongs to the player scope. Never reuse a previous owner's
+ // private stadium snapshot when the app switches back to player discovery.
+ if (_listeningOwnerId != null) {
+   _listeningOwnerId = null;
+   _stadiumSubscription?.cancel();
+   _stadiumSubscription = null;
+   _stadiums = [];
+   _filteredStadiums = [];
+   _isFilterActive = false;
+   _currentFilters = null;
+   _errorMessage = null;
+   _isLoading = false;
+   _isLoadingMore = false;
+   _lastDocument = null;
+   _hasMore = true;
+   isRefresh = true;
+ }
  if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
  if (isRefresh) {
@@ -180,12 +197,24 @@ class StadiumProvider with ChangeNotifier {
 
   // Listen specifically to owner's stadiums
   void listenToOwnerStadiums(String ownerId, {bool forceRefresh = false}) {
-    if (!forceRefresh && _listeningOwnerId == ownerId && _stadiumSubscription != null && _stadiums.isNotEmpty) {
+    final scopeChanged = _listeningOwnerId != ownerId;
+    if (!forceRefresh && !scopeChanged && _stadiumSubscription != null && _stadiums.isNotEmpty) {
       return;
     }
+
+    if (scopeChanged) {
+      // A different owner must never see the previous owner's stadium cache.
+      _stadiums = [];
+      _filteredStadiums = [];
+      _isFilterActive = false;
+      _currentFilters = null;
+      _isLoading = false;
+      _isLoadingMore = false;
+    }
+
     _listeningOwnerId = ownerId;
     _stadiumSubscription?.cancel();
-    
+
     _setError(null);
     _setLoading(true);
 
