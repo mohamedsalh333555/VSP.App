@@ -59,6 +59,7 @@
 - Rule 36: notification stream errors are no longer swallowed by the repository; the screen displays a localized error state with retry. Championship deep links now distinguish loading, error, and unavailable results.
 - Rule 10: the championship route's loading/error/unavailable copy is localized in Arabic and English.
 - Rule 41: source/database inspection established that opening a notification marks it read; it does not delete it. Swipe-to-dismiss is the explicit client deletion action. Historical disappearance is not yet explained.
+- Rule 38/39: the notifications screen now watches the active Supabase user ID and recreates its stream when the account changes, preventing a retained screen from continuing to display the previous account's notification feed.
 - Rule 36/41: notification deletion and Undo now report repository success/failure to the screen. A failed delete reloads the stream and displays an error instead of claiming deletion; a failed restore displays an error. Undo recreates the notification payload with its original `created_at` timestamp (the database generates a new row ID); no retention or schema policy changed.
 - Rule 42: V2 shared tokens/components remain the canonical foundation; the screen register is still an inventory/source-review aid, not a pass report.
 
