@@ -416,3 +416,4 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 ## Additional small lifecycle fix — support ticket sheet
 - `SupportTicketsScreen._newTicket()` now captures the submitted subject and disposes its locally-created `TextEditingController` after the bottom sheet closes, including dismissal without submission. The captured subject is passed to the ticket details route, so navigation does not read a disposed controller.
 - Source-level change only; no tests, analyzer, CI, or APK build were run. Runtime validation remains part of the single final pass.
+- Follow-up review caught and removed a duplicate `subjectController.dispose()` left at the end of the support-sheet method; the controller is now disposed exactly once after the sheet returns. No runtime checks were run.
