@@ -352,7 +352,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 20),
               label: Text(
                 isArabic ? 'إرسال دعوة عبر واتساب' : 'Send WhatsApp invitation',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
           ),
