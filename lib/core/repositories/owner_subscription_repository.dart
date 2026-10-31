@@ -6,6 +6,18 @@ class OwnerSubscriptionRepository {
   OwnerSubscriptionRepository({SupabaseClient? client})
       : _supabase = client ?? Supabase.instance.client;
 
+  Future<List<Map<String, dynamic>>> fetchPublicPlans() async {
+    final response = await _supabase
+        .from('public_subscription_plans')
+        .select(
+          'code,name_ar,name_en,description_ar,description_en,monthly_price,yearly_price,trial_days,max_stadiums,features,display_order',
+        )
+        .order('display_order');
+    return (response as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList(growable: false);
+  }
+
   Future<Map<String, dynamic>> startProTrial() async {
     final result = await _supabase.rpc('start_owner_trial');
     return Map<String, dynamic>.from(result as Map);
