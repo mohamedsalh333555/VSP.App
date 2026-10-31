@@ -3,12 +3,18 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 
 /// قسم جدول الترتيب الحي للبطولة (يدعم نظام الدوري ونظام المجموعات)
 class ChampionshipStandingsSection extends StatelessWidget {
   final Championship championship;
+  final VoidCallback onRetry;
 
-  const ChampionshipStandingsSection({super.key, required this.championship});
+  const ChampionshipStandingsSection({
+    super.key,
+    required this.championship,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +66,15 @@ class ChampionshipStandingsSection extends StatelessWidget {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: TournamentRepository().getChampionshipStandings(championshipId, groupName: groupName),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPErrorState(
+            customMessage: isArabic
+                ? 'تعذر تحميل جدول الترتيب. حاول مرة أخرى.'
+                : 'Could not load standings. Try again.',
+            onRetry: onRetry,
+            retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
             child: Padding(
