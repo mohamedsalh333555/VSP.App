@@ -48,12 +48,29 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
   bool _isContinuing = false;
+  String? _activeUserId;
+  bool _hasObservedUserId = false;
+  int _teamRequestGeneration = 0;
   final Map<String, bool> _championStatusMap = {};
 
   @override
   void initState() {
     super.initState();
-    _loadUserTeam();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final userId = context.watch<app_auth.AuthProvider>().currentUser?.id;
+    if (!_hasObservedUserId || userId != _activeUserId) {
+      _hasObservedUserId = true;
+      _activeUserId = userId;
+      final generation = ++_teamRequestGeneration;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _teamRequestGeneration) return;
+        _loadUserTeam(expectedUserId: userId, requestGeneration: generation);
+      });
+    }
   }
 
   @override
@@ -62,9 +79,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     super.dispose();
   }
 
-  Future<void> _loadUserTeam() async {
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.id;
+  Future<void> _loadUserTeam({
+    String? expectedUserId,
+    int? requestGeneration,
+  }) async {
+    final generation = requestGeneration ?? ++_teamRequestGeneration;
+    final uid = expectedUserId ?? context.read<app_auth.AuthProvider>().currentUser?.id;
     if (mounted) {
       setState(() {
         _isLoadingUserTeam = true;
@@ -72,7 +92,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       });
     }
     if (uid == null) {
-      if (mounted) {
+      if (mounted && generation == _teamRequestGeneration) {
         setState(() {
           _userTeam = null;
           _isLoadingUserTeam = false;
@@ -83,7 +103,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     }
     try {
       final team = await TeamRepository().getUserTeamStrict(uid);
-      if (!mounted || context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      if (!mounted ||
+          generation != _teamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
       setState(() {
         _userTeam = team;
         _isLoadingUserTeam = false;
@@ -91,7 +113,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       });
     } catch (e) {
       debugPrint('Failed to verify challenge captain team: $e');
-      if (!mounted || context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      if (!mounted ||
+          generation != _teamRequestGeneration ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
       setState(() {
         _userTeam = null;
         _isLoadingUserTeam = false;
