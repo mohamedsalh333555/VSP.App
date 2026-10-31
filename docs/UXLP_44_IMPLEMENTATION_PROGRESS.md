@@ -392,3 +392,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Team member chips previously rendered the full player name in an unconstrained `Text` inside a compact `Row`. Long names could consume the remove-action space or overflow the chip.
 - The name now has a bounded width, one-line ellipsis, and a localized fallback for blank names. The remove action remains separately tappable.
 - Source correction only; narrow-device and large-text rendering remain pending the consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
+
+
+## Public match card lifecycle state correction — 2026-10-31
+
+- The card previously prioritized the host badge over cancelled/ended status, so a host could see “My Match” instead of the actual terminal state.
+- Tapping an ended/cancelled open-join card also opened the active collective-invite sheet even though its action button was disabled. Terminal-state taps now open booking details; cancelled/ended badges take precedence for hosts and players alike.
+- Source-level state correction; tap-through and lifecycle regression checks remain pending the one consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
