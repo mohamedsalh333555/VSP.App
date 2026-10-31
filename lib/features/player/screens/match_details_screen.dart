@@ -106,7 +106,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
- final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.uid);
+ final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.id);
  
  if (mounted) {
  setState(() {
@@ -153,7 +153,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Future<void> _openOwnerChat() async {
    final booking = _booking;
    final auth = Provider.of<AuthProvider>(context, listen: false);
-   final currentUserId = auth.currentUser?.uid;
+   final currentUserId = auth.currentUser?.id;
    final ownerId = booking?.ownerId;
    if (booking == null || currentUserId == null || ownerId == null || ownerId.isEmpty) {
      VSPFeedback.showError(
