@@ -303,3 +303,12 @@ The following additional changes were committed to the working branch. They are 
   - Support escalation now reports when the WhatsApp support channel is unavailable or cannot be opened rather than silently swallowing the failure.
 
 All 44 UXLP rule statuses remain **source reviewed—runtime pending**. No CI, analyzer, automated tests, runtime tests, database migrations, or APK builds were run.
+
+
+## Phase 2 implementation continuation — notification actions and owner scope
+
+- **Rules 28, 36, 41, 43 — notification persistence and feedback:** notification read-state repository methods now return explicit success/failure. Mark-all and mark-one failures are surfaced with localized feedback; opening a notification does not invoke deletion, and a failed read-state update explicitly tells the user the notification remains in the list. The challenge action waits for the read-state operation before navigating.
+- **Rules 38, 39, 40 — owner account isolation:** owner dashboard requests and realtime subscriptions now rebind to the authenticated owner scope. Finance, analytics, championships, approval notices, selected filters and metric cache are cleared when the owner scope changes; delayed responses from an earlier owner are ignored.
+- **Rules 27, 33 — accessible controls:** add-player search now has a localized semantic label, tooltip and focusable InkWell target.
+
+**Important boundary:** these client changes improve persistence visibility and error feedback. They do not prove the root cause of the previously reported notification disappearance has been eliminated; that requires evidence from the actual database/realtime session, which is not being run in this implementation phase.
