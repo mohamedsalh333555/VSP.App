@@ -17,7 +17,7 @@ class League1v1NoGovernorateState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(VSPDSSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

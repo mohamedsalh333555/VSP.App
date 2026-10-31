@@ -22,8 +22,11 @@ class ChampionEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.lg, vertical: VSPDSSpacing.xl),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: VSPDSSpacing.lg,
+          vertical: VSPDSSpacing.xl,
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
