@@ -124,7 +124,6 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                                         ? 'تعذر حذف الحساب. حاول مرة أخرى.'
                                         : 'Could not delete the account. Please try again.',
                                   );
-                                  Navigator.pop(dialogCtx);
                                 }
                               } catch (e) {
                                 if (!dialogCtx.mounted) return;
