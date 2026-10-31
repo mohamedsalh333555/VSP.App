@@ -195,7 +195,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                           color: VSPColors.accentSoft,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team fee paid',
                           style: TextStyle(color: VSPColors.accent, fontSize: 10.5, fontWeight: FontWeight.bold),
                         ),
