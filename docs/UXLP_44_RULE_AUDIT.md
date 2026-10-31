@@ -194,3 +194,4 @@
 - Team dashboard now uses the strict active-league lookup for its initial tab decision; if that lookup fails, it opens the league tab so the tab's localized retry state is visible instead of silently implying there is no active league.
 - Team profile now distinguishes a genuinely empty member-ID list from a non-empty membership list whose public profile query returns no rows; the latter shows roster-unavailable/retry instead of the false “no players” empty state.
 - StadiumProvider.dispose now invalidates both scope and discovery request generations and clears the owner scope before canceling the stream, so late in-flight fetch/Realtime callbacks cannot notify or mutate a disposed provider.
+- Booking confirmation team context now watches AuthProvider and invalidates in-flight/post-frame lookups on account changes, so a team ID from the previous signed-in user cannot be attached to a new user's booking draft.
