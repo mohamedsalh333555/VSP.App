@@ -407,23 +407,47 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
             child: Column(
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(widget.match.homeTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text(
-                      'سجل: ${_formatResultText(widget.match.homeSubmission)}',
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        widget.match.homeTeamName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'سجل: ${_formatResultText(widget.match.homeSubmission)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
                 const Divider(color: VSPColors.divider, height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(widget.match.awayTeamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text(
-                      'سجل: ${_formatResultText(widget.match.awaySubmission)}',
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Text(
+                        widget.match.awayTeamName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'سجل: ${_formatResultText(widget.match.awaySubmission)}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ],
                 ),
@@ -490,12 +514,16 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
               size: 20,
             ),
             const SizedBox(width: 10),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.white : VSPColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : VSPColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 14,
+                ),
               ),
             ),
           ],
