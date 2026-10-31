@@ -20,6 +20,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final standings = league.standings;
     final isCompleted = league.status == 'completed';
     final topTeam = standings.isNotEmpty ? standings.first : null;
@@ -47,8 +48,8 @@ class TeamLeagueDetailsView extends StatelessWidget {
               children: [
                 const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 36),
                 const SizedBox(height: 8),
-                const Text(
-                  'انتهى الدوري — المتصدر',
+                Text(
+                  isArabic ? 'انتهى الدوري — المتصدر' : 'League champion',
                   style: TextStyle(
                     color: VSPColors.medalGold,
                     fontWeight: FontWeight.bold,
@@ -67,7 +68,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'المركز الأول برصيد ${topTeam.points} نقاط',
+                  isArabic ? 'المركز الأول برصيد ${topTeam.points} نقاط' : '1st place with ${topTeam.points} points',
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                 ),
               ],
@@ -93,6 +94,8 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     league.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const Spacer(),
@@ -102,22 +105,22 @@ class TeamLeagueDetailsView extends StatelessWidget {
                       color: VSPColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text('خاص', style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
+                    child: Text(isArabic ? 'خاص' : 'PRIVATE', style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildInfoRow('نظام الدوري', 'دوري — دور واحد'),
-              _buildInfoRow('المحافظة', league.governorate ?? 'القاهرة'),
-              _buildInfoRow('عدد الفرق', '${league.joinedTeamsCount} / ${league.maxTeams} فرق'),
-              _buildInfoRow('الفترة بين المباريات', 'كل ${league.matchIntervalDays} أيام'),
+              _buildInfoRow(isArabic ? 'نظام الدوري' : 'Format', isArabic ? 'دوري — دور واحد' : 'Single round-robin'),
+              _buildInfoRow(isArabic ? 'المحافظة' : 'Governorate', league.governorate ?? (isArabic ? 'القاهرة' : 'Cairo')),
+              _buildInfoRow(isArabic ? 'عدد الفرق' : 'Teams', '${league.joinedTeamsCount} / ${league.maxTeams}'),
+              _buildInfoRow(isArabic ? 'الفترة بين المباريات' : 'Match interval', isArabic ? 'كل ${league.matchIntervalDays} أيام' : 'Every ${league.matchIntervalDays} days'),
               _buildInfoRow(
-                'حالة الدوري',
+                isArabic ? 'حالة الدوري' : 'League status',
                 league.status == 'completed'
-                    ? 'انتهى الدوري'
+                    ? (isArabic ? 'انتهى الدوري' : 'Completed')
                     : league.status == 'ongoing'
-                        ? 'جاري المنافسات'
-                        : 'مرحلة تجميع الفرق',
+                        ? (isArabic ? 'جاري المنافسات' : 'Ongoing')
+                        : (isArabic ? 'مرحلة تجميع الفرق' : 'Gathering teams'),
               ),
             ],
           ),
@@ -140,7 +143,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'الفرق المشاركة (${league.teams.length})',
+                    isArabic ? 'الفرق المشاركة (${league.teams.length})' : 'Participating teams (${league.teams.length})',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
@@ -193,7 +196,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
-                          'رسوم مشاركة الفريق: مدفوعة',
+                          isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team fee paid',
                           style: TextStyle(color: VSPColors.accent, fontSize: 10.5, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -217,12 +220,12 @@ class TeamLeagueDetailsView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
                   SizedBox(width: 8),
                   Text(
-                    'جدول الدوري',
+                    isArabic ? 'جدول الدوري' : 'League standings',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -232,8 +235,8 @@ class TeamLeagueDetailsView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
-                'الفوز = 3 نقاط | التعادل = 1 نقطة | الخسارة = 0',
+              Text(
+                isArabic ? 'الفوز = 3 نقاط | التعادل = 1 نقطة | الخسارة = 0' : 'Win = 3 pts | Draw = 1 pt | Loss = 0',
                 style: TextStyle(color: VSPColors.textSecondary, fontSize: 11),
               ),
               const Divider(color: VSPColors.divider, height: 20),
@@ -245,7 +248,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     SizedBox(
                       width: 24,
@@ -259,34 +262,34 @@ class TeamLeagueDetailsView extends StatelessWidget {
                     Expanded(
                       flex: 4,
                       child: Text(
-                        'الفريق',
+                        isArabic ? 'الفريق' : 'Team',
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'لعب',
+                        isArabic ? 'لعب' : 'P',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'فاز',
+                        isArabic ? 'فاز' : 'W',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'تعادل',
+                        isArabic ? 'تعادل' : 'D',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
-                        'خسر',
+                        isArabic ? 'خسر' : 'L',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
@@ -294,7 +297,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: Text(
-                        'النقاط',
+                        isArabic ? 'النقاط' : 'Pts',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
@@ -310,7 +313,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'لا توجد مباريات مكتملة في جدول الترتيب حتى الآن',
+                      isArabic ? 'لا توجد مباريات مكتملة في جدول الترتيب حتى الآن' : 'No completed matches to show in the standings yet',
                       style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     ),
                   ),
