@@ -31,6 +31,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   List<MatchupStandingsItem> _standings = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _hasLoadError = false;
 
   // Form State for Recording Result
   String? _selectedTeamAId;
@@ -44,7 +45,10 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
   }
 
   Future<void> _loadMatchupData() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
     try {
       final teams = await _matchupRepo.getMatchupTeams(widget.bookingId);
       final results = await _matchupRepo.getMatchupResults(widget.bookingId);
@@ -55,6 +59,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
           _teams = teams;
           _results = results;
           _standings = standings;
+          _hasLoadError = false;
           if (_teams.length >= 2) {
             _selectedTeamAId ??= _teams[0].teamId;
             _selectedTeamBId ??= _teams[1].teamId;
@@ -65,7 +70,10 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     } catch (e) {
       debugPrint('Error loading matchup data: $e');
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _hasLoadError = true;
+        });
       }
     }
   }
@@ -183,6 +191,43 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       return const VSPScaffold(
         backgroundColor: VSPColors.background,
         body: SafeArea(top: false, bottom: true, child: Center(child: CircularProgressIndicator(color: VSPColors.accent))),
+      );
+    }
+
+    if (_hasLoadError) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          elevation: 0,
+          leading: const VSPBackButton(),
+          title: Text(isArabic ? 'لوحة المواجهات الحية' : 'Live Matchup Dashboard'),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 42),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic ? 'تعذر تحميل بيانات المواجهة.' : 'Could not load matchup data.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  PrimaryButton(
+                    text: isArabic ? 'إعادة المحاولة' : 'Retry',
+                    onPressed: _loadMatchupData,
+                    height: 48,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       );
     }
 
