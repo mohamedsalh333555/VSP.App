@@ -6,6 +6,7 @@ import '../../../../core/repositories/owner_repository.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/app_error_handler.dart';
 import '../../screens/owner_account_management_screen.dart';
 
 /// Modal dialogs for requesting digital balance payouts and settlements.
@@ -126,10 +127,14 @@ class OwnerPayoutDialog {
                     : 'Payout settlement request of ${amount.toStringAsFixed(0)} EGP submitted successfully.',
               );
             } else {
-              VSPFeedback.showError(
-                context,
-                res['error']?.toString() ?? (isAr ? 'فشل إرسال طلب التسوية' : 'Failed to submit request'),
-              );
+              final error = res['error']?.toString() ?? 'payout_request_failed';
+              VSPLogger.w('Owner payout request rejected: $error');
+              final message = error.toLowerCase().contains('not authenticated')
+                  ? (isAr
+                      ? 'انتهت الجلسة. سجّل الدخول مرة أخرى ثم حاول.'
+                      : 'Your session has expired. Sign in again and retry.')
+                  : AppErrorHandler.formatError(error, isArabic: isAr);
+              VSPFeedback.showError(context, message);
             }
           }
         },
