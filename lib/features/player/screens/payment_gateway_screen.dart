@@ -185,18 +185,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         _initBookingRealtimeListener(booking.id);
       } else if (!widget.isTournamentPayment) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        final errorMsg = bookingProvider.errorMessage ??
-            (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
-        VSPFeedback.showError(context, errorMsg);
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر تأكيد الحجز من الخادم. ارجع وحاول مرة أخرى.'
+              : 'The server could not confirm the booking. Go back and retry.',
+        );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted && !_hasAccountChanged &&
           Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        debugPrint('Payment gateway booking initialization failed: $e');
         VSPFeedback.showError(
           context,
-          isArabic ? 'تعذر بدء عملية الحجز: $e' : 'Failed to initialize booking: $e',
+          isArabic
+              ? 'تعذر بدء عملية الحجز. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'Could not start booking checkout. Check your connection and retry.',
         );
         Navigator.pop(context);
       }
