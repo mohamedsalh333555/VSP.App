@@ -45,7 +45,12 @@ class VSPRefundTrackingSheet extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(VSPDSSpacing.lg, VSPDSSpacing.sm, VSPDSSpacing.lg, VSPDSSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+        VSPDSSpacing.lg,
+        VSPDSSpacing.sm,
+        VSPDSSpacing.lg,
+        VSPDSSpacing.lg + MediaQuery.paddingOf(context).bottom,
+      ),
       decoration: const BoxDecoration(color: VSPDSSemanticColors.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(VSPDSRadius.bottomSheet))),
       child: ConstrainedBox(
         constraints: BoxConstraints(
