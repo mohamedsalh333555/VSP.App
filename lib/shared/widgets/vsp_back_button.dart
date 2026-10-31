@@ -62,23 +62,25 @@ class _VSPBackButtonState extends State<VSPBackButton>
       child: Semantics(
         button: true,
         label: isRtl ? 'رجوع' : 'Back',
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => _controller.reverse(),
-          onTapUp: (_) => _controller.forward(),
-          onTapCancel: () => _controller.forward(),
-          onTap: () {
-            HapticFeedback.lightImpact();
-            if (widget.onTap != null) {
-              widget.onTap!();
-            } else {
-              Navigator.maybePop(context);
-            }
-          },
-          child: Center(
-            child: ScaleTransition(
-              scale: _scale,
-              child: Container(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTapDown: (_) => _controller.reverse(),
+            onTapUp: (_) => _controller.forward(),
+            onTapCancel: () => _controller.forward(),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              if (widget.onTap != null) {
+                widget.onTap!();
+              } else {
+                Navigator.maybePop(context);
+              }
+            },
+            child: Center(
+              child: ScaleTransition(
+                scale: _scale,
+                child: Container(
                 width: widget.size,
                 height: widget.size,
                 decoration: BoxDecoration(
@@ -104,6 +106,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
                     color: widget.iconColor ?? VSPDSSemanticColors.textPrimary,
                     size: (widget.size * 0.46).clamp(14.0, 18.0),
                   ),
+                ),
                 ),
               ),
             ),
