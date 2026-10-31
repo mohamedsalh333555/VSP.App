@@ -639,3 +639,5 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The matchup result-entry card, standings table, results timeline, and outcome/validation service now use the active Arabic/English locale, including empty states and fallback team names.
 - The standings statistics and timeline team/outcome labels are width-bounded to avoid narrow-card overflow. Timeline results are reversed once per build rather than rebuilding the reversed list for every row.
 - Matchup scoring values remain unchanged (win = 3, draw = 1, loss = 0); this is presentation and rendering only. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+- Follow-up in the owner tournament dashboard: kickoff preparation, draw generation, competition activation, and related lifecycle failures now pass through the shared localized error handler instead of displaying raw exception text. Tournament state transitions are unchanged.
+- Penalty shootout team labels now localize the “pens” suffix and fallback team names.
