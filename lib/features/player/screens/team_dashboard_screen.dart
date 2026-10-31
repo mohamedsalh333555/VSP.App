@@ -34,13 +34,19 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   bool _hasObservedUserTeamScope = false;
   int _userTeamRequestGeneration = 0;
   final ScrollController _scrollController = ScrollController();
-  late final Stream<List<Booking>> _matchesStream;
+  late Stream<List<Booking>> _matchesStream;
   int _selectedMainTab = 0; // 0 = تجميع افتراضياً، 1 = دوري
 
   @override
   void initState() {
     super.initState();
     _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
+  }
+
+  void _refreshMatches() {
+    setState(() {
+      _matchesStream = MatchRepository().getPublicMatches().asBroadcastStream();
+    });
   }
 
   @override
@@ -201,56 +207,64 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                     children: [
                       // Tab 0: تجميع
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 0);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'تجميع' : 'Gathering';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 0 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedMainTab == 0,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(VSPRadius.full),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedMainTab = 0);
+                            },
+                            child: Center(
+                              child: Builder(
+                                builder: (context) {
+                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                  final label = isArabic ? 'تجميع' : 'Gathering';
+                                  return Text(
+                                    label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          color: _selectedMainTab == 0 ? Colors.black : Colors.white,
+                                          fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
                       ),
                       // Tab 1: دوري
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedMainTab = 1);
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'دوري' : 'League';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedMainTab == 1 ? Colors.black : Colors.white,
-                                        fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                );
-                              },
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedMainTab == 1,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(VSPRadius.full),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedMainTab = 1);
+                            },
+                            child: Center(
+                              child: Builder(
+                                builder: (context) {
+                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                  final label = isArabic ? 'دوري' : 'League';
+                                  return Text(
+                                    label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                          color: _selectedMainTab == 1 ? Colors.black : Colors.white,
+                                          fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         ),
@@ -286,26 +300,30 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     return StreamBuilder<List<Booking>>(
       stream: _matchesStream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          return VSPStateView(
-            state: VSPUiState.error,
-            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
-            message: isArabic
-                ? 'راجع الاتصال وحاول مرة تانية.'
-                : 'Check your connection and try again.',
-          );
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: VSPSpacing.md,
+            ),
             itemCount: 5,
             itemBuilder: (context, index) => const CardSkeleton(),
           );
         }
 
         final bookings = snapshot.data ?? [];
+        if (snapshot.hasError && bookings.isEmpty) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
+            message: isArabic
+                ? 'راجع الاتصال وحاول مرة تانية.'
+                : 'Check your connection and try again.',
+            onRetry: _refreshMatches,
+          );
+        }
 
         if (bookings.isEmpty) {
           return Center(
@@ -323,17 +341,26 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: () {
-                    playerHomeScreenKey.currentState?.switchToTab(0);
-                  },
-                  child: Text(
-                    AppLocalizations.of(context)!.hostOne,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.accent,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                      decorationColor: VSPColors.accent,
+                Semantics(
+                  button: true,
+                  child: InkWell(
+                    onTap: () {
+                      playerHomeScreenKey.currentState?.switchToTab(0);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.md,
+                        vertical: VSPSpacing.sm,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.hostOne,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.accent,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          decorationColor: VSPColors.accent,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -342,21 +369,71 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           );
         }
 
-        return ListView.builder(
-          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
-          itemCount: bookings.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-              child: PublicMatchCard(
-                booking: bookings[index],
-                highlighted:
-                    _userTeam != null &&
-                    bookings[index].bookingType == BookingType.team &&
-                    bookings[index].playerTeamId != null,
+        return Column(
+          children: [
+            if (snapshot.hasError)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(
+                    color: VSPColors.warning.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Iconsax.warning_2_copy,
+                      color: VSPColors.warning,
+                      size: 17,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'تعذر تحديث المباريات. نعرض آخر بيانات تم تحميلها.'
+                            : 'Could not refresh matches. Showing the last loaded list.',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _refreshMatches,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+            Expanded(
+              child: ListView.builder(
+                padding: VSPScrollPadding.forList(
+                  context,
+                  hasFloatingNavBar: true,
+                  top: VSPSpacing.md,
+                ),
+                itemCount: bookings.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                    child: PublicMatchCard(
+                      booking: bookings[index],
+                      highlighted: _userTeam != null &&
+                          bookings[index].bookingType == BookingType.team &&
+                          bookings[index].playerTeamId != null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
