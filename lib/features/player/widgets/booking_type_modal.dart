@@ -5,6 +5,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../screens/booking_confirmation_screen.dart';
 import '../screens/challenge_select_team_screen.dart';
@@ -43,22 +44,29 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       final uid = authProvider.currentUser?.id;
 
       if (typeId == 'Challenge Match') {
-        if (uid != null) {
-          final team = await TeamRepository().getUserTeam(uid);
-          if (team == null) {
-            if (!mounted) return;
-            final created = await showModalBottomSheet<bool>(
-              context: context,
-              isScrollControlled: true,
-              useSafeArea: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => const CreateTeamSheet(),
-            );
-            if (!mounted) return;
-            if (created != true) {
-              setState(() => _isLoading = false);
-              return;
-            }
+        if (uid == null) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'سجّل الدخول أولاً لاختيار فريقك.' : 'Sign in first to select your team.',
+          );
+          return;
+        }
+        // A failed membership query must not be mistaken for "no team".
+        final team = await TeamRepository().getUserTeamStrict(uid);
+        if (!mounted) return;
+        if (team == null) {
+          final created = await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const CreateTeamSheet(),
+          );
+          if (!mounted) return;
+          if (created != true) {
+            setState(() => _isLoading = false);
+            return;
           }
         }
       }
@@ -106,6 +114,17 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
           MaterialPageRoute(
             builder: (_) => BookingConfirmationScreen(stadium: widget.stadium, bookingType: typeString),
           ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to prepare booking type: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر التحقق من بيانات الفريق أو تجهيز الحجز. حاول مرة أخرى.'
+              : 'Could not verify team details or prepare the booking. Please retry.',
         );
       }
     } finally {
