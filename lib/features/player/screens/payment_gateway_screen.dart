@@ -105,7 +105,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (mounted) setState(() => _remainingSeconds = remaining);
       },
       onExpired: () async {
-        if (!_paymentCompleted && _booking != null && mounted) {
+        if (!_paymentCompleted && _booking != null && mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.id;
           if (widget.isTournamentPayment) {
@@ -124,7 +125,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               stadiumId: widget.bookingDraft.stadiumId,
             );
           }
-          if (mounted) {
+          if (mounted && !_hasAccountChanged &&
+              Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             VSPFeedback.showError(
               context,
@@ -331,7 +333,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         );
 
-        if (mounted && (isPaidSuccess == true)) {
+        if (mounted && !_hasAccountChanged &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId &&
+            (isPaidSuccess == true)) {
           if (widget.isTournamentPayment) {
             final orderReference = widget.existingBookingId;
             if (orderReference == null || orderReference.isEmpty) {
@@ -500,15 +504,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   void _closeVerificationModalIfShowing() {
-    if (_isVerificationModalShowing) {
-      _isVerificationModalShowing = false;
-      if (_verificationModalContext != null && _verificationModalContext!.mounted) {
-        Navigator.of(_verificationModalContext!).pop();
-        _verificationModalContext = null;
-      } else if (mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
+    if (!_isVerificationModalShowing) return;
+    _isVerificationModalShowing = false;
+    if (_verificationModalContext != null && _verificationModalContext!.mounted) {
+      Navigator.of(_verificationModalContext!).pop();
     }
+    _verificationModalContext = null;
   }
 
   AppBar _buildAppBar(BuildContext context, AppLocalizations l10n, bool isArabic, bool isChampionship) {
