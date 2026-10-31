@@ -254,20 +254,29 @@ class StadiumRepository {
           .where((s) => s.isNotEmpty && s != 'All')
           .toList();
       if (normalizedSports.isNotEmpty) {
-        query = query.inFilter('type', normalizedSports);
+        final sportExpressions = normalizedSports.map((sport) {
+          final safeSport = sport.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+          return 'description.ilike.%|Sport:$safeSport%,notes.ilike.%|Sport:$safeSport%';
+        }).join(',');
+        query = query.or(sportExpressions);
       } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
-        query = query.or('type.ilike.%$sportType%,description.ilike.%|Sport:$sportType%');
+        final safeSport = sportType.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
+        query = query.or(
+          'description.ilike.%|Sport:$safeSport%,notes.ilike.%|Sport:$safeSport%',
+        );
       }
 
       // 3. Pitch Size Filter
       final normalizedSizes = (pitchSizes ?? const <String>[])
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
+          .map((value) => int.tryParse(RegExp(r'\d+').firstMatch(value)?.group(0) ?? ''))
+          .whereType<int>()
+          .toSet()
           .toList();
       if (normalizedSizes.isNotEmpty) {
-        query = query.inFilter('size', normalizedSizes);
-      } else if (pitchSize != null && pitchSize.isNotEmpty) {
-        query = query.eq('size', pitchSize);
+        query = query.inFilter('players_per_team', normalizedSizes);
+      } else if (pitchSize != null && pitchSize.isNotEmpty && pitchSize != 'All') {
+        final playerCount = int.tryParse(RegExp(r'\d+').firstMatch(pitchSize)?.group(0) ?? '');
+        if (playerCount != null) query = query.eq('players_per_team', playerCount);
       }
 
       // 3b. Floor type and text search are applied before pagination.
