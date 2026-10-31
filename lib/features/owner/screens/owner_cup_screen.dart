@@ -130,7 +130,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             child: StreamBuilder<List<Championship>>(
               stream: _getChampionshipsStream(
                 _selectedSport,
-                Provider.of<AuthProvider>(context, listen: false).currentUser?.uid,
+                Provider.of<AuthProvider>(context, listen: false).currentUser?.id,
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
