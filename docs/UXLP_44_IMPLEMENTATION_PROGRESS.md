@@ -173,3 +173,10 @@ Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or AP
 - Realtime user-profile callbacks verify both the active auth identity and incoming profile UID before mutating AuthProvider state.
 
 No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+
+## Shared animated button cooldown correction
+
+- VSPAnimatedButton now schedules cooldown release from finally, so a synchronous callback exception cannot leave its AbsorbPointer active indefinitely.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.

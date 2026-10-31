@@ -389,3 +389,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Authentication retry/realtime account isolation — 2026-10-31
 
 - **Rules 38, 39, 41 — auth profile ownership:** profile retry responses now carry a request generation and are discarded if the authenticated account changes before completion. Returned profile UID must match the requested Supabase user ID. Realtime profile callbacks also verify the active auth ID and payload UID before updating the shared user model.
+
+
+### Shared action cooldown reliability — 2026-10-31
+
+- **Rules 28, 29, 36 — shared animated action:** VSPAnimatedButton now releases its cooldown in a finally block even if its synchronous action callback throws, matching the hardened PrimaryButton behavior and avoiding a permanently absorbed control.
