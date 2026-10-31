@@ -73,7 +73,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _loadFeePolicy() async {
-    if (mounted) setState(() => _isFeePolicyLoading = true);
+    if (mounted && !_isFeePolicyLoading) {
+      setState(() => _isFeePolicyLoading = true);
+    }
     final policy = await PaymobService.fetchFeePolicy();
     if (!mounted) return;
     setState(() {
