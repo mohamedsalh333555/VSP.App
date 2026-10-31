@@ -385,7 +385,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  Future<void> _onLeaveMatch() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = auth.currentUser?.uid;
+    final currentUserId = auth.currentUser?.id;
     if (currentUserId == null || _isActionProcessing) return;
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -486,7 +486,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  @override
  Widget build(BuildContext context) {
- final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+ final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
  return StreamBuilder<Booking?>(
