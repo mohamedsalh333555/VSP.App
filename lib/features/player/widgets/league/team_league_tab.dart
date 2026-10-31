@@ -848,7 +848,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                             : '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} EGP/hour',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
-                      trailing: Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_2_copy, color: VSPColors.accent, size: 18),
+                      trailing: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.accent, size: 18),
                       onTap: () async {
                         Navigator.pop(ctx);
                         final bookingRes = await Navigator.push(
