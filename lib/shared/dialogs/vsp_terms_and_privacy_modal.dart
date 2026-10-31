@@ -15,6 +15,12 @@ class VSPTermsAndPrivacyModal {
         final isAr = Localizations.localeOf(dialogContext).languageCode == 'ar';
         final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
         final buttonText = isAr ? 'موافق' : 'I Understand';
+        final media = MediaQuery.of(dialogContext);
+        final availableDialogHeight = (media.size.height -
+                media.viewInsets.bottom -
+                48)
+            .clamp(240.0, media.size.height)
+            .toDouble();
 
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
@@ -23,7 +29,7 @@ class VSPTermsAndPrivacyModal {
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Container(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
+                maxHeight: availableDialogHeight,
               ),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
