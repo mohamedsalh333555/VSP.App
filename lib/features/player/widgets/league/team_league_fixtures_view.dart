@@ -261,7 +261,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildMatchStatusBadge(match, hasBooking, isArabic),
+                Flexible(child: _buildMatchStatusBadge(match, hasBooking, isArabic)),
                 if (isUserMatch)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -384,9 +384,13 @@ class TeamLeagueFixturesView extends StatelessWidget {
                 children: [
                   const Icon(Iconsax.calendar_1_copy, size: 14, color: VSPColors.textSecondary),
                   const SizedBox(width: 6),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  Expanded(
+                    child: Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ),
                   ),
                   if (match.stadiumName != null && match.stadiumName!.isNotEmpty) ...[
                     const Spacer(),
