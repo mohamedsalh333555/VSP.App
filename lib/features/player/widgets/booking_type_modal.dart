@@ -175,9 +175,13 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  isArabic ? 'خيارات المباراة الأخرى' : 'Other match options',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
@@ -266,6 +270,8 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                       children: [
                         Text(
                           title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -275,6 +281,8 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 11.5,
