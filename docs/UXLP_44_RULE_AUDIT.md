@@ -439,3 +439,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Upgrade benefit promise correction — 2026-10-31
 
 - **Rules 13, 18 — truthful subscription copy:** facility-upgrade benefits no longer promise 24/7 owner support; the Arabic and English descriptions now state priority access without asserting an unsupported service-level guarantee.
+
+
+### Subscription comparison promise consistency — 2026-10-31
+
+- **Rules 13, 18, 23 — plan comparison truthfulness:** the subscription-plan comparison also no longer promises 24/7 technical support; its Arabic/English benefit text now matches the non-guaranteed priority-access wording used in the upgrade sheet.

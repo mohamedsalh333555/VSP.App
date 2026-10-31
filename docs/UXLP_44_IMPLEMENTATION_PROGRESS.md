@@ -251,3 +251,10 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Removed the unsupported 24/7 owner support promise from the facility-upgrade sheet; replaced it with bilingual priority-support-access wording.
 
 No plan entitlement, price, trial, backend rule, CI, analyzer, tests, runtime checks, migration, or APK build was changed/run.
+
+
+## Subscription comparison consistency
+
+- Removed the unsupported 24/7 service-level claim from the subscription-plan comparison and aligned its Arabic/English copy with the facility-upgrade sheet's priority-support-access description.
+
+No subscription pricing, entitlements, plan data, CI, analyzer, tests, runtime checks, migrations, or APK build were changed/run.
