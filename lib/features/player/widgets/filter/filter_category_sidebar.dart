@@ -49,53 +49,62 @@ class FilterCategorySidebar extends StatelessWidget {
               child: InkWell(
                 onTap: () => onSelectCategory(key),
                 child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                constraints: const BoxConstraints(minHeight: 48),
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? VSPColors.surface : Colors.transparent,
-                  border: BorderDirectional(
-                    start: BorderSide(
-                      color: isSelected ? VSPColors.accent : Colors.transparent,
-                      width: 3.5,
+                  duration: const Duration(milliseconds: 180),
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? VSPColors.surface : Colors.transparent,
+                    border: BorderDirectional(
+                      start: BorderSide(
+                        color: isSelected ? VSPColors.accent : Colors.transparent,
+                        width: 3.5,
+                      ),
                     ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      icon,
-                      color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 12,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        color: isSelected
+                            ? VSPColors.accent
+                            : VSPColors.textSecondary,
+                        size: 18,
                       ),
-                    ),
-                    if (badgeCount > 0) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: VSPColors.accent,
-                          shape: BoxShape.circle,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: isSelected
+                                ? VSPColors.accent
+                                : VSPColors.textSecondary,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            fontSize: 12,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (badgeCount > 0) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: VSPColors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
             );
           }).toList(),
         ),

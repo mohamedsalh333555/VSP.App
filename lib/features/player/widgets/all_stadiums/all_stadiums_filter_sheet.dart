@@ -121,14 +121,14 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
       curve: Curves.easeOut,
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: SafeArea(
-      bottom: true,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.9,
-        ),
-        child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        child: SingleChildScrollView(
+        bottom: true,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -212,10 +212,9 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
             ),
           ),
         ],
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }

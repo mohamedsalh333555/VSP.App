@@ -126,40 +126,46 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                   onTap: () => onDaySelected(index),
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                   child: Container(
-                  width: 60,
-                  margin: const EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.accent : Colors.transparent,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(
-                      color: isSelected ? VSPColors.accent : VSPColors.divider,
-                      width: 1.5,
+                    width: 60,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? VSPColors.accent : Colors.transparent,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(
+                        color: isSelected
+                            ? VSPColors.accent
+                            : VSPColors.divider,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            color: isSelected
+                                ? VSPColors.background
+                                : VSPColors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          dayName,
+                          style: TextStyle(
+                            color: isSelected
+                                ? VSPColors.background
+                                : VSPColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          color: isSelected ? VSPColors.background : VSPColors.textPrimary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        dayName,
-                        style: TextStyle(
-                          color: isSelected ? VSPColors.background : VSPColors.textSecondary,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
               );
             },
           ),
