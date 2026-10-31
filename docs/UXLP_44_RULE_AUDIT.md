@@ -15,7 +15,7 @@
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
 | 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
-| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; both preserve loaded lists/schedules during refresh and expose stream failures with retry. Verify other screens/states. |
+| 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; both preserve loaded lists/schedules during refresh and expose stream failures with retry. Owner stadium realtime errors now preserve the last authoritative stadium snapshot instead of clearing the schedule. Verify other screens/states. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
 | 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
@@ -140,3 +140,7 @@
 - `OwnerBookingsScreen` previously rendered its generated time slots before the owner booking fetch had completed. During the initial network window, booked slots could therefore appear visually free. The screen now shows a loading state until the authoritative owner booking snapshot is received and an error/retry state if the initial fetch fails.
 - The owner sync now treats an authoritative empty list as a completed load (rather than ignoring it), reports direct-fetch errors, and cancels the prior owner/user stream before changing scope. Force refreshes after quick booking preserve the already-loaded schedule instead of blanking it.
 - No availability, booking, or server-side conflict policy was changed. Runtime validation with existing bookings, empty schedule, network failure, and account switching remains pending.
+
+
+- Owner stadium realtime stream failures no longer clear `_stadiums` and `_filteredStadiums`; a refresh error now preserves the last authoritative schedule while surfacing the sync error. Initial failures still show the existing retry state because no snapshot exists.
+- Post-match result prompt suppression is now scoped to the player-home screen state rather than a process-wide static flag, so a prompt shown for one signed-in account cannot suppress another account's prompt in the same app process.
