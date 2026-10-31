@@ -287,7 +287,7 @@ class StadiumRepository {
       }
       final cleanSearch = (searchQuery ?? '')
           .trim()
-          .replaceAll(RegExp(r'[%_,()|]'), ' ')
+          .replaceAll(RegExp(r'[^A-Za-z0-9\u0600-\u06FF\s-]'), ' ')
           .replaceAll(RegExp(r'\s+'), ' ');
       if (cleanSearch.isNotEmpty) {
         orGroups.add(
