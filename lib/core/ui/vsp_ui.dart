@@ -168,7 +168,13 @@ class VSPStateView extends StatelessWidget {
 
     if (state == VSPUiState.loading || state == VSPUiState.processing) {
       return Center(
-        child: Column(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(VSPDSSpacing.lg),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: VSPDSAccessibility.stateMaxWidth,
+            ),
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(
