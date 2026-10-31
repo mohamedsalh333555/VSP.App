@@ -220,11 +220,13 @@ class StadiumProvider with ChangeNotifier {
 
     _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
       (data) {
+        if (_listeningOwnerId != ownerId) return;
         _stadiums = data;
         _errorMessage = null;
         _setLoading(false);
       },
       onError: (error) {
+        if (_listeningOwnerId != ownerId) return;
         // Preserve the last authoritative snapshot if a realtime refresh fails.
         // Initial failures still surface because the lists start empty.
         _setError('Failed to fetch your stadiums: ${error.toString()}');
