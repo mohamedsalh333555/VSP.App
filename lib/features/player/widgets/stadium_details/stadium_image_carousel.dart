@@ -81,7 +81,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                   ),
                 ),
                 Positioned(
-                  bottom: 30,
+                  bottom: MediaQuery.of(context).padding.bottom + 30,
                   left: 0,
                   right: 0,
                   child: Center(
