@@ -11,6 +11,7 @@ class RefundInfo {
   final RefundEta eta;
   final double refundAmount;
   final bool amountConfirmed;
+  final bool hasNoPaidAmount;
 
   /// صح لو الحجز كاش صافي ومفيش أي عربون أونلاين مدفوع
   final bool isPureCashNoDeposit;
@@ -22,6 +23,7 @@ class RefundInfo {
     required this.eta,
     required this.refundAmount,
     this.amountConfirmed = true,
+    this.hasNoPaidAmount = false,
     this.isPureCashNoDeposit = false,
   });
 
@@ -70,6 +72,7 @@ class RefundInfo {
       },
       refundAmount: recordedAmount ?? 0.0,
       amountConfirmed: recordedAmount != null || !hasPaidAmount,
+      hasNoPaidAmount: !hasPaidAmount,
       isPureCashNoDeposit: isPureCash,
     );
   }
@@ -114,6 +117,9 @@ class RefundInfo {
   };
 
   String refundNoticeText(String amountFormatted) {
+    if (hasNoPaidAmount) {
+      return 'لم يتم سداد أي مبلغ لهذا الحجز، لذلك لن ينتج عن الإلغاء استرداد مالي.';
+    }
     if (!amountConfirmed) {
       return 'سيتم تأكيد مبلغ الاسترداد من الخادم بعد إلغاء الحجز.';
     }
@@ -132,6 +138,11 @@ class RefundInfo {
   }
 
   String localizedNoticeText(AppLocalizations l10n, String typeText, String amountFormatted) {
+    if (hasNoPaidAmount) {
+      return l10n.localeName == 'ar'
+          ? 'لم يتم سداد أي مبلغ لهذا الحجز، لذلك لن ينتج عن الإلغاء استرداد مالي.'
+          : 'No payment was collected for this booking, so no refund is due.';
+    }
     if (!amountConfirmed) {
       return l10n.localeName == 'ar'
           ? 'سيتم تأكيد مبلغ الاسترداد من الخادم بعد إلغاء الحجز.'
@@ -145,6 +156,9 @@ class RefundInfo {
   }
 
   String refundSuccessText() {
+    if (hasNoPaidAmount) {
+      return 'تم إلغاء الحجز. لم يتم تحصيل مبلغ، لذلك لا يوجد استرداد مستحق.';
+    }
     if (!amountConfirmed) {
       return 'تم إلغاء الحجز. سيتم تأكيد مبلغ الاسترداد من الخادم بعد معالجة الطلب.';
     }
@@ -163,6 +177,11 @@ class RefundInfo {
   }
 
   String localizedSuccessText(AppLocalizations l10n) {
+    if (hasNoPaidAmount) {
+      return l10n.localeName == 'ar'
+          ? 'تم إلغاء الحجز. لم يتم تحصيل مبلغ، لذلك لا يوجد استرداد مستحق.'
+          : 'Booking cancelled. No payment was collected, so no refund is due.';
+    }
     if (!amountConfirmed) {
       return l10n.localeName == 'ar'
           ? 'تم إلغاء الحجز. سيتم تأكيد مبلغ الاسترداد من الخادم بعد معالجة الطلب.'
