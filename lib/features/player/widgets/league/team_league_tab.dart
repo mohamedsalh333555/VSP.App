@@ -252,13 +252,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
-                    SizedBox(width: 8),
+                    const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
+                    const SizedBox(width: 8),
                     Text(
                       isArabic ? 'إنشاء دوري' : 'Create League',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
