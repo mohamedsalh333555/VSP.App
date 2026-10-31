@@ -186,6 +186,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(
           AppLocalizations.of(context)!.errorLabel,
