@@ -664,9 +664,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         builder: (context, setDialogState) => Dialog(
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          child: Padding(
-            padding: const EdgeInsets.all(VSPSpacing.lg),
-            child: Column(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * 0.82,
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(VSPSpacing.lg),
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -773,6 +778,8 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   ],
                 ),
               ],
+                ),
+              ),
             ),
           ),
         ),
