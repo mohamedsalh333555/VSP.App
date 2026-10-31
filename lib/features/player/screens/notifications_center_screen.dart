@@ -174,7 +174,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 ),
               Expanded(
                 child: ListView.separated(
-            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
+            // SafeArea already applies the device bottom inset to this list.
+            // Keep only intentional breathing room here to avoid double-counting it.
+            padding: const EdgeInsets.fromLTRB(
+              VSPSpacing.md,
+              VSPSpacing.md,
+              VSPSpacing.md,
+              24,
+            ),
             physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 0),
@@ -186,8 +193,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   key: ValueKey(notification.id),
                   direction: DismissDirection.endToStart,
                   background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 20),
+                    alignment: AlignmentDirectional.centerEnd,
+                    padding: const EdgeInsetsDirectional.only(end: 20),
                     margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                     decoration: BoxDecoration(
                       color: VSPColors.error.withValues(alpha: 0.2),
