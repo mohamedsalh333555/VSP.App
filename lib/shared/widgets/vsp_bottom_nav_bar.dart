@@ -122,9 +122,9 @@ class VspBottomNavBar extends StatelessWidget {
                           ],
                         ),
                         if (item.hasNotification && !isSelected)
-                          Positioned(
+                          PositionedDirectional(
                             top: VSPDSizes.navigationNotificationTop,
-                            right: VSPDSizes.navigationNotificationRight,
+                            end: VSPDSizes.navigationNotificationRight,
                             child: Container(
                               width: VSPDSizes.notificationDot,
                               height: VSPDSizes.notificationDot,
