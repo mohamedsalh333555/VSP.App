@@ -196,3 +196,12 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Shared championship empty-state content and the 1v1 no-governorate state now use vertical scrolling to avoid compact-screen/large-text overflow.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Segmented-control and filter-chip implementation
+
+- Owner Pro overview/insights tabs now use semantic, focusable controls and 48dp selection surfaces.
+- Owner venue filters now expose the selected venue through semantics and meet 48dp minimum height.
+- Championship detail pill tabs now expose selected state and meet 48dp minimum height.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.

@@ -404,3 +404,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Championship empty-state viewport and touch sizing — 2026-10-31
 
 - **Rules 11, 27, 33, 35 — championship states:** the 1v1 governorate banner's return action now has a 48dp minimum target. Championship, tournament, team, and 1v1 no-governorate empty-state content can scroll vertically on compact viewports and large text settings rather than overflowing its centered layout.
+
+
+### Segmented-control and venue-filter interaction pass — 2026-10-31
+
+- **Rules 5, 27, 30, 33, 42 — owner/player tab controls:** Owner Pro segmented tabs, owner venue filter chips, and championship pill tabs now use focusable InkWell interactions with one semantic button per option and selected-state announcements. Their interactive surfaces meet a 48dp minimum height; Owner Pro track geometry was increased to preserve the selected pill's touch area.
