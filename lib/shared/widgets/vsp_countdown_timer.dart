@@ -24,20 +24,38 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
   @override
   void initState() {
     super.initState();
-    _calculateTimeRemaining();
+    _calculateTimeRemaining(notify: false);
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant VSPCountdownTimer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.targetDate != widget.targetDate) {
+      _timer?.cancel();
+      _calculateTimeRemaining();
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    if (_timeRemaining == Duration.zero) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        _calculateTimeRemaining();
-      }
+      _calculateTimeRemaining();
     });
   }
 
-  void _calculateTimeRemaining() {
-    final now = DateTime.now();
-    final difference = widget.targetDate.difference(now);
-    setState(() {
-      _timeRemaining = difference.isNegative ? Duration.zero : difference;
-    });
+  void _calculateTimeRemaining({bool notify = true}) {
+    final difference = widget.targetDate.difference(DateTime.now());
+    final next = difference.isNegative ? Duration.zero : difference;
+    if (notify && mounted) {
+      setState(() => _timeRemaining = next);
+    } else {
+      _timeRemaining = next;
+    }
+    if (next == Duration.zero) {
+      _timer?.cancel();
+    }
   }
 
   @override
