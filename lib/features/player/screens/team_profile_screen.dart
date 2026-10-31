@@ -175,12 +175,28 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       final code = res['invite_code']?.toString() ?? '';
 
       if (!mounted) return;
+      if (res['success'] == false || code.isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
+        return;
+      }
 
       await showTeamMatchupInviteModal(context, code);
     } catch (e) {
       debugPrint('Error generating invite code: $e');
       if (mounted) {
-        VSPFeedback.showError(context, 'تعذر توليد كود الدعوة: $e');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إنشاء كود الدعوة. حاول مرة أخرى.'
+              : 'Could not generate the invite code. Please try again.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isGeneratingCode = false);
