@@ -150,6 +150,11 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  child: TextField(
  controller: _phoneController,
  keyboardType: TextInputType.phone,
+ textDirection: TextDirection.ltr,
+ textInputAction: TextInputAction.search,
+ onSubmitted: (_) {
+   if (!_isSearching) _searchPlayer();
+ },
  style: Theme.of(context).textTheme.bodyMedium,
  decoration: InputDecoration(
  hintText: isArabic ? 'مثال: 01012345678' : 'e.g. 01012345678',
