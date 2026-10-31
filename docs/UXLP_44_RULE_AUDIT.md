@@ -414,3 +414,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Support ticket creation sheet viewport — 2026-10-31
 
 - **Rules 11, 35, 36 — support modal safety:** the new-ticket sheet now constrains itself to the remaining viewport after keyboard and safe-area insets; its subject/category/action content remains scrollable and the keyboard inset is not duplicated in inner bottom padding.
+
+
+### Owner payout and upgrade modal viewport pass — 2026-10-31
+
+- **Rules 11, 16, 17, 35 — financial dialogs/sheets:** owner payout dialogs now explicitly scroll long copy and form content. Password re-authentication sheet constrains its height after keyboard and safe-area insets. Facility-upgrade sheet respects both safe-area edges and remains scrollable within the visible viewport.

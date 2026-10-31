@@ -212,3 +212,12 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - New-ticket sheet now has a viewport constraint that accounts for keyboard and both safe-area edges; its content scrolls within that bound and the inner padding no longer duplicates keyboard inset.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Owner financial and upgrade modal safety
+
+- Owner payout dialogs explicitly enable scrollable AlertDialog layout.
+- Payout password re-auth sheet now subtracts keyboard and top/bottom safe areas from its height and retains its own scrollable form.
+- Facility upgrade sheet now subtracts top/bottom safe areas from its viewport height and retains vertical scrolling.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
