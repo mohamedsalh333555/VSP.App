@@ -324,13 +324,44 @@ class PlayerBookingCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildInfoColumn(context, l10n.date, _formatDate(context, booking.startTime)),
-                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                    _buildInfoColumn(context, l10n.time, _formatTimeRange(context, booking.startTime, booking.endTime), isTime: true),
-                    Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
+                    Expanded(
+                      child: _buildInfoColumn(
+                        context,
+                        l10n.date,
+                        _formatDate(context, booking.startTime),
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: VSPColors.divider.withValues(alpha: 0.1),
+                    ),
+                    Expanded(
+                      child: _buildInfoColumn(
+                        context,
+                        l10n.time,
+                        _formatTimeRange(
+                          context,
+                          booking.startTime,
+                          booking.endTime,
+                        ),
+                        isTime: true,
+                      ),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 24,
+                      color: VSPColors.divider.withValues(alpha: 0.1),
+                    ),
+                    Expanded(
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: _buildInfoColumn(
+                          context,
+                          l10n.price,
+                          '${booking.totalPrice.toInt()} ${l10n.egCurrency}',
+                        ),
+                      ),
                     ),
                   ],
                 ),
