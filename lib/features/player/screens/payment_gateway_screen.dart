@@ -570,11 +570,67 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       );
     }
 
+    if (!widget.isTournamentPayment && _booking == null) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isLoading) ...[
+                    const CircularProgressIndicator(color: VSPColors.accent),
+                    const SizedBox(height: VSPSpacing.md),
+                    Text(
+                      isArabic
+                          ? 'جارٍ تأكيد الحجز والسعر من الخادم...'
+                          : 'Confirming the booking and price with the server...',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                  ] else ...[
+                    Text(
+                      isArabic
+                          ? 'لم يتم تأكيد الحجز. ارجع وحاول مرة أخرى.'
+                          : 'The booking was not confirmed. Go back and try again.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: VSPColors.textPrimary),
+                    ),
+                    const SizedBox(height: VSPSpacing.md),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(isArabic ? 'رجوع' : 'Go back'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final l10n = AppLocalizations.of(context)!;
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final effectiveForceFullPayment = widget.forceFullPayment;
-    final hasDeposit = !effectiveForceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
-    final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
+    final effectiveDraft = _booking == null
+        ? widget.bookingDraft
+        : widget.bookingDraft.copyWith(
+            totalPrice: _booking!.totalPrice,
+            needsDeposit: _booking!.needsDeposit,
+            depositPaid: _booking!.depositAmount,
+          );
+    final bookingNeedsDeposit = _booking?.needsDeposit ?? widget.bookingDraft.needsDeposit;
+    final bookingDepositAmount = _booking?.depositAmount ?? widget.bookingDraft.depositPaid;
+    final hasDeposit = !effectiveForceFullPayment &&
+        !widget.isTournamentPayment &&
+        bookingNeedsDeposit &&
+        bookingDepositAmount > 0;
+    final amountToPay = hasDeposit
+        ? bookingDepositAmount
+        : (_booking?.totalPrice ?? widget.bookingDraft.totalPrice);
     final double? totalWithFees = _feePolicy?.isValidForElectronicCheckout == true
         ? _feePolicy!.total(amountToPay)
         : null;
@@ -610,7 +666,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     ),
                     const SizedBox(height: 16),
                     PaymentBreakdownCard(
-                      bookingDraft: widget.bookingDraft,
+                      bookingDraft: effectiveDraft,
                       isChampionship: isChampionship,
                       hasDeposit: hasDeposit,
                       amountToPay: amountToPay,
