@@ -23,7 +23,7 @@ class TeamCardHero extends StatelessWidget {
 
     return Container(
       width: isScreenshotMode ? 350 : double.infinity,
-      constraints: const BoxConstraints(minHeight: 440, maxHeight: 520),
+      constraints: const BoxConstraints(minHeight: 440),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.xl),
         gradient: const LinearGradient(
@@ -52,13 +52,14 @@ class TeamCardHero extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(VSPSpacing.xl),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // 1. Top Section: Rank & Points
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTopStat(AppLocalizations.of(context)!.ovrLabel, team.points.toString()),
-                    _buildTopStat(AppLocalizations.of(context)!.gldLabel, team.championshipsWon.toString(), isGold: true),
+                    Expanded(child: _buildTopStat(AppLocalizations.of(context)!.ovrLabel, team.points.toString())),
+                    Expanded(child: _buildTopStat(AppLocalizations.of(context)!.gldLabel, team.championshipsWon.toString(), isGold: true)),
                   ],
                 ),
                 
@@ -117,6 +118,9 @@ class TeamCardHero extends StatelessWidget {
                   ),
                   child: Text(
                     team.rankTitle.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: VSPColors.accent,
                       fontSize: 12,
@@ -126,16 +130,16 @@ class TeamCardHero extends StatelessWidget {
                   ),
                 ),
                 
-                const Spacer(),
+                const SizedBox(height: VSPSpacing.md),
                 const Divider(color: VSPColors.white12, thickness: 1),
                 
                 // 5. Grid Stats
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildGridStat(AppLocalizations.of(context)!.winRateLabel, winRate),
-                    _buildGridStat(AppLocalizations.of(context)!.winsLabel.toUpperCase(), team.wins.toString()),
-                    _buildGridStat(AppLocalizations.of(context)!.strkLabel.toUpperCase(), team.currentWinningStreak.toString()),
+                    Expanded(child: _buildGridStat(AppLocalizations.of(context)!.winRateLabel, winRate)),
+                    Expanded(child: _buildGridStat(AppLocalizations.of(context)!.winsLabel.toUpperCase(), team.wins.toString())),
+                    Expanded(child: _buildGridStat(AppLocalizations.of(context)!.strkLabel.toUpperCase(), team.currentWinningStreak.toString())),
                   ],
                 ),
                 
@@ -147,13 +151,15 @@ class TeamCardHero extends StatelessWidget {
                   children: [
                     Image.asset('assets/images/logo.png', height: 20, errorBuilder: (_, __, ___) => const SizedBox()),
                     const SizedBox(width: 8),
-                    const Text(
+                    const Flexible(
+                      child: Text(
                       'VSP CHAMPIONSHIP',
                       style: TextStyle(
                         color: VSPColors.white38,
                         fontSize: 10,
                         letterSpacing: 3,
                         fontWeight: FontWeight.w300,
+                      ),
                       ),
                     ),
                   ],
