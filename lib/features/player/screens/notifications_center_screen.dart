@@ -164,7 +164,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                           label: isArabic ? 'تراجع' : 'Undo',
                           textColor: VSPColors.accent,
                           onPressed: () async {
-                            final restored = await repository.sendNotification(_userId, deletedItem);
+                            final restored = await repository.restoreNotification(_userId, deletedItem);
                             if (!restored && mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
