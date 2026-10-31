@@ -10,16 +10,17 @@ import '../../../auth/screens/welcome_screen.dart';
 class OwnerDeleteAccountCard extends StatelessWidget {
   const OwnerDeleteAccountCard({super.key});
 
-  void _showDeleteAccountDialog(BuildContext context) {
+  Future<void> _showDeleteAccountDialog(BuildContext context) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     bool isDeleting = false;
     final passwordController = TextEditingController();
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            scrollable: true,
             backgroundColor: VSPColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Text(
@@ -119,8 +120,9 @@ class OwnerDeleteAccountCard extends StatelessWidget {
                                 setDialogState(() => isDeleting = false);
                                 VSPFeedback.showError(
                                   context,
-                                  authProvider.errorMessage ??
-                                      (isArabic ? 'فشل حذف الحساب' : 'Failed to delete account'),
+                                  isArabic
+                                      ? 'تعذر حذف الحساب. حاول مرة أخرى.'
+                                      : 'Could not delete the account. Please try again.',
                                 );
                                 Navigator.pop(dialogCtx);
                               }
@@ -134,6 +136,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
         },
       ),
     );
+    passwordController.dispose();
   }
 
   @override
