@@ -412,3 +412,7 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Pending booking cards now distinguish an unpaid checkout from a payment already reported as paid/partially paid but not yet confirmed by the booking server.
 - When payment confirmation is pending, the card no longer offers Resume Checkout; it shows a disabled verification state, warns the player not to pay again, and directs them to Check Status. The refreshed status response uses the same warning instead of incorrectly prompting another checkout.
 - The server remains the source of truth: a paid payment status alone does not mark the booking confirmed. This is a client-side duplicate-payment prevention guard, not a payment-state transition. Runtime webhook delay/retry checks remain pending. No CI, analyzer, tests, migrations, or APK build was run.
+
+## Additional small lifecycle fix — support ticket sheet
+- `SupportTicketsScreen._newTicket()` now captures the submitted subject and disposes its locally-created `TextEditingController` after the bottom sheet closes, including dismissal without submission. The captured subject is passed to the ticket details route, so navigation does not read a disposed controller.
+- Source-level change only; no tests, analyzer, CI, or APK build were run. Runtime validation remains part of the single final pass.
