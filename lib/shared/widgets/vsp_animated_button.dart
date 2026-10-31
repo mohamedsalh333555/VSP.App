@@ -112,7 +112,9 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
  scale: _scale,
  child: VSPPrimaryButton(
  text: widget.text,
- onPressed: _handleThrottledTap,
+ // Visually disable during the debounce window as well as blocking
+ // taps, so the user can tell the action is temporarily unavailable.
+ onPressed: _isCoolingDown ? null : _handleThrottledTap,
  isLoading: widget.isLoading,
  color: widget.color,
  textColor: widget.textColor,
