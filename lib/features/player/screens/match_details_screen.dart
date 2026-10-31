@@ -304,6 +304,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    return;
  }
  bool isSubmittingReport = false;
+ final pageContext = context;
  String selectedReason = 'Spam';
  final Map<String, String> reasons = {
  'Spam': AppLocalizations.of(context)!.reportReasonSpam,
@@ -351,7 +352,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  height: 48,
  color: VSPColors.surfaceAlt,
  textColor: VSPColors.textPrimary,
- onPressed: () => Navigator.pop(context),
+ onPressed: isSubmittingReport ? null : () => Navigator.pop(context),
  ),
  ),
  const SizedBox(width: VSPSpacing.md),
@@ -376,15 +377,18 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    );
    if (!context.mounted) return;
    Navigator.pop(context);
+   if (!pageContext.mounted) return;
    if (success) {
-     VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.reportSubmitted);
+     VSPFeedback.showSuccess(pageContext, AppLocalizations.of(pageContext)!.reportSubmitted);
    } else {
-     VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
+     VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
    }
  } catch (_) {
    if (!context.mounted) return;
    setDialogState(() => isSubmittingReport = false);
-   VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
+   if (pageContext.mounted) {
+     VSPFeedback.showError(pageContext, AppLocalizations.of(pageContext)!.reportFailed);
+   }
  }
  },
  ),
