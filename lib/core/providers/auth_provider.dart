@@ -214,9 +214,14 @@ class AuthProvider with ChangeNotifier {
       _c.sessionSync.updateFcmToken(user.id);
       _c.realtime.startRealtimeUserListener(
         userId: user.id,
-        getUserModel: () => _userModel,
-        getFirebaseUser: () => _supabaseUser,
+        getUserModel: () =>
+            _supabaseUser?.id == user.id && _userModel?.uid == user.id
+                ? _userModel
+                : null,
+        getFirebaseUser: () =>
+            _supabaseUser?.id == user.id ? _supabaseUser : null,
         onUserUpdated: (newModel) {
+          if (_supabaseUser?.id != user.id || newModel.uid != user.id) return;
           _userModel = newModel;
           notifyListeners();
         },
@@ -227,14 +232,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> retryDataFetch() async {
-    if (_supabaseUser == null) return;
+    final user = _supabaseUser;
+    if (user == null) return;
+    final requestGeneration = ++_userFetchGeneration;
     _isLoading = true;
     _dataFetchError = false;
     notifyListeners();
 
-    final model = await _c.sessionSync.retryDataFetch(_supabaseUser!.id);
+    final model = await _c.sessionSync.retryDataFetch(user.id);
+    if (requestGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != user.id) {
+      return;
+    }
+
     _isLoading = false;
-    if (model != null) {
+    if (model != null && model.uid == user.id) {
       _userModel = model;
       _dataFetchError = false;
     } else {
