@@ -37,6 +37,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   late Championship _currentChampionship;
   bool _isLoading = false;
   List<Team> _teams = [];
+  bool _hasTeamsLoadError = false;
   List<String> _lastJoinedTeams = [];
   StreamSubscription? _champSubscription;
 
@@ -66,14 +67,25 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
   Future<void> _fetchTeams(List<String> ids) async {
     if (ids.isEmpty) {
-      if (mounted) setState(() => _teams = []);
+      if (mounted) {
+        setState(() {
+          _teams = [];
+          _hasTeamsLoadError = false;
+        });
+      }
       return;
     }
     try {
       final teams = await TournamentRepository().getTeamsByIds(ids);
-      if (mounted) setState(() => _teams = teams);
+      if (mounted) {
+        setState(() {
+          _teams = teams;
+          _hasTeamsLoadError = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching teams in dashboard: $e');
+      if (mounted) setState(() => _hasTeamsLoadError = true);
     }
   }
 
@@ -543,16 +555,37 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ),
 
           Expanded(
-            child: _teams.isEmpty
+            child: _hasTeamsLoadError
                 ? Center(
-                    child: Text(
-                      Localizations.localeOf(context).languageCode == 'ar'
-                          ? 'لا توجد فرق مشاركة حتى الآن'
-                          : 'No teams joined yet',
-                      style: const TextStyle(color: VSPColors.textSecondary),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر تحميل الفرق المشاركة.'
+                              : 'Could not load participating teams.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                        TextButton(
+                          onPressed: () => _fetchTeams(_currentChampionship.joinedTeams),
+                          child: Text(
+                            Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry',
+                          ),
+                        ),
+                      ],
                     ),
                   )
-                : ListView.builder(
+                : _teams.isEmpty
+                    ? Center(
+                        child: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'لا توجد فرق مشاركة حتى الآن'
+                              : 'No teams joined yet',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      )
+                    : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     itemCount: _teams.length,
                     itemBuilder: (context, index) {
