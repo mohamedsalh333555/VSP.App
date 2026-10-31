@@ -42,10 +42,10 @@ This is a shared-foundation migration, not a completed screen audit.
 - UXLP-44 standard: written.
 - Candidate screen register: 128 Dart paths.
 - Shared component audit: initial pass and the changes above applied.
-- Static source scan of all 128 registered candidates: completed for legacy/V2 token imports, raw color/text-style declarations, hard-coded motion durations, safe-area markers, and modal entry points.
+- A recorded static source scan covers 128 candidate paths. The current register now contains 137 unique Dart screen/surface paths; therefore 9 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 137 paths before calling this gate complete.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
-- Rule-by-rule screen review across player and owner roles: still in progress; static scan does not establish a pass.
+- Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
 - Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
 - Added regression tests for token alias equivalence, primary-button interaction, and back-button touch-target size.
 - Flutter analyze, automated tests, and release APK: intentionally deferred until the grouped implementation batch is complete.
@@ -229,3 +229,11 @@ The shared `VSPStateView` now uses a bounded-width, scrollable content region fo
 ## Phase 2 implementation continuation
 
 The canonical shared bottom navigation now uses focusable InkWell interaction while retaining the selected/unselected icon contract. Filter and calendar components were updated to expose selected state and minimum touch dimensions, and the shared state presentation is scrollable under compact viewport constraints. Owner finance and notification/support surfaces now distinguish stale snapshots from failed initial loads. See `docs/UXLP_44_IMPLEMENTATION_PROGRESS.md` for the current source change inventory.
+
+
+## Latest grouped source corrections — 2026-10-31
+
+- Fixed the analyzer findings reported by PR CI run 41221229970 in the payout dialog, add-player invitation sheet, stadium filter sheet, challenge team-selection retry guard, auth provider, and date-picker semantics.
+- PR CI run 41222072722 then reported only one remaining informational const-constructor lint in the add-player sheet. The style was corrected in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`; this commit has not been analyzer-verified.
+- Removed a hardcoded Pro monthly amount from the owner dashboard teaser so it cannot diverge from the current public subscription-plan catalog.
+- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 137-path screen/state rule audit and device/runtime review remain incomplete.
