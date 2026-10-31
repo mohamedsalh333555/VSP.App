@@ -31,6 +31,9 @@ class OwnerBookingsScreen extends StatefulWidget {
 class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0;
   bool _isInitialLoadPending = true;
+  String? _activeOwnerScope;
+  bool _hasObservedOwnerScope = false;
+  int _ownerScopeGeneration = 0;
   Stadium? _selectedStadium;
   final ScrollController _scrollController = ScrollController();
 
@@ -47,16 +50,37 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-      }
-      setState(() => _isInitialLoadPending = false);
-    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final ownerId = auth.isOwner ? auth.currentUser?.id : null;
+    if (!_hasObservedOwnerScope || ownerId != _activeOwnerScope) {
+      _hasObservedOwnerScope = true;
+      _activeOwnerScope = ownerId;
+      final generation = ++_ownerScopeGeneration;
+      _isInitialLoadPending = ownerId != null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || generation != _ownerScopeGeneration) return;
+        if (ownerId != null &&
+            context.read<AuthProvider>().currentUser?.id == ownerId &&
+            context.read<AuthProvider>().isOwner) {
+          context.read<BookingProvider>().loadOwnerBookings(
+                ownerId,
+                forceRefresh: true,
+              );
+          context.read<StadiumProvider>().listenToOwnerStadiums(
+                ownerId,
+                forceRefresh: true,
+              );
+        }
+        if (mounted && generation == _ownerScopeGeneration) {
+          setState(() => _isInitialLoadPending = false);
+        }
+      });
+    }
   }
 
   @override
