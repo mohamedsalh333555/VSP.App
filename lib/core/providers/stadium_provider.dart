@@ -79,6 +79,7 @@ class StadiumProvider with ChangeNotifier {
    _stadiums = [];
    _filteredStadiums = [];
    _isFilterActive = false;
+   _activeQuickFilter = null;
    _currentFilters = null;
    _errorMessage = null;
    _isLoading = false;
@@ -207,6 +208,7 @@ class StadiumProvider with ChangeNotifier {
       _stadiums = [];
       _filteredStadiums = [];
       _isFilterActive = false;
+      _activeQuickFilter = null;
       _currentFilters = null;
       _isLoading = false;
       _isLoadingMore = false;
