@@ -357,11 +357,9 @@ class PlayerBookingCard extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            final bool hasRealRefund = booking.paymentStatus == 'refunded' &&
-                ((booking.refundTransactionId != null &&
-                        booking.refundTransactionId!.isNotEmpty) ||
-                    (booking.refundAmount != null &&
-                        booking.refundAmount! > 0));
+            // A server-confirmed refunded status is authoritative even if the
+            // amount/reference has not propagated to this read yet.
+            final bool hasRealRefund = booking.paymentStatus == 'refunded';
 
             final bool isRefundPending = !hasRealRefund &&
                 booking.paymentStatus == 'refund_pending';
@@ -391,10 +389,7 @@ class PlayerBookingCard extends StatelessWidget {
                       'refund_payment_method':
                           booking.refundPaymentMethod ?? booking.paymentMethod,
                       'payment_method': booking.paymentMethod,
-                      'refund_amount': booking.refundAmount ??
-                          (booking.depositPaid > 0
-                              ? booking.depositPaid
-                              : booking.totalPrice),
+                      'refund_amount': booking.refundAmount,
                     }),
                   ),
                 ),
