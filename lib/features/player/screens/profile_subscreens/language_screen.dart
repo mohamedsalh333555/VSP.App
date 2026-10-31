@@ -37,76 +37,119 @@ class _LanguageScreenState extends State<LanguageScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            children: [
-              ...languages.map((lang) => _buildLanguageItem(
-                context, 
-                lang['name']!, 
-                lang['code']!, 
-                languageProvider.currentLanguage == lang['code'],
-                (code) {
-                  HapticFeedback.lightImpact();
-                  languageProvider.changeLanguage(code);
-                },
-              )),
-              
-              const Spacer(),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                    elevation: 0,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight - 24),
+              child: Column(
+                children: [
+                  ...languages.map((lang) => _buildLanguageItem(
+                    context,
+                    lang['name']!,
+                    lang['code']!,
+                    languageProvider.currentLanguage == lang['code'],
+                    (code) {
+                      HapticFeedback.lightImpact();
+                      languageProvider.changeLanguage(code);
+                    },
+                  )),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        AppLocalizations.of(context)!.done,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Text(
-                    AppLocalizations.of(context)!.done, 
-                    style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)
-                  ),
-                ),
+                  const SizedBox(height: 8),
+                ],
               ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLanguageItem(BuildContext context, String name, String code, bool isSelected, Function(String) onSelect) {
-    return GestureDetector(
-      onTap: () => onSelect(code),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
+  Widget _buildLanguageItem(
+    BuildContext context,
+    String name,
+    String code,
+    bool isSelected,
+    ValueChanged<String> onSelect,
+  ) {
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: name,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onSelect(code),
           borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: isSelected ? Border.all(color: VSPColors.accent) : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(name, style: Theme.of(context).textTheme.bodyLarge),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider, width: 2),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 56),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(
+                color: isSelected
+                    ? VSPColors.accent
+                    : VSPColors.divider.withValues(alpha: 0.3),
               ),
-              child: isSelected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle))) : null,
-            )
-          ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(name, style: Theme.of(context).textTheme.bodyLarge),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? VSPColors.accent : VSPColors.divider,
+                      width: 2,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Center(
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: VSPColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

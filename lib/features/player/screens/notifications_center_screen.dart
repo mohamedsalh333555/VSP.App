@@ -325,7 +325,7 @@ class _NotificationCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           _localizeNotificationText(context, notification, isTitle: true),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
@@ -464,14 +464,14 @@ class _NotificationCard extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _localizeText(context, notification.title),
+                _localizeNotificationText(context, notification, isTitle: true),
                 style: const TextStyle(color: VSPColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
         content: Text(
-          _localizeText(context, notification.body),
+          _localizeNotificationText(context, notification, isTitle: false),
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.5),
         ),
         actions: [
