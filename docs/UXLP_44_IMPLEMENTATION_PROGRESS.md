@@ -615,3 +615,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The owner tournament dashboard now checks `mounted` before updating loading state after the team lookup completes, including the error path. This prevents a disposed dashboard from receiving `setState` after an asynchronous kickoff preparation request.
 - The kickoff confirmation dialog is scrollable for compact-height/large-text layouts. Existing kickoff authorization and tournament state transitions are unchanged.
 - Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+
+## Player profile editing and account deletion refinement — 2026-10-31
+
+- Profile photo-save, profile-update, and account-deletion failures now use localized generic recovery messages rather than exposing raw provider/backend exception details.
+- The account deletion confirmation dialog is scrollable on compact-height/large-text devices. The existing confirmation requirement and account deletion operation are unchanged.
+- Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
