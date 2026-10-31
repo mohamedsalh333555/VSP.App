@@ -62,7 +62,6 @@ class VSPColors {
   static const Color glassGlow = VSPDSColors.glassGlow;
   static const double glassBlurSigma = VSPDSBlur.glassSigma;
   static const Color black80 = VSPDSColors.black80;
-  static const Color white24 = VSPDSColors.white24;
   static const RadialGradient backgroundAura = VSPDSGradients.backgroundAura;
   static const LinearGradient surfaceGradient = VSPDSGradients.surface;
 }
