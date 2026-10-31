@@ -70,6 +70,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         top: false,
         bottom: true,
         child: StreamBuilder<List<AppNotification>>(
+          key: ValueKey(_userId),
           stream: _notificationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {

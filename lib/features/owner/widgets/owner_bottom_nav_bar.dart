@@ -38,6 +38,7 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
     final userId = context.read<AuthProvider>().currentUser?.uid ?? '';
 
     return StreamBuilder<int>(
+      key: ValueKey(userId),
       stream: _getUnreadStream(userId),
       builder: (context, snapshot) {
         final hasUnread = (snapshot.data ?? 0) > 0;
