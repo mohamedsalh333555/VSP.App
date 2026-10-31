@@ -311,6 +311,12 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                           itemCount: filteredStadiums.length + (provider.hasMore ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index >= filteredStadiums.length) {
+                              if (provider.isLoadingMore) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                                );
+                              }
                               if (provider.errorMessage != null) {
                                 return Center(
                                   child: TextButton(
@@ -319,9 +325,9 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   ),
                                 );
                               }
-                              if (!provider.isLoadingMore && provider.hasMore) {
+                              if (provider.hasMore) {
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (mounted && provider.errorMessage == null) {
+                                  if (mounted && provider.errorMessage == null && !provider.isLoadingMore) {
                                     _applyServerFilters(provider, isRefresh: false);
                                   }
                                 });
