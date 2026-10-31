@@ -149,6 +149,7 @@ class StadiumProvider with ChangeNotifier {
  governorate: _selectedGovernorate,
  );
 
+ if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  final List<Stadium> newStadiums = result['items'];
  _lastDocument = result['lastDoc'];
 
@@ -163,6 +164,7 @@ class StadiumProvider with ChangeNotifier {
             startAfter: null,
             governorate: 'All',
           );
+          if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
           final List<Stadium> fallbackStadiums = fallbackResult['items'];
           if (fallbackStadiums.isNotEmpty) {
             _stadiums = fallbackStadiums;
