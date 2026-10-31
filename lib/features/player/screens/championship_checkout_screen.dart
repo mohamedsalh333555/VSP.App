@@ -85,7 +85,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
     if (!mounted) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = auth.currentUser?.uid;
+    final currentUserId = auth.currentUser?.id;
 
     final effectiveCaptainId = widget.team.captainId.isNotEmpty
         ? widget.team.captainId
@@ -359,7 +359,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final captainId = widget.team.captainId.isNotEmpty
         ? widget.team.captainId
-        : (auth.currentUser?.uid ?? '');
+        : (auth.currentUser?.id ?? '');
 
     final minPlayers = widget.championship.minPlayersPerTeam;
     final maxPlayers = widget.championship.maxPlayersPerTeam;
