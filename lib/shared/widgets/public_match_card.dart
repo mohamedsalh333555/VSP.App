@@ -426,7 +426,7 @@ void _manageParticipants(BuildContext context) {
  ),
  ),
  if (!booking.isOpenJoin || isHost)
-  IconButton(visualDensity: VisualDensity.compact, icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18), onPressed: () => _handleShare(booking)),
+  IconButton( icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18), onPressed: () => _handleShare(booking)),
  ],
  ),
  const SizedBox(height: 12),
