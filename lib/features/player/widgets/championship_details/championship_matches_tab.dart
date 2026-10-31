@@ -69,8 +69,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                   retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
                 );
               }
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  !snapshot.hasData) {
+              if (!snapshot.hasData && !snapshot.hasError) {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(VSPSpacing.xl),
