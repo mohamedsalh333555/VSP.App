@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 133 unique registered candidate Dart paths (138 inventory rows including 5 repeated shared/embedded entries); static source triage currently covers 128 unique paths.  
+**Scope:** Shared foundations and 128 registered candidate Dart paths; embedded components are tracked separately in the screen register.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -48,7 +48,7 @@
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; automatic challenge result prompts now require the signed-in user to be the captain of a team participating in that booking, and use that team's ID for submission/response. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
-| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; the static scan covers 128 candidate paths; the remaining 5 unique registered paths still need source triage, but screen-level rule coverage is incomplete. |
+| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | source reviewed—runtime pending | Booking screen/owner schedule/pending-cancel surfaces now use generic localized failure copy instead of raw backend exception strings; repository/provider diagnostics remain separate. Audit all critical failure surfaces. |
 | 44 | Optimal cognitive load | not yet inspected | Review information density, urgency, animation, and feedback intensity for each task. |
 
@@ -69,7 +69,7 @@
 
 ## Gates still open
 
-1. Complete screen-by-screen rule mapping for all 133 unique candidate paths plus embedded widgets and state variants.
+1. Complete screen-by-screen rule mapping for all 128 candidate paths plus embedded widgets and state variants.
 2. Finish Arabic/English copy and RTL/LTR review.
 3. Resolve findings that require product decisions (including notification retention policy) before changing business/data behavior.
 4. Complete one consolidated validation pass after all grouped source changes.
@@ -156,3 +156,6 @@
 - Stadium discovery/owner streams: added a scope generation token. Player discovery requests (including filtered requests) are ignored if an owner subscription starts or the scope changes before the request completes. Owner subscriptions also receive a generation token on every resubscription, so late data/error callbacks from a cancelled subscription cannot overwrite the current snapshot, even when the owner ID is unchanged.
 - Booking synchronization: added a generation token shared by player and owner sync operations. Starting a newer sync or disposing/cancelling the coordinator invalidates all older direct-fetch results and Realtime callbacks/errors. The last-known player booking baseline is reset when the signed-in user changes, so a failed first fetch for a new account cannot retain the previous account's booking baseline.
 - These are source-level race-condition protections. Account-switch timing, delayed network responses, cancellation races, and notification Undo behavior still require the single consolidated runtime validation pass.
+
+
+- Follow-up source review of the embedded booking components confirmed the pending-booking card checks server-confirmed payment state before reporting confirmation, and the player booking card renders lifecycle/refund states from the booking record. The captain-team lookup now has a strict variant used by the post-match prompt: a failed Supabase lookup is surfaced as a localized verification error instead of being silently interpreted as “user is not a captain.” The compatibility method retains its historical empty-set fallback for other callers.
