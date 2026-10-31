@@ -278,8 +278,25 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       if (mounted) VSPFeedback.showInfo(context, ar ? 'يمكن مشاركة الدعوة بعد تأكيد الحجز.' : 'The invitation becomes available after confirmation.');
       return;
     }
-    _inviteToken = token; _inviteCode = code;
-    await SharingService.shareCollectiveInvite(inviteToken: token, inviteCode: code, stadiumName: booking.stadiumName, date: booking.formattedDate + ' - ' + booking.formattedTimeRange, hostName: booking.hostName ?? (ar ? 'المنشئ' : 'Host'));
+    _inviteToken = token;
+    _inviteCode = code;
+    try {
+      await SharingService.shareCollectiveInvite(
+        inviteToken: token,
+        inviteCode: code,
+        stadiumName: booking.stadiumName,
+        date: booking.formattedDate + ' - ' + booking.formattedTimeRange,
+        hostName: booking.hostName ?? (ar ? 'المنشئ' : 'Host'),
+      );
+    } catch (e) {
+      VSPLogger.w('Collective invite sharing failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذرت مشاركة الدعوة. حاول مرة أخرى.' : 'Could not share the invitation. Please try again.',
+        );
+      }
+    }
   }
 
   Future<void> _cancel() async {
