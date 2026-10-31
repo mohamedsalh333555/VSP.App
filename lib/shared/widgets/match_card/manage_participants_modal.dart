@@ -322,7 +322,12 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                                   await launchUrl(Uri.parse('tel:${u.phone}'));
                                                 } catch (_) {
                                                   if (context.mounted) {
-                                                    VSPFeedback.showError(context, 'Could not launch dialer');
+                                                    VSPFeedback.showError(
+                                                      context,
+                                                      isArabic
+                                                          ? 'تعذر فتح تطبيق الاتصال.'
+                                                          : 'Could not open the phone app.',
+                                                    );
                                                   }
                                                 }
                                               },
