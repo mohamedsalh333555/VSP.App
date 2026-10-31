@@ -651,3 +651,4 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 
 - The destructive round-schedule reset confirmation is now scrollable, its Arabic confirmation sentence is corrected, and success copy is concise and bilingual.
 - A failed reset previously produced no user-facing feedback; it now shows a localized retry message. The reset RPC and schedule data rules are unchanged.
+- The championship roster import action now says “لصق / Paste” rather than “لصق من واتساب / Paste from WhatsApp”; it reads clipboard text and is not tied to WhatsApp specifically.
