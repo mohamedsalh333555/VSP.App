@@ -288,7 +288,12 @@ void showBookingPaymentMethodSheet({
                                 } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
                                   HapticFeedback.vibrate();
                                   setSheetState(() => isNavigating = false);
-                                  VSPFeedback.showError(sheetContext, bookingProvider.errorMessage!);
+                                  VSPFeedback.showError(
+                                    sheetContext,
+                                    isArabic
+                                        ? 'تعذر تأكيد الحجز النقدي. لم يتم تأكيد الحجز؛ حاول مرة أخرى.'
+                                        : 'Could not confirm the cash booking. It has not been confirmed; please retry.',
+                                  );
                                 }
                               } catch (e) {
                                 HapticFeedback.vibrate();
