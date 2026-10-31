@@ -135,10 +135,10 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | source reviewed—runtime pending (showDialog safe-area route; centered custom content needs short-screen runtime check) |
 | `lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
+| `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | source reviewed—runtime pending (refund amount is not guessed from total_price; distinguishes unpaid, confirmed, and pending server calculation) |
 | `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
+| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown refund amount displays server-confirmation state instead of 0 EGP) |
 | `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (Dialog safe-area, bounded height, internally scrollable year/day steps) |
 
 ## Non-screen UI surfaces still requiring discovery
