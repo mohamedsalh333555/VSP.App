@@ -40,9 +40,9 @@ The compatibility layer preserves existing numeric geometry (including the legac
 This is a shared-foundation migration, not a completed screen audit.
 
 - UXLP-44 standard: written.
-- Initial candidate screen register: 128 Dart paths; the current register contains 184 unique Dart screen/surface paths.
+- Initial candidate screen register: 128 Dart paths; the current register contains 181 unique Dart screen/surface paths.
 - Shared component audit: initial pass and the changes above applied.
-- A recorded static source scan covers 128 candidate paths. The current register now contains 184 unique Dart screen/surface paths; therefore 56 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 184 paths before calling this gate complete.
+- A recorded static source scan covers 128 candidate paths. The current register now contains 181 unique Dart screen/surface paths; therefore 53 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 181 paths before calling this gate complete.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
 - Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
@@ -114,7 +114,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 
 ## Source inventory checkpoint
 
-- The original 128 candidate paths have source-review notes. Fifty-six paths added to the current 184-path register are not yet proven to be covered by the original static scan; this is not full per-rule/state coverage.
+- The original 128 candidate paths have source-review notes. Fifty-three paths added to the current 181-path register are not yet proven to be covered by the original static scan; this is not full per-rule/state coverage.
 - This is a source-review checkpoint only. It is not a 44-rule pass result: runtime states, locale/device combinations, embedded widgets not represented as candidate files, keyboard behavior, and visual overflow still require consolidated device validation and targeted screen-by-screen evidence.
 - No APK build or manual test suite was intentionally started as part of this checkpoint. Do not build the release artifact until the remaining UXLP implementation and grouped source fixes are complete.
 
@@ -154,7 +154,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 
 - The exact adopted standard is `docs/UXLP_44_VSP_STANDARD.md` (44 rules across perception, decision processing, interaction, system coherence, and cognitive load).
 - Added `docs/UXLP_44_RULE_AUDIT.md` as the rule-level evidence matrix. It records the shared-foundation source evidence, findings fixed in this batch, and what remains unverified for each rule.
-- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 184-path register remains the screen inventory; it does not prove per-rule coverage.
+- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 181-path register remains the screen inventory; it does not prove per-rule coverage.
 - No final validation or APK build has been run. Continue grouped implementation first, then perform one consolidated validation pass.
 
 ## Player post-match result flow source fixes
@@ -236,9 +236,9 @@ The canonical shared bottom navigation now uses focusable InkWell interaction wh
 - Fixed the analyzer findings reported by PR CI run 41221229970 in the payout dialog, add-player invitation sheet, stadium filter sheet, challenge team-selection retry guard, auth provider, and date-picker semantics.
 - PR CI run 41222072722 then reported only one remaining informational const-constructor lint in the add-player sheet. The style was corrected in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`; this commit has not been analyzer-verified.
 - Removed a hardcoded Pro monthly amount from the owner dashboard teaser so it cannot diverge from the current public subscription-plan catalog.
-- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 184-path screen/state rule audit and device/runtime review remain incomplete.
+- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 181-path screen/state rule audit and device/runtime review remain incomplete.
 
 
 ## Nested championship detail discovery — 2026-10-31
 
-Added the 10 Dart components under `lib/features/player/widgets/championship_details` to the register. The bottom action bar has source evidence for the open/ongoing/completed/cancelled/full state gates; the other nine files are explicitly `not yet inspected`. This raises the inventory to 184 unique Dart screen/surface paths. The original 128-path static scan does not cover 56 added paths until a complete rescan is recorded.
+Reconciled the nine Dart components under `lib/features/player/widgets/championship_details`. Two were already registered; seven were newly tracked. The bottom action bar has source evidence for the open/ongoing/completed/cancelled/full state gates; six newly tracked components remain `not yet inspected`. This raises the inventory to 181 unique Dart screen/surface paths. The original 128-path static scan does not cover 53 added paths until a complete rescan is recorded.
