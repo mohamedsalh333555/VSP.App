@@ -166,11 +166,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       ),
     );
 
+    final submittedSubject = subjectController.text.trim();
+    subjectController.dispose();
+
     if (result != null && mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SupportTicketScreen(ticketId: result, title: subjectController.text.trim()),
+          builder: (_) => SupportTicketScreen(ticketId: result, title: submittedSubject),
         ),
       );
     }
