@@ -536,8 +536,39 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    if (_paymentUserId == null || _hasAccountChanged || currentUserId != _paymentUserId) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic
+                        ? 'تغيّر الحساب أثناء عملية الدفع. أوقفنا المتابعة لحماية الحجز.'
+                        : 'The account changed during checkout. Payment has been paused to protect the booking.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(isArabic ? 'رجوع' : 'Go back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final l10n = AppLocalizations.of(context)!;
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final effectiveForceFullPayment = widget.forceFullPayment;
     final hasDeposit = !effectiveForceFullPayment && widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
