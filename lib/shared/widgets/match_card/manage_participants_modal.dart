@@ -261,7 +261,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                           ),
                         ),
                       )
-                    : SingleChildScrollView,
+                    : SingleChildScrollView(
                     child: Column(
                       children: [
                         if (_pending.isNotEmpty) ...[
