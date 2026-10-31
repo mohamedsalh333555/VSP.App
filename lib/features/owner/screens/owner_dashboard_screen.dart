@@ -82,17 +82,32 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
 
   Map<String, dynamic>? _financialSummary;
+  int _financialSummaryRequestGeneration = 0;
 
   Future<void> _fetchFinancialSummary(String uid) async {
+    final requestGeneration = ++_financialSummaryRequestGeneration;
+    if (mounted) {
+      // Do not keep presenting a previously verified balance as current while
+      // a new server snapshot is being requested.
+      setState(() => _financialSummary = null);
+    }
     try {
       final summary = await OwnerRepository().getOwnerFinancialSummary(uid);
-      if (mounted) {
-        setState(() {
-          _financialSummary = summary;
-        });
+      if (!mounted ||
+          requestGeneration != _financialSummaryRequestGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
       }
+      setState(() {
+        _financialSummary = summary;
+      });
     } catch (e) {
       VSPLogger.w('Failed to load owner financial summary for dashboard: $e');
+      if (mounted &&
+          requestGeneration == _financialSummaryRequestGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
+        setState(() => _financialSummary = null);
+      }
     }
   }
 
@@ -356,52 +371,57 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   child: Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedDashboardTab = 0);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(21),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              isArabic ? 'التشغيل اليومي' : 'Operations',
-                              style: TextStyle(
-                                color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedDashboardTab == 0,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(21),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedDashboardTab = 0);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(21),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isArabic ? 'التشغيل اليومي' : 'Operations',
+                                style: TextStyle(
+                                  color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            setState(() => _selectedDashboardTab = 1);
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
-                              borderRadius: BorderRadius.circular(21),
-                            ),
-                            alignment: Alignment.center,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  isArabic ? 'التحليلات الذكية' : 'Insights',
-                                  style: TextStyle(
-                                    color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
+                        child: Semantics(
+                          button: true,
+                          selected: _selectedDashboardTab == 1,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(21),
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() => _selectedDashboardTab = 1);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
+                                borderRadius: BorderRadius.circular(21),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isArabic ? 'التحليلات الذكية' : 'Insights',
+                                style: TextStyle(
+                                  color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
