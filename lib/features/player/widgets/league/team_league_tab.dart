@@ -571,7 +571,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                 await _loadLeague();
                               }
                             } catch (e, stackTrace) {
-                              debugPrint('Team league creation/payment setup failed: $e\\n$stackTrace');
+                              debugPrint('Team league creation/payment setup failed: $e\n$stackTrace');
                               if (pCtx.mounted) {
                                 setPSheetState(() => isSubmitting = false);
                                 ScaffoldMessenger.of(pCtx).showSnackBar(SnackBar(
@@ -755,7 +755,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                     await _loadLeague();
                                   }
                                 } catch (e, stackTrace) {
-                                  debugPrint('Joining team league failed: $e\\n$stackTrace');
+                                  debugPrint('Joining team league failed: $e\n$stackTrace');
                                   if (ctx.mounted) {
                                     setDialogState(() => isSubmitting = false);
                                     ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
