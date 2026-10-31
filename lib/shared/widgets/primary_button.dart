@@ -53,14 +53,18 @@ class _PrimaryButtonState extends State<PrimaryButton> {
 
     HapticFeedback.mediumImpact();
     setState(() => _isDebouncing = true);
-    widget.onPressed?.call();
-
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(VSPDSMotion.buttonDebounce, () {
-      if (mounted) {
-        setState(() => _isDebouncing = false);
-      }
-    });
+    try {
+      widget.onPressed?.call();
+    } finally {
+      // Always release the debounce state, even if a synchronous callback
+      // throws before it can start its own async operation.
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(VSPDSMotion.buttonDebounce, () {
+        if (mounted) {
+          setState(() => _isDebouncing = false);
+        }
+      });
+    }
   }
 
   @override

@@ -106,7 +106,8 @@ class VSPPrimaryButton extends StatelessWidget {
                     Flexible(
                       child: Text(
                         text,
-                        maxLines: 1,
+                        maxLines: 2,
+                        softWrap: true,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: VSPDSTypography.button.copyWith(
