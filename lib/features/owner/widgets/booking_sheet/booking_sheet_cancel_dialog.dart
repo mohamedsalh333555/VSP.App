@@ -57,9 +57,13 @@ class BookingSheetCancelDialog {
           children: [
             const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 22),
             const SizedBox(width: 8),
-            Text(
-              isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            Expanded(
+              child: Text(
+                isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
             ),
           ],
         ),
