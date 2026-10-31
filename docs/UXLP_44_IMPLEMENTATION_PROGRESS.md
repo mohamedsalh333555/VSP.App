@@ -375,3 +375,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Standings futures are cached per group so ordinary live match updates do not repeatedly issue standings queries. Retry clears the cache, rebuilds the standings queries, and refreshes the parent streams.
 - Group iteration is bounded to the supported A–H labels to prevent an out-of-range UI crash from malformed group-count data.
 - All changes are source-only; runtime and data-volume verification remain pending.
+
+
+## Player profile avatar consistency — 2026-10-31
+
+- The profile header and the no-team/free-agent card previously used `DecorationImage(CachedNetworkImageProvider(...))` with no image-load failure UI. A stale or inaccessible profile-image URL could therefore leave a blank circle even though the profile URL was present.
+- Both surfaces now use one shared local avatar renderer with the same image source and explicit placeholder/error fallback. The profile image remains the source of truth; the fallback appears only when the URL is missing, blank, or fails to load. This does not substitute a team image for a player image.
+- Source correction only; remote-image failure and visual consistency still require the consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
