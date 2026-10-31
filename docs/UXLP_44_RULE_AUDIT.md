@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 138 registered candidate Dart paths; static source triage currently covers 128 of those paths.  
+**Scope:** Shared foundations and 133 unique registered candidate Dart paths (138 inventory rows including 5 repeated shared/embedded entries); static source triage currently covers 128 unique paths.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -48,7 +48,7 @@
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; automatic challenge result prompts now require the signed-in user to be the captain of a team participating in that booking, and use that team's ID for submission/response. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes. No notification DELETE trigger or retention cron was found in the active project. UI stream is capped at 50; product retention rule and historical disappearance still need confirmation. |
-| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; the static scan covers 128 candidate paths; the remaining 10 registered paths still need source triage, but screen-level rule coverage is incomplete. |
+| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; the static scan covers 128 candidate paths; the remaining 5 unique registered paths still need source triage, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | source reviewed—runtime pending | Booking screen/owner schedule/pending-cancel surfaces now use generic localized failure copy instead of raw backend exception strings; repository/provider diagnostics remain separate. Audit all critical failure surfaces. |
 | 44 | Optimal cognitive load | not yet inspected | Review information density, urgency, animation, and feedback intensity for each task. |
 
@@ -69,7 +69,7 @@
 
 ## Gates still open
 
-1. Complete screen-by-screen rule mapping for all 138 candidate paths plus embedded widgets and state variants.
+1. Complete screen-by-screen rule mapping for all 133 unique candidate paths plus embedded widgets and state variants.
 2. Finish Arabic/English copy and RTL/LTR review.
 3. Resolve findings that require product decisions (including notification retention policy) before changing business/data behavior.
 4. Complete one consolidated validation pass after all grouped source changes.
