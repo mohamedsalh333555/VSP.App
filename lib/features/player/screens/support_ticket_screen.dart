@@ -150,6 +150,11 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                 ],
               ),
             ),
+            if (ticketSnapshot.hasError)
+              _SupportStreamWarning(
+                isArabic: ar,
+                onRetry: () => setState(() {}),
+              ),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _repo.streamSupportTicketMessages(widget.ticketId),
@@ -180,6 +185,27 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                     );
                   }
                   final messages = snapshot.data ?? [];
+                  if (snapshot.hasError && messages.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(VSPSpacing.lg),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              ar ? 'تعذر تحديث الرسائل.' : 'Could not load messages.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: VSPColors.textSecondary),
+                            ),
+                            TextButton(
+                              onPressed: () => setState(() {}),
+                              child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
                   if (messages.isEmpty) {
                     return Center(
                       child: Text(
@@ -190,9 +216,16 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                   }
                   return ListView.builder(
                     padding: const EdgeInsets.all(VSPSpacing.md),
-                    itemCount: messages.length,
+                    itemCount: messages.length + (snapshot.hasError ? 1 : 0),
                     itemBuilder: (_, i) {
-                      final m = messages[i];
+                      if (snapshot.hasError && i == 0) {
+                        return _SupportStreamWarning(
+                          isArabic: ar,
+                          onRetry: () => setState(() {}),
+                        );
+                      }
+                      final messageIndex = i - (snapshot.hasError ? 1 : 0);
+                      final m = messages[messageIndex];
                       final me = m['sender_id']?.toString() == userId;
                       return Align(
                         alignment: me ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
@@ -264,6 +297,58 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
               ),
           ]);
         },
+      ),
+    );
+  }
+}
+
+
+class _SupportStreamWarning extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onRetry;
+
+  const _SupportStreamWarning({
+    required this.isArabic,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(
+        horizontal: VSPSpacing.md,
+        vertical: VSPSpacing.xs,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: VSPSpacing.md,
+        vertical: VSPSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 17),
+          const SizedBox(width: VSPSpacing.sm),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر تحديث المحادثة. ما تم تحميله ما زال محفوظًا.'
+                  : 'Could not refresh this conversation. Loaded messages are still available.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 11.5,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
       ),
     );
   }
