@@ -106,8 +106,6 @@ class TeamLeagueFixturesView extends StatelessWidget {
               style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
           ),
-            style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
-          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -297,7 +295,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                         ),
                       ),
                       if (match.isConfirmed && match.winnerId == match.homeTeamId)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 4),
                           child: Text(
                             isArabic ? 'فوز 🟢' : 'Win 🟢',
@@ -359,7 +357,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                         ),
                       ),
                       if (match.isConfirmed && match.winnerId == match.awayTeamId)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 4),
                           child: Text(
                             isArabic ? 'فوز 🟢' : 'Win 🟢',
