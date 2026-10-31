@@ -91,7 +91,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (strict account-scoped team lookup; loading/empty/error/retry states; create-team recovery; challenge continuation re-verifies team and blocks duplicate/stale actions) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (checkout layout and insets reviewed; Supabase auth ID reads corrected to User.id) |
-| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup before registration; generic localized failure rather than treating read failure as no team or exposing backend exception) |
+| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup; live championship and matches streams can be recreated on retry; stale header data now shows a warning/retry banner) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
@@ -227,10 +227,10 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | `lib/features/player/widgets/championship_details/championship_bottom_bar.dart` | player | source reviewed—runtime pending (only open championships expose registration; ongoing/completed/cancelled/full states route to view/disabled actions) |
 | `lib/features/player/widgets/championship_details/championship_details_header.dart` | player | source reviewed—runtime pending (live championship status, date, prize, fee, and registration metrics; text wrapping/locale pending) |
-| `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | source reviewed—runtime pending (stream loading/empty/error/stale-data states with retry; brackets navigation and standings child) |
+| `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | source reviewed—runtime pending (waits for first stream event; separates empty/error/stale-data states; retry recreates stream and preserves last good matches) |
 | `lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart` | player | source reviewed—runtime pending (selected-tab semantics and tap handling; Arabic/English width and keyboard focus pending) |
 | `lib/features/player/widgets/championship_details/championship_rules_tab.dart` | player | source reviewed—runtime pending (long rules content is scrollable; localized headings and long-text rendering pending) |
-| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | source reviewed—runtime pending (FutureBuilder loading/error/empty states with retry; horizontal table scroll and stat columns) |
+| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | source reviewed—runtime pending (cached per-group FutureBuilder; loading/error/empty states with retry; group index bounded; horizontal table scroll) |
 | `lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart` | player | source reviewed—runtime pending (FutureBuilder loading/error/empty states with retry; scorer rank and goals presentation) |
 
 ## Latest grouped source remediation — 2026-10-31
