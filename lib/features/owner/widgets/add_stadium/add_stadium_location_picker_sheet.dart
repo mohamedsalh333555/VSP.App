@@ -403,7 +403,7 @@ class AddStadiumLocationPickerSheet {
     final TextEditingController addressController = TextEditingController(text: initialAddress ?? '');
     String? addressError;
 
-    return await showModalBottomSheet<LocationResult>(
+    final result = await showModalBottomSheet<LocationResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -605,5 +605,7 @@ class AddStadiumLocationPickerSheet {
         );
       },
     );
+    addressController.dispose();
+    return result;
   }
 }
