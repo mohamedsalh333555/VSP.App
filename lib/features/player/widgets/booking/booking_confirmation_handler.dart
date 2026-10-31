@@ -198,6 +198,12 @@ class BookingConfirmationHandler {
       VSPLogger.e('Error checking slot availability before booking', e, stack);
     }
 
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
+    }
+
     HapticFeedback.mediumImpact();
 
     // ── Build the booking draft ──────────────────────────────────────────────
