@@ -490,3 +490,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Match-result modal details now use three equal flexible columns; long stadium/date/price values are limited to two lines with ellipsis.
 - Booking-type modal heading and option title/subtitle are bounded to prevent long Arabic/English copy from overflowing compact layouts.
 - These are source-level layout corrections only. No tournament, match-result, booking, payment, or database business rules were changed. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+
+## Stadium location and bracket dialog lifecycle/responsiveness — 2026-10-31
+
+- **Stadium manual-address sheet:** its TextEditingController was created before opening the modal but had no disposal path. The method now awaits the modal result, disposes the controller after the sheet closes, and returns the unchanged result.
+- **Tournament bracket preview:** removed an inline-created TransformationController that had no owner/disposal lifecycle; the viewer retains its default initial transform. The live-draw dialog title now uses flexible width and bounded two-line text beside its icon.
+- No location data, tournament draw generation, booking, or payment rules were changed. Source-only corrections; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
