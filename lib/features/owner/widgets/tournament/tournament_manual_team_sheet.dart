@@ -266,8 +266,11 @@ void showTournamentManualTeamSheet(
                                       : 'Team added to tournament successfully.',
                                 );
                               }
-                            } catch (e) {
-                              setDialogState(() => isSubmitting = false);
+                            } catch (e, stackTrace) {
+                              debugPrint('Manual tournament team registration failed: $e\n$stackTrace');
+                              if (sheetContext.mounted) {
+                                setDialogState(() => isSubmitting = false);
+                              }
                               if (context.mounted) {
                                 VSPFeedback.showError(
                                   context,
