@@ -44,6 +44,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isBallRented = false;
   bool _isPrivate = true;
   bool _isLoading = false;
+  bool _isLoadingUserTeam = true;
+  bool _hasUserTeamLoadError = false;
   final int _currentPlayers = 1;
   int _initialPlayersCount = 1;
   String? _userTeamId;
@@ -88,12 +90,42 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   Future<void> _fetchUserTeam() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.id;
-    if (userId != null) {
-      final team = await TeamRepository().getUserTeam(userId);
+    if (userId == null) {
       if (mounted) {
+        setState(() {
+          _isLoadingUserTeam = false;
+          _userTeamId = null;
+          _userTeamName = null;
+          _hasUserTeamLoadError = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingUserTeam = true;
+        _hasUserTeamLoadError = false;
+      });
+    }
+    try {
+      final team = await TeamRepository().getUserTeamStrict(userId);
+      if (mounted && Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
         setState(() {
           _userTeamId = team?.id;
           _userTeamName = team?.name;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading booking team context: $e');
+      if (mounted && Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
+        setState(() {
+          _userTeamId = null;
+          _userTeamName = null;
+          _isLoadingUserTeam = false;
+          _hasUserTeamLoadError = true;
         });
       }
     }
@@ -125,6 +157,33 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _handleBookingConfirmation() async {
+    final normalizedType = widget.bookingType.toLowerCase();
+    final requiresTeam = normalizedType.contains('team') ||
+        BookingConfirmationHandler.isChallenge(widget.bookingType);
+    if (requiresTeam && _isLoadingUserTeam) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showInfo(
+        context,
+        isArabic ? 'جارٍ التحقق من بيانات فريقك. حاول بعد لحظات.' : 'Your team is still being verified. Try again in a moment.',
+      );
+      return;
+    }
+    if (requiresTeam && _userTeamId == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      if (_hasUserTeamLoadError) {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر التحقق من بيانات فريقك. أعد المحاولة الآن.' : 'Could not verify your team. Retrying now.',
+        );
+        await _fetchUserTeam();
+      } else {
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'يجب أن تنضم إلى فريق قبل إنشاء هذا الحجز.' : 'Join a team before creating this booking.',
+        );
+      }
+      return;
+    }
     await BookingConfirmationHandler.run(
       context: context,
       stadium: widget.stadium,
@@ -218,7 +277,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         depositAmount: deposit,
         needsDeposit: widget.stadium.needsDeposit,
         isSlotSelected: isSlotSelected,
-        isLoading: _isLoading,
+        isLoading: _isLoading || _isLoadingUserTeam,
         onConfirmPressed: _handleBookingConfirmation,
       ),
     );
