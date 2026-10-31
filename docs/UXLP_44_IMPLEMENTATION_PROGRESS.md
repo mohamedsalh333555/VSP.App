@@ -632,3 +632,4 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - The owner emergency-closure confirmation is now scrollable. Confirmation copy remains explicit that affected bookings enter administrative review/refund handling; the success message states the 24-hour closure duration without implying an immediate refund. Technical failure payloads are replaced with localized recovery guidance.
 - The operation's 24-hour duration, booking selection, and server-side administrative review/refund behavior were not changed.
+- Follow-up: owner deletion reauthentication/delete exceptions are caught in the dialog; loading is restored and localized retry feedback is shown instead of leaving the destructive-action modal stuck.
