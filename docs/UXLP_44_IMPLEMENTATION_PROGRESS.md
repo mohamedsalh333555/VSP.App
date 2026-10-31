@@ -474,3 +474,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Player counter label in the owner booking form now uses the available flexible width and ellipsizes, preserving the increment/decrement controls on narrow sheets.
 - No payment amounts, calculations, collection rules, or booking behavior were changed.
 - Source implementation only; no tests, analyzer, CI, runtime validation, database changes, or APK build were run.
+
+## Tournament dashboard UX correction
+- Kickoff is disabled when its activation callback is unavailable, avoiding an enabled no-op button.
+- Champion name is limited to two lines with ellipsis in the bottom bar.
+- No tournament state or data rules changed. Source-only; no tests, analyzer, CI, runtime checks, or APK build.
