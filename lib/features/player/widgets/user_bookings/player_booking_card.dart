@@ -492,29 +492,30 @@ class PlayerBookingCard extends StatelessWidget {
             const SizedBox(height: VSPSpacing.md),
             Row(
               children: [
-                Expanded(
-                  child: Builder(
-                    builder: (btnCtx) {
-                      final now = DateTime.now();
-                      final deadline = booking.startTime.subtract(const Duration(hours: 6));
-                      final isWithinGrace = now.difference(booking.createdAt).inMinutes <= 20 && !now.isAfter(booking.startTime);
-                      final bool canCancel = now.isBefore(deadline) || isWithinGrace;
-                      final bool bookingStarted = now.isAfter(booking.startTime);
-                      final String lockedLabel = bookingStarted
-                          ? (isArabic ? 'بدأ الحجز' : 'Booking started')
-                          : (isArabic ? 'لا يمكن الإلغاء (أقل من 6 ساعات)' : 'Cannot cancel (< 6 hrs left)');
-                      return Tooltip(
-                        message: canCancel ? '' : lockedLabel,
-                        child: VSPAnimatedButton(
-                          text: l10n.cancel,
-                          color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.4),
-                          textColor: canCancel ? VSPColors.error : VSPColors.textSecondary.withValues(alpha: 0.5),
-                          onPressed: canCancel ? () => _showCancelDialog(context) : null,
-                        ),
-                      );
-                    },
+                if (booking.status != BookingStatus.cancelled)
+                  Expanded(
+                    child: Builder(
+                      builder: (btnCtx) {
+                        final now = DateTime.now();
+                        final deadline = booking.startTime.subtract(const Duration(hours: 6));
+                        final isWithinGrace = now.difference(booking.createdAt).inMinutes <= 20 && !now.isAfter(booking.startTime);
+                        final bool canCancel = now.isBefore(deadline) || isWithinGrace;
+                        final bool bookingStarted = now.isAfter(booking.startTime);
+                        final String lockedLabel = bookingStarted
+                            ? (isArabic ? 'بدأ الحجز' : 'Booking started')
+                            : (isArabic ? 'لا يمكن الإلغاء (أقل من 6 ساعات)' : 'Cannot cancel (< 6 hrs left)');
+                        return Tooltip(
+                          message: canCancel ? '' : lockedLabel,
+                          child: VSPAnimatedButton(
+                            text: l10n.cancel,
+                            color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.4),
+                            textColor: canCancel ? VSPColors.error : VSPColors.textSecondary.withValues(alpha: 0.5),
+                            onPressed: canCancel ? () => _showCancelDialog(context) : null,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
                 if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
                 Expanded(
                   child: VSPAnimatedButton(
