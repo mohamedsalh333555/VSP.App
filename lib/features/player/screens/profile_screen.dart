@@ -581,6 +581,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final confirmed = await showDialog<bool>(
  context: context,
  builder: (ctx) => AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
  title: Row(
