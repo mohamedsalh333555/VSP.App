@@ -7,40 +7,40 @@
 
 | # | Rule | Current source status | Evidence / remaining verification |
 |---:|---|---|---|
-| 1 | Clear hierarchy | not yet inspected | Inspect each screen's primary task and visual hierarchy. |
-| 2 | Consistent grouping | not yet inspected | Verify related fields/actions and separation on each screen. |
+| 1 | Clear hierarchy | source reviewed—runtime pending | Source-reviewed representative player/owner flows: booking confirmation, match details, create-team, owner dashboard, subscription plans. Screen-by-screen hierarchy and device rendering still pending. |
+| 2 | Consistent grouping | source reviewed—runtime pending | Booking, team creation, subscription, and match-detail surfaces group related decision inputs/actions; full 128-surface grouping review remains pending. |
 | 3 | Contrast first | source reviewed—runtime pending | V2 semantic foreground/surface palette exists; audit actual component pairings and contrast in every state. |
 | 4 | Typography roles | source reviewed—runtime pending | V2 semantic typography roles exist; verify feature screens use the roles consistently and preserve Arabic/English legibility. |
 | 5 | One icon language | source reviewed—runtime pending | Shared navigation uses distinct Iconsax active/inactive variants; inspect all feature icons, sizes, and containers. |
 | 6 | Color semantics | source reviewed—runtime pending | V2 semantic success/warning/error/info/accent colors exist; verify no feature-level misuse. |
 | 7 | Stable alignment | source reviewed—runtime pending | Canonical spacing and geometry tokens exist; screen-level alignment review remains. |
-| 8 | Scan-friendly density | not yet inspected | Review information density and paragraph/card readability screen by screen. |
+| 8 | Scan-friendly density | source reviewed—runtime pending | Long booking, refund, and plan content now uses bounded scrolling; representative dashboards/cards reviewed. Density and large-text rendering still require device validation. |
 | 9 | State visibility | source reviewed—runtime pending | Player and owner booking screens distinguish initial loading from authoritative empty results; both preserve loaded lists/schedules during refresh and expose stream failures with retry. Owner stadium realtime errors now preserve the last authoritative stadium snapshot instead of clearing the schedule. Verify other screens/states. |
 | 10 | Bilingual visual integrity | source reviewed—runtime pending | Championship route and notification error states now have Arabic/English copy; full locale and RTL/LTR review remains. |
 | 11 | Responsive legibility | source reviewed—runtime pending | Grouped safe-area/scroll fixes applied to several dialogs and sheets; keyboard, large-text, and compact-device checks remain. |
-| 12 | Recognition over recall | not yet inspected | Verify required context and choices are visible at point of decision. |
+| 12 | Recognition over recall | source reviewed—runtime pending | Booking confirmation keeps selected slots, financial summary, and team context visible; challenge selection shows verified opponent/team; subscription cards show current entitlements and prices. |
 | 13 | Plain language | source reviewed—runtime pending | Player booking details maps lifecycle statuses to explicit Arabic/English labels; refund-pending badge now uses channel-neutral copy instead of incorrectly implying every refund is bank-based. Full app copy audit remains. |
-| 14 | One primary decision | not yet inspected | Identify competing primary actions on each decision surface. |
-| 15 | Progressive disclosure | not yet inspected | Review advanced/optional details and disclosure timing. |
-| 16 | Decision context | not yet inspected | Verify confirmation surfaces show all information needed before commitment. |
+| 14 | One primary decision | source reviewed—runtime pending | Booking type cards, checkout CTA, challenge continuation, and roster save expose a distinct primary action; remaining screen-by-screen hierarchy review pending. |
+| 15 | Progressive disclosure | source reviewed—runtime pending | Stadium detail tabs, payment fee explanation modal, and staged onboarding/tournament wizards defer secondary detail until requested. |
+| 16 | Decision context | source reviewed—runtime pending | Checkout shows server-confirmed amount plus fee breakdown; cancellation and match-leave dialogs explain consequences; booking confirmation surfaces slot/team context before commit. |
 | 17 | Transparent cost | source reviewed—runtime pending | Payment fee display now matches the server's local Paymob rate and validation; unknown fees are not shown as zero. Refund dialogs/tracking no longer infer a refundable amount from total_price; they distinguish confirmed amounts from server-pending amounts. Remaining booking/cancellation totals still require review. |
 | 18 | No misleading promises | source reviewed—runtime pending | Payment-fee and refund copy no longer promises unverified amounts, instant confirmation, 24/7 support, or “100% secure” processing. Cancellation success now requires persisted cancelled status when the refund worker reports pending. Refund notification gaps remain documented for server-side approval. |
-| 19 | Meaningful defaults | not yet inspected | Audit defaults against user role, location, and current booking/tournament context. |
-| 20 | Choice economy | not yet inspected | Find duplicate, redundant, or low-value choices. |
+| 19 | Meaningful defaults | source reviewed—runtime pending | Create-team defaults to Football, consistent with VSP's football-only product; challenge and booking flows now bind defaults to current authenticated/team context. Broader default audit pending. |
+| 20 | Choice economy | source reviewed—runtime pending | Booking-type choices are separated into personal, collective, and challenge paths; subscription now shows monthly/annual billing plus trial only when configured. |
 | 21 | Chunk complex tasks | source reviewed—runtime pending | Owner onboarding/tournament/documentation wizards reviewed at source level; verify progress, back navigation, and draft preservation at runtime. |
-| 22 | Explain constraints | not yet inspected | Verify eligibility, limits, required fields, and unavailable-action explanations. |
-| 23 | Comparable information | not yet inspected | Audit alternatives for consistent units, labels, and criteria. |
-| 24 | Contextual help | not yet inspected | Verify guidance appears next to the field/decision it explains. |
-| 25 | Error prevention | not yet inspected | Review input validation and invalid state-transition prevention. |
-| 26 | Decision reversibility | not yet inspected | Verify irreversible/costly actions and safe exits. |
-| 27 | Affordance clarity | not yet inspected | Inspect whether each interactive control visually matches its behavior. |
+| 22 | Explain constraints | source reviewed—runtime pending | Tournament roster min/max and lock states, team-required challenge booking, owner plan stadium limits, and trial eligibility are surfaced in the reviewed flows. |
+| 23 | Comparable information | source reviewed—runtime pending | Pro monthly and annual prices are sourced from the same plan catalog; annual savings is calculated against 12 monthly payments. Broader alternative comparisons remain pending. |
+| 24 | Contextual help | source reviewed—runtime pending | Fee detail tooltip/modal explains the fee composition at checkout; roster and challenge inputs provide adjacent constraints and guidance. |
+| 25 | Error prevention | source reviewed—runtime pending | Booking availability is rechecked before confirmation; team/roster constraints are verified before actions; challenge continuation re-fetches strict membership and disables unverified states. Server-side team authorization gaps remain documented. |
+| 26 | Decision reversibility | source reviewed—runtime pending | Match leave and booking/payment cancellation have confirmation copy; payment exit now distinguishes submitted payments awaiting server confirmation. More destructive flows remain pending. |
+| 27 | Affordance clarity | source reviewed—runtime pending | Booking options use full-card InkWell; dashboard tabs have 48dp targets; fee details use a 48dp IconButton with tooltip; disabled actions use null callbacks. |
 | 28 | Immediate feedback | source reviewed—runtime pending | Post-match result entry/confirmation/dispute now distinguish backend success from failure; the result modal awaits submission, disables repeat taps, closes only after a successful submission, and preserves the form for retry after a failed submission. Loading/disabled states and feedback timing remain to be checked across all flows. |
 | 29 | No duplicate submission | source reviewed—runtime pending | Shared primary button has duplicate-tap protection; private collective-match early return now resets processing flags. Verify every async action and backend idempotency path. |
 | 30 | Predictable navigation | source reviewed—runtime pending | Root/router and both role shells reviewed; deep links, back stack, and restored tabs still need runtime verification. |
-| 31 | State-driven actions | not yet inspected | Audit contradictory actions across booking/payment/team/tournament states. |
+| 31 | State-driven actions | source reviewed—runtime pending | Booking cards gate cancel/result/refund actions by lifecycle; checkout disables payment until fee policy and booking snapshot are verified; challenge continuation requires team and opponent. |
 | 32 | Safe destructive actions | source reviewed—runtime pending | Pending-booking cancellation now requires explicit confirmation and explains that the slot will be released; other destructive actions still require review. |
 | 33 | Touch ergonomics | source reviewed—runtime pending | Shared bottom navigation items are 58dp high; back button and pending-booking cancel icon have minimum 48dp targets. Verify all remaining controls and spacing. |
-| 34 | Form resilience | not yet inspected | Audit keyboard types, focus order, validation, autofill, and submit behavior. |
+| 34 | Form resilience | source reviewed—runtime pending | Create-team name/bio fields now declare capitalization and keyboard actions; challenge code uses character capitalization and keyboard dismissal; shared CustomTextField roles reviewed. Full focus/autofill pass pending. |
 | 35 | Scroll and modal safety | source reviewed—runtime pending | Scroll-safe dialogs/sheets and safe-area fixes applied in grouped batches; remaining surfaces and keyboard/device layouts need runtime validation. |
 | 36 | Feedback recovery | source reviewed—runtime pending | Notification stream errors, championship route failures, team/profile and team-league read failures, and fee-policy lookup failures now have explicit recovery/retry states; post-match result failures show localized retry guidance. Verify all critical flows and draft preservation. |
 | 37 | Consistent gestures | source reviewed—runtime pending | Notification swipe-to-dismiss is explicit and has Undo; verify discoverability and ensure critical actions have non-gesture alternatives. |
@@ -50,7 +50,7 @@
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes and Undo restores the original payload/time. Delete/Undo callbacks are bound to the originating account. UI stream is capped at 50; no DELETE trigger or retention cron was found. Refund notifications are emitted only after refund ledger recording succeeds; a durable reconciliation notification retry remains a server-side gap. |
 | 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 128 candidate paths have source-review notes, but screen-level rule coverage is incomplete. |
 | 43 | Operational observability | source reviewed—runtime pending | Booking screen/owner schedule/pending-cancel surfaces now use generic localized failure copy instead of raw backend exception strings; repository/provider diagnostics remain separate. Audit all critical failure surfaces. |
-| 44 | Optimal cognitive load | not yet inspected | Review information density, urgency, animation, and feedback intensity for each task. |
+| 44 | Optimal cognitive load | source reviewed—runtime pending | Owner dashboard tabs/analytics feedback and checkout loading/error states reviewed; refund and plan surfaces are scroll-bounded. Motion intensity and real-device cognitive-load validation pending. |
 
 ## Findings fixed in this batch (runtime pending)
 
@@ -225,3 +225,5 @@
 - Challenge selection now distinguishes team lookup loading, verified no-team, and lookup failure. It follows the signed-in account, retries stale/error lookups, offers team creation only for a verified no-team result, and re-verifies the user's team before continuing; the Continue action is disabled until a team and opponent are both verified. Challenge success/error copy is bilingual.
 - Championship registration now uses strict team lookup. A query failure no longer masquerades as a missing/incomplete team and no raw exception is rendered to the player.
 - Payment gateway booking initialization and match joining now use localized generic failure copy rather than exposing repository/provider error strings to the user; diagnostic detail remains in logs.
+
+- The remaining 18 rules were source-reviewed against representative high-risk player/owner flows and moved from 'not yet inspected' to 'source reviewed—runtime pending'. This is not a pass: every registered screen/surface still needs its own applicable-rule review, and no rule is marked pass until device/runtime validation is complete.
