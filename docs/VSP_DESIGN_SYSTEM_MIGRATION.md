@@ -259,3 +259,11 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - The new error surfaces reuse the shared `VSPErrorState`; table overflow remains horizontally scrollable and the main details content remains vertically scrollable.
 - All nine components in the nested championship details directory are now represented by source-review notes (two were already in the inventory). The 181-path register has no `not yet inspected` entries at this checkpoint.
 - The original 128-path static scan still leaves 53 registered paths without proven scan coverage. Source review/runtime verification and the 44-rule per-screen/state matrix remain incomplete.
+
+
+## Championship stream resilience follow-up — 2026-10-31
+
+- Added stale-data warning/retry UI for the championship header and match stream; retry recreates both streams.
+- Kept the matches tab loading until the first stream event, separating “not emitted yet” from a true empty list.
+- Cached standings futures per group across live match updates, with cache invalidation on Retry; bounded group indexes to A–H.
+- These changes reuse the shared error state and V2 tokens. They do not change database or tournament business rules; runtime validation remains pending.
