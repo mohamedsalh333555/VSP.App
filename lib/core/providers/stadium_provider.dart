@@ -19,6 +19,8 @@ class StadiumProvider with ChangeNotifier {
  bool _isLoadingMore = false;
  bool _hasMore = true;
  int? _lastDocument;
+ // Invalidates in-flight player fetches when the active data scope changes.
+ int _scopeGeneration = 0;
 
  StadiumProvider();
  String? _errorMessage;
@@ -73,6 +75,7 @@ class StadiumProvider with ChangeNotifier {
  // Discovery belongs to the player scope. Never reuse a previous owner's
  // private stadium snapshot when the app switches back to player discovery.
  if (_listeningOwnerId != null) {
+   _scopeGeneration++;
    _listeningOwnerId = null;
    _stadiumSubscription?.cancel();
    _stadiumSubscription = null;
@@ -88,6 +91,7 @@ class StadiumProvider with ChangeNotifier {
    _hasMore = true;
    isRefresh = true;
  }
+ final requestGeneration = _scopeGeneration;
  if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
  if (isRefresh) {
@@ -130,6 +134,7 @@ class StadiumProvider with ChangeNotifier {
  limit: limit,
  );
 
+ if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  _stadiums = nearbyStadiums;
  _lastDocument = _stadiums.length;
  _hasMore = nearbyStadiums.length >= limit;
@@ -183,8 +188,11 @@ class StadiumProvider with ChangeNotifier {
  }
  notifyListeners();
  } catch (e) {
- _setError('Failed to fetch stadiums: ${e.toString()}');
+ if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+   _setError('Failed to fetch stadiums: ${e.toString()}');
+ }
  } finally {
+ if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  if (isRefresh) {
  _setLoading(false);
  } else {
@@ -204,6 +212,7 @@ class StadiumProvider with ChangeNotifier {
     }
 
     if (scopeChanged) {
+      _scopeGeneration++;
       // A different owner must never see the previous owner's stadium cache.
       _stadiums = [];
       _filteredStadiums = [];
