@@ -421,6 +421,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
         child: AlertDialog(
+          scrollable: true,
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
           title: Text(l10n.cancelRegistrationTitle, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
