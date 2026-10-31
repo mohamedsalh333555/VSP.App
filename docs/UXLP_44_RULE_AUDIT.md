@@ -527,3 +527,18 @@ Recursive directory inspection of `lib/features/player/widgets/championship_deta
 ### Match participant manager resilience — 2026-10-31
 
 - **Rules 11, 17, 27, 33, 35, 42 — `ManageParticipantsModal`: keyboard-safe bounded height; explicit retryable lookup failure distinct from an empty list; localized action errors instead of raw exception text; wrapping header; localized tooltips and 48dp hit targets. Runtime validation remains pending.
+
+
+## Shared component findings and corrections — 2026-10-31
+
+The following source-level corrections were applied while expanding the component inventory. They are not runtime passes:
+
+- **Touch target and semantics:** the terms checkbox now has a 48dp interactive box and checked/button semantics; compact visual density was removed from player match/championship share actions so their default hit targets remain 48dp.
+- **Action feedback and error containment:** public match join, leave, request-cancel, and share paths now log technical exceptions and show localized user-safe feedback; the request-cancel boolean result is no longer ignored.
+- **Notification state:** owner unread-count stream errors now have a warning indicator and localized tooltip, avoiding a false “zero unread” presentation.
+- **Clipboard interaction:** phone copy has a semantic label and localized failure feedback.
+- **Timer lifecycle:** tournament countdown stops ticking at zero and recalculates/restarts when its target changes.
+- **Tournament lifecycle:** cards distinguish open, ongoing, cancelled, completed, full, and unknown/closed states; only the open state shows registration. The details bottom action bar independently confirms that gate.
+- **Design-system API:** the compatibility facade now exposes V2 size and typography roles plus canonical black/transparent/white-alpha color aliases, so feature surfaces can consume shared tokens instead of defining duplicate values.
+
+The team roster import control already displays `لصق` / `Paste`. The inventory is now 181 unique Dart paths; six newly tracked nested championship detail components remain `not yet inspected`. The 44-rule matrix remains source-reviewed/runtime-pending. The final consolidated review has not started.
