@@ -131,8 +131,8 @@ class StadiumProvider with ChangeNotifier {
 
  // Governorate Filter Priority: If a specific governorate is selected by user,
  // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
- if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null && _activeQuickFilter == null) {
- final limit = isRefresh ? 10 : _stadiums.length + 10;
+ if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
+ final limit = _activeQuickFilter != null ? 100 : (isRefresh ? 10 : _stadiums.length + 10);
  final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
  userPosition.latitude,
  userPosition.longitude,
@@ -140,9 +140,13 @@ class StadiumProvider with ChangeNotifier {
  );
 
  if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
- _stadiums = nearbyStadiums;
- _lastDocument = _stadiums.length;
- _hasMore = nearbyStadiums.length >= limit;
+ _stadiums = _activeQuickFilter == null
+     ? nearbyStadiums
+     : StadiumFilterService.applyQuickFilter(nearbyStadiums, _activeQuickFilter);
+ _lastDocument = nearbyStadiums.length;
+ // The nearby RPC caps at 100 rows and has no offset/filter parameters.
+ // For quick-filtered nearby results, load that bounded nearest set once.
+ _hasMore = _activeQuickFilter == null && nearbyStadiums.length >= limit;
  _isGeographicFallback = false;
  } else {
  final result = await _databaseService.getStadiumsPaginated(
