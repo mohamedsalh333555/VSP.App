@@ -50,7 +50,7 @@ class StadiumFilterService {
 
     if (normalizedAmenity == 'no deposit needed' ||
         amenity.trim() == 'حجز بدون عربون (دفع نقدي)') {
-      return !stadium.needsDeposit;
+      return !stadium.needsDeposit || stadium.depositAmount <= 0;
     }
 
     if (normalizedAmenity == 'showers & baths' || amenity.trim() == 'دش وحمام') {
