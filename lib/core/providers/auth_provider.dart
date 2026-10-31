@@ -121,6 +121,10 @@ class AuthProvider with ChangeNotifier {
       // Invalidate any profile fetch started for the previous auth identity.
       _userFetchGeneration++;
       _isFetchingUser = false;
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
     }
     _supabaseUser = user;
     if (!_preserveError) {
@@ -165,6 +169,12 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _fetchUserData(User user) async {
+    if (_userModel?.uid != user.id) {
+      _userModel = null;
+      _form.userType = null;
+      _isGhostUser = false;
+      _dataFetchError = false;
+    }
     final requestGeneration = ++_userFetchGeneration;
     _isFetchingUser = true;
     _isLoading = true;
