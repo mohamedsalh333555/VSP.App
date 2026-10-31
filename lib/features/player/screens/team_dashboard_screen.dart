@@ -48,7 +48,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Future<void> _fetchUserTeam() async {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     if (auth.isAuthenticated) {
-      final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+      final team = await TeamRepository().getUserTeam(auth.currentUser!.id);
       if (mounted) {
         setState(() => _userTeam = team);
         if (team != null) {
