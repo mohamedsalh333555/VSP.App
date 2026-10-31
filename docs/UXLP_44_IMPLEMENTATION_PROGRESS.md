@@ -590,3 +590,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Player and owner onboarding exit-confirmation dialogs are now scrollable, preventing their title/content/actions from being clipped on compact-height devices or with larger text.
 - Login, signup, create-account, email-verification, and both onboarding screens were source-reviewed for scroll/safe-area structure. No claim of runtime validation is made.
 - Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+## Matchup, championship checkout, and player recovery follow-up — 2026-10-31
+
+- The live matchup dashboard now distinguishes failed team/result/standings reads from a verified empty state and offers a localized retry action. Result submission and matchup closure feedback are bilingual; raw backend exception strings are no longer displayed, and the closure confirmation is scrollable.
+- Championship roster validation and paste feedback now support Arabic and English. The paste flow checks that the screen is still mounted after the import dialog returns. Registration failures use localized recovery copy rather than raw exception details.
+- Match leave failures now use localized recovery feedback rather than rendering the raw exception. Championship detail error dialogs are scrollable.
+- These are source-level changes only. The server-side matchup result authorization/closure rules and tournament scoring logic were not modified. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
