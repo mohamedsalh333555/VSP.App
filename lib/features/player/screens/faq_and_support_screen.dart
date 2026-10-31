@@ -222,7 +222,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
           collapsedIconColor: VSPColors.textSecondary,
           title: Text(
             question,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           children: [
             Padding(
