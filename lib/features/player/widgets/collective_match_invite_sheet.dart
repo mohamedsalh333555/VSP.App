@@ -117,7 +117,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   }
 
   Future<void> _join() async {
-    final uid = context.read<AuthProvider>().currentUser?.uid;
+    final uid = context.read<AuthProvider>().currentUser?.id;
     if (uid == null || _inviteToken == null || _joining) return;
     setState(() => _joining = true);
     try {
@@ -133,7 +133,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _leave() async {
     final booking = _booking;
-    final uid = context.read<AuthProvider>().currentUser?.uid;
+    final uid = context.read<AuthProvider>().currentUser?.id;
     if (booking == null || uid == null || _leaving) return;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final ok = await showDialog<bool>(
@@ -291,7 +291,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final booking = _booking;
-    final uid = context.read<AuthProvider>().currentUser?.uid;
+    final uid = context.read<AuthProvider>().currentUser?.id;
     if (_loading && booking == null) return const SizedBox(height: 420, child: Center(child: CircularProgressIndicator(color: VSPColors.accent)));
     if (booking == null) return _empty(ar);
     final isHost = uid != null && booking.createdByUserId == uid;
