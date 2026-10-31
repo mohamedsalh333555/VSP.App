@@ -47,7 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   _teamFutureUserId = userId;
   _teamFuture = userId == null
       ? Future<Team?>.value(null)
-      : TeamRepository().getUserTeam(userId);
+      : TeamRepository().getUserTeamStrict(userId);
  }
 
  Future<void> _shareTeamCard(String teamName) async {
@@ -78,7 +78,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final auth = context.read<AuthProvider>();
   final uid = auth.currentUser?.id;
   if (uid == null) return;
-  final team = await TeamRepository().getUserTeam(uid);
+  Team? team;
+  try {
+    team = await TeamRepository().getUserTeamStrict(uid);
+  } catch (_) {
+    if (mounted) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من عضويتك في الفريق. حاول مرة أخرى.'
+            : 'Could not verify your team membership. Please try again.',
+      );
+    }
+    return;
+  }
   if (!mounted) return;
   if (team != null) {
     await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
