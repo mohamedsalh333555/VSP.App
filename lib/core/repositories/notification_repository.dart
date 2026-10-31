@@ -70,27 +70,32 @@ class NotificationRepository {
     }
   }
 
-  Future<void> markNotificationAsRead(String userId, String notificationId) async {
+  Future<bool> markNotificationAsRead(String userId, String notificationId) async {
     try {
-      await _supabase
+      final updated = await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('id', notificationId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('id');
+      return updated.isNotEmpty;
     } catch (e) {
-      debugPrint('Error marking notification as read: ');
+      debugPrint('Error marking notification as read: $e');
+      return false;
     }
   }
 
-  Future<void> markAllAsRead(String userId) async {
+  Future<bool> markAllAsRead(String userId) async {
     try {
       await _supabase
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', userId)
           .eq('is_read', false);
+      return true;
     } catch (e) {
-      debugPrint('Error marking all as read: ');
+      debugPrint('Error marking all notifications as read: $e');
+      return false;
     }
   }
 

@@ -60,7 +60,21 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => NotificationRepository().markAllAsRead(_userId),
+            onPressed: () async {
+              final success = await NotificationRepository().markAllAsRead(_userId);
+              if (!context.mounted || success) return;
+              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isArabic
+                        ? 'تعذر تحديث حالة الإشعارات. حاول مرة أخرى.'
+                        : 'Could not update notification status. Please retry.',
+                  ),
+                  backgroundColor: VSPColors.error,
+                ),
+              );
+            },
             child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.accent, fontSize: 13)),
           ),
           const SizedBox(width: 8),
@@ -340,8 +354,11 @@ class _NotificationCard extends StatelessWidget {
                       text: isArabic ? 'عرض تفاصيل التحدي' : 'View Challenge Details',
                       height: 44,
                       onPressed: () {
-                        NotificationRepository().markNotificationAsRead(userId, notification.id);
-                        NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                        _markAsReadBeforeNavigation(context).then((_) {
+                          if (context.mounted) {
+                            NotificationUiHelper.navigateToBooking(context, notification.bookingId!);
+                          }
+                        });
                       },
                     ),
                   ],
@@ -354,9 +371,46 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  void _onNotificationTap(BuildContext context) {
+  Future<void> _markAsReadBeforeNavigation(BuildContext context) async {
+    if (notification.isRead) return;
+    final marked = await NotificationRepository().markNotificationAsRead(
+      userId,
+      notification.id,
+    );
+    if (!context.mounted || marked) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isArabic
+              ? 'تعذر تحديث حالة الإشعار. سيظل محفوظاً في القائمة.'
+              : 'Could not update this notification. It will remain in your list.',
+        ),
+        backgroundColor: VSPColors.warning,
+      ),
+    );
+  }
+
+  Future<void> _onNotificationTap(BuildContext context) async {
     if (!notification.isRead) {
-      NotificationRepository().markNotificationAsRead(userId, notification.id);
+      final marked = await NotificationRepository().markNotificationAsRead(
+        userId,
+        notification.id,
+      );
+      if (!context.mounted) return;
+      if (!marked) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isArabic
+                  ? 'تعذر تحديث حالة الإشعار. سيظل محفوظاً في القائمة.'
+                  : 'Could not update this notification. It will remain in your list.',
+            ),
+            backgroundColor: VSPColors.warning,
+          ),
+        );
+      }
     }
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
