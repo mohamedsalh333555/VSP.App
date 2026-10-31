@@ -4,6 +4,7 @@ import '../../../../core/utils/owner_financial_calculator.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كبسولة الأرباح للباقة الأساسية (Basic Financial Glance)
+@Deprecated('Use OwnerOperationalFinanceCard for the canonical owner finance surface')
 class OwnerBasicFinancialGlance extends StatelessWidget {
   final OwnerFinancialMetrics metrics;
   final String selectedTimePeriod;

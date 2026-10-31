@@ -263,7 +263,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
 
     final metrics = _getOrCalculateMetrics(allBookings);
 
-    final double availableBalance = (_financialSummary?['success'] == true)
+    final bool balanceVerified = _financialSummary?['success'] == true;
+    final double availableBalance = balanceVerified
         ? ((_financialSummary?['available_balance'] as num?)?.toDouble() ?? 0.0)
         : 0.0;
 
@@ -416,6 +417,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                   onlinePending: _dashboardAnalytics.revenue.onlinePending,
                   onlineHeld: _dashboardAnalytics.revenue.onlineUnavailable,
                   availableBalance: availableBalance,
+                  balanceVerified: balanceVerified,
                   upcomingValue: _dashboardAnalytics.revenue.upcomingConfirmedValue,
                   isProOwner: isProOwner,
                   onUpgrade: () => _showProUpgradeSheet(context),

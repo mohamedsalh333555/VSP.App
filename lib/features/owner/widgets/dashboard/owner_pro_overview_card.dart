@@ -6,6 +6,7 @@ import '../../../../core/utils/owner_financial_calculator.dart';
 import 'owner_time_period_dropdown.dart';
 
 /// كارت النظرة العامة للتحليلات للباقة الاحترافية (Pro Overview Analytics)
+@Deprecated('Use OwnerOperationalFinanceCard for the canonical owner finance surface')
 class OwnerProOverviewCard extends StatelessWidget {
   final OwnerFinancialMetrics metrics;
   final String selectedTimePeriod;

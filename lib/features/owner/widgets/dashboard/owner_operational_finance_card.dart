@@ -17,6 +17,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   final double onlinePending;
   final double onlineHeld;
   final double availableBalance;
+  final bool balanceVerified;
   final double upcomingValue;
   final bool isProOwner;
   final VoidCallback onOpenLedger;
@@ -33,6 +34,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
     this.onlinePending = 0.0,
     this.onlineHeld = 0.0,
     required this.availableBalance,
+    this.balanceVerified = true,
     this.upcomingValue = 0.0,
     required this.isProOwner,
     required this.onOpenLedger,
@@ -46,7 +48,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final currency = isArabic ? 'ج.م' : 'EGP';
     final collectedTotal = collectedCash + collectedOnline;
-    final hasBalance = availableBalance > 0.009;
+    final hasBalance = balanceVerified && availableBalance > 0.009;
     final dueTotal = cashDue + onlinePending;
     final hasDueMoney = dueTotal > 0.009;
 
@@ -184,7 +186,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal',
+                        balanceVerified
+                            ? (isArabic ? 'جاهز للسحب الآن' : 'Available for withdrawal')
+                            : (isArabic ? 'رصيد السحب غير متاح حالياً' : 'Withdrawal balance unavailable'),
                         style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontSize: 11,
@@ -193,7 +197,7 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${availableBalance.toStringAsFixed(0)} $currency',
+                        balanceVerified ? '${availableBalance.toStringAsFixed(0)} $currency' : (isArabic ? 'غير متاح' : 'Unavailable'),
                         style: const TextStyle(
                           color: VSPColors.textPrimary,
                           fontSize: 17,
@@ -211,9 +215,9 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     } else {
                       VSPFeedback.showWarning(
                         context,
-                        isArabic
-                            ? 'لا يوجد رصيد متاح للسحب حالياً'
-                            : 'No balance is currently available for withdrawal',
+                        !balanceVerified
+                            ? (isArabic ? 'تعذر التحقق من رصيد السحب. حاول مرة أخرى.' : 'Could not verify the withdrawal balance. Please retry.')
+                            : (isArabic ? 'لا يوجد رصيد متاح للسحب حالياً' : 'No balance is currently available for withdrawal'),
                       );
                     }
                   },
