@@ -446,7 +446,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
                     border: Border.all(color: VSPColors.divider),
                   ),
                   child: const Icon(
-                    Iconsax.wifi_square_copy,
+                    Iconsax.warning_2_copy,
                     color: VSPColors.textSecondary,
                     size: 34,
                   ),
