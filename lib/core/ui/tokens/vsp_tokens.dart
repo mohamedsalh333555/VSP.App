@@ -33,6 +33,14 @@ class VSPColors {
   static const success = VSPDSSemanticColors.success;
   static const warning = VSPDSSemanticColors.warning;
   static const info = VSPDSSemanticColors.info;
+  static const Color black = VSPDSColors.black;
+  static const Color transparent = VSPDSColors.transparent;
+  static const Color white05 = VSPDSColors.white05;
+  static const Color white08 = VSPDSColors.white08;
+  static const Color white10 = VSPDSColors.white10;
+  static const Color white15 = VSPDSColors.white15;
+  static const Color white24 = VSPDSColors.white24;
+  static const Color white38 = VSPDSColors.white38;
   static const Color whatsApp = VSPDSColors.whatsappGreen;
   static const Color proAccent = accent;
   static const Color proAccentSoft = accentSoft;
@@ -76,8 +84,37 @@ class VSPRadius {
 }
 
 class VSPSize {
+  static const double touchTarget = VSPDSizes.touchTarget;
+  static const double iconXs = VSPDSizes.iconXs;
+  static const double iconSm = VSPDSizes.iconSm;
+  static const double iconMd = VSPDSizes.iconMd;
+  static const double iconCompact = VSPDSizes.iconCompact;
+  static const double iconLg = VSPDSizes.iconLg;
+  static const double iconXl = VSPDSizes.iconXl;
   static const double inputHeight = VSPDSizes.inputHeight;
   static const double buttonHeight = VSPDSizes.buttonHeight;
+  static const double compactButtonHeight = VSPDSizes.compactButtonHeight;
+  static const double statusIcon = VSPDSizes.statusIcon;
+  static const double textButtonMinHeight = VSPDSizes.textButtonMinHeight;
+  static const double buttonProgress = VSPDSizes.buttonProgress;
+  static const double progressStroke = VSPDSizes.progressStroke;
+  static const double navigationItemHeight = VSPDSizes.navigationItemHeight;
+  static const double navigationIcon = VSPDSizes.navigationIcon;
+  static const double navigationIconSelected = VSPDSizes.navigationIconSelected;
+  static const double notificationDot = VSPDSizes.notificationDot;
+  static const double navigationNotificationTop = VSPDSizes.navigationNotificationTop;
+  static const double navigationNotificationRight = VSPDSizes.navigationNotificationRight;
+  static const double emptyIconSize = VSPDSizes.emptyIconSize;
+  static const double emptyIconPadding = VSPDSizes.emptyIconPadding;
+  static const double navigationBottomPadding = VSPDSizes.navigationBottomPadding;
+  static const double stateIconBox = VSPDSizes.stateIconBox;
+  static const double stateLoadingIndicator = VSPDSizes.stateLoadingIndicator;
+  static const double avatarSm = VSPDSizes.avatarSm;
+  static const double avatarMd = VSPDSizes.avatarMd;
+  static const double avatarLg = VSPDSizes.avatarLg;
+  static const double aiIcon = VSPDSizes.aiIcon;
+  static const double aiIconLarge = VSPDSizes.aiIconLarge;
+  static const double aiIconSmall = VSPDSizes.aiIconSmall;
 }
 
 class VSPSpacing {
@@ -135,6 +172,24 @@ class VSPGlass {
 }
 
 class VSPTypography {
+  static const TextStyle displayLarge = VSPDSTypography.displayLarge;
+  static const TextStyle displayMedium = VSPDSTypography.displayMedium;
+  static const TextStyle displaySmall = VSPDSTypography.displaySmall;
+  static const TextStyle headlineLarge = VSPDSTypography.headlineLarge;
+  static const TextStyle headlineMedium = VSPDSTypography.headlineMedium;
+  static const TextStyle headlineSmall = VSPDSTypography.headlineSmall;
+  static const TextStyle titleLarge = VSPDSTypography.titleLarge;
+  static const TextStyle titleMedium = VSPDSTypography.titleMedium;
+  static const TextStyle titleSmall = VSPDSTypography.titleSmall;
+  static const TextStyle bodyLarge = VSPDSTypography.bodyLarge;
+  static const TextStyle bodyMedium = VSPDSTypography.bodyMedium;
+  static const TextStyle bodySmall = VSPDSTypography.bodySmall;
+  static const TextStyle labelLarge = VSPDSTypography.labelLarge;
+  static const TextStyle labelMedium = VSPDSTypography.labelMedium;
+  static const TextStyle button = VSPDSTypography.button;
+  static const TextStyle compactButton = VSPDSTypography.compactButton;
+  static const TextStyle navigationSelected = VSPDSTypography.navigationSelected;
+  static const TextStyle navigationUnselected = VSPDSTypography.navigationUnselected;
   static const TextStyle numericStyle = VSPDSTypography.numeric;
 }
 
