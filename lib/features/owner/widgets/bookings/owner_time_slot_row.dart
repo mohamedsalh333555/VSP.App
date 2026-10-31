@@ -58,6 +58,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                         color: VSPColors.textSecondary,
                         fontSize: 12,
                       ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (isMerged) ...[
                   const SizedBox(height: 2),
@@ -68,6 +70,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
                 if ((slot['nightLabel'] as String?)?.isNotEmpty ?? false) ...[
@@ -79,6 +83,8 @@ class OwnerTimeSlotRow extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 9,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
