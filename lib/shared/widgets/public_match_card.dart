@@ -70,7 +70,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     try {
       if (booking.isOpenJoin) {
         final credentials = await MatchRepository().getCollectiveInviteCredentials(booking.id);
-        if (!context.mounted) return;
+        if (!mounted) return;
         final token = credentials?['invite_token']?.toString();
         final code = credentials?['invite_code']?.toString();
         final active = credentials?['active'] == true || credentials?['status'] == 'confirmed';
@@ -102,7 +102,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       );
     } catch (e, stack) {
       VSPLogger.e('Failed to share public match invitation', e, stack);
-      if (!context.mounted) return;
+      if (!mounted) return;
       VSPFeedback.showError(
         context,
         isArabic
