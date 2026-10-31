@@ -256,13 +256,13 @@ class StadiumRepository {
       if (normalizedSports.isNotEmpty) {
         final sportExpressions = normalizedSports.map((sport) {
           final safeSport = sport.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
-          return 'description.ilike.%|Sport:$safeSport%,notes.ilike.%|Sport:$safeSport%';
+          return 'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%';
         }).join(',');
         query = query.or(sportExpressions);
       } else if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
         final safeSport = sportType.replaceAll(RegExp(r'[%,_(),|]'), ' ').trim();
         query = query.or(
-          'description.ilike.%|Sport:$safeSport%,notes.ilike.%|Sport:$safeSport%',
+          'description.ilike.%Sport:$safeSport%,notes.ilike.%Sport:$safeSport%',
         );
       }
 
