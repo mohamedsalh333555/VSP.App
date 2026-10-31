@@ -148,12 +148,18 @@ serve(async (req: Request) => {
       await supabase.from("user_device_tokens").delete().in("token", invalidTokens);
     }
 
-    return new Response(JSON.stringify({
+    const dispatchResult = {
       success: sentCount > 0,
       sent_count: sentCount,
       failed_count: failedCount,
       invalid_tokens_removed: invalidTokens.length,
-    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    };
+    return new Response(JSON.stringify(dispatchResult), {
+      // A queue worker must not archive a notification when every device send
+      // failed. A non-2xx response keeps the message eligible for PGMQ retry.
+      status: sentCount === 0 && failedCount > 0 ? 502 : 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error: any) {
     console.error("FCM internal error", error);
     return new Response(JSON.stringify({ error: "Internal notification service error" }), {
