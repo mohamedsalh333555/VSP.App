@@ -295,7 +295,8 @@ void showBookingPaymentMethodSheet({
                                         : 'Could not confirm the cash booking. It has not been confirmed; please retry.',
                                   );
                                 }
-                              } catch (e) {
+                              } catch (e, stackTrace) {
+                                debugPrint('Cash booking confirmation failed: $e\n$stackTrace');
                                 HapticFeedback.vibrate();
                                 if (sheetContext.mounted) {
                                   setSheetState(() => isNavigating = false);
