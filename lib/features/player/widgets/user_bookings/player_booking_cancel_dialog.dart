@@ -109,28 +109,44 @@ class _CancelDialogActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext _) {
-    return Row(
-      children: [
-        Expanded(
-          child: PrimaryButton(
-            text: l10n.keepBooking,
-            height: 48,
-            color: VSPColors.surfaceAlt,
-            textColor: VSPColors.textPrimary,
-            onPressed: () => Navigator.pop(dialogCtx),
-          ),
-        ),
-        const SizedBox(width: VSPSpacing.md),
-        Expanded(
-          child: PrimaryButton(
-            text: l10n.cancel,
-            height: 48,
-            color: VSPColors.error,
-            textColor: VSPColors.background,
-            onPressed: _performCancellation,
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final keepButton = PrimaryButton(
+          text: l10n.keepBooking,
+          height: 48,
+          color: VSPColors.surfaceAlt,
+          textColor: VSPColors.textPrimary,
+          onPressed: () => Navigator.pop(dialogCtx),
+        );
+        final cancelButton = PrimaryButton(
+          text: l10n.cancel,
+          height: 48,
+          color: VSPColors.error,
+          textColor: VSPColors.background,
+          onPressed: _performCancellation,
+        );
+
+        // Stack actions on narrow screens so Arabic labels and touch targets
+        // remain readable without compressing two buttons into one short row.
+        if (constraints.maxWidth < 360) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              keepButton,
+              const SizedBox(height: VSPSpacing.sm),
+              cancelButton,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: keepButton),
+            const SizedBox(width: VSPSpacing.md),
+            Expanded(child: cancelButton),
+          ],
+        );
+      },
     );
   }
 
