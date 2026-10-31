@@ -72,7 +72,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   bool _isCaptain(Team? currentTeam) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (currentTeam == null) return true;
-    return auth.currentUser?.uid == currentTeam.memberUids.first;
+    return auth.currentUser?.id == currentTeam.memberUids.first;
   }
 
   @override
@@ -83,7 +83,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     // Listen to membership changes in Supabase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.uid;
+      final uid = auth.currentUser?.id;
       if (uid != null) {
         _membershipSubscription = TeamRepository().streamUserMembership(uid).listen((data) {
           _initialLoad();
@@ -119,7 +119,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     _teamSubscription = null;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid;
+    final uid = auth.currentUser?.id;
     if (uid == null) return;
 
     final team = await TeamRepository().getUserTeam(uid);
@@ -175,7 +175,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid;
+    final uid = auth.currentUser?.id;
 
     if (uid == null) return const VSPScaffold(body: Center(child: Text("Not authenticated")));
 
