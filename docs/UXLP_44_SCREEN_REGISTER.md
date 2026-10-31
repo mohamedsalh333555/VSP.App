@@ -230,7 +230,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/championship_details/championship_matches_tab.dart` | player | source reviewed—runtime pending (waits for first stream event; separates empty/error/stale-data states; retry recreates stream and preserves last good matches) |
 | `lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart` | player | source reviewed—runtime pending (selected-tab semantics and tap handling; Arabic/English width and keyboard focus pending) |
 | `lib/features/player/widgets/championship_details/championship_rules_tab.dart` | player | source reviewed—runtime pending (long rules content is scrollable; localized headings and long-text rendering pending) |
-| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | source reviewed—runtime pending (cached per-group FutureBuilder; loading/error/empty states with retry; group index bounded; horizontal table scroll) |
+| `lib/features/player/widgets/championship_details/championship_standings_table.dart` | player | source reviewed—runtime pending (cached per-group FutureBuilder; parent refresh version invalidates cache; loading/error/empty states with retry; group index bounded) |
 | `lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart` | player | source reviewed—runtime pending (FutureBuilder loading/error/empty states with retry; scorer rank and goals presentation) |
 
 ## Latest grouped source remediation — 2026-10-31
