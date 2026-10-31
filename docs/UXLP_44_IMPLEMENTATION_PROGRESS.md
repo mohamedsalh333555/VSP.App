@@ -603,3 +603,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - A failed matchup teams/results read previously only stopped the loading spinner, leaving empty lists that could be mistaken for a valid empty matchup. The screen now renders a distinct localized error state with Retry.
 - Match result submission and matchup closure success/error messages now support Arabic and English. Raw repository exceptions are not shown to users, and the close-confirmation dialog is scrollable.
 - The result calculation, points/scoring behavior, and repository write operations were not changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Owner tournament dashboard and creation error feedback — 2026-10-31
+
+- Tournament creation no longer interpolates raw exception details into the user-facing error; it presents localized retry guidance.
+- Owner tournament dashboard now separates a failed participating-team lookup from a genuinely empty team list and offers a retry action, instead of rendering the failure as “No teams joined yet.”
+- No tournament lifecycle, team membership, kickoff authorization, or scoring rule was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
