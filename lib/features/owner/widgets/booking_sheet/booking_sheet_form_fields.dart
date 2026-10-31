@@ -12,7 +12,7 @@ class InputLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
