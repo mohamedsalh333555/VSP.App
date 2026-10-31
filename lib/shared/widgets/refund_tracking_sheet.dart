@@ -73,7 +73,15 @@ class VSPRefundTrackingSheet extends StatelessWidget {
             child: Column(children: [
               _DetailRow(label: isArabic ? 'الحجز' : 'Booking', value: '#$bookingReference'),
               const SizedBox(height: VSPDSSpacing.xs),
-              _DetailRow(label: isArabic ? 'المبلغ المسترد' : 'Refund amount', value: '${refundInfo.refundAmount.toStringAsFixed(0)} ${l10n.egCurrency}', valueColor: VSPDSSemanticColors.accent),
+              _DetailRow(
+          label: isArabic ? 'المبلغ المسترد' : 'Refund amount',
+          value: refundInfo.amountConfirmed
+              ? '${refundInfo.refundAmount.toStringAsFixed(0)} ${l10n.egCurrency}'
+              : (isArabic ? 'سيتم التأكيد بعد المعالجة' : 'Pending server confirmation'),
+          valueColor: refundInfo.amountConfirmed
+              ? VSPDSSemanticColors.accent
+              : VSPDSSemanticColors.warning,
+        ),
               const SizedBox(height: VSPDSSpacing.xs),
               _DetailRow(label: isArabic ? 'القناة' : 'Channel', value: channel),
               const SizedBox(height: VSPDSSpacing.xs),
