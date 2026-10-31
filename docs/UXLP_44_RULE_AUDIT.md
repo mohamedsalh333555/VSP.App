@@ -221,3 +221,7 @@
 - Refund tracking sheet is now height-bounded and scrollable so the close action remains reachable on compact devices and with large text.
 - Payment fee information now has a 48dp touch target and tooltip. Payment-exit copy no longer guarantees a refund/charge outcome when a payment attempt may still be awaiting server confirmation.
 - Tournament roster read errors no longer fall through to an editable-looking empty roster; they have a distinct retry state, save is disabled until verified, and raw backend error text is not shown.
+
+- Challenge selection now distinguishes team lookup loading, verified no-team, and lookup failure. It follows the signed-in account, retries stale/error lookups, offers team creation only for a verified no-team result, and re-verifies the user's team before continuing; the Continue action is disabled until a team and opponent are both verified. Challenge success/error copy is bilingual.
+- Championship registration now uses strict team lookup. A query failure no longer masquerades as a missing/incomplete team and no raw exception is rendered to the player.
+- Payment gateway booking initialization and match joining now use localized generic failure copy rather than exposing repository/provider error strings to the user; diagnostic detail remains in logs.
