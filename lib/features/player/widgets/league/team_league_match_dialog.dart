@@ -340,6 +340,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final media = MediaQuery.of(context);
     final availableHeight = (media.size.height -
             media.viewInsets.bottom -
@@ -382,12 +383,12 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'مراجعة نتيجة المباراة',
+                      isArabic ? 'مراجعة نتيجة المباراة' : 'Review match result',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'يوجد اختلاف في تسجيل النتيجة بين الفريقين',
+                      isArabic ? 'يوجد اختلاف في تسجيل النتيجة بين الفريقين' : 'The two teams submitted different results',
                       style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
@@ -424,7 +425,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'سجل: ${_formatResultText(widget.match.homeSubmission)}',
+                        '${isArabic ? 'سجل' : 'Submitted'}: ${_formatResultText(widget.match.homeSubmission, isArabic: isArabic)}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
@@ -447,7 +448,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        'سجل: ${_formatResultText(widget.match.awaySubmission)}',
+                        '${isArabic ? 'سجل' : 'Submitted'}: ${_formatResultText(widget.match.awaySubmission, isArabic: isArabic)}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
@@ -462,31 +463,31 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
           const SizedBox(height: 18),
 
           const Text(
-            'اختر النتيجة المعتمدة للمباراة:',
+            isArabic ? 'اختر النتيجة المعتمدة للمباراة:' : 'Choose the final match result:', 
             style: TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
 
           // 3 Resolution Options
           _buildResolutionRadio(
-            title: 'فوز ${widget.match.homeTeamName}',
+            title: isArabic ? 'فوز ${widget.match.homeTeamName}' : '${widget.match.homeTeamName} win',
             value: 'home_win',
           ),
           const SizedBox(height: 8),
           _buildResolutionRadio(
-            title: 'تعادل',
+            title: isArabic ? 'تعادل' : 'Draw',
             value: 'draw',
           ),
           const SizedBox(height: 8),
           _buildResolutionRadio(
-            title: 'فوز ${widget.match.awayTeamName}',
+            title: isArabic ? 'فوز ${widget.match.awayTeamName}' : '${widget.match.awayTeamName} win',
             value: 'away_win',
           ),
           const SizedBox(height: 20),
 
           // Primary Button
           PrimaryButton(
-            text: 'اعتماد النتيجة',
+            text: isArabic ? 'اعتماد النتيجة' : 'Confirm result',
             isLoading: _isLoading,
             onPressed: _selectedResolution == null ? null : _confirmAndResolve,
           ),
