@@ -65,6 +65,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            excludeFromSemantics: true,
             customBorder: const CircleBorder(),
             onTapDown: (_) => _controller.reverse(),
             onTapUp: (_) => _controller.forward(),
