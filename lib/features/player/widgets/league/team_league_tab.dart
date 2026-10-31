@@ -1061,7 +1061,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         isArabic
                             ? 'تعذر التحقق من حالة رسوم الفريق. أعد المحاولة قبل الدفع.'
