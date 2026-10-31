@@ -8,11 +8,13 @@ import '../../../../shared/widgets/vsp_error_state.dart';
 /// قسم جدول الترتيب الحي للبطولة (يدعم نظام الدوري ونظام المجموعات)
 class ChampionshipStandingsSection extends StatefulWidget {
   final Championship championship;
+  final int refreshVersion;
   final VoidCallback onRetry;
 
   const ChampionshipStandingsSection({
     super.key,
     required this.championship,
+    required this.refreshVersion,
     required this.onRetry,
   });
 
@@ -28,7 +30,8 @@ class _ChampionshipStandingsSectionState
   @override
   void didUpdateWidget(covariant ChampionshipStandingsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.championship.id != widget.championship.id) {
+    if (oldWidget.championship.id != widget.championship.id ||
+        oldWidget.refreshVersion != widget.refreshVersion) {
       _standingsFutures.clear();
     }
   }
