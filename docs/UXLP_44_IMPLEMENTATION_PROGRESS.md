@@ -582,3 +582,11 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Fixture cards now localize all match states/actions and use the active locale for dates. The result-entry action is shown only after a booking exists and the scheduled kickoff has passed; before then the card shows the appropriate next action or waiting guidance.
 - The server-side submit-result RPC currently does not enforce the same booking/time gate. This is explicitly documented as an approval-required backend follow-up; no migration/RPC was changed.
 - Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
+
+## Authentication and owner-ledger refinements — 2026-10-31
+
+- Owner financial-ledger export failures now use a localized, non-technical recovery message instead of interpolating the raw platform/filesystem exception into user-facing copy.
+- Signup no longer writes raw authentication failure details to debug logs; the existing localized signup error mapping remains the user-facing recovery path.
+- Player and owner onboarding exit-confirmation dialogs are now scrollable, preventing their title/content/actions from being clipped on compact-height devices or with larger text.
+- Login, signup, create-account, email-verification, and both onboarding screens were source-reviewed for scroll/safe-area structure. No claim of runtime validation is made.
+- Source-only. No CI, analyzer, automated tests, runtime checks, migrations, or APK build were run.
