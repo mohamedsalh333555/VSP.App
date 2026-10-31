@@ -3,7 +3,7 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
-- Registered Dart screen/surface paths: 137 unique paths
+- Registered Dart screen/surface paths: 139 unique paths
 - Additional shared navigation component entry: 1
 - Table records: 143, including 5 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
@@ -203,4 +203,4 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
 
-The source fixes above are not runtime passes. The 137 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
+The source fixes above are not runtime passes. The 139 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
