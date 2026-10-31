@@ -109,26 +109,32 @@ class TeamRepository {
  }
   Future<Team?> getTeam(String id) async {
     try {
-      final response = await _supabase
-          .from('teams_public')
-          .select()
-          .eq('id', id)
-          .maybeSingle();
-      if (response == null) return null;
-
-      final memberUids = await getTeamMemberUids(id);
-      final playerImages = await getTeamPlayerImages(memberUids);
-
-      final data = Map<String, dynamic>.from(response);
-      data['memberUids'] = memberUids;
-      data['playerImages'] = playerImages;
-      data['playersCount'] = memberUids.length;
-
-      return Team.fromFirestore(data, id);
+      return await getTeamStrict(id);
     } catch (e) {
       debugPrint('Error getting team: $e');
       return null;
     }
+  }
+
+  /// Strict team lookup for screens that must distinguish a missing team from
+  /// a failed network/query request.
+  Future<Team?> getTeamStrict(String id) async {
+    final response = await _supabase
+        .from('teams_public')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+    if (response == null) return null;
+
+    final memberUids = await getTeamMemberUids(id);
+    final playerImages = await getTeamPlayerImages(memberUids);
+
+    final data = Map<String, dynamic>.from(response);
+    data['memberUids'] = memberUids;
+    data['playerImages'] = playerImages;
+    data['playersCount'] = memberUids.length;
+
+    return Team.fromFirestore(data, id);
   }
 
   Future<List<Team>> fetchTeamsDirectly({String? governorate}) async {
