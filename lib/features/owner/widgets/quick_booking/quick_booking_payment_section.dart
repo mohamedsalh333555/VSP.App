@@ -66,22 +66,32 @@ class QuickBookingPaymentSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              isAr ? 'المبلغ المستلم / المدفوع (ج.م)' : 'Amount Received (EGP)',
-              style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-              ),
+            Expanded(
               child: Text(
-                '${isAr ? "الإجمالي" : "Total"}: ${totalPrice.toInt()} ${isAr ? "ج.م" : "EGP"}',
-                style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11.5,
+                isAr ? 'المبلغ المستلم / المدفوع (ج.م)' : 'Amount Received (EGP)',
+                style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                ),
+                child: Text(
+                  '${isAr ? "الإجمالي" : "Total"}: ${totalPrice.toInt()} ${isAr ? "ج.م" : "EGP"}',
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
                 ),
               ),
             ),
