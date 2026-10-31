@@ -141,9 +141,17 @@ class CreateTeamMembersSection extends StatelessWidget {
                         borderRadius: VSPRadius.full,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        member.name ?? 'Player',
-                        style: Theme.of(context).textTheme.labelSmall,
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 144),
+                        child: Text(
+                          member.name?.trim().isNotEmpty == true
+                              ? member.name!.trim()
+                              : (isArabic ? 'لاعب' : 'Player'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       IconButton(
