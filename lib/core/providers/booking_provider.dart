@@ -285,11 +285,24 @@ class BookingProvider with ChangeNotifier {
       if (success) {
         // Keep the cancelled booking in history so a pending/confirmed refund
         // remains visible and trackable from the user's booking record.
-        final updatedBooking = await _repository.getBookingById(bookingId);
-        if (updatedBooking != null) {
-          BookingListModifier.updateBooking(_userBookings, updatedBooking);
-        } else {
-          BookingListModifier.removeBooking(_userBookings, bookingId);
+        try {
+          final updatedBooking = await _repository.getBookingByIdStrict(bookingId);
+          if (updatedBooking != null) {
+            BookingListModifier.updateBooking(_userBookings, updatedBooking);
+          } else {
+            BookingListModifier.removeBooking(_userBookings, bookingId);
+          }
+        } catch (refreshError) {
+          // Cancellation is already confirmed. Keep the record in history with
+          // a cancelled status while the next strict sync refreshes refund fields.
+          final existingIndex = _userBookings.indexWhere((item) => item.id == bookingId);
+          if (existingIndex >= 0) {
+            BookingListModifier.updateBooking(
+              _userBookings,
+              _userBookings[existingIndex].copyWith(status: BookingStatus.cancelled),
+            );
+          }
+          debugPrint('Cancellation succeeded but booking refresh failed: $refreshError');
         }
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
