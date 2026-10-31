@@ -444,3 +444,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Subscription comparison promise consistency — 2026-10-31
 
 - **Rules 13, 18, 23 — plan comparison truthfulness:** the subscription-plan comparison also no longer promises 24/7 technical support; its Arabic/English benefit text now matches the non-guaranteed priority-access wording used in the upgrade sheet.
+
+
+### Payout rejection copy normalization — 2026-10-31
+
+- **Rules 13, 18, 36, 43 — payout RPC feedback:** rejected payout responses are logged and normalized through the centralized error formatter; expired-session errors receive bilingual re-authentication guidance instead of exposing raw technical payloads.

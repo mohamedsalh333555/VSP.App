@@ -258,3 +258,10 @@ No plan entitlement, price, trial, backend rule, CI, analyzer, tests, runtime ch
 - Removed the unsupported 24/7 service-level claim from the subscription-plan comparison and aligned its Arabic/English copy with the facility-upgrade sheet's priority-support-access description.
 
 No subscription pricing, entitlements, plan data, CI, analyzer, tests, runtime checks, migrations, or APK build were changed/run.
+
+
+## Payout rejection copy normalization
+
+- Payout RPC rejection details now go to diagnostics and through the centralized localized error formatter; expired-session responses show explicit bilingual sign-in guidance.
+
+No payout business rules, RPCs, database policy, CI, analyzer, tests, runtime checks, migrations, or APK build were changed/run.
