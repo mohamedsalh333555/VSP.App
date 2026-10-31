@@ -326,23 +326,38 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
                 children: [
                   const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 13),
                   const SizedBox(width: 4),
-                  Text(
-                    widget.stadium.name,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      widget.stadium.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const Text('•', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                   const SizedBox(width: 6),
-                  Text(
-                    dateStr,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      dateStr,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   const Text('•', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                   const SizedBox(width: 6),
-                  Text(
-                    dynamicSlotWindow,
-                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w700, fontSize: 12),
+                  Flexible(
+                    flex: 2,
+                    child: Text(
+                      dynamicSlotWindow,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
