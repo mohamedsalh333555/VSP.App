@@ -496,7 +496,7 @@ class StadiumRepository {
           .toList();
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
-      return [];
+      rethrow;
     }
   }
 
