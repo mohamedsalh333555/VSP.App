@@ -39,6 +39,7 @@ class AuthProvider with ChangeNotifier {
   bool _isInitializing = true;
   String? _errorMessage;
   bool _isFetchingUser = false;
+  int _userFetchGeneration = 0;
   bool _dataFetchError = false;
   bool _isGhostUser = false;
   bool _preserveError = false;
@@ -116,6 +117,11 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (user?.id != _supabaseUser?.id) {
+      // Invalidate any profile fetch started for the previous auth identity.
+      _userFetchGeneration++;
+      _isFetchingUser = false;
+    }
     _supabaseUser = user;
     if (!_preserveError) {
       _errorMessage = null;
@@ -159,7 +165,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _fetchUserData(User user) async {
-    if (_isFetchingUser) return;
+    final requestGeneration = ++_userFetchGeneration;
     _isFetchingUser = true;
     _isLoading = true;
     notifyListeners();
@@ -168,6 +174,14 @@ class AuthProvider with ChangeNotifier {
       user: user,
       currentUserType: _form.userType,
     );
+
+    // A slower response from a previous account must never replace the active
+    // account's profile or realtime subscriptions.
+    if (requestGeneration != _userFetchGeneration ||
+        _supabaseUser?.id != user.id) {
+      return;
+    }
+
     _isFetchingUser = false;
     _isLoading = false;
     _isInitializing = false;
