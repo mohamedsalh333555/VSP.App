@@ -103,7 +103,7 @@ serve(async (req: Request) => {
           data: {
             click_action: "FLUTTER_NOTIFICATION_CLICK",
             type: String(type),
-            notification_id: String(record.id || ""),
+            notification_id: String(record.id || record.notification_id || ""),
             bookingId,
             tournamentId,
             championship_id: tournamentId,
