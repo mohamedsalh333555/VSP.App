@@ -29,7 +29,13 @@ class VspDatePickerStepChip extends StatelessWidget {
     final isDone = value != null;
 
     return Expanded(
-      child: InkWell(
+      child: Semantics(
+        button: true,
+        selected: isCurrent,
+        enabled: isEnabled,
+        label: value == null ? title : '$title, $value',
+        child: InkWell(
+        excludeFromSemantics: true,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         onTap: isEnabled
             ? () {
@@ -86,6 +92,7 @@ class VspDatePickerStepChip extends StatelessWidget {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
