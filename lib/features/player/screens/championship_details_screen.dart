@@ -37,6 +37,7 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
+  int _championshipRefreshVersion = 0;
   Team? _myTeam;
   late Stream<Championship?> _singleChampionshipStream;
   late Stream<List<TournamentMatch>> _matchesStream;
@@ -82,6 +83,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void _refreshChampionshipData() {
     if (!mounted) return;
     setState(() {
+      _championshipRefreshVersion++;
       final repository = TournamentRepository();
       _singleChampionshipStream = repository
           .getSingleChampionshipStream(widget.championship.id)
@@ -349,6 +351,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     ChampionshipMatchesTab(
                       championship: championship,
                       matchesStream: _matchesStream,
+                      refreshVersion: _championshipRefreshVersion,
                       onRetry: _refreshChampionshipData,
                     ),
 
