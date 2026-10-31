@@ -199,7 +199,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                       child: Row(
                         children: [
                           const Icon(
-                            Iconsax.warning_2_copy,
+                            Icons.warning_amber_rounded,
                             color: VSPColors.warning,
                             size: 18,
                           ),
