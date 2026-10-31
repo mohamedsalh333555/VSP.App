@@ -49,9 +49,6 @@ void showTournamentBracketPreviewDialog(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(VSPRadius.md),
             child: InteractiveViewer(
-              transformationController: TransformationController(
-                Matrix4.identity()..translate(0.0, 0.0),
-              ),
               constrained: false,
               scaleEnabled: true,
               minScale: 0.5,
@@ -134,10 +131,14 @@ Future<void> showInteractiveDrawRoomDialog(
             children: [
               const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 10),
-              Text(
-                isAr ? 'غرفة سحب القرعة المباشر' : 'Live Draw Room',
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              Expanded(
+                child: Text(
+                  isAr ? 'غرفة سحب القرعة المباشر' : 'Live Draw Room',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ),
             ],
           ),
