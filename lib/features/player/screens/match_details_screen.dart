@@ -266,7 +266,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
    if (submitted != true || reason.isEmpty || !mounted) return;
 
-   final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+   final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
    if (currentUserId == null) return;
 
    final ok = await ReportRepository().reportEntity(
@@ -357,7 +357,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  textColor: Colors.white,
  onPressed: () async {
  final success = await ReportRepository().reportEntity(
- reporterId: auth.currentUser!.uid,
+ reporterId: auth.currentUser!.id,
  targetId: widget.bookingId,
  targetType: 'match',
  reason: selectedReason,
