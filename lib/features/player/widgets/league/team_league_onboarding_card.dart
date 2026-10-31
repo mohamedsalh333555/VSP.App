@@ -17,6 +17,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       padding: const EdgeInsets.all(VSPSpacing.xl),
@@ -59,8 +60,8 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: VSPSpacing.md),
-          const Text(
-            '🏆 دوري الفرق الخاص',
+          Text(
+            isArabic ? '🏆 دوري الفرق الخاص' : '🏆 Private Team League',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
@@ -69,8 +70,10 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'أنشئ دوري خاص لفريقك وادعُ من 4 إلى 8 فرق للمنافسة',
+          Text(
+            isArabic
+                ? 'أنشئ دوري خاص لفريقك وادعُ من 4 إلى 8 فرق للمنافسة'
+                : 'Create a private league for your team and invite 4–8 teams to compete',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: VSPColors.textSecondary,
@@ -82,33 +85,43 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           // League Features Pills
           _buildFeatureRow(
             icon: Iconsax.people_copy,
-            title: '4 إلى 8 فرق متنافسة',
-            subtitle: 'دوري خاص: دور واحد، كل فريق يواجه الآخر مرة واحدة',
+            title: isArabic ? '4 إلى 8 فرق متنافسة' : '4–8 competing teams',
+            subtitle: isArabic
+                ? 'دوري خاص: دور واحد، كل فريق يواجه الآخر مرة واحدة'
+                : 'Private single round-robin: every team plays each other once',
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.calendar_1_copy,
-            title: 'جدولة منتظمة للمباريات',
-            subtitle: 'VSP يحدد يوم المباراة والفرق تختار الساعة والملعب',
+            title: isArabic ? 'جدولة منتظمة للمباريات' : 'Regular match scheduling',
+            subtitle: isArabic
+                ? 'VSP يحدد يوم المباراة والفرق تختار الساعة والملعب'
+                : 'VSP sets match days; teams choose the time and stadium',
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.wallet_copy,
-            title: 'رسوم مشاركة الفريق: ${entryFee.toStringAsFixed(0)} جنيه',
-            subtitle: '30 جنيه للفريق الواحد (رسوم مشاركة الفريق)',
+            title: isArabic
+                ? 'رسوم مشاركة الفريق: ${entryFee.toStringAsFixed(0)} جنيه'
+                : 'Team entry fee: ${entryFee.toStringAsFixed(0)} EGP',
+            subtitle: isArabic
+                ? 'رسوم مشاركة الفريق الواحد'
+                : 'Entry fee per team',
             highlight: true,
           ),
           const SizedBox(height: 10),
           _buildFeatureRow(
             icon: Iconsax.judge_copy,
-            title: 'منظومة حسم النتائج',
-            subtitle: 'تسجيل سهل (فوز - تعادل - خسارة) بدون أهداف عددية',
+            title: isArabic ? 'منظومة حسم النتائج' : 'Simple match outcomes',
+            subtitle: isArabic
+                ? 'تسجيل سهل (فوز - تعادل - خسارة) بدون أهداف عددية'
+                : 'Record win, draw, or loss without entering goal counts',
           ),
 
           const SizedBox(height: VSPSpacing.xl),
 
           PrimaryButton(
-            text: 'إنشاء دوري',
+            text: isArabic ? 'إنشاء دوري' : 'Create league',
             onPressed: onCreateLeague,
           ),
 
@@ -117,8 +130,8 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onJoinLeague,
             icon: const Icon(Iconsax.login_copy, size: 18),
-            label: const Text(
-              'الانضمام لدوري عبر دعوة / كود',
+            label: Text(
+              isArabic ? 'الانضمام لدوري عبر دعوة / كود' : 'Join a league with an invite code',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: OutlinedButton.styleFrom(
