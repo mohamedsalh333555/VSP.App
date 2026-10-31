@@ -283,7 +283,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 const SizedBox(height: 16),
 
                 // 2. Number of Teams (4 to 8 Stepper / Selector)
-                const Text(
+                Text(
                   isArabic ? 'عدد الفرق المشاركة:' : 'Number of participating teams:',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
@@ -350,12 +350,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 const SizedBox(height: 16),
 
                 // 4. Match Scheduling Interval
-                const Text(
+                Text(
                   isArabic ? 'الفترة بين المباريات:' : 'Interval between matches:',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   isArabic ? 'VSP يحدد يوم المباراة حسب الفترة التي تختارها، والفرق تحدد الملعب والساعة.' : 'VSP sets match days from your chosen interval; teams choose the venue and kickoff time.',
                   style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
@@ -460,12 +460,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
+                  Text(
                     isArabic ? 'طريقة دفع رسوم الدوري' : 'League fee payment method',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     isArabic
                         ? 'رسوم مشاركة الفريق: ${feePerTeam.toStringAsFixed(0)} جنيه للفريق الواحد'
                         : 'Team entry fee: ${feePerTeam.toStringAsFixed(0)} EGP per team',
