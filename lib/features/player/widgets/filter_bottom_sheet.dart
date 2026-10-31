@@ -68,10 +68,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       final maxPriceFromDb = stadiumProvider.maxStadiumPrice;
       final double startPrice = (widget.initialFilters?['minPrice'] as num?)?.toDouble() ?? 0.0;
       final double endPrice = (widget.initialFilters?['maxPrice'] as num?)?.toDouble() ?? maxPriceFromDb;
-      _priceRange = RangeValues(
-        startPrice.clamp(0.0, maxPriceFromDb),
-        endPrice.clamp(0.0, maxPriceFromDb),
-      );
+      final clampedStart = startPrice.clamp(0.0, maxPriceFromDb).toDouble();
+      final clampedEnd = endPrice.clamp(0.0, maxPriceFromDb).toDouble();
+      // RangeValues requires an ordered interval; normalize stale or malformed
+      // saved filters before constructing the slider state.
+      _priceRange = clampedStart <= clampedEnd
+          ? RangeValues(clampedStart, clampedEnd)
+          : RangeValues(clampedEnd, clampedStart);
       _priceInitialized = true;
     }
 
