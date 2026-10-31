@@ -159,3 +159,4 @@
 
 
 - Follow-up source review of the embedded booking components confirmed the pending-booking card checks server-confirmed payment state before reporting confirmation, and the player booking card renders lifecycle/refund states from the booking record. The captain-team lookup now has a strict variant used by the post-match prompt: a failed Supabase lookup is surfaced as a localized verification error instead of being silently interpreted as “user is not a captain.” The compatibility method retains its historical empty-set fallback for other callers.
+- Player home post-match prompt suppression is now keyed by the active user ID rather than one screen-wide boolean, so a prompt shown for one account cannot suppress the other account's prompt when the same home-screen state is retained during account switching.
