@@ -550,7 +550,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                               final amount = (result['amount'] as num?)?.toDouble() ?? 30.0;
                               if (pCtx.mounted) Navigator.pop(pCtx);
                               if (ref != null && ref.isNotEmpty) {
-                                await _openLeaguePayment(paymentReference: ref, amount: amount);
+                                await _openLeaguePayment(paymentReference: ref, amount: amount, team: widget.userTeam!);
                               } else {
                                 await _loadLeague();
                               }
@@ -721,7 +721,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                   final paymentReference = result['payment_reference']?.toString();
                                   final amount = (result['amount'] as num?)?.toDouble() ?? 30.0;
                                   if (paymentReference != null && paymentReference.isNotEmpty) {
-                                    await _openLeaguePayment(paymentReference: paymentReference, amount: amount);
+                                    await _openLeaguePayment(paymentReference: paymentReference, amount: amount, team: widget.userTeam!);
                                   } else {
                                     await _loadLeague();
                                   }
@@ -926,6 +926,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     // A failed or unfinished membership query is not equivalent to no team.
     if (widget.isLoadingUserTeam) {
       return const Center(

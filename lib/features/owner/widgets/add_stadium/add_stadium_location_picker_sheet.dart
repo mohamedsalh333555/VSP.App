@@ -385,6 +385,9 @@ class AddStadiumLocationPickerSheet {
         );
       },
     );
+    isSheetOpen = false;
+    searchController.dispose();
+    return result;
   }
 
   /// Displays an offline/manual address entry modal sheet allowing the owner to enter the address without map tiles.
@@ -602,8 +605,5 @@ class AddStadiumLocationPickerSheet {
         );
       },
     );
-    isSheetOpen = false;
-    searchController.dispose();
-    return result;
   }
 }

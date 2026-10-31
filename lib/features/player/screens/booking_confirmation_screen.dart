@@ -146,6 +146,32 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
   }
 
+  void _generateDynamicTimeSlots() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() {
+      _timeSlots = BookingSlotCalculator.generateDynamicTimeSlots(
+        stadium: widget.stadium,
+        isArabic: isArabic,
+      );
+    });
+  }
+
+  void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
+    setState(() {
+      final updated = BookingSlotCalculator.calculateNewSelectedSlots(
+        slotKey: slotKey,
+        currentSelectedSlots: _selectedTimeSlots,
+        timeSlots: _timeSlots,
+        stadium: widget.stadium,
+        selectedDate: _selectedDate,
+        existingBookings: existingBookings,
+      );
+      _selectedTimeSlots
+        ..clear()
+        ..addAll(updated);
+    });
+  }
+
   Future<void> _handleBookingConfirmation() async {
     if (_requiresTeamContext && _isLoadingUserTeam) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';

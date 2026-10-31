@@ -145,7 +145,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                     final repository = NotificationRepository();
                     final deleted = await repository.deleteNotification(deletingUserId, deletedItem.id);
 
-                    if (!mounted || _userId != deletingUserId) return;
+                    if (!context.mounted || _userId != deletingUserId) return;
                     if (!deleted) {
                       setState(() {
                         _notificationsStream = repository.getUserNotifications(_userId);
@@ -179,9 +179,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                           onPressed: () async {
                             // Never restore an old account's notification into a newly
                             // signed-in account if the user changed while the SnackBar was visible.
-                            if (!mounted || _userId != deletingUserId) return;
+                            if (!context.mounted || _userId != deletingUserId) return;
                             final restored = await repository.restoreNotification(deletingUserId, deletedItem);
-                            if (!restored && mounted && _userId == deletingUserId) {
+                            if (!restored && context.mounted && _userId == deletingUserId) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(

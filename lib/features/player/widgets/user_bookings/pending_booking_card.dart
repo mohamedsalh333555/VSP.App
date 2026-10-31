@@ -6,6 +6,7 @@ import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../screens/payment_gateway_screen.dart';
+import '../../services/payment_checkout_service.dart';
 
 /// Card showing a pending booking that is awaiting payment confirmation or checkout completion.
 class PendingBookingCard extends StatelessWidget {

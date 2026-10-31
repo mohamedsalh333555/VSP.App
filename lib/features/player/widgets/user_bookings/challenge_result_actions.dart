@@ -111,8 +111,7 @@ class ChallengeResultActions extends StatelessWidget {
                 review: review,
               );
 
-              if (!context.mounted) return;
-              Navigator.of(dialogContext).pop();
+              if (!context.mounted) return false;
 
               if (success) {
                 VSPFeedback.showSuccess(
@@ -129,6 +128,7 @@ class ChallengeResultActions extends StatelessWidget {
                   ),
                 );
               }
+              return success;
             },
           ),
         );
