@@ -323,7 +323,7 @@ class StadiumRepository {
           'features->workingHours->>end.ilike.%05:%)',
         );
       } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
-        query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
+        orGroups.add('or(needs_deposit.eq.false,deposit_amount.lte.0)');
       }
 
       // Apply each selected amenity before range pagination.
