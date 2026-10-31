@@ -217,13 +217,23 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.isAr ? 'الرصيد المتاح للسحب:' : 'Available Balance:',
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                Expanded(
+                  child: Text(
+                    widget.isAr ? 'الرصيد المتاح للسحب:' : 'Available Balance:',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
                 ),
-                Text(
-                  '${widget.digitalBalance.toStringAsFixed(0)} ${widget.isAr ? "ج.م" : "EGP"}',
-                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${widget.digitalBalance.toStringAsFixed(0)} ${widget.isAr ? "ج.م" : "EGP"}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
                 ),
               ],
             ),
