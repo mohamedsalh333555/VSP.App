@@ -73,14 +73,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 value: category,
                 decoration: InputDecoration(labelText: isArabic ? 'التصنيف' : 'Category'),
                 items: const [
-                  DropdownMenuItem(value: 'account', child: Text('Account / الحساب')),
-                  DropdownMenuItem(value: 'booking', child: Text('Booking / حجز')),
-                  DropdownMenuItem(value: 'payment', child: Text('Payment / دفع')),
-                  DropdownMenuItem(value: 'refund', child: Text('Refund / استرداد')),
-                  DropdownMenuItem(value: 'tournament', child: Text('Tournament / بطولة')),
-                  DropdownMenuItem(value: 'report', child: Text('Report / بلاغ')),
-                  DropdownMenuItem(value: 'technical', child: Text('Technical / تقني')),
-                  DropdownMenuItem(value: 'general', child: Text('General / عام')),
+                  DropdownMenuItem(value: 'account', child: Text(isArabic ? 'الحساب' : 'Account')),
+                  DropdownMenuItem(value: 'booking', child: Text(isArabic ? 'الحجز' : 'Booking')),
+                  DropdownMenuItem(value: 'payment', child: Text(isArabic ? 'الدفع' : 'Payment')),
+                  DropdownMenuItem(value: 'refund', child: Text(isArabic ? 'الاسترداد' : 'Refund')),
+                  DropdownMenuItem(value: 'tournament', child: Text(isArabic ? 'البطولات' : 'Tournament')),
+                  DropdownMenuItem(value: 'report', child: Text(isArabic ? 'بلاغ' : 'Report')),
+                  DropdownMenuItem(value: 'technical', child: Text(isArabic ? 'مشكلة تقنية' : 'Technical')),
+                  DropdownMenuItem(value: 'general', child: Text(isArabic ? 'عام' : 'General')),
                 ],
                 onChanged: (v) => setSheetState(() => category = v ?? category),
               ),
@@ -214,14 +214,21 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: VSPSpacing.sm),
                   itemBuilder: (context, index) {
                     final ticket = tickets[index];
-                    final status = ticket['status']?.toString() ?? 'open';
+                    final status = ticket['status']?.toString().toLowerCase() ?? 'open';
+                    final statusLabel = switch (status) {
+                      'in_progress' => isArabic ? 'قيد المتابعة' : 'In progress',
+                      'waiting_user' => isArabic ? 'في انتظار ردك' : 'Waiting for you',
+                      'resolved' => isArabic ? 'تم الحل' : 'Resolved',
+                      'closed' => isArabic ? 'مغلقة' : 'Closed',
+                      _ => isArabic ? 'مفتوحة' : 'Open',
+                    };
                     final title = ticket['subject']?.toString() ?? (isArabic ? 'تذكرة دعم' : 'Support Ticket');
                     return ListTile(
                       tileColor: VSPColors.surface,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.card)),
                       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(
-                        isArabic ? 'الحالة: $status' : 'Status: $status',
+                        isArabic ? 'الحالة: $statusLabel' : 'Status: $statusLabel',
                         style: const TextStyle(color: VSPColors.textSecondary),
                       ),
                       trailing: const Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary),
