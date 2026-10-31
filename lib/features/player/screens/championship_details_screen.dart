@@ -12,6 +12,7 @@ import '../../../core/utils/app_date_formatter.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
 import '../widgets/championship_details/championship_bottom_bar.dart';
 import '../widgets/championship_details/championship_details_header.dart';
@@ -209,6 +210,16 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       stream: _singleChampionshipStream,
       initialData: widget.championship,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.active &&
+            snapshot.data == null) {
+          return VSPErrorState(
+            customMessage: isArabic
+                ? 'هذه البطولة لم تعد متاحة.'
+                : 'This championship is no longer available.',
+            onRetry: _refreshChampionshipData,
+            retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+          );
+        }
         final championship = snapshot.data ?? widget.championship;
         final isTeamRegistered = _myTeam != null && championship.joinedTeams.contains(_myTeam!.id);
         final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
