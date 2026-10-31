@@ -60,6 +60,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       builder: (context) => AddPlayerSheet(
         requiredGovernorate: context.read<AuthProvider>().userModel?.governorate?.trim(),
         onPlayerAdded: (user) {
+          if (!mounted) return;
           setState(() {
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
               _teamMembers.add(user);
@@ -72,6 +73,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
   Future<void> _pasteFromWhatsApp() async {
     final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
+    if (!mounted) return;
     if (parsedNames.isEmpty) {
       if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -264,7 +266,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                 ),
               ),
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                 icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               ),
             ],
@@ -283,6 +285,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
                       hintText: isArabic ? 'مثال: فريق النجوم' : 'e.g. Star Team',
@@ -307,6 +311,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.sm),
                   TextField(
                     controller: _bioController,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                     minLines: 2,
                     maxLines: 4,
                     maxLength: 160,
@@ -383,7 +389,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancelBtn,
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: _isSubmitting ? null : () => Navigator.pop(context),
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                 ),
