@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/owner_repository.dart';
+import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../screens/owner_account_management_screen.dart';
@@ -347,7 +348,23 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                           return;
                         }
                         setState(() => _isSubmitting = true);
-                        await widget.onSubmit(parsed, selectedDest['id']!, selectedDest['value']!);
+                        try {
+                          await widget.onSubmit(
+                            parsed,
+                            selectedDest['id']!,
+                            selectedDest['value']!,
+                          );
+                        } catch (e) {
+                          VSPLogger.w('Owner payout submission failed: $e');
+                          if (!mounted) return;
+                          setState(() => _isSubmitting = false);
+                          VSPFeedback.showError(
+                            context,
+                            widget.isAr
+                                ? 'تعذر إرسال طلب التسوية. تحقق من الاتصال وحاول مرة أخرى.'
+                                : 'Could not submit the payout request. Check your connection and try again.',
+                          );
+                        }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
