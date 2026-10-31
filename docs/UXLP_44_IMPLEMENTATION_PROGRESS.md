@@ -621,3 +621,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Profile photo-save, profile-update, and account-deletion failures now use localized generic recovery messages rather than exposing raw provider/backend exception details.
 - The account deletion confirmation dialog is scrollable on compact-height/large-text devices. The existing confirmation requirement and account deletion operation are unchanged.
 - Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+
+## Owner account deletion modal lifecycle — 2026-10-31
+
+- Owner account deletion confirmation is now scrollable for short screens and large text. Its password controller is disposed after the dialog closes, and failed deletion no longer exposes raw AuthProvider error details.
+- Password reauthentication remains required before the existing delete-account operation; no account deletion, financial, or backend behavior was changed.
+- Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
