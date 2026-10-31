@@ -131,10 +131,18 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             );
                             onDelivered?.call();
                           }
-                        } catch (e) {
-                          setDialogState(() => isSubmitting = false);
+                        } catch (e, stackTrace) {
+                          debugPrint('Tournament prize handover failed: $e\n$stackTrace');
+                          if (ctx.mounted) {
+                            setDialogState(() => isSubmitting = false);
+                          }
                           if (context.mounted) {
-                            VSPFeedback.showError(context, e.toString());
+                            VSPFeedback.showError(
+                              context,
+                              isAr
+                                  ? 'تعذر توثيق تسليم الجائزة. حاول مرة أخرى.'
+                                  : 'Could not record the prize handover. Please try again.',
+                            );
                           }
                         }
                       },
