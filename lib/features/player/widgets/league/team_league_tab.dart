@@ -1131,6 +1131,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               ),
             TeamLeagueGatheringCard(
               league: league,
+              entryFee: _hasPaymentStatusError ? null : _configuredFee,
               onRefresh: _loadLeague,
               onCancelLeague: () => _cancelLeague(league.id),
               onPayFee: (_hasPaymentStatusError || _leaguePaymentStatus == 'paid')
