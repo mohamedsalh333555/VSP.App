@@ -25,6 +25,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Map<String, dynamic>? _proPlan;
   bool _isPlansLoading = true;
   bool _hasPlansError = false;
+  int _plansRequestGeneration = 0;
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Future<void> _loadPlans() async {
+    final requestGeneration = ++_plansRequestGeneration;
     if (mounted) {
       setState(() {
         _isPlansLoading = true;
@@ -41,6 +43,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
     try {
       final plans = await _subscriptionRepository.fetchPublicPlans();
+      if (!mounted || requestGeneration != _plansRequestGeneration) return;
       Map<String, dynamic>? freePlan;
       Map<String, dynamic>? proPlan;
       for (final plan in plans) {
@@ -50,7 +53,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       if (freePlan == null || proPlan == null) {
         throw StateError('subscription_plan_missing');
       }
-      if (!mounted) return;
+      if (!mounted || requestGeneration != _plansRequestGeneration) return;
       setState(() {
         _freePlan = freePlan;
         _proPlan = proPlan;
@@ -59,7 +62,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       });
     } catch (e) {
       debugPrint('Failed to load public subscription plans: $e');
-      if (!mounted) return;
+      if (!mounted || requestGeneration != _plansRequestGeneration) return;
       setState(() {
         _isPlansLoading = false;
         _hasPlansError = true;
@@ -656,7 +659,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         VSPFeedback.showSuccess(
           context,
           isArabic
-              ? 'تم تفعيل تجربة Pro لمدة ${_planNumber(_proPlan ?? const {}, 'trial_days')} أيام بنجاح.'
+              ? 'تم تفعيل تجربة Pro لمدة ${_planNumber(_proPlan ?? const <String, dynamic>{}, 'trial_days')} أيام بنجاح.'
               : 'Your ${_planNumber(_proPlan ?? const {}, 'trial_days')}-day Pro trial is now active.',
         );
       }
