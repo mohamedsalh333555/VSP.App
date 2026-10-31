@@ -210,7 +210,8 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       stream: _singleChampionshipStream,
       initialData: widget.championship,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.active &&
+        if (!snapshot.hasError &&
+            snapshot.connectionState == ConnectionState.active &&
             snapshot.data == null) {
           return VSPErrorState(
             customMessage: isArabic
