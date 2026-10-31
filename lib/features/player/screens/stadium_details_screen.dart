@@ -25,7 +25,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   late Stream<List<Map<String, dynamic>>> _stadiumStream;
 
   void _subscribeToStadium() {
-    _subscribeToStadium();
+    _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
   }
 
   @override
