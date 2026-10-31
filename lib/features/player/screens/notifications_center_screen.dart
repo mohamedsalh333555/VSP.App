@@ -31,7 +31,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = context.read<AuthProvider>().currentUser?.uid ?? '';
+    _userId = context.read<AuthProvider>().currentUser?.id ?? '';
     _notificationsStream = NotificationRepository().getUserNotifications(_userId);
   }
 
