@@ -449,3 +449,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Payout rejection copy normalization — 2026-10-31
 
 - **Rules 13, 18, 36, 43 — payout RPC feedback:** rejected payout responses are logged and normalized through the centralized error formatter; expired-session errors receive bilingual re-authentication guidance instead of exposing raw technical payloads.
+
+
+### Shared control semantic de-duplication — 2026-10-31
+
+- **Rules 27, 33, 42 — accessibility semantics:** shared back navigation and add-player search now expose one explicit localized semantic control each; nested InkWell semantics are excluded to avoid duplicate announcements.

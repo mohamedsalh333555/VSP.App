@@ -265,3 +265,10 @@ No subscription pricing, entitlements, plan data, CI, analyzer, tests, runtime c
 - Payout RPC rejection details now go to diagnostics and through the centralized localized error formatter; expired-session responses show explicit bilingual sign-in guidance.
 
 No payout business rules, RPCs, database policy, CI, analyzer, tests, runtime checks, migrations, or APK build were changed/run.
+
+
+## Shared control semantic de-duplication
+
+- Shared back button and add-player search now expose one explicit semantic button label each without duplicate nested InkWell announcements.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
