@@ -26,12 +26,14 @@ class PlayerBookingCard extends StatelessWidget {
   final Booking booking;
   final bool isHistory;
   final String? myTeamId;
+  final String? myCaptainTeamId;
 
   const PlayerBookingCard({
     super.key,
     required this.booking,
     required this.isHistory,
     this.myTeamId,
+    this.myCaptainTeamId,
   });
 
   String _getLocalizedBookingType(BuildContext context, BookingType type) {
@@ -521,9 +523,10 @@ class PlayerBookingCard extends StatelessWidget {
           if (isHistory &&
               booking.bookingType == BookingType.challenge &&
               booking.opponentTeamId != null &&
+              myCaptainTeamId != null &&
               booking.endTime.isBefore(DateTime.now())) ...[
             const SizedBox(height: VSPSpacing.md),
-            ChallengeResultActions(booking: booking, myTeamId: myTeamId),
+            ChallengeResultActions(booking: booking, myTeamId: myCaptainTeamId),
           ],
         ],
       ),
