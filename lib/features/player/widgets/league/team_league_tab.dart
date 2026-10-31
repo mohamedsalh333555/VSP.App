@@ -652,6 +652,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   }
 
   void _showJoinLeagueDialog() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final codeController = TextEditingController();
     bool isSubmitting = false;
 
@@ -667,14 +668,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'الانضمام لدوري عبر دعوة / كود',
+                Text(
+                  isArabic ? 'الانضمام لدوري عبر دعوة / كود' : 'Join a league by invite code',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'الدوري خاص، أدخل كود الدوري للانضمام',
+                Text(
+                  isArabic ? 'الدوري خاص، أدخل كود الدوري للانضمام' : 'This league is private. Enter its code to join.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
@@ -684,7 +685,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   controller: codeController,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'كود أو معرف الدوري',
+                    labelText: isArabic ? 'كود أو معرف الدوري' : 'League code or ID',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary),
                     filled: true,
                     fillColor: VSPColors.surfaceAlt,
@@ -693,8 +694,10 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 ),
 
                 const SizedBox(height: 12),
-                const Text(
-                  'رسوم مشاركة الفريق: 30 جنيه للفريق الواحد',
+                Text(
+                  isArabic
+                      ? 'رسوم مشاركة الفريق: ${_configuredFee.toStringAsFixed(0)} جنيه للفريق الواحد'
+                      : 'Team entry fee: ${_configuredFee.toStringAsFixed(0)} EGP per team',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
@@ -709,7 +712,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           foregroundColor: VSPColors.textSecondary,
                           side: const BorderSide(color: VSPColors.borderLight),
                         ),
-                        child: const Text('إلغاء'),
+                        child: Text(isArabic ? 'إلغاء' : 'Cancel'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -733,21 +736,26 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                     VSPFeedback.triggerSuccess();
                                     await _loadLeague();
                                     messenger.showSnackBar(
-                                      const SnackBar(content: Text('رسوم مشاركة الفريق: مدفوعة')),
+                                      SnackBar(content: Text(isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team entry fee has already been paid.')),
                                     );
                                     return;
                                   }
                                   final paymentReference = result['payment_reference']?.toString();
-                                  final amount = (result['amount'] as num?)?.toDouble() ?? 30.0;
+                                  final amount = (result['amount'] as num?)?.toDouble() ?? _configuredFee;
                                   if (paymentReference != null && paymentReference.isNotEmpty) {
                                     await _openLeaguePayment(paymentReference: paymentReference, amount: amount, team: widget.userTeam!);
                                   } else {
                                     await _loadLeague();
                                   }
-                                } catch (e) {
-                                  setDialogState(() => isSubmitting = false);
+                                } catch (e, stackTrace) {
+                                  debugPrint('Joining team league failed: $e\\n$stackTrace');
                                   if (ctx.mounted) {
-                                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+                                    setDialogState(() => isSubmitting = false);
+                                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                                      content: Text(isArabic
+                                          ? 'تعذر الانضمام للدوري. تحقق من الكود وحاول مرة أخرى.'
+                                          : 'Could not join the league. Check the code and try again.'),
+                                    ));
                                   }
                                 }
                               },
@@ -767,7 +775,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           ),
         ),
       ),
-    );
+    ).whenComplete(codeController.dispose);
   }
 
   void _onBookMatch(TeamLeagueMatch match) {
