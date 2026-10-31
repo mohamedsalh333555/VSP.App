@@ -120,6 +120,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   Future<void> _handleCreateTeam() async {
     final name = _nameController.text.trim();
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (name.isEmpty) {
       VSPFeedback.showError(context, l10n.enterTeamName);
@@ -164,7 +165,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final teamData = {
         'name': name,
         'bio': _bioController.text.trim(),
-        'captainName': auth.userModel?.name ?? 'Captain',
+        'captainName': auth.userModel?.name ?? (isArabic ? 'الكابتن' : 'Captain'),
         'captainPhone': PhoneUtils.normalize(auth.userModel?.phone ?? ''),
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
         'logoUrl': _uploadedLogoUrl ?? '',
