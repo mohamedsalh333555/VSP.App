@@ -81,7 +81,7 @@ class BookingCancellationCoordinator {
                   .select('status,payment_status')
                   .eq('id', bookingId)
                   .maybeSingle();
-              if (persisted?['status'] == 'cancelled') {
+              if (persisted != null && persisted['status'] == 'cancelled') {
                 VSPLogger.w('Booking cancelled; refund remains pending for booking: $bookingId');
                 paymobProcessed = true;
               } else {
