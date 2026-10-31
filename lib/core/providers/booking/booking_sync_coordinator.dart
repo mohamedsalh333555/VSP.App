@@ -12,11 +12,14 @@ class BookingSyncCoordinator {
   /// Tracks the last trusted full server list for player bookings.
   /// Used to detect disappearances caused by partial Realtime events.
   List<Booking> _lastKnownUserBookings = [];
+  String? _activeUserId;
+  int _syncGeneration = 0;
 
   BookingSyncCoordinator(this._repository);
 
   /// Cancels active synchronization subscription.
   void cancelSubscription() {
+    _syncGeneration++;
     _subscription?.cancel();
     _subscription = null;
   }
@@ -67,7 +70,13 @@ class BookingSyncCoordinator {
     required void Function(String error) onError,
   }) async {
     // Stop any previous user's stream before waiting on the next authoritative snapshot.
+    final generation = ++_syncGeneration;
+    if (_activeUserId != userId) {
+      _activeUserId = userId;
+      _lastKnownUserBookings = [];
+    }
     await _subscription?.cancel();
+    if (generation != _syncGeneration) return false;
     _subscription = null;
 
     // 1. Direct REST fetch (trusted) — await the first authoritative snapshot so
@@ -77,6 +86,7 @@ class BookingSyncCoordinator {
       final directList = _repository is SupabaseBookingRepository
           ? await _repository.getUserBookingsDirectlyStrict(userId)
           : await _repository.getUserBookingsDirectly(userId);
+      if (generation != _syncGeneration) return false;
       _lastKnownUserBookings = directList;
       final categorized = BookingCategorizationService.categorizeUserBookings(
         bookings: directList,
@@ -88,12 +98,14 @@ class BookingSyncCoordinator {
     } catch (e, stack) {
       // Preserve current state if the direct fetch fails.
       VSPLogger.e('Error loading direct user bookings in BookingSyncCoordinator', e, stack);
-      onError('Failed to load bookings: $e');
+      if (generation == _syncGeneration) onError('Failed to load bookings: $e');
     }
 
+    if (generation != _syncGeneration) return false;
     // 2. Realtime Stream — transport only, results merged with last-known state.
     _subscription = _repository.getUserBookings(userId).listen(
       (incoming) {
+        if (generation != _syncGeneration) return;
         // Merge incoming with last known — never replace if incoming is partial.
         final merged = _mergeWithLastKnown(incoming: incoming, userId: userId);
         // Update baseline only when incoming actually contains this user's bookings
@@ -110,6 +122,7 @@ class BookingSyncCoordinator {
         onData(merged, categorized);
       },
       onError: (e) {
+        if (generation != _syncGeneration) return;
         // Transport error — preserve existing state, report error to UI.
         VSPLogger.w('Realtime stream error in syncUserBookings (keeping existing state): $e');
         // Re-emit last known so UI doesn't go blank.
@@ -136,7 +149,9 @@ class BookingSyncCoordinator {
     required void Function(String error) onError,
   }) async {
     // Stop any previous user's/owner's stream before changing the booking scope.
+    final generation = ++_syncGeneration;
     await _subscription?.cancel();
+    if (generation != _syncGeneration) return;
     _subscription = null;
 
     // 1. Direct REST fetch for immediate UI population
@@ -144,6 +159,7 @@ class BookingSyncCoordinator {
       final repo = _repository;
       if (repo is SupabaseBookingRepository) {
         final directBookings = await repo.fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
+        if (generation != _syncGeneration) return;
         final categorized = BookingCategorizationService.categorizeOwnerBookings(
           bookings: directBookings,
           now: DateTime.now(),
@@ -153,12 +169,14 @@ class BookingSyncCoordinator {
       }
     } catch (e, stack) {
       VSPLogger.e('Error loading direct owner bookings in BookingSyncCoordinator', e, stack);
-      onError('Failed to load owner bookings: $e');
+      if (generation == _syncGeneration) onError('Failed to load owner bookings: $e');
     }
 
+    if (generation != _syncGeneration) return;
     // 2. Realtime Stream subscription
     _subscription = _repository.getOwnerBookings(ownerId, stadiumIds: stadiumIds).listen(
       (bookings) {
+        if (generation != _syncGeneration) return;
         final merged = BookingCategorizationService.mergeLocalManualBookings(
           incomingBookings: bookings,
           currentBookings: getCurrentBookings(),
