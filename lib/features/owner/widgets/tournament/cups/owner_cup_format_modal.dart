@@ -13,6 +13,9 @@ void showOwnerCupFormatModal(BuildContext context) {
     isScrollControlled: true,
     builder: (ctx) {
       return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.88,
+        ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.sheet)),
@@ -24,10 +27,11 @@ void showOwnerCupFormatModal(BuildContext context) {
           20,
           MediaQuery.of(ctx).padding.bottom + 24,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Center(
               child: Container(
                 width: 40,
@@ -98,7 +102,8 @@ void showOwnerCupFormatModal(BuildContext context) {
                 CreateTournamentWizard.open(context, preselectedType: 'League');
               },
             ),
-          ],
+            ],
+          ),
         ),
       );
     },
