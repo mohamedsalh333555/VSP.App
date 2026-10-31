@@ -210,6 +210,9 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     } else if (isPending) {
       statusColor = VSPColors.warning;
       statusText = isArabic ? 'طلبك قيد المراجعة' : 'Join request pending';
+    } else if (remaining == 0) {
+      statusColor = VSPColors.textSecondary;
+      statusText = isArabic ? 'اكتمل العدد' : 'Full';
     } else {
       statusColor = VSPColors.success;
       statusText = isArabic ? 'مفتوحة للانضمام' : 'Open to join';
