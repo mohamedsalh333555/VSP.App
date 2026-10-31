@@ -230,6 +230,9 @@ class BookingMapper {
       depositPaid: _parseDouble(
           data['deposit_paid'] ?? data['depositPaid'], 0.0),
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
+      needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
+      depositAmount: _parseDouble(
+          data['deposit_amount'] ?? data['depositAmount'], 0.0),
       instapay: data['instapay'] ?? data['insta_pay'],
       vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],
       binanceId: data['binanceId'] ?? data['binance_id'],
@@ -389,6 +392,8 @@ class BookingMapper {
       'notes': booking.notes,
       'deposit_paid': booking.depositPaid,
       'is_deposit_paid': booking.isDepositPaid,
+      'needs_deposit': booking.needsDeposit,
+      'deposit_amount': booking.depositAmount,
       'instapay': booking.instapay,
       'vodafone_cash': booking.vodafoneCash,
       'vodafoneCash': booking.vodafoneCash,
