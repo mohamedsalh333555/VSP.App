@@ -47,6 +47,7 @@ class FilterCategorySidebar extends StatelessWidget {
               selected: isSelected,
               label: title,
               child: InkWell(
+                excludeFromSemantics: true,
                 onTap: () => onSelectCategory(key),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
