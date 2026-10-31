@@ -155,7 +155,6 @@ class _SignupScreenState extends State<SignupScreen> {
       userData: userData,
     );
 
-    debugPrint("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
 
     if (!mounted) return;
 
@@ -164,7 +163,6 @@ class _SignupScreenState extends State<SignupScreen> {
     } else if (mounted) {
       final isAr = Localizations.localeOf(context).languageCode == 'ar';
       final errorMsg = SignupValidationService.formatSignupError(authProvider.errorMessage, isArabic: isAr);
-      debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
       VSPFeedback.showError(context, errorMsg);
     }
 
