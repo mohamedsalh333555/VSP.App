@@ -47,7 +47,6 @@ class VSPColors {
   static const cardGreen = surfaceAlt;
   static const cardDarkGreen = surface;
   static const white12 = VSPDSColors.white12;
-  static const white38 = VSPDSColors.white38;
   static const white = VSPDSColors.white;
   static const Color medalGold = VSPDSColors.gold;
   static const Color medalSilver = VSPDSColors.silver;
