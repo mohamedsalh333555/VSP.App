@@ -57,11 +57,24 @@ class CopyablePhoneText extends StatelessWidget {
             );
           }
         },
-        child: Tooltip(
-          message: isArabic ? 'اضغط مطولاً للنسخ' : 'Long press to copy',
-          child: Text(
-            phone,
-            style: style ?? const TextStyle(color: VSPColors.textPrimary, decoration: TextDecoration.underline),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: VSPSize.touchTarget,
+            minHeight: VSPSize.touchTarget,
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Tooltip(
+              message: isArabic ? 'اضغط مطولاً للنسخ' : 'Long press to copy',
+              child: Text(
+                phone,
+                style: style ??
+                    const TextStyle(
+                      color: VSPColors.textPrimary,
+                      decoration: TextDecoration.underline,
+                    ),
+              ),
+            ),
           ),
         ),
       ),
