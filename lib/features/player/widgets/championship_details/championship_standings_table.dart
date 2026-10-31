@@ -28,7 +28,7 @@ class _ChampionshipStandingsSectionState
   @override
   void didUpdateWidget(covariant ChampionshipStandingsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.widget.championship.id != widget.championship.id) {
+    if (oldWidget.championship.id != widget.championship.id) {
       _standingsFutures.clear();
     }
   }
@@ -52,12 +52,13 @@ class _ChampionshipStandingsSectionState
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isGroupOrLeague = widget.championship.type == 'League' || championship.type == 'GroupsAndKnockout';
+    final isGroupOrLeague = widget.championship.type == 'League' || widget.championship.type == 'GroupsAndKnockout';
     if (!isGroupOrLeague) return const SizedBox.shrink();
 
-    final isGroups = championship.type == 'GroupsAndKnockout';
+    final isGroups = widget.championship.type == 'GroupsAndKnockout';
     final numGroups = widget.championship.numberOfGroups;
     final groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    final safeGroupCount = numGroups.clamp(0, groupNames.length).toInt();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +75,7 @@ class _ChampionshipStandingsSectionState
         ),
         const SizedBox(height: 12),
         if (isGroups) ...[
-          for (int g = 0; g < numGroups; g++) ...[
+          for (int g = 0; g < safeGroupCount; g++) ...[
             Padding(
               padding: const EdgeInsets.only(top: 8, bottom: 6),
               child: Text(
@@ -82,18 +83,18 @@ class _ChampionshipStandingsSectionState
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ),
-            _buildStandingsTableWidget(context, championship.id, groupName: groupNames[g]),
+            _buildStandingsTableWidget(context, groupName: groupNames[g]),
             const SizedBox(height: 12),
           ],
         ] else ...[
-          _buildStandingsTableWidget(context, championship.id),
+          _buildStandingsTableWidget(context),
         ],
         const SizedBox(height: 20),
       ],
     );
   }
 
-  Widget _buildStandingsTableWidget(BuildContext context, String championshipId, {String? groupName}) {
+  Widget _buildStandingsTableWidget(BuildContext context, {String? groupName}) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return FutureBuilder<List<Map<String, dynamic>>>(
