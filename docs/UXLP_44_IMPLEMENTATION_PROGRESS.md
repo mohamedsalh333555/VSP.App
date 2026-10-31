@@ -432,3 +432,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - **Root cause identified in source:** the ticket-creation bottom sheet opts into `useSafeArea: true`, but its explicit maximum-height calculation also subtracts both system-bar padding values. The sheet then separately adds bottom safe-area padding to its own content. This counts safe-area space twice and unnecessarily reduces the sheet's usable viewport; with the keyboard visible, that can leave the primary action outside the readily visible area.
 - **Correction:** removed the duplicate top/bottom safe-area subtraction from the explicit height calculation while retaining keyboard-inset handling, the safe-area wrapper, and scrollable content. The form's primary action remains inside the scroll view.
 - **Scope:** UI layout only. No support-ticket database or messaging behavior changed. Runtime verification remains pending; no tests/CI/analyzer/APK were run.
+
+
+## Booking-card responsive layout correction — 2026-10-31
+
+- Player booking card date/time/price metadata previously placed three intrinsic-width columns directly in a Row. Long localized time values or enlarged text could demand more width than a narrow card provides.
+- Each metadata column is now constrained with Expanded, allowing its text to wrap within the available card width while retaining the existing three-column hierarchy and separators.
+- Source-only correction. No booking/payment/refund behavior was changed. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
