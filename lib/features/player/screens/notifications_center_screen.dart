@@ -138,11 +138,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   ),
                   onDismissed: (_) async {
                     final deletedItem = notification;
+                    // Bind the delete/Undo operation to the account that owned this row.
+                    // The screen may remain mounted while AuthProvider switches accounts.
+                    final deletingUserId = _userId;
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     final repository = NotificationRepository();
-                    final deleted = await repository.deleteNotification(_userId, deletedItem.id);
+                    final deleted = await repository.deleteNotification(deletingUserId, deletedItem.id);
 
-                    if (!mounted) return;
+                    if (!mounted || _userId != deletingUserId) return;
                     if (!deleted) {
                       setState(() {
                         _notificationsStream = repository.getUserNotifications(_userId);
@@ -174,8 +177,11 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                           label: isArabic ? 'تراجع' : 'Undo',
                           textColor: VSPColors.accent,
                           onPressed: () async {
-                            final restored = await repository.restoreNotification(_userId, deletedItem);
-                            if (!restored && mounted) {
+                            // Never restore an old account's notification into a newly
+                            // signed-in account if the user changed while the SnackBar was visible.
+                            if (!mounted || _userId != deletingUserId) return;
+                            final restored = await repository.restoreNotification(deletingUserId, deletedItem);
+                            if (!restored && mounted && _userId == deletingUserId) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
