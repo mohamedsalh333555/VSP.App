@@ -269,3 +269,20 @@ The source fixes above are not runtime passes. The 181 unique registered paths s
 | `lib/features/player/widgets/league/team_league_gathering_card.dart` | player | source reviewed—runtime pending (bilingual gathering/progress/share copy; fee text uses configured entry-fee value) |
 | `lib/features/player/widgets/league/team_league_standings_view.dart` | player | source reviewed—runtime pending (bilingual league detail/standings labels; long title and metadata rows bounded) |
 | `lib/features/player/widgets/league/team_league_fixtures_view.dart` | player | source reviewed—runtime pending (bilingual fixture/status copy; dates use active locale; result entry waits for booking and scheduled kickoff; server-side gate remains approval-required) |
+
+### Additional player/owner/authentication surfaces reviewed and refined — 2026-10-31
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/auth/screens/signup_screen.dart` | auth | source reviewed—runtime pending (removed raw auth-error debug logging; localized validation feedback retained) |
+| `lib/features/auth/screens/player_onboarding_screen.dart` | player | source reviewed—runtime pending (exit confirmation scrollable; form already SafeArea/scroll bounded) |
+| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | owner | source reviewed—runtime pending (exit confirmation scrollable) |
+| `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (export failure copy no longer exposes platform exception) |
+| `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (sign-out confirmation scrollable) |
+| `lib/features/player/screens/profile_screen.dart` | player | source reviewed—runtime pending (sign-out confirmation scrollable; existing profile avatar source retained) |
+| `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (roster validation and paste feedback bilingual; post-dialog mounted guard; registration errors sanitized) |
+| `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (error dialog scrollable) |
+| `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match-leave exception localized and sanitized) |
+| `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (load failure distinct from empty state with retry; bilingual result/closure feedback; scrollable close confirmation) |
+| `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (creation exception localized and sanitized) |
+| `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (team-list failure distinct from empty roster with retry; kickoff async lifecycle guard and scrollable confirmation) |
