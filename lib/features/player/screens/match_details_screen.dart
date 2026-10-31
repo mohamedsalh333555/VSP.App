@@ -143,7 +143,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  } else {
  VSPFeedback.showError(
  context,
- errorMsg.isNotEmpty ? errorMsg : (isArabic ? 'فشل الانضمام للمباراة' : 'Failed to join match'),
+ isArabic ? 'تعذر الانضمام للمباراة. حاول مرة أخرى.' : 'Could not join the match. Please try again.',
  );
  }
  }
