@@ -419,3 +419,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Owner payout and upgrade modal viewport pass — 2026-10-31
 
 - **Rules 11, 16, 17, 35 — financial dialogs/sheets:** owner payout dialogs now explicitly scroll long copy and form content. Password re-authentication sheet constrains its height after keyboard and safe-area insets. Facility-upgrade sheet respects both safe-area edges and remains scrollable within the visible viewport.
+
+
+### Payout re-authentication recovery — 2026-10-31
+
+- **Rules 10, 18, 28, 36, 43 — financial security form:** payout password empty/incorrect/network feedback is now bilingual. A thrown re-authentication error is logged and restores the form's retryable state rather than leaving the verification button stuck loading; incorrect-password copy explicitly states that no financial change was saved.

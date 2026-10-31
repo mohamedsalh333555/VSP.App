@@ -221,3 +221,11 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Facility upgrade sheet now subtracts top/bottom safe areas from its viewport height and retains vertical scrolling.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Payout re-authentication feedback
+
+- Owner payout password validation and incorrect-password feedback are now Arabic/English.
+- Thrown re-authentication failures are logged, return the form to an actionable state, and show localized retry guidance instead of leaving the verification control loading.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
