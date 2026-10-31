@@ -592,3 +592,8 @@ The 181-path inventory has no `not yet inspected` rows at this checkpoint, but t
 | Shared V2 token facade | 42 | Feature surfaces lacked direct compatibility aliases for the complete V2 size and typography roles. | Exposed V2 size, typography, and canonical color aliases. | fail — corrected in source; runtime pending |
 
 “Corrected in source” is not a pass. These entries remain open until the consolidated runtime review records the actual result on representative devices, both locales, and all relevant states.
+
+
+### Player profile avatar consistency — 2026-10-31
+
+- **Player profile header and no-team card:** replaced duplicated network `DecorationImage` usage with one shared renderer that handles missing/blank URLs and network image failures. Both locations now render the same profile-image source and fallback behavior. Source-reviewed; runtime image-cache/network failure verification remains pending.
