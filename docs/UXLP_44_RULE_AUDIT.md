@@ -542,3 +542,8 @@ The following source-level corrections were applied while expanding the componen
 - **Design-system API:** the compatibility facade now exposes V2 size and typography roles plus canonical black/transparent/white-alpha color aliases, so feature surfaces can consume shared tokens instead of defining duplicate values.
 
 The team roster import control already displays `لصق` / `Paste`. The inventory is now 181 unique Dart paths; six newly tracked nested championship detail components remain `not yet inspected`. The 44-rule matrix remains source-reviewed/runtime-pending. The final consolidated review has not started.
+
+
+### Shared upload widget accessibility and resilience — 2026-10-31
+
+- **Rules 17, 27, 33 — `VspUploadMainCard` / `VspUploadedItemRow`: semantic upload action with Material interaction; localized delete tooltip and 48dp hit target; empty thumbnail URLs treated as absent. Runtime assistive-technology and upload-flow validation remains pending.
