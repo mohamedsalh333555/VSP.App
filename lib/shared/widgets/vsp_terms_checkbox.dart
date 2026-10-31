@@ -35,31 +35,39 @@ class VSPTermsCheckbox extends StatelessWidget {
       children: [
         Semantics(
           label: isAr ? 'الموافقة على الشروط والأحكام' : 'Agree to Terms and Conditions',
+          button: true,
           checked: value,
-          child: GestureDetector(
+          child: InkWell(
             onTap: () {
               HapticFeedback.selectionClick();
               onChanged(!value);
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: value ? VSPColors.accent : VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.sm),
-                border: Border.all(
-                  color: value ? VSPColors.accent : VSPColors.borderLight,
-                  width: 1.5,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            child: SizedBox(
+              width: VSPSize.touchTarget,
+              height: VSPSize.touchTarget,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: value ? VSPColors.accent : VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(
+                      color: value ? VSPColors.accent : VSPColors.borderLight,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: value
+                      ? const Icon(
+                          Iconsax.tick_circle_copy,
+                          size: 16,
+                          color: VSPColors.black,
+                        )
+                      : null,
                 ),
               ),
-              child: value
-                  ? const Icon(
-                      Iconsax.tick_circle_copy,
-                      size: 16,
-                      color: Colors.black,
-                    )
-                  : null,
             ),
           ),
         ),
