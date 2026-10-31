@@ -459,3 +459,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Notification list safe-area and RTL swipe correction — 2026-10-31
 
 - **Rules 7, 10, 11, 32, 42 — notification center:** removed duplicate bottom safe-area spacing because the list is already inside SafeArea; retained intentional list breathing room. Swipe-to-delete background now uses directional alignment and padding so its affordance mirrors correctly between Arabic RTL and English LTR. This does not alter notification retention or deletion policy.
+
+
+### Notification and cancellation dialog responsiveness — 2026-10-31
+
+- **Rules 7, 10, 11, 26, 33, 35, 42 — player notification/cancellation surfaces:** notification list no longer double-counts the device bottom inset and its swipe-delete affordance mirrors in RTL/LTR. Booking cancellation dialog actions stack into full-width 48dp controls below 360dp available width; wider layouts retain the side-by-side arrangement. No cancellation/refund business logic was changed.

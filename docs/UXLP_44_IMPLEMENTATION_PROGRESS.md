@@ -281,3 +281,12 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - No notification retention/deletion business rule or database behavior was changed.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Notification and cancellation dialog responsive corrections
+
+- Notification center: removed duplicate bottom safe-area padding and changed swipe-to-delete background to directional end alignment/padding.
+- Player booking cancellation confirmation: action buttons stack vertically and expand to full width when available dialog width is below 360dp; wider viewports retain the horizontal two-button layout. Both retain 48dp height.
+- No notification retention, cancellation, or refund business rules were changed.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
