@@ -31,6 +31,7 @@ class PaymentCountdownHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasVerifiedTotal = totalAmountWithFees != null;
     final double displayAmount = totalAmountWithFees ?? amountToPay;
     final String formattedAmount = (displayAmount % 1 == 0)
         ? displayAmount.toInt().toString()
@@ -107,9 +108,13 @@ class PaymentCountdownHeader extends StatelessWidget {
           child: Column(
             children: [
               Text(
-                isChampionship
-                    ? (isArabic ? 'إجمالي الاشتراك المطلوب الآن' : 'Total Entry Fee Due Now')
-                    : (isArabic ? 'المبلغ المطلوب دفعه الآن' : 'Total Amount Due Now'),
+                hasVerifiedTotal
+                    ? (isChampionship
+                        ? (isArabic ? 'إجمالي الاشتراك المطلوب الآن' : 'Total Entry Fee Due Now')
+                        : (isArabic ? 'المبلغ المطلوب دفعه الآن' : 'Total Amount Due Now'))
+                    : (isChampionship
+                        ? (isArabic ? 'رسوم الاشتراك الأساسية قبل الرسوم' : 'Base entry fee before fees')
+                        : (isArabic ? 'السعر الأساسي قبل الرسوم' : 'Base amount before fees')),
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
               ),
               const SizedBox(height: VSPSpacing.xs),
@@ -122,6 +127,16 @@ class PaymentCountdownHeader extends StatelessWidget {
                   letterSpacing: 0.5,
                 ),
               ),
+              if (!hasVerifiedTotal) ...[
+                const SizedBox(height: VSPSpacing.xs),
+                Text(
+                  isArabic
+                      ? 'الإجمالي النهائي غير متاح حتى يتم التحقق من الرسوم.'
+                      : 'Final total is unavailable until fees are verified.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: VSPColors.warning, fontSize: 11),
+                ),
+              ],
             ],
           ),
         ),
