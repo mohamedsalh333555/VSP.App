@@ -44,7 +44,7 @@ class RosterGuestPlayersSection extends StatelessWidget {
               onPressed: onPasteFromWhatsApp,
               icon: const Icon(Iconsax.copy_copy, size: 16, color: VSPColors.accent),
               label: Text(
-                isArabic ? 'لصق من واتساب ' : 'Paste from WhatsApp ',
+                isArabic ? 'لصق' : 'Paste',
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
