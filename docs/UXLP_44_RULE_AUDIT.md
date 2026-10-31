@@ -394,3 +394,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Shared action cooldown reliability — 2026-10-31
 
 - **Rules 28, 29, 36 — shared animated action:** VSPAnimatedButton now releases its cooldown in a finally block even if its synchronous action callback throws, matching the hardened PrimaryButton behavior and avoiding a permanently absorbed control.
+
+
+### Date-picker selection semantics — 2026-10-31
+
+- **Rules 27, 33, 34 — date selection accessibility:** date-picker step chips and year/month/day choices now expose one semantic button each, including the selected state, value, and disabled state for unavailable steps; their InkWell surfaces remain keyboard/focus interactive.

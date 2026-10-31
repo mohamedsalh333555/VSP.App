@@ -180,3 +180,11 @@ No CI, analyzer, automated tests, runtime checks, migrations, or APK build were 
 - VSPAnimatedButton now schedules cooldown release from finally, so a synchronous callback exception cannot leave its AbsorbPointer active indefinitely.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Date-picker accessibility follow-up
+
+- Date-picker step chips expose localized step/value labels and current selected/enabled state through one semantic control.
+- Year, month, and day options expose their displayed value and selected state as one semantic button while retaining focusable InkWell interaction.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
