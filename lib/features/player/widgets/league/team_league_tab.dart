@@ -84,9 +84,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       });
     }
     try {
-      final data = await _leagueRepo.getTeamActiveLeague(teamId);
+      final data = await _leagueRepo.getTeamActiveLeagueStrict(teamId);
       if (!mounted || generation != _leagueLoadGeneration || widget.userTeam?.id != teamId) return;
-      final fee = await _leagueRepo.getTeamLeagueEntryFee();
+      final fee = await _leagueRepo.getTeamLeagueEntryFeeStrict();
       if (!mounted || generation != _leagueLoadGeneration || widget.userTeam?.id != teamId) return;
       var paymentStatus = 'not_created';
       var paymentStatusError = false;
