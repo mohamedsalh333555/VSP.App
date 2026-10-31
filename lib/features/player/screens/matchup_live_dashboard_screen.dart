@@ -131,7 +131,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
         scrollable: true,
         backgroundColor: VSPColors.surface,
         title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
+        content: Text(
           isArabic
               ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
               : 'After closing, no more results can be added to this session and the final standings will be locked.',
