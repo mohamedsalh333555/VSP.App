@@ -6,7 +6,7 @@ import '../../../../data/models.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
 
 /// قسم جدول الترتيب الحي للبطولة (يدعم نظام الدوري ونظام المجموعات)
-class ChampionshipStandingsSection extends StatelessWidget {
+class ChampionshipStandingsSection extends StatefulWidget {
   final Championship championship;
   final VoidCallback onRetry;
 
@@ -17,13 +17,46 @@ class ChampionshipStandingsSection extends StatelessWidget {
   });
 
   @override
+  State<ChampionshipStandingsSection> createState() =>
+      _ChampionshipStandingsSectionState();
+}
+
+class _ChampionshipStandingsSectionState
+    extends State<ChampionshipStandingsSection> {
+  final Map<String, Future<List<Map<String, dynamic>>>> _standingsFutures = {};
+
+  @override
+  void didUpdateWidget(covariant ChampionshipStandingsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.widget.championship.id != widget.championship.id) {
+      _standingsFutures.clear();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _standingsFuture(String? groupName) {
+    final key = groupName ?? '__all__';
+    return _standingsFutures.putIfAbsent(
+      key,
+      () => TournamentRepository().getChampionshipStandings(
+        widget.championship.id,
+        groupName: groupName,
+      ),
+    );
+  }
+
+  void _retryStandings() {
+    setState(_standingsFutures.clear);
+    widget.onRetry();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isGroupOrLeague = championship.type == 'League' || championship.type == 'GroupsAndKnockout';
+    final isGroupOrLeague = widget.championship.type == 'League' || championship.type == 'GroupsAndKnockout';
     if (!isGroupOrLeague) return const SizedBox.shrink();
 
     final isGroups = championship.type == 'GroupsAndKnockout';
-    final numGroups = championship.numberOfGroups;
+    final numGroups = widget.championship.numberOfGroups;
     final groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
     return Column(
@@ -64,14 +97,14 @@ class ChampionshipStandingsSection extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: TournamentRepository().getChampionshipStandings(championshipId, groupName: groupName),
+      future: _standingsFuture(groupName),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return VSPErrorState(
             customMessage: isArabic
                 ? 'تعذر تحميل جدول الترتيب. حاول مرة أخرى.'
                 : 'Could not load standings. Try again.',
-            onRetry: onRetry,
+            onRetry: _retryStandings,
             retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
           );
         }
