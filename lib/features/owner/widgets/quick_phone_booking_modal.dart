@@ -195,7 +195,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final ownerId = authProvider.currentUser?.uid ?? widget.stadium.ownerId;
+      final ownerId = authProvider.currentUser?.id ?? widget.stadium.ownerId;
       final bookingRef = 'MAN_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       final cleanPhone = rawPhone.isNotEmpty ? PhoneUtils.normalize(rawPhone) : null;
