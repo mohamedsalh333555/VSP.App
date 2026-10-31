@@ -87,16 +87,18 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
  // Activate cooldown
  setState(() => _isCoolingDown = true);
 
- // Execute the original callback
+ // Execute the original callback, but always release the cooldown even
+ // if a synchronous callback throws before starting its async work.
+ try {
  widget.onPressed!();
-
- // Start cooldown timer
+ } finally {
  _cooldownTimer?.cancel();
  _cooldownTimer = Timer(Duration(milliseconds: widget.cooldownMs), () {
  if (mounted) {
  setState(() => _isCoolingDown = false);
  }
  });
+ }
  }
 
  @override
