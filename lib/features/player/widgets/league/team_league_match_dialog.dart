@@ -300,8 +300,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('اعتماد النتيجة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
-          ],
-        ),
+        ],
       ),
     );
 
