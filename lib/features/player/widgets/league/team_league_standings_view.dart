@@ -311,8 +311,8 @@ class TeamLeagueDetailsView extends StatelessWidget {
 
               // Table Body
               if (standings.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
                       isArabic ? 'لا توجد مباريات مكتملة في جدول الترتيب حتى الآن' : 'No completed matches to show in the standings yet',
