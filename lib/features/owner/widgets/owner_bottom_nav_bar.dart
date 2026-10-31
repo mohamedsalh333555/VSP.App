@@ -35,7 +35,7 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final userId = context.read<AuthProvider>().currentUser?.uid ?? '';
+    final userId = context.read<AuthProvider>().currentUser?.id ?? '';
 
     return StreamBuilder<int>(
       key: ValueKey(userId),
