@@ -7,6 +7,10 @@
 import 'package:flutter/material.dart';
 import 'vsp_design_tokens.dart';
 
+// Re-export the canonical navigation geometry through the legacy token facade
+// so existing feature imports resolve the single source of truth.
+export 'vsp_design_tokens.dart' show VSPBottomNavMetrics;
+
 /// Backward-compatible aliases. VSP DS V2 is the only visual source of truth.
 class VSPColors {
   static const background = VSPDSSemanticColors.background;

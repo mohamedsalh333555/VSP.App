@@ -256,3 +256,12 @@ The following additional source-level corrections were made on `uxlp-44-implemen
 - **Rules 29, 35, 36 — interaction correctness:** malformed duplicate source appended to the booking query coordinator was removed; booking slot handlers were restored; location-picker cleanup was returned to the owning sheet method; async notification context guards were corrected; result submission now returns its real success value and avoids double-pop; missing payment checkout import and league team arguments were restored.
 
 **Still pending:** complete screen-by-screen rule mapping for every registered surface and embedded widget; Arabic/English and RTL/LTR review; compact-device, keyboard, large-text, safe-area and modal runtime checks; final consolidated validation. No final test or APK build is authorized at this checkpoint.
+
+
+## Phase 2 implementation batch — shared tokens and owner tournament recovery
+
+- **Rule 5 / Rule 42 — one icon language and design-system governance:** the legacy `vsp_tokens.dart` facade now explicitly re-exports the canonical `VSPBottomNavMetrics` declaration from `vsp_design_tokens.dart`. This preserves one geometry source while allowing existing feature files that import the compatibility facade to resolve the canonical symbol. It does not introduce a second value or duplicate geometry definition.
+- **Rule 9 / Rule 36 — state visibility and feedback recovery:** the owner tournament list now distinguishes an initial stream failure from a successful empty result. It presents the shared localized `VSPErrorState` with retry, and it does not replace a previously delivered snapshot with an empty list when a later stream refresh is still pending or fails.
+- **Rule 11 / Rule 35 — responsive and modal-safe state recovery:** the owner tournament error surface reuses the shared scroll-safe state component instead of a bespoke fixed-height error dialog. Runtime sizing remains part of the later approved validation phase.
+
+These are source changes only. They do not change tournament eligibility, status mapping, database behavior, or business policy. No CI, analyzer, automated tests, runtime tests, or APK build were run.

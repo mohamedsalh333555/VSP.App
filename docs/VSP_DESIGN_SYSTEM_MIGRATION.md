@@ -214,3 +214,8 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - `OwnerOperationalFinanceCard` is the canonical owner finance component used by the dashboard. `OwnerBasicFinancialGlance` and `OwnerProOverviewCard` are deprecated and must not be extended for new surfaces.
 - `TeamCardHero` uses a minimum height rather than a hard maximum and flexible stat/footer rows to reduce clipping at narrow widths and larger text scales.
 - Runtime visual verification remains pending. Do not mark these changes as visually passed before the consolidated device validation.
+
+
+## Phase 2 implementation note — canonical bottom navigation token access
+
+The legacy `vsp_tokens.dart` facade re-exports `VSPBottomNavMetrics` from the canonical `vsp_design_tokens.dart` file. This is a compatibility export only: the values remain defined once in the V2 token source. Feature files may migrate to direct V2 imports independently without creating duplicate geometry.

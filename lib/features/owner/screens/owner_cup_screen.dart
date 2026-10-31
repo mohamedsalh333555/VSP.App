@@ -10,6 +10,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/tournament/cups/cups_tab_selector.dart';
 import '../widgets/tournament/cups/cups_filter_dropdowns.dart';
 import '../widgets/tournament/cups/owner_cup_card.dart';
@@ -133,10 +134,25 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 Provider.of<AuthProvider>(context, listen: false).currentUser?.id,
               ),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                 }
 
+                if (snapshot.hasError && !snapshot.hasData) {
+                  return VSPErrorState(
+                    onRetry: () {
+                      setState(() {
+                        _championshipsStream = null;
+                        _lastSport = null;
+                        _lastOwnerId = null;
+                      });
+                    },
+                  );
+                }
+
+                // Keep the last delivered snapshot visible if the realtime stream
+                // fails after its initial successful load; never turn a stream
+                // failure into a false empty-tournaments state.
                 final championships = snapshot.data ?? [];
                 final hasAny = championships.isNotEmpty;
                 if (_hasAnyChampionships != hasAny) {
