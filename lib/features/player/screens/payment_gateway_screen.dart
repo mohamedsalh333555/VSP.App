@@ -299,12 +299,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
 
+    final bookingNeedsDeposit = _booking?.needsDeposit ?? widget.bookingDraft.needsDeposit;
+    final bookingDepositAmount = _booking?.depositAmount ?? widget.bookingDraft.depositPaid;
+    final paymentDraft = _booking == null
+        ? widget.bookingDraft
+        : widget.bookingDraft.copyWith(
+            totalPrice: _booking!.totalPrice,
+            needsDeposit: _booking!.needsDeposit,
+            depositPaid: _booking!.depositAmount,
+          );
     final isFullPayment = widget.forceFullPayment ||
-        !widget.bookingDraft.needsDeposit ||
-        widget.bookingDraft.depositPaid <= 0;
+        widget.isTournamentPayment ||
+        !bookingNeedsDeposit ||
+        bookingDepositAmount <= 0;
 
     final paymobUrl = await PaymentCheckoutService.requestPaymobCheckoutUrl(
-      draft: widget.bookingDraft,
+      draft: paymentDraft,
       selectedMethod: _selectedMethod,
       isTournamentPayment: widget.isTournamentPayment,
       bookingId: _booking?.id ?? widget.existingBookingId,
