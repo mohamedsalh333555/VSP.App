@@ -125,8 +125,7 @@ class BookingQueryCoordinator {
             final refreshed = await fetchOwnerBookingsDirectlyStrict(ownerId, stadiumIds: stadiumIds);
             sink.add(refreshed);
           },
-        )
-        ;
+        );
   }
 
   /// Fetches a single booking by ID.
@@ -397,8 +396,7 @@ class BookingQueryCoordinator {
             final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
             sink.add(refreshed);
           },
-        )
-        ;
+        );
   }
 
   /// Fetches a single booking by ID.
