@@ -573,3 +573,22 @@ The 181-path inventory has no `not yet inspected` rows at this checkpoint, but t
 - Standings futures are cached per group across match-stream emissions, avoiding repeated standings requests on every live update. A retry clears the cache and re-fetches.
 - Group rendering is bounded to the supported A–H labels.
 - These source changes do not alter tournament registration or scoring rules. Device/runtime verification is pending.
+
+
+## Screen-level defect ledger — source correction complete, runtime pending
+
+| Surface | UXLP rule | Source failure observed | Correction committed | Final status |
+|---|---:|---|---|---|
+| `ChampionshipCard` | 31, 40 | `ongoing`, `cancelled`, and unknown statuses could be presented as open/joinable. | Explicit lifecycle labels; only `open` shows registration CTA. | fail — corrected in source; runtime pending |
+| `ChampionshipDetailsScreen` | 28, 36, 38, 40 | Live championship stream errors silently fell back to the original object. | Stale-data warning and retry recreate both championship and match streams. | fail — corrected in source; runtime pending |
+| `ChampionshipMatchesTab` | 28, 36 | No first stream event and stream errors could appear as “no matches”. | Separate loading/empty/error/stale-data states; retry preserves last good matches. | fail — corrected in source; runtime pending |
+| `ChampionshipStandingsSection` | 28, 36, 44 | Failed standings queries could appear as an empty table; live updates could repeatedly recreate the query. | Shared error/retry state; cached futures per group; bounded A–H indexes. | fail — corrected in source; runtime pending |
+| `ChampionshipTopScorersTab` | 28, 36 | Failed scorer query could appear as “no goals recorded”. | Shared localized error/retry state. | fail — corrected in source; runtime pending |
+| `PublicMatchCard` | 28, 36, 43 | Raw backend exceptions could reach users; request-cancel false result was ignored; share failure was unhandled. | Localized safe messages, diagnostic logging, boolean result handling, and share catch path. | fail — corrected in source; runtime pending |
+| `OwnerNotificationButton` | 9, 36 | Unread-count stream failure could look like zero unread. | Warning indicator and localized tooltip on stream error. | fail — corrected in source; runtime pending |
+| `VSPTermsCheckbox` | 27, 33 | The checkbox hit area was only 22dp. | 48dp interactive target with checked/button semantics. | fail — corrected in source; runtime pending |
+| `CopyablePhoneText` | 27, 28, 36, 37 | Clipboard failure had no localized recovery feedback or explicit semantic label. | Semantic label and localized failure feedback. | fail — corrected in source; runtime pending |
+| `VSPCountdownTimer` | 44 | Timer continued rebuilding after reaching zero and did not reset its timer when targetDate changed. | Stops at zero, restarts for a changed target, and disposes the timer. | fail — corrected in source; runtime pending |
+| Shared V2 token facade | 42 | Feature surfaces lacked direct compatibility aliases for the complete V2 size and typography roles. | Exposed V2 size, typography, and canonical color aliases. | fail — corrected in source; runtime pending |
+
+“Corrected in source” is not a pass. These entries remain open until the consolidated runtime review records the actual result on representative devices, both locales, and all relevant states.
