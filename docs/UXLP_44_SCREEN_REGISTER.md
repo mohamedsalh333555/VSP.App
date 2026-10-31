@@ -157,31 +157,31 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, focusable selection and SafeArea documented; selected/unselected runtime pending) |
 | `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (shared state/empty pattern documented; every screen usage and state runtime pending) |
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) |
-| `lib/shared/widgets/vsp_fade_in_item.dart` | shared | not yet inspected |
+| `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source reviewed—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
 | `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
 | `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
 | `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
 | `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
 | `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height documented; runtime pending) |
-| `lib/shared/widgets/banner_slider_widget.dart` | shared | not yet inspected |
-| `lib/shared/widgets/copyable_phone_text.dart` | shared | not yet inspected |
-| `lib/shared/widgets/public_match_card.dart` | player | not yet inspected |
-| `lib/shared/widgets/vsp_ai_spark_icon.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_ambient_background.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_auth_header.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_countdown_timer.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | not yet inspected |
-| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | not yet inspected |
-| `lib/core/ui/components/vsp_menu_item.dart` | shared | not yet inspected |
-| `lib/core/ui/components/vsp_section_title.dart` | shared | not yet inspected |
-| `lib/features/player/widgets/championship_card.dart` | player | not yet inspected |
-| `lib/features/player/widgets/collective_match_invite_route.dart` | player | not yet inspected |
-| `lib/features/player/widgets/create_team_logo_picker_row.dart` | player | not yet inspected |
-| `lib/features/player/widgets/create_team_members_section.dart` | player | not yet inspected |
-| `lib/features/player/widgets/vsp_1v1_trophy_badge.dart` | player | not yet inspected |
-| `lib/features/owner/widgets/owner_notification_button.dart` | owner | not yet inspected |
-| `lib/features/owner/widgets/radial_tick_gauge_painter.dart` | owner | not yet inspected |
+| `lib/shared/widgets/banner_slider_widget.dart` | shared | source reviewed—runtime pending (REST and realtime banner sources, autoplay/pointer lifecycle, image fallback; optional banner fetch failure hides the carousel without blocking the screen) |
+| `lib/shared/widgets/copyable_phone_text.dart` | shared | source reviewed—runtime pending (long-press copy now has semantic label and localized clipboard failure feedback; touch target/call-site runtime pending) |
+| `lib/shared/widgets/public_match_card.dart` | player | source reviewed—runtime pending (join/leave/request/share failures are localized; backend details are logged; request result is checked; share action retains 48dp target) |
+| `lib/shared/widgets/vsp_ai_spark_icon.dart` | shared | source reviewed—runtime pending (custom unequal four-point spark geometry; visual identity and contrast runtime pending) |
+| `lib/shared/widgets/vsp_ambient_background.dart` | shared | source reviewed—runtime pending (shared ambient decoration uses the compatibility token facade; contrast and low-performance rendering pending) |
+| `lib/shared/widgets/vsp_auth_header.dart` | shared | source reviewed—runtime pending (shared auth title/back affordance; parent safe-area and keyboard layout pending) |
+| `lib/shared/widgets/vsp_countdown_timer.dart` | shared | source reviewed—runtime pending (timer stops at zero, cancels on disposal, and recalculates when targetDate changes; locale/large-text runtime pending) |
+| `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | source reviewed—runtime pending (48dp checkbox hit area, checked semantics, and separate terms/privacy link actions; keyboard/focus runtime pending) |
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source reviewed—runtime pending (upload card disabled state and uploaded-item delete action; caller permission/error/confirmation behavior pending) |
+| `lib/core/ui/components/vsp_menu_item.dart` | shared | source reviewed—runtime pending (canonical V2 menu component; minimum hit area and focus/semantics runtime pending) |
+| `lib/core/ui/components/vsp_section_title.dart` | shared | source reviewed—runtime pending (canonical V2 section heading component; long Arabic/English title wrapping pending) |
+| `lib/features/player/widgets/championship_card.dart` | player | source reviewed—runtime pending (open/full/completed card states, countdown visibility, dynamic fee/prize display, and 48dp share action; non-open status mapping requires product confirmation) |
+| `lib/features/player/widgets/collective_match_invite_route.dart` | player | source reviewed—runtime pending (opens invite sheet once after first frame and returns from route after sheet closes; invalid/expired token runtime pending) |
+| `lib/features/player/widgets/create_team_logo_picker_row.dart` | player | source reviewed—runtime pending (logo selection action and preview; picker permission/cancel/error states pending) |
+| `lib/features/player/widgets/create_team_members_section.dart` | player | source reviewed—runtime pending (paste label is already simplified to “لصق” / “Paste”; add/remove actions and long roster layout pending) |
+| `lib/features/player/widgets/vsp_1v1_trophy_badge.dart` | player | source reviewed—runtime pending (presentation-only trophy badge variants; contrast and semantics pending) |
+| `lib/features/owner/widgets/owner_notification_button.dart` | owner | source reviewed—runtime pending (unread stream errors now show a warning indicator and localized tooltip rather than appearing as zero unread) |
+| `lib/features/owner/widgets/radial_tick_gauge_painter.dart` | owner | source reviewed—runtime pending (custom painter has no direct interaction; gauge scale/contrast and parent semantics pending) |
 
 - Shared widgets and reusable cards
 - Navigation bars, drawers, app bars, tabs, and action menus
