@@ -54,12 +54,17 @@ class OwnerSlotCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            Text(
-              isAr ? 'غير متاح للحجز' : 'Not bookable',
-              style: const TextStyle(
-                color: VSPColors.textSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                isAr ? 'غير متاح للحجز' : 'Not bookable',
+                style: const TextStyle(
+                  color: VSPColors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
               ),
             ),
           ],
@@ -102,16 +107,20 @@ class OwnerSlotCard extends StatelessWidget {
               size: 22,
             ),
             const SizedBox(width: 12),
-            Text(
-              isBreak
-                  ? l10n.breakTime
-                  : (isPast ? (isAr ? 'موعد منقضي' : 'Expired Slot') : (isAr ? 'متاح للحجز' : 'Available')),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.textSecondary,
-                    fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
-                  ),
+            Expanded(
+              child: Text(
+                isBreak
+                    ? l10n.breakTime
+                    : (isPast ? (isAr ? 'موعد منقضي' : 'Expired Slot') : (isAr ? 'متاح للحجز' : 'Available')),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.textSecondary,
+                      fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
