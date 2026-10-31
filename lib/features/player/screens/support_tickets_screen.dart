@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -130,6 +131,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                             );
                             if (ctx.mounted) Navigator.pop(ctx, ticket['id']?.toString());
                           } catch (e) {
+                            VSPLogger.w('Support ticket creation failed: $e');
                             if (ctx.mounted) {
                               ScaffoldMessenger.of(ctx).showSnackBar(
                                 SnackBar(content: Text(isArabic ? 'تعذر فتح التذكرة.' : 'Could not create the ticket.')),
