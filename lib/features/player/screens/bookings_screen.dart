@@ -6,7 +6,6 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/repositories/team_repository.dart';
-import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -87,13 +86,6 @@ class _BookingsScreenState extends State<BookingsScreen> {
           _myCaptainTeamIds = <String>{};
           _hasTeamContextError = true;
         });
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'تعذر التحقق من عضوية الفريق وصلاحية القائد. اسحب للتحديث قبل تسجيل النتيجة.'
-              : 'Could not verify team membership/captain access. Refresh before recording a result.',
-        );
       }
     } finally {
       if (mounted && generation == _userScopeGeneration) {
@@ -150,16 +142,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
           const SizedBox(width: VSPDSSpacing.sm),
           Expanded(
             child: Text(
-              isArabic
-                  ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
-                  : 'Could not refresh bookings. Showing the last loaded data.',
+              _hasTeamContextError
+                  ? (isArabic
+                      ? 'تعذر التحقق من عضوية الفريق وصلاحية القائد. أعد التحديث قبل تسجيل النتيجة.'
+                      : 'Could not verify team membership/captain access. Refresh before recording a result.')
+                  : (isArabic
+                      ? 'تعذر تحديث الحجوزات. يتم عرض آخر بيانات تم تحميلها.'
+                      : 'Could not refresh bookings. Showing the last loaded data.'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: errorColor,
                   ),
             ),
           ),
           TextButton(
-            onPressed: _loadData,
+            onPressed: _refreshData,
             child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
           ),
         ],
@@ -241,7 +237,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 customMessage: isArabic
                     ? 'تعذر تحميل حجوزاتك. تحقق من اتصالك ثم حاول مرة أخرى.'
                     : 'Could not load your bookings. Check your connection and try again.',
-                onRetry: _loadData,
+                onRetry: _refreshData,
               );
             }
 
@@ -274,7 +270,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 final historyCount = data.history.length;
                 final hasUpcoming = upcomingCount > 0;
                 final hasHistory = historyCount > 0;
-                final hasSyncError = data.error != null;
+                final hasSyncError = data.error != null || _hasTeamContextError;
 
                 return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
