@@ -11,6 +11,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback? onCancelLeague;
   final VoidCallback? onPayFee;
+  final double? entryFee;
 
   const TeamLeagueGatheringCard({
     super.key,
@@ -18,10 +19,12 @@ class TeamLeagueGatheringCard extends StatelessWidget {
     required this.onRefresh,
     this.onCancelLeague,
     this.onPayFee,
+    this.entryFee,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final joined = league.teams.length;
     final total = league.maxTeams;
     final progress = total > 0 ? (joined / total).clamp(0.0, 1.0) : 0.0;
@@ -63,7 +66,9 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'مرحلة تجميع الفرق ($joined من $total فرق)',
+                      isArabic
+                          ? 'مرحلة تجميع الفرق ($joined من $total فرق)'
+                          : 'Team gathering ($joined of $total teams)',
                       style: const TextStyle(
                         color: VSPColors.textSecondary,
                         fontSize: 12,
@@ -104,8 +109,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
           const SizedBox(height: VSPSpacing.lg),
 
           // Joined Teams List
-          const Text(
-            'الفرق المنضمة حتى الآن:',
+          Text(
+            isArabic ? 'الفرق المنضمة حتى الآن:' : 'Teams that have joined:',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -198,7 +203,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                       const SizedBox(width: 10),
                       const Expanded(
                         child: Text(
-                          'في انتظار انضمام فريق منافس...',
+                          isArabic ? 'في انتظار انضمام فريق منافس...' : 'Waiting for another team to join...', 
                           style: TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 12,
@@ -224,8 +229,10 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
               ),
-              child: const Text(
-                'رسوم تنظيم الدوري 30 جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.',
+              child: Text(
+                isArabic
+                    ? 'رسوم تنظيم الدوري ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.'
+                    : 'League organization fee: ${entryFee?.toStringAsFixed(0) ?? '—'} EGP per team. Stadium rental for each match is split equally between the two teams.', 
                 textAlign: TextAlign.center,
                 style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
@@ -239,7 +246,12 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
-              child: const Text('دفع رسوم تنظيم الدوري — 30 جنيه', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                isArabic
+                    ? 'دفع رسوم تنظيم الدوري — ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه'
+                    : 'Pay league fee — ${entryFee?.toStringAsFixed(0) ?? '—'} EGP',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
 
@@ -255,8 +267,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               children: [
                 const Icon(Iconsax.key_copy, color: VSPColors.textSecondary, size: 18),
                 const SizedBox(width: 8),
-                const Text(
-                  'كود الدوري:',
+                Text(
+                  isArabic ? 'كود الدوري:' : 'League code:', 
                   style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(width: 8),
@@ -277,7 +289,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                     Clipboard.setData(ClipboardData(text: league.id));
                     VSPFeedback.triggerSuccess();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('تم نسخ كود الدوري')),
+                      SnackBar(content: Text(isArabic ? 'تم نسخ كود الدوري' : 'League code copied')), 
                     );
                   },
                 ),
@@ -289,18 +301,26 @@ class TeamLeagueGatheringCard extends StatelessWidget {
 
           ElevatedButton.icon(
             onPressed: () {
-              final shareText = '''
+              final shareText = isArabic
+                  ? '''
 🏆 دعوة للمشاركة في ${league.name} على تطبيق VSP!
-اجمع فريقك ونافس 4 فرق على لقب الدوري (3 جولات).
-رسوم تنظيم المنصة: 30 جنيه لكل فريق فقط.
-(حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين).
+اجمع فريقك ونافس الفرق الأخرى على لقب الدوري.
+رسوم تنظيم المنصة: ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه لكل فريق.
+حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.
 كود الانضمام: ${league.id}
+'''
+                  : '''
+🏆 Join ${league.name} on VSP!
+Bring your team and compete for the league title.
+Platform organization fee: ${entryFee?.toStringAsFixed(0) ?? '—'} EGP per team.
+Stadium rental for each match is split equally between the two teams.
+Join code: ${league.id}
 ''';
               SharingService().shareText(shareText);
             },
             icon: const Icon(Iconsax.share_copy, size: 18),
-            label: const Text(
-              'مشاركة الدعوة على واتساب',
+            label: Text(
+              isArabic ? 'مشاركة الدعوة على واتساب' : 'Share invite on WhatsApp',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
@@ -318,8 +338,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: onCancelLeague,
                 icon: const Icon(Iconsax.trash_copy, size: 16, color: VSPColors.error),
-                label: const Text(
-                  'إلغاء هذا الدوري',
+                label: Text(
+                  isArabic ? 'إلغاء هذا الدوري' : 'Cancel this league',
                   style: TextStyle(color: VSPColors.error, fontSize: 12),
                 ),
               ),
