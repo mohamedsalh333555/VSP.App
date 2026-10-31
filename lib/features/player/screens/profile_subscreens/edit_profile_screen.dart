@@ -414,7 +414,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  } else {
  setDialogState(() => _isDeleting = false);
  VSPFeedback.showError(context, isArabic ? "تعذر حذف الحساب. حاول مرة أخرى." : "Could not delete the account. Please try again.");
- Navigator.pop(context);
  }
  },
  ),
