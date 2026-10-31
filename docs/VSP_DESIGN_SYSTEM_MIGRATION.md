@@ -42,7 +42,7 @@ This is a shared-foundation migration, not a completed screen audit.
 - UXLP-44 standard: written.
 - Initial candidate screen register: 128 Dart paths; the current register contains 174 unique Dart screen/surface paths.
 - Shared component audit: initial pass and the changes above applied.
-- A recorded static source scan covers 128 candidate paths. The current register now contains 139 unique Dart screen/surface paths; therefore 46 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 174 paths before calling this gate complete.
+- A recorded static source scan covers 128 candidate paths. The current register now contains 174 unique Dart screen/surface paths; therefore 46 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 174 paths before calling this gate complete.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
 - Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
