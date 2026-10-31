@@ -21,6 +21,7 @@ class StadiumProvider with ChangeNotifier {
  int? _lastDocument;
  // Invalidates in-flight player fetches when the active data scope changes.
  int _scopeGeneration = 0;
+ int _discoveryRequestGeneration = 0;
 
  StadiumProvider();
  String? _errorMessage;
@@ -91,10 +92,12 @@ class StadiumProvider with ChangeNotifier {
    _hasMore = true;
    isRefresh = true;
  }
- final requestGeneration = _scopeGeneration;
- if (_isLoading || (_isLoadingMore && !isRefresh)) return;
+ final requestGeneration = isRefresh ? ++_discoveryRequestGeneration : _discoveryRequestGeneration;
+ final requestScopeGeneration = _scopeGeneration;
+ if ((_isLoading || _isLoadingMore) && !isRefresh) return;
 
  if (isRefresh) {
+ _isLoadingMore = false;
  _lastDocument = null;
  _hasMore = true;
  if (_stadiums.isEmpty) {
@@ -134,7 +137,7 @@ class StadiumProvider with ChangeNotifier {
  limit: limit,
  );
 
- if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
+ if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  _stadiums = nearbyStadiums;
  _lastDocument = _stadiums.length;
  _hasMore = nearbyStadiums.length >= limit;
@@ -188,11 +191,11 @@ class StadiumProvider with ChangeNotifier {
  }
  notifyListeners();
  } catch (e) {
- if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+ if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
    _setError('Failed to fetch stadiums: ${e.toString()}');
  }
  } finally {
- if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+ if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
    if (isRefresh) {
      _setLoading(false);
    } else {
@@ -369,10 +372,13 @@ class StadiumProvider with ChangeNotifier {
  bool? noDepositOnly,
  List<String>? amenities,
  }) async {
- final requestGeneration = _scopeGeneration;
- if (_isLoading || (_isLoadingMore && !isRefresh)) return;
+ if (_listeningOwnerId != null) return;
+ final requestGeneration = isRefresh ? ++_discoveryRequestGeneration : _discoveryRequestGeneration;
+ final requestScopeGeneration = _scopeGeneration;
+ if ((_isLoading || _isLoadingMore) && !isRefresh) return;
 
  if (isRefresh) {
+ _isLoadingMore = false;
  _lastDocument = null;
  _hasMore = true;
  _setLoading(true);
@@ -395,7 +401,7 @@ class StadiumProvider with ChangeNotifier {
  noDepositOnly: noDepositOnly,
  );
 
- if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
+ if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
  final List<Stadium> rawItems = result['items'];
  final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
  ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
@@ -417,11 +423,11 @@ class StadiumProvider with ChangeNotifier {
  _errorMessage = null;
  notifyListeners();
  } catch (e) {
- if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+ if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
    _setError('Failed to fetch stadiums: ${e.toString()}');
  }
  } finally {
- if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+ if (requestGeneration == _discoveryRequestGeneration && requestScopeGeneration == _scopeGeneration && _listeningOwnerId == null) {
    if (isRefresh) {
      _setLoading(false);
    } else {
