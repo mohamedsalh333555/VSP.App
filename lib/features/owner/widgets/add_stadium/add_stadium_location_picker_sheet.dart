@@ -261,12 +261,20 @@ class AddStadiumLocationPickerSheet {
                               final target = LatLng(position.latitude, position.longitude);
                               selectedCoords = target;
                               mapController.move(target, 16.0);
-                            } catch (e) {
-                              if (context.mounted) {
-                                VSPFeedback.showError(context, 'Could not fetch current GPS location');
+                            } catch (e, stackTrace) {
+                              VSPLogger.w('Failed to fetch current GPS location: $e\n$stackTrace');
+                              if (sheetContext.mounted) {
+                                VSPFeedback.showError(
+                                  sheetContext,
+                                  isArabic
+                                      ? 'تعذر تحديد موقعك الحالي. تحقق من صلاحية الموقع وحاول مرة أخرى.'
+                                      : 'Could not get your current location. Check location permission and try again.',
+                                );
                               }
                             } finally {
-                              setSheetState(() => isSearching = false);
+                              if (sheetContext.mounted) {
+                                setSheetState(() => isSearching = false);
+                              }
                             }
                           },
                         ),
