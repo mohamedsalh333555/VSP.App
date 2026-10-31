@@ -242,7 +242,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               const SizedBox(height: 18),
 
               // Free and Pro plan content is sourced from public_subscription_plans.
-              _buildFreePlanCard(context, isArabic, hasProAccess, _freePlan!),
+              _buildFreePlanCard(context, isArabic, hasProAccess, isTrialActive, _freePlan!),
 
               const SizedBox(height: 18),
 
@@ -257,7 +257,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Widget _buildFreePlanCard(
     BuildContext context,
     bool isArabic,
-    bool isPro,
+    bool hasProAccess,
+    bool isTrialActive,
     Map<String, dynamic> plan,
   ) {
     return Container(
@@ -267,8 +268,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.card),
         border: Border.all(
-          color: !isPro ? VSPColors.accent.withValues(alpha: 0.45) : VSPColors.divider,
-          width: !isPro ? 1.4 : 1.0,
+          color: !hasProAccess ? VSPColors.accent.withValues(alpha: 0.45) : VSPColors.divider,
+          width: !hasProAccess ? 1.4 : 1.0,
         ),
       ),
       child: Column(
@@ -371,18 +372,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
             height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: !isPro ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
+              color: !hasProAccess ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
               borderRadius: BorderRadius.circular(VSPRadius.sm),
               border: Border.all(
-                color: !isPro ? VSPColors.accent.withValues(alpha: 0.35) : VSPColors.divider,
+                color: !hasProAccess ? VSPColors.accent.withValues(alpha: 0.35) : VSPColors.divider,
               ),
             ),
             child: Text(
-              !isPro
+              !hasProAccess
                   ? (isArabic ? 'حسابك المجاني الحالي' : 'Your current free account')
-                  : (isArabic ? 'مضمنة مع حسابك مجاناً' : 'Included with your account for free'),
+                  : isTrialActive
+                      ? (isArabic ? 'الخطة المجانية متاحة دائماً' : 'The free plan remains available')
+                      : (isArabic ? 'مضمنة مع حسابك مجاناً' : 'Included with your account for free'),
               style: TextStyle(
-                color: !isPro ? VSPColors.accent : VSPColors.textSecondary,
+                color: !hasProAccess ? VSPColors.accent : VSPColors.textSecondary,
                 fontWeight: FontWeight.w800,
                 fontSize: 13,
               ),
