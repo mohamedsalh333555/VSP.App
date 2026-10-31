@@ -455,9 +455,9 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> updateProfilePhoto(XFile file) async {
-    if (_supabaseUser == null) return;
-    await _runAuthAction(() async {
+  Future<bool> updateProfilePhoto(XFile file) async {
+    if (_supabaseUser == null) return false;
+    return _runAuthAction(() async {
       final res = await _c.profile.updateProfilePhoto(
         authUser: _supabaseUser,
         currentUserModel: _userModel,
