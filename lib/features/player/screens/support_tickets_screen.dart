@@ -64,10 +64,11 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: (MediaQuery.sizeOf(ctx).height -
+            // The modal already applies the keyboard inset, while useSafeArea
+          // protects the system bars. Subtracting those insets again here
+          // double-counts them and can collapse the usable sheet viewport.
+          maxHeight: (MediaQuery.sizeOf(ctx).height -
                     MediaQuery.viewInsetsOf(ctx).bottom -
-                    MediaQuery.paddingOf(ctx).top -
-                    MediaQuery.paddingOf(ctx).bottom -
                     24)
                 .clamp(0.0, MediaQuery.sizeOf(ctx).height)
                 .toDouble(),
