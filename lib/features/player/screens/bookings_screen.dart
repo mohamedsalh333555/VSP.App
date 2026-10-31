@@ -132,6 +132,20 @@ class _BookingsScreenState extends State<BookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    if (context.read<app_auth.AuthProvider>().currentUser == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return VSPScaffold(
+        backgroundColor: VSPDSSemanticColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Text(
+              isArabic ? 'سجّل الدخول لعرض حجوزاتك' : 'Sign in to view your bookings',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      );
+    }
 
     return VSPScaffold(
       backgroundColor: VSPDSSemanticColors.background,
