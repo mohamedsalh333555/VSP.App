@@ -191,6 +191,7 @@ class ChampionshipCard extends StatelessWidget {
                   child: Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     final isCompleted = championship.status == 'completed';
+                    final isOngoing = championship.status == 'ongoing';
                     final isFull =
                         championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
 
