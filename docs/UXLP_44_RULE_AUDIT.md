@@ -511,7 +511,7 @@ Until each decision is supplied, affected rule/screen pairs must retain the `nee
 
 ## Newly discovered shared and embedded surfaces — 2026-10-31
 
-A top-level directory reconciliation initially found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They were added to the inventory and reviewed in subsequent batches. The current register contains 181 unique Dart paths; six newly tracked nested championship-detail components remain `not yet inspected` and must be reviewed before the final gate. This inventory update does not promote any rule to pass.
+A top-level directory reconciliation initially found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They were added to the inventory and reviewed in subsequent batches. The current register contains 181 unique Dart paths, with no rows currently marked `not yet inspected`. This inventory update does not satisfy the per-rule/state coverage gate and does not promote any rule to pass.
 
 
 ### Support ticket sheet action visibility correction — 2026-10-31
@@ -521,7 +521,7 @@ A top-level directory reconciliation initially found 35 shared/embedded Dart sur
 
 ## Nested championship detail surfaces — 2026-10-31
 
-Recursive directory inspection of `lib/features/player/widgets/championship_details` found nine component files. Two were already represented in the register; seven were newly tracked. The bottom action bar source confirms that only `open` championships expose registration; `ongoing`, `completed`, `cancelled`, and full states route to view/disabled actions. Six newly tracked nested components remain `not yet inspected`. The championship card was corrected to show ongoing/cancelled/unknown statuses without presenting them as joinable. These remain source-only changes; runtime and caller-state validation are pending.
+Recursive directory inspection of `lib/features/player/widgets/championship_details` found nine component files. Two were already represented in the register; seven were newly tracked. The bottom action bar source confirms that only `open` championships expose registration; `ongoing`, `completed`, `cancelled`, and full states route to view/disabled actions. All nine component paths are now represented as source-reviewed/runtime-pending in the register. The championship card was corrected to show ongoing/cancelled/unknown statuses without presenting them as joinable. These remain source-only changes; runtime and caller-state validation are pending.
 
 
 ### Match participant manager resilience — 2026-10-31
@@ -541,7 +541,7 @@ The following source-level corrections were applied while expanding the componen
 - **Tournament lifecycle:** cards distinguish open, ongoing, cancelled, completed, full, and unknown/closed states; only the open state shows registration. The details bottom action bar independently confirms that gate.
 - **Design-system API:** the compatibility facade now exposes V2 size and typography roles plus canonical black/transparent/white-alpha color aliases, so feature surfaces can consume shared tokens instead of defining duplicate values.
 
-The team roster import control already displays `لصق` / `Paste`. The inventory is now 181 unique Dart paths; six newly tracked nested championship detail components remain `not yet inspected`. The 44-rule matrix remains source-reviewed/runtime-pending. The final consolidated review has not started.
+The team roster import control already displays `لصق` / `Paste`. The inventory is now 181 unique Dart paths and all registered paths have source-review notes. The 44-rule matrix remains runtime-pending; the final consolidated review has not started.
 
 
 ### Shared upload widget accessibility and resilience — 2026-10-31
