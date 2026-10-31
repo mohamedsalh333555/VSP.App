@@ -334,13 +334,19 @@ class StadiumRepository {
       
       switch (sortBy) {
         case 'priceLowToHigh':
-          query = query.order('price_per_hour', ascending: true);
+          query = query
+              .order('price_per_hour', ascending: true)
+              .order('created_at', ascending: false);
           break;
         case 'priceHighToLow':
-          query = query.order('price_per_hour', ascending: false);
+          query = query
+              .order('price_per_hour', ascending: false)
+              .order('created_at', ascending: false);
           break;
         case 'topRated':
-          query = query.order('rating', ascending: false);
+          query = query
+              .order('rating', ascending: false)
+              .order('created_at', ascending: false);
           break;
         default:
           query = query
