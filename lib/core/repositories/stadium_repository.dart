@@ -282,7 +282,7 @@ class StadiumRepository {
       if (cleanSearch.isNotEmpty) {
         query = query.or(
           'name.ilike.%$cleanSearch%,location.ilike.%$cleanSearch%,'
-          'area.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%',
+          'city.ilike.%$cleanSearch%,governorate.ilike.%$cleanSearch%',
         );
       }
 
@@ -300,13 +300,17 @@ class StadiumRepository {
       }
 
       if (quickFilter == 'night_shift') {
+        // closing_time is a PostgreSQL TIME column, not text.
         query = query.or(
-          'closing_time.ilike.%AM%,closing_time.ilike.%صباحاً%,'
-          'closing_time.ilike.%00:%,closing_time.ilike.%01:%,'
-          'closing_time.ilike.%02:%,closing_time.ilike.%03:%,'
-          'closing_time.ilike.%04:%,closing_time.ilike.%05:%,'
+          'closing_time.lt.06:00:00,'
           'features->workingHours->>end.ilike.%AM%,'
-          'features->workingHours->>end.ilike.%صباحاً%',
+          'features->workingHours->>end.ilike.%صباحاً%,'
+          'features->workingHours->>end.ilike.%00:%,'
+          'features->workingHours->>end.ilike.%01:%,'
+          'features->workingHours->>end.ilike.%02:%,'
+          'features->workingHours->>end.ilike.%03:%,'
+          'features->workingHours->>end.ilike.%04:%,'
+          'features->workingHours->>end.ilike.%05:%',
         );
       } else if (quickFilter == 'no_deposit' && noDepositOnly != true) {
         query = query.or('needs_deposit.eq.false,deposit_amount.lte.0');
@@ -357,13 +361,13 @@ class StadiumRepository {
     switch (amenity.trim().toLowerCase()) {
       case 'دش وحمام':
       case 'showers & baths':
-        return 'baths.gt.0,features->>bathOption.eq.Yes,features->>hasShower.eq.true,features->>shower.eq.true';
+        return 'features->>bathOption.eq.Yes,features->>hasShower.eq.true,features->>shower.eq.true';
       case 'غرف تغيير ملابس':
       case 'changing rooms':
         return 'features->>changingRoom.eq.true,features->>changingRooms.eq.true,features->>hasChangingRooms.eq.true';
       case 'كافتيريا ومشروبات':
       case 'cafeteria & drinks':
-        return 'cafeteria.gt.0,features->>cafeteria.eq.true,features->>hasCafeteria.eq.true';
+        return 'features->>cafeteria.gt.0,features->>cafeteria.eq.true,features->>hasCafeteria.eq.true';
       case 'جراج سيارات':
       case 'garage & parking':
         return 'features->>garage.eq.true,features->>hasGarage.eq.true,features->>parking.eq.true';

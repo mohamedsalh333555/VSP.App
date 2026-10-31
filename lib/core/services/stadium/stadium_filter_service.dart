@@ -76,7 +76,12 @@ class StadiumFilterService {
           hasLabel(['professional lighting', 'floodlight', 'إضاءة', 'كشاف']);
     }
     if (normalizedAmenity == 'cafeteria & drinks' || amenity.trim() == 'كافتيريا ومشروبات') {
-      return stadium.cafeteria > 0 ||
+      final rawCafeteria = featMap['cafeteria'];
+      final cafeteriaCount = rawCafeteria is num
+          ? rawCafeteria.toInt()
+          : int.tryParse(rawCafeteria?.toString() ?? '') ?? 0;
+      return cafeteriaCount > 0 ||
+          stadium.cafeteria > 0 ||
           featMap['cafeteria'] == true ||
           featMap['hasCafeteria'] == true ||
           hasLabel(['cafeteria', 'كافتيريا', 'مشروبات']);
