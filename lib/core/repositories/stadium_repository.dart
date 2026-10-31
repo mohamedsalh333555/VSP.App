@@ -411,11 +411,8 @@ class StadiumRepository {
         .eq('id', stadiumId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium details stream: $e');
-        });
+          onTimeout: (sink) => sink.addError(StateError('stadium_stream_timeout')),
+        );
   }
 
   /// Stream reviews for a stadium
@@ -426,16 +423,13 @@ class StadiumRepository {
         .eq('stadium_id', stadiumId)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
+          onTimeout: (sink) => sink.addError(StateError('stadium_reviews_stream_timeout')),
         )
         .map((list) {
           final sorted = List<Map<String, dynamic>>.from(list);
           sorted.sort((a, b) => DateTime.parse(b['created_at'].toString())
               .compareTo(DateTime.parse(a['created_at'].toString())));
           return sorted;
-        })
-        .handleError((e) {
-          VSPLogger.w('Handled realtime error in stadium reviews stream: $e');
         });
   }
 
