@@ -304,7 +304,7 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 32),
+                        const Icon(Icons.info_outline, color: VSPColors.warning, size: 32),
                         const SizedBox(height: VSPSpacing.md),
                         Text(
                           isAr
