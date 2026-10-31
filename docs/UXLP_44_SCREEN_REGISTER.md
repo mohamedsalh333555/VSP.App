@@ -111,7 +111,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected) |
 | `lib/features/player/screens/support_tickets_screen.dart` | player | source reviewed—runtime pending (new-ticket sheet uses useSafeArea, keyboard insets, and scrollable content) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | source reviewed—runtime pending (strict team-membership fetch; account-scoped async refresh; separate loading/error/retry from no-team state) |
-| `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (strict team/roster fetches with retry; captain identified by `captain_id`, not unordered roster position; member count from authoritative IDs) |
+| `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (strict team/roster fetches with retry; captain identified by `captain_id`; invite modal opens only after a non-empty successful RPC code) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/player/screens/tournament_registration_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/add_player_sheet.dart` | player | source reviewed—runtime pending (scrollable content; accounts for keyboard and bottom system inset; caller sheet configuration still to verify) |
