@@ -196,7 +196,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final currentUid = auth.currentUser?.uid;
+    final currentUid = auth.currentUser?.id;
     final isCaptain = currentUid != null &&
         (currentUid == team.captainId || (team.memberUids.isNotEmpty && team.memberUids.first == currentUid));
 
