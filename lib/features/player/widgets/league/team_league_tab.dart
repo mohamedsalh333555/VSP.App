@@ -771,12 +771,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   }
 
   void _onBookMatch(TeamLeagueMatch match) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
     final stadiums = stadiumProvider.allStadiums;
 
     if (stadiums.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا توجد ملاعب متاحة حالياً للحجز')),
+        SnackBar(content: Text(isArabic ? 'لا توجد ملاعب متاحة حالياً للحجز' : 'No stadiums are currently available for booking.')),
       );
       return;
     }
@@ -784,6 +785,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
@@ -791,7 +793,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         ),
-        padding: const EdgeInsets.all(VSPSpacing.md),
+        padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, VSPSpacing.md + MediaQuery.of(ctx).padding.bottom),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -801,7 +803,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'اختر ملعب لمباراة: ${match.homeTeamName} × ${match.awayTeamName}',
+                    isArabic
+                        ? 'اختر ملعب لمباراة: ${match.homeTeamName} × ${match.awayTeamName}'
+                        : 'Choose a stadium for: ${match.homeTeamName} vs ${match.awayTeamName}',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -829,10 +833,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} ج/ساعة',
+                        isArabic
+                            ? '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} ج.م/ساعة'
+                            : '${stadium.governorate} • ${stadium.basePrice.toStringAsFixed(0)} EGP/hour',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
-                      trailing: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.accent, size: 18),
+                      trailing: Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_2_copy, color: VSPColors.accent, size: 18),
                       onTap: () async {
                         Navigator.pop(ctx);
                         final bookingRes = await Navigator.push(
