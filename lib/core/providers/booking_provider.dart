@@ -283,7 +283,14 @@ class BookingProvider with ChangeNotifier {
     try {
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
-        BookingListModifier.removeBooking(_userBookings, bookingId);
+        // Keep the cancelled booking in history so a pending/confirmed refund
+        // remains visible and trackable from the user's booking record.
+        final updatedBooking = await _repository.getBookingById(bookingId);
+        if (updatedBooking != null) {
+          BookingListModifier.updateBooking(_userBookings, updatedBooking);
+        } else {
+          BookingListModifier.removeBooking(_userBookings, bookingId);
+        }
         await Future.delayed(const Duration(milliseconds: 300));
       } else {
         _errorMessage ??= 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
