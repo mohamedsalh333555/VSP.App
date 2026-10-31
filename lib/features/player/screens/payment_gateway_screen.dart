@@ -373,7 +373,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 };
               },
               onPaid: (_) {
-                if (!mounted || _paymentCompleted) return;
+                if (!mounted || _hasAccountChanged || _paymentCompleted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
                 _paymentCompleted = true;
                 _coordinator.cancelAllTimers();
                 Navigator.pop(context, true);
@@ -382,7 +383,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _coordinator.startWebhookTimeout(
               timeout: const Duration(seconds: 90),
               onTimeout: () {
-                if (!mounted || _paymentCompleted) return;
+                if (!mounted || _hasAccountChanged || _paymentCompleted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
                 _coordinator.cancelAllTimers();
                 setState(() {
                   _isAwaitingWebhook = false;
