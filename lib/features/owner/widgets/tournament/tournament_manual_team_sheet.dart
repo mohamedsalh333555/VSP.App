@@ -229,7 +229,7 @@ void showTournamentManualTeamSheet(
                                   try {
                                     final auth = Provider.of<AuthProvider>(context, listen: false);
                                     final currentUserId =
-                                        auth.currentUser?.uid ?? auth.currentUser?.id;
+                                        auth.currentUser?.id;
 
                                     if (currentUserId == null || currentUserId.isEmpty) {
                                       VSPFeedback.showError(
