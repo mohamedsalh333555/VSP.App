@@ -348,7 +348,7 @@ void _manageParticipants(BuildContext context) {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          if (booking.isOpenJoin) {
+          if (booking.isOpenJoin && !isEnded && !isCancelled) {
             CollectiveMatchInviteSheet.showForBooking(
               context,
               bookingId: booking.id,
@@ -385,12 +385,12 @@ void _manageParticipants(BuildContext context) {
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
  _buildTypeBadge(PublicMatchCardFormatter.getLocalizedBookingType(booking.bookingType, isArabic: isArabic)),
-  if (isHost)
-  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
-  else if (isCancelled)
+  if (isCancelled)
   _buildStatusBadge(isArabic ? 'ملغاة' : 'Cancelled', VSPColors.error)
   else if (isEnded)
   _buildStatusBadge(isArabic ? 'انتهت' : 'Ended', VSPColors.textSecondary)
+  else if (isHost)
+  _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
   else if (hasJoined)
   _buildStatusBadge(AppLocalizations.of(context)!.joined, VSPColors.info)
   else if (isPending)
