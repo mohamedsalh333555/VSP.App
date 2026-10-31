@@ -135,14 +135,17 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
         championshipId: league.id,
         teamId: team.id,
       );
-      if (payment['prepaid_by_creator'] == true) {
+      if (payment['prepaid_by_creator'] == true || payment['already_paid'] == true) {
         VSPFeedback.triggerSuccess();
         if (!mounted || widget.userTeam?.id != team.id) return;
         await _loadLeague();
         if (mounted && widget.userTeam?.id == team.id) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final message = payment['already_paid'] == true
+              ? (isArabic ? 'رسوم مشاركة فريقك مدفوعة بالفعل.' : 'Your team participation fee is already paid.')
+              : (isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team participation fee is paid.');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team participation fee is paid.')),
+            SnackBar(content: Text(message)),
           );
         }
         return;
