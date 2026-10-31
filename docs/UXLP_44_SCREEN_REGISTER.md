@@ -213,7 +213,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/features/player/widgets/league/team_league_tab.dart` | player | source reviewed—runtime pending (league query failures now have retry; failed fee-status lookup disables payment until rechecked; payment error copy localized) |
+| `lib/features/player/widgets/league/team_league_tab.dart` | player | source reviewed—runtime pending (creation/join/payment/stadium/cancel flows bilingual; modal controllers disposed; safe-area handling; configured fee labels; cancellation copy excludes non-refundable administrative fees; raw errors replaced with localized recovery) |
 
 
 ### Additional payment surfaces inspected
