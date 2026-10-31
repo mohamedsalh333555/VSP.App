@@ -18,7 +18,7 @@ class OwnerProSegmentedTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: 54,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: VSPColors.surface,
@@ -36,7 +36,7 @@ class OwnerProSegmentedTabs extends StatelessWidget {
             child: FractionallySizedBox(
               widthFactor: 0.5,
               child: Container(
-                height: 42,
+                height: 48,
                 decoration: BoxDecoration(
                   color: VSPColors.accent,
                   borderRadius: BorderRadius.circular(VSPRadius.full),
@@ -64,20 +64,26 @@ class OwnerProSegmentedTabs extends StatelessWidget {
   Widget _buildTabButton({required String title, required int index}) {
     final isSelected = selectedIndex == index;
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTabSelected(index);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          alignment: Alignment.center,
-          child: Text(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: title,
+        child: InkWell(
+          excludeFromSemantics: true,
+          borderRadius: BorderRadius.circular(VSPRadius.full),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTabSelected(index);
+          },
+          child: Container(
+            alignment: Alignment.center,
+            child: Text(
             title,
             style: TextStyle(
               color: isSelected ? Colors.black : VSPColors.textSecondary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
               fontSize: 14,
+            ),
             ),
           ),
         ),

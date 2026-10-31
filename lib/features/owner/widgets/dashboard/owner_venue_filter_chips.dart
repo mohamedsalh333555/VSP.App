@@ -49,13 +49,20 @@ class OwnerVenueFilterChips extends StatelessWidget {
 
   Widget _buildVenueChip({required String id, required String label, required IconData icon}) {
     final isSelected = selectedStadiumId == id;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onStadiumSelected(id);
-      },
-      child: AnimatedContainer(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: InkWell(
+        excludeFromSemantics: true,
+        borderRadius: BorderRadius.circular(VSPRadius.full),
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onStadiumSelected(id);
+        },
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
+        constraints: const BoxConstraints(minHeight: 48),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.04),
@@ -83,6 +90,7 @@ class OwnerVenueFilterChips extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

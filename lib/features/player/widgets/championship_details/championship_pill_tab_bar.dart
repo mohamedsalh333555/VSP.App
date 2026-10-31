@@ -60,12 +60,19 @@ class ChampionshipPillTabBar extends StatelessWidget {
     final isSelected = currentIndex == index;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          tabController.animateTo(index);
-        },
-        child: AnimatedContainer(
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: title,
+        child: InkWell(
+          excludeFromSemantics: true,
+          borderRadius: BorderRadius.circular(VSPRadius.full),
+          onTap: () {
+            tabController.animateTo(index);
+          },
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
+          constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected ? VSPColors.accent : Colors.transparent,
@@ -93,6 +100,7 @@ class ChampionshipPillTabBar extends StatelessWidget {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
