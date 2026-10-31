@@ -467,3 +467,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - Start time, merged-slot end time, and night labels are now single-line ellipsized within the fixed time column. This prevents long localized/night labels from painting outside the 75dp column or pushing the adjacent slot card.
 - Source-only; no tests, analyzer, CI, runtime validation, database changes, or APK build were run.
+
+## Owner quick-booking and booking-form text resilience
+
+- Quick-booking payment heading now allocates flexible width between the section title and total-price chip; both labels truncate safely instead of overflowing on compact layouts.
+- Player counter label in the owner booking form now uses the available flexible width and ellipsizes, preserving the increment/decrement controls on narrow sheets.
+- No payment amounts, calculations, collection rules, or booking behavior were changed.
+- Source implementation only; no tests, analyzer, CI, runtime validation, database changes, or APK build were run.
