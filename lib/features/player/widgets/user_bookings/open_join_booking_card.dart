@@ -56,7 +56,16 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      debugPrint('Open Join leave failed: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر الخروج من المباراة. حاول مرة أخرى.'
+              : 'Could not leave the match. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -75,7 +84,16 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      debugPrint('Open Join request cancellation failed: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذر إلغاء طلب الانضمام. حاول مرة أخرى.'
+              : 'Could not cancel the join request. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
