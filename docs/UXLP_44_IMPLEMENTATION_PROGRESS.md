@@ -565,3 +565,12 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Team-league cancellation confirmation no longer promises that every paid fee will be refunded. It now states that only policy-eligible amounts are reviewed and explicitly says administrative fees are non-refundable; the cancellation RPC and refund processing were not changed.
 - Team-league join/cancel/create/payment setup failures now use localized recovery messages and diagnostic logging rather than exposing raw exception text. Empty-team guidance, tabs, and stadium selection copy now support Arabic and English.
 - No league fee configuration, RPC, authorization, payment amount calculation, refund worker, administrative fee rule, or database behavior was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
+
+## Team-league cards, standings, and fixtures refinement — 2026-10-31
+
+- Team-league onboarding, gathering, standings, and fixture surfaces now render Arabic/English copy, including empty, pending, approved, disputed, booked, and result states.
+- Onboarding and gathering fee explanations/share text now use the configured team-entry fee passed from the league screen; hardcoded 30 EGP presentation text was removed from these cards.
+- Standings metadata rows and league title now constrain long text; the table uses compact English column labels so all statistics remain legible in the same row layout.
+- Fixture dates now format using the active locale; long match names, status labels, and date/venue metadata are bounded. Result submission is no longer presented before a match is booked and its scheduled kickoff time has passed; the user sees localized guidance while waiting.
+- Backend limitation retained for approval: source review of submit_team_league_match_result found no server-side booking/scheduled-time gate. The new restriction is client presentation only; no RPC or migration was changed. Server enforcement requires a separately approved SQL change.
+- No league points/scoring formula, result reconciliation, captain/team authorization, entry-fee calculation, booking RPC, or refund policy was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
