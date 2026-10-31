@@ -409,3 +409,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Segmented-control and venue-filter interaction pass — 2026-10-31
 
 - **Rules 5, 27, 30, 33, 42 — owner/player tab controls:** Owner Pro segmented tabs, owner venue filter chips, and championship pill tabs now use focusable InkWell interactions with one semantic button per option and selected-state announcements. Their interactive surfaces meet a 48dp minimum height; Owner Pro track geometry was increased to preserve the selected pill's touch area.
+
+
+### Support ticket creation sheet viewport — 2026-10-31
+
+- **Rules 11, 35, 36 — support modal safety:** the new-ticket sheet now constrains itself to the remaining viewport after keyboard and safe-area insets; its subject/category/action content remains scrollable and the keyboard inset is not duplicated in inner bottom padding.

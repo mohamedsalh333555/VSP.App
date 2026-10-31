@@ -205,3 +205,10 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Championship detail pill tabs now expose selected state and meet 48dp minimum height.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Support ticket creation sheet safety
+
+- New-ticket sheet now has a viewport constraint that accounts for keyboard and both safe-area edges; its content scrolls within that bound and the inner padding no longer duplicates keyboard inset.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
