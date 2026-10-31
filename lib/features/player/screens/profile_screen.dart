@@ -207,6 +207,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final String userName = auth.userModel?.name ?? l10n.player;
  final String userPosition = auth.userModel?.position?.trim() ?? '';
 
+ Widget buildProfileAvatar({
+   required double size,
+   required Color borderColor,
+   required double iconSize,
+ }) {
+   final hasProfileImage = userProfileUrl != null && userProfileUrl.trim().isNotEmpty;
+   return Container(
+     width: size,
+     height: size,
+     decoration: BoxDecoration(
+       shape: BoxShape.circle,
+       border: Border.all(color: borderColor, width: 1.5),
+     ),
+     clipBehavior: Clip.antiAlias,
+     child: hasProfileImage
+         ? CachedNetworkImage(
+             imageUrl: userProfileUrl!,
+             width: size,
+             height: size,
+             fit: BoxFit.cover,
+             placeholder: (_, __) => Icon(
+               Iconsax.user_copy,
+               color: VSPColors.textSecondary,
+               size: iconSize,
+             ),
+             errorWidget: (_, __, ___) => Icon(
+               Iconsax.user_copy,
+               color: VSPColors.textSecondary,
+               size: iconSize,
+             ),
+           )
+         : Icon(
+             Iconsax.user_copy,
+             color: VSPColors.textSecondary,
+             size: iconSize,
+           ),
+   );
+ }
+
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
@@ -270,23 +309,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  child: Row(
  children: [
- Container(
- width: 42,
- height: 42,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.accent, width: 1.5),
- image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
- ? DecorationImage(
- image: CachedNetworkImageProvider(userProfileUrl),
- fit: BoxFit.cover,
- )
- : null,
- ),
- child: (userProfileUrl == null || userProfileUrl.isEmpty)
- ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20)
- : null,
- ),
+ buildProfileAvatar(size: 42, borderColor: VSPColors.accent, iconSize: 20),
  const SizedBox(width: 12),
  Expanded(
  child: Column(
@@ -380,23 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  ),
  const SizedBox(height: VSPSpacing.md),
- Container(
- width: 90,
- height: 90,
- decoration: BoxDecoration(
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.textSecondary, width: 2),
- image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
- ? DecorationImage(
- image: CachedNetworkImageProvider(userProfileUrl),
- fit: BoxFit.cover,
- )
- : null,
- ),
- child: (userProfileUrl == null || userProfileUrl.isEmpty)
- ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 40)
- : null,
- ),
+ buildProfileAvatar(size: 90, borderColor: VSPColors.textSecondary, iconSize: 40),
  const SizedBox(height: VSPSpacing.sm),
  Row(
  mainAxisAlignment: MainAxisAlignment.center,
