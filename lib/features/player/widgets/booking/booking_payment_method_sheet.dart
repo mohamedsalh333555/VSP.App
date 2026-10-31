@@ -299,7 +299,12 @@ void showBookingPaymentMethodSheet({
                                 HapticFeedback.vibrate();
                                 if (sheetContext.mounted) {
                                   setSheetState(() => isNavigating = false);
-                                  VSPFeedback.showError(sheetContext, e.toString().replaceAll('Exception: ', ''));
+                                  VSPFeedback.showError(
+                                    sheetContext,
+                                    isArabic
+                                        ? 'تعذر تأكيد الحجز حالياً. حاول مرة أخرى.'
+                                        : 'Could not confirm the booking right now. Please try again.',
+                                  );
                                 }
                               }
                             },
