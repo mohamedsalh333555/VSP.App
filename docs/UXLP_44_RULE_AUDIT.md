@@ -597,3 +597,6 @@ The 181-path inventory has no `not yet inspected` rows at this checkpoint, but t
 ### Player profile avatar consistency — 2026-10-31
 
 - **Player profile header and no-team card:** replaced duplicated network `DecorationImage` usage with one shared renderer that handles missing/blank URLs and network image failures. Both locations now render the same profile-image source and fallback behavior. Source-reviewed; runtime image-cache/network failure verification remains pending.
+
+
+The championship refresh callback also increments a parent refresh version. The standings child invalidates its per-group Future cache when that version changes, so retrying a match/header stream error cannot leave a prior standings failure cached.
