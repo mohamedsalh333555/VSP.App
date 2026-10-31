@@ -373,3 +373,9 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 
 - **Rules 9, 11, 35 — owner booking sheet:** the owner manual-booking/edit sheet now sizes against the viewport after keyboard and both safe-area insets; keyboard height is no longer added again to its internal bottom padding.
 - **Rules 18, 36, 43 — action failure feedback:** collective invitation share failures and owner no-show report failures now keep technical details in logs and show concise localized recovery copy.
+
+
+### Booking and collective navigation feedback follow-up — 2026-10-31
+
+- **Rules 11, 35 — owner booking viewport:** owner manual-booking sheet now accounts for keyboard and both safe-area edges in its maximum height and avoids double-counting keyboard inset in bottom padding.
+- **Rules 18, 36, 43 — collective action recovery:** invite share credential lookup, external share launch, and stadium-map launch now have guarded failure handling, technical logs, and localized user-facing recovery copy.

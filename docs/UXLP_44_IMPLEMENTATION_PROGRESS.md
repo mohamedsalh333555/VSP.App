@@ -150,3 +150,11 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Owner no-show report errors are logged and no longer expose raw exception text to the owner.
 
 Source only. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Latest owner booking and collective-match recovery batch
+
+- Owner booking sheet now subtracts keyboard plus top/bottom safe areas from its viewport constraint; keyboard inset is not added again to internal bottom padding.
+- Collective invite share now catches credential-fetch and platform-share failures; stadium map launch checks the returned launch status and displays localized feedback on failure.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
