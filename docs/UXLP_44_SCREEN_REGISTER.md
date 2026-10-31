@@ -118,7 +118,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/booking/booking_calendar_modal.dart` | player | source reviewed—runtime pending (Dialog safe-area defaults; fixed-height calendar needs small-screen runtime check) |
 | `lib/features/player/widgets/booking/booking_payment_method_sheet.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
-| `lib/features/player/widgets/booking_type_modal.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
+| `lib/features/player/widgets/booking_type_modal.dart` | player | source reviewed—runtime pending (challenge creation now uses strict team lookup; failed membership read shows retry-safe error rather than falsely prompting team creation) |
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
@@ -131,14 +131,14 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/league/team_league_match_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/match_result_modal.dart` | player | source reviewed—runtime pending (awaited boolean result; closes only on success; failed submission preserves form for retry; duplicate taps/dismissal guarded) |
 | `lib/features/player/widgets/my_team/team_dialogs.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (standard AlertDialog safe-area layout) |
+| `lib/features/player/widgets/payment/payment_cancel_dialog.dart` | player | source reviewed—runtime pending (exit copy distinguishes unsubmitted payment from a submitted attempt awaiting server confirmation) |
 | `lib/features/player/widgets/payment/payment_verification_modal.dart` | player | source reviewed—runtime pending (showDialog safe-area route; centered custom content needs short-screen runtime check) |
 | `lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart` | player | source reviewed—runtime pending (refund amount is not guessed from total_price; distinguishes unpaid, confirmed, and pending server calculation) |
 | `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
-| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown refund amount displays server-confirmation state instead of 0 EGP) |
+| `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown amount shows server-confirmation state; long timeline content is bounded and scrollable within device height) |
 | `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (Dialog safe-area, bounded height, internally scrollable year/day steps) |
 
 ## Non-screen UI surfaces still requiring discovery
@@ -184,6 +184,6 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source reviewed—runtime pending (server-matching local gateway fee; no false zero fee; verified total only; localized retry) |
+| `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source reviewed—runtime pending (server-matching fee policy; no false zero; localized retry; fee-info action has 48dp touch target) |
 | `lib/features/player/widgets/payment/payment_countdown_header.dart` | player | source reviewed—runtime pending (base amount is not labeled as final total when fee policy is unavailable) |
 | `lib/features/player/widgets/payment/payment_security_footer.dart` | player | source reviewed—runtime pending (checkout disabled until fee policy is valid; accurate Paymob checkout guidance) |
