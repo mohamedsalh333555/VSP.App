@@ -497,3 +497,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - **Stadium manual-address sheet:** its TextEditingController was created before opening the modal but had no disposal path. The method now awaits the modal result, disposes the controller after the sheet closes, and returns the unchanged result.
 - **Tournament bracket preview:** removed an inline-created TransformationController that had no owner/disposal lifecycle; the viewer retains its default initial transform. The live-draw dialog title now uses flexible width and bounded two-line text beside its icon.
 - No location data, tournament draw generation, booking, or payment rules were changed. Source-only corrections; no analyzer, tests, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner financial and prize summary row resilience — 2026-10-31
+
+- Payout request and tournament prize-handover dialogs now allocate flexible width between descriptive labels and monetary values. Long Arabic labels wrap to two lines, while amounts stay single-line and ellipsize when needed on narrow dialog widths.
+- Display-only layout changes; payout amounts, prize-pool source values, settlement, and prize-delivery behavior are unchanged. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
