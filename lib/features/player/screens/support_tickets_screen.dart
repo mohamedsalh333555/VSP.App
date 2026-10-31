@@ -67,11 +67,19 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             VSPSpacing.lg,
             VSPSpacing.lg,
             VSPSpacing.lg,
-            MediaQuery.of(ctx).padding.bottom +
-                MediaQuery.of(ctx).viewInsets.bottom +
-                VSPSpacing.lg,
+            MediaQuery.paddingOf(ctx).bottom + VSPSpacing.lg,
           ),
-          child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: (MediaQuery.sizeOf(ctx).height -
+                      MediaQuery.viewInsetsOf(ctx).bottom -
+                      MediaQuery.paddingOf(ctx).top -
+                      MediaQuery.paddingOf(ctx).bottom -
+                      24)
+                  .clamp(0.0, MediaQuery.sizeOf(ctx).height)
+                  .toDouble(),
+            ),
+            child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -151,6 +159,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 ),
               ),
               ],
+            ),
             ),
           ),
         ),
