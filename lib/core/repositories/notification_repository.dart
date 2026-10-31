@@ -33,20 +33,23 @@ class NotificationRepository {
             .toList());
   }
 
-  Future<void> sendNotification(String userId, AppNotification notification) async {
+  Future<bool> sendNotification(String userId, AppNotification notification) async {
     try {
-      await _supabase.from('notifications').insert({
+      final inserted = await _supabase.from('notifications').insert({
         'user_id': userId,
         'title': notification.title,
         'body': notification.body,
         'type': notification.type,
         'is_read': notification.isRead,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
+        // Restore the original timestamp when the user undoes a swipe deletion.
+        'created_at': notification.createdAt.toUtc().toIso8601String(),
         'booking_id': (notification.bookingId != null && notification.bookingId!.trim().isNotEmpty) ? notification.bookingId : null,
         'metadata': notification.metadata,
-      });
+      }).select('id');
+      return inserted.isNotEmpty;
     } catch (e) {
-      debugPrint('Error sending notification: ');
+      debugPrint('Error restoring notification: $e');
+      return false;
     }
   }
 
@@ -74,15 +77,18 @@ class NotificationRepository {
     }
   }
 
-  Future<void> deleteNotification(String userId, String notificationId) async {
+  Future<bool> deleteNotification(String userId, String notificationId) async {
     try {
-      await _supabase
+      final deleted = await _supabase
           .from('notifications')
           .delete()
           .eq('id', notificationId)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select('id');
+      return deleted.isNotEmpty;
     } catch (e) {
-      debugPrint('Error deleting notification: ');
+      debugPrint('Error deleting notification: $e');
+      return false;
     }
   }
 
