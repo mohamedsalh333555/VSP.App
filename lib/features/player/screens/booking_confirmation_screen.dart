@@ -99,6 +99,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _fetchUserTeamFor(String? userId) async {
+    if (userId != null && context.read<AuthProvider>().currentUser?.id != userId) return;
     final generation = ++_userTeamRequestGeneration;
     if (userId == null) {
       if (mounted) {
