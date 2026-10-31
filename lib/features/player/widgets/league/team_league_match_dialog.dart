@@ -34,8 +34,9 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
 
   Future<void> _submit() async {
     if (_selectedResult == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار نتيجة فريقك')),
+        SnackBar(content: Text(isArabic ? 'يرجى اختيار نتيجة فريقك' : 'Select your team result first.')),
       );
       return;
     }
@@ -63,6 +64,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final isHome = widget.match.homeTeamId == widget.userTeamId;
     final myTeamName = isHome ? widget.match.homeTeamName : widget.match.awayTeamName;
     final opponentName = isHome ? widget.match.awayTeamName : widget.match.homeTeamName;
@@ -109,12 +111,12 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'نتيجة المباراة',
+                      isArabic ? 'نتيجة المباراة' : 'Match result',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'ماذا كانت نتيجة فريقك؟',
+                      isArabic ? 'ماذا كانت نتيجة فريقك؟' : 'What was your team’s result?',
                       style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
@@ -148,7 +150,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                     color: VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
-                  child: const Text('ضد', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                  child: Text(isArabic ? 'ضد' : 'VS', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                 ),
                 Expanded(
                   child: Text(
@@ -168,7 +170,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🟢 WIN
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'فوز',
+                  title: isArabic ? 'فوز' : 'Win',
                   icon: Iconsax.cup_copy,
                   value: 'win',
                   activeColor: VSPColors.accent,
@@ -178,7 +180,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🟡 DRAW
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'تعادل',
+                  title: isArabic ? 'تعادل' : 'Draw',
                   icon: Iconsax.pause_copy,
                   value: 'draw',
                   activeColor: VSPColors.warning,
@@ -188,7 +190,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
               // 🔴 LOSS
               Expanded(
                 child: _buildChoiceButton(
-                  title: 'خسارة',
+                  title: isArabic ? 'خسارة' : 'Loss',
                   icon: Iconsax.close_circle_copy,
                   value: 'loss',
                   activeColor: VSPColors.error,
@@ -200,7 +202,9 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
 
           // Submit Button
           PrimaryButton(
-            text: widget.match.myTeamSubmission != null ? 'تعديل النتيجة' : 'تأكيد وإرسال النتيجة',
+            text: widget.match.myTeamSubmission != null
+                ? (isArabic ? 'تعديل النتيجة' : 'Edit result')
+                : (isArabic ? 'تأكيد وإرسال النتيجة' : 'Confirm and submit result'),
             isLoading: _isLoading,
             onPressed: _selectedResult == null ? null : _submit,
           ),
@@ -276,35 +280,36 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
     _selectedResolution = widget.match.confirmedOutcome;
   }
 
-  String _formatResultText(String? result) {
-    if (result == 'win') return 'فوز 🟢';
-    if (result == 'draw') return 'تعادل 🟡';
-    if (result == 'loss') return 'خسارة 🔴';
-    return 'لم يسجل بعد';
+  String _formatResultText(String? result, {required bool isArabic}) {
+    if (result == 'win') return isArabic ? 'فوز 🟢' : 'Win 🟢';
+    if (result == 'draw') return isArabic ? 'تعادل 🟡' : 'Draw 🟡';
+    if (result == 'loss') return isArabic ? 'خسارة 🔴' : 'Loss 🔴';
+    return isArabic ? 'لم يسجل بعد' : 'Not submitted';
   }
 
   Future<void> _confirmAndResolve() async {
     if (_selectedResolution == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: const Text('اعتماد نتيجة المباراة', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
-          'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.',
+          isArabic ? 'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.' : 'This result will be confirmed and the league table will be updated.',
           style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء', style: TextStyle(color: VSPColors.textSecondary)),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('اعتماد النتيجة', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'اعتماد النتيجة' : 'Confirm result', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
