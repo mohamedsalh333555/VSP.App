@@ -196,8 +196,8 @@ class StadiumProvider with ChangeNotifier {
         _setLoading(false);
       },
       onError: (error) {
-        _stadiums = [];
-        _filteredStadiums = [];
+        // Preserve the last authoritative snapshot if a realtime refresh fails.
+        // Initial failures still surface because the lists start empty.
         _setError('Failed to fetch your stadiums: ${error.toString()}');
         _setLoading(false);
       },
