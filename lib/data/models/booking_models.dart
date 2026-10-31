@@ -75,6 +75,8 @@ class Booking {
  final String paymentStatus; // 'pending', 'paid', 'refunded'
  final double depositPaid;
  final bool isDepositPaid;
+ final bool needsDeposit;
+ final double depositAmount;
  final String? instapay;
  final String? vodafoneCash;
  final String? binanceId;
@@ -171,6 +173,8 @@ class Booking {
  this.cancellationReason,
  this.depositPaid = 0.0,
  this.isDepositPaid = false,
+ this.needsDeposit = false,
+ this.depositAmount = 0.0,
  this.instapay,
  this.vodafoneCash,
  this.binanceId,
@@ -248,6 +252,8 @@ class Booking {
  isPaid: draft.isPaid,
  depositPaid: draft.depositPaid,
  isDepositPaid: draft.isDepositPaid,
+ needsDeposit: draft.needsDeposit,
+ depositAmount: draft.depositPaid,
  paymentStatus: draft.paymentStatus ?? (draft.isPaid ? 'paid' : (draft.isDepositPaid ? 'partially_paid' : 'pending')),
  instapay: draft.instapay,
  vodafoneCash: draft.vodafoneCash,
@@ -300,6 +306,8 @@ class Booking {
  String? paymentStatus,
  double? depositPaid,
  bool? isDepositPaid,
+ bool? needsDeposit,
+ double? depositAmount,
  String? instapay,
  String? vodafoneCash,
  String? binanceId,
@@ -350,6 +358,8 @@ class Booking {
  paymentStatus: paymentStatus ?? this.paymentStatus,
  depositPaid: depositPaid ?? this.depositPaid,
  isDepositPaid: isDepositPaid ?? this.isDepositPaid,
+ needsDeposit: needsDeposit ?? this.needsDeposit,
+ depositAmount: depositAmount ?? this.depositAmount,
  instapay: instapay ?? this.instapay,
  vodafoneCash: vodafoneCash ?? this.vodafoneCash,
  binanceId: binanceId ?? this.binanceId,
