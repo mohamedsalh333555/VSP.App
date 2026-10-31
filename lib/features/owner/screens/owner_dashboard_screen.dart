@@ -45,6 +45,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   String _selectedTimePeriod = 'today';
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
+  bool _hasChampionshipStreamError = false;
   final Map<String, DateTime> _approvalNoticeSeenUntil = {};
 
   String? _lastMetricsKey;
@@ -115,14 +116,19 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     try {
       final champs = await TournamentRepository()
           .getChampionships(isOwner: true, ownerId: uid);
-      if (mounted) {
-        setState(() {
-          _ownerChampionships = champs;
-        });
-        _claimApprovedChampionshipHomeNotices(champs);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) {
+        return;
       }
+      setState(() {
+        _ownerChampionships = champs;
+        _hasChampionshipStreamError = false;
+      });
+      _claimApprovedChampionshipHomeNotices(champs);
     } catch (e) {
       VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
+        setState(() => _hasChampionshipStreamError = true);
+      }
     }
   }
 
@@ -228,13 +234,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             .getChampionshipsStream(isOwner: true, ownerId: uid)
             .listen(
           (champs) {
-            if (!mounted) return;
+            if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
             setState(() {
               _ownerChampionships = champs;
+              _hasChampionshipStreamError = false;
             });
           },
           onError: (e) {
             VSPLogger.w('Owner championships subscription notice (handled): $e');
+            if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
+              setState(() => _hasChampionshipStreamError = true);
+            }
           },
         );
       }
@@ -321,6 +331,38 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
                   ),
                   const SizedBox(height: 8),
+                ],
+                if (_hasChampionshipStreamError) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.warning.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.warning_2_copy, size: 15, color: VSPColors.warning),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'تعذر تحديث بيانات البطولات. نعرض آخر بيانات تم تحميلها.'
+                                : 'Could not refresh tournament data. Showing the last loaded information.',
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            final uid = auth.currentUser?.id;
+                            if (uid != null) _fetchOwnerChampionships(uid);
+                          },
+                          child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 if (_analyticsError != null) ...[
                   Container(
