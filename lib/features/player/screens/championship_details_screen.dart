@@ -58,7 +58,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser != null) {
-        final team = await TeamRepository().getUserTeam(auth.currentUser!.id);
+        final userId = auth.currentUser!.id;
+        final team = await TeamRepository().getUserTeamStrict(userId);
+        if (!mounted || context.read<AuthProvider>().currentUser?.id != userId) return;
         if (team != null && mounted) {
           setState(() {
             _myTeam = team;
@@ -92,7 +94,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     setState(() => _isJoining = true);
 
     try {
-      final team = await TeamRepository().getUserTeam(auth.currentUser!.id);
+      final userId = auth.currentUser!.id;
+      final team = await TeamRepository().getUserTeamStrict(userId);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != userId) return;
 
       if (team != null &&
           team.captainId.isNotEmpty &&
@@ -150,7 +154,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog(e.toString().replaceAll('Exception: ', ''));
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        _showErrorDialog(
+          isArabic
+              ? 'تعذر التحقق من بيانات فريقك أو التسجيل في البطولة. حاول مرة أخرى.'
+              : 'Could not verify your team or register for the championship. Please retry.',
+        );
       }
     } finally {
       if (mounted) setState(() => _isJoining = false);
