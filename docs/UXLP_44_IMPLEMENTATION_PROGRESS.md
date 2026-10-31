@@ -342,3 +342,10 @@ The source batch remains open. All 44 UXLP rule statuses are still runtime pendi
 - The team member import action already uses the requested concise Arabic label `لصق` and English `Paste`; no copy change was needed.
 
 No test or analyzer run was started for this batch. The last observed PR CI runs remain failed at Analyze; tests and the debug APK step were skipped. All changes remain source-reviewed/runtime-pending, and the final consolidated review gate remains closed.
+
+
+## Shared upload widget accessibility and resilience — 2026-10-31
+
+- The upload-selection card now exposes a labeled button semantic and Material ink interaction while remaining disabled during upload.
+- The uploaded-file delete action now has a localized tooltip and a 48dp minimum target. Blank thumbnail URLs are treated as missing rather than being passed to `NetworkImage` or shown as a successful uploaded image.
+- Source-level corrections for Rules 17, 27, and 33. Runtime screen-reader, touch, and upload-flow checks remain pending; no CI, analyzer, tests, migrations, or APK build was run.
