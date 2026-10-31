@@ -296,7 +296,10 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLookingUpCode = false);
-        VSPFeedback.showError(context, 'حدث خطأ أثناء فحص الكود');
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'حدث خطأ أثناء فحص الكود.' : 'An error occurred while checking the code.',
+        );
       }
     }
   }
