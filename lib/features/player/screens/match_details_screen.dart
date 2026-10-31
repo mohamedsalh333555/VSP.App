@@ -298,6 +298,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  return;
  }
 
+ final reporterId = auth.currentUser?.id;
+ if (reporterId == null) {
+   VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
+   return;
+ }
+ bool isSubmittingReport = false;
  String selectedReason = 'Spam';
  final Map<String, String> reasons = {
  'Spam': AppLocalizations.of(context)!.reportReasonSpam,
@@ -353,24 +359,32 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  child: PrimaryButton(
  text: AppLocalizations.of(context)!.report,
  height: 48,
+ isLoading: isSubmittingReport,
  color: VSPColors.error,
  textColor: Colors.white,
- onPressed: () async {
- final success = await ReportRepository().reportEntity(
- reporterId: auth.currentUser!.id,
- targetId: widget.bookingId,
- targetType: 'match',
- reason: selectedReason,
- contextType: 'match',
- contextId: widget.bookingId,
- bookingId: widget.bookingId,
- );
- if (!context.mounted) return;
- Navigator.pop(context);
- if (success) {
- VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.reportSubmitted);
- } else {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
+ onPressed: isSubmittingReport ? null : () async {
+ setDialogState(() => isSubmittingReport = true);
+ try {
+   final success = await ReportRepository().reportEntity(
+     reporterId: reporterId,
+     targetId: widget.bookingId,
+     targetType: 'match',
+     reason: selectedReason,
+     contextType: 'match',
+     contextId: widget.bookingId,
+     bookingId: widget.bookingId,
+   );
+   if (!context.mounted) return;
+   Navigator.pop(context);
+   if (success) {
+     VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.reportSubmitted);
+   } else {
+     VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
+   }
+ } catch (_) {
+   if (!context.mounted) return;
+   setDialogState(() => isSubmittingReport = false);
+   VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
  }
  },
  ),
