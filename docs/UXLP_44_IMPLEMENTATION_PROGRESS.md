@@ -382,3 +382,6 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The profile header and the no-team/free-agent card previously used `DecorationImage(CachedNetworkImageProvider(...))` with no image-load failure UI. A stale or inaccessible profile-image URL could therefore leave a blank circle even though the profile URL was present.
 - Both surfaces now use one shared local avatar renderer with the same image source and explicit placeholder/error fallback. The profile image remains the source of truth; the fallback appears only when the URL is missing, blank, or fails to load. This does not substitute a team image for a player image.
 - Source correction only; remote-image failure and visual consistency still require the consolidated runtime pass. No CI, analyzer, tests, migrations, or APK build was run.
+
+
+- Follow-up: a monotonically increasing championship refresh version now invalidates cached standings futures whenever either the match or header stream is retried. This prevents a failed standings future from remaining cached after a different child error triggers the parent retry.
