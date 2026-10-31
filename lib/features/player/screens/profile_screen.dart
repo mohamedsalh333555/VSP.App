@@ -407,8 +407,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ],
  ),
  Text(
- l10n.positionLabel(userPosition),
- style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.accent),
+ userPosition.isNotEmpty
+     ? l10n.positionLabel(userPosition)
+     : (isArabic ? 'المركز غير محدد' : 'Position not set'),
+ style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+   color: VSPColors.accent,
+ ),
  ),
  const SizedBox(height: VSPSpacing.lg),
  Text(
