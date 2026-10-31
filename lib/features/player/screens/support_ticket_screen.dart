@@ -40,19 +40,55 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
   }
 
   Future<void> _whatsappFallback() async {
+    final ar = Localizations.localeOf(context).languageCode == 'ar';
     try {
       final settings = await AppSettingsRepository().getSettings();
-      final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : settings.supportPhone;
-      if (phone.isEmpty || !mounted) return;
-      final ar = Localizations.localeOf(context).languageCode == 'ar';
-      final ref = widget.ticketId.length >= 8 ? widget.ticketId.substring(0, 8) : widget.ticketId;
-      final ticketId = widget.ticketId;
-      try {
-        await _repo.markSupportTicketWhatsAppEscalated(ticketId);
-      } catch (_) {}
+      final phone = settings.whatsappNumber.isNotEmpty
+          ? settings.whatsappNumber
+          : settings.supportPhone;
       if (!mounted) return;
-      await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: ar ? 'أحتاج تصعيد تذكرة دعم VSP رقم #$ref.' : 'I need to escalate VSP support ticket #$ref.');
-    } catch (_) {}
+      if (phone.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ar
+                  ? 'وسيلة التواصل عبر واتساب غير متاحة حالياً.'
+                  : 'WhatsApp support is not available right now.',
+            ),
+          ),
+        );
+        return;
+      }
+      final ref = widget.ticketId.length >= 8
+          ? widget.ticketId.substring(0, 8)
+          : widget.ticketId;
+      try {
+        await _repo.markSupportTicketWhatsAppEscalated(widget.ticketId);
+      } catch (_) {
+        // Escalation tracking is secondary; opening the configured support
+        // channel remains available even if this metadata update fails.
+      }
+      if (!mounted) return;
+      await VSPLauncherUtils.openWhatsApp(
+        context,
+        phone: phone,
+        message: ar
+            ? 'أحتاج تصعيد تذكرة دعم VSP رقم #$ref.'
+            : 'I need to escalate VSP support ticket #$ref.',
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ar
+                  ? 'تعذر فتح واتساب حالياً. حاول مرة أخرى.'
+                  : 'Could not open WhatsApp right now. Please try again.',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
