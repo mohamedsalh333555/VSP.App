@@ -80,8 +80,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  // 1. Upload compressed new image if selected
  if (_newProfileImage != null) {
  final compressed = await StorageService().compressImage(_newProfileImage!);
- await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
- // AuthProvider already handles the Firestore update for the photo
+ final photoSaved = await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
+ if (!photoSaved) {
+   if (mounted) {
+     setState(() => _isLoading = false);
+     VSPFeedback.showError(
+       context,
+       auth.errorMessage ?? AppLocalizations.of(context)!.profileUpdateFailed,
+     );
+   }
+   return;
+ }
  }
 
  // 2. Update other profile data
