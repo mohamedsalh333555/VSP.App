@@ -12,6 +12,9 @@ class PaymentBreakdownCard extends StatelessWidget {
   final bool hasDeposit;
   final double amountToPay;
   final bool isArabic;
+  final PaymobFeePolicy? feePolicy;
+  final bool isFeePolicyLoading;
+  final VoidCallback onRetryFeePolicy;
 
   const PaymentBreakdownCard({
     super.key,
@@ -20,16 +23,23 @@ class PaymentBreakdownCard extends StatelessWidget {
     required this.hasDeposit,
     required this.amountToPay,
     required this.isArabic,
+    required this.feePolicy,
+    required this.isFeePolicyLoading,
+    required this.onRetryFeePolicy,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<PaymobFeePolicy?>(
-      future: PaymobService.fetchFeePolicy(),
-      builder: (context, snapshot) {
-        final policy = snapshot.data;
-        final double serviceFee = policy?.serviceFee(amountToPay) ?? 0;
-        final double totalWithFees = policy?.total(amountToPay) ?? amountToPay;
+    if (isFeePolicyLoading) {
+      return _buildFeePolicyState(context, isLoading: true);
+    }
+    final policy = feePolicy;
+    if (policy == null || !policy.isValidForElectronicCheckout) {
+      return _buildFeePolicyState(context, isLoading: false);
+    }
+
+    final double serviceFee = policy.serviceFee(amountToPay);
+    final double totalWithFees = policy.total(amountToPay);
 
     final String displayStadiumName =
         (bookingDraft.stadiumName.trim().isEmpty || bookingDraft.stadiumName.trim() == 'Mo')
@@ -108,8 +118,43 @@ class PaymentBreakdownCard extends StatelessWidget {
           ],
         ],
       ),
-        );
-      },
+    );
+  }
+
+  Widget _buildFeePolicyState(BuildContext context, {required bool isLoading}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: isLoading ? VSPColors.divider : VSPColors.warning),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isLoading ? Iconsax.timer_1_copy : Iconsax.info_circle_copy,
+            color: isLoading ? VSPColors.textSecondary : VSPColors.warning,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isLoading
+                  ? (isArabic ? 'جارٍ تحميل تفاصيل الرسوم...' : 'Loading fee details...')
+                  : (isArabic
+                      ? 'تعذر التحقق من رسوم الدفع. لن نعرض إجماليًا غير مؤكد؛ أعد المحاولة قبل الدفع.'
+                      : 'Could not verify payment fees. An unconfirmed total is hidden; retry before paying.'),
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+          ),
+          if (!isLoading)
+            TextButton(
+              onPressed: onRetryFeePolicy,
+              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+            ),
+        ],
+      ),
     );
   }
 
