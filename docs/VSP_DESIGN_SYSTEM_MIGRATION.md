@@ -208,3 +208,9 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 - The second-captain result dialog now has a submission lock, action-specific loading indicator, disabled dismissal while the request is active, and retryable error behavior. A failed server response no longer closes the only confirmation surface.
 - Owner schedule and pending-booking cancellation failures now show generic localized user-facing messages; raw Supabase/exception strings are not rendered in those surfaces.
 - Read-only schema inspection showed `teams` does not enforce unique `captain_id`; the same account can captain both sides. The client suppresses second-captain result review for a booking when the current account captains both participating teams. The RPC still lacks a server-side distinct-captain check; proposed guard requires the first submitter's captain to differ from the responding `auth.uid()`. This is a policy/security decision and remains approval-required; no database change was made.
+## Additional governance updates — 2026-10-31
+
+- Canonical bottom-navigation geometry is now `VSPBottomNavMetrics`. The former `VSPDSBottomNavMetrics` and `VSPBottomNavBarMetrics` names are deprecated compatibility aliases that reference the canonical values; new code must not define geometry independently.
+- `OwnerOperationalFinanceCard` is the canonical owner finance component used by the dashboard. `OwnerBasicFinancialGlance` and `OwnerProOverviewCard` are deprecated and must not be extended for new surfaces.
+- `TeamCardHero` uses a minimum height rather than a hard maximum and flexible stat/footer rows to reduce clipping at narrow widths and larger text scales.
+- Runtime visual verification remains pending. Do not mark these changes as visually passed before the consolidated device validation.

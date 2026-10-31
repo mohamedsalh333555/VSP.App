@@ -369,3 +369,25 @@ This task is NOT complete until:
 15. Visual runtime regression matrix passes.
 
 Do not declare "done" based on CI alone.
+## Latest source remediation — 2026-10-31
+
+Source work continued on `uxlp-44-implementation`:
+
+- Repaired the malformed booking-query coordinator tail and restored missing booking slot, location-picker, league, payment, and result-action code paths implicated by the previous analyzer log.
+- Reworked stadium discovery so query failures are not converted into empty results; added localized error/retry behavior and preserved loaded results during refresh.
+- Moved sports, pitch-size, amenities, quick filters, floor type, search, sorting, price and governorate filters ahead of database pagination, using the live `public.stadiums` schema.
+- Removed first-page-dependent sport filter choices and included active quick filters in the filter count/reset behavior.
+- Made owner withdrawal balance display fail closed when the server summary is missing or invalid.
+- Consolidated bottom-navigation geometry naming and deprecated parallel finance widgets.
+- Removed the 50-booking truncation from the owner metrics cache key and improved team hero text/layout resilience.
+
+### Remaining gates (not yet complete)
+
+1. Finish source review and explicit rule-to-screen mapping for every registered player/owner screen, embedded widget, popup, and state variant.
+2. Complete Arabic/English copy and RTL/LTR review across all registered surfaces.
+3. Review all remaining data queries against the live Supabase schema and verify that failures cannot masquerade as empty/zero states.
+4. Resolve product/domain decisions documented in the audit before changing their behavior (including team authorization edge cases, multi-team selection semantics, notification retention, and refund notification reconciliation/outbox).
+5. Complete safe-area, keyboard, compact-screen, large-text, modal, and real-device visual review.
+6. Only after all source work and the above gates are closed, perform one consolidated test pass; then build and verify one test APK.
+
+No final test pass or APK build was intentionally started as part of this source-remediation batch.
