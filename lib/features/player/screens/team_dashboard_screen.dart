@@ -302,7 +302,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         if (snapshot.connectionState == ConnectionState.waiting &&
-            !snapshot.hasData) {
+            (snapshot.data == null || snapshot.data!.isEmpty)) {
           return ListView.builder(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,

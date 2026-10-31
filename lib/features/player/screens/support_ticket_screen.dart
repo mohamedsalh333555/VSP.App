@@ -73,7 +73,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         stream: _repo.streamSupportTicket(widget.ticketId),
         builder: (context, ticketSnapshot) {
           if (ticketSnapshot.connectionState == ConnectionState.waiting &&
-              !ticketSnapshot.hasData) {
+              ticketSnapshot.data == null) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
           if (ticketSnapshot.hasError && !ticketSnapshot.hasData) {
@@ -160,7 +160,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                 stream: _repo.streamSupportTicketMessages(widget.ticketId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
+                      (snapshot.data == null || snapshot.data!.isEmpty)) {
                     return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                   }
                   if (snapshot.hasError && !snapshot.hasData) {

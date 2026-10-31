@@ -73,7 +73,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
           key: ValueKey(_userId),
           stream: _notificationsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              (snapshot.data == null || snapshot.data!.isEmpty)) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             return VSPStateView(
               state: VSPUiState.loading,
