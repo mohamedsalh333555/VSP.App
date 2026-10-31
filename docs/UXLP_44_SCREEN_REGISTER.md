@@ -253,3 +253,10 @@ The source fixes above are not runtime passes. The 181 unique registered paths s
 | Component | Role | Source finding / status |
 |---|---|---|
 | `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source reviewed—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent) |
+
+
+### Additional booking surface source review
+
+| Component | Role | Source finding / status |
+|---|---|---|
+| `lib/features/player/widgets/user_bookings/open_join_booking_card.dart` | player | source reviewed—runtime pending (zero-capacity state now displays Full rather than Open to join; terminal-state, host, joined, and pending status precedence reviewed) |
