@@ -464,3 +464,21 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Notification and cancellation dialog responsiveness — 2026-10-31
 
 - **Rules 7, 10, 11, 26, 33, 35, 42 — player notification/cancellation surfaces:** notification list no longer double-counts the device bottom inset and its swipe-delete affordance mirrors in RTL/LTR. Booking cancellation dialog actions stack into full-width 48dp controls below 360dp available width; wider layouts retain the side-by-side arrangement. No cancellation/refund business logic was changed.
+
+
+## Grouped source remediation and CI evidence — 2026-10-31
+
+The following source defects were found in existing PR-triggered CI run [41221229970](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41221229970). The job reached `flutter analyze` after dependency installation, localization generation, and Firebase-options presence checks succeeded. Analyze reported three errors plus a warning and two informational lints; tests and APK build were skipped.
+
+- `owner_payout_dialog.dart`: replaced the unrelated State `mounted` guard with `context.mounted` before using the dialog context after the awaited payout callback.
+- `add_player_sheet.dart`: removed the invalid `const` from a localized dynamic Text label.
+- `all_stadiums_filter_sheet.dart`: restored the missing closing delimiter in the nested safe-area/scroll layout.
+- `challenge_select_team_screen.dart`: added braces around the retry guard.
+- `auth_provider.dart`: removed the write-only `_isFetchingUser` field and its assignments.
+- `vsp_date_picker_step_views.dart`: removed unnecessary interpolation from the day semantic label.
+
+The next already-started PR CI run, [41222072722](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41222072722), completed dependency/localization/Firebase checks and reached Analyze. It failed only on one informational `prefer_const_constructors` finding at `add_player_sheet.dart:355`; tests and the workflow's debug APK step were skipped. The remaining const style issue was corrected in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`. That final one-line cleanup has not yet been analyzer-verified.
+
+A further source-only truthfulness fix removed the hardcoded `1,000 EGP/month` claim from the owner dashboard Pro teaser. Current prices remain displayed by the subscription screen from the public plan catalog; the teaser now only says “Upgrade to Pro”. This does not change plan pricing or entitlements.
+
+These findings are implementation evidence only. No rule has been promoted to `pass`; all 44 rule rows remain runtime-pending and the final consolidated validation gate is still closed.
