@@ -429,3 +429,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Payout submission exception recovery — 2026-10-31
 
 - **Rules 28, 29, 36, 43 — payout request action:** if the payout repository call throws, the payout dialog now restores the submit control, logs the technical exception, and displays localized retry guidance instead of remaining indefinitely in a loading state.
+
+
+### RTL alignment corrections — 2026-10-31
+
+- **Rules 7, 10, 30, 42 — directional layout:** owner booking form labels and owner venue-chip spacing now use directional start insets. Shared bottom-navigation unread badge now anchors to logical end, mirroring correctly in Arabic RTL and English LTR.

@@ -236,3 +236,11 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Payout submission exceptions now restore the dialog to an actionable state, log the technical exception, and show localized retry copy rather than leaving the confirmation action stuck loading.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## RTL alignment corrections
+
+- Owner booking form labels and owner venue filter chip spacing now use directional start padding.
+- Shared bottom-navigation notification dot now uses directional end positioning so its placement mirrors in RTL.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
