@@ -451,3 +451,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 - Active-list booking cards previously rendered the Cancel action for every non-history booking, including records already in `BookingStatus.cancelled`. The cancellation control is now omitted for cancelled records; existing chat/share actions are unchanged.
 - This is a presentation/state-guard correction only. Cancellation eligibility, refund calculation, server RPCs, and financial rules were not modified. Source-only; no tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+## Booking-card compact-width text resilience
+
+- Player booking metadata labels now truncate within their column, while date/time/price values are centered and limited to two lines with ellipsis. This complements the existing expanded-column layout and prevents long localized time/price strings from forcing horizontal overflow on narrow cards.
+- Source implementation only; no analyzer, tests, CI, runtime checks, database changes, or APK build were run.
