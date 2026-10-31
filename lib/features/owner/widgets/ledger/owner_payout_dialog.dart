@@ -361,7 +361,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                           );
                         } catch (e) {
                           VSPLogger.w('Owner payout submission failed: $e');
-                          if (!mounted) return;
+                          if (!context.mounted) return;
                           setState(() => _isSubmitting = false);
                           VSPFeedback.showError(
                             context,
