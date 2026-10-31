@@ -177,7 +177,6 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         ),
       );
     }
-    subjectController.dispose();
   }
 
   @override
