@@ -62,22 +62,22 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.fromLTRB(
-            VSPSpacing.lg,
-            VSPSpacing.lg,
-            VSPSpacing.lg,
-            MediaQuery.paddingOf(ctx).bottom + VSPSpacing.lg,
+        builder: (ctx, setSheetState) => ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: (MediaQuery.sizeOf(ctx).height -
+                    MediaQuery.viewInsetsOf(ctx).bottom -
+                    MediaQuery.paddingOf(ctx).top -
+                    MediaQuery.paddingOf(ctx).bottom -
+                    24)
+                .clamp(0.0, MediaQuery.sizeOf(ctx).height)
+                .toDouble(),
           ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: (MediaQuery.sizeOf(ctx).height -
-                      MediaQuery.viewInsetsOf(ctx).bottom -
-                      MediaQuery.paddingOf(ctx).top -
-                      MediaQuery.paddingOf(ctx).bottom -
-                      24)
-                  .clamp(0.0, MediaQuery.sizeOf(ctx).height)
-                  .toDouble(),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              VSPSpacing.lg,
+              VSPSpacing.lg,
+              VSPSpacing.lg,
+              MediaQuery.paddingOf(ctx).bottom + VSPSpacing.lg,
             ),
             child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
