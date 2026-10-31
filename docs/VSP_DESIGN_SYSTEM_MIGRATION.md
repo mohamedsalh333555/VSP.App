@@ -40,9 +40,9 @@ The compatibility layer preserves existing numeric geometry (including the legac
 This is a shared-foundation migration, not a completed screen audit.
 
 - UXLP-44 standard: written.
-- Candidate screen register: 128 Dart paths.
+- Initial candidate screen register: 128 Dart paths; the current register contains 139 unique Dart screen/surface paths.
 - Shared component audit: initial pass and the changes above applied.
-- A recorded static source scan covers 128 candidate paths. The current register now contains 137 unique Dart screen/surface paths; therefore 9 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 137 paths before calling this gate complete.
+- A recorded static source scan covers 128 candidate paths. The current register now contains 137 unique Dart screen/surface paths; therefore 11 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 137 paths before calling this gate complete.
 - Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
 - Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
 - Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
@@ -114,7 +114,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 
 ## Source inventory checkpoint
 
-- The 128-path candidate register now has source-review notes for all 128 entries; there are no entries left marked `not yet inspected`.
+- The original 128 candidate paths have source-review notes. Eleven paths added to the current 139-path register are not yet proven to be covered by the original static scan; this is not full per-rule/state coverage.
 - This is a source-review checkpoint only. It is not a 44-rule pass result: runtime states, locale/device combinations, embedded widgets not represented as candidate files, keyboard behavior, and visual overflow still require consolidated device validation and targeted screen-by-screen evidence.
 - No APK build or manual test suite was intentionally started as part of this checkpoint. Do not build the release artifact until the remaining UXLP implementation and grouped source fixes are complete.
 
@@ -154,7 +154,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 
 - The exact adopted standard is `docs/UXLP_44_VSP_STANDARD.md` (44 rules across perception, decision processing, interaction, system coherence, and cognitive load).
 - Added `docs/UXLP_44_RULE_AUDIT.md` as the rule-level evidence matrix. It records the shared-foundation source evidence, findings fixed in this batch, and what remains unverified for each rule.
-- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 128-path register remains the screen inventory; it does not prove per-rule coverage.
+- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 139-path register remains the screen inventory; it does not prove per-rule coverage.
 - No final validation or APK build has been run. Continue grouped implementation first, then perform one consolidated validation pass.
 
 ## Player post-match result flow source fixes
