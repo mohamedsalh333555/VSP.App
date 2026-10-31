@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 139 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
+**Scope:** Shared foundations and 174 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -507,3 +507,8 @@ Until each decision is supplied, affected rule/screen pairs must retain the `nee
 ### Add-player sheet keyboard viewport correction — 2026-10-31
 
 - **Rules 11, 35 — add-player sheet:** its maximum height now uses the available viewport after keyboard and system insets; the duplicate outer keyboard padding was removed and the content remains scrollable. Keyboard-open and device-inset runtime checks remain pending.
+
+
+## Newly discovered shared and embedded surfaces — 2026-10-31
+
+A top-level directory reconciliation found 35 shared/embedded Dart surfaces that were not represented as individual rows in the previous register. They are now tracked explicitly: 16 have documented source changes and remain runtime-pending; 19 are marked `not yet inspected`. The 19 uninspected paths are listed in `docs/UXLP_44_SCREEN_REGISTER.md` and must be reviewed before the final gate. This discovery expands the current inventory to 174 unique paths; it does not promote any rule to pass.
