@@ -886,9 +886,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 ),
               ),
               child: Text(
-                isArabic
-                    ? 'الترقية للباقة الاحترافية — 1,000 ج.م/شهر'
-                    : 'Upgrade to Pro — 1,000 EGP/month',
+                isArabic ? 'الترقية للباقة الاحترافية' : 'Upgrade to Pro',
                 style: const TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 13.5,
