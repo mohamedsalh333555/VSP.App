@@ -267,3 +267,6 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Kept the matches tab loading until the first stream event, separating “not emitted yet” from a true empty list.
 - Cached standings futures per group across live match updates, with cache invalidation on Retry; bounded group indexes to A–H.
 - These changes reuse the shared error state and V2 tokens. They do not change database or tournament business rules; runtime validation remains pending.
+
+
+- Championship refresh now carries a version from the parent details screen into the standings component. A retry from any child invalidates the cached per-group Future results, avoiding a stale cached error after a different stream failure.
