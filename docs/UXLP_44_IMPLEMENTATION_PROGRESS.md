@@ -545,3 +545,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Tournament prize-handover failures now keep technical exception/stack details in diagnostics and show concise Arabic/English retry guidance; the notes controller continues to be disposed after the dialog closes.
 - Stadium current-location lookup now logs technical failure separately, shows localized permission/retry guidance, and avoids updating the sheet's loading state after its modal context has been disposed.
 - No prize ledger entry, payout, GPS permission, stadium coordinate, geocoding, or booking business behavior was changed. Source-only; no CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+## Owner quick-booking and tournament action diagnostics — 2026-10-31
+
+- Quick phone-booking no longer forwards an unrecognized raw exception string to the owner; known conflict/amount/time/authorization cases retain their specific localized guidance, while unknown failures use safe retry copy and diagnostic logging.
+- Manual tournament-team registration, cash booking confirmation, and tournament score submission now log technical exception/stack details separately while retaining localized user-facing recovery messages. Dialog loading state is reset only while the sheet context remains mounted.
+- No booking price, slot lock, payment, tournament registration, scoring, or prize policy was changed. Source-only; no analyzer, CI, tests, runtime checks, migrations, or APK build were run.
