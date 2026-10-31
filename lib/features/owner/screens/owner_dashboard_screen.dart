@@ -47,6 +47,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   List<Championship> _ownerChampionships = [];
   bool _hasChampionshipStreamError = false;
   final Map<String, DateTime> _approvalNoticeSeenUntil = {};
+  String? _activeOwnerScope;
+  bool _hasObservedOwnerScope = false;
+  int _ownerScopeGeneration = 0;
 
   String? _lastMetricsKey;
   OwnerFinancialMetrics? _cachedMetrics;
@@ -221,33 +224,68 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthProvider>();
+    final ownerId = auth.isOwner ? auth.currentUser?.id : null;
+    if (_hasObservedOwnerScope && ownerId == _activeOwnerScope) return;
+
+    _hasObservedOwnerScope = true;
+    _activeOwnerScope = ownerId;
+    final generation = ++_ownerScopeGeneration;
+
+    _champSubscription?.cancel();
+    _champSubscription = null;
+    _financialSummaryRequestGeneration++;
+    _analyticsRequestGeneration++;
+    _financialSummary = null;
+    _ownerChampionships = [];
+    _hasChampionshipStreamError = false;
+    _dashboardAnalytics = const DashboardAnalytics();
+    _analyticsError = null;
+    _isLoadingAnalytics = false;
+    _approvalNoticeSeenUntil.clear();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        _fetchFinancialSummary(uid);
-        _loadDashboardAnalytics(ownerId: uid);
-        _fetchOwnerChampionships(uid);
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-        _champSubscription = TournamentRepository()
-            .getChampionshipsStream(isOwner: true, ownerId: uid)
-            .listen(
-          (champs) {
-            if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
-            setState(() {
-              _ownerChampionships = champs;
-              _hasChampionshipStreamError = false;
-            });
-          },
-          onError: (e) {
-            VSPLogger.w('Owner championships subscription notice (handled): $e');
-            if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
-              setState(() => _hasChampionshipStreamError = true);
-            }
-          },
-        );
+      if (!mounted ||
+          generation != _ownerScopeGeneration ||
+          context.read<AuthProvider>().currentUser?.id != ownerId) {
+        return;
       }
+      if (ownerId == null) return;
+
+      _fetchFinancialSummary(ownerId);
+      _loadDashboardAnalytics(ownerId: ownerId);
+      _fetchOwnerChampionships(ownerId);
+      context.read<BookingProvider>().loadOwnerBookings(ownerId);
+      context.read<StadiumProvider>().listenToOwnerStadiums(ownerId);
+
+      _champSubscription = TournamentRepository()
+          .getChampionshipsStream(isOwner: true, ownerId: ownerId)
+          .listen(
+        (champs) {
+          if (!mounted ||
+              generation != _ownerScopeGeneration ||
+              context.read<AuthProvider>().currentUser?.id != ownerId) {
+            return;
+          }
+          setState(() {
+            _ownerChampionships = champs;
+            _hasChampionshipStreamError = false;
+          });
+        },
+        onError: (e) {
+          VSPLogger.w('Owner championships subscription notice (handled): $e');
+          if (mounted &&
+              generation == _ownerScopeGeneration &&
+              context.read<AuthProvider>().currentUser?.id == ownerId) {
+            setState(() => _hasChampionshipStreamError = true);
+          }
+        },
+      );
     });
   }
 
