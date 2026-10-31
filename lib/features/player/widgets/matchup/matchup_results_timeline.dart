@@ -29,6 +29,7 @@ class MatchupResultsTimeline extends StatelessWidget {
       );
     }
 
+    final reversedResults = results.reversed.toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,10 +41,10 @@ class MatchupResultsTimeline extends StatelessWidget {
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: results.reversed.length,
+          itemCount: reversedResults.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
-            final result = results.reversed.toList()[index];
+            final result = reversedResults[index];
             final tA = teams.firstWhere(
               (t) => t.teamId == result.teamAId,
               orElse: () => MatchupTeam(
@@ -88,6 +89,8 @@ class MatchupResultsTimeline extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${tA.teamName} ${isArabic ? 'ضد' : 'vs'} ${tB.teamName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
@@ -99,6 +102,8 @@ class MatchupResultsTimeline extends StatelessWidget {
                     ),
                     child: Text(
                       presentation.text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: presentation.color,
                         fontSize: 12,
