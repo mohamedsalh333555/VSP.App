@@ -145,7 +145,16 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       if (reference == null || reference.isEmpty) throw Exception('تعذر إنشاء عملية الدفع');
       await _openLeaguePayment(paymentReference: reference, amount: amount);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+      debugPrint('Error starting team league payment: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic ? 'تعذر بدء عملية الدفع. حاول مرة أخرى.' : 'Could not start payment. Please try again.'),
+            backgroundColor: VSPColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -1045,13 +1054,15 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   children: [
                     const Expanded(
                       child: Text(
-                        'تعذر التحقق من حالة رسوم الفريق. أعد المحاولة قبل الدفع.',
+                        isArabic
+                            ? 'تعذر التحقق من حالة رسوم الفريق. أعد المحاولة قبل الدفع.'
+                            : 'Could not verify the team fee status. Retry before paying.',
                         style: TextStyle(color: VSPColors.warning, fontSize: 12),
                       ),
                     ),
                     TextButton(
                       onPressed: _loadLeague,
-                      child: const Text('إعادة المحاولة'),
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                     ),
                   ],
                 ),
