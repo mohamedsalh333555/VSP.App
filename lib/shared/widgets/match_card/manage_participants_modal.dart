@@ -95,7 +95,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
         );
       }
       await _fetchUsers();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Participant acceptance failed: $e\n$stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(e.toString().contains('match_is_full')
@@ -131,7 +132,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
         );
       }
       await _fetchUsers();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Participant request rejection failed: $e\n$stackTrace');
       if (!mounted) return;
       VSPFeedback.showError(
         context,
@@ -152,7 +154,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     try {
       await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
       _fetchUsers();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Participant removal failed: $e\n$stackTrace');
       if (!mounted) return;
       VSPFeedback.showError(
         context,
