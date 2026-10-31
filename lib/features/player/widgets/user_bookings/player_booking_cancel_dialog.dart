@@ -41,10 +41,11 @@ class PlayerBookingCancelDialog {
           : (refundChannel == RefundChannel.wallet ? RefundEta.minutes : RefundEta.immediate),
       refundAmount: actualRefundAmount,
       amountConfirmed: amountConfirmed,
+      hasNoPaidAmount: !hasPaidAmount,
       isPureCashNoDeposit: isPureCash,
     );
 
-    final amountFormatted = isPureCash
+    final amountFormatted = !hasPaidAmount
         ? (isArabic ? 'لا يوجد مبلغ مدفوع' : 'No amount paid')
         : (amountConfirmed
             ? '${refundInfo.refundAmount.toStringAsFixed(0)} ${isArabic ? 'جنيه' : l10n.egCurrency}'
