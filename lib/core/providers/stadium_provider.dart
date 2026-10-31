@@ -192,12 +192,13 @@ class StadiumProvider with ChangeNotifier {
    _setError('Failed to fetch stadiums: ${e.toString()}');
  }
  } finally {
- if (requestGeneration != _scopeGeneration || _listeningOwnerId != null) return;
- if (isRefresh) {
- _setLoading(false);
- } else {
- _isLoadingMore = false;
- notifyListeners();
+ if (requestGeneration == _scopeGeneration && _listeningOwnerId == null) {
+   if (isRefresh) {
+     _setLoading(false);
+   } else {
+     _isLoadingMore = false;
+     notifyListeners();
+   }
  }
  }
  }
