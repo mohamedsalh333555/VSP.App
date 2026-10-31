@@ -208,16 +208,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          isArabic ? 'تصفية الملاعب' : 'Filter Stadiums',
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        if (activeCount > 0) ...[
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              isArabic ? 'تصفية الملاعب' : 'Filter Stadiums',
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (activeCount > 0) ...[
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
