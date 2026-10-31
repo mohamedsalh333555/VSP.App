@@ -89,16 +89,26 @@ class CreateTeamMembersSection extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Icon(
-                  Iconsax.user_add_copy,
-                  color: VSPColors.textSecondary.withValues(alpha: 0.1),
-                  size: 40,
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
+                  ),
+                  child: const Icon(
+                    Iconsax.user_add_copy,
+                    color: VSPColors.textSecondary,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   l10n.noMembersAddedYet,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: VSPColors.textSecondary.withValues(alpha: 0.3),
+                        color: VSPColors.textSecondary,
                       ),
                 ),
               ],
@@ -136,15 +146,19 @@ class CreateTeamMembersSection extends StatelessWidget {
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                       const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () => onRemoveMember(member),
-                        child: const Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Icon(
-                            Iconsax.close_circle_copy,
-                            size: 14,
-                            color: VSPColors.textSecondary,
-                          ),
+                      IconButton(
+                        tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
+                        onPressed: () => onRemoveMember(member),
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(
+                          Iconsax.close_circle_copy,
+                          size: 16,
+                          color: VSPColors.textSecondary,
                         ),
                       ),
                     ],
