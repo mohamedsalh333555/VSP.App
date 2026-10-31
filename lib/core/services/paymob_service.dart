@@ -18,7 +18,8 @@ class PaymobFeePolicy {
 
   factory PaymobFeePolicy.fromMap(Map<String, dynamic> map) => PaymobFeePolicy(
     vspRate: (map['booking_vsp_rate'] as num?)?.toDouble() ?? 0,
-    gatewayRate: (map['booking_paymob_rate'] as num?)?.toDouble() ?? 0,
+    gatewayRate: (map['booking_paymob_local_rate'] as num?)?.toDouble() ??
+        (map['booking_paymob_rate'] as num?)?.toDouble() ?? 0,
     fixedGatewayFee: (map['booking_paymob_fixed_fee'] as num?)?.toDouble() ?? 0,
     vspAppliesToCash: map['vsp_applies_to_cash'] == true,
     paymobAppliesToElectronic: map['paymob_applies_to_electronic'] == true,
@@ -37,6 +38,14 @@ class PaymobFeePolicy {
 
   double total(double baseAmount) =>
       double.parse((baseAmount + serviceFee(baseAmount)).toStringAsFixed(2));
+
+  bool get isValidForElectronicCheckout =>
+      paymobAppliesToElectronic &&
+      [vspRate, gatewayRate, fixedGatewayFee].every((value) => value.isFinite) &&
+      vspRate >= 0 &&
+      gatewayRate >= 0 &&
+      gatewayRate < 1 &&
+      fixedGatewayFee >= 0;
 }
 
 class PaymobService {
@@ -44,7 +53,7 @@ class PaymobService {
     try {
       final response = await Supabase.instance.client
           .from('platform_fee_config')
-          .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_fixed_fee,vsp_applies_to_cash,paymob_applies_to_electronic')
+          .select('booking_vsp_rate,booking_paymob_rate,booking_paymob_local_rate,booking_paymob_fixed_fee,vsp_applies_to_cash,paymob_applies_to_electronic')
           .eq('id', 1)
           .maybeSingle();
       if (response == null) return null;
