@@ -157,6 +157,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, focusable selection and SafeArea documented; selected/unselected runtime pending) |
 | `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (shared state/empty pattern documented; every screen usage and state runtime pending) |
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) |
+| `lib/shared/widgets/vsp_fade_in_item.dart` | shared | not yet inspected |
 | `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
 | `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
 | `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
