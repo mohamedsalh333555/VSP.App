@@ -19,11 +19,17 @@ import 'team_league_standings_view.dart';
 class TeamLeagueTab extends StatefulWidget {
   final Team? userTeam;
   final VoidCallback onTeamCreated;
+  final bool isLoadingUserTeam;
+  final bool hasUserTeamLoadError;
+  final VoidCallback onRetryUserTeam;
 
   const TeamLeagueTab({
     super.key,
     required this.userTeam,
     required this.onTeamCreated,
+    required this.isLoadingUserTeam,
+    required this.hasUserTeamLoadError,
+    required this.onRetryUserTeam,
   });
 
   @override
@@ -874,6 +880,36 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
   @override
   Widget build(BuildContext context) {
+    // A failed or unfinished membership query is not equivalent to no team.
+    if (widget.isLoadingUserTeam) {
+      return const Center(
+        child: CircularProgressIndicator(color: VSPColors.accent),
+      );
+    }
+    if (widget.hasUserTeamLoadError) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(VSPSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isArabic ? 'تعذر تحميل بيانات فريقك' : 'Could not load your team',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              TextButton(
+                onPressed: widget.onRetryUserTeam,
+                child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // 1. If player has no team
     if (widget.userTeam == null) {
       return Center(
