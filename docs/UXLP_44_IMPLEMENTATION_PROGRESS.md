@@ -519,3 +519,10 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Owner Copilot sheet height now subtracts keyboard and top safe-area insets before applying its preferred 78% height, preventing the keyboard from pushing the sheet beyond the available viewport.
 - Owner no-show confirmation now uses a scrollable AlertDialog for compact-height and enlarged-text layouts.
 - These are source-level presentation/lifecycle corrections only. No booking, cancellation, refund, payout, authorization, or database rules were changed. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+## League, refund, and compact-dialog follow-up — 2026-10-31
+
+- Team-league match-result and dispute-resolution sheets now cap their height to the viewport remaining after keyboard/system insets and scroll their content, keeping the primary action reachable on short screens and with large text.
+- Team-league result submission and dispute-resolution failures now show concise Arabic/English recovery messages; technical exceptions and stack traces are sent to debug diagnostics rather than exposed in the UI.
+- Refund-tracking sheet bottom padding now includes the device bottom system inset so its close action and final details remain above gesture/navigation areas.
+- No league scoring, dispute-resolution authorization, refund eligibility, refund amount, payout, booking, or database behavior was changed. Source-only changes; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
