@@ -524,6 +524,8 @@ class _NotificationCard extends StatelessWidget {
         return Iconsax.verify_copy;
       case 'public_match_joined':
         return Iconsax.user_add_copy;
+      case 'join_request_accepted':
+        return Iconsax.tick_circle_copy;
       case 'match_full':
         return Iconsax.people_copy;
       case 'chat':
@@ -554,6 +556,8 @@ class _NotificationCard extends StatelessWidget {
       case 'match_full':
       case 'result_confirmation':
         return VSPColors.accent;
+      case 'join_request_accepted':
+        return VSPColors.success;
       case 'booking_cancelled':
       case 'debt_warning':
       case 'debt_grace':
