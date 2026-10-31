@@ -245,6 +245,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     _ownerChampionships = [];
     _hasChampionshipStreamError = false;
     _dashboardAnalytics = const DashboardAnalytics();
+    _currentFilter = DashboardFilter.today();
+    _selectedStadiumFilter = 'all';
+    _selectedTimePeriod = 'today';
+    _cachedMetrics = null;
+    _lastMetricsKey = null;
+    _selectedDashboardTab = 0;
     _analyticsError = null;
     _isLoadingAnalytics = false;
     _approvalNoticeSeenUntil.clear();
