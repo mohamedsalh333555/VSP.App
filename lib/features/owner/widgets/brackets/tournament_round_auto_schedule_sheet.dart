@@ -177,6 +177,7 @@ void showResetRoundScheduleConfirmationDialog(
     context: context,
     builder: (dialogCtx) {
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -192,7 +193,7 @@ void showResetRoundScheduleConfirmationDialog(
         ),
         content: Text(
           isArabic
-              ? 'هل أنت تأكد من إلغاء وتصفير مواعيد جميع مباريات ($roundName) وإعادتها إلى "غير مجدول"؟'
+              ? 'هل أنت متأكد من إلغاء مواعيد جميع مباريات ($roundName) وإعادتها إلى "غير مجدول"؟'
               : 'Are you sure you want to reset all match dates for ($roundName) to unscheduled?',
           style: const TextStyle(color: Colors.white70, fontSize: 13),
         ),
@@ -219,12 +220,17 @@ void showResetRoundScheduleConfirmationDialog(
                 VSPFeedback.showSuccess(
                   context,
                   isArabic
-                      ? ' تم تصفير وإلغاء جدول مباريات $roundName بنجاح!'
-                      : ' Reset schedule for $roundName successfully!',
+                      ? 'تم إلغاء مواعيد مباريات $roundName بنجاح.'
+                      : 'The schedule for $roundName was reset successfully.', 
+                );
+              } else if (context.mounted) {
+                VSPFeedback.showError(
+                  context,
+                  isArabic ? 'تعذر تصفير جدول المباريات. حاول مرة أخرى.' : 'Could not reset the match schedule. Please try again.',
                 );
               }
             },
-            child: Text(isArabic ? 'تأكيد التصفير ' : 'Confirm Reset'),
+            child: Text(isArabic ? 'تأكيد التصفير' : 'Confirm Reset'),
           ),
         ],
       );
