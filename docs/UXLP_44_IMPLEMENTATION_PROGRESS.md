@@ -188,3 +188,11 @@ No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
 - Year, month, and day options expose their displayed value and selected state as one semantic button while retaining focusable InkWell interaction.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Championship empty-state responsive pass
+
+- 1v1 governorate banner return action now has a minimum 48dp touch target.
+- Shared championship empty-state content and the 1v1 no-governorate state now use vertical scrolling to avoid compact-screen/large-text overflow.
+
+No CI, analyzer, tests, runtime checks, migrations, or APK build were run.

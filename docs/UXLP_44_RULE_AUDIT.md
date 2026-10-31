@@ -399,3 +399,8 @@ Source touchpoints only; no whole-app rule is marked complete and runtime valida
 ### Date-picker selection semantics — 2026-10-31
 
 - **Rules 27, 33, 34 — date selection accessibility:** date-picker step chips and year/month/day choices now expose one semantic button each, including the selected state, value, and disabled state for unavailable steps; their InkWell surfaces remain keyboard/focus interactive.
+
+
+### Championship empty-state viewport and touch sizing — 2026-10-31
+
+- **Rules 11, 27, 33, 35 — championship states:** the 1v1 governorate banner's return action now has a 48dp minimum target. Championship, tournament, team, and 1v1 no-governorate empty-state content can scroll vertically on compact viewports and large text settings rather than overflowing its centered layout.
