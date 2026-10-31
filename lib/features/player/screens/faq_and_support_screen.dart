@@ -107,7 +107,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                       const SizedBox(width: 8),
                       Text(
                         isOwner ? l10n.supportOwnerDirectTitle : l10n.supportPlayerDirectTitle,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -229,7 +229,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Text(
                 answer,
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
               ),
             ),
           ],
