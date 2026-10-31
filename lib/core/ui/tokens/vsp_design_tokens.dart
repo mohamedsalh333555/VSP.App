@@ -594,11 +594,21 @@ abstract final class VSPDSAccessibility {
   static const bool supportsReducedMotion = true;
 }
 
-abstract final class VSPDSBottomNavMetrics {
+/// Single geometry source for both player and owner bottom navigation.
+abstract final class VSPBottomNavMetrics {
   static const double height = 64.0;
   static const double bottomMargin = 12.0;
   static const double contentClearance = 8.0;
   static const double fabBottomOffset = height + bottomMargin;
+}
+
+/// Legacy name retained as a value-only compatibility alias during migration.
+@Deprecated('Use VSPBottomNavMetrics')
+abstract final class VSPDSBottomNavMetrics {
+  static const double height = VSPBottomNavMetrics.height;
+  static const double bottomMargin = VSPBottomNavMetrics.bottomMargin;
+  static const double contentClearance = VSPBottomNavMetrics.contentClearance;
+  static const double fabBottomOffset = VSPBottomNavMetrics.fabBottomOffset;
 }
 
 abstract final class VSPDSGlass {
@@ -626,8 +636,8 @@ abstract final class VSPDSScrollPadding {
   }) {
     final safeBottom = MediaQuery.of(context).padding.bottom;
     if (hasFloatingNavBar) {
-      return VSPDSBottomNavMetrics.height +
-          VSPDSBottomNavMetrics.bottomMargin +
+      return VSPBottomNavMetrics.height +
+          VSPBottomNavMetrics.bottomMargin +
           safeBottom +
           extra;
     }

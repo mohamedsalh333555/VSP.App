@@ -170,7 +170,7 @@ class VspBottomNavBar extends StatelessWidget {
         bottom: true,
         child: SizedBox(
           width: double.infinity,
-          height: VSPDSBottomNavMetrics.height,
+          height: VSPBottomNavMetrics.height,
           child: navCard,
         ),
       ),

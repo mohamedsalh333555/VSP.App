@@ -94,11 +94,13 @@ class VSPSpacing {
   static const double actionGap = grid1;
 }
 
+/// Legacy compatibility alias. New code must use VSPBottomNavMetrics.
+@Deprecated('Use VSPBottomNavMetrics')
 class VSPBottomNavBarMetrics {
-  static const double height = VSPDSBottomNavMetrics.height;
-  static const double bottomMargin = VSPDSBottomNavMetrics.bottomMargin;
-  static const double contentClearance = VSPDSBottomNavMetrics.contentClearance;
-  static const double fabBottomOffset = VSPDSBottomNavMetrics.fabBottomOffset;
+  static const double height = VSPBottomNavMetrics.height;
+  static const double bottomMargin = VSPBottomNavMetrics.bottomMargin;
+  static const double contentClearance = VSPBottomNavMetrics.contentClearance;
+  static const double fabBottomOffset = VSPBottomNavMetrics.fabBottomOffset;
 }
 
 class VSPStates {
