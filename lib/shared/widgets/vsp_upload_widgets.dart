@@ -151,7 +151,7 @@ class VspUploadedItemRow extends StatelessWidget {
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: thumbnailUrl != null || imageFile != null
+                        color: (thumbnailUrl?.isNotEmpty ?? false) || imageFile != null
                             ? VSPColors.accent
                             : (isUploading ? VSPColors.warning : VSPColors.textSecondary),
                       ),
@@ -159,7 +159,7 @@ class VspUploadedItemRow extends StatelessWidget {
               ],
             ),
           ),
-          if (thumbnailUrl != null || imageFile != null)
+          if ((thumbnailUrl?.isNotEmpty ?? false) || imageFile != null)
             Row(
               children: [
                 const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
