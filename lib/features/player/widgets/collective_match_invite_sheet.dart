@@ -128,7 +128,14 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       await _reload();
       if (mounted) VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تم انضمامك للمباراة بنجاح.' : 'You joined the match successfully.');
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      VSPLogger.w('Collective invite join failed: $e');
+      if (mounted) {
+        final ar = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر الانضمام للتجميعية. حاول مرة أخرى.' : 'Could not join this match. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _joining = false);
     }
@@ -159,7 +166,13 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       await _reload();
       if (mounted) VSPFeedback.showSuccess(context, ar ? 'تمت المغادرة.' : 'You left the match.');
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      VSPLogger.w('Collective invite leave failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر مغادرة التجميعية. حاول مرة أخرى.' : 'Could not leave this match. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _leaving = false);
     }
@@ -177,7 +190,14 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       if (!ok) throw Exception('تعذر تحديث عدد اللاعبين.');
       await _reload();
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      VSPLogger.w('Collective manual-player update failed: $e');
+      if (mounted) {
+        final ar = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر تحديث عدد اللاعبين. حاول مرة أخرى.' : 'Could not update the player count. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _updatingManual = false);
     }
@@ -236,7 +256,13 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       await _repo.removePrivateCollectiveParticipant(booking.id, participantId);
       await _reload();
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      VSPLogger.w('Collective participant removal failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذرت إزالة اللاعب. حاول مرة أخرى.' : 'Could not remove the player. Please try again.',
+        );
+      }
     }
   }
 
@@ -280,7 +306,13 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       if (!success) throw Exception(ar ? 'تعذر إلغاء الحجز.' : 'Unable to cancel booking.');
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, e.toString());
+      VSPLogger.w('Collective booking cancellation failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          ar ? 'تعذر إلغاء الحجز. حاول مرة أخرى.' : 'Could not cancel the booking. Please try again.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _cancelling = false);
     }
