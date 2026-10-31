@@ -298,18 +298,12 @@ class PlayerBookingCard extends StatelessWidget {
                   ] else if (booking.bookingType == BookingType.challenge) ...[
                     Builder(
                       builder: (ctx) {
-                        final badge = ChallengeResultActions.buildChallengeStatusBadge(
+                        if (myTeamId == null) return const SizedBox.shrink();
+                        return ChallengeResultActions.buildChallengeStatusBadge(
                           context,
                           booking: booking,
                           myTeamId: myTeamId,
                         );
-                        if (badge is SizedBox) {
-                          return ChallengeResultActions.buildStatusBadge(
-                            l10n.completed,
-                            VSPColors.textSecondary,
-                          );
-                        }
-                        return badge;
                       },
                     ),
                   ] else ...[
