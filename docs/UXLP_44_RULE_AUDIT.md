@@ -53,6 +53,22 @@
 | 44 | Optimal cognitive load | source reviewed—runtime pending | Owner dashboard tabs/analytics feedback and checkout loading/error states reviewed; refund and plan surfaces are scroll-bounded. Motion intensity and real-device cognitive-load validation pending. |
 
 ## Findings fixed in this batch (runtime pending)
+### Analyzer remediation follow-up — 2026-10-31
+
+The CI run on commit `35b50e4286a6aaf17d56188cc5efac64c3182288` reached `flutter analyze` and failed with 14 analyzer findings. Dependency installation, localization generation, and the Firebase options presence check succeeded. The 14 findings were:
+- 2 unused fields in `booking_confirmation_screen.dart`
+- 1 deprecated bottom-navigation metrics alias use in `owner_cup_screen.dart`
+- 1 missing-braces style finding in `owner_dashboard_screen.dart`
+- 2 missing-braces style findings in `challenge_select_team_screen.dart`
+- 5 missing-braces style findings in `payment_gateway_screen.dart`
+- 1 missing `const` in `team_league_tab.dart`
+- 1 missing `const` in `payment_countdown_header.dart`
+- 1 missing-braces style finding in `payment_gateway_screen.dart` checkout account guard (identified while reconciling the log)
+
+Source cleanup was committed in `f0b04981bbe3862dec277d018f1db16cb6e1517b` and `d18f224f5cb934dae30cb6c086d67e0be9ab8402`: removed the unused fields, switched the owner cup FAB offset to the canonical metrics source, added braces to the flagged control-flow statements, and applied the missing const constructors. **These changes are not analyzer-verified yet** because the available workflow run belongs to the earlier commit; the branch's next consolidated CI/analyzer run must verify them.
+
+The CI run stopped at Analyze; automated tests and APK build were skipped. No test pass or APK artifact was produced.
+
 
 - Rule 35: owner verification and forced-update dialogs made scrollable; grouped booking, payment, tournament, and location sheets/dialogs received viewport, scroll, or safe-area corrections.
 - Rule 29: private collective-match early-return path now clears the processing/loading flags.

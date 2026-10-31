@@ -335,6 +335,17 @@ Never close this task while:
 production schema != main migration history.
 
 ## Current verified remediation
+### Operating-window migration provenance clarification — 2026-10-31
+
+The live `supabase_migrations.schema_migrations` history confirms these exact applied versions:
+- `20261006005321` — `20261006010000_enforce_booking_operating_hours_and_breaks` (the migration's display/name label differs from its version timestamp)
+- `20261006005714` — `enforce_booking_operating_window_all_mutations`
+- `20261006005740` — `harden_operating_window_function_and_remove_duplicate_audit_indexes`
+
+The matching SQL files exist under `supabase/migrations/` on this branch. Read-only inspection of `public.bookings` triggers confirms `trg_bookings_operating_window` fires BEFORE INSERT and BEFORE UPDATE OF `start_time,end_time`; it calls `vsp_enforce_booking_operating_window`, which calls the shared Cairo-local validator. This covers RPCs/direct mutations that actually insert a booking or change its time fields, including manual booking and reschedule updates, without relying on each client path to repeat the rule. Maintenance rows are intentionally excluded because they represent closures rather than customer bookings.
+
+This is source/schema evidence, not a replacement for the final mutation matrix/runtime pass. No SQL was applied during this review.
+
 
 Production migration applied:
 20261006010000_enforce_booking_operating_hours_and_breaks
