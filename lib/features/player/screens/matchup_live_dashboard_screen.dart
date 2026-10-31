@@ -160,7 +160,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       ),
     );
 
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
 
     setState(() => _isSubmitting = true);
     try {
