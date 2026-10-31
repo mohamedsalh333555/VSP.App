@@ -317,6 +317,44 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
           IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary)),
         ])),
         Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 20), children: [
+          if (_loadFailed)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      ar
+                          ? 'تعذر تحديث بعض بيانات الدعوة. نعرض آخر بيانات متاحة.'
+                          : 'Some invitation details could not be refreshed. Showing the last available data.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: VSPColors.textSecondary,
+                          ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _loading
+                        ? null
+                        : () {
+                            setState(() {
+                              _loading = true;
+                              _loadFailed = false;
+                            });
+                            _load();
+                          },
+                    child: Text(ar ? 'تحديث' : 'Retry'),
+                  ),
+                ],
+              ),
+            ),
           if (booking.stadiumImageUrl.isNotEmpty) ClipRRect(borderRadius: BorderRadius.circular(VSPRadius.lg), child: CachedNetworkImage(imageUrl: booking.stadiumImageUrl, height: 155, fit: BoxFit.cover)),
           const SizedBox(height: 14),
           Row(children: [
