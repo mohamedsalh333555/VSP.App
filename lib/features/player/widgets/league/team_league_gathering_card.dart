@@ -25,6 +25,9 @@ class TeamLeagueGatheringCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final feeText = entryFee == null
+        ? (isArabic ? 'راجع الرسوم داخل التطبيق' : 'Check the current fee in the app')
+        : entryFee!.toStringAsFixed(0);
     final joined = league.teams.length;
     final total = league.maxTeams;
     final progress = total > 0 ? (joined / total).clamp(0.0, 1.0) : 0.0;
@@ -231,8 +234,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               ),
               child: Text(
                 isArabic
-                    ? 'رسوم تنظيم الدوري ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.'
-                    : 'League organization fee: ${entryFee?.toStringAsFixed(0) ?? '—'} EGP per team. Stadium rental for each match is split equally between the two teams.', 
+                    ? 'رسوم تنظيم الدوري $feeText جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.'
+                    : 'League organization fee: $feeText EGP per team. Stadium rental for each match is split equally between the two teams.', 
                 textAlign: TextAlign.center,
                 style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
@@ -248,8 +251,8 @@ class TeamLeagueGatheringCard extends StatelessWidget {
               ),
               child: Text(
                 isArabic
-                    ? 'دفع رسوم تنظيم الدوري — ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه'
-                    : 'Pay league fee — ${entryFee?.toStringAsFixed(0) ?? '—'} EGP',
+                    ? 'دفع رسوم تنظيم الدوري — $feeText جنيه'
+                    : 'Pay league fee — $feeText EGP',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -305,14 +308,14 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                   ? '''
 🏆 دعوة للمشاركة في ${league.name} على تطبيق VSP!
 اجمع فريقك ونافس الفرق الأخرى على لقب الدوري.
-رسوم تنظيم المنصة: ${entryFee?.toStringAsFixed(0) ?? '—'} جنيه لكل فريق.
+رسوم تنظيم المنصة: $feeText جنيه لكل فريق.
 حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.
 كود الانضمام: ${league.id}
 '''
                   : '''
 🏆 Join ${league.name} on VSP!
 Bring your team and compete for the league title.
-Platform organization fee: ${entryFee?.toStringAsFixed(0) ?? '—'} EGP per team.
+Platform organization fee: $feeText EGP per team.
 Stadium rental for each match is split equally between the two teams.
 Join code: ${league.id}
 ''';
