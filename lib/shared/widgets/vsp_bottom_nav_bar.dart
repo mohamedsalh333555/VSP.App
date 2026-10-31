@@ -74,6 +74,7 @@ class VspBottomNavBar extends StatelessWidget {
               selected: isSelected,
               label: item.label,
               child: InkWell(
+                excludeFromSemantics: true,
                 borderRadius: BorderRadius.circular(VSPDSRadius.md),
                 onTap: () {
                   HapticFeedback.lightImpact();

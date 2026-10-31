@@ -267,7 +267,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                       softWrap: true,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: isArabic ? TextAlign.start : TextAlign.start,
+                      textAlign: TextAlign.start,
                       style: Theme.of(context)
                           .textTheme
                           .labelSmall
