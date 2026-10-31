@@ -38,52 +38,79 @@ class StadiumFilterService {
   static bool checkAmenity(Stadium stadium, String amenity) {
     final dynamic feats = stadium.features;
     final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
+    final labels = feats is List
+        ? feats.map((value) => value.toString().trim().toLowerCase()).toList()
+        : Stadium.parseFeatures(feats).map((value) => value.trim().toLowerCase()).toList();
+
+    bool hasLabel(List<String> terms) => labels.any(
+          (label) => terms.any((term) => label.contains(term)),
+        );
 
     final normalizedAmenity = amenity.trim().toLowerCase();
 
-    // 1. Payment & Deposit
-    if (normalizedAmenity == 'no deposit needed' || amenity.trim() == 'حجز بدون عربون (دفع نقدي)') {
+    if (normalizedAmenity == 'no deposit needed' ||
+        amenity.trim() == 'حجز بدون عربون (دفع نقدي)') {
       return !stadium.needsDeposit;
     }
 
-    // 2. Real Owner Amenities (Strictly matching owner inputs)
     if (normalizedAmenity == 'showers & baths' || amenity.trim() == 'دش وحمام') {
-      return featMap['bathOption'] == 'Yes' || featMap['hasShower'] == true || featMap['shower'] == true;
+      final bathOption = featMap['bathOption']?.toString().toLowerCase();
+      return bathOption == 'yes' ||
+          featMap['hasShower'] == true ||
+          featMap['shower'] == true ||
+          stadium.baths > 0 ||
+          hasLabel(['bath', 'حمام', 'دش']);
     }
     if (normalizedAmenity == 'changing rooms' || amenity.trim() == 'غرف تغيير ملابس') {
-      return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
+      return featMap['changingRoom'] == true ||
+          featMap['changingRooms'] == true ||
+          featMap['hasChangingRooms'] == true ||
+          hasLabel(['changingroom', 'changing room', 'غرف تغيير']);
     }
     if (normalizedAmenity == 'night floodlights' || amenity.trim() == 'كشافات ليلية') {
-      // The owner-facing lighting source of truth is hasJerash, historically
-      // labeled as Professional Lighting in the stadium model.
       return stadium.hasJerash ||
           featMap['hasJerash'] == true ||
           featMap['nightFloodlights'] == true ||
           featMap['floodlights'] == true ||
-          featMap['hasFloodlights'] == true;
+          featMap['hasFloodlights'] == true ||
+          hasLabel(['professional lighting', 'floodlight', 'إضاءة', 'كشاف']);
     }
     if (normalizedAmenity == 'cafeteria & drinks' || amenity.trim() == 'كافتيريا ومشروبات') {
-      return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
+      return stadium.cafeteria > 0 ||
+          featMap['cafeteria'] == true ||
+          featMap['hasCafeteria'] == true ||
+          hasLabel(['cafeteria', 'كافتيريا', 'مشروبات']);
     }
-    if (normalizedAmenity == 'spectator seats' || amenity.trim() == 'مدرجات جمهور' || amenity.trim() == 'مقاعد') {
+    if (normalizedAmenity == 'spectator seats' ||
+        amenity.trim() == 'مدرجات جمهور' ||
+        amenity.trim() == 'مقاعد') {
       final rawSeats = featMap['seats'];
-      final seatCount = rawSeats is num ? rawSeats.toInt() : int.tryParse(rawSeats?.toString() ?? '') ?? 0;
-      return seatCount > 0 || featMap['hasSeats'] == true || stadium.hasSeats;
+      final seatCount = rawSeats is num
+          ? rawSeats.toInt()
+          : int.tryParse(rawSeats?.toString() ?? '') ?? 0;
+      return seatCount > 0 ||
+          featMap['hasSeats'] == true ||
+          stadium.hasSeats ||
+          hasLabel(['spectator seat', 'seat', 'مقاعد', 'مدرجات']);
     }
     if (normalizedAmenity == 'garage & parking' || amenity.trim() == 'جراج سيارات') {
-      return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
+      return featMap['garage'] == true ||
+          featMap['hasGarage'] == true ||
+          featMap['parking'] == true ||
+          hasLabel(['garage', 'parking', 'جراج', 'مواقف']);
     }
-
     if (normalizedAmenity == 'ball provided' || amenity.trim() == 'الكرة متوفرة') {
       return stadium.hasBall ||
           featMap['hasBall'] == true ||
           featMap['ballProvided'] == true ||
-          featMap['ball'] == true;
+          featMap['ball'] == true ||
+          hasLabel(['ball', 'كرة']);
     }
 
-    // Fallback checks
     final key = amenity.replaceAll(' ', '').toLowerCase();
-    return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
+    return featMap[key] == true ||
+        featMap['has${amenity.replaceAll(' ', '')}'] == true ||
+        hasLabel([normalizedAmenity]);
   }
 
   /// Filters stadiums by query matching name or location.

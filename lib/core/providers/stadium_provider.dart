@@ -166,6 +166,7 @@ class StadiumProvider with ChangeNotifier {
             limit: 10,
             startAfter: null,
             governorate: 'All',
+            quickFilter: _activeQuickFilter,
           );
           if (requestGeneration != _discoveryRequestGeneration || requestScopeGeneration != _scopeGeneration || _listeningOwnerId != null) return;
           final List<Stadium> fallbackStadiums = fallbackResult['items'];
@@ -490,7 +491,8 @@ class StadiumProvider with ChangeNotifier {
  return false;
  }
  } catch (e) {
- _setError('Error during stadium deletion: ${e.toString()}');
+ VSPLogger.e('Error deleting stadium', e);
+ _setError('stadium_delete_failed');
  _setLoading(false);
  return false;
  }
