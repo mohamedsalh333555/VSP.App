@@ -146,4 +146,5 @@
 
 
 - Owner stadium realtime stream failures no longer clear `_stadiums` and `_filteredStadiums`; a refresh error now preserves the last authoritative schedule while surfacing the sync error. Initial failures still show the existing retry state because no snapshot exists.
+- Stadium data is now isolated across account/role scopes: switching to a different owner clears the previous owner's cached stadiums before subscribing, while a same-owner forced refresh preserves the last good snapshot. Switching from owner scope back to player discovery cancels the owner stream and clears the owner-only list before fetching public stadiums.
 - Post-match result prompt suppression is now scoped to the player-home screen state rather than a process-wide static flag, so a prompt shown for one signed-in account cannot suppress another account's prompt in the same app process.
