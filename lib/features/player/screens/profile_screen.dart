@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
  Future<void> _openMyTeam() async {
   final auth = context.read<AuthProvider>();
-  final uid = auth.currentUser?.uid;
+  final uid = auth.currentUser?.id;
   if (uid == null) return;
   final team = await TeamRepository().getUserTeam(uid);
   if (!mounted) return;
@@ -200,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  FutureBuilder<Team?>(
  future: auth.currentUser == null
  ? Future.value(null)
- : TeamRepository().getUserTeam(auth.currentUser!.uid),
+ : TeamRepository().getUserTeam(auth.currentUser!.id),
  builder: (context, teamSnapshot) {
  if (teamSnapshot.connectionState == ConnectionState.waiting) {
  return const Center(
@@ -262,9 +262,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
+ if (auth.currentUser?.id != null) ...[
  const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.id),
  ],
  ],
  ),
@@ -360,9 +360,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
  overflow: TextOverflow.ellipsis,
  ),
  ),
- if (auth.currentUser?.uid != null) ...[
+ if (auth.currentUser?.id != null) ...[
  const SizedBox(width: 8),
- Vsp1v1UserTrophyBadge(userId: auth.currentUser!.uid),
+ Vsp1v1UserTrophyBadge(userId: auth.currentUser!.id),
  ],
  ],
  ),
