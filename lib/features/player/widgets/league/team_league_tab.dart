@@ -427,6 +427,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     required int maxTeams,
     required int intervalDays,
   }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     String selectedPayOption = 'my_team'; // 'my_team', 'all', 'custom'
     int customPaidCount = 2;
     bool isSubmitting = false;
@@ -434,6 +435,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (pCtx) => StatefulBuilder(
         builder: (context, setPSheetState) {
@@ -447,7 +449,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               top: 24,
               left: 20,
               right: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 24,
             ),
             decoration: const BoxDecoration(
               color: VSPColors.surface,
@@ -459,21 +461,25 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'طريقة دفع رسوم الدوري',
+                    isArabic ? 'طريقة دفع رسوم الدوري' : 'League fee payment method',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'رسوم مشاركة الفريق: 30 جنيه للفريق الواحد',
+                    isArabic
+                        ? 'رسوم مشاركة الفريق: ${feePerTeam.toStringAsFixed(0)} جنيه للفريق الواحد'
+                        : 'Team entry fee: ${feePerTeam.toStringAsFixed(0)} EGP per team',
                     style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
 
                   // OPTION A: Pay for your team only
                   _buildPaymentOptionCard(
-                    title: 'ادفع لفريقك',
-                    subtitle: '30 جنيه — رسوم مشاركة فريقك',
-                    costText: '${totalForTeam.toStringAsFixed(0)} جنيه',
+                    title: isArabic ? 'ادفع لفريقك' : 'Pay for your team',
+                    subtitle: isArabic
+                        ? '${feePerTeam.toStringAsFixed(0)} جنيه — رسوم مشاركة فريقك'
+                        : '${feePerTeam.toStringAsFixed(0)} EGP — your team entry fee',
+                    costText: '${totalForTeam.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'my_team',
                     onTap: () => setPSheetState(() => selectedPayOption = 'my_team'),
                   ),
@@ -481,9 +487,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
                   // OPTION B: Pay for the whole league
                   _buildPaymentOptionCard(
-                    title: 'ادفع للدوري كله',
-                    subtitle: 'ادفع رسوم جميع الفرق ($maxTeams فرق × 30 جنيه)',
-                    costText: '${totalForAll.toStringAsFixed(0)} جنيه',
+                    title: isArabic ? 'ادفع للدوري كله' : 'Pay for the entire league',
+                    subtitle: isArabic
+                        ? 'ادفع رسوم جميع الفرق ($maxTeams فرق × ${feePerTeam.toStringAsFixed(0)} جنيه)'
+                        : 'Pay for all teams ($maxTeams × ${feePerTeam.toStringAsFixed(0)} EGP)',
+                    costText: '${totalForAll.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'all',
                     onTap: () => setPSheetState(() => selectedPayOption = 'all'),
                   ),
@@ -491,9 +499,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
                   // OPTION C: Pay for a custom number of teams
                   _buildPaymentOptionCard(
-                    title: 'ادفع لعدد محدد من الفرق',
-                    subtitle: '$customPaidCount فرق × 30 جنيه = ${totalForCustom.toStringAsFixed(0)} جنيه',
-                    costText: '${totalForCustom.toStringAsFixed(0)} جنيه',
+                    title: isArabic ? 'ادفع لعدد محدد من الفرق' : 'Pay for a selected number of teams',
+                    subtitle: isArabic
+                        ? '$customPaidCount فرق × ${feePerTeam.toStringAsFixed(0)} جنيه = ${totalForCustom.toStringAsFixed(0)} جنيه'
+                        : '$customPaidCount teams × ${feePerTeam.toStringAsFixed(0)} EGP = ${totalForCustom.toStringAsFixed(0)} EGP',
+                    costText: '${totalForCustom.toStringAsFixed(0)} ${isArabic ? 'جنيه' : 'EGP'}',
                     isSelected: selectedPayOption == 'custom',
                     onTap: () => setPSheetState(() => selectedPayOption = 'custom'),
                   ),
@@ -510,7 +520,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('عدد الفرق التي ستدفع عنها:', style: TextStyle(color: Colors.white, fontSize: 13)),
+                          Text(isArabic ? 'عدد الفرق التي ستدفع عنها:' : 'Number of teams to pay for:', style: const TextStyle(color: Colors.white, fontSize: 13)),
                           Row(
                             children: [
                               IconButton(
@@ -558,10 +568,15 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                               } else {
                                 await _loadLeague();
                               }
-                            } catch (e) {
-                              setPSheetState(() => isSubmitting = false);
+                            } catch (e, stackTrace) {
+                              debugPrint('Team league creation/payment setup failed: $e\\n$stackTrace');
                               if (pCtx.mounted) {
-                                ScaffoldMessenger.of(pCtx).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+                                setPSheetState(() => isSubmitting = false);
+                                ScaffoldMessenger.of(pCtx).showSnackBar(SnackBar(
+                                  content: Text(isArabic
+                                      ? 'تعذر إنشاء الدوري وتجهيز الدفع. حاول مرة أخرى.'
+                                      : 'Could not create the league or prepare payment. Please retry.'),
+                                ));
                               }
                             }
                           },
@@ -575,10 +590,10 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                         : Text(
                             selectedPayOption == 'my_team'
-                                ? 'ادفع ${totalForTeam.toStringAsFixed(0)} جنيه'
+                                ? (isArabic ? 'ادفع ${totalForTeam.toStringAsFixed(0)} جنيه' : 'Pay ${totalForTeam.toStringAsFixed(0)} EGP')
                                 : selectedPayOption == 'all'
-                                    ? 'ادفع ${totalForAll.toStringAsFixed(0)} جنيه'
-                                    : 'ادفع ${totalForCustom.toStringAsFixed(0)} جنيه',
+                                    ? (isArabic ? 'ادفع ${totalForAll.toStringAsFixed(0)} جنيه' : 'Pay ${totalForAll.toStringAsFixed(0)} EGP')
+                                    : (isArabic ? 'ادفع ${totalForCustom.toStringAsFixed(0)} جنيه' : 'Pay ${totalForCustom.toStringAsFixed(0)} EGP'),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                           ),
                   ),
