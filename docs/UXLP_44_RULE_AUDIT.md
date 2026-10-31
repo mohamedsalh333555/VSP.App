@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 137 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
+**Scope:** Shared foundations and 139 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -482,3 +482,18 @@ The next already-started PR CI run, [41222072722](https://github.com/mohamedsalh
 A further source-only truthfulness fix removed the hardcoded `1,000 EGP/month` claim from the owner dashboard Pro teaser. Current prices remain displayed by the subscription screen from the public plan catalog; the teaser now only says “Upgrade to Pro”. This does not change plan pricing or entitlements.
 
 These findings are implementation evidence only. No rule has been promoted to `pass`; all 44 rule rows remain runtime-pending and the final consolidated validation gate is still closed.
+
+
+## Product decisions and backend approvals still open
+
+These findings are explicitly classified as **needs product decision**. They are not implementation defects that may be silently “fixed” in the client, and no SQL, Edge Function, permission, or business-rule change is authorized by this audit.
+
+| Affected UXLP rules | Surface / contract | Decision required | Current safe behavior |
+|---|---|---|---|
+| 25, 39 | Team booking authorization in `create_booking_atomic` | Decide whether any team member or only the captain may create a team booking; also define which team is active when a user belongs to multiple teams. | Client verifies membership and does not invent a team-selection policy; server contract remains unchanged. |
+| 19, 39 | Multi-team default selection | Decide whether users need an explicit active-team selector or a deterministic product-defined default. | Existing first-membership behavior is preserved and documented; no unordered selection policy is claimed correct. |
+| 25, 31, 39, 40 | Challenge result eligibility in `submit_challenge_result_atomic` | Approve whether only confirmed/completed bookings may accept results and whether the second result must come from a different authenticated captain. | Client suppresses ineligible prompts and dual-side self-review; deployed RPC is unchanged. |
+| 41 | Notification retention | Define the intended retention/archive policy and explain historical disappearance before changing deletion or retention behavior. | Opening marks read; explicit swipe deletion and Undo remain the client behavior. No retention trigger/cron was added. |
+| 18, 36, 41, 43 | Refund notification reconciliation | Decide the required durable notification/reconciliation behavior when Paymob confirms a refund but ledger recording or notification insertion fails. | Existing refund/ledger flow remains unchanged; no outbox table or migration was applied. |
+
+Until each decision is supplied, affected rule/screen pairs must retain the `needs product decision` status rather than being marked `pass` or changed by assumption.
