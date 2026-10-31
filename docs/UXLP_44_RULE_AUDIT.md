@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 174 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
+**Scope:** Shared foundations and 184 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -517,3 +517,8 @@ A top-level directory reconciliation found 35 shared/embedded Dart surfaces that
 ### Support ticket sheet action visibility correction — 2026-10-31
 
 - **Rules 11, 35 — support ticket creation modal:** the maximum-height constraint now contains the outer padding and bottom safe-area inset, preventing those insets from being added beyond the available keyboard-safe viewport. The content remains scrollable. Compact-device and keyboard-open runtime checks remain pending.
+
+
+## Nested championship detail surfaces — 2026-10-31
+
+Recursive directory inspection of `lib/features/player/widgets/championship_details` found 10 component files. The bottom action bar source confirms that only `open` championships expose registration; `ongoing`, `completed`, `cancelled`, and full states route to view/disabled actions. The remaining nine nested components are now registered as `not yet inspected`. The championship card was corrected to show ongoing/cancelled/unknown statuses without presenting them as joinable. These remain source-only changes; runtime and caller-state validation are pending.
