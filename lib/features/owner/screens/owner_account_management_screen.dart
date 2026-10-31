@@ -170,7 +170,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userModel = authProvider.userModel;
-    final currentUid = authProvider.currentUser?.uid ?? '';
+    final currentUid = authProvider.currentUser?.id ?? '';
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return VSPScaffold(
