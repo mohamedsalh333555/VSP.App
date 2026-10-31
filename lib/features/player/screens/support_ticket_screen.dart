@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/chat_repository.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -21,6 +22,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
   final _repo = ChatRepository();
   final _controller = TextEditingController();
   bool _sending = false;
+  int _accountGeneration = 0;
   String? _streamUserId;
   late Stream<Map<String, dynamic>?> _ticketStream;
   late Stream<List<Map<String, dynamic>>> _messagesStream;
@@ -46,6 +48,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
     super.didChangeDependencies();
     final activeUserId = context.watch<AuthProvider>().currentUser?.id ?? '';
     if (activeUserId == _streamUserId) return;
+    _accountGeneration++;
     _bindStreams(activeUserId);
     _controller.clear();
     _sending = false;
@@ -59,17 +62,34 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         context.read<AuthProvider>().currentUser?.id != _streamUserId) {
       return;
     }
+    final sendingUserId = _streamUserId!;
+    final requestGeneration = _accountGeneration;
     setState(() => _sending = true);
     try {
       await _repo.sendSupportTicketMessage(ticketId: widget.ticketId, body: body);
-      _controller.clear();
-    } catch (_) {
-      if (mounted) {
+      if (mounted &&
+          requestGeneration == _accountGeneration &&
+          context.read<AuthProvider>().currentUser?.id == sendingUserId) {
+        _controller.clear();
+      }
+    } catch (e) {
+      if (mounted &&
+          requestGeneration == _accountGeneration &&
+          context.read<AuthProvider>().currentUser?.id == sendingUserId) {
+        VSPLogger.w('Support ticket message send failed: $e');
         final ar = Localizations.localeOf(context).languageCode == 'ar';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ar ? 'تعذر إرسال الرسالة.' : 'Could not send the message.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ar ? 'تعذر إرسال الرسالة. حاول مرة أخرى.' : 'Could not send the message. Please try again.',
+            ),
+          ),
+        );
       }
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted && requestGeneration == _accountGeneration) {
+        setState(() => _sending = false);
+      }
     }
   }
 
