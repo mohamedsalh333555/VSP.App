@@ -362,7 +362,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                         const Padding(
                           padding: EdgeInsets.only(top: 4),
                           child: Text(
-                            'فوز 🟢',
+                            isArabic ? 'فوز 🟢' : 'Win 🟢',
                             style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
