@@ -526,3 +526,9 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Team-league result submission and dispute-resolution failures now show concise Arabic/English recovery messages; technical exceptions and stack traces are sent to debug diagnostics rather than exposed in the UI.
 - Refund-tracking sheet bottom padding now includes the device bottom system inset so its close action and final details remain above gesture/navigation areas.
 - No league scoring, dispute-resolution authorization, refund eligibility, refund amount, payout, booking, or database behavior was changed. Source-only changes; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+
+## Additional owner modal safe-area corrections — 2026-10-31
+
+- Tournament-format selection sheet now has a viewport-based maximum height and scrollable content, preserving access to all format choices on short displays and with enlarged text.
+- Manual stadium-address entry now opts into the modal safe-area behavior and adds the remaining bottom system inset alongside keyboard spacing, keeping the address field and confirmation action clear of system UI.
+- These are layout-only changes. Tournament format selection, stadium coordinates, geocoding, booking, and backend behavior were not changed. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
