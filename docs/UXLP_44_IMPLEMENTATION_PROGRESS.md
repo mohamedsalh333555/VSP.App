@@ -366,3 +366,12 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - The championship details screen now recreates the matches stream on retry and rebuilds the standings/top-scorers queries through the same refresh callback. No repository contract or database behavior changed.
 - Source-reviewed the nested championship details header, pill tab bar, rules tab, governorate confirmation dialog, squad-builder bridge sheet, matches tab, standings table, and top-scorers tab. Their runtime status remains pending.
 - The six newly tracked nested championship files are now source-reviewed; the 181-path register currently has no entries marked `not yet inspected`. This is inventory/source coverage only, not completion of the 44-rule screen/state audit.
+
+
+## Championship live-stream resilience follow-up — 2026-10-31
+
+- The championship header stream now has the same stale-data warning/retry affordance as the matches stream. Retry recreates both the single-championship and match streams.
+- The matches tab remains in loading state until the first stream event arrives; an active subscription with no first event is no longer misreported as an empty schedule.
+- Standings futures are cached per group so ordinary live match updates do not repeatedly issue standings queries. Retry clears the cache, rebuilds the standings queries, and refreshes the parent streams.
+- Group iteration is bounded to the supported A–H labels to prevent an out-of-range UI crash from malformed group-count data.
+- All changes are source-only; runtime and data-volume verification remain pending.
