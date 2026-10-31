@@ -150,8 +150,8 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
                 _FeatureRow(
                   icon: Iconsax.headphones_copy,
                   text: isAr
-                      ? 'دعم فني وأولوية تشغيلية على مدار الساعة'
-                      : '24/7 Priority owner support',
+                      ? 'أولوية في التواصل مع فريق الدعم'
+                      : 'Priority access to the support team',
                 ),
               ],
             ),
