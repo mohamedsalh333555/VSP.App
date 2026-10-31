@@ -479,3 +479,14 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 - Kickoff is disabled when its activation callback is unavailable, avoiding an enabled no-op button.
 - Champion name is limited to two lines with ellipsis in the bottom bar.
 - No tournament state or data rules changed. Source-only; no tests, analyzer, CI, runtime checks, or APK build.
+
+
+## Tournament and match modal compact-viewport corrections — 2026-10-31
+
+- Tournament score-entry modal title now shares available width with the close control and wraps to at most two lines.
+- Tournament format option title/badge now share flexible width; long subtitles are bounded to two lines.
+- Automatic tournament scheduling sheet now has a viewport-based maximum height and scrollable content so its save action remains reachable on short screens.
+- Manual team-registration sheet title now shares the header row with the close control without forcing horizontal overflow.
+- Match-result modal details now use three equal flexible columns; long stadium/date/price values are limited to two lines with ellipsis.
+- Booking-type modal heading and option title/subtitle are bounded to prevent long Arabic/English copy from overflowing compact layouts.
+- These are source-level layout corrections only. No tournament, match-result, booking, payment, or database business rules were changed. No analyzer, tests, CI, runtime checks, migrations, or APK build were run.
