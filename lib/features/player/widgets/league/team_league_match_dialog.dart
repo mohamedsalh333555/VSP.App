@@ -44,10 +44,16 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
     try {
       await widget.onSubmitResult(_selectedResult!);
       if (mounted) Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('League match result submission failed: $e\n$stackTrace');
       if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطأ أثناء حفظ النتيجة: $e')),
+          SnackBar(
+            content: Text(isArabic
+                ? 'تعذر حفظ نتيجة المباراة. حاول مرة أخرى.'
+                : 'Could not save the match result. Please try again.'),
+          ),
         );
       }
     } finally {
@@ -310,9 +316,17 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
     try {
       await widget.onResolveDispute(_selectedResolution!);
       if (mounted) Navigator.pop(context, true);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('League dispute resolution failed: $e\n$stackTrace');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('خطأ: $e')));
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic
+                ? 'تعذر اعتماد نتيجة المباراة. حاول مرة أخرى.'
+                : 'Could not confirm the match result. Please try again.'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
