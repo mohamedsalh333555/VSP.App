@@ -60,7 +60,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
   Future<void> _loadUserTeam() async {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid;
+    final uid = auth.currentUser?.id;
     if (uid != null) {
       final team = await TeamRepository().getUserTeam(uid);
       if (mounted) {
