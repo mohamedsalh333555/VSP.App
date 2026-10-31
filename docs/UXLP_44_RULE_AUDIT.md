@@ -564,3 +564,12 @@ The nested championship detail flow now has explicit source-level state handling
 - The nested header, pill tab bar, rules tab, governorate confirmation dialog, squad-builder sheet, matches tab, standings table, and top-scorers tab have source-review notes. Runtime, large-text, focus, and device layout evidence remain pending.
 
 The 181-path inventory has no `not yet inspected` rows at this checkpoint, but this does not satisfy the per-rule/per-state coverage requirement. All 44 rule rows remain runtime-pending; no final consolidated review has started.
+
+
+## Championship stream and standings cache follow-up — 2026-10-31
+
+- Both championship and match streams can now be recreated through one retry callback; stale header/match data is preserved and visibly marked when live updates fail.
+- A matches stream with no first event remains in loading state instead of showing the empty state prematurely.
+- Standings futures are cached per group across match-stream emissions, avoiding repeated standings requests on every live update. A retry clears the cache and re-fetches.
+- Group rendering is bounded to the supported A–H labels.
+- These source changes do not alter tournament registration or scoring rules. Device/runtime verification is pending.
