@@ -126,10 +126,30 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                     ),
                     child: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
-                  onDismissed: (_) {
+                  onDismissed: (_) async {
                     final deletedItem = notification;
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                    NotificationRepository().deleteNotification(_userId, deletedItem.id);
+                    final repository = NotificationRepository();
+                    final deleted = await repository.deleteNotification(_userId, deletedItem.id);
+
+                    if (!mounted) return;
+                    if (!deleted) {
+                      setState(() {
+                        _notificationsStream = repository.getUserNotifications(_userId);
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isArabic ? 'تعذر حذف الإشعار. حاول مرة أخرى.' : 'Could not delete the notification. Please try again.',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: VSPColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -143,8 +163,20 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                         action: SnackBarAction(
                           label: isArabic ? 'تراجع' : 'Undo',
                           textColor: VSPColors.accent,
-                          onPressed: () {
-                            NotificationRepository().sendNotification(_userId, deletedItem);
+                          onPressed: () async {
+                            final restored = await repository.sendNotification(_userId, deletedItem);
+                            if (!restored && mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isArabic ? 'تعذرت استعادة الإشعار.' : 'Could not restore the notification.',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: VSPColors.error,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
                           },
                         ),
                         duration: const Duration(seconds: 4),
