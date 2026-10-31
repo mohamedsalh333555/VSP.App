@@ -605,3 +605,8 @@ The championship refresh callback also increments a parent refresh version. The 
 ### Create-team member chip text bounds — 2026-10-31
 
 - **Rules 11, 17 — `CreateTeamMembersSection`: member names now have a bounded one-line display with ellipsis so long names cannot displace the remove control; blank names use localized fallback text. Runtime narrow-width/large-text checks remain pending.
+
+
+### Public match card lifecycle state correction — 2026-10-31
+
+- **Rules 18, 27, 41 — `PublicMatchCard`:** cancelled/ended badges now override the host “My Match” badge, and terminal open-join cards route to booking details rather than the active invite sheet. Runtime terminal-state/tap-through validation remains pending.
