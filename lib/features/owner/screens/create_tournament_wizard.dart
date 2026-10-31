@@ -218,7 +218,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   void _loadOwnerSports() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid ?? auth.userModel?.uid;
+    final uid = auth.currentUser?.id ?? auth.userModel?.uid;
     if (uid != null) {
       _stadiumSubscription?.cancel();
       _stadiumSubscription = StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
