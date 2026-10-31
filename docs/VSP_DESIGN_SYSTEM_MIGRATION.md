@@ -251,3 +251,11 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Hardened public-match action feedback, owner notification stream-error visibility, phone clipboard feedback, and countdown timer lifecycle.
 - Corrected championship card lifecycle labels/CTA state so ongoing, cancelled, completed, full, and unknown statuses do not appear as open registration.
 - These are source changes only. The 181-path inventory still has six nested championship detail components marked `not yet inspected`; 53 paths are not proven to be covered by the original 128-path static scan. All 44 UXLP rules remain runtime-pending.
+
+
+## Championship detail state/retry implementation — 2026-10-31
+
+- Matches, standings, and top-scorers surfaces now distinguish loading, empty, error, and stale/live-update states. Retry recreates the matches stream and rebuilds the standings/scorer futures from the parent details screen.
+- The new error surfaces reuse the shared `VSPErrorState`; table overflow remains horizontally scrollable and the main details content remains vertically scrollable.
+- All nine components in the nested championship details directory are now represented by source-review notes (two were already in the inventory). The 181-path register has no `not yet inspected` entries at this checkpoint.
+- The original 128-path static scan still leaves 53 registered paths without proven scan coverage. Source review/runtime verification and the 44-rule per-screen/state matrix remain incomplete.
