@@ -115,13 +115,29 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               await Provider.of<BookingProvider>(context, listen: false)
                   .loadUserBookings(userId);
           if (mounted && bookingsLoaded) {
-            final captainTeamIds =
-                await TeamRepository().getUserCaptainTeamIds(userId);
-            if (mounted) {
-              _checkPendingChallengeResultPopup(
-                context,
-                captainTeamIds: captainTeamIds,
-              );
+            try {
+              // An empty set means the user is not a captain; a query failure
+              // must not be silently interpreted as that business state.
+              final captainTeamIds =
+                  await TeamRepository().getUserCaptainTeamIdsStrict(userId);
+              if (mounted) {
+                _checkPendingChallengeResultPopup(
+                  context,
+                  captainTeamIds: captainTeamIds,
+                );
+              }
+            } catch (e) {
+              debugPrint('Could not verify captain access for pending match results: $e');
+              if (mounted) {
+                final isArabic =
+                    Localizations.localeOf(context).languageCode == 'ar';
+                VSPFeedback.showError(
+                  context,
+                  isArabic
+                      ? 'تعذر التحقق من صلاحية قائد الفريق. أعد فتح الشاشة للمحاولة مرة أخرى.'
+                      : 'Could not verify team captain access. Reopen the screen to try again.',
+                );
+              }
             }
           }
         }
