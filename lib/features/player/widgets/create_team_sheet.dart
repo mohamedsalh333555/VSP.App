@@ -228,8 +228,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     final availableHeight = (media.size.height -
             media.viewInsets.bottom -
             media.padding.top -
+            media.padding.bottom -
             24)
-        .clamp(280.0, media.size.height)
+        .clamp(0.0, media.size.height)
         .toDouble();
     final bottomInset = media.padding.bottom + 16;
 
