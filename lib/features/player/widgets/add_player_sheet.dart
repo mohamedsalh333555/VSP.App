@@ -176,6 +176,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  button: true,
  label: isArabic ? 'البحث عن اللاعب' : 'Search for player',
  child: InkWell(
+ excludeFromSemantics: true,
  onTap: _isSearching ? null : _searchPlayer,
  borderRadius: BorderRadius.circular(VSPRadius.md),
  child: SizedBox(
