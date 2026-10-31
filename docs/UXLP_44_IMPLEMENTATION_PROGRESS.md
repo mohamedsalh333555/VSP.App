@@ -646,3 +646,8 @@ No test or analyzer run was started for this batch. The last observed PR CI runs
 
 Source review found four material conflicts in `terms_and_privacy_screen.dart`, in both Arabic and English: owner/signatory age 21 (lines 72–73) vs the current 18+ registration rule; player age 16/guardian exception (147–148) vs 18+ for all roles; a 100% refund promise plus a 20-minute grace/90-day request window (157–158) vs non-refundable administrative/payment fees; and a 150m no-show GPS appeal radius (178–179) vs the current 200m/≤50m accuracy rule. Proposed corrections and exact source locations are recorded in `UXLP_44_RULE_AUDIT.md`. These legal/financial eligibility statements were deliberately not changed pending explicit approval; the existing 60-minute appeal window also needs confirmation before changing.
 - Account-deletion recovery follow-up: failed deletion now leaves the confirmation dialog open with its password field available for a retry; the modal closes only when the existing delete operation succeeds or the user cancels.
+
+## Tournament round schedule reset feedback — 2026-10-31
+
+- The destructive round-schedule reset confirmation is now scrollable, its Arabic confirmation sentence is corrected, and success copy is concise and bilingual.
+- A failed reset previously produced no user-facing feedback; it now shows a localized retry message. The reset RPC and schedule data rules are unchanged.
