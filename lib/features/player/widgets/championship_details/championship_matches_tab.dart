@@ -11,12 +11,14 @@ import 'championship_standings_table.dart';
 class ChampionshipMatchesTab extends StatelessWidget {
   final Championship championship;
   final Stream<List<TournamentMatch>> matchesStream;
+  final int refreshVersion;
   final VoidCallback onRetry;
 
   const ChampionshipMatchesTab({
     super.key,
     required this.championship,
     required this.matchesStream,
+    required this.refreshVersion,
     required this.onRetry,
   });
 
@@ -32,6 +34,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
           // Live Standings Table (For League & Group Systems)
           ChampionshipStandingsSection(
             championship: championship,
+            refreshVersion: refreshVersion,
             onRetry: onRetry,
           ),
 
