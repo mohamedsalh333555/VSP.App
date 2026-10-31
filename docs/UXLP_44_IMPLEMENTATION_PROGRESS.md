@@ -141,3 +141,12 @@ No CI, analyzer, automated tests, runtime checks, migrations, or APK build were 
 - Technical exceptions for support ticket creation and collective match actions are logged separately from concise localized user messages.
 
 No CI, analyzer, tests, runtime checks, migrations, or APK build were run.
+
+
+## Owner booking and collective-share follow-up
+
+- Owner booking sheet now subtracts keyboard, top safe-area, and bottom safe-area insets from its maximum height; removed duplicate keyboard inset from inner padding so fixed bottom actions stay within the visible area.
+- Collective invitation sharing catches errors and displays localized recovery guidance while logging the technical exception.
+- Owner no-show report errors are logged and no longer expose raw exception text to the owner.
+
+Source only. No CI, analyzer, tests, runtime checks, migrations, or APK build were run.

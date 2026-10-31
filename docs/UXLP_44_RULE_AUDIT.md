@@ -367,3 +367,9 @@ These are additional source touchpoints only; no rule is promoted to whole-app c
 - **Rules 10, 13 — support copy:** missing support contact configuration now produces explicit Arabic/English user-facing text instead of an internal localization key.
 
 Source touchpoints only; no whole-app rule is marked complete and runtime validation remains pending.
+
+
+### Owner booking and collective-share follow-up — 2026-10-31
+
+- **Rules 9, 11, 35 — owner booking sheet:** the owner manual-booking/edit sheet now sizes against the viewport after keyboard and both safe-area insets; keyboard height is no longer added again to its internal bottom padding.
+- **Rules 18, 36, 43 — action failure feedback:** collective invitation share failures and owner no-show report failures now keep technical details in logs and show concise localized recovery copy.
