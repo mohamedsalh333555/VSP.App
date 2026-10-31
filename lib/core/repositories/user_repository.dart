@@ -53,20 +53,26 @@ class UserRepository {
   }
 
   Future<List<UserModel>> getUsersByIds(List<String> ids) async {
-    if (ids.isEmpty) return [];
     try {
-      final response = await _supabase
-          .from('user_public_profiles')
-          .select('id, name, profile_image_url, position')
-          .inFilter('id', ids);
-
-      return (response as List)
-          .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
-          .toList();
+      return await getUsersByIdsStrict(ids);
     } catch (e) {
       VSPLogger.e('Error getting users by IDs', e);
       return [];
     }
+  }
+
+  /// Strict profile lookup for UI that must distinguish an empty result from
+  /// a failed request.
+  Future<List<UserModel>> getUsersByIdsStrict(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final response = await _supabase
+        .from('user_public_profiles')
+        .select('id, name, profile_image_url, position')
+        .inFilter('id', ids);
+
+    return (response as List)
+        .map((data) => UserModel.fromFirestore(data as Map<String, dynamic>))
+        .toList();
   }
 
   Map<String, dynamic> _convertToSnakeCase(Map<String, dynamic> map) {
