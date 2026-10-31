@@ -48,3 +48,19 @@
 ## Phase boundary
 
 This progress file does not declare UXLP-44 complete. All 44 matrix entries remain runtime-pending until a later explicitly approved validation phase. No CI, analyzer, automated tests, runtime tests, database mutation, migration, or APK build was performed.
+
+
+## Continued implementation batch — player/owner flows
+
+Additional commits after the first Phase 2 batch extended implementation across player profile, team dashboard, notifications, support, filters, owner booking calendar, and owner dashboard:
+
+- Profile: strict/cached team membership lookup; retryable failure state; account-scoped future; refresh after team-management/create return.
+- Notifications: account-scoped stream reset; keep loaded notifications during refresh; error is not shown as an empty list; retry banner for stale data.
+- Public match gathering: retain loaded match cards on stream failure; initial error has retry; tabs announce selected state.
+- Support tickets: preserve loaded ticket/message content through realtime refresh failures; show bilingual retry warning; WhatsApp escalation failures are visible.
+- Stadium filters: keyboard-aware sheets, 48dp category hit targets, accessible no-deposit control, and normalized persisted price ranges.
+- Owner bookings calendar: 48dp selectors and localized date semantics for day items.
+- Owner dashboard: invalidate stale withdrawal balance while refreshing, ignore late cross-account financial results, surface tournament stream errors, and make tabs accessible.
+- Add-player lookup: strict phone query distinguishes "not registered" from "query failed".
+
+The exact touched rule groups are 3, 5, 6, 9, 11, 17, 18, 25, 27, 28, 33, 35, 36, 38, 39, 42, and 43. These remain source-level implementation notes, not verification passes. Remaining rules and applicable surfaces still require continued source implementation/mapping in Phase 2.

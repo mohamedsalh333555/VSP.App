@@ -276,3 +276,30 @@ These are source changes only. They do not change tournament eligibility, status
 The owner tournament screen also now keeps its last non-empty tournament snapshot visible after a realtime refresh error and shows a localized retry warning; an initial failure or an empty snapshot followed by failure uses the shared error state instead of presenting a false empty result.
 
 No automated checks, CI, runtime tests, or APK build were run.
+
+
+## Phase 2 implementation continuation — multi-surface source changes
+
+The following additional changes were committed to the working branch. They are source implementation evidence only; they do not mark any rule as a pass.
+
+- **Rules 9, 36, 38, 43 — authoritative data and recovery**
+  - Player profile team lookup now uses the strict membership query. A Supabase failure is no longer silently converted into a no-team/free-agent card; it displays a localized retry state. The lookup is cached per authenticated user and refreshed after team management/create flows.
+  - Player notifications now retain the last non-empty list during realtime refresh failure, display a localized stale-data warning/retry, and avoid showing a false empty state on an initial failure.
+  - Notification streams reset when the authenticated account changes, preventing a previous account's notification snapshot from being carried into the next account's view.
+  - Public match gathering now retains the last loaded list during stream refresh failure and exposes a retry action; an initial failure no longer appears as a no-matches empty state.
+  - Support-ticket metadata and message streams now distinguish initial load failure from refresh failure, preserve previously loaded messages, and expose bilingual retry guidance.
+  - Owner dashboard financial summary invalidates its previous withdrawal-balance snapshot during refresh and rejects late responses from a different request/account. Owner championship stream errors now preserve last loaded data and show a retry banner.
+
+- **Rules 11, 27, 33, 35 — responsive and accessible interactions**
+  - Stadium filter category tabs expose selected semantics and have a minimum 48dp row height.
+  - Owner booking calendar controls have minimum 48dp targets; day choices expose their full localized date and selected state and use focusable InkWell interaction.
+  - Stadium filter sheets account for keyboard insets and bounded height; the price filter uses an accessible CheckboxListTile.
+  - Saved price ranges are normalized before slider construction so malformed/reversed persisted ranges cannot create invalid slider state.
+  - Shared bottom navigation now uses InkWell interaction inside its existing selected-state semantics.
+  - Owner dashboard and team dashboard segmented tabs expose selected semantics and focusable interactions.
+
+- **Rules 17, 18, 25, 38, 43 — data and transaction clarity**
+  - Add-player phone search now uses a strict repository lookup. Invalid phone input is rejected, and a failed query no longer masquerades as an unregistered number and incorrectly offers an external invite.
+  - Support escalation now reports when the WhatsApp support channel is unavailable or cannot be opened rather than silently swallowing the failure.
+
+All 44 UXLP rule statuses remain **source reviewed—runtime pending**. No CI, analyzer, automated tests, runtime tests, database migrations, or APK builds were run.

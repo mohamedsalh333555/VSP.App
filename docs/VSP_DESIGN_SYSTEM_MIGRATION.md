@@ -224,3 +224,8 @@ The legacy `vsp_tokens.dart` facade re-exports `VSPBottomNavMetrics` from the ca
 ## Phase 2 implementation — state surfaces
 
 The shared `VSPStateView` now uses a bounded-width, scrollable content region for loading and terminal states so localized text and recovery actions remain reachable on compact viewports. The owner tournament stream now distinguishes initial failure from a successful empty list and preserves the last non-empty snapshot on refresh failure with a bilingual retry affordance. These are implementation changes, not runtime validation results.
+
+
+## Phase 2 implementation continuation
+
+The canonical shared bottom navigation now uses focusable InkWell interaction while retaining the selected/unselected icon contract. Filter and calendar components were updated to expose selected state and minimum touch dimensions, and the shared state presentation is scrollable under compact viewport constraints. Owner finance and notification/support surfaces now distinguish stale snapshots from failed initial loads. See `docs/UXLP_44_IMPLEMENTATION_PROGRESS.md` for the current source change inventory.
