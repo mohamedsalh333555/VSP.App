@@ -63,13 +63,27 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   final String _selectedMethod = 'card';
   PaymobFeePolicy? _feePolicy;
   bool _isFeePolicyLoading = true;
+  String? _paymentUserId;
+  bool _hasAccountChanged = false;
 
   @override
   void initState() {
     super.initState();
+    _paymentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
     _startCountdownTimer();
     _loadFeePolicy();
     _createPendingBooking();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentUserId = context.watch<AuthProvider>().currentUser?.id;
+    if (currentUserId != _paymentUserId && !_hasAccountChanged) {
+      _hasAccountChanged = true;
+      _coordinator.cancelAllTimers();
+      _closeVerificationModalIfShowing();
+    }
   }
 
   Future<void> _loadFeePolicy() async {
@@ -135,7 +149,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (!mounted) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final userId = authProvider.currentUser?.id;
+    final userId = _paymentUserId;
+    if (userId == null || authProvider.currentUser?.id != userId || _hasAccountChanged) {
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -150,7 +167,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         createBooking: bookingProvider.createBooking,
       );
 
-      if (!mounted) return;
+      if (!mounted ||
+          _hasAccountChanged ||
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) return;
       setState(() {
         _booking = booking;
         _isLoading = false;
@@ -165,7 +184,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !_hasAccountChanged &&
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
@@ -180,6 +200,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _coordinator.listenToBookingStatus(
       bookingId: bookingId,
       onStatusUpdated: (bookingData) async {
+        if (!mounted || _hasAccountChanged ||
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
@@ -188,7 +210,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           if (mounted) {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
-            if (updatedBooking != null && mounted) {
+            if (updatedBooking != null && mounted && !_hasAccountChanged &&
+                Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
               _paymentCompleted = true;
               _closeVerificationModalIfShowing();
               Navigator.pushReplacement(
@@ -210,7 +233,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       bookingId: bookingId,
       fetchBooking: (id) => Provider.of<BookingProvider>(context, listen: false).getBookingById(id),
       onConfirmed: (booking) {
-        if (mounted && !_paymentCompleted) {
+        if (mounted && !_hasAccountChanged && !_paymentCompleted &&
+            Provider.of<AuthProvider>(context, listen: false).currentUser?.id == _paymentUserId) {
           _paymentCompleted = true;
           _closeVerificationModalIfShowing();
           HapticFeedback.heavyImpact();
@@ -226,6 +250,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _startPaymobCheckout() async {
+    if (_paymentUserId == null || _hasAccountChanged ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
+      return;
+    }
     if (_booking == null && !widget.isTournamentPayment) return;
     if (_isFeePolicyLoading || _feePolicy?.isValidForElectronicCheckout != true) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -261,6 +289,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
+    if (user?.id != _paymentUserId || _hasAccountChanged) {
+      if (mounted) setState(() { _isLoading = false; _isAwaitingWebhook = false; });
+      return;
+    }
     final userName = auth.userModel?.name ?? 'Player';
     final userPhone = auth.userModel?.phone ?? '';
     final userEmail = user?.email ?? 'player@vsp.app';
@@ -280,7 +312,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       isFullPayment: isFullPayment,
     );
 
-    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
+    if (!mounted || _hasAccountChanged ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (paymobUrl != null && paymobUrl.isNotEmpty) {
       try {
