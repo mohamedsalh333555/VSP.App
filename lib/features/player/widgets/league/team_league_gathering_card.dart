@@ -204,7 +204,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           isArabic ? 'في انتظار انضمام فريق منافس...' : 'Waiting for another team to join...', 
                           style: TextStyle(
