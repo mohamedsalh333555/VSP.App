@@ -778,3 +778,9 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 
 - `stadium_details_screen.dart`: the three information/pitch/rating tabs previously had 4dp margins inside a 48dp parent, reducing the actual hit region below 48dp. Replaced the non-semantic GestureDetector with InkWell and set each tab surface to the full 48dp height.
 - The bottom booking bar already wraps its controls in SafeArea. Stadium live-stream failure preserves the supplied last-known stadium and shows a retry warning.
+
+
+### Championship governorate banner bilingual correction — 2026-11-01
+
+- **Rules 10 and 13 — `ChampionshipsListTab`:** the Arabic browsing banner and its return-to-home action previously displayed raw canonical governorate names. Both now call the existing `championTranslateItem` helper so the selected and home governorates follow the active locale, consistent with the 1v1 banner.
+- Source commit: `66e05af0a2c483f4a3e21128d9c7b651e2375b9c`. Runtime locale verification remains pending; no tests or build were run.
