@@ -2220,3 +2220,10 @@ Read-only inspection was performed against the connected production VSP project 
 - No tests, analyzer, CI, device checks, or APK build were run.
 
 - Break-time validation follow-up: both the current multi-break schema and legacy single-break shape now validate start/end strings before parsing. Malformed break schedules fail closed to an empty slot list instead of being interpreted as midnight intervals. Source commits: `c99f1a3fc924d6e5ba7f00b81f6c0e84e6373dbe`, `414ce82870b27fc15410074802e9809aacb74848`.
+
+
+## Booking draft restore race — 2026-11-01
+
+- `booking_provider.dart`: an asynchronous SharedPreferences restore could complete after a newer draft had already been selected or edited, overwriting the current in-memory draft with stale persisted data. A generation guard now invalidates pending restores whenever a draft is set, updated, or cleared; a restore also refuses to replace an already-populated draft.
+- Source commit: `f92e9735bd2b8dcf0adfc832295b1d3984708b28`.
+- No tests, analyzer, CI, device checks, or APK build were run.
