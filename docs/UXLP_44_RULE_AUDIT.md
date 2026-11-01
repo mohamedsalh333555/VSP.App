@@ -829,3 +829,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rule 33 — `add_player_sheet.dart`:** the found-player Add action was 40dp high; its minimum hit area is now 48dp. Lookup and roster behavior are unchanged.
 - Source commit: `d15526e2233ede46bd2f7fa527c00dfb7f2062ee`. Device/touch verification remains pending; no tests or build were run.
+
+
+### Shared loading indicator semantics — 2026-11-01
+
+- **Rules 28 and 33 — `VSPStateView`:** the shared loading spinner now has a localized Arabic/English semantics label for screen readers. Visual and request behavior are unchanged.
+- Source commit: `749a144d77da65abffbf90536886c90f6f627a3b`. Assistive-technology verification remains pending; no tests or build were run.
