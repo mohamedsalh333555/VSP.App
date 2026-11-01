@@ -22,10 +22,12 @@ class PendingBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final paymentState = pendingBooking.paymentStatus.toLowerCase().trim();
+    final isRefundPending = paymentState == 'refund_pending';
     final isPaymentAwaitingConfirmation = pendingBooking.isPaid ||
         paymentState == 'paid' ||
-        paymentState == 'partially_paid' ||
-        paymentState == 'refund_pending';
+        paymentState == 'partially_paid';
+    final isPaymentActionLocked =
+        isPaymentAwaitingConfirmation || isRefundPending;
 
     return Container(
       margin: const EdgeInsets.only(bottom: VSPSpacing.md),
@@ -44,9 +46,11 @@ class PendingBookingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isPaymentAwaitingConfirmation
-                      ? (isArabic ? 'تم استلام الدفع وجارٍ التحقق منه' : 'Payment received — verification pending')
-                      : (isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment'),
+                  isRefundPending
+                      ? (isArabic ? 'طلب استرداد المبلغ قيد المعالجة' : 'Refund request is being processed')
+                      : isPaymentAwaitingConfirmation
+                          ? (isArabic ? 'تم استلام الدفع وجارٍ التحقق منه' : 'Payment received — verification pending')
+                          : (isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment'),
                   style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
@@ -133,13 +137,17 @@ class PendingBookingCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            isPaymentAwaitingConfirmation
+            isRefundPending
                 ? (isArabic
-                    ? 'تم تسجيل عملية الدفع، لكن تأكيد الحجز من الخادم لم يصل بعد. لا تكرر الدفع؛ استخدم «استعلم عن الحالة» للتحقق.'
-                    : 'Your payment has been received, but the server has not confirmed the booking yet. Do not pay again; use Check Status.')
-                : (isArabic
-                    ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
-                    : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.'),
+                    ? 'طلب الاسترداد قيد المعالجة. لا تبدأ عملية دفع جديدة لهذا الحجز؛ استخدم «استعلم عن الحالة» لمتابعة التحديث.'
+                    : 'Your refund is being processed. Do not start another payment for this booking; use Check Status for updates.')
+                : isPaymentAwaitingConfirmation
+                    ? (isArabic
+                        ? 'تم تسجيل عملية الدفع، لكن تأكيد الحجز من الخادم لم يصل بعد. لا تكرر الدفع؛ استخدم «استعلم عن الحالة» للتحقق.'
+                        : 'Your payment has been received, but the server has not confirmed the booking yet. Do not pay again; use Check Status.')
+                    : (isArabic
+                        ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
+                        : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.'),
             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
           ),
           const SizedBox(height: 12),
@@ -238,12 +246,14 @@ class PendingBookingCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: isPaymentAwaitingConfirmation
+                child: isPaymentActionLocked
                     ? ElevatedButton.icon(
                         onPressed: null,
                         icon: const Icon(Iconsax.shield_tick_copy, size: 14),
                         label: Text(
-                          isArabic ? 'جارٍ التحقق من الدفع' : 'Payment verification',
+                          isRefundPending
+                              ? (isArabic ? 'الاسترداد قيد المعالجة' : 'Refund processing')
+                              : (isArabic ? 'جارٍ التحقق من الدفع' : 'Payment verification'),
                           style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
