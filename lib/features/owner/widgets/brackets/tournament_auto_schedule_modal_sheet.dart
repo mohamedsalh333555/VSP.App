@@ -374,27 +374,42 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
               text: isArabic ? 'تأكيد وحفظ الجدولة التلقائية ' : 'Save Auto-Schedule ',
               onPressed: () async {
                 Navigator.pop(context);
-                final success = await TournamentRepository().autoScheduleRoundMatches(
-                  championshipId: widget.championship.id,
-                  roundIndex: widget.roundIndex,
-                  matches: widget.matches,
-                  startDate: _selectedDate,
-                  startTime: _selectedTime,
-                  daysCount: _daysCount,
-                  matchDurationMinutes: _selectedMatchDuration,
-                );
+                try {
+                  final success =
+                      await TournamentRepository().autoScheduleRoundMatches(
+                    championshipId: widget.championship.id,
+                    roundIndex: widget.roundIndex,
+                    matches: widget.matches,
+                    startDate: _selectedDate,
+                    startTime: _selectedTime,
+                    daysCount: _daysCount,
+                    matchDurationMinutes: _selectedMatchDuration,
+                  );
 
-                if (success && context.mounted) {
-                  widget.onScheduleSaved();
-                  VSPFeedback.showSuccess(
+                  if (success && context.mounted) {
+                    widget.onScheduleSaved();
+                    VSPFeedback.showSuccess(
+                      context,
+                      isArabic
+                          ? 'تم جدولة جميع مباريات ${widget.roundName} تلقائياً بنجاح!'
+                          : 'Auto-scheduled all ${widget.roundName} matches successfully!',
+                    );
+                  } else if (!success && context.mounted) {
+                    VSPFeedback.showError(
+                      context,
+                      isArabic
+                          ? 'حدث خطأ أثناء الجدولة التلقائية. حاول مرة أخرى.'
+                          : 'Could not auto-schedule matches. Please try again.',
+                    );
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  VSPFeedback.showError(
                     context,
                     isArabic
-                        ? ' تم جدولة جميع مباريات ${widget.roundName} تلقائياً بنجاح!'
-                        : ' Auto-scheduled all ${widget.roundName} matches successfully!',
+                        ? 'حدث خطأ أثناء حفظ الجدولة التلقائية. حاول مرة أخرى.'
+                        : 'An error occurred while saving the auto-schedule. Please try again.',
                   );
-                } else if (!success && context.mounted) {
-                  VSPFeedback.showError(
-                      context, isArabic ? 'حدث خطأ أثناء الجدولة التلقائية' : 'Error auto-scheduling matches');
                 }
               },
             ),
