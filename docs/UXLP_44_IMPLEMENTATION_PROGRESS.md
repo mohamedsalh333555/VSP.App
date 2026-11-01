@@ -1097,3 +1097,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Follow-up source correction: aligned the refresh-fallback log call with the actual `VSPLogger.e(message, error, stackTrace)` signature (`VSPLogger.w` accepts only a message). Commit: 22bd7e569b33520998660300e805bd775f98d8bb.
 
 - Additional participant-modal edge cases fixed: the refresh helper now exits before reading providers if the sheet was disposed, and the zero-participant branch clears both displayed lists instead of leaving removed players visible. Commit: fbb513044d77499729868ef44c3cf53a4183ec84.
+
+
+## Player booking cancellation dialog account-session guard — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart`: the dialog previously dismissed itself and awaited `BookingProvider.cancelBooking`, then showed success/failure feedback based only on whether the parent screen remained mounted. If the user account changed while the cancellation was in flight, the old booking result could be surfaced in the new account's session. The dialog now captures the initiating player when opened, verifies that account before starting cancellation, and suppresses stale-session feedback after the request completes.
+- Cancellation and refund calculation behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d86aaf636e2cd1042ca9622e09213ff9fb087ee8.
