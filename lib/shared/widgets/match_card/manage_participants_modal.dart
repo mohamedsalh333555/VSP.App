@@ -237,13 +237,9 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final media = MediaQuery.of(context);
     final bottomInset = media.padding.bottom + 16;
-    final availableHeight = (media.size.height -
-            media.viewInsets.bottom -
-            media.padding.top -
-            media.padding.bottom -
-            24)
-        .clamp(0.0, media.size.height * 0.88)
-        .toDouble();
+    // The scroll-controlled SafeArea modal route already applies keyboard
+    // and system viewport constraints.
+    final availableHeight = media.size.height * 0.88;
 
     return Container(
       constraints: BoxConstraints(maxHeight: availableHeight),
