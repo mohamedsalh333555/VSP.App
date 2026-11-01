@@ -705,3 +705,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The floating “open ticket” action is now hidden when there is no authenticated user. Previously the screen showed a sign-in-required empty state but still exposed an action that launched the ticket-creation flow, creating a misleading and potentially failing path.
 - Authenticated-user behavior is unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `6f045e18696fb71c1b685a05bd2bbc671ee6e439`.
+
+
+## Team member governorate alias normalization — 2026-11-01
+
+- Adding an existing VSP player to a team now compares governorates using the shared EgyptGovernorates canonical resolver before falling back to normalized text. Equivalent Arabic/English and supported Google Maps aliases (for example, Aswan / أسوان) no longer trigger a false “different governorate” block.
+- The same-governorate eligibility rule remains unchanged; this only normalizes equivalent stored names. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `70bcb668aa853b1290aa458fbd5666ff90679774`.
