@@ -401,7 +401,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
           items: govs
               .map<DropdownMenuItem<String>>((v) => DropdownMenuItem<String>(
                     value: v,
-                    child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                    child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
                   ))
               .toList(),
         ),
@@ -438,7 +438,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, elevation: 0, minimumSize: const Size(0, 48)),
+              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white, elevation: 0, minimumSize: const Size(0, 48)),
               child: Text(l10n.cancelAndSignOut),
             ),
           ],
