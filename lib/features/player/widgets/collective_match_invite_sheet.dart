@@ -132,7 +132,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       }
     } catch (e) {
       VSPLogger.w('Collective invite join failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         final ar = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
@@ -173,7 +173,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       }
     } catch (e) {
       VSPLogger.w('Collective invite leave failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         VSPFeedback.showError(
           context,
           ar ? 'تعذر مغادرة التجميعية. حاول مرة أخرى.' : 'Could not leave this match. Please try again.',
@@ -199,7 +199,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       await _reload();
     } catch (e) {
       VSPLogger.w('Collective manual-player update failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         final ar = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
@@ -271,7 +271,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       await _reload();
     } catch (e) {
       VSPLogger.w('Collective participant removal failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         VSPFeedback.showError(
           context,
           ar ? 'تعذرت إزالة اللاعب. حاول مرة أخرى.' : 'Could not remove the player. Please try again.',
