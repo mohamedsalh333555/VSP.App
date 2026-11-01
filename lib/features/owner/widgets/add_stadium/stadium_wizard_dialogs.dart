@@ -87,7 +87,7 @@ class StadiumWizardDialogs {
               backgroundColor: VSPColors.error,
               minimumSize: const Size(64, 48),
               tapTargetSize: MaterialTapTargetSize.padded,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             child: Text(isArabic ? 'تأكيد الإخفاء' : 'Confirm Hide'),
