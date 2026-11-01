@@ -39,6 +39,7 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
   }
 
   Future<void> _verifyPassword() async {
+    if (_isVerifying) return;
     final password = _passwordController.text;
     if (password.isEmpty) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
