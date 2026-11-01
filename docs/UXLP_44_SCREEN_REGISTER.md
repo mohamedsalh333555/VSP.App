@@ -671,3 +671,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 - `lib/features/owner/widgets/bookings/owner_schedule_slots_builder.dart`: owner schedule slots now honor every configured stadium `breakTimes` interval and mark any overlapping 30-minute slot as a break, matching player-side availability; legacy single-break fields remain supported.
 - `lib/features/player/widgets/my_team/my_team_controller.dart`: team updates now require a verified signed-in user instead of attempting logo uploads under a synthetic `unknown` storage path. Manual tournament team names are trimmed before persistence.
+
+
+- `lib/features/owner/widgets/tournament/wizard/tournament_wizard_coordinator.dart`: tournament creation/edit validation now rejects non-numeric, non-finite, or negative entry-fee and prize values instead of allowing invalid text to silently become zero in the payload.
