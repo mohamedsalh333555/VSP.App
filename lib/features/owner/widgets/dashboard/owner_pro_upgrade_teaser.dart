@@ -52,23 +52,31 @@ class OwnerProUpgradeTeaser extends StatelessWidget {
             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.45),
           ),
           const SizedBox(height: VSPSpacing.md),
-          GestureDetector(
-            onTap: onUpgrade,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: VSPColors.proAccentSoft,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.4)),
-              ),
-              child: Center(
-                child: Text(
-                  isArabic ? 'ترقية الآن (1000 ج.م / شهر)' : 'Upgrade to PRO (1000 EGP / mo)',
-                  style: const TextStyle(
-                    color: VSPColors.proAccent,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              onTap: onUpgrade,
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: VSPColors.proAccentSoft,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.proAccent.withValues(alpha: 0.4)),
+                ),
+                child: Center(
+                  child: Text(
+                    isArabic ? 'ترقية الآن (1000 ج.م / شهر)' : 'Upgrade to PRO (1000 EGP / mo)',
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: VSPColors.proAccent,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
