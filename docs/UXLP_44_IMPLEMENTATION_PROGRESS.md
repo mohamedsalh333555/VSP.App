@@ -840,3 +840,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Four tournament dashboard confirmation dialogs, the home governorate confirmation dialog, and the stadium-wizard discard confirmation dialog now use scrollable AlertDialogs for compact screens and large text.
 - No booking, tournament, payment, pricing, or registration business rules were changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: adcd0e3de3ea1639ed1395eb19c8c3053a5e8812; 569e28aa289ec0bfaad773e2cf049d7e2f251107; 1a7f0a2917ee14f277aae1a88595f1c45e01f8a6; b225122d05c9e471ace9fa39b77bb1d4d88e287c; 61f0bbeb1eea82c2618cd062b59a3ac448665fe4; 434ad88c021c32c0d2c893e24a0f2cb1a1590410.
+
+
+## Location and quick-booking receipt reliability — 2026-11-01
+- Manual governorate selection now awaits the profile save before applying the stadium filter and closing the picker. A failed save keeps the picker open and shows a localized retry message; it no longer applies a location filter while persistence may still be pending or fail.
+- The governorate picker is capped to 85% of the safe viewport so its list remains usable on compact screens.
+- The owner quick-booking receipt sheet is now height-constrained and scrollable, preserving both WhatsApp-send and close actions on compact screens or with larger text.
+- No pricing, payment, booking, or eligibility rules changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: fc6c243d9102fc6e4a2cf0dc4d64b62a77fba405; 22df76dd446cc9dc8ef3a628ec26bdab416ec5d8; 1f9cfc975fe4ff5a4832562bbc45e0b0ef90bbcd; 9b3eb1caee26c0e768125e7bd591424fae37fd4e.
