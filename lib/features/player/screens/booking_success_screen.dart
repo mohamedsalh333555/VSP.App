@@ -329,17 +329,17 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
  ),
  ],
  ),
- InkWell(
- onTap: _copyLink,
- borderRadius: BorderRadius.circular(VSPRadius.xs),
- child: Container(
- padding: const EdgeInsets.all(8),
- decoration: BoxDecoration(
- color: VSPColors.accent,
- borderRadius: BorderRadius.circular(VSPRadius.xs),
+ IconButton(
+ onPressed: _copyLink,
+ tooltip: isArabic ? 'نسخ مرجع الحجز' : 'Copy booking reference',
+ constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+ padding: EdgeInsets.zero,
+ style: IconButton.styleFrom(
+ backgroundColor: VSPColors.accent,
+ foregroundColor: VSPColors.background,
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xs)),
  ),
- child: const Icon(Iconsax.copy_copy, color: VSPColors.background, size: 16),
- ),
+ icon: const Icon(Iconsax.copy_copy, size: 16),
  ),
  ],
  ),
