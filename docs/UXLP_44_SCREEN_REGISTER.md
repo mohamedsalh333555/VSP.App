@@ -23,7 +23,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback guard against disposal; GPS auto-detect hit target 48dp; form and fixed CTA respect system insets) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (app-bar body avoids duplicate top safe inset) (safe-area protected form scroll layout) |
-| `lib/features/auth/screens/signup_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; GPS auto-detect hit target 48dp) |
+| `lib/features/auth/screens/signup_screen.dart` | auth | source reviewed—runtime pending (system bottom safe-area wrapper; GPS auto-detect 48dp target with localized tooltip) |
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
 | `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
 | `lib/features/auth/screens/welcome_screen.dart` | player/owner | source reviewed—runtime pending (top and bottom controls individually safe-area protected) |
