@@ -1398,3 +1398,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `lib/features/owner/screens/facility_onboarding_screen.dart` previously logged stream errors but then treated a missing/empty snapshot as proof the owner had no stadiums, which could misleadingly prompt a first-stadium flow during a network failure. It now shows a localized retryable error when the initial load fails; if previously loaded stadiums exist, it preserves them and displays a stale-data warning with retry.
 - Code commit: `a62a5e08aaacf27fa5736b026a04b6c7bfbf224f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner document upload error-copy correction — 2026-11-01
+
+- `lib/features/owner/screens/owner_documentation_wizard.dart` had two upload catch paths that interpolated `e.toString()` into the localized user-facing message. Both now show localized generic retry guidance through the existing upload-failed localization, avoiding raw backend/filesystem exception details.
+- Code commit: `9df785b4cc7720f12a5bd4eba8090071b45e3ea7`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
