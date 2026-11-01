@@ -1270,3 +1270,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/owner/widgets/ledger/owner_payout_dialog.dart`: the “Withdraw full balance” action previously aligned to the physical left in Arabic and physical right in English. It now uses directional start alignment and a focusable 48dp InkWell target with a semantic action label.
 - Payout amount and request behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `851e699c19b51c1f5d9adfca13b34480e69bab3d`.
+
+
+## Owner booking calendar RTL spacing — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/bookings/owner_bookings_filter_bar.dart`: horizontal day-strip spacing used a physical right margin, which did not mirror with the active text direction. It now uses a directional end margin so spacing remains consistent in Arabic and English.
+- Day selection, date ordering, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `7d5009b855f619c7be83a15855e0fb2cb1adbd30`.
