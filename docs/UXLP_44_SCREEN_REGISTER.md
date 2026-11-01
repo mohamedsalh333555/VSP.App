@@ -698,3 +698,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/add_stadium/stadium_wizard_validator.dart` and `add_stadium_wizard.dart`: hourly price, ball-rental price, and deposit values now reject invalid/non-finite values before payload creation; the image-upload-in-progress validation message is localized in Arabic and English.
+
+
+- `lib/features/player/widgets/my_team/my_team_controller.dart`: team creation success is no longer reported as a failure if the subsequent list refresh fails; it now reports that the team was created and the view needs reopening. Selected team-logo uploads are required to succeed before create/update continues.
