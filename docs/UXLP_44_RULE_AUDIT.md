@@ -506,6 +506,7 @@ Source corrections in this group:
 - The 1v1 tournament, roster, and standings streams now distinguish unavailable data from a confirmed empty state. Failed streams with prior data preserve it and show a retry warning; standings retry now invokes the parent stream-recreation callback and no longer exposes raw backend exception text.
 - 1v1 registration cancellation and governorate-switch controls now meet the 48dp minimum; the join action uses a null disabled callback while payment is processing rather than a no-op callback.
 - The 1v1 roster now normalizes missing player names and displays an initial while avatar images load or fail, rather than leaving an empty image circle.
+- The 1v1 hero card now displays the tournament governorate using the shared Arabic/English governorate translation, so the location value passed by the parent is no longer unused.
 - These changes do not alter tournament registration, payment, refund, or scoring rules. Runtime validation remains pending.
 
 ## Product decisions and backend approvals still open
