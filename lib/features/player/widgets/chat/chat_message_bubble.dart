@@ -69,9 +69,17 @@ class ChatMessageBubble extends StatelessWidget {
     final host = isHost || (booking != null && message.senderId == booking!.createdByUserId);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return GestureDetector(
-      onLongPress: isMe ? () => _showEditDialog(context) : null,
-      child: Align(
+    return Semantics(
+      customActions: isMe
+          ? <CustomSemanticsAction, VoidCallback>{
+              CustomSemanticsAction(
+                label: isArabic ? 'تعديل الرسالة' : 'Edit message',
+              ): () => _showEditDialog(context),
+            }
+          : const <CustomSemanticsAction, VoidCallback>{},
+      child: GestureDetector(
+        onLongPress: isMe ? () => _showEditDialog(context) : null,
+        child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -103,13 +111,17 @@ class ChatMessageBubble extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      message.senderName,
-                      style: const TextStyle(
+                    Flexible(
+                      child: Text(
+                        message.senderName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                         color: VSPColors.accent,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
                     ),
                     if (host) ...[
                       const SizedBox(width: 4),
@@ -147,7 +159,7 @@ class ChatMessageBubble extends StatelessWidget {
                     ),
                   ],
                   Text(
-                    DateFormat('hh:mm a').format(message.timestamp),
+                    DateFormat.jm(Localizations.localeOf(context).toString()).format(message.timestamp),
                     style: TextStyle(
                       color: (isMe ? VSPColors.background : VSPColors.textSecondary).withValues(alpha: 0.6),
                       fontSize: 10,
@@ -166,6 +178,7 @@ class ChatMessageBubble extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
