@@ -362,6 +362,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
  showDialog(
  context: context,
+ useSafeArea: true,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) {
  return AlertDialog(
