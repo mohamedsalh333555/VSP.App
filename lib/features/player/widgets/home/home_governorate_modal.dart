@@ -20,7 +20,14 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
     ),
     builder: (context) {
       const governorates = EgyptGovernorates.allGovernorates;
+      final media = MediaQuery.of(context);
+      final availableHeight = (media.size.height -
+              media.padding.top -
+              media.padding.bottom)
+          .clamp(240.0, media.size.height)
+          .toDouble();
       return Container(
+        constraints: BoxConstraints(maxHeight: availableHeight * 0.85),
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
