@@ -1662,3 +1662,9 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/player/widgets/championship_checkout/checkout_championship_header.dart`: championship title is bounded to two lines; governorate and team labels now flex within the metadata row and ellipsize instead of forcing horizontal overflow on compact widths or with long names.
 - `lib/features/player/widgets/championship_checkout/checkout_squad_requirement_card.dart`: roster heading now yields space to the count badge and truncates cleanly rather than overflowing when localized text or large text scaling is used.
 - Checkout values and roster min/max validation are unchanged. Source commits: `345275ef60b2ddf4c6fe7d70cac0314a0563935b`, `b9ffda958156bf540e14b76b46ef855421982836`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Stadium location action accessibility and recovery — 2026-11-01
+
+- `lib/features/player/widgets/stadium_details/stadium_information_tab.dart`: the location badge is now a focusable InkWell with a localized map-action tooltip; long addresses are bounded to one line within the available screen width. The map launcher now checks the returned launch result and shows localized recovery feedback when the external maps app cannot open, while keeping technical exceptions in diagnostics.
+- Coordinates/address selection and map URL behavior are unchanged. Source commits: `aed4b1aab8511b80493aeb6daed0133a5e8875b8`, `6231c0f438cd5e5ce73d3f24c404323383f279ec`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
