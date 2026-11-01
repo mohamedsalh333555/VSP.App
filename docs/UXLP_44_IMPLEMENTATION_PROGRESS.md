@@ -1349,3 +1349,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the cancel/delete action is no longer shown while payment is awaiting server confirmation or a refund is being processed. During those states the user sees status checking and the locked payment/refund state; once the booking is confirmed, cancellation remains available through the dedicated cancellation/refund flow.
 - No payment, cancellation, refund, or server eligibility rules were changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `0c2ac37a580fa92efcf9cbbaa156c5b8c29015fd`.
+
+
+## Pending booking action touch targets — 2026-11-01
+
+- Updated `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: Check Status, locked payment/refund status, and Resume Checkout actions now have 48dp minimum heights. The cancel icon already had a 48×48dp minimum target.
+- Action state and payment rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `5d7ded90676ab95c7c5a80238a23ae6f56785fc4`.
