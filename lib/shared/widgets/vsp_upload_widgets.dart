@@ -27,7 +27,7 @@ class VspUploadMainCard extends StatelessWidget {
       hint: helper,
       onTap: isLoading ? null : onTap,
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         child: InkWell(
           excludeFromSemantics: true,
