@@ -1247,3 +1247,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 9, 10, 29, and 36 — Book Tonight async state recovery:** slot discovery now has a shared bilingual loading state, a retryable error state, and single-flight reload protection. Runtime slow-network/offline retry behavior remains pending.
+
+
+- **Rules 9 and 10 — bilingual signup feedback:** password-strength status labels now render in Arabic or English according to the active locale. Device/readability verification remains pending.
