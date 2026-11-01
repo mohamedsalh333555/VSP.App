@@ -52,6 +52,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
   late final BookTonightService _service;
   bool _isLoading = true;
   bool _hasLoadError = false;
+  bool _isLoadInFlight = false;
   List<TonightStadiumOffer> _offers = [];
 
   @override
@@ -64,7 +65,8 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
   }
 
   Future<void> _loadTonightSlots() async {
-    if (!mounted || _isLoading && _hasLoadError == false && _offers.isNotEmpty) return;
+    if (!mounted || _isLoadInFlight) return;
+    _isLoadInFlight = true;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     setState(() {
       _isLoading = true;
@@ -77,6 +79,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
         currentTime: widget.currentTime,
       );
       if (!mounted) return;
+      _isLoadInFlight = false;
       setState(() {
         _offers = results;
         _isLoading = false;
@@ -84,6 +87,7 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
     } catch (error, stackTrace) {
       debugPrint('Book tonight offers failed: $error');
       debugPrintStack(stackTrace: stackTrace);
+      _isLoadInFlight = false;
       if (!mounted) return;
       setState(() {
         _isLoading = false;
