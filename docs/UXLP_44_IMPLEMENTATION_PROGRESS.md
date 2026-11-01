@@ -1281,4 +1281,4 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 ## Match details initial-load recovery — 2026-11-01
 
 - Fixed `lib/features/player/screens/match_details_screen.dart`: an initial repository/network failure no longer falls through to the “match not found” screen. It now presents a localized, safe-area-protected error state with retry; a successful lookup returning no match still uses the not-found state.
-- Match eligibility, join, payment, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `9077f2d85ad6bc41e2b78da1a4c7505afaa16429`.
+- Both the initial loading and error views are now protected from system insets. Match eligibility, join, payment, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `9077f2d85ad6bc41e2b78da1a4c7505afaa16429`, `9c4cd3fe13cfb36f9134f8a3ea9734bb132d01f4`.
