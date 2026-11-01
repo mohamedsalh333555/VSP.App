@@ -33,6 +33,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
   }
 
   Future<void> _submit() async {
+    if (_isLoading) return;
     if (_selectedResult == null) {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,7 +223,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
   }) {
     final isSelected = _selectedResult == value;
     return InkWell(
-      onTap: () => setState(() => _selectedResult = value),
+      onTap: _isLoading ? null : () => setState(() => _selectedResult = value),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
