@@ -1617,3 +1617,11 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/player/widgets/create_team_sheet.dart`: both known callers open it as a scroll-controlled `useSafeArea: true` modal route. The sheet previously subtracted keyboard and system insets again from full screen height. It now relies on the route's actual viewport constraints while retaining its bottom system padding, scrollable form content, and sticky action controls.
 - Team creation, logo upload, roster entry, and membership behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `ca4778a2bed9827aa9dccb4f2655d9468884d904`.
+
+
+## Owner schedule and dashboard interaction refinement — 2026-11-01
+
+- `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: replaced the opaque `GestureDetector` wrapper with a transparent `Material` + `InkWell`. Tap and long-press behavior are unchanged, while the primary tap is now keyboard-focusable, exposes button semantics, and provides standard interaction feedback.
+- `lib/features/owner/widgets/bookings/owner_slot_card.dart`: the trailing booking-detail chevron now mirrors in RTL instead of always pointing right.
+- `lib/features/owner/widgets/dashboard/owner_dashboard_header.dart`: the profile-photo action now has a localized tooltip and an InkWell focus/semantic target; the verified-account tooltip is now localized in Arabic and English.
+- These are presentation/accessibility-only changes; booking, profile upload, and identity-verification logic are unchanged. Source commits: `c853ea69ab5634790fc167021aa2a08b19e120da`, `0555e1a17c1cfce2a6ca0f80fcf0dbb3ccfc4a6e`, `f880179e87a87ccc2a4db8781254e02fa9830e3d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
