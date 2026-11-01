@@ -790,3 +790,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Added a mounted-state guard immediately after the asynchronous roster lookup and before fallback-list mutation or context access, preventing the disposed checkout screen from continuing its post-request work.
 - Captain selection and roster eligibility are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `d4daffc1c40aa6dfd139f8d466eaa2e4941aec92`.
+
+
+## Championship checkout fee-card localization and accessibility — 2026-11-01
+
+- Localized the fee-card heading, tournament entry-fee label, total-due label, and currency suffix for English and Arabic; the platform-fee label was already bilingual.
+- Increased the fee-explanation info affordance to a 48dp IconButton with a localized tooltip, and made its bottom sheet scrollable within safe areas on compact screens.
+- Displayed fee amounts and the existing fee explanation remain unchanged; no fee calculation, pricing, or payment behavior changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `4306975177eebb97646641350304a58eb94708b6`.
