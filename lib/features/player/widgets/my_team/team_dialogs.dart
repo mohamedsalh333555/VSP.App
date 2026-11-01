@@ -144,6 +144,17 @@ class TeamDialogs {
                         );
                         if (!context.mounted) return;
                         Navigator.pop(context);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isArabic
+                                  ? 'تعذر حذف الفريق. حاول مرة أخرى.'
+                                  : 'Could not delete the team. Please try again.',
+                            ),
+                            backgroundColor: VSPColors.error,
+                          ),
+                        );
                       }
                     } catch (e) {
                       if (!context.mounted) return;
