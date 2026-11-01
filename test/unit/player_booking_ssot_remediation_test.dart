@@ -992,7 +992,7 @@ void main() {
       );
 
       final receivedBatches = <List<Booking>>[];
-      coordinator.syncUserBookings(
+      await coordinator.syncUserBookings(
         userId: 'test-user',
         onData: (bookings, categorized) => receivedBatches.add(bookings),
         onError: (err) {},
