@@ -1198,3 +1198,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 9, 10, 29, and 36 — save feedback, bilingual copy, and duplicate-safe recovery:** owner stadium persistence and profile synchronization now have separate failure handling so a successful DB write is not misreported as a failed stadium save; default notes and blocked/auth-expired messages are bilingual.
 - **Rules 29, 36, and 43 — payment callback integrity and failure handling:** callback URLs are parsed by HTTP(S) URI host/path/query rather than substring matching. Untrusted hosts, path-only status URLs, and `standalone` text no longer imply payment success; only explicit success/failure parameters on trusted payment hosts are acted upon. Provider compatibility and DB polling behavior remain to be validated on device; this source change alone does not establish end-to-end payment correctness.
+
+
+- **Rules 10, 29, and 36 — schedule accuracy and identity integrity:** player slot generation now honors all `breakTimes` intervals saved by the stadium wizard (with legacy `breakTime` fallback), preventing slots from being offered during secondary stadium breaks. Manual tournament-team creation now rejects an empty captain ID instead of inserting a hard-coded placeholder UUID. Runtime and server-side validation remain pending.
