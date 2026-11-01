@@ -65,7 +65,7 @@ class RosterListViewer extends StatelessWidget {
       children: [
         Text(
           isArabic ? ' كشف أسماء اللاعبين المشاركين بالبطولة:' : ' Championship Team Rosters:',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 12),
         if (isLoading)
