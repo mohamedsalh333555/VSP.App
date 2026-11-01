@@ -137,10 +137,11 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
 
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isArabic ? 'إغلاق المواجهة؟' : 'Close matchup?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(
           isArabic
               ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
@@ -155,7 +156,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: Text(isArabic ? 'إغلاق المواجهة' : 'Close matchup', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'إغلاق المواجهة' : 'Close matchup', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
