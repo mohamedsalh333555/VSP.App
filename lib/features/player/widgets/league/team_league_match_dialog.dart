@@ -113,7 +113,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                   children: [
                     Text(
                       isArabic ? 'نتيجة المباراة' : 'Match result',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -157,7 +157,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                   child: Text(
                     opponentName,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
               ],
@@ -243,7 +243,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : VSPColors.textSecondary,
+                color: isSelected ? VSPColors.white : VSPColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                 fontSize: 15,
               ),
@@ -298,7 +298,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(
           isArabic ? 'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.' : 'This result will be confirmed and the league table will be updated.',
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
@@ -311,7 +311,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(isArabic ? 'اعتماد النتيجة' : 'Confirm result', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: Text(isArabic ? 'اعتماد النتيجة' : 'Confirm result', style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -374,10 +374,10 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.15),
+                  color: VSPColors.warning.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 22),
+                child: const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -386,7 +386,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                   children: [
                     Text(
                       isArabic ? 'مراجعة نتيجة المباراة' : 'Review match result',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -408,7 +408,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
                 color: widget.match.isDisputed 
-                    ? Colors.redAccent.withValues(alpha: 0.4) 
+                    ? VSPColors.error.withValues(alpha: 0.4) 
                     : VSPColors.accent.withValues(alpha: 0.4),
               ),
             ),
@@ -421,7 +421,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                         widget.match.homeTeamName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -444,7 +444,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                         widget.match.awayTeamName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -528,7 +528,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : VSPColors.textSecondary,
+                  color: isSelected ? VSPColors.white : VSPColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),
