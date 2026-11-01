@@ -835,3 +835,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 28 and 33 — `VSPStateView`:** the shared loading spinner now has a localized Arabic/English semantics label for screen readers. Visual and request behavior are unchanged.
 - Source commit: `749a144d77da65abffbf90536886c90f6f627a3b`. Assistive-technology verification remains pending; no tests or build were run.
+
+
+### Reactive offline/online error-state update — 2026-11-01
+
+- **Rules 28 and 33 — `VSPErrorState`:** the widget previously sampled connectivity once and did not subscribe to the service notifier, allowing stale offline messaging to remain visible after the device regained a connection. It now listens to connectivity changes, swaps state/copy/icon immediately, and exposes the updated error state as a live region.
+- Source commits: `d6f20e446b907636add2cfb0c46046fa4da48e87`, `88a89f23515752def1cf2350bd063e37ab344ca1`. Runtime connectivity and screen-reader verification remains pending; no tests or build were run.
