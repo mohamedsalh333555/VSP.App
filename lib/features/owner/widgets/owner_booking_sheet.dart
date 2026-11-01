@@ -126,12 +126,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         : (isArabic ? 'حجز يدوي' : 'Manual Booking');
 
     setState(() => _isSaving = true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
 
     try {
       final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
-      final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+      authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
 
       final uid = authProvider.currentUser?.id;
+      initiatingUserId = uid;
       if (uid == null) {
         throw Exception(isArabic ? 'انتهت الجلسة، يرجى إعادة تسجيل الدخول' : 'Session expired');
       }
@@ -209,7 +212,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         if (res is Map && res['success'] == false) {
           throw Exception(res['error']?.toString() ?? res['message']?.toString() ?? 'Failed to save booking');
         }
+        if (!mounted || authProvider.currentUser?.id != uid) return;
         await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+        if (!mounted || authProvider.currentUser?.id != uid) return;
       } else {
         final booking = widget.slot['booking'] as Booking?;
         if (booking != null) {
@@ -257,7 +262,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           );
 
           await OwnerRepository().updateBookingDetails(booking.id, updateMap);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
           await bookingProvider.loadOwnerBookings(uid);
+          if (!mounted || authProvider.currentUser?.id != uid) return;
         }
       }
 
@@ -275,7 +282,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         final cleanErr = OwnerBookingSheetService.formatBookingErrorMessage(e, isArabic: isArabic);
         VSPFeedback.showError(context, cleanErr);
       }
