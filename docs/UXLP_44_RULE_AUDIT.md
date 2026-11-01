@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and all 290 unique registered Dart screen/surface and embedded-component paths (317 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and all 299 unique registered Dart screen/surface and embedded-component paths (326 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -1170,3 +1170,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Bilingual visual integrity:** quick-booking duration chips now use directional start spacing in both compact and horizontal-scroll layouts, removing locale-specific physical left/right branches. Document upload steps, ledger balances, quick-booking sections, and cup-card/empty-state components were added to the embedded register; runtime and data-state verification remains pending.
+
+
+- **Rule 10 — Bilingual visual integrity:** the owner manual-team options section now uses directional start padding for labels and directional end spacing for color choices. Tournament/roster, booking-financial, guest-checkout and chat embedded components have been added to the register for caller-level verification.
