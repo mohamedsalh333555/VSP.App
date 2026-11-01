@@ -1256,3 +1256,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 31, 36, and 43 — stale checkout response isolation:** payment polling generation tokens invalidate in-flight responses when a poll is replaced or checkout cleanup cancels polling; a late response cannot update a superseding checkout. Runtime race validation remains pending.
+
+
+- **Rules 29, 36, and 43 — owner dashboard data freshness:** stale championship refresh responses/errors are ignored when a newer refresh starts or the active owner scope changes. Runtime refresh-race validation remains pending.
