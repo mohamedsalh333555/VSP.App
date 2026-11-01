@@ -86,7 +86,13 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.88,
+        maxHeight: (MediaQuery.of(context).size.height -
+                MediaQuery.of(context).viewInsets.bottom -
+                MediaQuery.of(context).padding.top -
+                MediaQuery.of(context).padding.bottom)
+            .clamp(240.0, MediaQuery.of(context).size.height)
+            .toDouble() *
+            0.88,
       ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
       decoration: const BoxDecoration(
