@@ -41,18 +41,21 @@ class VSPErrorState extends StatelessWidget {
                     ? 'تعذر الوصول إلى الخادم في الوقت الحالي.'
                     : 'The server could not be reached right now.'));
 
-        return VSPStateView(
-          state: !isOnline ? VSPUiState.offline : VSPUiState.error,
-          title: title,
-          message: message,
-          icon: !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy,
-          onRetry: onRetry,
-          action: retryButtonText != null
-              ? PrimaryButton(
-                  text: retryButtonText!,
-                  onPressed: onRetry,
-                )
-              : null,
+        return Semantics(
+          liveRegion: true,
+          child: VSPStateView(
+            state: !isOnline ? VSPUiState.offline : VSPUiState.error,
+            title: title,
+            message: message,
+            icon: !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy,
+            onRetry: onRetry,
+            action: retryButtonText != null
+                ? PrimaryButton(
+                    text: retryButtonText!,
+                    onPressed: onRetry,
+                  )
+                : null,
+          ),
         );
       },
     );
