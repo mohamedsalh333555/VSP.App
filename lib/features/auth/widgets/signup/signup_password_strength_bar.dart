@@ -38,6 +38,8 @@ class SignupPasswordStrengthBar extends StatelessWidget {
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: strength.score,
+          semanticsLabel: strength.label,
+          semanticsValue: '${(strength.score * 100).toInt()}%',
           backgroundColor: VSPColors.surfaceAlt,
           valueColor: AlwaysStoppedAnimation<Color>(strength.color),
           borderRadius: BorderRadius.circular(VSPRadius.xs),
