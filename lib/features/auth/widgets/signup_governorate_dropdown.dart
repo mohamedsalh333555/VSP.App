@@ -13,6 +13,7 @@ class SignupGovernorateDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     const govs = EgyptGovernorates.allGovernorates;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -37,7 +38,9 @@ class SignupGovernorateDropdown extends StatelessWidget {
             return DropdownMenuItem<String>(
               value: value,
               child: Text(
-                value,
+                EgyptGovernorates.getLocalizedName(value, isArabic),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
               ),
             );
