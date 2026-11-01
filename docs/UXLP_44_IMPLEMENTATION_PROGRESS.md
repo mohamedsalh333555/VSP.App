@@ -1392,3 +1392,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - `lib/features/player/screens/match_details_screen.dart` previously relied on the initial fetch error flag but did not surface errors from the live `StreamBuilder` once a booking had loaded. The screen now keeps the last loaded booking visible, shows a localized stale-data warning, and recreates the realtime stream when the user retries.
 - Initial loading/error/not-found states remain distinct; no booking eligibility or join/cancel rules changed.
 - Code commit: `d0980d16fd9b020a10283babbb154e94adc68662`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner facility onboarding stream-state correction — 2026-11-01
+
+- `lib/features/owner/screens/facility_onboarding_screen.dart` previously logged stream errors but then treated a missing/empty snapshot as proof the owner had no stadiums, which could misleadingly prompt a first-stadium flow during a network failure. It now shows a localized retryable error when the initial load fails; if previously loaded stadiums exist, it preserves them and displays a stale-data warning with retry.
+- Code commit: `a62a5e08aaacf27fa5736b026a04b6c7bfbf224f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
