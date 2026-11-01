@@ -177,9 +177,11 @@ Future<void> showInteractiveDrawRoomDialog(
                   setModalState(() => isRevealing = true);
                   for (int i = 0; i < matchups.length; i++) {
                     await Future.delayed(const Duration(milliseconds: 450));
+                    if (!dialogCtx.mounted) return;
                     HapticFeedback.mediumImpact();
                     setModalState(() => revealedCount = i + 1);
                   }
+                  if (!dialogCtx.mounted) return;
                   setModalState(() => isRevealing = false);
                 },
               )
