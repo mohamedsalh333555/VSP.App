@@ -28,7 +28,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
 
   Widget _buildSectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: 6, start: 4),
       child: Text(
         label,
         style: const TextStyle(
@@ -143,7 +143,7 @@ class TournamentManualTeamOptionsSection extends StatelessWidget {
                 child: Container(
                   width: 36,
                   height: 36,
-                  margin: const EdgeInsets.only(right: 8),
+                  margin: const EdgeInsetsDirectional.only(end: 8),
                   decoration: BoxDecoration(
                     color: item['color'] as Color,
                     shape: BoxShape.circle,
