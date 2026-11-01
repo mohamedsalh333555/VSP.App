@@ -20,6 +20,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (isLoading) {
       return const Center(
         child: Padding(
@@ -33,7 +34,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'أعضاء الفريق المسجلين:',
+          isArabic ? 'أعضاء الفريق المسجلين:' : 'Registered team members:',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
         ),
         const SizedBox(height: VSPSpacing.sm),
@@ -65,7 +66,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
                 ),
                 subtitle: isCaptain
                     ? const Text(
-                        'قائد الفريق (إجباري)',
+                        isArabic ? 'قائد الفريق (إجباري)' : 'Team captain (required)',
                         style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                       )
                     : null,
