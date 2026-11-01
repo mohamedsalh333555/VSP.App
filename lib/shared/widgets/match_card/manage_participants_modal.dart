@@ -153,7 +153,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
-      _fetchUsers();
+      await _fetchUsers();
     } catch (e, stackTrace) {
       debugPrint('Participant removal failed: $e\n$stackTrace');
       if (!mounted) return;
