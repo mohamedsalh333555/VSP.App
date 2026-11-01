@@ -767,3 +767,10 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - Added exact palette tokens for white/black alpha variants and warning soft/border states; added motion tokens for press, selection, micro-interaction, standard, indicator, fade-in, and banner transitions. Existing timings and rendered alpha values were preserved.
 - `CopilotLoadingBubble` now uses directional placement and bilingual status copy. `AddStadiumStep1HoursSection` and tournament wizard padding now use directional geometry. `HomeFeedContent` refresh now awaits the actual `StadiumProvider.fetchStadiums` future instead of waiting an arbitrary 800ms delay.
 - Source changes remain runtime pending. No UXLP rule or screen is marked pass from static analysis.
+
+## Bilingual financial-identifier input correction — 2026-11-01
+
+- `CustomTextField` now accepts an explicit `textDirection` override while preserving its existing automatic LTR behavior for email, phone, URL, and numeric keyboard types.
+- Owner onboarding Instapay input now uses the email keyboard; bank IBAN input explicitly uses LTR direction so Arabic locale does not reverse or misplace the identifier.
+- The 35 registered paths that were unchanged at the time of the literal-copy sweep were checked for direct hardcoded Text/placeholder/tooltip candidates. The only candidates were three payout-format examples (`username@instapay`, phone format, and IBAN prefix), not user-facing copy; the two identifier fields are now explicitly LTR. One registered path has since changed, leaving 34 registered paths currently unchanged.
+- This is source-level bilingual-input evidence only. Keyboard display, cursor movement, paste behavior, and Arabic/English runtime rendering remain pending.
