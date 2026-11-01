@@ -877,3 +877,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `VspCopilotSheet`:** the scroll-controlled modal route already applies keyboard insets, but the sheet also subtracted the inset from its height and added a matching bottom margin. Removed the duplicate offset while retaining its internal bottom SafeArea and preferred height.
 - Source commit: `9e01276e39b1a7b80e05d8a5517a45497c9cde48`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Tournament score-entry sheet double keyboard inset — 2026-11-01
+
+- **Rules 11 and 35 — `tournament_score_modal.dart`:** removed duplicate keyboard inset subtraction from sheet height and duplicate keyboard inset padding below the footer. Also removed the 240dp minimum that could exceed a compact viewport. The modal route now owns keyboard constraints; footer keeps the system bottom inset.
+- Source commit: `7ea2f5a740d42b5ed7bd732fc99b6a1f66c600c6`. Keyboard/device verification remains pending; no tests or build were run.
