@@ -301,7 +301,7 @@ void showTournamentManualTeamSheet(
 
 Widget _buildSectionLabel(String label) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 6, left: 4),
+    padding: const EdgeInsetsDirectional.only(bottom: 6, start: 4),
     child: Text(
       label,
       style: const TextStyle(
