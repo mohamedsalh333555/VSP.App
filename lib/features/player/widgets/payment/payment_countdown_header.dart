@@ -57,7 +57,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       isArabic ? 'تم تثبيت الوقت لك مؤقتاً لمدة:' : 'Slot temporarily held for:',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -73,7 +73,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                       Text(
                         formatCountdown(remainingSeconds),
                         style: VSPTypography.numericStyle.copyWith(
-                          color: Colors.black,
+                          color: VSPColors.black,
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
                         ),
@@ -82,7 +82,7 @@ class PaymentCountdownHeader extends StatelessWidget {
                       Text(
                         isArabic ? 'دقيقة' : 'min',
                         style: const TextStyle(
-                          color: Colors.black,
+                          color: VSPColors.black,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
