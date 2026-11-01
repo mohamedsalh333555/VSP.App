@@ -187,11 +187,16 @@ class BookingConfirmationHandler {
               selectedDate: selectedDate,
             )));
 
-      final isConflict = BookingSlotCalculator.isSlotBooked(
-        slotKey: sortedCheck.first,
-        stadium: stadium,
-        selectedDate: selectedDate,
-        existingBookings: currentBookings,
+      // Every selected half-hour must still be free at confirmation time.
+      // Checking only the first slot allowed a later slot in a multi-slot
+      // booking to be taken between selection and submission.
+      final isConflict = sortedCheck.any(
+        (slotKey) => BookingSlotCalculator.isSlotBooked(
+          slotKey: slotKey,
+          stadium: stadium,
+          selectedDate: selectedDate,
+          existingBookings: currentBookings,
+        ),
       );
 
       if (isConflict) {
