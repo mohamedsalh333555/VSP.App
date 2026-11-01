@@ -167,6 +167,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final ok = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -244,6 +245,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -354,6 +356,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final ok = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
