@@ -393,7 +393,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+                    const Icon(Icons.info_outline_rounded, color: VSPColors.warning, size: 18),
                     const SizedBox(width: VSPSpacing.sm),
                     Expanded(
                       child: Text(
