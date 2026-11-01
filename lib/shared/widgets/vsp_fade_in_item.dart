@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 
 class VSPFadeInItem extends StatefulWidget {
   final Widget child;
@@ -10,7 +11,7 @@ class VSPFadeInItem extends StatefulWidget {
     super.key,
     required this.child,
     this.index = 0,
-    this.duration = const Duration(milliseconds: 400),
+    this.duration = VSPDSMotion.fadeIn,
     this.delay,
   });
 
@@ -41,7 +42,7 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
     );
 
     // Use explicit delay if provided, otherwise fall back to index-based stagger
-    final effectiveDelay = widget.delay ?? Duration(milliseconds: widget.index * 50);
+    final effectiveDelay = widget.delay ?? Duration(milliseconds: widget.index * VSPDSMotion.staggerStepMilliseconds);
     Future.delayed(effectiveDelay, () {
       if (mounted) _controller.forward();
     });
