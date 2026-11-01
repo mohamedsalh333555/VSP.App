@@ -165,6 +165,7 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
           ),
           const SizedBox(height: 8),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(0, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: _isVerifying ? null : () => Navigator.of(context).pop(false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
