@@ -132,7 +132,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
         contextType: 'booking',
         contextId: widget.booking.id,
       );
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final chatId = chat['id']?.toString();
       if (chatId == null || chatId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
