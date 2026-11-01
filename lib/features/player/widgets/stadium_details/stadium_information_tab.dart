@@ -187,7 +187,7 @@ class StadiumInformationTab extends StatelessWidget {
                   ? 'فتح الموقع على الخريطة'
                   : 'Open location in maps',
               child: Material(
-                color: Colors.transparent,
+                color: VSPColors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(VSPRadius.xl),
                   onTap: () async {
