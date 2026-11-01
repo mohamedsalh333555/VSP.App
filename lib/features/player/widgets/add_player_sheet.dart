@@ -124,18 +124,12 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  @override
  Widget build(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final media = MediaQuery.of(context);
- final bottomPadding = media.padding.bottom;
- final availableHeight = (media.size.height -
-         media.viewInsets.bottom -
-         media.padding.top -
-         media.padding.bottom -
-         24)
-     .clamp(0.0, media.size.height)
-     .toDouble();
+ final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
+ // The scroll-controlled modal route already constrains this sheet to the
+ // keyboard-safe viewport. Derive height from those parent constraints rather
+ // than subtracting viewInsets and system padding a second time.
  return Container(
- constraints: BoxConstraints(maxHeight: availableHeight),
  padding: EdgeInsets.only(
  top: VSPSpacing.lg,
  left: VSPSpacing.md,
