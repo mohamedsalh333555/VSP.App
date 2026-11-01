@@ -18,13 +18,15 @@ class CheckoutFinancialCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -78,6 +80,7 @@ class CheckoutFinancialCard extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -87,6 +90,7 @@ class CheckoutFinancialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final currencyLabel = isArabic ? 'ج.م' : 'EGP';
 
     return Container(
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -99,15 +103,15 @@ class CheckoutFinancialCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'تفاصيل الرسوم والاشتراك',
+            isArabic ? 'تفاصيل الرسوم والاشتراك' : 'Fees and registration details',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           const Divider(color: VSPColors.divider, height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('رسوم اشتراك البطولة:', style: TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-              Text('${entryFee.toInt()} ج.م', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(isArabic ? 'رسوم اشتراك البطولة:' : 'Tournament entry fee:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+              Text('${entryFee.toInt()} $currencyLabel', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -121,26 +125,29 @@ class CheckoutFinancialCard extends StatelessWidget {
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                   ),
                   const SizedBox(width: 6),
-                  GestureDetector(
-                    onTap: () => _showFeeTransparencyModal(context, isArabic),
-                    child: const Icon(
+                  IconButton(
+                    tooltip: isArabic ? 'تفاصيل رسوم الخدمة' : 'Service fee details',
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showFeeTransparencyModal(context, isArabic),
+                    icon: const Icon(
                       Iconsax.info_circle_copy,
-                      size: 14,
+                      size: 16,
                       color: VSPColors.accent,
                     ),
                   ),
                 ],
               ),
-              Text('${serviceFee.toStringAsFixed(1)} ج.م', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+              Text('${serviceFee.toStringAsFixed(1)} $currencyLabel', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
             ],
           ),
           const Divider(color: VSPColors.divider, height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('المبلغ الإجمالي المطلـوب:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(isArabic ? 'المبلغ الإجمالي المطلـوب:' : 'Total amount due:', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               Text(
-                '${totalCheckoutPrice.toStringAsFixed(1)} ج.م',
+                '${totalCheckoutPrice.toStringAsFixed(1)} $currencyLabel',
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 18),
               ),
             ],
