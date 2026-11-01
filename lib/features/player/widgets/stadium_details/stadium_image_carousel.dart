@@ -109,29 +109,37 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
   Widget _buildCircularIcon({
     required IconData icon,
     required VoidCallback onTap,
+    required String tooltip,
     Color color = VSPColors.textPrimary,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: VSPColors.background.withValues(alpha: 0.6),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.12),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: VSPColors.background.withValues(alpha: 0.6),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
-          ],
+            child: Icon(icon, color: color, size: 20),
+          ),
         ),
-        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -174,14 +182,22 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                         errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
                       );
 
-                      return GestureDetector(
-                        onTap: () => _openFullScreenGallery(index),
-                        child: index == 0
-                            ? Hero(
-                                tag: 'stadium-hero-${widget.stadium.id}',
-                                child: imageWidget,
-                              )
-                            : imageWidget,
+                      return Tooltip(
+                        message: Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'فتح معرض الصور'
+                            : 'Open image gallery',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _openFullScreenGallery(index),
+                            child: index == 0
+                                ? Hero(
+                                    tag: 'stadium-hero-${widget.stadium.id}',
+                                    child: imageWidget,
+                                  )
+                                : imageWidget,
+                          ),
+                        ),
                       );
                     },
                   )
@@ -228,6 +244,9 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                       children: [
                         _buildCircularIcon(
                           icon: Iconsax.share_copy,
+                          tooltip: Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'مشاركة الملعب'
+                              : 'Share stadium',
                           onTap: () => SharePlus.instance.share(
                             ShareParams(text: l10n.shareStadiumText(widget.stadium.name, widget.stadium.location)),
                           ),
@@ -238,6 +257,13 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                             final isFav = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
                             return _buildCircularIcon(
                               icon: isFav ? Iconsax.heart : Iconsax.heart_copy,
+                              tooltip: isFav
+                                  ? (Localizations.localeOf(context).languageCode == 'ar'
+                                      ? 'إزالة من المفضلة'
+                                      : 'Remove from favorites')
+                                  : (Localizations.localeOf(context).languageCode == 'ar'
+                                      ? 'إضافة إلى المفضلة'
+                                      : 'Add to favorites'),
                               color: VSPColors.accent,
                               onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
                             );
@@ -258,9 +284,16 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
               left: 0,
               right: 0,
               child: Center(
-                child: GestureDetector(
-                  onTap: () => _openFullScreenGallery(_currentImageIndex),
-                  child: Container(
+                child: Tooltip(
+                  message: Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'فتح معرض الصور'
+                      : 'Open image gallery',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () => _openFullScreenGallery(_currentImageIndex),
+                      child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.55),
@@ -282,6 +315,8 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                           ),
                         );
                       }),
+                    ),
+                      ),
                     ),
                   ),
                 ),
