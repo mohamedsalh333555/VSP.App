@@ -34,7 +34,7 @@ class SignupDateOfBirthField extends StatelessWidget {
         Tooltip(
           message: l10n.dateOfBirth,
           child: Material(
-            color: Colors.transparent,
+            color: VSPColors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.input),
               onTap: onTap,
