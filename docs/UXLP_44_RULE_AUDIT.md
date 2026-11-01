@@ -621,13 +621,15 @@ The championship refresh callback also increments a parent refresh version. The 
 
 - **Rules 18, 27, 41 — `PendingBookingCard`:** when the payment row is already paid/partially paid but the booking is still awaiting server confirmation, the card disables Resume Checkout and directs the player to status refresh without repeating payment. The booking is still considered confirmed only by the existing server-backed `PaymentCheckoutService.isPaymentConfirmed` contract. Runtime webhook/retry validation remains pending.
 
-## Approval required — terms and policy copy conflicts (not changed)
+## Terms and policy copy alignment — implemented on 2026-11-01
 
-| Location | Source evidence | Why it is blocked | Proposed correction |
-|---|---|---|---|
-| `lib/features/player/screens/terms_and_privacy_screen.dart:72-73` | Owner/signatory minimum age is stated as 21 in Arabic and English. | The current VSP registration rule is 18+ for both owner and player; this is legal eligibility copy. | Align owner minimum age with the approved 18+ registration rule, subject to legal/product confirmation. |
-| `lib/features/player/screens/terms_and_privacy_screen.dart:147-148` | Player minimum age is stated as 16 with guardian-supervised financial transactions. | Conflicts with the current 18+ registration gate for all roles. | Replace with the approved 18+ rule; remove the under-18 guardian exception if that is still the intended policy. |
-| `lib/features/player/screens/terms_and_privacy_screen.dart:157-158` | Refund text promises a 100% refund for early cancellation and describes a 20-minute grace window and 90-day request window. | Refund language can create financial/legal commitments; the VSP policy requires administrative/payment fees to remain non-refundable. | Rewrite to match the currently approved cancellation/refund policy, explicitly separating refundable principal from non-refundable administrative/gateway fees. Do not promise a full 100% refund. |
-| `lib/features/player/screens/terms_and_privacy_screen.dart:178-179` | No-show GPS appeal radius is stated as 150m; current product rule is 200m with accuracy no worse than 50m. | This is an eligibility rule affecting no-show disputes and attendance. | Align radius to 200m and accuracy to ≤50m; confirm whether the existing 60-minute appeal window remains valid before changing it. |
+Following the product owner's explicit instruction to implement the previously listed corrections, `lib/features/player/screens/terms_and_privacy_screen.dart` was updated in Arabic and English:
 
-No legal, age, refund, or GPS eligibility copy was changed in this pass. These items require explicit approval before implementation.
+- Owner/signatory minimum age: 21 → 18, aligned with the current registration gate.
+- Player minimum age: 16 / guardian-supervised exception → 18, aligned with the current registration gate.
+- Owner force-majeure cancellation: removed the unconditional promise to refund every amount without deductions; wording now refers to eligible refunds and excludes non-refundable administrative/payment-gateway fees.
+- Player booking refunds: removed unsupported 100% automatic-refund, 20-minute grace, 90-day request-window, and fixed 3–7 business-day claims. Copy now describes policy-based eligibility, refundable principal, excluded non-refundable fees, and provider-dependent settlement timing.
+- Tournament refunds: removed the unconditional full-refund promise; requests are subject to the terms shown before payment and the tournament state.
+- No-show GPS appeal: radius 150m → 200m; accuracy is stated as no worse than 50m. The existing 60-minute appeal period was retained unchanged.
+
+These are client-facing policy-copy changes only. No booking/refund RPC, database migration, RLS policy, payment calculation, refund eligibility logic, or GPS enforcement logic was changed. Runtime/legal review remains required before treating the terms as externally approved.
