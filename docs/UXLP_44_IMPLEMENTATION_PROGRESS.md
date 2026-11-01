@@ -1565,3 +1565,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/player/screens/support_tickets_screen.dart`: the new-ticket modal route already applies the keyboard view inset, but the sheet's own `maxHeight` calculation subtracted `MediaQuery.viewInsets.bottom` a second time. Removed the duplicate subtraction while retaining the viewport cap, scrollable form, route `useSafeArea`, and bottom system padding. This prevents the available sheet height from collapsing by counting the keyboard twice.
 - Ticket creation, account-generation guard, and submit behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `a098bb1c594a1eba3c5a807498884102f6ab3e85`.
+
+
+## Add Player modal viewport inset correction — 2026-11-01
+
+- Fixed `lib/features/player/widgets/add_player_sheet.dart`: the caller opens the sheet with `isScrollControlled: true` and `useSafeArea: true`, so the modal route already constrains content to the keyboard-safe viewport. The sheet previously subtracted keyboard and top/bottom system insets again from the full screen height, risking a collapsed content area on compact devices or when the keyboard was open. Removed the duplicate height calculation and now rely on the route's actual parent constraints; retained the sheet's bottom system padding and scrollable body.
+- Player search, eligibility, and add/invite behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `cb8327b5f52d019a58f9ce071fa94c2afae1107c`.
