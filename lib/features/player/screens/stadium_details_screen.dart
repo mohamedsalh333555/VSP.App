@@ -72,7 +72,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           onTap: () => _tabController.animateTo(index),
           child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: VSPDSMotion.selection,
           height: 48,
           margin: EdgeInsets.zero,
           decoration: BoxDecoration(
