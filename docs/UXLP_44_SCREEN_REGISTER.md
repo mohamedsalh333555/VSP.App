@@ -406,3 +406,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried owner upgrade surface — 2026-11-01
 
 | `lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart` | owner | source reviewed—runtime pending (upgrade action is focusable, at least 48dp high, and supports two-line localized copy) |
+
+
+### Newly inventoried login role-selection surface — 2026-11-01
+
+| `lib/features/auth/widgets/login_footer.dart` | auth | source reviewed—runtime pending (sign-up action is focusable; role sheet is safe-area aware/scrollable, bilingual, and RTL-aware) |
