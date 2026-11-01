@@ -1459,3 +1459,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `owner_dashboard_screen.dart` is rendered inside `OwnerMainScreen`, which already applies the top safe inset and uses a bottom navigation bar that protects the system bottom inset. The dashboard's nested SafeArea now sets `top: false, bottom: false` to avoid duplicate spacing above and below its content.
 - Code commit: `a554d6028441804afc8e8bf87c69100a678c14f3`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner Dashboard bottom safe-area preservation — 2026-11-01
+
+- Follow-up source review retained the dashboard's bottom SafeArea because the dashboard scroll content still needs system-navigation protection while the parent OwnerMain shell deliberately sets `bottom: false` for its bottom navigation bar. Only the already-applied parent top inset is suppressed in the nested dashboard body.
+- Corrective code commit: `7d8aa46757d1116fb7547d1e9b4d9fcf1aee6f99`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
