@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_design_tokens.dart';
-import '../../../../../shared/widgets/primary_button.dart';
+import '../../../../../shared/widgets/vsp_empty_state.dart';
 import '../champion_podium_components.dart';
 import '../champion_empty_state.dart';
 
@@ -17,48 +17,16 @@ class League1v1NoGovernorateState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(VSPDSSpacing.xl),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: VSPDSizes.stateIconBox,
-              height: VSPDSizes.stateIconBox,
-              decoration: BoxDecoration(
-                color: VSPDSColors.zinc800,
-                borderRadius: BorderRadius.circular(VSPDSRadius.md),
-                border: Border.all(color: VSPDSColors.zinc750),
-              ),
-              child: const Icon(Iconsax.location_slash_copy, size: VSPDSizes.emptyIconSize, color: VSPDSColors.zinc400),
-            ),
-            const SizedBox(height: VSPDSSpacing.md),
-            Text(
-              isArabic ? 'يرجى تحديد محافظتك من الملف الشخصي' : 'Please set your governorate in profile',
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.titleMedium,
-            ),
-            const SizedBox(height: VSPDSSpacing.xs),
-            Text(
-              isArabic
-                  ? 'حدد محافظتك لمشاهدة بطولات منطقتك والمشاركة بها'
-                  : 'Set your home governorate to view and join local 1v1 tournaments',
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.stateBody,
-            ),
-            const SizedBox(height: VSPDSSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              child: PrimaryButton(
-                text: isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
-                icon: Iconsax.edit_2_copy,
-                onPressed: () => context.push('/edit-profile'),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return VSPEmptyState(
+      icon: Iconsax.location_slash_copy,
+      title: isArabic
+          ? 'يرجى تحديد محافظتك من الملف الشخصي'
+          : 'Please set your governorate in profile',
+      subtitle: isArabic
+          ? 'حدد محافظتك لمشاهدة بطولات منطقتك والمشاركة بها'
+          : 'Set your home governorate to view and join local 1v1 tournaments',
+      buttonText: isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
+      onButtonPressed: () => context.push('/edit-profile'),
     );
   }
 }
@@ -83,7 +51,7 @@ class League1v1NoTournamentState extends StatelessWidget {
       descriptionArabic:
           'لا توجد بطولة واحد ضد واحد نشطة حالياً في $locationName. ترقب إعلان البطولة القادمة.',
       descriptionEnglish:
-          'There is no active 1vs1 tournament in $locationName right now. Stay tuned for the next tournament.',
+          'There is no active 1v1 tournament in $locationName right now. Stay tuned for the next tournament.',
       isArabic: isArabic,
     );
   }
