@@ -10,6 +10,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/repositories/report_repository.dart';
@@ -31,6 +32,7 @@ class MatchDetailsScreen extends StatefulWidget {
 
 class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  bool _isLoading = true;
+ bool _hasLoadError = false;
  Booking? _booking;
  Stadium? _stadium;
  bool _isJoining = false;
@@ -63,7 +65,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  Future<void> _fetchMatchDetails() async {
- setState(() => _isLoading = true);
+ if (!mounted) return;
+ setState(() {
+   _isLoading = true;
+   _hasLoadError = false;
+ });
  try {
  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
@@ -76,8 +82,10 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           _loadJoinedUsers(booking.joinedUserIds);
         }
  }
- } catch (e) {
+ } catch (e, stackTrace) {
  debugPrint('Error fetching match details: $e');
+ debugPrintStack(stackTrace: stackTrace);
+ if (mounted) setState(() => _hasLoadError = true);
  } finally {
  if (mounted) setState(() => _isLoading = false);
  }
@@ -549,11 +557,28 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  );
  }
 
+ if (_booking == null && _hasLoadError) {
+ return VSPScaffold(
+ backgroundColor: VSPColors.background,
+ appBar: AppBar(backgroundColor: Colors.transparent),
+ body: SafeArea(
+   child: VSPErrorState(
+     customMessage: isAr
+         ? 'تعذر تحميل تفاصيل المباراة. تحقق من الاتصال ثم أعد المحاولة.'
+         : 'Could not load match details. Check your connection and try again.',
+     retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+     onRetry: _fetchMatchDetails,
+   ),
+ ),
+ );
+ }
+
  if (_booking == null) {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(backgroundColor: Colors.transparent),
- body: Center(
+ body: SafeArea(
+   child: Center(
  child: Column(
  mainAxisAlignment: MainAxisAlignment.center,
  children: [
@@ -565,6 +590,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
  )
  ],
+ ),
  ),
  ),
  );
