@@ -168,7 +168,7 @@ Widget _buildTypeOption(
                         decoration: BoxDecoration(
                           color: VSPColors.white08,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: VSPVSPColors.white10, width: 0.5),
+                          border: Border.all(color: VSPColors.white10, width: 0.5),
                         ),
                         child: Text(
                           badgeText,
