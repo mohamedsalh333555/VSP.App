@@ -949,3 +949,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 5, 27, 30, and 33:** share/favorite controls now expose focusable 48dp targets and localized state-aware tooltips; tapping the hero image or gallery indicator is now keyboard/focus accessible without changing swipe navigation or the full-screen gallery flow.
 - Source commit: `c308b47cca78448cf7eb3aa8f6b19f16f43d505f`. Runtime/device verification remains pending; no tests or build were run.
+
+
+### Owner quick-cash centralized clock — 2026-11-01
+
+- **Rules 31, 38, and 40:** quick-cash day/status calculations now use the shared VSP clock by default while retaining explicit injected-time support, aligning the action card with owner booking schedule and pending-cash date semantics.
+- Source commit: `8a3a2007566590cb90779b0d31d774dbdb99f89d`. Runtime verification remains pending; no tests or build were run.
