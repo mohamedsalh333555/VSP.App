@@ -130,7 +130,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         _ownerChampionships = champs;
         _hasChampionshipStreamError = false;
       });
-      _claimApprovedChampionshipHomeNotices(champs);
+      _claimApprovedChampionshipHomeNotices(uid, champs);
     } catch (e) {
       VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
       if (mounted &&
@@ -141,16 +141,36 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     }
   }
 
-  Future<void> _claimApprovedChampionshipHomeNotices(List<Championship> champs) async {
+  Future<void> _claimApprovedChampionshipHomeNotices(
+    String ownerId,
+    List<Championship> champs,
+  ) async {
     final repo = TournamentRepository();
     final now = DateTime.now().toUtc();
+    final ownerScopeGeneration = _ownerScopeGeneration;
+
     for (final championship in champs) {
       if (!championship.isApproved) continue;
+      if (!mounted ||
+          ownerScopeGeneration != _ownerScopeGeneration ||
+          context.read<AuthProvider>().currentUser?.id != ownerId) {
+        return;
+      }
+
       try {
         final response = await repo.claimOwnerChampionshipApprovalHomeNotice(championship.id);
+
+        // A response from the previous owner must never repopulate the new
+        // account's notice state after an account switch or dashboard rebuild.
+        if (!mounted ||
+            ownerScopeGeneration != _ownerScopeGeneration ||
+            context.read<AuthProvider>().currentUser?.id != ownerId) {
+          return;
+        }
+
         if (response['success'] == true && response['seen_until'] != null) {
           final seenUntil = DateTime.tryParse(response['seen_until'].toString());
-          if (seenUntil != null && seenUntil.isAfter(now) && mounted) {
+          if (seenUntil != null && seenUntil.isAfter(now)) {
             setState(() {
               _approvalNoticeSeenUntil[championship.id] = seenUntil;
             });
