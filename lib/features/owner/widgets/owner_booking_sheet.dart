@@ -458,14 +458,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
     final media = MediaQuery.of(context);
     final double systemBottomPadding = media.padding.bottom;
-    final double keyboardPadding = media.viewInsets.bottom;
-    final double availableSheetHeight = (media.size.height -
-            keyboardPadding -
-            media.padding.top -
-            systemBottomPadding -
-            24)
-        .clamp(0.0, media.size.height)
-        .toDouble();
+    // The scroll-controlled modal route already constrains this sheet around
+    // the keyboard and system bars; keep only a preferred content-height cap.
+    final double availableSheetHeight = media.size.height * 0.92;
     final int maxMins = _getMaxAvailableMinutes();
 
     final formattedSlotTime = OwnerBookingSheetService.formatSlotTime(
