@@ -51,6 +51,8 @@ abstract final class VSPDSColors {
   static const Color white24 = Color(0x3DFFFFFF);
   static const Color white38 = Color(0x61FFFFFF);
 
+  static const Color black26 = Color(0x42000000);
+  static const Color black45 = Color(0x73000000);
   static const Color black80 = Color(0xCC000000);
 
   static const Color glassSurface = Color(0x73141417);
