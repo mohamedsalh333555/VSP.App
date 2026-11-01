@@ -859,3 +859,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `AddPlayerSheet`:** its caller already enables a scroll-controlled, SafeArea modal route, but the sheet also subtracted keyboard and system insets from full screen height. Removed that duplicate viewport calculation, preserving bottom safe padding and scroll behavior.
 - Source commit: `cb8327b5f52d019a58f9ce071fa94c2afae1107c`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Owner payout OTP and auto-schedule modal viewport corrections — 2026-11-01
+
+- **Rules 11 and 35 — `OwnerPayoutOtpDialog` and `TournamentAutoScheduleModalSheet`:** both are opened through scroll-controlled, SafeArea modal routes but previously subtracted keyboard/system insets again from full screen height. The auto-schedule sheet also forced a 240dp minimum that could exceed short viewports. Both now use a preferred 88% content-height cap and rely on parent route constraints for the actual keyboard-safe viewport; bottom padding and scrollable content remain.
+- Source commits: `33dc6d1b5c43a4fc25ce3811273f0fa926453171`, `947cee3bf2d21f785914ee12114f1bbf568c89dc`. Keyboard/device verification remains pending; no tests or build were run.
