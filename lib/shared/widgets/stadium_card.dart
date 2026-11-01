@@ -39,10 +39,10 @@ class StadiumCard extends StatelessWidget {
  height: isOwnerView ? 260 : 210,
  decoration: BoxDecoration(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.8),
+ border: Border.all(color: VSPColors.white.withValues(alpha: 0.08), width: 0.8),
  boxShadow: [
  BoxShadow(
- color: Colors.black.withValues(alpha: 0.35),
+ color: VSPColors.black.withValues(alpha: 0.35),
  blurRadius: 16,
  offset: const Offset(0, 6),
  ),
@@ -75,8 +75,8 @@ class StadiumCard extends StatelessWidget {
  begin: Alignment.topCenter,
  end: Alignment.center,
  colors: [
- Colors.black54,
- Colors.transparent,
+ VSPColors.black54,
+ VSPColors.transparent,
  ],
  ),
  ),
@@ -92,7 +92,7 @@ class StadiumCard extends StatelessWidget {
  end: Alignment.bottomCenter,
  stops: isOwnerView ? const [0.35, 1.0] : const [0.6, 1.0],
  colors: [
- Colors.transparent,
+ VSPColors.transparent,
  VSPColors.background.withValues(alpha: 0.95),
  ],
  ),
@@ -269,7 +269,7 @@ class StadiumCard extends StatelessWidget {
    children: [
      Icon(icon, color: VSPColors.accent, size: 14),
      const SizedBox(width: 4),
-     Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+     Text(label, style: const TextStyle(color: VSPColors.white70, fontSize: 11)),
    ],
  );
 
@@ -284,7 +284,7 @@ class StadiumCard extends StatelessWidget {
      if (!hasBaths && !hasCafe && !hasGarage)
        Text(
          isArabic ? 'لا توجد خدمات مضافة' : 'No amenities listed',
-         style: const TextStyle(color: Colors.white38, fontSize: 11),
+         style: const TextStyle(color: VSPColors.white38, fontSize: 11),
        ),
    ],
  );
@@ -341,13 +341,13 @@ class StadiumCard extends StatelessWidget {
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
  decoration: BoxDecoration(
- color: Colors.white10,
+ color: VSPColors.white10,
  borderRadius: BorderRadius.circular(4),
  ),
  child: Text(
  _localizeSizeAndType(stadium.size, stadium.type, context),
  style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: Colors.white70,
+ color: VSPColors.white70,
  fontWeight: FontWeight.w600,
  ),
  ),
