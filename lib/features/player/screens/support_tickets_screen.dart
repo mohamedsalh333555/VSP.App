@@ -141,7 +141,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                             );
                             return;
                           }
-                          if (!ctx.mounted ||
+                          if (!ctx.mounted) return;
+                          if (!mounted ||
                               context.read<AuthProvider>().currentUser?.id != initiatingUserId) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
