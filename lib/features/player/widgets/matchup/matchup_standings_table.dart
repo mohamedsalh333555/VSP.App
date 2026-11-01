@@ -34,7 +34,7 @@ class MatchupStandingsTable extends StatelessWidget {
                   isArabic ? 'جدول ترتيب المواجهة الحية' : 'Live matchup standings',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ],
@@ -67,7 +67,7 @@ class MatchupStandingsTable extends StatelessWidget {
                     child: Text(
                       '${index + 1}',
                       style: TextStyle(
-                        color: isLeader ? Colors.black : Colors.white,
+                        color: isLeader ? VSPColors.black : VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -77,7 +77,7 @@ class MatchupStandingsTable extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.teamName,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
