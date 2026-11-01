@@ -48,7 +48,7 @@ class FilterSportsPanel extends StatelessWidget {
               checkmarkColor: VSPColors.accent,
               side: BorderSide(color: isSelected ? VSPColors.accent : VSPColors.divider),
               labelStyle: TextStyle(
-                color: isSelected ? VSPColors.accent : Colors.white,
+                color: isSelected ? VSPColors.accent : VSPColors.white,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12.5,
               ),
