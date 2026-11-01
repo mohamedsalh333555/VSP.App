@@ -932,3 +932,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/owner/widgets/account/owner_delete_account_card.dart`: the confirmation dialog always placed Cancel and Delete in one horizontal `Row` with equal-width buttons. On narrow devices, Arabic labels and the loading state could become cramped or overflow. Actions now stack vertically below 360 logical pixels and remain side-by-side on wider dialogs.
 - Password reauthentication, deletion flow, and account rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: 5d8e1d554aa8557e138c727dd9574d4694c6144d.
+
+
+## Owner payout dialog narrow-screen actions — 2026-11-01
+- Fixed `lib/features/owner/widgets/ledger/owner_payout_dialog.dart`: the payout amount/destination dialog always forced Cancel and Confirm Request into a horizontal equal-width row. On narrow devices and in Arabic, the long confirmation label could be compressed. Actions now stack vertically below 360 logical pixels and remain horizontal on wider dialogs.
+- Payout amount validation, destination selection, and settlement submission behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: 33b5a5bcf0deeff80477a96819a26daefef5ca15.
