@@ -784,3 +784,9 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 
 - **Rules 10 and 13 — `ChampionshipsListTab`:** the Arabic browsing banner and its return-to-home action previously displayed raw canonical governorate names. Both now call the existing `championTranslateItem` helper so the selected and home governorates follow the active locale, consistent with the 1v1 banner.
 - Source commit: `66e05af0a2c483f4a3e21128d9c7b651e2375b9c`. Runtime locale verification remains pending; no tests or build were run.
+
+
+### Directional bottom action-bar padding correction — 2026-11-01
+
+- **Rules 7, 10, 11, 35, and 42 — `VSPBottomActionBar`:** its public padding type is `EdgeInsetsGeometry`, but the previous implementation discarded any non-`EdgeInsets` value and substituted physical left/right defaults. The component now preserves the supplied directional or physical padding and adds the system bottom inset independently.
+- Source commit: `025643a19457b5d21568958e531b7126cc465fe1`. Runtime device/RTL verification remains pending; no tests or build were run.
