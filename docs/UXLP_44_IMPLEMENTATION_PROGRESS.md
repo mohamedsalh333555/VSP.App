@@ -1714,3 +1714,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart`: replaced the non-focusable gesture target with a Material/InkWell action, raised its minimum target height to 48dp, and bounded the localized upgrade label to two lines for compact widths.
 - Upgrade callback, displayed plan price, and plan entitlement remain unchanged. Source commit: `e824ab825bcc5f501c7d267a93370191a57a6205`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+### Date-of-birth field structure follow-up — 2026-11-01
+
+- Rewrote the `SignupDateOfBirthField` wrapper with balanced Tooltip/Material/InkWell/Container nesting and bounded the selected date to one line. The accessible tap target and original date display/callback are preserved.
+- Follow-up source commit: `524148fc4ee6925b06b422ad600d0f2deb8b7c22`. No tests, analyzer, CI, runtime checks, or APK build were run.
