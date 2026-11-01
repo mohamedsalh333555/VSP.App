@@ -55,8 +55,8 @@ class MatchupRecordResultCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Iconsax.direct_up_copy, color: VSPColors.accent, size: 20),
-              SizedBox(width: 8),
+              const Icon(Iconsax.direct_up_copy, color: VSPColors.accent, size: 20),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isArabic ? 'تسجيل نتيجة مباراة جديدة' : 'Record a new match result',
