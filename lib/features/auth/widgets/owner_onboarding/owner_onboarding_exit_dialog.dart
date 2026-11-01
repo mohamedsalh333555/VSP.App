@@ -29,6 +29,7 @@ class OwnerOnboardingExitDialog {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
+              style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
               child: Text(l10n.continueRegistration, style: const TextStyle(color: VSPColors.accent)),
             ),
             ElevatedButton(
@@ -37,6 +38,7 @@ class OwnerOnboardingExitDialog {
                 backgroundColor: VSPColors.error,
                 foregroundColor: Colors.white,
                 elevation: 0,
+                minimumSize: const Size(0, 48),
               ),
               child: Text(l10n.cancelAndSignOut),
             ),
