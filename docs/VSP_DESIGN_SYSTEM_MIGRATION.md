@@ -312,3 +312,4 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Owner payout Instapay now requests the email keyboard, and IBAN is explicitly LTR in Arabic and English contexts.
 - Literal-copy triage of the 35 then-unchanged registered paths found only three payout-format examples, not untranslated user-facing labels. One of those paths has since been changed by this correction; 34 remain unchanged.
 - Runtime keyboard, caret, paste, and bidi behavior still require consolidated device validation.
+- The current screen register now marks **56 distinct paths / 57 rows** as `source updated—runtime pending` after the grouped palette, motion, RTL, refresh, and input-direction corrections. This remains source status only; none of those entries is a runtime pass.
