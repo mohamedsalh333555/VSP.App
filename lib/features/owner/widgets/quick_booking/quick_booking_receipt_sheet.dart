@@ -25,6 +25,7 @@ void showQuickBookingReceiptSheet({
     endTime: endTime,
     totalPrice: totalPrice,
     depositPaid: paidAmount,
+    isCashConfirmed: totalPrice > 0 && paidAmount >= totalPrice,
     googleMapsUrl: stadium.googleMapsUrl,
     stadiumPhone: stadium.phone,
     isArabic: isAr,
