@@ -710,3 +710,22 @@ The active `SECURITY DEFINER` function trusts the caller-supplied team ID and om
 Add an in-function authorization gate before constructing the response: require a non-null `auth.uid()`, then allow only the league creator or a captain/member of a team participating in that league. Keep the existing data contract for authorized participants unless product approves reducing returned fields; consider whether `captain_phone` is necessary for every participant. Preserve the existing authenticated-only EXECUTE grant, and add SQL verification for unauthenticated, unrelated authenticated, participant, and league-creator callers.
 
 **Status:** Critical approval-required security finding. No SQL was drafted, applied, or deployed in this pass.
+
+
+### TL-03 — Authenticated users can directly regenerate Team League fixtures
+
+**Severity:** Critical — unauthorized privileged mutation  
+**Affected rules:** 25, 31, 38, 39, 43
+
+**Evidence**
+- `supabase/migrations/20260930050000_vsp_team_league_ssot_and_creator_authority.sql` explicitly revokes `PUBLIC`/`anon` and then grants `EXECUTE` on `generate_team_league_fixtures(UUID)` to `authenticated`.
+- The current definition in `supabase/migrations/20261001022000_vsp_team_league_runtime_linkage_fix.sql` is `SECURITY DEFINER`. It accepts a caller-supplied championship ID, validates only that it is a Team League and that the joined team count is 4–8, deletes existing scheduled/unplayed fixtures, inserts regenerated fixtures, and changes an open championship to `ongoing`. It does not check `auth.uid()`, league ownership, payment completion, or whether the caller is the service role.
+- The client repository `lib/core/repositories/league/team_league_repository.dart` does not call `generate_team_league_fixtures` directly. The payment-confirmation flow calls it internally from `confirm_team_league_payment`, which is granted to `service_role` in the earlier migration.
+
+**Root cause**
+A privileged fixture-generation function was exposed to every authenticated client even though the intended call path is server-side payment reconciliation. Because it is `SECURITY DEFINER`, the grant lets an authenticated caller bypass ordinary row-level permissions and trigger fixture deletion/regeneration for a league ID they supply.
+
+**Proposed fix for approval**
+Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only the trusted internal/server-side invocation path. Add a defensive invariant inside the function that the league has reached its fully paid team threshold before fixture generation, and make repeat invocation safe so existing scheduled fixtures cannot be unexpectedly reset. Verify that authenticated direct RPC calls are denied and that the server-side payment-confirmation flow can still generate fixtures after the required payments complete.
+
+**Status:** Critical approval-required security finding. No SQL was drafted, applied, or deployed in this pass.
