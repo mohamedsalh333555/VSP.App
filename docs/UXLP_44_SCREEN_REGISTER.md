@@ -5,7 +5,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
 - Registered Dart screen/surface and embedded-component paths: 338 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 368, including 30 repeated paths that document separate embedded-component findings (recounted from the current register table on 2026-11-01)
+- Table data rows: 366, including 28 repeated paths that document separate embedded-component findings (recounted from the current register table on 2026-11-01)
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. That scan covered 128 of the 215 paths registered at the time; it has not been rerun across the current 338-path register.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -34,7 +34,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets; assistant loading bubble and stadium navigation cue now mirror directionally and have Arabic/English copy) |
 | `lib/features/owner/screens/add_stadium_wizard.dart` | owner | source reviewed—runtime pending (app-bar body no longer double-counts the top safe inset; wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/create_tournament_wizard.dart` | owner | source reviewed—runtime pending (wizard layout reviewed; Supabase auth ID access corrected to User.id) |
-| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps onboarding states; Supabase auth ID reads corrected to User.id; initial stadium-stream failure shows localized retry instead of a false empty state; stale loaded stadiums remain visible with retry warning) |
+| `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps onboarding states; Supabase auth ID reads corrected to User.id; initial stadium-stream failure shows localized retry instead of a false empty state; stale loaded stadiums remain visible with retry warning; shared VSPErrorState import added after monitored compile diagnostic; runtime pending) |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (form lifecycle reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (stadium, booking, and owner-scope loading branches now use shared bilingual VSPStateView) | source reviewed—runtime pending (stadium/booking streams distinguish loading/error from empty/free; owner stream reloads on authenticated owner-scope changes) |
 | `lib/features/owner/widgets/bookings/owner_bookings_filter_bar.dart` | owner | source reviewed—runtime pending (horizontal day-strip spacing now uses directional end margin so the calendar spacing mirrors in RTL/LTR; 60×80dp day targets remain comfortably above minimum) |
@@ -115,7 +115,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (team actions reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/widgets/my_team/team_members_section.dart` | player | source reviewed—runtime pending (captain/member trophy badges and remove-member action spacing now use directional insets for RTL/LTR consistency) |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea) |
+| `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea; missing Material/Expanded closure corrected after monitored compile diagnostic; runtime pending) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected; ticket and message streams distinguish loading/error/empty and expose retry) |
 | `lib/features/player/screens/support_tickets_screen.dart` | player | source reviewed—runtime pending (new-ticket sheet constrains complete padded content including bottom safe-area inside keyboard-safe viewport; scrollable form and single-flight submit; ticket list distinguishes loading/error/empty) (new-ticket sheet no longer double-subtracts keyboard viewInsets; viewport remains scrollable and SafeArea protected) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | source reviewed—runtime pending (strict team-membership fetch; account-scoped async refresh; separate loading/error/retry from no-team state) |
@@ -735,3 +735,10 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - These are source-level changes only; runtime validation remains pending by the agreed no-tests/no-build instruction.
 
 - `lib/features/player/widgets/collective_match_invite_sheet.dart`: explicit safe-area protection added to all three booking/invite action dialogs; the two entry bottom sheets already use `useSafeArea: true`.
+
+
+## Monitored compiler diagnostics — 2026-11-01
+
+- Existing workflow run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423), on older commit `6eb50fdd2c4e6879a4c8a95a5a0de1415af4a5aa`, reached the Release compile step and failed with two Dart source diagnostics: an unmatched widget-tree delimiter in `stadium_details_screen.dart` and an unresolved `VSPErrorState` reference in `facility_onboarding_screen.dart`.
+- Corrected the missing `Material`/outer `Expanded` closure and added the explicit shared error-state import on the current branch. These fixes are recorded in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`.
+- The failed run predates those commits; it is root-cause evidence only, not verification of the fixes. No artifact was produced and no new build was started.
