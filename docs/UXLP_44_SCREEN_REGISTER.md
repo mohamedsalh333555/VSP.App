@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 299 unique paths
+- Registered Dart screen/surface and embedded-component paths: 309 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 326, including 27 repeated paths that document separate embedded-component findings
+- Table records: 336, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -207,6 +207,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_checkout/checkout_guest_players_section.dart` | player | source reviewed—runtime pending (guest-player checkout section; roster limits, validation and saved data behavior pending) |
 | `lib/features/player/widgets/chat/chat_app_bar_title.dart` | player | source reviewed—runtime pending (chat title/participant header; participant state and long-name rendering pending) |
 | `lib/features/player/widgets/chat/chat_system_banner.dart` | player | source reviewed—runtime pending (chat system status banner; lifecycle copy and locale behavior pending) |
+| `lib/features/player/widgets/filter/filter_amenities_panel.dart` | player | source reviewed—runtime pending (amenity filter panel; selected-state and applied-filter consistency pending) |
+| `lib/features/player/widgets/filter/filter_category_sidebar.dart` | player | source reviewed—runtime pending (filter category navigation; active state and RTL order pending) |
+| `lib/features/player/widgets/filter/filter_location_panel.dart` | player | source reviewed—runtime pending (location/governorate filter; localized values and server-filter consistency pending) |
+| `lib/features/player/widgets/filter/filter_price_panel.dart` | player | source reviewed—runtime pending (price/deposit filter; currency, range bounds and query mapping pending) |
+| `lib/features/player/widgets/filter/filter_specs_panel.dart` | player | source reviewed—runtime pending (pitch specification filter; selected state and query mapping pending) |
+| `lib/features/player/widgets/filter/filter_sports_panel.dart` | player | source reviewed—runtime pending (sport filter; option availability and query mapping pending) |
+| `lib/features/player/widgets/home/book_tonight_card.dart` | player | source reviewed—runtime pending (home booking CTA card; eligibility, time-window and navigation behavior pending) |
+| `lib/features/player/widgets/home/home_feed_content.dart` | player | source reviewed—runtime pending (home feed composition; empty/loading/error and source-data mapping pending) |
+| `lib/features/player/widgets/matchup/matchup_record_result_card.dart` | player | source reviewed—runtime pending (matchup result card; participant/result state and action visibility pending) |
+| `lib/features/player/widgets/my_team/team_achievements_section.dart` | player | source reviewed—runtime pending (team achievements section; actual result source and empty-state behavior pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
