@@ -1528,3 +1528,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - The release workflow previously had a push trigger for `uxlp-44-implementation`, which conflicted with the current instruction to defer APK generation until all 11 workstreams are complete. Removed the automatic push trigger; `.github/workflows/build-release-apk.yml` is now `workflow_dispatch` only.
 - Workflow commit: `76e27f24ac4173685197f24cb5e42892ba706356`. No manual workflow dispatch was started. The connector exposed no workflow-run cancellation/list action, so any run already triggered by earlier commits could not be confirmed or cancelled from this session. Future branch pushes will not trigger release APK builds.
+
+
+## CI validation trigger deferred to final phase — 2026-11-01
+
+- The CI workflow also had automatic `pull_request` and `push` triggers. Because the current instruction is to defer the single consolidated validation pass until all source work is complete, these triggers have been removed; `.github/workflows/ci.yml` is now `workflow_dispatch` only.
+- Workflow commit: `97e09403e198c25ecab0acd1b927eb190424af66`. No manual CI run was started. Previously triggered CI run status could not be inspected/cancelled with the available GitHub Actions controls in this session. Future branch commits and PR updates will not start CI automatically.
