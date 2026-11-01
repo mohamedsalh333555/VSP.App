@@ -871,3 +871,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Earlier modal viewport fixes recorded — 2026-11-01
 - Added the previously omitted progress entries for the collective-match invitation sheet and booking-type modal keyboard/safe-area height constraints.
 - Commits: 08a3bf1e6313830a749f20075df77890beefec9f; 6fb489053843cb4c09ebcd0fee55e87182931f55.
+
+
+## Tournament automatic scheduling failure recovery — 2026-11-01
+- The automatic round-scheduling action now catches repository exceptions and presents localized retry guidance instead of allowing an unhandled asynchronous failure. It checks that the parent screen remains mounted before showing feedback.
+- Scheduling inputs, match ordering, date/time selection, and repository behavior are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 59a162650d674ac9e78755e8727fbe09ea158da5.
