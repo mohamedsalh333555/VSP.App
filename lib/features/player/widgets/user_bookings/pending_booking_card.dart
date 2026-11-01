@@ -240,6 +240,7 @@ class PendingBookingCard extends StatelessWidget {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.surfaceAlt,
+                    minimumSize: const Size(0, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.chip)),
                   ),
                 ),
@@ -258,6 +259,7 @@ class PendingBookingCard extends StatelessWidget {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.surfaceAlt,
+                          minimumSize: const Size(0, 48),
                           disabledForegroundColor: VSPColors.textSecondary,
                           disabledBackgroundColor: VSPColors.surfaceAlt,
                           shape: RoundedRectangleBorder(
@@ -304,6 +306,7 @@ class PendingBookingCard extends StatelessWidget {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
+                    minimumSize: const Size(0, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.chip)),
                   ),
                 ),
