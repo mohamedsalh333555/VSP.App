@@ -147,9 +147,30 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                         : 'Reschedule proposal sent to player ',
                   );
                   if (booking.playerPhone != null && booking.playerPhone!.isNotEmpty) {
-                    launchUrl(Uri.parse('tel:${booking.playerPhone}'));
+                    try {
+                      final launched = await launchUrl(
+                        Uri.parse('tel:${booking.playerPhone}'),
+                      );
+                      if (!launched && context.mounted) {
+                        VSPFeedback.showError(
+                          context,
+                          isArabic
+                              ? 'تعذر فتح تطبيق الاتصال.'
+                              : 'Could not open the phone app.',
+                        );
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        VSPFeedback.showError(
+                          context,
+                          isArabic
+                              ? 'تعذر فتح تطبيق الاتصال.'
+                              : 'Could not open the phone app.',
+                        );
+                      }
+                    }
                   }
-                  Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 } else {
                   VSPFeedback.showError(
                     context,
