@@ -36,7 +36,9 @@ void showBookingCalendarModal({
             ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+              constraints: BoxConstraints(
+                maxHeight: availableHeight.clamp(0.0, mediaQuery.size.height).toDouble(),
+              ),
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(VSPSpacing.md),
                 child: Column(
