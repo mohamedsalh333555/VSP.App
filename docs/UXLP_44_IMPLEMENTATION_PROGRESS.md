@@ -712,3 +712,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Adding an existing VSP player to a team now compares governorates using the shared EgyptGovernorates canonical resolver before falling back to normalized text. Equivalent Arabic/English and supported Google Maps aliases (for example, Aswan / أسوان) no longer trigger a false “different governorate” block.
 - The same-governorate eligibility rule remains unchanged; this only normalizes equivalent stored names. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `70bcb668aa853b1290aa458fbd5666ff90679774`.
+
+
+## Support empty-state signed-out action consistency — 2026-11-01
+
+- Completed the signed-out support-ticket correction: the empty state previously still displayed an “Open Ticket” action and copy telling the user to open a ticket, even though the floating action was hidden and the flow required authentication.
+- Signed-out users now receive explicit bilingual sign-in guidance and no create-ticket button. Authenticated users retain the existing empty-state action. No authentication, ticket, or backend rules changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `c84d1893ec5672f9613ead796e209c4bc008aff2`.
