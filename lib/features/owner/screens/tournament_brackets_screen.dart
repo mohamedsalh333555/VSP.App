@@ -138,7 +138,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   ElevatedButton.icon(
                     onPressed: () => setState(() => _refreshKey++),
                     icon: const Icon(Iconsax.refresh_copy, size: 18),
-                    label: const Text('إعادة المحاولة'),
+                    label: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.accent,
                       foregroundColor: VSPColors.black,
