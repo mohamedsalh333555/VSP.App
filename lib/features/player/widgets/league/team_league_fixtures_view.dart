@@ -90,32 +90,32 @@ class TeamLeagueFixturesView extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.15),
+        color: VSPColors.warning.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.judge_copy, color: Colors.amber, size: 20),
+          const Icon(Iconsax.judge_copy, color: VSPColors.warning, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               isArabic ? 'مباريات بانتظار اعتمادك (منشئ الدوري)' : 'Matches awaiting your approval (league creator)',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13.5),
+              style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13.5),
             ),
           ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.amber,
+              color: VSPColors.warning,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               '$count',
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12),
+              style: const TextStyle(color: VSPColors.black, fontWeight: FontWeight.w900, fontSize: 12),
             ),
           ),
         ],
@@ -133,7 +133,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
-          color: isConflict ? Colors.amber : VSPColors.accent,
+          color: isConflict ? VSPColors.warning : VSPColors.accent,
           width: 1.5,
         ),
       ),
@@ -147,13 +147,13 @@ class TeamLeagueFixturesView extends StatelessWidget {
                   '${match.homeTeamName} × ${match.awayTeamName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (isConflict ? Colors.amber : VSPColors.accent).withValues(alpha: 0.2),
+                  color: (isConflict ? VSPColors.warning : VSPColors.accent).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -161,7 +161,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                       ? (isArabic ? 'اختلاف نتيجتين' : 'Conflicting results')
                       : (isArabic ? 'بانتظار الاعتماد' : 'Awaiting approval'),
                   style: TextStyle(
-                    color: isConflict ? Colors.amber : VSPColors.accent,
+                    color: isConflict ? VSPColors.warning : VSPColors.accent,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -189,8 +189,8 @@ class TeamLeagueFixturesView extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: () => onResolveDispute(match),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isConflict ? Colors.amber : VSPColors.accent,
-                foregroundColor: Colors.black,
+                backgroundColor: isConflict ? VSPColors.warning : VSPColors.accent,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
               icon: const Icon(Iconsax.judge_copy, size: 18),
@@ -244,7 +244,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
           color: match.isDisputed
-              ? Colors.amber.withValues(alpha: 0.6)
+              ? VSPColors.warning.withValues(alpha: 0.6)
               : isUserMatch
                   ? VSPColors.accent.withValues(alpha: 0.5)
                   : VSPColors.borderLight,
@@ -289,7 +289,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: match.homeTeamId == userTeamId ? VSPColors.accent : Colors.white,
+                          color: match.homeTeamId == userTeamId ? VSPColors.accent : VSPColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -321,7 +321,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                             match.confirmedOutcome == 'draw'
                                 ? (isArabic ? 'تعادل 🟡' : 'Draw 🟡')
                                 : (isArabic ? 'انتهت' : 'Finished'),
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         )
                       : Container(
@@ -351,7 +351,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: match.awayTeamId == userTeamId ? VSPColors.accent : Colors.white,
+                          color: match.awayTeamId == userTeamId ? VSPColors.accent : VSPColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -516,8 +516,8 @@ class TeamLeagueFixturesView extends StatelessWidget {
         child: ElevatedButton.icon(
           onPressed: () => onResolveDispute(match),
           style: ElevatedButton.styleFrom(
-            backgroundColor: isConflict ? Colors.amber : VSPColors.accent,
-            foregroundColor: Colors.black,
+            backgroundColor: isConflict ? VSPColors.warning : VSPColors.accent,
+            foregroundColor: VSPColors.black,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
           icon: const Icon(Iconsax.judge_copy, size: 16),
@@ -538,12 +538,12 @@ class TeamLeagueFixturesView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.1),
+          color: VSPColors.warning.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(VSPRadius.md),
         ),
         child: Text(
           isArabic ? 'النتيجة قيد المراجعة من منشئ الدوري' : 'The league creator is reviewing this result',
-          style: const TextStyle(color: Colors.amber, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.warning, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
       );
     }
@@ -619,7 +619,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
           onPressed: () => onBookMatch(match),
           style: ElevatedButton.styleFrom(
             backgroundColor: VSPColors.surfaceAlt,
-            foregroundColor: Colors.white,
+            foregroundColor: VSPColors.white,
             side: const BorderSide(color: VSPColors.accent, width: 1),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
@@ -655,7 +655,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
           onPressed: () => onRecordScore(match),
           style: ElevatedButton.styleFrom(
             backgroundColor: VSPColors.accent,
-            foregroundColor: Colors.black,
+            foregroundColor: VSPColors.black,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
           icon: const Icon(Iconsax.tick_circle_copy, size: 16),
