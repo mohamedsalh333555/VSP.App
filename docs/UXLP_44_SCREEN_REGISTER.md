@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
-- Registered Dart screen/surface paths: 199 unique paths
+- Registered Dart screen/surface paths: 208 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 225, including 26 repeated paths that document separate embedded-component findings
+- Table records: 234, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Static source scan: all 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -312,4 +312,13 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/booking/booking_bottom_bar.dart` | player/owner | source reviewed—runtime pending (collective booking displays full total without deposit-only hint; currency suffix normalized to EGP; player counter +/- controls enforce 48dp minimum targets; optional ball and confirm disabled without slot/loading; compact-width runtime review pending) |
 | `lib/features/player/widgets/champion/champion_empty_state.dart` | player/owner | source reviewed—runtime pending (shared charcoal square icon tile, scrollable content, localized empty-state copy with optional explicit locale override, optional return action with RTL-aware directional spacing) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart` | player/owner | source reviewed—runtime pending (charcoal empty-state tile, governorate prompt, banner hit target; fixed broken edit-profile navigation by registering route and using GoRouter; 1v1 empty-state copy now passes its explicit locale input through to the shared empty-state renderer and the home-governorate banner localizes the governorate label) |
+| `lib/features/player/widgets/champion/champion_podium_components.dart` | player | source reviewed—runtime pending (localized governorate/sport filter labels, podium rank and team identity presentation, network-image fallback) |
+| `lib/features/player/widgets/champion/championships_list_tab.dart` | player | source reviewed—runtime pending (championship stream loading/error/empty states; preserves last data and shows retry warning on realtime failure) |
+| `lib/features/player/widgets/champion/teams_ranking_tab.dart` | player | source reviewed—runtime pending (team ranking filter and podium/list states; preserves last ranking snapshot and surfaces retry warning after stream failure) |
+| `lib/features/player/widgets/champion/vsp_1v1_league_tab.dart` | player | source reviewed—runtime pending (1v1 tournament and roster stream loading/error/stale states; payment and cancellation lifecycle unchanged) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_hero_card.dart` | player | source reviewed—runtime pending (localized tournament name, capacity counts, and bounded progress value) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_prize_card.dart` | player | source reviewed—runtime pending (entry fee and prize values displayed from supplied server data with EGP localization) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart` | player | source reviewed—runtime pending (registration/refund/location states; 48dp cancel/switch actions and disabled join action while payment is processing) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart` | player | source reviewed—runtime pending (server-confirmed roster presentation, player identity, and empty state; avatar network-failure fallback pending) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart` | player | source reviewed—runtime pending (standings loading/error/empty states; uses parent retry and preserves last data with stale warning) |
 
