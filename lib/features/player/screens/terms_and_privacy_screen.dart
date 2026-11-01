@@ -69,8 +69,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب والأهلية' : '1. Stadium Operations & Age Eligibility',
                 content: isArabic
-                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط في المفوض بإدارة حساب المنشأة الرياضية (صاحب الملعب) أو التوقيع على التعاقدات ألا يقل عمره عن 21 عاماً وأن يتمتع بالأهلية القانونية الكاملة للتعاقد وإدارة المنشأة.'
-                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Authorized venue managers and signatories must be at least 21 years of age and possess full legal capacity to contract and manage operations.',
+                    ? '• يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.\n• يُشترط في المفوض بإدارة حساب المنشأة الرياضية (صاحب الملعب) أو التوقيع على التعاقدات ألا يقل عمره عن 18 عاماً وأن يتمتع بالأهلية القانونية الكاملة للتعاقد وإدارة المنشأة.'
+                    : '• Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.\n• Authorized venue managers and signatories must be at least 18 years of age and possess full legal capacity to contract and manage operations.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -91,8 +91,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '3. سياسة منع الإلغاء المفاجئ' : '3. Cancellation & Commitment Policy',
                 content: isArabic
-                    ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل العربون أو المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
-                    : 'Owners are prohibited from cancelling confirmed bookings except in proven force majeure cases, with mandatory immediate full refund to the customer.',
+                    ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة المبالغ المستحقة وفق سياسة الاسترداد المعتمدة، مع استثناء الرسوم الإدارية ورسوم بوابة الدفع غير القابلة للاسترداد.'
+                    : 'Owners are prohibited from cancelling confirmed bookings except in proven force majeure cases, with a refund of eligible amounts under the VSP refund policy; non-refundable administrative and payment-gateway fees are excluded.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -144,8 +144,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '1. طبيعة المنصة وشروط الأهلية' : '1. Platform Services & Eligibility',
                 content: isArabic
-                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم العادي (اللاعب) عن 16 عاماً، أو أن تتم المعاملات المالية تحت إشراف ولي الأمر.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
-                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Regular users (players) must be at least 16 years of age, or conduct financial transactions under parental supervision.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
+                    ? '• تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية.\n• يُشترط ألا يقل عمر المستخدم (اللاعب) عن 18 عاماً، وأن يتمتع بالأهلية القانونية لاستخدام المنصة وإجراء المعاملات.\n• يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق والروح الرياضية واحترام منشآت ومرافق الملعب المضيف.'
+                    : '• VSP operates as a digital platform facilitating pitch bookings and competitive matches.\n• Players must be at least 18 years of age and possess the legal capacity to use the platform and conduct transactions.\n• Players must arrive on time and uphold sportsmanship and respect facility amenities.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -154,8 +154,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '2. سياسة الإلغاء والاسترداد المالي (Paymob)' : '2. Cancellation & Paymob Refund Policy',
                 content: isArabic
-                    ? '• الإلغاء المبكر (أكثر من 6 ساعات قبل المباراة): استرداد مالي كامل (100%) يتم استرجاعه تلقائياً لنفس وسيلة الدفع الأصلية عبر بوابة Paymob مباشرة.\n• البطولات الرياضية: يُسمح بالإلغاء واسترداد رسوم الاشتراك بالكامل قبل انطلاق البطولة بيومين (48 ساعة) وقبل إجراء القرعة الرسمية.\n• مهلة الـ 20 دقيقة الأولى: عند إلغاء الحجز خلال أول 20 دقيقة من إتمامه وسداده، يُسترد المبلغ مخصوماً منه المصاريف الإدارية والتشغيلية غير المستردة (رسوم بوابة الدفع الإلكتروني).\n• مدة الاسترداد ونافذة الـ 90 يوماً: يستغرق ظهور المبلغ في الحساب من 3 إلى 7 أيام عمل وفقاً لدورة المقاصة بالبنك المصدر (شريطة تقديم طلب الاسترداد خلال 90 يوماً كحد أقصى من تاريخ العملية وفقاً لسياسة Paymob).\n• الإلغاء المتأخر (أقل من 6 ساعات) أو عدم الحضور (No-Show) لا يمنح الحق في استرداد المبالغ المدفوعة.'
-                    : '• Early Cancellation (over 6 hours prior to match): Full 100% refund processed automatically back to the original payment method via Paymob.\n• Tournaments: Full refund when withdrawing at least 48 hours prior to kickoff and before the official bracket draw.\n• 20-Minute Grace Window: Cancellations within the first 20 minutes of booking are refunded minus non-refundable gateway processing fees.\n• Bank Settlement & 90-Day Window: Refunds reflect within 3-7 business days per issuer clearing cycles (provided refund requests are initiated within a 90-day maximum window per Paymob policy).\n• Late cancellations or no-shows forfeit refunds.',
+                    ? '• الإلغاء قبل موعد المباراة بأكثر من 6 ساعات: يخضع طلب الاسترداد لمراجعة حالة الحجز والسياسة المعتمدة. يقتصر أي مبلغ مسترد على أصل المبلغ المؤهل للاسترداد، ولا يشمل الرسوم الإدارية أو رسوم بوابة الدفع غير القابلة للاسترداد.\n• البطولات الرياضية: تخضع طلبات الإلغاء والاسترداد للشروط المعروضة قبل الدفع وحالة البطولة؛ ولا يُعد تقديم الطلب ضماناً لقبوله أو لاسترداد كامل الرسوم.\n• تُعاد المبالغ المستحقة إلى وسيلة الدفع الأصلية متى أمكن، وتختلف مدة ظهورها حسب إجراءات البنك ومزود خدمة الدفع.\n• الإلغاء خلال آخر 6 ساعات قبل المباراة أو عدم الحضور (No-Show) لا يمنح الحق في استرداد المبالغ المدفوعة.'
+                    : '• Cancellation more than 6 hours before a match: refund requests are reviewed against the booking state and applicable policy. Any refund is limited to eligible booking principal and excludes non-refundable administrative and payment-gateway fees.\n• Tournaments: cancellation and refund requests are governed by the terms shown before payment and the tournament state; submitting a request does not guarantee approval or a full refund.\n• Eligible refunds are returned to the original payment method where possible. The time for funds to appear depends on the bank and payment provider.\n• Cancellation within the final 6 hours before a match or a No-Show is not eligible for a refund.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -175,8 +175,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 context,
                 title: isArabic ? '4. سياسة تتبع الحضور والغياب (No-Show)' : '4. Attendance & No-Show Policy',
                 content: isArabic
-                    ? '• تسجيل حالتي (2) غياب يؤدي إلى تقييد ميزة الحجز النقدي المباشر.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 150 متراً من الملعب بدقة GPS تقل عن 50 متراً.'
-                    : '• 2 recorded no-shows restrict cash booking privileges.\n• 3 recorded no-shows lead to account suspension.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 150m of the stadium with GPS accuracy under 50m.',
+                    ? '• تسجيل حالتي (2) غياب يؤدي إلى تقييد ميزة الحجز النقدي المباشر.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 200 متر من الملعب وبدقة GPS لا تتجاوز 50 متراً.'
+                    : '• 2 recorded no-shows restrict cash booking privileges.\n• 3 recorded no-shows lead to account suspension.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 200m of the stadium with GPS accuracy of 50m or better.',
               ),
 
               const SizedBox(height: VSPSpacing.md),
