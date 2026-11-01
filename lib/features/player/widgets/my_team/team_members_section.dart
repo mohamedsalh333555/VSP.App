@@ -127,7 +127,7 @@ class TeamMembersSection extends StatelessWidget {
             final captainUid = (team?.captainId.isNotEmpty == true) ? team!.captainId : (currentUser?.uid ?? '');
             if (captainUid.isEmpty) return const SizedBox.shrink();
             return Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: Vsp1v1UserTrophyBadge(
                 userId: captainUid,
                 fontSize: 9,
@@ -166,7 +166,7 @@ class TeamMembersSection extends StatelessWidget {
           ),
           if (user.uid.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 4),
+              padding: const EdgeInsetsDirectional.only(start: 4),
               child: Vsp1v1UserTrophyBadge(
                 userId: user.uid,
                 fontSize: 9,
