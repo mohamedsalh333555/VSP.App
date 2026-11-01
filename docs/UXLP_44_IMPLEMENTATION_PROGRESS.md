@@ -1844,3 +1844,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Signup auto-location now checks mounted before its initial setState/Provider access, not only in finally.
 - Verify-email OTP digit boxes now calculate width from the available viewport; the previous fixed 46dp boxes plus margins exceeded the 312dp content width on a 360dp device before any text scaling. The new width is responsive (32–46dp) and preserves the default 46dp on wider screens.
 - No analyzer, tests, CI, runtime/device validation, or APK build was run.
+
+- Follow-up: VerifyEmailScreen now guards `_verify()` against duplicate submissions while a previous OTP verification request is in flight; this covers repeated final-digit/paste callbacks. Source-only, not runtime-tested.
