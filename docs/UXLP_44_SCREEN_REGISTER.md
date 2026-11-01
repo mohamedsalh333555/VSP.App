@@ -168,7 +168,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_details.dart` | owner | source reviewed—runtime pending (note-template chip spacing now uses directional end padding; form/keyboard behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart` | owner | source reviewed—runtime pending (opening-hours editor; validation, locale and responsive behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_location_field.dart` | owner | source reviewed—runtime pending (stadium location input; geolocation, permissions and error recovery verification pending) |
-| `lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart` | owner | source reviewed—runtime pending (feature/amenity selection; responsive option layout and locale behavior pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart` | owner | source reviewed—runtime pending (feature/amenity selection; amenities heading now uses directional start alignment; responsive option layout and locale behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step3_images.dart` | owner | source reviewed—runtime pending (stadium image selection/upload; permission, progress and failure recovery pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step_indicator.dart` | owner | source reviewed—runtime pending (stadium wizard step indicator; localized label and narrow-width behavior pending) |
 | `lib/features/owner/widgets/brackets/tournament_champion_banner.dart` | owner | source reviewed—runtime pending (champion outcome banner; result data and long team-name rendering pending) |
