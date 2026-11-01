@@ -55,7 +55,11 @@ abstract final class VSPDSColors {
   static const Color white06 = Color(0x0FFFFFFF);
   static const Color white50 = Color(0x80FFFFFF);
   static const Color white54 = Color(0x8AFFFFFF);
+  static const Color white03 = Color(0x08FFFFFF);
+  static const Color white20 = Color(0x33FFFFFF);
+  static const Color white25 = Color(0x40FFFFFF);
 
+  static const Color black10 = Color(0x1A000000);
   static const Color black15 = Color(0x26000000);
   static const Color black26 = Color(0x42000000);
   static const Color black45 = Color(0x73000000);
@@ -63,6 +67,9 @@ abstract final class VSPDSColors {
   static const Color black87 = Color(0xDE000000);
   static const Color black55 = Color(0x8C000000);
   static const Color black60 = Color(0x99000000);
+  static const Color black25 = Color(0x40000000);
+  static const Color black30 = Color(0x4D000000);
+  static const Color black85 = Color(0xD9000000);
   static const Color white70 = Color(0xB3FFFFFF);
   static const Color black80 = Color(0xCC000000);
 
@@ -94,6 +101,8 @@ abstract final class VSPDSSemanticColors {
 
   static const Color error = VSPDSColors.red500;
   static const Color warning = VSPDSColors.amber500;
+  static const Color warningSoft = Color(0x1AF59E0B);
+  static const Color warningBorder = Color(0x4DF59E0B);
   static const Color info = VSPDSColors.blue500;
   static const Color success = VSPDSColors.voltGreen;
 
@@ -576,9 +585,15 @@ abstract final class VSPDSTypography {
 abstract final class VSPDSMotion {
   // [PROPOSED] centralized timings; current screen behavior remains unchanged
   // until individual components are migrated to these tokens.
+  static const Duration press = Duration(milliseconds: 120);
   static const Duration fast = Duration(milliseconds: 150);
   static const Duration microInteraction = Duration(milliseconds: 160);
+  static const Duration selection = Duration(milliseconds: 200);
   static const Duration standard = Duration(milliseconds: 250);
+  static const Duration indicatorTransition = Duration(milliseconds: 300);
+  static const Duration fadeIn = Duration(milliseconds: 400);
+  static const Duration bannerTransition = Duration(milliseconds: 600);
+  static const int staggerStepMilliseconds = 50;
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration navigationSwitch = Duration(milliseconds: 180);
