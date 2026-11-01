@@ -9,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final String? errorText;
   final TextEditingController controller;
   final TextInputType keyboardType;
+  final TextDirection? textDirection;
   final bool obscureText;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
@@ -31,6 +32,7 @@ class CustomTextField extends StatelessWidget {
     this.errorText,
     required this.controller,
     this.keyboardType = TextInputType.text,
+    this.textDirection,
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
@@ -87,13 +89,14 @@ class CustomTextField extends StatelessWidget {
         final fieldWidget = TextFormField(
           controller: controller,
           keyboardType: keyboardType,
-          textDirection: (keyboardType == TextInputType.emailAddress ||
-                  keyboardType == TextInputType.url ||
-                  keyboardType == TextInputType.phone ||
-                  keyboardType == TextInputType.number ||
-                  keyboardType.toString().contains('number'))
-              ? TextDirection.ltr
-              : null,
+          textDirection: textDirection ??
+              ((keyboardType == TextInputType.emailAddress ||
+                      keyboardType == TextInputType.url ||
+                      keyboardType == TextInputType.phone ||
+                      keyboardType == TextInputType.number ||
+                      keyboardType.toString().contains('number'))
+                  ? TextDirection.ltr
+                  : null),
           obscureText: obscureText,
           maxLines: maxLines,
           validator: validator,
