@@ -177,7 +177,7 @@ class HomeStadiumsSection extends StatelessWidget {
                         final stadium = provider.stadiums[index];
                         return Container(
                           width: 300,
-                          margin: const EdgeInsets.only(right: 6),
+                          margin: const EdgeInsetsDirectional.only(end: 6),
                           child: StadiumCard(
                             stadium: stadium,
                             onTap: () => Navigator.push(
