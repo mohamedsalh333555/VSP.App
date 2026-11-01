@@ -320,7 +320,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                     color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                     border: Border.all(
-                      color: isSelected ? VSPColors.accent : VSPVSPColors.white08,
+                      color: isSelected ? VSPColors.accent : VSPColors.white08,
                       width: isSelected ? 1.5 : 1.0,
                     ),
                   ),
@@ -347,7 +347,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                             Text(
                               dest['value']!,
                               style: TextStyle(
-                                color: isSelected ? VSPColors.accent : VSPVSPColors.white70,
+                                color: isSelected ? VSPColors.accent : VSPColors.white70,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
