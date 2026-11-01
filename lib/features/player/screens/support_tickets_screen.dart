@@ -369,11 +369,13 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _newTicket,
-        backgroundColor: VSPColors.accent,
-        child: const Icon(Iconsax.add_copy, color: Colors.black),
-      ),
+      floatingActionButton: userId.isEmpty
+          ? null
+          : FloatingActionButton(
+              onPressed: _newTicket,
+              backgroundColor: VSPColors.accent,
+              child: const Icon(Iconsax.add_copy, color: Colors.black),
+            ),
     );
   }
 }
