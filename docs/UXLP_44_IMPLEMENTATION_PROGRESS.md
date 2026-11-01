@@ -1435,3 +1435,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `vsp_copilot_sheet.dart`: assistant loading bubble now aligns to `AlignmentDirectional.centerStart` instead of physical left, so it mirrors in Arabic; its loading message now has an English equivalent rather than remaining Arabic in both locales.
 - Code commit: `fe6f2e3c45295958492c660013d049ffde5d535e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Championship Checkout safe-area ownership — 2026-11-01
+
+- `championship_checkout_screen.dart` now wraps the scroll body in `SafeArea(top: false, bottom: false)`: the AppBar owns the top inset and the existing `VSPBottomActionBar` already adds the bottom system inset. This prevents content spacing from double-counting either edge while keeping the sticky payment/registration action protected.
+- Code commits: `c586a40b8bbf7b50c2e574b89bbe9735756dc0da`, `1bb0f1364e696e105a6e965cbc3d5ce77bad0dae`, `871854150764c1bea43c55c620b3c5b251536c40`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
