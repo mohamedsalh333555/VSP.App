@@ -1127,3 +1127,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Quick phone booking receipt payment wording — 2026-11-01
 - Fixed `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart`: the quick-phone-booking flow collects the amount received directly from the stadium owner, but the receipt formatter's `isCashConfirmed` flag was never passed. When the full booking total had been collected, the receipt could therefore label it as paid online. The receipt now marks cash as confirmed only when the positive total has been collected in full; partial collection remains correctly represented as a deposit with the balance due on arrival.
 - No payment amounts, booking writes, or collection rules changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 71415521482a5ed30ee1b8c9312f7d2d749ce4c4.
+
+
+## Collective invite details resilient loading — 2026-11-01
+- Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: the initial booking-details load previously treated a failure to fetch optional invite/share credentials as a failure of the entire sheet, hiding booking and participant details that had already loaded. Credential retrieval is now isolated and logged; the booking details remain available, while invite actions stay unavailable until valid credentials are obtained. Added mounted checks after stadium and participant loads before continuing asynchronous work.
+- Invite authorization and credential-generation behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 8af23997a248232cce060105628a9d9ca0234828.
