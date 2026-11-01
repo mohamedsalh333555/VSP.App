@@ -2209,3 +2209,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `booking_slot_calculator.dart`: slot generation already defaulted missing stadium hours to 4:00 PM–3:00 AM, but date resolution parsed missing hours as zero. After-midnight slots could therefore be attached to the wrong calendar day. Date resolution now uses the same fallback hours as slot generation.
 - Source commit: `b660a3f9ae1dfe012a56c3d623c1a88ae6cec4b7`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+- Follow-up: the same calculator now rejects malformed working-hour strings instead of silently parsing them as midnight. Invalid schedules produce no selectable slots, and direct date resolution fails explicitly rather than assigning a fabricated time. Source commit: `d802dd922e773e0c9fdc93830a2b757ad8dc9163` (helper section corrected in `31b6eb61b3e4c92d9f7b603e99e776bae99c0398`).
