@@ -55,12 +55,7 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                         if (!context.mounted) return;
                         context.read<StadiumProvider>().applyGovernorateFilter(gov);
                         Navigator.pop(context);
-                      } catch (error, stackTrace) {
-                        VSPLogger.e(
-                          'Failed to save selected governorate',
-                          error,
-                          stackTrace,
-                        );
+                      } catch (_) {
                         if (!context.mounted) return;
                         VSPFeedback.showError(
                           context,
