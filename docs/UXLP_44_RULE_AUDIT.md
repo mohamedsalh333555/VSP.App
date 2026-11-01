@@ -1129,3 +1129,5 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Rules 9, 10, 28, 36, and 42:** collective invite route, 1v1 league tournament/player streams, and championship discovery now use the shared bilingual loading state. Existing retry/error/empty behavior and repository operations are unchanged; runtime verification remains pending.
 
 - **Rules 9, 10, 28, 36, and 42:** player team-league membership/league loading, team rankings, and 1v1 standings now use the shared bilingual state renderer. Existing retry/error/empty paths remain intact. No rule is marked pass before runtime validation.
+
+- **Rules 10, 13, and 36:** My Team's unauthenticated fallback no longer exposes a raw English-only diagnostic; it now presents a safe-area-protected Arabic/English account error with a clear sign-in recovery instruction.
