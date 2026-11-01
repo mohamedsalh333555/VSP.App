@@ -296,7 +296,13 @@ class _ManageTournamentRosterScreenState extends State<ManageTournamentRosterScr
         leading: const VSPBackButton(),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+          ? VSPStateView(
+              state: VSPUiState.loading,
+              title: isAr ? 'جارٍ تحميل التشكيلة' : 'Loading roster',
+              message: isAr
+                  ? 'نحمّل بيانات الفريق والبطولة قبل عرض التعديلات.'
+                  : 'Loading team and tournament data before showing roster controls.',
+            )
           : _hasLoadError
               ? Center(
                   child: Padding(
