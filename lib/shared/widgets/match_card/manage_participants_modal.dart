@@ -65,7 +65,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
         _pendingUserIds = List<String>.from(updatedBooking.pendingUserIds);
       }
     } catch (e, stack) {
-      VSPLogger.w('Could not refresh booking participants from server', e, stack);
+      VSPLogger.e('Could not refresh booking participants from server', e, stack);
     }
     if (!mounted) return;
     await _fetchUsers();
