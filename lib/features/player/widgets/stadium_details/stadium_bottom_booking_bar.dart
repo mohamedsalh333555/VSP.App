@@ -62,7 +62,7 @@ class StadiumBottomBookingBar extends StatelessWidget {
                       ),
                     ),
                     AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
+                      duration: VSPDSMotion.standard,
                       child: hasDeposit
                           ? Row(
                               key: const ValueKey('deposit'),
