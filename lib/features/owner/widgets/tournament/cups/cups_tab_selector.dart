@@ -72,7 +72,7 @@ class CupsTabSelector extends StatelessWidget {
           child: Text(
             text,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: isSelected ? Colors.black : VSPColors.textSecondary,
+                  color: isSelected ? VSPColors.black : VSPColors.textSecondary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
           ),
