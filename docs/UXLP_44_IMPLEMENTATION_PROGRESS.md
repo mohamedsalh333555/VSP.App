@@ -966,3 +966,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Pending booking account-scope protection — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the cancel and payment-status actions could finish after an account switch and then display results or refresh the booking list using the newly active account. The status check now captures the initiating user and discards stale results; cancellation likewise verifies the initiating account before presenting its outcome and refreshes only that captured user's list.
 - Booking cancellation, payment-status interpretation, and checkout behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 96b87dc777257810fba418444654026f0ad7963b.
+
+
+## Quick phone booking post-dismiss context safety — 2026-11-01
+- Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: after saving a manual booking, the modal was popped and then its own `context` was reused to open the receipt sheet or show the success feedback. That context belongs to the dismissed route and can be deactivated during the transition.
+- The flow now captures the host navigator context before dismissal, closes the modal, verifies the host context is still mounted, and presents the receipt/success feedback from the host route. Booking creation and receipt contents are unchanged.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 6bbed9316107eba4dc07cb92c20cb1ada13bab23.
