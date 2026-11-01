@@ -182,16 +182,15 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final teamId = await TeamRepository().createTeam(teamData);
 
       if (teamId != null && mounted) {
+        final messenger = ScaffoldMessenger.of(context);
+        final successTextStyle = Theme.of(context)
+            .textTheme
+            .labelLarge
+            ?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold);
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
-            content: Text(
-              l10n.teamCreatedSuccess,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelLarge
-                  ?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold),
-            ),
+            content: Text(l10n.teamCreatedSuccess, style: successTextStyle),
             backgroundColor: VSPColors.accent,
           ),
         );
