@@ -294,6 +294,41 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                     ],
                   ),
                 ),
+              if (_summaryLoadError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.warning),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          summaryReady
+                              ? (isAr
+                                  ? 'تعذر تحديث ملخص الرصيد. المعروض آخر ملخص تم تحميله.'
+                                  : 'Could not refresh the balance summary. Showing the last loaded summary.')
+                              : (isAr
+                                  ? 'ملخص الرصيد غير متاح حالياً.'
+                                  : 'The balance summary is currently unavailable.'),
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadSummary,
+                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
               // Never present an unconfirmed balance as a verified zero.
               if (summaryReady)
                 OwnerDigitalBalanceCard(
