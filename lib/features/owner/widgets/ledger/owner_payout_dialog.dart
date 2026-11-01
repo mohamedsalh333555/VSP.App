@@ -41,7 +41,7 @@ class OwnerPayoutDialog {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           title: Text(
             isAr ? 'وسيلة التحصيل غير مسجلة' : 'Payout Method Required',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
           ),
           content: Text(
             isAr
@@ -68,7 +68,7 @@ class OwnerPayoutDialog {
                 minimumSize: const Size(64, 48),
                 tapTargetSize: MaterialTapTargetSize.padded,
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 minimumSize: const Size(64, 48),
                 tapTargetSize: MaterialTapTargetSize.padded,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
@@ -214,7 +214,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
       title: Text(
         widget.isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
       ),
       content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -246,7 +246,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
             const SizedBox(height: 12),
             Text(
               widget.isAr ? 'المبلغ المطلوب سحبه:' : 'Payout Amount:',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             TextField(
@@ -254,7 +254,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
               onChanged: _validateAmount,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               decoration: InputDecoration(
                 filled: true,
                 fillColor: VSPColors.inputFill,
@@ -306,7 +306,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
             const SizedBox(height: 14),
             Text(
               widget.isAr ? 'جهة التحويل المطلوبة:' : 'Transfer Destination:',
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             ...widget.destinations.map((dest) {
@@ -320,7 +320,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                     color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.inputFill,
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                     border: Border.all(
-                      color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+                      color: isSelected ? VSPColors.accent : VSPVSPColors.white08,
                       width: isSelected ? 1.5 : 1.0,
                     ),
                   ),
@@ -339,7 +339,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                             Text(
                               dest['title']!,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : VSPColors.textSecondary,
+                                color: isSelected ? VSPColors.white : VSPColors.textSecondary,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 fontSize: 12,
                               ),
@@ -347,7 +347,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                             Text(
                               dest['value']!,
                               style: TextStyle(
-                                color: isSelected ? VSPColors.accent : Colors.white70,
+                                color: isSelected ? VSPColors.accent : VSPVSPColors.white70,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -411,14 +411,14 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
               child: _isSubmitting
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                     )
                   : Text(
                       widget.isAr ? 'تأكيد الإرسال' : 'Confirm Request',
