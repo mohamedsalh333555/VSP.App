@@ -1423,3 +1423,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `edit_profile_screen.dart` and `set_new_password_screen.dart` both had default top SafeArea padding beneath an AppBar. Both now suppress the duplicate top inset; Edit Profile also avoids applying bottom safe padding twice because its scroll padding already includes the system bottom inset.
 - Code commits: `dca334764a8d6f23c1fecac3dfe7426ff03d060b`, `4fe91fa6b55baef5b8590a8a2b44db560a64dc71`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Player Bookings top-inset correction — 2026-11-01
+
+- `bookings_screen.dart` has its own AppBar, which already handles the top system inset. Its body SafeArea no longer adds the status-bar inset a second time.
+- Code commit: `dab989b7e51bc7891300aa49d882df7ae31cf1c4`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
