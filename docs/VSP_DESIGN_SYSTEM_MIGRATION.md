@@ -41,6 +41,7 @@ This document records the shared foundation migration. It is not, by itself, a c
 
 - Current `docs/UXLP_44_SCREEN_REGISTER.md`: **338 unique Dart screen/surface paths**, **366 table rows** (28 repeated paths record separate embedded-component findings), plus one shared navigation component entry.
 - The recorded heuristic source scan is historical: it fetched 128 candidate files from an earlier 215-path inventory. It has **not** been rerun against the current 338-path register; complete current Design System scan coverage is therefore **not proven**.
+- A separate current partial triage scanned PR diff additions across 321 changed Dart files (14,991 added lines) and fetched/scanned all 69 registered paths untouched by this PR. It found and corrected 28 raw-color files, six physical left/right geometry occurrences across five files, ten inline duration/delay values across seven files, and 19 additional changed-surface raw-color findings. This covers selected patterns, not every unchanged line in all changed files; it does **not** establish a complete full-file scan of all 338 paths.
 - All 338 unique registered paths have source-review notes, but those notes are not runtime passes. Embedded caller behavior, Arabic/English direction, compact/large text, keyboard/system insets, contrast pairings, and loading/empty/error/success states still need direct verification.
 - The current global UXLP-44 matrix records 39 rules as `source reviewed—runtime pending` and rules 25, 31, 38, 39, and 41 as `needs product decision`. No rule has a runtime pass. This global matrix is not a completed 44 × screen × state matrix.
 - The next audit gate is a current-branch static scan across the full 338-path register, completion of the per-screen/per-state rule mapping, closure of objective source findings, and then one consolidated device/runtime validation.
@@ -295,3 +296,12 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Added `VSPDSMotion.microInteraction` (160ms) and exposed `VSPDSMotion` through the compatibility facade. Replaced inline 160ms/180ms durations in quick-booking payment, all-stadium filter, filter-category sidebar, and terms-checkbox interactions without changing their timing.
 - `CopyablePhoneText` now uses locale-directional start alignment and explicitly renders the phone-number text LTR.
 - These corrections are source-level evidence only. Runtime contrast, Arabic/English alignment, device insets, and motion behavior remain pending; no UXLP-44 pass is claimed from this batch.
+
+## Expanded token and interaction cleanup — 2026-11-01
+
+- Added alpha primitives `white03`, `white20`, `white25`, `black10`, `black25`, `black30`, and `black85`; added semantic `warningSoft` and `warningBorder`. Exact legacy alpha values were preserved.
+- Extended `VSPDSMotion` with `press` (120ms), `selection` (200ms), `microInteraction` (160ms), `indicatorTransition` (300ms), `fadeIn` (400ms), `bannerTransition` (600ms), and a 50ms stagger-step constant. Existing 250ms/1500ms timings now reference canonical tokens where reviewed.
+- Migrated the remaining raw palette references found in the 69 full-file scanned register paths, including owner bracket scoring, Copilot, owner insights/verification, ledger, player filters, booking cards, refund badge, banner, tournament wizard, and champion surfaces.
+- Replaced physical left/right spacing in the inspected tournament wizard and Add Stadium hours components with directional geometry. The Copilot loading bubble now uses directional alignment and Arabic/English status copy.
+- Removed the arbitrary 800ms wait from the player-home refresh indicator; it now awaits the actual stadium refresh future.
+- Post-fix checks re-fetched all 28 files with raw-color findings and confirmed no remaining `Colors.black`, `Colors.white`, `Colors.transparent`, or `Colors.amber` references in those files. This remains static source evidence, not a runtime pass.
