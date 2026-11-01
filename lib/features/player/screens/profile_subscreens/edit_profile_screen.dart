@@ -128,7 +128,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  leading: const VSPBackButton(),
  title: Text(
@@ -188,7 +188,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  shape: BoxShape.circle,
  border: Border.all(color: VSPColors.background, width: 3),
  ),
- child: const Icon(Iconsax.image_copy, size: 16, color: Colors.black),
+ child: const Icon(Iconsax.image_copy, size: 16, color: VSPColors.black),
  ),
  ],
  ),
@@ -256,7 +256,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  final label = isAr ? '${pos.code} - ${pos.nameAr}' : '${pos.code} - ${pos.nameEn}';
  return DropdownMenuItem<String>(
  value: pos.code,
- child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+ child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
  );
  }).toList(),
  onChanged: (String? newValue) {
@@ -336,7 +336,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  onPressed: () => _showDeleteAccountDialog(context),
  style: TextButton.styleFrom(
  backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
  ),
