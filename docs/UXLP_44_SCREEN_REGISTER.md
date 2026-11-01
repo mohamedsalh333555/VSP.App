@@ -429,3 +429,9 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 - `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart`: cash confirmation and phone-call controls now meet a 48dp minimum target (previously 36dp); the post-confirmation receipt bottom sheet is scrollable and respects the device safe area, including short-height screens and bottom system insets. Payment eligibility, `updatePaymentStatus` call, receipt content, and WhatsApp action are unchanged.
 - Source commit: `55c3992dd9bf091fea1d29b55effc710a9212554`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Stadium image gallery lifecycle and navigation target — 2026-11-01
+
+- `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart`: the full-screen gallery's temporary `PageController` is now disposed when the dialog closes (previously allocated for each opening and never disposed); the top back action hit area is raised from 40dp to 48dp. Image paging, zoom, hero transition, and navigation destination are unchanged.
+- Source commit: `3d3a696719a7e939b5eee8ec8c7977747ed71618`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
