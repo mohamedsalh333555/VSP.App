@@ -95,12 +95,21 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
 
   Future<void> _whatsappFallback() async {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final requestGeneration = _accountGeneration;
+    final requestingUserId = _streamUserId;
+    bool requestStillBelongsToActiveAccount() =>
+        mounted &&
+        requestGeneration == _accountGeneration &&
+        requestingUserId != null &&
+        requestingUserId.isNotEmpty &&
+        context.read<AuthProvider>().currentUser?.id == requestingUserId;
+    if (!requestStillBelongsToActiveAccount()) return;
     try {
       final settings = await AppSettingsRepository().getSettings();
+      if (!requestStillBelongsToActiveAccount()) return;
       final phone = settings.whatsappNumber.isNotEmpty
           ? settings.whatsappNumber
           : settings.supportPhone;
-      if (!mounted) return;
       if (phone.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -122,7 +131,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         // Escalation tracking is secondary; opening the configured support
         // channel remains available even if this metadata update fails.
       }
-      if (!mounted) return;
+      if (!requestStillBelongsToActiveAccount()) return;
       await VSPLauncherUtils.openWhatsApp(
         context,
         phone: phone,
