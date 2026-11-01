@@ -128,7 +128,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
           isArabic ? 'جميع الملاعب' : 'All Stadiums',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: VSPColors.white,
               ),
         ),
         actions: [
@@ -223,7 +223,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                               label: Text(isArabic ? 'إعادة ضبط الفلاتر' : 'Reset Filters'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: VSPColors.accent,
-                                foregroundColor: Colors.black,
+                                foregroundColor: VSPColors.black,
                                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                               ),
@@ -386,7 +386,7 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
             Expanded(
               child: TextField(
                 controller: _searchController,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(color: VSPColors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: isArabic ? 'ابحث باسم الملعب، المدينة أو المحافظة...' : 'Search stadium name or city...',
                   hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
