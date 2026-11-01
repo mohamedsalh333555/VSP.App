@@ -1376,3 +1376,12 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Source review found `generate_team_league_fixtures(p_championship_id)` is `SECURITY DEFINER`, is granted to `authenticated`, accepts a caller-supplied championship ID, and can delete/recreate scheduled fixtures and move the league to `ongoing` without checking caller identity or full payment completion. The Flutter repository does not call this RPC directly; it is invoked internally by the service-role payment-confirmation flow.
 - Evidence and proposed permission/invariant fix are recorded as `TL-03` in `docs/UXLP_44_RULE_AUDIT.md`.
 - This is a critical access-control/business-integrity change. No SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Authentication safe-area, RTL and location touch-target batch — 2026-11-01
+
+- `login_screen.dart`: removed duplicate bottom system inset inside `SafeArea`; forgot-password action uses directional end alignment for Arabic/English.
+- `signup_screen.dart`: removed duplicate bottom system inset; GPS auto-detect is a localized 48×48dp `IconButton`.
+- `player_onboarding_screen.dart` and `owner_onboarding_location_section.dart`: GPS auto-detect controls now use localized tooltips and 48×48dp targets.
+- Code commits: `4d6bd7cfa9726f3d6ecff1992f5de842fa8ea15a`, `b4eef846e7614448575f81b6bcfad21c6a9add82`, `3d08f560651a8619efd93acf46fdf9bbdff045a5`, `b0b47a09e993add33200b2ac7665be0edad0814d`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
