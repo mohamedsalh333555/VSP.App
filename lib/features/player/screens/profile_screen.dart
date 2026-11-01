@@ -173,14 +173,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
  ),
  trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
  onTap: () async {
- await auth.updateProfile({'governorate': gov});
- if (context.mounted) {
- context.read<StadiumProvider>().applyGovernorateFilter(gov);
- Navigator.pop(sheetContext);
- VSPFeedback.showSuccess(
- context,
- isArabic ? 'تم تغيير موقعك إلى $displayGovName بنجاح ' : 'Location changed to $gov successfully ',
- );
+ try {
+   await auth.updateProfile({'governorate': gov});
+   if (!context.mounted || !sheetContext.mounted) return;
+   context.read<StadiumProvider>().applyGovernorateFilter(gov);
+   Navigator.pop(sheetContext);
+   VSPFeedback.showSuccess(
+     context,
+     isArabic
+         ? 'تم تغيير موقعك إلى $displayGovName بنجاح'
+         : 'Location changed to $gov successfully',
+   );
+ } catch (_) {
+   if (!context.mounted) return;
+   VSPFeedback.showError(
+     context,
+     isArabic
+         ? 'تعذر تحديث المحافظة. حاول مرة أخرى.'
+         : 'Could not update your governorate. Please try again.',
+   );
  }
  },
  );
