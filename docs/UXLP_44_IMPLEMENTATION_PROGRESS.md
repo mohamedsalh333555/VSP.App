@@ -1882,3 +1882,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Support ticket details and message streams, the support-ticket list, team profile, My Team, and notification preferences now use localized shared loading states rather than raw page-level spinners.
 - This pass changes presentation only: repository queries, booking/tournament permissions, payment behavior, stream lifecycles, and retry handlers are unchanged. Inline action/image progress indicators remain intentionally compact.
 - Source-level changes only. No analyzer, tests, CI, device validation, or APK build was run.
+
+- Owner tournament dashboard dialogs: raised all eight explicitly 44dp `PrimaryButton` action targets to 48dp across unpaid-team confirmation, force-start, cancel, and destructive tournament dialogs. Dialogs remain scrollable; business decisions and action callbacks are unchanged.
