@@ -42,6 +42,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   }
 
   void _onSearchChanged(String query) {
+    // Invalidate an in-flight request as soon as the user changes the query.
+    _searchRequestGeneration++;
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       _performSearch(query);
