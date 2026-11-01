@@ -1188,3 +1188,17 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Booking availability precheck fail-closed handling — 2026-11-01
 - Fixed `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: if both the booking-provider stream and direct repository fallback failed while checking the selected slot, the exception was logged but execution continued toward payment/booking confirmation. The flow now stops, resets its loading state, and tells the player that availability could not be verified. This avoids presenting an unverified slot as ready to book; the server-side booking authority remains unchanged.
 - No pricing, slot reservation, or payment rules were changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `59423c42669c8787c0db8ed2d2547f990107199e`.
+
+
+## Consolidated analyzer blocker corrections — 2026-11-01
+
+The automatically triggered PR workflow run `41263244452` reached Flutter Analyze after dependency installation, localization generation, and Firebase client-options verification succeeded. Analyze reported compile/analyzer errors in the following source locations:
+
+- `matchup_live_dashboard_screen.dart`: missing import for the shared `PrimaryButton`.
+- `support_ticket_screen.dart`: BuildContext use after asynchronous gaps in the WhatsApp escalation path; explicit mounted guards now precede context access and launcher invocation.
+- `booking_calendar_modal.dart`: one surplus closing parenthesis in the scroll-safe date dialog.
+- `filter_bottom_sheet.dart`: the header's expanded title row was not closed before the trailing close button.
+- `team_league_gathering_card.dart` and `team_league_match_dialog.dart`: dynamic locale-dependent text was incorrectly placed inside const widget subtrees.
+- `payment_verification_modal.dart`: one missing closing parenthesis for the outer PopScope/Center composition.
+
+These source corrections are committed on `uxlp-44-implementation`. They are not yet verified by a subsequent successful analyzer run. The original run stopped at Analyze; its Test and APK steps were skipped. The consolidated final validation gate remains open, and all UXLP-44 rule statuses remain runtime-pending.
