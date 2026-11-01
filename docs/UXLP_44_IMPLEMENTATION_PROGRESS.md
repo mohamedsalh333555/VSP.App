@@ -1813,3 +1813,16 @@ Read-only inspection was performed against the connected production VSP project 
   - Direct ACL query confirms `get_team_active_league`, `submit_team_league_match_result`, and `vsp_user_is_tournament_participant` are SECURITY DEFINER and executable by authenticated.
 - No Supabase grants, RLS policies, views, functions, auth settings, migrations, or production data were changed. The broad 198-function advisor result must be triaged by intended client entry points and internal wrapper dependencies; blanket revocation would risk breaking app workflows.
 - No tests, analyzer, CI, runtime validation, or APK build were run.
+
+
+
+## Follow-up batch — dialogs and owner/player sheet targets (2026-11-01)
+
+- `lib/features/player/widgets/collective_match_invite_sheet.dart`: close control now has a localized tooltip and 48×48dp constraints; manual participant increment/decrement controls use 48×48dp.
+- `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart`: primary confirmation action increased from 44dp to 48dp.
+- `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart`: cancel action now has a 48dp minimum height and padded tap target. Existing scroll-controlled route, SafeArea, keyboard-dismiss behavior, and password verification flow preserved.
+- `lib/features/player/widgets/payment/payment_cancel_dialog.dart` and `lib/features/owner/widgets/booking_sheet/booking_sheet_cancel_dialog.dart`: both received 48dp action targets in the preceding batch.
+- `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart`: already used 48dp PrimaryButton actions and a narrow-screen stacked layout; no behavioral change needed.
+- `lib/features/owner/widgets/quick_phone_booking_modal.dart`, `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart`, and `lib/features/player/widgets/payment/payment_verification_modal.dart` use scrollable content or bounded modal layouts; this source pass did not establish complete device/runtime SafeArea coverage.
+- Supabase log drill-down shows repeated Warp timeout entries at root path `/` with no method/status/request identifier fields populated. They recur in time clusters (for example 08:54, 08:44, 08:16 UTC on 2026-11-01); the available log payload does not identify a concrete app RPC or table. No SQL/function/index change is justified from these entries alone.
+- No tests, analyzer, CI, runtime validation, or APK build were run.
