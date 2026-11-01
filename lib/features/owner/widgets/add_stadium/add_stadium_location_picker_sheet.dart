@@ -103,7 +103,7 @@ class AddStadiumLocationPickerSheet {
                           size: 48,
                           shadows: [
                             Shadow(
-                              color: VSPVSPColors.black.withValues(alpha: 0.45),
+                              color: VSPColors.black45,
                               offset: Offset(0, 4),
                               blurRadius: 6,
                             ),
@@ -128,7 +128,7 @@ class AddStadiumLocationPickerSheet {
                               border: Border.all(color: VSPColors.divider),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: VSPVSPColors.black.withValues(alpha: 0.26),
+                                  color: VSPColors.black26,
                                   blurRadius: 10,
                                   offset: Offset(0, 4),
                                 ),
@@ -241,7 +241,7 @@ class AddStadiumLocationPickerSheet {
                           border: Border.all(color: VSPColors.divider),
                           boxShadow: const [
                             BoxShadow(
-                              color: VSPVSPColors.black.withValues(alpha: 0.26),
+                              color: VSPColors.black26,
                               blurRadius: 6,
                               offset: Offset(0, 3),
                             ),
@@ -302,7 +302,7 @@ class AddStadiumLocationPickerSheet {
                               border: Border.all(color: VSPColors.divider),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: VSPVSPColors.black.withValues(alpha: 0.26),
+                                  color: VSPColors.black26,
                                   blurRadius: 6,
                                   offset: Offset(0, 2),
                                 ),
