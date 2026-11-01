@@ -107,7 +107,7 @@ void showBookingCalendarModal({
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                         ),
                       ],
@@ -151,7 +151,7 @@ void showBookingCalendarModal({
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? VSPColors.accent
-                                  : (isPastDate ? VSPColors.surfaceAlt : Colors.transparent),
+                                  : (isPastDate ? VSPColors.surfaceAlt : VSPColors.transparent),
                               shape: BoxShape.circle,
                             ),
                             child: Text(
