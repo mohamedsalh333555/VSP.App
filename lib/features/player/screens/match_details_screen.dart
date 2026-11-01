@@ -553,7 +553,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  if (_isLoading) {
  return const VSPScaffold(
  backgroundColor: VSPColors.background,
- body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+ body: SafeArea(
+   child: Center(
+     child: CircularProgressIndicator(color: VSPColors.accent),
+   ),
+ ),
  );
  }
 
