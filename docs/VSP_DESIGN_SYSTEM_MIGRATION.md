@@ -283,3 +283,10 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Existing workflow run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423) failed in the Flutter Release compile step on older commit `6eb50fdd2c4e6879a4c8a95a5a0de1415af4a5aa` because of an unmatched widget-tree delimiter in `stadium_details_screen.dart` and a missing import for the shared `VSPErrorState` in `facility_onboarding_screen.dart`.
 - Both source causes were corrected on this branch in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`. The old run does not validate the new commits; runtime and consolidated verification remain pending.
 - No build was triggered during this review and no APK artifact exists from this run.
+
+
+## Semantic color alias cleanup — 2026-11-01
+
+- Replaced raw black/white/transparent UI literals with existing VSP design-system aliases in 11 auth/owner surfaces: welcome, forgot-password dialog, create-tournament wizard, owner dashboard, owner tournament dashboard, subscription plans, tournament brackets, owner bookings, owner booking filter bar, owner profile, and owner payout OTP sheet.
+- The changes reuse existing `VSPColors` / `VSPDSColors` primitives; no palette, business, payment, authorization, or data behavior changed.
+- Runtime contrast and state verification remain pending.
