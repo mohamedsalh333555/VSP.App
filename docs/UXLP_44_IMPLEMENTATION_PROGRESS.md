@@ -902,3 +902,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Added a `mounted` check after awaiting the dispute-confirmation dialog and before changing the sheet's loading state or starting the resolution callback. This prevents `setState` or continued work on a league sheet that was dismissed while its confirmation dialog was open.
 - Dispute confirmation wording, resolution choices, and league result behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: 76b6c864cbf4c13bc2120d58e154b88343a411ec.
+
+
+## Cash booking empty-result recovery — 2026-11-01
+- Fixed the cash booking sheet's null-result branch: if `createBooking` returns `null` while the sheet is still mounted, the action now always clears its navigating/loading state and displays the existing localized failure message. Previously this recovery only ran when `BookingProvider.errorMessage` was non-null, which could leave the cash option permanently disabled with no feedback if the provider returned null without setting an error string.
+- Booking creation, eligibility, payment values, and server-side rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: 3b7f99ba5b0c0bf3ec0fa7ca23ff08a888f90bf7.
