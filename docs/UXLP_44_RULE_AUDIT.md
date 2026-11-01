@@ -1222,3 +1222,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29 and 31 — booking time-boundary accuracy:** player slot generation no longer offers a 30-minute slot whose end would exceed the configured stadium closing time. Runtime and backend boundary checks remain pending.
+
+
+- **Rules 29 and 31 — owner/player schedule consistency:** owner schedule slots now respect exact opening and closing minutes and do not show partial final half-hours beyond closing; overnight/24-hour schedules are calculated on an operational-minute timeline. Device verification remains pending.
