@@ -271,6 +271,7 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
           ),
         ),
       ),
+      ),
     );
   }
 
