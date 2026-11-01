@@ -1002,3 +1002,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Participant removal refresh serialization — 2026-11-01
 - Fixed `lib/shared/widgets/match_card/manage_participants_modal.dart`: after removing a participant, the modal previously started `_fetchUsers()` without awaiting it. The `finally` block therefore released `_isProcessing` before the refreshed participant list completed, allowing another participant action while the previous refresh was still in flight.
 - The refresh is now awaited, keeping the existing action lock active until the updated participant list finishes loading. Repository operation and participant eligibility are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 085104f0b6be71d9a9f6e3c1dcd53bcecd29fbfd.
+
+
+## Team leave callback lifecycle guard — 2026-11-01
+- Fixed `lib/features/player/widgets/my_team/team_dialogs.dart`: the leave-team async action invoked its parent `onSavingFinished` callback unconditionally from `finally`, even if the owning team screen had been disposed while the repository request was pending. The callback now runs only while the parent context remains mounted, preventing a disposed parent from receiving a late state update.
+- Team membership operation and captaincy-transfer behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 40b3d91d4851354303a428c86b739e0fe6ec4c65.
