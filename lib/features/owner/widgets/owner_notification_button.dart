@@ -48,7 +48,7 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
               tooltip: hasError
                   ? (isArabic ? 'تعذر تحديث الإشعارات' : 'Could not refresh notifications')
                   : (isArabic ? 'الإشعارات' : 'Notifications'),
-              icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+              icon: const Icon(Iconsax.notification_copy, color: VSPColors.white),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 Navigator.push(
