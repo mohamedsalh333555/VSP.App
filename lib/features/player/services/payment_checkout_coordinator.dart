@@ -72,7 +72,11 @@ class PaymentCheckoutCoordinator {
     Duration interval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
+    var isFetching = false;
+    var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(interval, (timer) async {
+      if (isFetching || hasConfirmed) return;
+      isFetching = true;
       try {
         final booking = await fetchBooking(bookingId);
         if (booking != null &&
@@ -80,6 +84,7 @@ class PaymentCheckoutCoordinator {
               status: booking.status.toDbValue(),
               paymentStatus: booking.paymentStatus,
             )) {
+          hasConfirmed = true;
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -87,6 +92,8 @@ class PaymentCheckoutCoordinator {
         }
       } catch (e) {
         debugPrint('Fallback polling notice: $e');
+      } finally {
+        isFetching = false;
       }
     });
   }
@@ -106,10 +113,15 @@ class PaymentCheckoutCoordinator {
     required void Function(Map<String, dynamic>) onPaid,
   }) {
     _fallbackPollingTimer?.cancel();
+    var isFetching = false;
+    var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+      if (isFetching || hasConfirmed) return;
+      isFetching = true;
       try {
         final status = await fetchStatus(orderReference);
         if (status['success'] == true && status['payment_status'] == 'paid') {
+          hasConfirmed = true;
           timer.cancel();
           _webhookTimeoutTimer?.cancel();
           _fallbackPollingTimer?.cancel();
@@ -117,6 +129,8 @@ class PaymentCheckoutCoordinator {
         }
       } catch (e) {
         debugPrint('Tournament payment polling notice: $e');
+      } finally {
+        isFetching = false;
       }
     });
   }
