@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
 import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/booking_confirmation_screen.dart';
@@ -980,8 +981,10 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     // A failed or unfinished membership query is not equivalent to no team.
     if (widget.isLoadingUserTeam) {
-      return const Center(
-        child: CircularProgressIndicator(color: VSPColors.accent),
+      return VSPStateView(
+        state: VSPUiState.loading,
+        title: isArabic ? 'جارٍ تحميل بيانات فريقك' : 'Loading your team',
+        message: isArabic ? 'نتحقق من عضويتك قبل عرض الدوري.' : 'Checking your team membership before showing the league.',
       );
     }
     if (widget.hasUserTeamLoadError) {
@@ -1053,7 +1056,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
     // 2. Loading state
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+      return VSPStateView(
+        state: VSPUiState.loading,
+        title: isArabic ? 'جارٍ تحميل الدوري' : 'Loading league',
+        message: isArabic ? 'نحدّث تفاصيل الدوري والمشاركين.' : 'Fetching league details and participants.',
+      );
     }
 
     if (_hasLeagueLoadError) {
