@@ -237,6 +237,11 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (snapshot.hasError)
+                            _TournamentBracketStaleWarning(
+                              isArabic: isArabic,
+                              onRetry: _refreshMatches,
+                            ),
                           if (canAdvanceGroups) _buildAdvanceGroupsBanner(context, isArabic),
                           ChampionshipStandingsSection(
                             championship: widget.championship,
@@ -253,7 +258,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                   final showOwnerBanner = widget.isOwner;
                   final showAdvanceGroups = roundIdx == 99 && canAdvanceGroups;
                   final headerOffset = (showChampion ? 1 : 0) + (showOwnerBanner ? 1 : 0) + (showAdvanceGroups ? 1 : 0);
-                  final totalItems = headerOffset + roundMatches.length;
+                  final totalItems =
+                      headerOffset + roundMatches.length + (snapshot.hasError ? 1 : 0);
                   final roundName = _getRoundLabel(context, roundIdx, sortedRounds.length);
 
                   return ListView.builder(
@@ -261,6 +267,13 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                     itemCount: totalItems,
                     itemBuilder: (context, index) {
                       var currentIndex = index;
+                      if (snapshot.hasError && currentIndex == 0) {
+                        return _TournamentBracketStaleWarning(
+                          isArabic: isArabic,
+                          onRetry: _refreshMatches,
+                        );
+                      }
+                      if (snapshot.hasError) currentIndex--;
                       if (showChampion) {
                         if (currentIndex == 0) {
                           final winnerName = roundMatches.first.winnerId == roundMatches.first.homeTeamId
@@ -340,5 +353,48 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         }
         return 'Round ${roundIndex + 1}';
     }
+  }
+}
+
+class _TournamentBracketStaleWarning extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onRetry;
+
+  const _TournamentBracketStaleWarning({
+    required this.isArabic,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+      child: Container(
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        decoration: BoxDecoration(
+          color: VSPColors.warning.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+            const SizedBox(width: VSPSpacing.sm),
+            Expanded(
+              child: Text(
+                isArabic
+                    ? 'تعذر تحديث الجدول. المعروض آخر بيانات تم تحميلها.'
+                    : 'Could not refresh the bracket. Showing the last loaded data.',
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+            ),
+            TextButton(
+              onPressed: onRetry,
+              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
