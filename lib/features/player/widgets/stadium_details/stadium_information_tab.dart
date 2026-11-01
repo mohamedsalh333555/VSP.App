@@ -180,7 +180,7 @@ class StadiumInformationTab extends StatelessWidget {
           // Location badge opens the stadium in the external maps app.
           ConstrainedBox(
             constraints: BoxConstraints(
-              maxWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0.0, double.infinity),
+              maxWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0.0, double.infinity).toDouble(),
             ),
             child: Tooltip(
               message: Localizations.localeOf(context).languageCode == 'ar'
