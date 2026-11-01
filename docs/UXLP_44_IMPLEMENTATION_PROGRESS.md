@@ -1611,3 +1611,9 @@ Read-only inspection was performed against the connected production VSP project 
 - Fixed `lib/features/player/widgets/booking_type_modal.dart`: removed the manual keyboard/system inset subtraction and unsafe 240dp minimum from its height calculation. The scroll-controlled SafeArea route now owns the actual viewport; the sheet retains its preferred 82% content-height cap and bottom padding.
 - Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: removed duplicate keyboard/system inset subtraction and the 240dp minimum from its maximum-height calculation. Added the device bottom system inset to the scrollable list's bottom padding so final content/actions remain reachable above system navigation.
 - Booking type selection, team lookup, collective invite, join/leave, and host actions are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `422c4f223ce9e6edf62f17dbb44b0eead1cd33a5`, `a75c17dbe3344905955eb4a50d372c7750855824`.
+
+
+## Create Team sheet keyboard viewport correction — 2026-11-01
+
+- Fixed `lib/features/player/widgets/create_team_sheet.dart`: both known callers open it as a scroll-controlled `useSafeArea: true` modal route. The sheet previously subtracted keyboard and system insets again from full screen height. It now relies on the route's actual viewport constraints while retaining its bottom system padding, scrollable form content, and sticky action controls.
+- Team creation, logo upload, roster entry, and membership behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `ca4778a2bed9827aa9dccb4f2655d9468884d904`.
