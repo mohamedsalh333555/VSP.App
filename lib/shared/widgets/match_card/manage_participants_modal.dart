@@ -54,6 +54,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   }
 
   Future<void> _refreshBookingAndUsers() async {
+    if (!mounted) return;
     try {
       final updatedBooking = await Provider.of<BookingProvider>(
         context,
@@ -75,7 +76,14 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     try {
       final allUserIds = [..._joinedUserIds, ..._pendingUserIds];
       if (allUserIds.isEmpty) {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            _participants = [];
+            _pending = [];
+            _isLoading = false;
+            _hasLoadError = false;
+          });
+        }
         return;
       }
 
