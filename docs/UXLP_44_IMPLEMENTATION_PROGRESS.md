@@ -1960,3 +1960,11 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart`: both selected-value dropdown alignments now use `AlignmentDirectional.centerEnd` instead of physical `Alignment.centerRight`, so the displayed filter value follows RTL/LTR reading direction.
 - Added ten previously unregistered owner embedded components to the coverage register: stadium feature/image/step-indicator widgets, tournament champion banner, booking/revenue/KPI insight cards and grid, top filters, and basic financial glance. Their underlying Supabase data, caller integration, and runtime behavior remain pending individual review.
 - Code commit: `e54b53d957dbc27fb894eed8007de70879867f7e`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Owner dashboard timeline/filter RTL pass and component coverage — 2026-11-01
+
+- `owner_glanceable_timeline.dart`: ongoing-status marker now uses directional end margin so the dot-to-time gap follows reading direction.
+- `owner_time_period_dropdown.dart`: selected period label now uses `AlignmentDirectional.centerEnd` rather than physical right alignment.
+- Added ten more embedded owner components to the register: timeline, operational finance, PRO insights/overview/segmented tabs, period dropdown, today's pitch schedule, venue filters, verification/subscription banners, and document explanation card. Their real-data mapping, entitlement states, and runtime behavior remain pending caller-level review.
+- Code commits: `23c400d1b5e20981df5e6d921f700a5a9e43e672`, `55118920b49738ef0c3fce29ab0edd6fbc3f2384`. No tests, analyzer, CI, runtime checks, or APK build were run.
