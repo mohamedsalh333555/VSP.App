@@ -388,3 +388,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried player chat message surface — 2026-11-01
 
 | `lib/features/player/widgets/chat/chat_message_bubble.dart` | player | source reviewed—runtime pending (message edit custom action is localized for assistive technology; sender names bounded; timestamps use active locale) |
+
+
+### Newly inventoried signup and email-verification surfaces — 2026-11-01
+
+| `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart` | auth | source reviewed—runtime pending (date-of-birth field has focusable InkWell and localized label tooltip) |
+| `lib/features/auth/widgets/verify_email/otp_box.dart` | auth | source reviewed—runtime pending (keyboard event listener no longer creates an undisposed FocusNode in build; numeric LTR input retained) |
+| `lib/features/auth/widgets/verify_email/otp_resend_section.dart` | auth | source reviewed—runtime pending (resend is a 48dp TextButton and remains disabled during countdown/resend; change-email action retained) |
