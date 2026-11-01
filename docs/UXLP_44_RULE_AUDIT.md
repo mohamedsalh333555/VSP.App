@@ -690,3 +690,23 @@ The booking and kickoff constraints exist only in the Flutter presentation path.
 Before the submission upsert, make the RPC reject a fixture with no `booking_id`, a null `scheduled_time`, or a `scheduled_time` later than `clock_timestamp()`. Keep the existing auth, team-membership, participation, and result-lock checks intact. Then add a focused SQL verification proving the RPC rejects both an unbooked fixture and a future fixture, and accepts an eligible booked fixture.
 
 **Status:** Awaiting explicit approval of the exact migration SQL. No SQL has been drafted, applied, or deployed in this pass.
+
+
+### TL-02 — Team League active-league RPC lacks participant authorization
+
+**Severity:** Critical — authenticated cross-team data exposure  
+**Affected rules:** 25, 38, 39, 43
+
+**Evidence**
+- `supabase/migrations/20261001022000_vsp_team_league_runtime_linkage_fix.sql` defines `public.get_team_active_league(p_team_id uuid)` as `SECURITY DEFINER`. It reads the requested team's league and returns the full teams/matches/submissions payload, including each team's `captain_phone`.
+- In that function, `v_user_id := auth.uid()` is assigned and `v_is_creator` is calculated, but there is no rejection for a null user and no membership/captain/creator authorization check before returning the payload.
+- `supabase/migrations/20260930050000_vsp_team_league_ssot_and_creator_authority.sql` grants execution to `authenticated` after revoking `PUBLIC` and `anon`. That role grant is authentication-only; it does not prove league participation.
+- `lib/core/repositories/league/team_league_repository.dart` calls this RPC with a client-supplied `p_team_id`, so the database function must enforce the access boundary itself.
+
+**Root cause**
+The active `SECURITY DEFINER` function trusts the caller-supplied team ID and omits the authorization predicate that must protect privileged reads. Because it returns captain contact fields and team submissions, an authenticated user may be able to request another team's league data directly.
+
+**Proposed fix for approval**
+Add an in-function authorization gate before constructing the response: require a non-null `auth.uid()`, then allow only the league creator or a captain/member of a team participating in that league. Keep the existing data contract for authorized participants unless product approves reducing returned fields; consider whether `captain_phone` is necessary for every participant. Preserve the existing authenticated-only EXECUTE grant, and add SQL verification for unauthenticated, unrelated authenticated, participant, and league-creator callers.
+
+**Status:** Critical approval-required security finding. No SQL was drafted, applied, or deployed in this pass.
