@@ -67,7 +67,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected ? VSPColors.black : VSPColors.white,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
@@ -93,7 +93,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.black : Colors.white,
+          color: isSelected ? VSPColors.black : VSPColors.white,
           fontSize: 12,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
@@ -142,7 +142,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
                   widget.isArabic ? 'تصفية وترتيب الملاعب' : 'Filter & Sort Stadiums',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               TextButton(
@@ -206,7 +206,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
               child: Text(
