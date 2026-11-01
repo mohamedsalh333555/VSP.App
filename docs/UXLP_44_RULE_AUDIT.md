@@ -817,3 +817,9 @@ Read-only inspection of the connected VSP project `mktqkddbcddrxjxabdua` (Postgr
 - RLS is enabled and policies are present on all six previously flagged tables: `cancellation_refund_queue` (2), `challenge_results` (2), `internal_function_secrets` (1), `team_league_cancellation_refund_queue` (2), `team_league_payments` (2), and `vsp_1v1_cancellation_refund_queue` (2). The older zero-policy baseline is stale.
 
 No SQL, grants, RLS policies, migrations, or production data were changed. This was a read-only live-state check.
+
+
+### Final APK workflow gate — 2026-11-01
+
+- Removed the release workflow's automatic push trigger for `main` and `uxlp-44-implementation`; the workflow now runs only through `workflow_dispatch`, preserving the agreed final-phase APK gate.
+- Workflow commit: `76e27f24ac4173685197f24cb5e42892ba706356`. No manual release build was started. Previously triggered run status was not available through the connected GitHub actions controls in this session.
