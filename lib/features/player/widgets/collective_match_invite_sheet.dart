@@ -162,7 +162,11 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         ],
       ),
     );
-    if (ok != true || !mounted) return;
+    if (ok != true ||
+        !mounted ||
+        context.read<AuthProvider>().currentUser?.id != uid) {
+      return;
+    }
     setState(() => _leaving = true);
     try {
       await _repo.leavePrivateCollectiveMatch(booking.id, uid);
@@ -329,7 +333,8 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _cancel() async {
     final booking = _booking;
-    if (booking == null || _cancelling) return;
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (booking == null || uid == null || _cancelling) return;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final ok = await showDialog<bool>(
       context: context,
@@ -344,9 +349,11 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         ],
       ),
     );
-    if (ok != true || !mounted) return;
-    final uid = context.read<AuthProvider>().currentUser?.id;
-    if (uid == null) return;
+    if (ok != true ||
+        !mounted ||
+        context.read<AuthProvider>().currentUser?.id != uid) {
+      return;
+    }
     setState(() => _cancelling = true);
     try {
       final success = await context.read<BookingProvider>().cancelBooking(booking.id);
