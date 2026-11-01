@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../core/repositories/tournament_repository.dart';
 import '../../../../shared/widgets/vsp_fade_in_item.dart';
@@ -129,7 +130,11 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
       stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل البطولات' : 'Loading championships',
+            message: isArabic ? 'نحدّث البطولات المتاحة في منطقتك.' : 'Fetching championships available in your area.',
+          );
         }
         if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return Center(
