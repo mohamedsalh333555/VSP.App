@@ -63,7 +63,7 @@ class PaymentBreakdownCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   displayStadiumName,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ],
@@ -162,6 +162,7 @@ class PaymentBreakdownCard extends StatelessWidget {
   static void showFeeTransparencyModal(BuildContext context, bool isArabic) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: VSPColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
@@ -197,7 +198,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     isArabic ? 'تفاصيل المصاريف الإدارية' : 'Administrative Fee Details',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -214,7 +215,7 @@ class PaymentBreakdownCard extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -245,7 +246,7 @@ class PaymentBreakdownCard extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                color: isBold ? Colors.white : VSPColors.textSecondary,
+                color: isBold ? VSPColors.white : VSPColors.textSecondary,
                 fontSize: isBold ? 13 : 11,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               ),
@@ -269,7 +270,7 @@ class PaymentBreakdownCard extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: isBold ? VSPColors.accent : Colors.white,
+            color: isBold ? VSPColors.accent : VSPColors.white,
             fontSize: isBold ? 14 : 11,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
           ),
