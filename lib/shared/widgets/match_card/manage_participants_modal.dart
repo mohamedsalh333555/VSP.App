@@ -321,7 +321,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                           Padding(
                             padding: const EdgeInsets.all(20),
                             child: Align(
-                              alignment: Alignment.centerLeft,
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 isArabic ? 'طلبات الانضمام المعلقة:' : 'Pending Requests:',
                                 style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold),
@@ -404,7 +404,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                         Padding(
                           padding: const EdgeInsets.all(20),
                           child: Align(
-                            alignment: Alignment.centerLeft,
+                            alignment: AlignmentDirectional.centerStart,
                             child: Text(
                               AppLocalizations.of(context)!.joinedFromApp,
                               style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
