@@ -38,6 +38,9 @@ class VSPColors {
   static const Color black45 = VSPDSColors.black45;
   static const Color black54 = VSPDSColors.black54;
   static const Color black87 = VSPDSColors.black87;
+  static const Color black15 = VSPDSColors.black15;
+  static const Color black55 = VSPDSColors.black55;
+  static const Color black60 = VSPDSColors.black60;
   static const Color white70 = VSPDSColors.white70;
   static const Color transparent = VSPDSColors.transparent;
   static const Color white05 = VSPDSColors.white05;
@@ -46,6 +49,11 @@ class VSPColors {
   static const Color white15 = VSPDSColors.white15;
   static const Color white24 = VSPDSColors.white24;
   static const Color white38 = VSPDSColors.white38;
+  static const Color white02 = VSPDSColors.white02;
+  static const Color white04 = VSPDSColors.white04;
+  static const Color white06 = VSPDSColors.white06;
+  static const Color white50 = VSPDSColors.white50;
+  static const Color white54 = VSPDSColors.white54;
   static const Color whatsApp = VSPDSColors.whatsappGreen;
   static const Color proAccent = accent;
   static const Color proAccentSoft = accentSoft;
