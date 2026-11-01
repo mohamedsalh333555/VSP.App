@@ -658,3 +658,9 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 - `lib/features/owner/widgets/add_stadium/stadium_wizard_submit_service.dart`: stadium persistence is now treated separately from post-save owner-profile synchronization. If the stadium write succeeds but profile refresh fails, the UI no longer reports that the stadium save itself failed; it surfaces a localized account-sync warning and closes the completed wizard. The default stadium usage note is localized in Arabic and English, and blocked/auth-expired feedback is bilingual.
 - `lib/features/player/widgets/payment/paymob_callback_url_parser.dart`: payment callback decisions now require an HTTP(S) URL on an exact trusted payment domain or its subdomain, a recognized payment endpoint, and an explicit success/failure status parameter. Path-only `/payment-status`, arbitrary `standalone` substrings, and untrusted hosts no longer produce a success callback. Bank/3DS domains remain pending and rely on server-side payment-status polling.
+
+
+## Additional booking and tournament integrity fixes — 2026-11-01
+
+- `lib/features/player/widgets/booking/booking_slot_calculator.dart`: availability generation now excludes every configured `breakTimes` interval, while retaining backward compatibility with legacy `breakTime` records.
+- `lib/features/owner/widgets/tournament/tournament_manual_team_service.dart`: manual team creation now rejects an empty captain identity and empty team name; it no longer inserts a hard-coded placeholder UUID into `memberUids`.
