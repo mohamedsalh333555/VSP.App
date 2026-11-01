@@ -1604,3 +1604,10 @@ Read-only inspection was performed against the connected production VSP project 
 - Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: removed the extra keyboard-bottom `Padding` around the sheet and stopped switching bottom padding based on keyboard visibility. The modal route already moves/resizes the sheet; system bottom padding remains.
 - Fixed `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart`: removed duplicate keyboard/system inset subtraction from both the height calculation and footer padding, and removed the unsafe 240dp minimum. The route owns viewport constraints; footer retains the system bottom inset.
 - Booking, payment, manual team registration, and customer input behavior are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `068d381b19a96f935560c9a8b69ca558a088ba2f`, `d96527b83cd298ae44d32edd414950a3d1e9f0e2`, `981951eebe65b85d4953b60a8806b1aea97d18b7`.
+
+
+## Player booking and collective-invite modal viewport corrections — 2026-11-01
+
+- Fixed `lib/features/player/widgets/booking_type_modal.dart`: removed the manual keyboard/system inset subtraction and unsafe 240dp minimum from its height calculation. The scroll-controlled SafeArea route now owns the actual viewport; the sheet retains its preferred 82% content-height cap and bottom padding.
+- Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: removed duplicate keyboard/system inset subtraction and the 240dp minimum from its maximum-height calculation. Added the device bottom system inset to the scrollable list's bottom padding so final content/actions remain reachable above system navigation.
+- Booking type selection, team lookup, collective invite, join/leave, and host actions are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `422c4f223ce9e6edf62f17dbb44b0eead1cd33a5`, `a75c17dbe3344905955eb4a50d372c7750855824`.
