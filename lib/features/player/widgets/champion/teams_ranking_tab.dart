@@ -83,7 +83,8 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
-        if (snapshot.hasError) {
+        if (snapshot.hasError &&
+            (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return VSPErrorState(
             onRetry: _handleRetry,
           );
@@ -105,6 +106,14 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         }).toList();
 
         if (teams.isEmpty) {
+          if (snapshot.hasError) {
+            return Column(
+              children: [
+                _buildStaleDataWarning(context),
+                const Expanded(child: TeamsEmptyState()),
+              ],
+            );
+          }
           return const TeamsEmptyState();
         }
 
@@ -240,6 +249,15 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
           );
         }
 
+        if (snapshot.hasError) {
+          content = Column(
+            children: [
+              _buildStaleDataWarning(context),
+              Expanded(child: content),
+            ],
+          );
+        }
+
         if (myTeam != null && myTeamRank != null) {
           final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           return Stack(
@@ -330,6 +348,40 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
 
         return content;
       },
+    );
+  }
+
+  Widget _buildStaleDataWarning(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر تحديث الترتيب اللحظي.'
+                  : 'Showing the latest available data; live ranking updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _handleRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
     );
   }
 
