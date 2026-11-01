@@ -26,6 +26,18 @@ class TournamentManualTeamService {
     required List<String> playerNames,
     required bool isArabic,
   }) async {
+    final captainId = currentUserId.trim();
+    if (captainId.isEmpty) {
+      throw Exception(
+        isArabic
+            ? 'تعذر تحديد حساب قائد الفريق. سجّل الدخول مرة أخرى ثم حاول.'
+            : 'Could not identify the team captain. Sign in again and retry.',
+      );
+    }
+    if (teamName.trim().isEmpty) {
+      throw Exception(isArabic ? 'يرجى إدخال اسم الفريق.' : 'Please enter a team name.');
+    }
+
     final teamId = await _teamRepository.createTeam({
       'name': teamName,
       'captainName': isArabic ? 'تسجيل يدوي' : 'Manual Registration',
@@ -33,11 +45,7 @@ class TournamentManualTeamService {
       'logoUrl': '',
       'sportType': championship.sportType,
       'governorate': championship.governorate,
-      'memberUids': [
-        currentUserId.isNotEmpty
-            ? currentUserId
-            : '8d3d7d65-a167-4138-b36c-85bbdead1b7a'
-      ],
+      'memberUids': [captainId],
       'date': 'Upcoming',
       'primary_color': primaryColor,
       'secondary_color': '#000000',
