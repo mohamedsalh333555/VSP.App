@@ -39,7 +39,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   bool _isActionProcessing = false;
   bool _isReportingOwnerIssue = false;
   final Map<String, UserModel> _joinedUserProfiles = {};
-  late final Stream<Booking?> _bookingStream;
+  late Stream<Booking?> _bookingStream;
 
   Future<void> _loadJoinedUsers(List<String> userIds) async {
     if (userIds.isEmpty) return;
@@ -89,6 +89,11 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  } finally {
  if (mounted) setState(() => _isLoading = false);
  }
+ }
+
+ void _retryMatchDetails() {
+   _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
+   _fetchMatchDetails();
  }
 
  Future<void> _onJoin() async {
@@ -571,7 +576,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
          ? 'تعذر تحميل تفاصيل المباراة. تحقق من الاتصال ثم أعد المحاولة.'
          : 'Could not load match details. Check your connection and try again.',
      retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
-     onRetry: _fetchMatchDetails,
+     onRetry: _retryMatchDetails,
    ),
  ),
  );
@@ -711,6 +716,38 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  : Container(color: VSPColors.surface),
  ),
  ),
+ if (snapshot.hasError && _booking != null)
+   SliverToBoxAdapter(
+     child: Padding(
+       padding: const EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.sm, VSPSpacing.md, 0),
+       child: Container(
+         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+         decoration: BoxDecoration(
+           color: VSPColors.warning.withValues(alpha: 0.10),
+           borderRadius: BorderRadius.circular(VSPRadius.md),
+           border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+         ),
+         child: Row(
+           children: [
+             const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+             const SizedBox(width: VSPSpacing.sm),
+             Expanded(
+               child: Text(
+                 isAr
+                     ? 'توقفت التحديثات المباشرة للمباراة. قد تكون البيانات المعروضة قديمة.'
+                     : 'Live match updates paused. Displayed details may be out of date.',
+                 style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+               ),
+             ),
+             TextButton(
+               onPressed: _retryMatchDetails,
+               child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+             ),
+           ],
+         ),
+       ),
+     ),
+   ),
  SliverToBoxAdapter(
  child: Padding(
  padding: const EdgeInsets.all(VSPSpacing.lg),
