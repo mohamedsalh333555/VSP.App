@@ -1294,3 +1294,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/owner/screens/owner_ledger_screen.dart`: financial-summary fetch exceptions are now caught and logged; the screen presents localized retry guidance when no summary is available, and it hides the payout-balance card instead of rendering an unverified zero balance. If transactions are present, they remain visible while a warning and retry action explain the unavailable summary.
 - If a previously confirmed summary becomes unavailable during refresh, the last confirmed balance remains visible only with an explicit stale-data warning and retry; an unconfirmed balance stays hidden. Payout eligibility and server-side balance calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `7518de714ee47eba23e6f83e6e1aae6d94d9bc28`, `514e6f559ac8e6953e9d942034c8fb07d18de8bd`.
+
+
+## Player home stadium carousel RTL spacing — 2026-11-01
+
+- Fixed `lib/features/player/widgets/home/home_stadiums_section.dart`: the horizontal stadium carousel used a physical right margin, so card spacing did not mirror with Arabic direction. It now uses a directional end margin.
+- Stadium ordering and discovery behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `8f4ec24465196ea015207f48f562940defdb9a99`.
