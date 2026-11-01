@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and all 215 unique registered Dart screen/surface paths (241 register rows, including 26 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and all 250 unique registered Dart screen/surface and embedded-component paths (277 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -1155,3 +1155,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - Re-ran read-only privilege checks against the active project: `generate_team_league_fixtures(uuid)` is executable by `postgres` and `service_role` only; `anon` and `authenticated` are denied. `confirm_team_league_payment(...)` is also service-role-only. The internal helper is called from the SECURITY DEFINER payment confirmation and captain-authorized `join_team_league(...)` paths.
 - TL-03 is therefore closed as a direct authenticated RPC exposure in the current live ACL. This does not claim the helper is independently safe for arbitrary invocation by a trusted service-role caller; its payment/registration invariants remain defense-in-depth. No SQL or grants were changed.
+
+
+- **Rule 10 — Bilingual visual integrity:** the shared `CardSkeleton` component now applies its horizontal trailing gap with `EdgeInsetsDirectional.end`, so skeleton cards mirror correctly in Arabic RTL. The register was expanded to include ten shared/auth embedded UI components; their caller-level and runtime verification remains pending.
