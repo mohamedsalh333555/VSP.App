@@ -106,28 +106,49 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
   }
 
   Future<void> _openChat() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final userId = context.read<app_auth.AuthProvider>().currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'سجّل الدخول أولاً لفتح المحادثة.' : 'Sign in to open this chat.'),
+      ));
+      return;
+    }
     final other = <String>[
       widget.booking.ownerId,
       widget.booking.createdByUserId,
       ...widget.booking.joinedUserIds,
     ].firstWhere((id) => id.isNotEmpty && id != userId, orElse: () => '');
-    if (other.isEmpty) return;
+    if (other.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'لا يوجد مشارك متاح للمحادثة حالياً.' : 'No participant is available to chat with yet.'),
+      ));
+      return;
+    }
     try {
       final chat = await ChatRepository().getOrCreateDirectChat(
         otherUserId: other,
-        isArabic: Localizations.localeOf(context).languageCode == 'ar',
+        isArabic: isArabic,
         contextType: 'booking',
         contextId: widget.booking.id,
       );
+      if (!mounted) return;
       final chatId = chat['id']?.toString();
-      if (chatId == null || !mounted) return;
+      if (chatId == null || chatId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(isArabic ? 'تعذر فتح المحادثة حالياً. حاول مرة أخرى.' : 'Could not open the chat. Please try again.'),
+        ));
+        return;
+      }
       Navigator.push(context, MaterialPageRoute(
         builder: (_) => ChatScreen(booking: widget.booking, conversationId: chatId, otherUserId: other),
       ));
     } catch (e) {
       debugPrint('Open Join chat unavailable: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isArabic ? 'تعذر فتح المحادثة حالياً. حاول مرة أخرى.' : 'Could not open the chat. Please try again.'),
+      ));
     }
   }
 
