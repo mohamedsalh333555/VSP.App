@@ -1571,3 +1571,10 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/player/widgets/add_player_sheet.dart`: the caller opens the sheet with `isScrollControlled: true` and `useSafeArea: true`, so the modal route already constrains content to the keyboard-safe viewport. The sheet previously subtracted keyboard and top/bottom system insets again from the full screen height, risking a collapsed content area on compact devices or when the keyboard was open. Removed the duplicate height calculation and now rely on the route's actual parent constraints; retained the sheet's bottom system padding and scrollable body.
 - Player search, eligibility, and add/invite behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `cb8327b5f52d019a58f9ce071fa94c2afae1107c`.
+
+
+## Owner modal keyboard/system inset corrections — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart`: the scroll-controlled `useSafeArea` route already applies keyboard/system viewport constraints, but the sheet also subtracted `viewInsets.bottom` and system padding from full screen height. It now uses only an 88% preferred content-height cap; the route's parent constraints enforce the actual available viewport. Bottom safe padding and scrollable password form remain.
+- Fixed `lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart`: removed the same duplicate keyboard/system inset subtraction and the unsafe 240dp minimum clamp that could exceed a compact viewport. It now uses an 88% preferred cap while respecting the modal route's actual constraints.
+- Password verification, schedule calculation, and persistence behavior are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `33dc6d1b5c43a4fc25ce3811273f0fa926453171`, `947cee3bf2d21f785914ee12114f1bbf568c89dc`.
