@@ -1017,3 +1017,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Public-match participant action false-result handling — 2026-11-01
 - Fixed `lib/shared/widgets/match_card/manage_participants_modal.dart`: the repository methods `acceptJoinRequest`, `rejectJoinRequest`, and `removeParticipantFromPublicMatch` return `bool`, but the modal ignored `false`. A failed accept/reject could therefore still trigger a player notification, and a failed removal could silently refresh without telling the owner.
 - The modal now treats each `false` result as a failed action and follows its existing localized error path. Acceptance/rejection notifications and participant refresh run only after a successful repository result. Repository/RPC behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d1499daab90240eaac58a9aee5ec14c4a352e85e.
+
+
+## Match result false-return feedback — 2026-11-01
+- Fixed `lib/features/player/widgets/match_result_modal.dart`: when the result-submission callback returned `false` (without throwing), the modal only reset its loading state and gave no indication why submission had not completed. It now displays localized failure feedback and leaves the modal open for correction/retry.
+- Result calculation, callback, and submission rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 90ff537342410603803c4f6602f22b57f292c3a3.
