@@ -1790,3 +1790,13 @@ Read-only inspection was performed against the connected production VSP project 
 ## Authentication and owner onboarding component review — 2026-11-01
 
 - Reviewed the social sign-in row, owner payout information card, and responsive signup name fields. The social buttons already use the shared `SocialAuthButton` semantic Material target at 56dp and the owner payout fields use localized labels from generated app localizations. Signup name fields already switch to a vertical layout below 360dp and use localized labels/hints. No source change was made where the existing implementation already met the inspected criterion; device/large-text verification remains pending.
+
+
+## Empty/loading/error state consistency pass — 2026-11-01
+
+- `lib/shared/widgets/vsp_empty_state.dart`: removed its separate hand-built layout and delegated rendering to the canonical `VSPStateView(state: VSPUiState.empty)`. The shared empty state now inherits the same bounded-width, scroll-safe layout, charcoal square icon treatment, typography, and spacing as the design-system state renderer. Optional primary action remains 48dp-or-greater through the canonical button.
+- `lib/features/player/widgets/champion/champion_empty_state.dart`: championship, teams, and 1v1 empty states now use `VSPEmptyState` rather than maintaining a second copy of the visual structure. Arabic/English selection, explicit locale override, text, and optional return action are preserved.
+- `lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart`: the missing-governorate state now uses the same shared empty-state component; its profile navigation action and localized copy are preserved.
+- Reviewed shared loading and error presentation in `VSPStateView` and `VSPErrorState`: loading/processing content is bounded and scrollable, has a localized progress semantic label, and error/offline states distinguish connectivity from server failures, announce the state through a live region, and provide retry.
+- Source commits: `d62fbf3cd79e307b98168e15739c8f95768e9320`, `579addbd0da8e7d00c39be5aafe473a72d9a8da1`, `13690300262d064c25a47c7f78de5caee1fff00c`, `8f2a0799e9a0e7f67d1d6fb8c216e7f061fae8e9`.
+- Scope of this pass: 3 Dart source files consolidated; shared loading/error components source-reviewed, not changed. This is not proof that every caller uses the shared components correctly. Caller-by-caller coverage and runtime checks remain pending. No tests, analyzer, CI, runtime checks, or APK build were run.
