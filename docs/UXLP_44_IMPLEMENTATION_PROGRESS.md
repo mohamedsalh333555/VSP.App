@@ -1534,3 +1534,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - The CI workflow also had automatic `pull_request` and `push` triggers. Because the current instruction is to defer the single consolidated validation pass until all source work is complete, these triggers have been removed; `.github/workflows/ci.yml` is now `workflow_dispatch` only.
 - Workflow commit: `97e09403e198c25ecab0acd1b927eb190424af66`. No manual CI run was started. Previously triggered CI run status could not be inspected/cancelled with the available GitHub Actions controls in this session. Future branch commits and PR updates will not start CI automatically.
+
+
+## Add Player sheet action target correction — 2026-11-01
+
+- Fixed `lib/features/player/widgets/add_player_sheet.dart`: the Add action in the found-player card was 40dp high. It now uses a 48dp hit area, matching the VSP touch-target standard.
+- Player lookup, governorate eligibility, roster insertion, and invitation behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `d15526e2233ede46bd2f7fa527c00dfb7f2062ee`.
