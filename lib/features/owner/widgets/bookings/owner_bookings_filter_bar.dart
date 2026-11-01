@@ -129,7 +129,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                     width: 60,
                     margin: const EdgeInsetsDirectional.only(end: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? VSPColors.accent : Colors.transparent,
+                      color: isSelected ? VSPColors.accent : VSPColors.transparent,
                       borderRadius: BorderRadius.circular(VSPRadius.md),
                       border: Border.all(
                         color: isSelected
