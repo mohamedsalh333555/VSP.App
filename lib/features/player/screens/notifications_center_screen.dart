@@ -220,7 +220,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                         SnackBar(
                           content: Text(
                             isArabic ? 'تعذر حذف الإشعار. حاول مرة أخرى.' : 'Could not delete the notification. Please try again.',
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: VSPColors.white),
                           ),
                           backgroundColor: VSPColors.error,
                           behavior: SnackBarBehavior.floating,
@@ -234,7 +234,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                       SnackBar(
                         content: Text(
                           isArabic ? 'تم حذف الإشعار' : 'Notification deleted',
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: VSPColors.white),
                         ),
                         backgroundColor: VSPColors.surface,
                         behavior: SnackBarBehavior.floating,
@@ -252,7 +252,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                 SnackBar(
                                   content: Text(
                                     isArabic ? 'تعذرت استعادة الإشعار.' : 'Could not restore the notification.',
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(color: VSPColors.white),
                                   ),
                                   backgroundColor: VSPColors.error,
                                   behavior: SnackBarBehavior.floating,
