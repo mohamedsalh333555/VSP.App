@@ -2076,3 +2076,6 @@ Read-only inspection was performed against the connected production VSP project 
 
 
 - Additional booking boundary correction: `BookingSlotCalculator.generateDynamicTimeSlots` now requires `slotStart + 30 <= closingMinutes`; when operating hours end between half-hour boundaries, the incomplete tail is not offered as a 30-minute booking. Code commit: `bc3ec06696bdad970a39435becd1a093f3b00d3c`.
+
+
+- Follow-up to owner/player schedule parity: `OwnerScheduleSlotsBuilder.generateRawSlots` previously reduced opening/closing times to whole hours, starting every schedule at `HH:00` and allowing the final displayed slot to extend past a closing time with non-zero minutes. It now builds an operational-minute timeline from the exact stored times, supports overnight/24-hour windows, and emits only complete 30-minute intervals ending at or before closing. Break intervals use the same operational-minute basis. Code commit: `2056a51b46002abbc40130ffaf819e5c3062de35`.
