@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/core/providers/booking_provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
+import '../../helpers/test_owner_auth_provider.dart';
 import 'package:vsp_application/core/repositories/booking/booking_cancellation_coordinator.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
 import 'package:vsp_application/data/models/booking_models.dart';
@@ -133,12 +135,15 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('ar'),
-            home: Scaffold(
+            home: ChangeNotifierProvider<TestOwnerAuthProvider>.value(
+              value: TestOwnerAuthProvider(),
+              child: Scaffold(
               body: Builder(
                 builder: (ctx) => ElevatedButton(
                   onPressed: () => PlayerBookingCancelDialog.show(ctx, testBooking),
                   child: const Text('Open Dialog'),
                 ),
+              ),
               ),
             ),
           ),
