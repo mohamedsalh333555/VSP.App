@@ -105,7 +105,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (initial match-detail fetch failure now shows a localized retryable error instead of incorrectly presenting “match not found”; loading and error views are safe-area protected; realtime stream failures now preserve loaded match data, show a localized stale-data warning, and recreate the stream on retry; report/join actions remain lifecycle-gated) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/notifications_center_screen.dart` | player | source reviewed—runtime pending (SafeArea list; stream errors now distinct from empty state with retry; informational AlertDialog scroll-safe) |
-| `lib/features/player/screens/payment_gateway_screen.dart` | player | source reviewed—runtime pending (fee policy fails closed; server-created booking is authoritative; account-bound checkout; initialization errors localized without raw backend text) |
+| `lib/features/player/screens/payment_gateway_screen.dart` | player | source updated—runtime pending (fee policy fails closed; server-created booking is authoritative; account-bound checkout; initialization errors localized without raw backend text) |
 | `lib/features/player/screens/paymob_web_view_screen.dart` | player | source reviewed—runtime pending (SafeArea wraps payment web view content) |
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (report dialog scroll-safe; report success/failure feedback correct; booking lifecycle statuses localized in Arabic/English) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source updated—runtime pending (post-match prompts require participating captain, eligible booking state, and independent opposing captain for second review) |
@@ -327,8 +327,8 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source reviewed—runtime pending (server-matching fee policy; no false zero; localized retry; fee-info action has 48dp touch target) |
-| `lib/features/player/widgets/payment/payment_countdown_header.dart` | player | source reviewed—runtime pending (base amount is not labeled as final total when fee policy is unavailable) |
+| `lib/features/player/widgets/payment/payment_breakdown_card.dart` | player | source updated—runtime pending (server-matching fee policy; no false zero; localized retry; fee-info action has 48dp touch target) |
+| `lib/features/player/widgets/payment/payment_countdown_header.dart` | player | source updated—runtime pending (base amount is not labeled as final total when fee policy is unavailable) |
 | `lib/features/player/widgets/payment/payment_security_footer.dart` | player | source reviewed—runtime pending (checkout disabled until fee policy is valid; accurate Paymob checkout guidance) |
 
 
