@@ -60,7 +60,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               Expanded(
                 child: Text(
                   isArabic ? 'اكتملت مواجهات دور المجموعات!' : 'Group Stage Completed!',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ],
@@ -120,7 +120,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
-            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
+            appBar: AppBar(backgroundColor: VSPColors.transparent, elevation: 0, leading: const VSPBackButton()),
             body: SafeArea(top: false, bottom: true, child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -141,7 +141,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                     label: const Text('إعادة المحاولة'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
+                      foregroundColor: VSPColors.black,
                     ),
                   ),
                 ],
@@ -169,7 +169,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         if (matches.isEmpty) {
           return VSPScaffold(
             backgroundColor: VSPColors.background,
-            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
+            appBar: AppBar(backgroundColor: VSPColors.transparent, elevation: 0, leading: const VSPBackButton()),
             body: SafeArea(top: false, bottom: true, child: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary)))),
           );
         }
@@ -200,7 +200,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           child: VSPScaffold(
             backgroundColor: VSPColors.background,
             appBar: AppBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor: VSPColors.transparent,
               elevation: 0,
               centerTitle: true,
               leading: const VSPBackButton(),
