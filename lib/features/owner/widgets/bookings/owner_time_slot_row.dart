@@ -256,7 +256,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
 
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final created = await bookingProvider.createBooking(draft, uid);
-      if (!context.mounted) return;
+      if (!context.mounted || auth.currentUser?.id != uid) return;
       if (created != null) {
         VSPFeedback.showSuccess(
           context,
