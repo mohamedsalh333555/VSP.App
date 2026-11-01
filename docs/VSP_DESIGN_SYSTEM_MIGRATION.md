@@ -275,7 +275,7 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 
 - Current `docs/UXLP_44_SCREEN_REGISTER.md`: 338 unique Dart paths, 366 table data rows, and 28 repeated path rows documenting separate embedded-component findings, plus one shared navigation component entry.
 - The only evidenced heuristic/static token-and-layout scan covers 128 candidate files from an earlier 215-path inventory. It has not been rerun against the current 338-path inventory; current complete Design System scan coverage is therefore **not proven**.
-- All 44 UXLP rules remain `source reviewed—runtime pending`. The rule matrix is global, not a completed 44 × screen × state runtime matrix. No visual/runtime pass is inferred from token usage or source notes.
+- Current global UXLP-44 matrix: 39 rules remain `source reviewed—runtime pending`; 5 rules (25, 31, 38, 39, 41) are `needs product decision`. No rule has a runtime pass. The matrix is global, not a completed 44 × screen × state runtime matrix.
 - The screen register contains source-review notes for its registered entries, but that does not establish every embedded component, state variant, locale, keyboard condition, safe-area interaction, or device size has passed.
 
 ## Monitored compiler diagnostics — 2026-11-01
