@@ -256,12 +256,20 @@ class OwnerTimeSlotRow extends StatelessWidget {
 
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final created = await bookingProvider.createBooking(draft, uid);
-      if (created != null && context.mounted) {
+      if (!context.mounted) return;
+      if (created != null) {
         VSPFeedback.showSuccess(
           context,
           isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح.' : 'Quick phone booking confirmed successfully.',
         );
         onQuickBookingDone();
+      } else {
+        VSPFeedback.showError(
+          context,
+          isAr
+              ? 'تعذر تثبيت الحجز التليفوني. لم يتم إنشاء الحجز؛ حاول مرة أخرى.'
+              : 'Could not confirm the phone booking. No booking was created; please try again.',
+        );
       }
     }
   }
