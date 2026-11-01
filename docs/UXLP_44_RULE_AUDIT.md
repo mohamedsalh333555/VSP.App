@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 181 unique registered Dart screen/surface paths; one additional shared navigation component and embedded components are tracked separately in the screen register.  
+**Scope:** Shared foundations and all 199 unique registered Dart screen/surface paths (225 register rows, including 26 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -48,7 +48,7 @@
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; result actions in both home and booking cards require captain identity for a participating team, suppress dual-side captain actions, and recalculate on account changes. Owner schedule is hidden outside owner role. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes and Undo restores the original payload/time. Delete/Undo callbacks are bound to the originating account. UI stream is capped at 50; no DELETE trigger or retention cron was found. Refund notifications are emitted only after refund ledger recording succeeds; a durable reconciliation notification retry remains a server-side gap. |
-| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 181 unique registered Dart paths have source-review notes (191 register rows including 10 repeated entries), but screen-level rule/state coverage is incomplete. |
+| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 199 unique registered Dart paths are represented in the current screen register (225 rows including 26 repeated paths); the nine components added in the latest reconciliation require explicit source-review completion evidence, but screen-level rule/state coverage is incomplete. |
 | 43 | Operational observability | source reviewed—runtime pending | Booking/owner actions, team-league create/join/cancel/outcomes, prize handover, GPS lookup, cash booking, score submission, and participant management separate technical diagnostics from localized user errors. Audit all remaining critical failure surfaces. |
 | 44 | Optimal cognitive load | source reviewed—runtime pending | Owner dashboard tabs/analytics feedback and checkout loading/error states reviewed; refund and plan surfaces are scroll-bounded. Motion intensity and real-device cognitive-load validation pending. |
 
@@ -85,7 +85,7 @@ The CI run stopped at Analyze; automated tests and APK build were skipped. No te
 
 ## Gates still open
 
-1. Complete screen-by-screen rule mapping for all 128 candidate paths plus embedded widgets and state variants.
+1. Complete screen-by-screen rule mapping for all 199 registered unique paths, the 26 separately tracked repeated embedded-component findings, and applicable state variants.
 2. Finish Arabic/English copy and RTL/LTR review.
 3. Resolve findings that require product decisions (including notification retention policy) before changing business/data behavior.
 4. Complete one consolidated validation pass after all grouped source changes.
