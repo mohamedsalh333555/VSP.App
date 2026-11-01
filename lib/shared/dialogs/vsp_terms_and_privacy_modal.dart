@@ -16,10 +16,10 @@ class VSPTermsAndPrivacyModal {
         final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
         final buttonText = isAr ? 'موافق' : 'I Understand';
         final media = MediaQuery.of(dialogContext);
-        final availableDialogHeight = (media.size.height -
-                media.viewInsets.bottom -
-                48)
-            .clamp(240.0, media.size.height)
+        // Dialog applies keyboard viewInsets through its own route padding.
+        // Keep a content cap without subtracting the keyboard height twice.
+        final availableDialogHeight = (media.size.height - 48)
+            .clamp(0.0, media.size.height)
             .toDouble();
 
         return BackdropFilter(
