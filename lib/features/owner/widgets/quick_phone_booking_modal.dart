@@ -220,17 +220,20 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
       if (!mounted) return;
       HapticFeedback.lightImpact();
+      final parentContext = Navigator.of(context).context;
+      final parentNavigator = Navigator.of(context);
 
       // Refresh bookings in provider immediately
       Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(ownerId);
 
-      // Dismiss modal
-      Navigator.pop(context, true);
+      // Dismiss modal before showing the follow-up receipt on the host route.
+      parentNavigator.pop(true);
+      if (!parentContext.mounted) return;
 
       // If phone was provided, prompt WhatsApp receipt dialog, otherwise show direct success toast
       if (cleanPhone != null && cleanPhone.isNotEmpty) {
         showQuickBookingReceiptSheet(
-          context: context,
+          context: parentContext,
           stadium: widget.stadium,
           bookingRef: createdBookingId.length >= 8 ? createdBookingId.substring(0, 8).toUpperCase() : createdBookingId,
           customerName: customerName,
@@ -243,7 +246,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
         );
       } else {
         VSPFeedback.showSuccess(
-          context,
+          parentContext,
           isAr ? 'تم تأكيد حجز $customerName بنجاح' : 'Booking confirmed for $customerName',
         );
       }
