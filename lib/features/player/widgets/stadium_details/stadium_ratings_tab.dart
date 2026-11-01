@@ -58,7 +58,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
         context: context,
         useSafeArea: true,
         isScrollControlled: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         builder: (sheetCtx) {
           return StatefulBuilder(
             builder: (context, setSheetState) {
@@ -113,7 +113,7 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
                       const SizedBox(height: 16),
                       TextField(
                         controller: commentController,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(color: VSPColors.white, fontSize: 14),
                         maxLines: 3,
                         decoration: InputDecoration(
                           hintText: isArabic
