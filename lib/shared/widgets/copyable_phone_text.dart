@@ -63,11 +63,12 @@ class CopyablePhoneText extends StatelessWidget {
             minHeight: VSPSize.touchTarget,
           ),
           child: Align(
-            alignment: Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Tooltip(
               message: isArabic ? 'اضغط مطولاً للنسخ' : 'Long press to copy',
               child: Text(
                 phone,
+                textDirection: TextDirection.ltr,
                 style: style ??
                     const TextStyle(
                       color: VSPColors.textPrimary,
