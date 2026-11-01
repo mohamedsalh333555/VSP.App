@@ -767,3 +767,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The match-report reason selector dialog now uses scrollable AlertDialog content so its explanatory text, reason selector, and actions remain accessible on compact screens and when the keyboard/insets reduce available height.
 - Report submission behavior and moderation rules are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `8fa0d4e595881a198e2294f9f87f5f2363b9b893`.
+
+
+## Owner financial ledger CSV export integrity — 2026-11-01
+
+- CSV cells are now escaped according to CSV quoting rules (embedded double quotes are doubled), preventing transaction text containing quotes or delimiters from corrupting exported rows.
+- Export failures now log the technical exception and stack trace while retaining concise localized user-facing recovery copy.
+- Financial values, transaction selection, payout behavior, and ledger data are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `51599f0858f9cc25ccbcb176e2e92b2da06996bb`.
