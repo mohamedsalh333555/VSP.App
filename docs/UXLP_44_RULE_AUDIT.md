@@ -1146,3 +1146,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 31, and 36:** Team League match-result submission now has a handler-level single-flight guard, and result choices are disabled during the pending save. Existing localized failure recovery remains intact. Backend authorization and result-window enforcement remain separate approval-required server findings; this client guard does not replace them.
+
+
+- **Rule 29 — No duplicate submission:** owner tournament score submission now checks `isSubmitting` inside the action handler before issuing the repository write, in addition to the existing loading button state. Team League result submission has the same handler-level guard and locks result selection during save. These are client-side safeguards only; authoritative server-side idempotency/authorization still requires separate review.
