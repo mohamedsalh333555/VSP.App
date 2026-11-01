@@ -708,3 +708,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/services/payment_checkout_coordinator.dart`: both booking and tournament fallback pollers now serialize async status reads and latch confirmed completion, preventing overlapping timer ticks from issuing duplicate requests or invoking success callbacks more than once.
+
+
+- `lib/features/player/widgets/home/book_tonight_sheet.dart`: failed slot discovery now exits loading into a bilingual retryable error state instead of leaving the sheet spinning indefinitely; the loader also prevents overlapping retries.
