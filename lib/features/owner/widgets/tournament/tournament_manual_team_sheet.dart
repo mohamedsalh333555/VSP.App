@@ -32,7 +32,7 @@ void showTournamentManualTeamSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
@@ -84,7 +84,7 @@ void showTournamentManualTeamSheet(
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(dialogContext).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
+                              color: VSPColors.white,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -187,7 +187,7 @@ void showTournamentManualTeamSheet(
                           onPressed: isSubmitting ? null : () => Navigator.pop(sheetContext),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.surfaceAlt,
-                            foregroundColor: Colors.white,
+                            foregroundColor: VSPColors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -204,7 +204,7 @@ void showTournamentManualTeamSheet(
                         child: PrimaryButton(
                           text: isArabic ? 'تأكيد إضافة الفريق' : 'Confirm Add Team',
                           color: canSubmit ? VSPColors.accent : VSPColors.surfaceAlt,
-                          textColor: canSubmit ? Colors.black : VSPColors.textSecondary,
+                          textColor: canSubmit ? VSPColors.black : VSPColors.textSecondary,
                           isLoading: isSubmitting,
                           onPressed: !canSubmit
                               ? null
