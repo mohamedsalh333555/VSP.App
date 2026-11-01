@@ -227,8 +227,12 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 data.upcoming.isNotEmpty || data.history.isNotEmpty || data.pending.isNotEmpty;
 
             if (_isInitialLoadPending || (data.loading && !hasBookings)) {
-              return const Center(
-                child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+              return VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic ? 'جارٍ تحميل حجوزاتك' : 'Loading your bookings',
+                message: isArabic
+                    ? 'نحدّث مواعيدك وحجوزاتك الآن.'
+                    : 'Updating your bookings and match schedule.',
               );
             }
 
