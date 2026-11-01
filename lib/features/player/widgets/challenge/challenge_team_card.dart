@@ -14,6 +14,7 @@ class ChallengeTeamCard extends StatelessWidget {
   final bool isSelected;
   final bool hasChampion;
   final bool isLoadingH2H;
+  final bool hasH2HError;
   final Map<String, int>? h2hStats;
   final VoidCallback onTap;
 
@@ -23,6 +24,7 @@ class ChallengeTeamCard extends StatelessWidget {
     required this.isSelected,
     required this.hasChampion,
     required this.isLoadingH2H,
+    this.hasH2HError = false,
     this.h2hStats,
     required this.onTap,
   });
@@ -131,6 +133,17 @@ class ChallengeTeamCard extends StatelessWidget {
                 )
               else if (h2hStats != null && h2hStats!['totalMatches']! > 0)
                 _buildH2HContent(context, l10n)
+              else if (hasH2HError)
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'تعذر تحميل سجل المواجهات السابقة.'
+                      : 'Could not load head-to-head history.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: VSPColors.warning,
+                    fontSize: 12,
+                  ),
+                )
               else if (h2hStats != null)
                 Text(
                   l10n.firstTimePlaying,
