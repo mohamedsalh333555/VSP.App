@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 319 unique paths
+- Registered Dart screen/surface and embedded-component paths: 327 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 346, including 27 repeated paths that document separate embedded-component findings
+- Table records: 354, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -227,6 +227,14 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart` | player | source reviewed—runtime pending (stadium booking action bar; availability/price state and safe-area reachability pending) |
 | `lib/features/player/widgets/stadium_details/stadium_pitch_conditions_tab.dart` | player | source reviewed—runtime pending (pitch condition details; data source, empty state and locale behavior pending) |
 | `lib/features/player/widgets/stadium_details/stadium_ratings_tab.dart` | player | source reviewed—runtime pending (review stream now has shared bilingual loading/error states and retry by recreating the stream; runtime verification pending) |
+| `lib/features/player/widgets/team_profile/team_profile_achievements_section.dart` | player | source reviewed—runtime pending (team achievement list; source result mapping and empty state pending) |
+| `lib/features/player/widgets/team_profile/team_profile_action_bar.dart` | player | source reviewed—runtime pending (captain/player action visibility and invite-code loading feedback reviewed; role/state runtime verification pending) |
+| `lib/features/player/widgets/team_profile/team_profile_captain_card.dart` | player | source reviewed—runtime pending (captain identity/contact card; privacy and data permission verification pending) |
+| `lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart` | player | source reviewed—runtime pending (head-to-head results; match source and empty/error mapping pending) |
+| `lib/features/player/widgets/team_profile/team_profile_hero_header.dart` | player | source reviewed—runtime pending (team hero/header; logo fallback and long-name layout pending) |
+| `lib/features/player/widgets/team_profile/team_profile_roster_section.dart` | player | source reviewed—runtime pending (roster loading/error/empty branches and retry callback present; device verification pending) |
+| `lib/features/player/widgets/team_profile/team_profile_stats_grid.dart` | player | source reviewed—runtime pending (team stats grid; zero-data and actual-result consistency pending) |
+| `lib/features/player/widgets/user_bookings/reschedule_action_banner.dart` | player | source reviewed—runtime pending (reschedule action banner; loading and eligibility copy reviewed; state-driven action runtime verification pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
