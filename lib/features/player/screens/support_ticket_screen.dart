@@ -22,6 +22,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
   final _repo = ChatRepository();
   final _controller = TextEditingController();
   bool _sending = false;
+  bool _escalating = false;
   int _accountGeneration = 0;
   String? _streamUserId;
   late Stream<Map<String, dynamic>?> _ticketStream;
@@ -52,6 +53,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
     _bindStreams(activeUserId);
     _controller.clear();
     _sending = false;
+    _escalating = false;
   }
 
   Future<void> _send() async {
@@ -103,7 +105,8 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         requestingUserId != null &&
         requestingUserId.isNotEmpty &&
         context.read<AuthProvider>().currentUser?.id == requestingUserId;
-    if (!requestStillBelongsToActiveAccount()) return;
+    if (!requestStillBelongsToActiveAccount() || _escalating) return;
+    setState(() => _escalating = true);
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!requestStillBelongsToActiveAccount()) return;
@@ -151,6 +154,10 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted && requestGeneration == _accountGeneration) {
+        setState(() => _escalating = false);
+      }
     }
   }
 
@@ -166,7 +173,19 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background, elevation: 0,
         leading: const VSPBackButton(), title: Text(widget.title),
-        actions: [IconButton(tooltip: ar ? 'تصعيد عبر واتساب' : 'Escalate via WhatsApp', onPressed: _whatsappFallback, icon: const Icon(Iconsax.message_text_1_copy, color: VSPColors.accent))],
+        actions: [
+          IconButton(
+            tooltip: ar ? 'تصعيد عبر واتساب' : 'Escalate via WhatsApp',
+            onPressed: _escalating ? null : _whatsappFallback,
+            icon: _escalating
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Iconsax.message_text_1_copy, color: VSPColors.accent),
+          ),
+        ],
       ),
       body: userId.isEmpty
           ? Center(
