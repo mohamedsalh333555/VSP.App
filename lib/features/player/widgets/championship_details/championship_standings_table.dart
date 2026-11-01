@@ -72,7 +72,7 @@ class _ChampionshipStandingsSectionState
             const SizedBox(width: 8),
             Text(
               isArabic ? 'جدول الترتيب الحي' : 'Live Standings Table',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 16),
             ),
           ],
         ),
@@ -152,28 +152,28 @@ class _ChampionshipStandingsSectionState
                   label: Text(isArabic ? '#' : '#', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'الفريق' : 'Team', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  label: Text(isArabic ? 'الفريق' : 'Team', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'لعب' : 'P', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'لعب' : 'P', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'فاز' : 'W', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'فاز' : 'W', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'تعادل' : 'D', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'تعادل' : 'D', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'خسر' : 'L', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'خسر' : 'L', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'له' : 'GF', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'له' : 'GF', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? 'عليه' : 'GA', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? 'عليه' : 'GA', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
-                  label: Text(isArabic ? '+/-' : 'GD', style: const TextStyle(color: Colors.white70)),
+                  label: Text(isArabic ? '+/-' : 'GD', style: const TextStyle(color: VSPColors.white70)),
                 ),
                 DataColumn(
                   label: Text(isArabic ? 'النقاط' : 'PTS', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
@@ -188,21 +188,21 @@ class _ChampionshipStandingsSectionState
                     DataCell(Text(
                       '$rank',
                       style: TextStyle(
-                        color: rank <= 2 ? VSPColors.accent : Colors.white,
+                        color: rank <= 2 ? VSPColors.accent : VSPColors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     )),
                     DataCell(Text(
                       r['team_name']?.toString() ?? 'Team',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                     )),
-                    DataCell(Text('${r['played'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['played'] ?? 0}', style: const TextStyle(color: VSPColors.white70))),
                     DataCell(Text('${r['won'] ?? 0}', style: const TextStyle(color: VSPColors.accent))),
                     DataCell(Text('${r['drawn'] ?? 0}', style: const TextStyle(color: VSPColors.warning))),
                     DataCell(Text('${r['lost'] ?? 0}', style: const TextStyle(color: VSPColors.error))),
-                    DataCell(Text('${r['goals_for'] ?? 0}', style: const TextStyle(color: Colors.white70))),
-                    DataCell(Text('${r['goals_against'] ?? 0}', style: const TextStyle(color: Colors.white70))),
-                    DataCell(Text('${r['goal_difference'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['goals_for'] ?? 0}', style: const TextStyle(color: VSPColors.white70))),
+                    DataCell(Text('${r['goals_against'] ?? 0}', style: const TextStyle(color: VSPColors.white70))),
+                    DataCell(Text('${r['goal_difference'] ?? 0}', style: const TextStyle(color: VSPColors.white70))),
                     DataCell(Text(
                       '${r['points'] ?? 0}',
                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
