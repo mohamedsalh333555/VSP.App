@@ -27,8 +27,8 @@ class MatchupStandingsTable extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
-              SizedBox(width: 8),
+              const Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isArabic ? 'جدول ترتيب المواجهة الحية' : 'Live matchup standings',
@@ -42,7 +42,7 @@ class MatchupStandingsTable extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             isArabic ? 'حساب النقاط: (فوز = 3 نقاط | تعادل = 1 نقطة)' : 'Points: Win = 3 | Draw = 1',
-            style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            stconst yle: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
           ),
           const Divider(color: VSPColors.divider, height: 24),
           ListView.separated(
