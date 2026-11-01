@@ -25,6 +25,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
           final prizeAmount =
               championship.prizePool > 0 ? championship.prizePool : championship.grandPrize;
           return AlertDialog(
+            scrollable: true,
             backgroundColor: VSPColors.surface,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -32,9 +33,17 @@ Future<void> showTournamentPrizeDeliveryDialog(
               children: [
                 const Icon(Iconsax.award_copy, color: VSPColors.success, size: 22),
                 const SizedBox(width: 8),
-                Text(
-                  isAr ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Handover',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                Expanded(
+                  child: Text(
+                    isAr ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Handover',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -121,7 +130,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                             championship.id,
                             notes: notesController.text.trim(),
                           );
-                          if (context.mounted) {
+                          if (ctx.mounted && context.mounted) {
                             Navigator.pop(ctx);
                             VSPFeedback.showSuccess(
                               context,
