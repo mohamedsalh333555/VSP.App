@@ -1417,3 +1417,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `add_stadium_wizard.dart` and `owner_documentation_wizard.dart` both placed a default top SafeArea inside a Scaffold body that already begins below an AppBar, adding the status-bar inset a second time. Their body SafeAreas now use `top: false`; bottom/system navigation protection remains enabled.
 - Code commits: `f2a741b3b412ca5a9e06c001732057326d41c43f`, `c383c574ef022db4ab112c6d768f1299c8eb3f08`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Edit Profile and Set New Password safe-area correction — 2026-11-01
+
+- `edit_profile_screen.dart` and `set_new_password_screen.dart` both had default top SafeArea padding beneath an AppBar. Both now suppress the duplicate top inset; Edit Profile also avoids applying bottom safe padding twice because its scroll padding already includes the system bottom inset.
+- Code commits: `dca334764a8d6f23c1fecac3dfe7426ff03d060b`, `4fe91fa6b55baef5b8590a8a2b44db560a64dc71`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
