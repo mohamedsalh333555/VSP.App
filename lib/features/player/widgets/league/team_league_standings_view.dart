@@ -254,10 +254,10 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   children: [
                     const SizedBox(
                       width: 24,
-                      child: const Text(
+                      child: Text(
                         '#',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 8),
