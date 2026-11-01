@@ -211,7 +211,7 @@ class _SignupScreenState extends State<SignupScreen> {
  left: VSPSpacing.lg, 
  right: VSPSpacing.lg, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + VSPSpacing.lg,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
