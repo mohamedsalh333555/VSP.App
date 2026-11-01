@@ -742,3 +742,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The in-flight state is reset when the authenticated account changes, and the request's existing account-generation guard prevents an old request from updating the new account's screen.
 - No support policy, ticket ownership rule, database behavior, or WhatsApp destination was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `3af127d34764783d3fedb4b9b0474f18df61e098`.
+
+
+## Support-ticket creation account-scope guard — 2026-11-01
+
+- The create-ticket sheet captures the account that opened it and verifies that the same account is still active immediately before submitting. If the account changed while the sheet was open, submission is blocked with clear Arabic/English guidance.
+- After the create request returns, the ticket detail route is opened only if the initiating account is still active. Failure feedback is likewise suppressed when it belongs to an account that is no longer active.
+- No ticket permissions, ownership policy, categories, priority rules, or backend behavior were changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: `1326be01e5c53fde8fffcbe32cd72a59583221ad`, `55681d98ba7692eec25cb5308de65d090184c6ff`.
