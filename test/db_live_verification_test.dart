@@ -104,5 +104,5 @@ void main() {
  print('=================================================================\n');
 
  expect(failed, 0);
- });
+ }, skip: !_canRunLiveTests ? 'Requires explicit VSP_RUN_LIVE_TESTS=true and Supabase credentials; avoids accidental live database access.' : false);
 }
