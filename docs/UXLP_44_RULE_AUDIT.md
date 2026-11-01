@@ -1070,3 +1070,14 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - Last-24-hour PostgREST log scan returned 121 matches for a Warp timeout message; treat as repeated log entries, not unique failures. More targeted correlation by request/endpoint is required before proposing a code/database change.
 - These database findings are read-only observations. No database policy/grant/function/view/auth setting was altered. Product-safe revocation list and wrapper call graph need review before any privilege change.
 - UXLP statuses remain source-reviewed/runtime-pending; no test or runtime pass is claimed.
+
+
+
+## Additional modal accessibility pass — 2026-11-01
+
+- Collective match invite sheet: localized close tooltip; close and participant counter controls meet 48×48dp.
+- Championship governorate confirmation: primary action increased to 48dp.
+- Owner payout OTP sheet: cancel action minimum height/tap target 48dp; scroll and keyboard handling retained.
+- Player booking cancellation already uses 48dp actions and stacks actions on narrow screens.
+- Supabase Warp timeout log entries currently lack request method, status, or endpoint details (path only reports `/`); no reliable attribution to a VSP RPC can be made. Do not treat the repeated log rows as confirmed unique app failures.
+- Runtime status remains pending; no test or full-screen coverage claim.
