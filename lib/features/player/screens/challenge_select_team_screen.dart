@@ -45,6 +45,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isGeneratingCode = false;
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
+  bool _hasH2HError = false;
   bool _isLoadingUserTeam = true;
   bool _hasUserTeamLoadError = false;
   bool _isContinuing = false;
@@ -252,6 +253,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             _isLookingUpCode = false;
             _isLoadingH2H = true;
             _h2hStats = null;
+            _hasH2HError = false;
           });
 
           // Fetch head-to-head stats if user has a team
@@ -261,10 +263,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               setState(() {
                 _h2hStats = stats;
                 _isLoadingH2H = false;
+                _hasH2HError = stats == null;
               });
             }
           } else {
-            if (mounted) setState(() => _isLoadingH2H = false);
+            if (mounted) setState(() {
+              _isLoadingH2H = false;
+              _hasH2HError = false;
+            });
           }
 
           if (mounted) {
@@ -313,6 +319,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       _selectedTeam = null;
       _appliedChallengeCode = null;
       _h2hStats = null;
+      _isLoadingH2H = false;
+      _hasH2HError = false;
       _challengeCodeController.clear();
     });
   }
@@ -869,6 +877,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       isSelected: true,
       hasChampion: hasChampion,
       isLoadingH2H: _isLoadingH2H,
+      hasH2HError: _hasH2HError,
       h2hStats: _h2hStats,
       onTap: () {},
     );
