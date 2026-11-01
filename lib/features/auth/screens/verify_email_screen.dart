@@ -115,7 +115,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
   Future<void> _verify() async {
     final code = _enteredCode;
-    if (code.length < 6) return;
+    if (code.length < 6 || _isVerifying) return;
 
     HapticFeedback.mediumImpact();
     setState(() {
