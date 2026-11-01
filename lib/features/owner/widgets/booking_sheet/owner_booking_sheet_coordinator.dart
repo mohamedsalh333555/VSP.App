@@ -239,7 +239,7 @@ class OwnerBookingSheetCoordinator {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
-        setDeleting(false);
+        if (context.mounted) setDeleting(false);
       }
       if (context.mounted) nav.pop();
       return;
@@ -291,7 +291,7 @@ class OwnerBookingSheetCoordinator {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
-        setDeleting(false);
+        if (context.mounted) setDeleting(false);
       }
       if (context.mounted) nav.pop();
     }
