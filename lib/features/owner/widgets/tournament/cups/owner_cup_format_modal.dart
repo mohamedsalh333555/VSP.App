@@ -9,7 +9,7 @@ void showOwnerCupFormatModal(BuildContext context) {
   showModalBottomSheet(
     context: context,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     isScrollControlled: true,
     builder: (ctx) {
       return Container(
@@ -46,7 +46,7 @@ void showOwnerCupFormatModal(BuildContext context) {
             Text(
               isArabic ? 'اختر نظام البطولة' : 'Choose Tournament Format',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
@@ -139,7 +139,7 @@ Widget _buildTypeOption(
               shape: BoxShape.circle,
               border: Border.all(color: VSPColors.borderLight, width: 0.5),
             ),
-            child: Icon(icon, color: Colors.white, size: 20),
+            child: Icon(icon, color: VSPColors.white, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -154,7 +154,7 @@ Widget _buildTypeOption(
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: VSPColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -166,9 +166,9 @@ Widget _buildTypeOption(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: VSPColors.white08,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 0.5),
+                          border: Border.all(color: VSPVSPColors.white10, width: 0.5),
                         ),
                         child: Text(
                           badgeText,
