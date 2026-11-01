@@ -127,9 +127,12 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                 children: [
                   const Icon(Iconsax.refresh_copy, color: VSPColors.warning, size: 36),
                   const SizedBox(height: 12),
-                  const Text(
-                    'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
-                    style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                  Text(
+                    isArabic
+                        ? 'تعذر تحميل جدول البطولة. حاول إعادة المحاولة.'
+                        : 'Could not load the tournament bracket. Please try again.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
