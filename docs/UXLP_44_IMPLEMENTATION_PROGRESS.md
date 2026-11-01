@@ -1590,3 +1590,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/copilot/screens/vsp_copilot_sheet.dart`: its scroll-controlled, SafeArea modal route already handles keyboard insets, while the sheet also reduced its own height by `viewInsets.bottom` and added a matching bottom margin. Removed that duplicate keyboard offset/shrink; the sheet now uses its preferred 78% height and lets the route's parent constraints provide the actual keyboard-safe viewport. Internal bottom SafeArea and chat composer remain.
 - Copilot role gate, messages, tool access, and navigation behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `9e01276e39b1a7b80e05d8a5517a45497c9cde48`.
+
+
+## Tournament score-entry modal keyboard inset correction — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/brackets/tournament_score_modal.dart`: the scroll-controlled SafeArea route already applies keyboard insets, but the sheet also subtracted `viewInsets.bottom` from its maximum height and added the same inset again below the footer actions. Removed both duplicate applications and the unsafe 240dp minimum clamp. The sheet now uses a preferred 92% content-height cap and the route's actual parent constraints; the footer retains the system bottom inset.
+- Score entry, goal details, penalties, edit reason, and submit behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `7ea2f5a740d42b5ed7bd732fc99b6a1f66c600c6`.
