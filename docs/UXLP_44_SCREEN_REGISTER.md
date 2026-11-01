@@ -509,3 +509,5 @@ The following registered screens now use `VSPStateView` with localized Arabic/En
 - `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart`: all eight explicitly 44dp primary actions raised to 48dp.
 
 - Player league/ranking follow-up: `league/team_league_tab.dart`, `champion/teams_ranking_tab.dart`, and `champion/league_1v1/league_1v1_standings_view.dart` now use localized shared loading states for initial data reads.
+
+- Dialog touch-target pass: owner document-upload, stadium discard/delete, Paymob still-waiting, and tournament dashboard dialogs now use explicit 48dp minimum action heights/tap targets where their previous dimensions were below the standard.
