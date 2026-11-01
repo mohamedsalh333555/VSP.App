@@ -982,3 +982,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Public match action account-scope protection — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: leaving a public match and cancelling a join request previously accepted the initiating user ID but only checked whether the widget remained mounted after the asynchronous repository call. They now verify that the same user is still authenticated before displaying either success/failure feedback; exception feedback is also suppressed after an account switch.
 - Match repository calls and join/leave eligibility are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: ef65a835778dda957a28ec5db18fad25d6db6e57.
+
+
+## Owner quick phone booking session guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: manual booking creation now captures the initiating owner identity before the request and verifies it after the request before refreshing owner bookings, dismissing the sheet, or showing the receipt/success UI. Error feedback and loading-state recovery are also scoped to that same account. The captured identity is kept in scope for both success and exception paths.
+- Owner selection fallback and booking payload are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 1996a32a64bf4581422bdb97c1feda03a8ea7f02; 62139a2aac1b139d10d97ead4297662915c258a8.
