@@ -937,3 +937,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 8, 11, 23, and 35:** checkout championship title, governorate/team metadata, and roster heading now have bounded line counts/flexible widths with ellipsis so long localized labels do not force row overflow; the roster count badge retains its visible space.
 - Source commits: `345275ef60b2ddf4c6fe7d70cac0314a0563935b`, `b9ffda958156bf540e14b76b46ef855421982836`. Device/large-text verification remains pending; no tests or build were run.
+
+
+### Stadium location action accessibility and launch recovery — 2026-11-01
+
+- **Rules 11, 27, 33, and 36:** stadium location badge now exposes a localized, focusable map action; long address text is bounded on compact screens; a false/failed external-launch result produces localized recovery feedback instead of silently doing nothing.
+- Source commits: `aed4b1aab8511b80493aeb6daed0133a5e8875b8`, `6231c0f438cd5e5ce73d3f24c404323383f279ec`. Device/launch verification remains pending; no tests or build were run.
