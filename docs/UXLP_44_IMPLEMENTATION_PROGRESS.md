@@ -1325,3 +1325,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `HomeNotificationBadge` in `lib/features/player/widgets/home/home_feed_sections.dart`: the unread-count stream now rebinds when the authenticated user changes; an unread-count stream failure displays an amber warning indicator and localized tooltip rather than silently appearing as zero unread. Indicator placement is directional for RTL/LTR.
 - Notification read/delete behavior and repository queries are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `8b8a070e903722c1193cac749489a19feb845b72`.
+
+
+## Championship checkout fee modal responsiveness — 2026-11-01
+
+- Fixed `lib/features/player/widgets/championship_checkout/checkout_financial_card.dart`: the long Arabic/English fee-transparency title now wraps within the modal width instead of competing with the leading icon; the acknowledgement action has a 48dp minimum height. Existing SafeArea and scrollable sheet behavior are retained.
+- Fee text and calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `f48bfbf4f179da8a994d3b2e7775dc5293ef46fd`.
