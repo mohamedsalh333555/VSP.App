@@ -500,3 +500,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Loading-state implementation additions — 2026-11-01
 
 The following registered screens now use `VSPStateView` with localized Arabic/English titles and contextual messages for full-page/stream loading: `facility_onboarding_screen.dart`, `owner_cup_screen.dart`, `owner_inbox_screen.dart`, `subscription_plans_screen.dart`, `tournament_brackets_screen.dart`, `match_details_screen.dart`, `matchup_live_dashboard_screen.dart`, `support_ticket_screen.dart` (ticket + messages streams), `support_tickets_screen.dart`, `team_profile_screen.dart`, `profile_subscreens/my_team_screen.dart`, and `profile_subscreens/notifications_screen.dart`. Existing error/retry/empty and data-fetch logic was retained. Compact button and image placeholders were not expanded into page-level states.
+
+
+### Additional discovery and action-integrity refinements — 2026-11-01
+
+- `lib/features/player/widgets/collective_match_invite_route.dart`, `lib/features/player/widgets/champion/vsp_1v1_league_tab.dart`, and `lib/features/player/widgets/champion/championships_list_tab.dart`: replaced bare full-surface/stream loading spinners with localized shared loading states.
+- `lib/core/repositories/match_repository.dart`: `acceptJoinRequest` and `rejectJoinRequest` now return success only when the server JSONB explicitly reports `success: true`; transport exceptions are logged. This prevents UI success messages/local participant updates after a server-side rejection.
+- `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart`: all eight explicitly 44dp primary actions raised to 48dp.
