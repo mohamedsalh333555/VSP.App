@@ -2162,3 +2162,14 @@ Read-only inspection was performed against the connected production VSP project 
 - `vsp_copilot_sheet.dart`: a failed Edge Function/network request previously escaped the send handler and could leave the composer permanently in its loading state. The UI now catches the failure, appends a localized retry message, restores the composer, and keeps the conversation visible.
 - Source commit: `aef552d6ef07fd99f07abe8b5b31ea65e764c333`.
 - No analyzer, tests, CI, runtime/device checks, backend changes, or APK build were run.
+
+## Team directory RLS remediation — 2026-11-01
+
+- Confirmed from repository usage that `teams_public` is the authenticated team-discovery directory used by `TeamRepository`; team discovery must remain available to all signed-in players, while raw team rows were previously restricted to captains/members/admins.
+- Replaced the SECURITY DEFINER view path with a SECURITY INVOKER view and an authenticated directory SELECT policy on `teams`.
+- Removed table-level SELECT from `authenticated` and granted SELECT only on the public team profile/statistics columns. Explicitly revoked access to `captain_phone`, `active_invite_code`, and `invite_code_expires_at`.
+- Changed the computed `team_members(public.teams_public)` relationship to SECURITY INVOKER and retained authenticated-only execution.
+- Enabled `security_barrier` on the directory view and documented the public-column contract.
+- Applied Supabase migrations: `harden_teams_public_directory_view`, `make_teams_public_view_security_invoker`, `limit_team_select_to_public_columns`.
+- Verified live catalog: `teams_public` has `security_invoker=true` and `security_barrier=true`; sensitive-column SELECT privileges are false for all three fields; authenticated no longer has table-level SELECT on `teams`; the `security_definer_view` advisor finding is gone. The remaining 197 SECURITY DEFINER function warnings are a separate review queue and were not mass-modified.
+- No app tests, analyzer, CI, or APK build were run.
