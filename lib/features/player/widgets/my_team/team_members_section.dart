@@ -104,7 +104,7 @@ class TeamMembersSection extends StatelessWidget {
             radius: 12,
             backgroundColor: VSPColors.accent,
             backgroundImage: imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
-            child: imgUrl.isEmpty ? const Icon(Iconsax.crown_copy, color: Colors.black, size: 12) : null,
+            child: imgUrl.isEmpty ? const Icon(Iconsax.crown_copy, color: VSPColors.black, size: 12) : null,
           ),
           const SizedBox(width: VSPSpacing.sm),
           Text(
@@ -120,7 +120,7 @@ class TeamMembersSection extends StatelessWidget {
             ),
             child: Text(
               isArabic ? 'كابتن' : 'C',
-              style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.black, fontSize: 9, fontWeight: FontWeight.bold),
             ),
           ),
           Builder(builder: (_) {
