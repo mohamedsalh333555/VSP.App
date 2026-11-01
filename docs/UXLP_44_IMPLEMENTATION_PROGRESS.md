@@ -1429,3 +1429,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `bookings_screen.dart` has its own AppBar, which already handles the top system inset. Its body SafeArea no longer adds the status-bar inset a second time.
 - Code commit: `dab989b7e51bc7891300aa49d882df7ae31cf1c4`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Copilot sheet RTL and bilingual loading state — 2026-11-01
+
+- `vsp_copilot_sheet.dart`: assistant loading bubble now aligns to `AlignmentDirectional.centerStart` instead of physical left, so it mirrors in Arabic; its loading message now has an English equivalent rather than remaining Arabic in both locales.
+- Code commit: `fe6f2e3c45295958492c660013d049ffde5d535e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
