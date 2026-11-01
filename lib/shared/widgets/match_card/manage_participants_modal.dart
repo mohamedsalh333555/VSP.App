@@ -80,7 +80,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
+      final accepted = await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
+      if (!accepted) throw StateError('accept_join_request_failed');
       try {
         await NotificationHandler.notifyJoinRequestAccepted(
           playerId: userId,
@@ -118,7 +119,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      final rejected = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      if (!rejected) throw StateError('reject_join_request_failed');
       try {
         await NotificationHandler.notifyJoinRequestRejected(
           playerId: userId,
@@ -152,7 +154,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
     try {
-      await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
+      final removed = await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
+      if (!removed) throw StateError('remove_participant_failed');
       await _fetchUsers();
     } catch (e, stackTrace) {
       debugPrint('Participant removal failed: $e\n$stackTrace');
