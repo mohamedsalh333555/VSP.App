@@ -82,7 +82,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  stream: _chatRepository.streamUserConversations(ownerId),
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+ return VSPStateView(
+   state: VSPUiState.loading,
+   title: isArabic ? 'جارٍ تحميل المحادثات' : 'Loading conversations',
+   message: isArabic ? 'نحدّث قائمة محادثاتك.' : 'Fetching your conversations.',
+ );
  }
 
  final conversations = snapshot.data ?? [];
