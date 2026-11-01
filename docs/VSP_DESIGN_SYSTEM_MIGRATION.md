@@ -279,3 +279,7 @@ The coverage figures in the earlier sections above are historical checkpoints an
 - The recorded heuristic/static scan still covers 128 candidate files. Therefore, 62 of the currently registered unique paths are not proven to be included in that earlier scan. The scan must be rerun across the current complete register before this design-system scan gate can be closed.
 - The 190-path inventory still does not prove exhaustive embedded-widget, state, locale, or runtime coverage.
 - All 44 UXLP rules remain source-reviewed/runtime-pending. No visual/runtime pass is inferred from token usage or source notes.
+
+## Coverage update after embedded-component discovery — 2026-11-01
+
+Nine additional embedded UI components have now been registered as `not yet inspected`. The current inventory is 199 unique Dart paths across 225 table records (26 repeated entries), replacing the prior 190-path / 216-record checkpoint. The existing 128-file static scan is still not proven to cover the newly expanded register; 71 registered paths are outside the evidenced scan set until a complete rescan is recorded.
