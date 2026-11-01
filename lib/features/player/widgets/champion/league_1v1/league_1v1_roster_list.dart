@@ -23,7 +23,7 @@ class League1v1RosterList extends StatelessWidget {
       child: Text(
         initial,
         style: TextStyle(
-          color: isMe ? VSPColors.accent : Colors.white,
+          color: isMe ? VSPColors.accent : VSPColors.white,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -43,7 +43,7 @@ class League1v1RosterList extends StatelessWidget {
             children: [
               Text(
                 isArabic ? 'جدول المسجلين بالبطولة' : 'Registered Roster',
-                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: VSPColors.white, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -142,7 +142,7 @@ class League1v1RosterList extends StatelessWidget {
                       child: Text(
                         pName + (isMe ? (isArabic ? ' (أنت)' : ' (You)') : ''),
                         style: TextStyle(
-                          color: isMe ? VSPColors.accent : Colors.white,
+                          color: isMe ? VSPColors.accent : VSPColors.white,
                           fontWeight: isMe ? FontWeight.w900 : FontWeight.w600,
                           fontSize: 13,
                         ),
