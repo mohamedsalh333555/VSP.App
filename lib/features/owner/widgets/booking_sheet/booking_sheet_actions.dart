@@ -51,7 +51,7 @@ class OngoingMatchBanner extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: VSPColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -69,7 +69,7 @@ class OngoingMatchBanner extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               minimumSize: const Size(48, 48),
               tapTargetSize: MaterialTapTargetSize.padded,
@@ -223,6 +223,7 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 }
                 final confirmed = await showDialog<bool>(
                   context: context,
+                  useSafeArea: true,
                   builder: (dialogContext) => AlertDialog(
                     scrollable: true,
                     backgroundColor: VSPColors.surface,
@@ -254,7 +255,7 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                         onPressed: () => Navigator.pop(dialogContext, true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.error,
-                          foregroundColor: Colors.white,
+                          foregroundColor: VSPColors.white,
                         ),
                         child: Text(isArabic ? 'تأكيد الإغلاق' : 'Confirm Closure'),
                       ),
