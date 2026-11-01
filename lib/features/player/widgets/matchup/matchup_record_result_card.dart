@@ -62,7 +62,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                   isArabic ? 'تسجيل نتيجة مباراة جديدة' : 'Record a new match result',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ],
@@ -76,7 +76,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                 child: DropdownButtonFormField<String>(
                   value: selectedTeamAId,
                   dropdownColor: VSPColors.surfaceAlt,
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     labelText: isArabic ? 'الفريق الأول' : 'Team A',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
@@ -97,7 +97,7 @@ class MatchupRecordResultCard extends StatelessWidget {
                 child: DropdownButtonFormField<String>(
                   value: selectedTeamBId,
                   dropdownColor: VSPColors.surfaceAlt,
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     labelText: isArabic ? 'الفريق الثاني' : 'Team B',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
@@ -177,7 +177,7 @@ class MatchupRecordResultCard extends StatelessWidget {
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected ? VSPColors.black : VSPColors.white,
             fontWeight: FontWeight.bold,
             fontSize: 11,
           ),
