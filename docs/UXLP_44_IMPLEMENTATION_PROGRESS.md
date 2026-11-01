@@ -1159,3 +1159,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Open Join match sharing now awaits the native share operation, logs platform errors, and presents localized failure feedback instead of allowing an unhandled asynchronous error.
 - Code commits: `1e3edbf34ad4b0d8567b5a8d2f4cd4c62ee5272f`, `f58f822648acf10c22f8a3ef12e8af9b8044b376`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Refund status refresh copy alignment — 2026-11-01
+
+- The pending-booking Check Status response now preserves the distinction between a refund still processing and a payment awaiting server confirmation. It no longer tells a player to wait for payment confirmation when the actual state is `refund_pending`.
+- Code commit: `02d3fcfeb8af4467ad98e7cd91dd4431dcfbc165`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
