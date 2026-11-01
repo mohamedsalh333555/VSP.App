@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../champion_podium_components.dart';
 
 /// كارت الهيدر الرئيسي لبطولة 1vs1 مع إبراز نظام الـ 32 لاعب وعدد الجولات
 class League1v1HeroCard extends StatelessWidget {
@@ -96,6 +97,31 @@ class League1v1HeroCard extends StatelessWidget {
             ],
           ),
 
+          if (governorate != null && governorate!.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(
+                  Iconsax.location_copy,
+                  color: VSPColors.textSecondary,
+                  size: 15,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    championTranslateItem(context, governorate!),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 12),
