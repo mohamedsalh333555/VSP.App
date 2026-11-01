@@ -1552,3 +1552,10 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/shared/widgets/vsp_error_state.dart`: it previously read `ConnectivityService.instance.isCurrentOnline` once during `build`, so an error screen already on display could keep showing stale offline/server copy after connectivity changed until an unrelated parent rebuild. It now listens to `isOnlineNotifier` via `ValueListenableBuilder`, switches the title/message/icon/state immediately, and marks the changing state as a live region for assistive technology.
 - Retry callback, custom online-server message, and button behavior remain unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `d6f20e446b907636add2cfb0c46046fa4da48e87`, `88a89f23515752def1cf2350bd063e37ab344ca1`.
+
+
+## Shared empty-state visual normalization — 2026-11-01
+
+- Fixed `lib/shared/widgets/vsp_empty_state.dart`: the general-purpose empty-state icon previously used the brighter `zinc100`, while the championship empty-state family uses the muted `zinc400` tone. It now uses the same charcoal-system icon tone.
+- Fixed `lib/core/ui/vsp_ui.dart`: shared `VSPStateView` empty/disabled states now use the same 28dp empty-state icon token as `VSPEmptyState` and `ChampionEmptyState`, while error/success states retain the larger status icon.
+- Empty-state tile geometry, action behavior, and state copy are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `20b07e2bb584426de7a86b625a0b80b2bb81fe6d`, `869014683a6328af5283ba2f74a023baf56df8b7`.
