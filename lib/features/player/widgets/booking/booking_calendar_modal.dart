@@ -190,7 +190,6 @@ void showBookingCalendarModal({
                   ),
                 ),
               ),
-            ),
           );
         },
       );
