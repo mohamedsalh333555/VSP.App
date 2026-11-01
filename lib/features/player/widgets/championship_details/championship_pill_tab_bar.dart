@@ -75,7 +75,7 @@ class ChampionshipPillTabBar extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.transparent,
+            color: isSelected ? VSPColors.accent : VSPColors.transparent,
             borderRadius: BorderRadius.circular(VSPRadius.full),
           ),
           child: Row(
@@ -84,7 +84,7 @@ class ChampionshipPillTabBar extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: isSelected ? Colors.black : VSPColors.textSecondary,
+                color: isSelected ? VSPColors.black : VSPColors.textSecondary,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -93,7 +93,7 @@ class ChampionshipPillTabBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: isSelected ? Colors.black : VSPColors.textSecondary,
+                    color: isSelected ? VSPColors.black : VSPColors.textSecondary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
