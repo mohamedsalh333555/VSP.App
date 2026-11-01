@@ -130,7 +130,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | player | source updated—runtime pending (explicit showDialog SafeArea enabled; cancel action minimum 48×48dp; runtime/keyboard verification intentionally deferred) |
 | `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart` | player | source reviewed—runtime pending (incomplete-squad bridge and nested add-team sheet use scroll control and SafeArea; team lookup/runtime pending) |
 | `lib/features/player/widgets/chat/chat_dialogs.dart` | player | source updated—runtime pending (both dialogs explicitly use SafeArea; all cancel/submit targets at least 48dp; controller lifecycle retained; runtime/keyboard verification deferred) |
-| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source reviewed—runtime pending (invite actions reviewed; Supabase auth ID reads corrected to User.id)  (close action has localized tooltip and 48dp target; manual player counters increased to 48dp) |
+| `lib/features/player/widgets/collective_match_invite_sheet.dart` | player | source updated—runtime pending (invite actions reviewed; Supabase auth ID reads corrected to User.id)  (close action has localized tooltip and 48dp target; manual player counters increased to 48dp) |
 | `lib/features/player/widgets/create_team_sheet.dart` | player | source reviewed—runtime pending (Arabic/English helper copy, keyboard behavior, async lifecycle, and premature success feedback corrected; auth ID reads use User.id) |
 | `lib/features/player/widgets/filter_bottom_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/features/player/widgets/home/book_tonight_sheet.dart` | player | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
@@ -733,3 +733,5 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - Added explicit `useSafeArea: true` to owner no-show confirmation, tournament round reset, owner onboarding exit, document-under-review, both tournament bracket dialogs, tournament prize handover, Paymob waiting, player booking cancellation, and team-league match dialogs.
 - Removed the redundant nested `SingleChildScrollView` behavior from the prize-handover `AlertDialog` while retaining its scrollable content, avoiding competing dialog/content scroll containers.
 - These are source-level changes only; runtime validation remains pending by the agreed no-tests/no-build instruction.
+
+- `lib/features/player/widgets/collective_match_invite_sheet.dart`: explicit safe-area protection added to all three booking/invite action dialogs; the two entry bottom sheets already use `useSafeArea: true`.
