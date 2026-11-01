@@ -1027,3 +1027,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Championship squad-to-team creation session guard — 2026-11-01
 - Fixed `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart`: after opening the create-team sheet, the bridge previously read whichever account was currently active and could fetch that account's team and route it into championship checkout if the user switched accounts during creation. It now captures the initiating user before dismissing the bridge and verifies that same user after team creation and again after fetching the team.
 - Team creation and championship checkout rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 3cf50323faf160b56d2f891dff9d7024faafb5d0.
+
+
+## Reschedule phone-launch feedback and dismissal guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: after sending a reschedule proposal, the optional `tel:` launch was previously fire-and-forget. A device with no handler or a failed launch could silently do nothing or surface an unhandled asynchronous error, and an exception could prevent the booking sheet from closing. The launch is now awaited, a localized error is shown when it returns false or throws, and the sheet is dismissed only while its context remains mounted.
+- Reschedule proposal behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: f1fd913284eb53db998e8ae04694b2a5ae435573.
