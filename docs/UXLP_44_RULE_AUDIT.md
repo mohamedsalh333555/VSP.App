@@ -493,7 +493,9 @@ These findings are explicitly classified as **needs product decision**. They are
 | 25, 39 | Team booking authorization in `create_booking_atomic` | Decide whether any team member or only the captain may create a team booking; also define which team is active when a user belongs to multiple teams. | Client verifies membership and does not invent a team-selection policy; server contract remains unchanged. |
 | 19, 39 | Multi-team default selection | Decide whether users need an explicit active-team selector or a deterministic product-defined default. | Existing first-membership behavior is preserved and documented; no unordered selection policy is claimed correct. |
 | 25, 31, 39, 40 | Challenge result eligibility in `submit_challenge_result_atomic` | Approve whether only confirmed/completed bookings may accept results and whether the second result must come from a different authenticated captain. | Client suppresses ineligible prompts and dual-side self-review; deployed RPC is unchanged. |
-| 41 | Notification retention | Define the intended retention/archive policy and explain historical disappearance before changing deletion or retention behavior. | Opening marks read; explicit swipe deletion and Undo remain the client behavior. No retention trigger/cron was added. |
+### Open product decision — notification retention
+
+Define the intended retention/archive policy and explain historical disappearance before changing deletion or retention behavior. Opening marks read; explicit swipe deletion and Undo remain the client behavior. No retention trigger/cron was added. This remains a server-side product decision; no deletion or retention behavior was introduced.
 | 18, 36, 41, 43 | Refund notification reconciliation | Decide the required durable notification/reconciliation behavior when Paymob confirms a refund but ledger recording or notification insertion fails. | Existing refund/ledger flow remains unchanged; no outbox table or migration was applied. |
 
 Until each decision is supplied, affected rule/screen pairs must retain the `needs product decision` status rather than being marked `pass` or changed by assumption.
