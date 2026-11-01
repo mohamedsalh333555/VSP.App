@@ -161,6 +161,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         title: Text(isArabic ? 'مغادرة المباراة؟' : 'Leave match?'),
@@ -220,7 +221,7 @@ void _manageParticipants(BuildContext context) {
  return Text(
  text,
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 13,
  fontWeight: FontWeight.bold,
  ),
@@ -254,7 +255,7 @@ void _manageParticipants(BuildContext context) {
  Text(
  headerTitle,
  style: TextStyle(
- color: Colors.white.withValues(alpha: 0.5),
+ color: VSPColors.white.withValues(alpha: 0.5),
  fontSize: 9.5,
  fontWeight: FontWeight.w600,
  ),
@@ -269,7 +270,7 @@ void _manageParticipants(BuildContext context) {
  value,
  maxLines: 1,
  overflow: TextOverflow.ellipsis,
- style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+ style: const TextStyle(color: VSPColors.white, fontSize: 11, fontWeight: FontWeight.bold),
  ),
  ),
  ),
@@ -277,7 +278,7 @@ void _manageParticipants(BuildContext context) {
  );
  }
 
- Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
+ Widget _buildDivider() => Container(width: 1, height: 22, color: VSPColors.white10);
 
  Widget _buildRawButton({required String label, required Color color, required VoidCallback? onTap, bool isOutlined = false}) {
  return AbsorbPointer(
@@ -288,15 +289,15 @@ void _manageParticipants(BuildContext context) {
  height: 48.0,
  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
  decoration: BoxDecoration(
- color: isOutlined ? Colors.transparent : color,
+ color: isOutlined ? VSPColors.transparent : color,
  borderRadius: BorderRadius.circular(VSPRadius.button),
  border: isOutlined ? Border.all(color: color, width: 1.5) : null,
  boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 3))],
  ),
  child: Center(
  child: _isLoading 
- ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) 
- : Text(label, style: TextStyle(color: isOutlined ? color : Colors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+ ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: VSPColors.black, strokeWidth: 2)) 
+ : Text(label, style: TextStyle(color: isOutlined ? color : VSPColors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
  ),
  ),
  ),
@@ -368,10 +369,10 @@ void _manageParticipants(BuildContext context) {
       decoration: BoxDecoration(
         color: VSPColors.surface, 
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: widget.highlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08), width: 1),
+        border: Border.all(color: widget.highlighted ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.08), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: VSPColors.black.withValues(alpha: 0.25),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -420,7 +421,7 @@ void _manageParticipants(BuildContext context) {
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
- Text(booking.hostName ?? booking.playerTeamName ?? AppLocalizations.of(context)!.host, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+ Text(booking.hostName ?? booking.playerTeamName ?? AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
  Text(booking.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
  ],
  ),
@@ -432,7 +433,7 @@ void _manageParticipants(BuildContext context) {
  const SizedBox(height: 12),
  Container(
  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
- decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
+ decoration: BoxDecoration(color: VSPColors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
  child: Row(
  mainAxisAlignment: MainAxisAlignment.spaceAround,
  children: [
