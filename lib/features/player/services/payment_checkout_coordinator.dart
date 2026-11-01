@@ -13,6 +13,7 @@ class PaymentCheckoutCoordinator {
   Timer? _webhookTimeoutTimer;
   Timer? _fallbackPollingTimer;
   StreamSubscription? _bookingSubscription;
+  int _pollingGeneration = 0;
 
   PaymentCheckoutCoordinator({SupabaseBookingRepository? bookingRepo})
       : _bookingRepo = bookingRepo;
@@ -72,6 +73,7 @@ class PaymentCheckoutCoordinator {
     Duration interval = const Duration(seconds: 10),
   }) {
     _fallbackPollingTimer?.cancel();
+    final pollingGeneration = ++_pollingGeneration;
     var isFetching = false;
     var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(interval, (timer) async {
@@ -79,6 +81,7 @@ class PaymentCheckoutCoordinator {
       isFetching = true;
       try {
         final booking = await fetchBooking(bookingId);
+        if (pollingGeneration != _pollingGeneration) return;
         if (booking != null &&
             PaymentCheckoutService.isPaymentConfirmed(
               status: booking.status.toDbValue(),
@@ -100,6 +103,7 @@ class PaymentCheckoutCoordinator {
 
   /// Cancels active fallback polling timer.
   void cancelFallbackPolling() {
+    _pollingGeneration++;
     _fallbackPollingTimer?.cancel();
     _fallbackPollingTimer = null;
   }
@@ -113,6 +117,7 @@ class PaymentCheckoutCoordinator {
     required void Function(Map<String, dynamic>) onPaid,
   }) {
     _fallbackPollingTimer?.cancel();
+    final pollingGeneration = ++_pollingGeneration;
     var isFetching = false;
     var hasConfirmed = false;
     _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
@@ -120,6 +125,7 @@ class PaymentCheckoutCoordinator {
       isFetching = true;
       try {
         final status = await fetchStatus(orderReference);
+        if (pollingGeneration != _pollingGeneration) return;
         if (status['success'] == true && status['payment_status'] == 'paid') {
           hasConfirmed = true;
           timer.cancel();
@@ -228,6 +234,7 @@ class PaymentCheckoutCoordinator {
 
   /// Cancels all active timers and stream subscriptions.
   void cancelAllTimers() {
+    _pollingGeneration++;
     _countdownTimer?.cancel();
     _webhookTimeoutTimer?.cancel();
     _fallbackPollingTimer?.cancel();
