@@ -216,7 +216,7 @@ class TeamRepository {
         teamId: teamId,
       );
 
- Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
+ Future<Map<String, int>?> getHeadToHeadStats(String team1Id, String team2Id) async {
  try {
  final response = await _supabase
  .from('bookings')
@@ -227,7 +227,7 @@ class TeamRepository {
  return TeamPayloadBuilder.calculateHeadToHead(response as List, team1Id, team2Id);
  } catch (e) {
  debugPrint('Error getting head to head stats: $e');
- return {'teamAWins': 0, 'draws': 0, 'teamBWins': 0, 'totalMatches': 0};
+ return null;
  }
  }
 
