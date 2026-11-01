@@ -156,7 +156,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       ));
     } catch (e) {
       debugPrint('Open Join chat unavailable: $e');
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(isArabic ? 'تعذر فتح المحادثة حالياً. حاول مرة أخرى.' : 'Could not open the chat. Please try again.'),
       ));
