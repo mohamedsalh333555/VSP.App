@@ -355,7 +355,29 @@ class BookingConfirmationHandler {
     // any additional booking must be paid in full online. This is mirrored
     // by the database trigger as the final authority.
     final directRepo = SupabaseBookingRepository();
-    final existingUserBookings = await directRepo.getUserBookingsDirectly(userId);
+    List<Booking> existingUserBookings;
+    try {
+      // This read gates a payment policy. Never interpret a query failure as
+      // an empty booking history, or an active cash booking could be bypassed.
+      existingUserBookings =
+          await directRepo.getUserBookingsDirectlyStrict(userId);
+    } catch (e, stack) {
+      VSPLogger.e('Could not verify existing bookings before payment routing', e, stack);
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من حجوزاتك الحالية. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify your current bookings. No booking was submitted; please try again.',
+      );
+      return;
+    }
     if (!context.mounted) return;
     if (!isSameUser()) {
       onLoadingChanged(false);
