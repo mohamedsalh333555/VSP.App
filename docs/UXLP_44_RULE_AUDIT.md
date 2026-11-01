@@ -1137,3 +1137,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Rules 11, 33, and 35:** chat report dialog now scrolls under keyboard pressure; all report/delete dialog actions have explicit 48dp minimum hit targets.
 
 - Prize handover dialog actions were also raised to the 48dp target. All source-only touch-target changes remain runtime pending.
+
+
+- **Rule 10 — Bilingual visual integrity:** corrected a physical `left` inset in `tournament_manual_team_sheet.dart` to directional `start` padding. This removes one confirmed RTL asymmetry in the manual-team sheet. Device rendering and the rest of the 215 registered surfaces remain subject to final verification; no rule is marked pass from this source correction alone.
