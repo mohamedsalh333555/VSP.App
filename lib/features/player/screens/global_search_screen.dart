@@ -182,7 +182,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         ],
       ),
       body: SafeArea(top: false, bottom: true, child: _isSearching
-          ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+          ? VSPStateView(
+              state: VSPUiState.loading,
+              title: ar ? 'جارٍ البحث' : 'Searching',
+              message: ar
+                  ? 'نبحث عن الملاعب والفرق والبطولات.'
+                  : 'Looking for stadiums, teams, and tournaments.',
+            )
           : SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: EdgeInsets.only(
