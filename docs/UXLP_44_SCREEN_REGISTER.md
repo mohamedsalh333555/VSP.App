@@ -378,3 +378,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried stadium gallery surface — 2026-11-01
 
 | `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart` | player | source reviewed—runtime pending (share/favorite actions have localized tooltips and focusable 48dp targets; image and indicator open the accessible full-screen gallery) |
+
+
+### Newly inventoried owner quick-cash surface — 2026-11-01
+
+| `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart` | owner | source reviewed—runtime pending (date-sensitive cash actions use VSPTimeService unless an explicit currentTime is injected; success/failure feedback retained) |
