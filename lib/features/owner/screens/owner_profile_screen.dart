@@ -178,28 +178,60 @@ class OwnerProfileScreen extends StatelessWidget {
                           ? StadiumRepository().getOwnerStadiums(auth.currentUser!.uid)
                           : Stream.value([]),
                       builder: (context, snapshot) {
+                        final hasError = snapshot.hasError;
+                        final isLoading =
+                            snapshot.connectionState == ConnectionState.waiting &&
+                            !snapshot.hasData;
                         final count = snapshot.data?.length ?? 0;
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: VSPColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(VSPRadius.full),
-                            border: Border.all(color: VSPColors.divider.withValues(alpha: 0.2)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Iconsax.building_copy, size: 11, color: VSPColors.textSecondary),
-                              const SizedBox(width: 4),
-                              Text(
-                                ArabicPluralUtils.formatStadiumCount(count, isArabic: isArabic),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: VSPColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        final label = hasError && !snapshot.hasData
+                            ? (isArabic ? 'تعذر تحميل الملاعب' : 'Stadium count unavailable')
+                            : isLoading
+                                ? (isArabic ? 'جاري التحميل' : 'Loading')
+                                : ArabicPluralUtils.formatStadiumCount(
+                                    count,
+                                    isArabic: isArabic,
+                                  );
+                        return Tooltip(
+                          message: hasError
+                              ? (isArabic
+                                  ? 'تعذر تحديث عدد الملاعب'
+                                  : 'Could not refresh stadium count')
+                              : label,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: VSPColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(VSPRadius.full),
+                              border: Border.all(
+                                color: (hasError ? VSPColors.warning : VSPColors.divider)
+                                    .withValues(alpha: 0.3),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  hasError
+                                      ? Iconsax.warning_2_copy
+                                      : Iconsax.building_copy,
+                                  size: 11,
+                                  color: hasError
+                                      ? VSPColors.warning
+                                      : VSPColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  label,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: hasError
+                                        ? VSPColors.warning
+                                        : VSPColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
