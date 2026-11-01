@@ -17,7 +17,7 @@ class OwnerPayoutOtpDialog extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => const OwnerPayoutOtpDialog(),
     );
     return result ?? false;
