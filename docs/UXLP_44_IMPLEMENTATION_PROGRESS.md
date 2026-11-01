@@ -1900,3 +1900,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Player league/ranking surfaces: team-league membership and league loading, team rankings, and 1v1 standings now use shared bilingual loading states. Existing retry/error/empty branches and join/payment actions remain unchanged; compact submit-button spinners remain local.
 
 - My Team screen: replaced the raw English-only `Not authenticated` fallback with a safe-area-protected, localized error state and clear sign-in recovery guidance.
+
+- Dialog ergonomics: owner document-upload cancellation, add-stadium discard/delete, and Paymob still-waiting dialogs now give every explicit action a 48dp minimum height and padded tap target; scrollable content and action semantics remain unchanged.
