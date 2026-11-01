@@ -18,14 +18,14 @@ Future<void> showTournamentPrizeDeliveryDialog(
 
   await showDialog(
     context: context,
-    barrierDismissible: false,
+    useSafeArea: true,
+      barrierDismissible: false,
     builder: (ctx) {
       return StatefulBuilder(
         builder: (dialogCtx, setDialogState) {
           final prizeAmount =
               championship.prizePool > 0 ? championship.prizePool : championship.grandPrize;
           return AlertDialog(
-            scrollable: true,
             backgroundColor: VSPColors.surface,
             surfaceTintColor: Colors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
