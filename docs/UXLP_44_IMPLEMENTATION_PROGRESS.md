@@ -1511,3 +1511,14 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: previous/next month arrows now swap direction in RTL instead of retaining LTR-facing Iconsax glyphs. Both icon buttons also expose localized Arabic/English tooltips for their month-navigation action.
 - Date selection and month-boundary rules are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `2a3a66cfe239a2924bb03c9ac68131e95ac656f1`.
+
+
+## Live Supabase data/authorization source reconciliation — 2026-11-01
+
+Read-only inspection was performed against the connected production VSP project `mktqkddbcddrxjxabdua` (Postgres 17.6.1.127):
+
+- Confirmed `generate_team_league_fixtures(uuid)` and `confirm_team_league_payment(...)` are SECURITY DEFINER but executable only by `postgres` and `service_role`; authenticated client execution is not present. Historical TL-03 direct-client exposure is therefore closed in the live ACL.
+- Confirmed `get_team_active_league(uuid)` is still executable by `authenticated` and still lacks participant/creator authorization in its active SECURITY DEFINER body. TL-02 remains approval-required.
+- Confirmed `submit_team_league_match_result(uuid,uuid,text)` is still executable by `authenticated` and its active definition still lacks the booking/kickoff guard. TL-01 remains approval-required.
+- Rechecked the six previously flagged queue/security tables: RLS is enabled and each now has explicit policies (2, 2, 1, 2, 2, and 2 respectively). The old zero-policy inventory is no longer current.
+- No SQL, RLS, grants, migrations, or production data were changed. No tests, analyzer, CI, runtime checks, or APK build were run.
