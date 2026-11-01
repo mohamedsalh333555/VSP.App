@@ -972,3 +972,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: after saving a manual booking, the modal was popped and then its own `context` was reused to open the receipt sheet or show the success feedback. That context belongs to the dismissed route and can be deactivated during the transition.
 - The flow now captures the host navigator context before dismissal, closes the modal, verifies the host context is still mounted, and presents the receipt/success feedback from the host route. Booking creation and receipt contents are unchanged.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 6bbed9316107eba4dc07cb92c20cb1ada13bab23.
+
+
+## Collective invite account-scoped async actions — 2026-11-01
+- Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: join, leave, manual-player-count update, participant removal, invitation credential lookup/share, and collective cancellation now verify the initiating authenticated account after asynchronous work before refreshing state, navigating, or presenting feedback. Error feedback for join/leave/count/removal is also suppressed if the active account changed while the request was pending.
+- The repository operations and product eligibility rules are unchanged; this only prevents stale async results from crossing account sessions. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: eb36c3c26203a5cd5147c281cb6701fb9da8802b; 84c2a6264c0948adab02faf4fe6d5f1f2f202a48.
