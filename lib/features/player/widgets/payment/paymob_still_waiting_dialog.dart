@@ -47,6 +47,8 @@ class PaymobStillWaitingDialog {
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
               foregroundColor: Colors.white,
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             child: Text(isArabic ? 'إلغاء' : 'Cancel'),
