@@ -1118,3 +1118,10 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - No rule is marked pass from source edits alone. Locale rendering, narrow viewport behavior, keyboard interaction, and stream recovery remain part of the single final runtime validation pass.
 
 - **Rule 33:** owner tournament dashboard confirmation, force-start, cancellation, and destructive dialog actions now use 48dp primary-action heights instead of 44dp. Source-only; tap-area verification remains part of final device validation.
+
+
+### Public-match join request integrity and backend authorization — 2026-11-01
+
+- **Rules 18, 25, 29, 31, 36, 38, 39, and 43:** the Flutter repository now honors the JSONB `success` field returned by `accept_join_request`/`reject_join_request`, so an RPC-level rejection cannot be reported as a successful action or mutate the local participant list. Diagnostics now retain stack traces without exposing them to users.
+- **Approval-required database findings:** `accept_join_request` does not verify pending membership or reject an already-joined target before incrementing the booking player count. The public-match card's self-cancel action calls the host-only `reject_join_request`; there is no dedicated caller-owned cancellation RPC. A narrow server-side fix is specified in the implementation progress record but is not deployed because production SQL requires explicit approval. These findings remain open.
+- Live Supabase security/performance advisor results were refreshed read-only. No schema, RLS, RPC grant, view, or Edge Function changes were applied.
