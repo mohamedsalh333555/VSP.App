@@ -8,11 +8,37 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../shared/widgets/stadium_card.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../shared/widgets/vsp_empty_state.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 import '../../../../data/models.dart';
 import '../stadium_details_screen.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
+
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  String? _favoriteIdsKey;
+  List<String> _favoriteIds = [];
+  Future<List<Stadium>>? _favoriteStadiumsFuture;
+
+  void _bindFavorites(List<String> ids) {
+    final key = ids.join('|');
+    if (_favoriteIdsKey == key) return;
+    _favoriteIdsKey = key;
+    _favoriteIds = List<String>.from(ids);
+    _favoriteStadiumsFuture = ids.isEmpty
+        ? null
+        : StadiumRepository().getStadiumsByIds(_favoriteIds);
+  }
+
+  void _retryFavorites() {
+    setState(() {
+      _favoriteStadiumsFuture = StadiumRepository().getStadiumsByIds(_favoriteIds);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +60,7 @@ class FavoritesScreen extends StatelessWidget {
         builder: (context, auth, child) {
           final favoriteIds = auth.userModel?.favoriteStadiums ?? [];
           
+          _bindFavorites(favoriteIds);
           if (favoriteIds.isEmpty) {
             return VSPEmptyState(
               icon: Iconsax.heart_copy,
@@ -43,14 +70,27 @@ class FavoritesScreen extends StatelessWidget {
           }
 
           return FutureBuilder<List<Stadium>>(
-            future: StadiumRepository().getStadiumsByIds(favoriteIds),
+            future: _favoriteStadiumsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                return VSPStateView(
+                  state: VSPUiState.loading,
+                  title: isAr ? 'جاري تحميل المفضلة' : 'Loading favorites',
+                );
               }
-              
+
+              if (snapshot.hasError) {
+                return VSPErrorState(
+                  customMessage: isAr
+                      ? 'تعذر تحميل الملاعب المفضلة. تحقق من الاتصال ثم أعد المحاولة.'
+                      : 'Could not load favorite stadiums. Check your connection and try again.',
+                  retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+                  onRetry: _retryFavorites,
+                );
+              }
+
               final favoriteStadiums = snapshot.data ?? [];
-              
+
               if (favoriteStadiums.isEmpty) {
                 return VSPEmptyState(
                   icon: Iconsax.search_normal_copy,
