@@ -116,9 +116,8 @@ class QuickBookingDurationSection extends StatelessWidget {
               final index = availableDurations.indexOf(mins);
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(
-                    right: isAr ? (index > 0 ? 6 : 0) : 0,
-                    left: isAr ? 0 : (index > 0 ? 6 : 0),
+                  padding: EdgeInsetsDirectional.only(
+                    start: index > 0 ? 6 : 0,
                   ),
                   child: _buildDurationChip(mins, _formatDurationLabel(mins, isAr)),
                 ),
@@ -132,7 +131,7 @@ class QuickBookingDurationSection extends StatelessWidget {
             child: Row(
               children: availableDurations.map((mins) {
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(start: 8),
                   child: _buildDurationChip(mins, _formatDurationLabel(mins, isAr)),
                 );
               }).toList(),
