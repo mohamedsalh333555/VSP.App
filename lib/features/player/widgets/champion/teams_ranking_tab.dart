@@ -6,6 +6,7 @@ import '../../../../core/constants/egypt_governorates.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/vsp_error_state.dart';
@@ -77,11 +78,16 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return StreamBuilder<List<Team>>(
       stream: _stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل ترتيب الفرق' : 'Loading team rankings',
+            message: isArabic ? 'نحدّث نقاط الفرق ونتائجها.' : 'Fetching team points and results.',
+          );
         }
         if (snapshot.hasError &&
             (!snapshot.hasData || snapshot.data!.isEmpty)) {
