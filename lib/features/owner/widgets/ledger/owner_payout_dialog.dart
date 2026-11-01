@@ -34,6 +34,7 @@ class OwnerPayoutDialog {
     if (!hasPayoutMethod) {
       showDialog(
         context: context,
+        useSafeArea: true,
         builder: (ctx) => AlertDialog(
           scrollable: true,
           backgroundColor: VSPColors.surface,
@@ -51,6 +52,7 @@ class OwnerPayoutDialog {
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48), tapTargetSize: MaterialTapTargetSize.padded),
               onPressed: () => Navigator.pop(ctx),
               child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
             ),
@@ -63,8 +65,12 @@ class OwnerPayoutDialog {
                 );
               },
               style: ElevatedButton.styleFrom(
+                minimumSize: const Size(64, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
                 backgroundColor: VSPColors.accent,
                 foregroundColor: Colors.black,
+                minimumSize: const Size(64, 48),
+                tapTargetSize: MaterialTapTargetSize.padded,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
               child: Text(
@@ -103,6 +109,7 @@ class OwnerPayoutDialog {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => _PayoutDialogContent(
         digitalBalance: digitalBalance,
         isAr: isAr,
@@ -369,6 +376,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
         LayoutBuilder(
           builder: (_, constraints) {
             final cancelButton = TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(64, 48), tapTargetSize: MaterialTapTargetSize.padded),
               onPressed: _isSubmitting ? null : widget.onCancel,
               child: Text(
                 widget.isAr ? 'إلغاء' : 'Cancel',
