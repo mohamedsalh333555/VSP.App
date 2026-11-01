@@ -938,3 +938,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/owner/widgets/ledger/owner_payout_dialog.dart`: the payout amount/destination dialog always forced Cancel and Confirm Request into a horizontal equal-width row. On narrow devices and in Arabic, the long confirmation label could be compressed. Actions now stack vertically below 360 logical pixels and remain horizontal on wider dialogs.
 - Payout amount validation, destination selection, and settlement submission behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: 33b5a5bcf0deeff80477a96819a26daefef5ca15.
+
+
+## Support ticket creation parent-context lifecycle guard — 2026-11-01
+- Fixed `lib/features/player/screens/support_tickets_screen.dart`: after the asynchronous support-ticket creation request, the sheet context was checked but the owning screen context was not checked before reading `AuthProvider` from that parent context. If the screen was disposed while the sheet remained mounted, the success or error path could access a deactivated parent context.
+- Both post-request success and error paths now require the parent screen to remain mounted before reading its provider. Ticket creation behavior and account-identity checks are unchanged.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d1253058ff48d02bcf208ff2fc8f19a5d7da7e1c.
