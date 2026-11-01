@@ -961,3 +961,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 10, 13, 27, and 33:** message edit remains long-press only for the sender but is now discoverable through a localized assistive-technology custom action; sender names are bounded; timestamps follow the active locale.
 - Source commit: `2f48a9caa58f078ffc48b29a5566238403db96b2`. Runtime/accessibility verification remains pending; no tests or build were run.
+
+
+### Signup/OTP focus, touch target, and lifecycle corrections — 2026-11-01
+
+- **Rules 27, 33, 34, and 35:** OTP keyboard event handling no longer allocates an undisposed FocusNode during build; resend is a keyboard-focusable TextButton with a 48dp minimum target and correct disabled countdown state; date-of-birth field is now focusable with a localized tooltip.
+- Source commits: `d03b89bbc9c303c1e74d95bfb6a722c58fe335af`, `cf7f225de5405ce3fce507e2a64b1777972c1c0e`, `5b283415b6ed5028ed3e36a48188f1b880a2c039`. Keyboard/device verification remains pending; no tests or build were run.
