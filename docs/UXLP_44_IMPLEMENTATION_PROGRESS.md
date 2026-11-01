@@ -1453,3 +1453,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `forgot_password_dialog.dart`: AlertDialog is now scrollable; Cancel and Submit controls both have 48dp minimum heights, keeping the modal usable on short screens and improving touch accessibility.
 - Code commits: `197b64fa48d08301df79505fb026b32a8ec9c3ff`, `175b8c9eefb6b5b8813e1972c061691f3a602aa1`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner Dashboard nested safe-area correction — 2026-11-01
+
+- `owner_dashboard_screen.dart` is rendered inside `OwnerMainScreen`, which already applies the top safe inset and uses a bottom navigation bar that protects the system bottom inset. The dashboard's nested SafeArea now sets `top: false, bottom: false` to avoid duplicate spacing above and below its content.
+- Code commit: `a554d6028441804afc8e8bf87c69100a678c14f3`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
