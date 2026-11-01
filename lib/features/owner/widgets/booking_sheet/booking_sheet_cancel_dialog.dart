@@ -21,6 +21,7 @@ class BookingSheetCancelDialog {
   }) {
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -51,6 +52,7 @@ class BookingSheetCancelDialog {
   }) async {
     final result = await showDialog<ManualBookingCancelDecision>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
