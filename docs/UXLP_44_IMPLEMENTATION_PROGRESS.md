@@ -1207,3 +1207,13 @@ These source corrections are committed on `uxlp-44-implementation`. They are not
 ### Filter header parser follow-up — 2026-11-01
 
 The next automatic Analyze run reduced the previous blocker set to one remaining parser error in `filter_bottom_sheet.dart`: the nested title Row's child list had been closed as a widget call during the grouped correction. The child list and enclosing Expanded are now closed in the correct order. This follow-up is source-only and awaits the next Analyze result; the preceding run skipped tests and APK build.
+
+
+
+## Consolidated CI and policy-copy follow-up — 2026-11-01
+
+- Fixed the compile-time opt-in expression in `test/db_live_verification_test.dart` and `test/simulate_human_traffic_test.dart`. The previous use of `String.isNotEmpty` inside a const initializer caused `const_initialized_with_non_constant_value` analyzer errors. The compile-time gate now uses constant string comparisons. Both live-Supabase tests remain skipped unless `VSP_RUN_LIVE_TESTS=true` and both Supabase credentials are explicitly supplied; ordinary CI does not mutate or load-test the live database.
+- Added a CI artifact upload for the debug APK and enabled the separate test-release APK workflow on the working branch. The test-release build uses the Gradle test-only debug signing path; it is installable for QA and is not a Play Store or production-signing artifact.
+- Updated Arabic and English legal-facing copy in `terms_and_privacy_screen.dart`: owner/player eligibility now reflects 18+; cancellation/refund text no longer promises unconditional 100% refunds or unsupported grace/request/settlement windows; non-refundable administrative/payment-gateway fees are explicitly excluded; GPS no-show appeal radius is 200m with accuracy no worse than 50m. The existing 60-minute appeal period was retained. No database, RPC, RLS, payment calculation, refund engine, or GPS enforcement behavior was changed.
+- The first CI run after the test-gate change failed at Analyze because of the two const-expression errors above; this was the exact root cause. A fresh CI run and test-release build are now triggered from the latest branch head.
+- Final status is intentionally not marked complete until Analyze, the consolidated test suite, Debug APK build/upload, and test Release APK build/upload all finish successfully. The 44 UXLP rule rows and registered screen surfaces remain source-reviewed/runtime-pending until the required device, locale, state, accessibility, and visual checks are evidenced. No claim of runtime pass is made here.
