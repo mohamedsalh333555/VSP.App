@@ -471,3 +471,19 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 - `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: the ongoing-match Extend (+30m) action no longer uses a shrink-wrapped tap target; its minimum interactive size is 48×48dp. Source commit: `052d25e47478a78b69a2eb82102d60b623c47cea`.
 - `lib/features/player/widgets/booking/booking_bottom_bar.dart`: collective-booking player-count labels now use the available row width, wrap to at most two lines, and ellipsize excess text so they cannot push the 48dp increment/decrement controls off-screen on compact devices. Source commit: `348d69664fe6e7d52f502ff114c2c41f8605b620`.
 - These are source-level remediations only. Per the agreed batch process, no test/analyzer/CI/device pass or APK build was run. Both surfaces remain runtime pending until the consolidated validation stage.
+
+
+## Root account-state and owner-flow lifecycle remediation — 2026-11-01
+
+- `lib/core/navigation/root_screen.dart`: the authenticated-profile resolution state now uses the canonical `VSPStateView` loading presentation, bilingual Arabic/English copy, and `SafeArea` instead of an unlabeled bare spinner. Existing five-second timeout and offline recovery destination remain unchanged. Source commit: `55eaf75c5c8b7c8820a2c94c449eb8c0daf20944`.
+- `lib/features/owner/screens/owner_main_screen.dart`: the deferred post-frame celebration subscription now checks `mounted` before reading Provider and checks it again before handling late stream events, preventing use of a disposed screen context. Source commit: `9f9d96d2fdbfeaa025f55719d22aa24d6fa7eb49`.
+- These are source-level changes; no analyzer, tests, CI, device run, or APK build was executed.
+
+## Supabase live review — production project `mktqkddbcddrxjxabdua` — 2026-11-01
+
+- Project status: `ACTIVE_HEALTHY`; PostgreSQL 17.6.1.127. Public schema inventory returned 66 tables; all 66 report RLS enabled.
+- The six sensitive operational tables previously flagged for missing policies now have policies: refund queues and challenge results expose admin read + service-role full access; internal function secrets have service-role-only access; team-league payments have service-role full access plus users' own-payment read access. No client policy was added to internal secrets or refund worker queues.
+- Active Edge Function inventory: `create_paymob_intention` v33 (JWT required), `process_paymob_refund` v20 (JWT required), `paymob_webhook` v45 (JWT disabled, expected webhook entrypoint), `vsp_copilot` v123 (JWT required), `fcm_push` v20 (JWT disabled; webhook/token validation requires separate code review), `process_tournament_refund` v16 (JWT required), `create_owner_web_checkout` v10 (JWT required), `get_owner_web_checkout_status` v7 (JWT required).
+- Security advisor findings: one ERROR for `public.teams_public` being a SECURITY DEFINER view; 198 WARN findings for authenticated execution of SECURITY DEFINER functions; one WARN for leaked-password protection being disabled. Performance advisor findings: 44 auth-RLS initplan findings, 50 multiple-permissive-policy findings, and 79 unused-index findings.
+- `teams_public` currently selects team-directory fields from `public.teams`, grants SELECT to authenticated (not anon), and has no `security_invoker` option. The base `teams` SELECT policy limits rows to captain/member/admin. Changing this view to invoker semantics without first designing a public-safe discovery policy could hide other teams from player discovery; bulk-revoking the 198 SECURITY DEFINER RPC grants could break intended atomic app workflows. These are not changed blindly. Required next remediation is function-by-function authorization review and an explicit decision on intended public team discovery, followed by a migration and advisor re-check.
+- No production database DDL, RLS policy, RPC grant, or Edge Function deployment was changed during this review.
