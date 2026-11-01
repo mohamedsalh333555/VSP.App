@@ -23,8 +23,7 @@ class HomeFeedContent extends StatelessWidget {
             color: VSPColors.accent,
             backgroundColor: VSPColors.surface,
             onRefresh: () async {
-              context.read<StadiumProvider>().fetchStadiums(isRefresh: true);
-              await Future.delayed(const Duration(milliseconds: 800));
+              await context.read<StadiumProvider>().fetchStadiums(isRefresh: true);
             },
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
