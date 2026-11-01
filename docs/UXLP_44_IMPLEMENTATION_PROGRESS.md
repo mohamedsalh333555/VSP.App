@@ -726,3 +726,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Support-ticket subjects in the ticket list are now limited to two lines with ellipsis. Long user-entered Arabic/English subjects can no longer expand a row without bound or crowd its status/navigation affordance on narrow screens.
 - Ticket subject data is preserved and the full title remains available in the ticket detail screen. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `dbcb227f63213dbb42a57cc4f1d12575462168dc`.
+
+
+## Add-player lookup stale-response protection — 2026-11-01
+
+- The add-player phone lookup now captures the initiating account and normalized phone number. A late success is discarded if the user changes the phone field or switches accounts before the lookup returns, preventing an outdated player from appearing as the current search result.
+- Lookup errors are also shown only when they still belong to the active phone/account request; stale failures no longer display misleading errors over a newer search or account. Governorate eligibility and the repository lookup contract are unchanged.
+- Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: `0dcc02a29b8e0b1439a8072561bfab31dfcd1dda`, `1d128f5017efcade0d7e3a4dbd651201dbc9ea42`.
