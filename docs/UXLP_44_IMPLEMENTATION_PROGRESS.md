@@ -2198,3 +2198,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `payment_gateway_screen.dart`: the online-payment Remote Config flag is now enforced inside the checkout screen itself, not only in the payment-method sheet. This closes direct-route paths (such as forced online payment) that could otherwise bypass the flag. The checkout CTA is disabled with a localized explanation while online payment is off, and the action rechecks the flag before requesting a Paymob intention.
 - Source commit: `ba2e08b20e661b15b7d4b2cdb28dccb3484f8f39`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+- Follow-up: checkout initialization now checks the same flag before starting timers, loading fee data, or creating a pending booking. When online payment is disabled, the screen explains that no temporary booking/slot was created and offers a safe return path. Source commit: `8e7e0928745182928e3f04e6e6c317d105bef541`.
