@@ -955,3 +955,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 31, 38, and 40:** quick-cash day/status calculations now use the shared VSP clock by default while retaining explicit injected-time support, aligning the action card with owner booking schedule and pending-cash date semantics.
 - Source commit: `8a3a2007566590cb90779b0d31d774dbdb99f89d`. Runtime verification remains pending; no tests or build were run.
+
+
+### Chat message edit affordance and locale-aware time — 2026-11-01
+
+- **Rules 10, 13, 27, and 33:** message edit remains long-press only for the sender but is now discoverable through a localized assistive-technology custom action; sender names are bounded; timestamps follow the active locale.
+- Source commit: `2f48a9caa58f078ffc48b29a5566238403db96b2`. Runtime/accessibility verification remains pending; no tests or build were run.
