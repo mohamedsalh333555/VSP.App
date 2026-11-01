@@ -66,11 +66,14 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   Widget _buildTabItem(int index, String label) {
     final isSelected = _tabController.index == index;
     return Expanded(
-      child: GestureDetector(
-        onTap: () => _tabController.animateTo(index),
-        child: AnimatedContainer(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          onTap: () => _tabController.animateTo(index),
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.all(4),
+          margin: EdgeInsets.zero,
           decoration: BoxDecoration(
             color: isSelected ? VSPColors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
