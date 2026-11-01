@@ -1826,3 +1826,13 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/quick_phone_booking_modal.dart`, `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart`, and `lib/features/player/widgets/payment/payment_verification_modal.dart` use scrollable content or bounded modal layouts; this source pass did not establish complete device/runtime SafeArea coverage.
 - Supabase log drill-down shows repeated Warp timeout entries at root path `/` with no method/status/request identifier fields populated. They recur in time clusters (for example 08:54, 08:44, 08:16 UTC on 2026-11-01); the available log payload does not identify a concrete app RPC or table. No SQL/function/index change is justified from these entries alone.
 - No tests, analyzer, CI, runtime validation, or APK build were run.
+
+
+## Root loading, owner lifecycle, and final grouped source review — 2026-11-01
+
+- Root authenticated-profile resolution now renders the canonical bilingual loading state inside SafeArea rather than a bare spinner. Existing timeout-to-offline recovery is retained.
+- Owner celebration listener setup now checks widget lifecycle before deferred Provider access and before responding to stream events; this closes a post-frame disposal race.
+- Three additional compact-layout/accessibility corrections were committed: tournament step labels are width-bounded, collective-booking player-count labels cannot push controls off-screen, and the ongoing-match extension action now has a 48dp minimum target.
+- Supabase production review completed read-only: 66 public tables report RLS enabled; six previously sensitive tables have explicit policies; current Edge Function versions/JWT flags were recorded. Advisor findings are not blindly changed: one SECURITY DEFINER view, 198 authenticated-callable SECURITY DEFINER functions, leaked-password protection disabled, 44 RLS initplan, 50 multiple-permissive-policy, and 79 unused-index findings remain for controlled remediation.
+- The teams_public view's current definer behavior may be intentional for team discovery, while the base teams RLS SELECT policy limits rows to captain/member/admin. Switching it to invoker semantics without a reviewed public discovery policy could hide teams from players. This requires an explicit product/security decision and a migration plan; no production database mutation was made.
+- This remains source implementation only. No analyzer, tests, CI, device validation, database DDL, Edge Function deployment, or APK build was run. All 44 rules remain runtime-pending.
