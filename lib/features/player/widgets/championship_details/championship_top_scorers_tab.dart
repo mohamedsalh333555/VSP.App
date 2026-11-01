@@ -111,7 +111,7 @@ class ChampionshipTopScorersTab extends StatelessWidget {
                         Text(
                           name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
