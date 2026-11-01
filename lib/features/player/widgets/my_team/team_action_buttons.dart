@@ -60,11 +60,11 @@ class TeamActionButtons extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.whatsApp,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 elevation: 0,
               ),
-              icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 20),
+              icon: const Icon(Iconsax.messages_3_copy, color: VSPColors.white, size: 20),
               label: Text(
                 Localizations.localeOf(context).languageCode == 'ar'
                     ? 'دعوة لاعبين للفريق عبر واتساب'
