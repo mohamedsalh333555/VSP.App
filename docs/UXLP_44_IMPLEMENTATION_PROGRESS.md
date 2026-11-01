@@ -1904,3 +1904,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Dialog ergonomics: owner document-upload cancellation, add-stadium discard/delete, and Paymob still-waiting dialogs now give every explicit action a 48dp minimum height and padded tap target; scrollable content and action semantics remain unchanged.
 
 - Chat report/delete dialogs: report form is now scrollable when the keyboard is open, and all four dialog actions use 48dp minimum height with padded tap targets. Report submission and conversation deletion behavior are unchanged.
+
+- Owner tournament prize-delivery dialog: both cancel and confirm actions now have explicit 48dp minimum height and padded tap targets; its scrollable form and submission guard remain unchanged.
