@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/repositories/tournament_repository.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../data/models.dart';
@@ -52,18 +53,25 @@ class TournamentMatchCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  scheduleText,
-                  style: TextStyle(
-                    color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    scheduleText,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 if (isOwner)
-                  GestureDetector(
-                    onTap: () async {
-                      final now = DateTime.now();
+                  IconButton(
+                    tooltip: isAr ? 'تحديد موعد المباراة' : 'Schedule match',
+                    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                    padding: EdgeInsets.zero,
+                    onPressed: () async {
+                      final now = VSPTimeService.now;
                       final initialDate = (match.scheduledTime != null && match.scheduledTime!.isAfter(now))
                           ? match.scheduledTime!
                           : now;
@@ -77,7 +85,7 @@ class TournamentMatchCard extends StatelessWidget {
 
                       final initialTime = match.scheduledTime != null
                           ? TimeOfDay.fromDateTime(match.scheduledTime!)
-                          : TimeOfDay.now();
+                          : TimeOfDay.fromDateTime(now);
                       final time = await showTimePicker(
                         context: context,
                         initialTime: initialTime,
@@ -96,7 +104,7 @@ class TournamentMatchCard extends StatelessWidget {
                         onRefresh();
                       }
                     },
-                    child: const Icon(Iconsax.calendar_1_copy, color: Colors.white, size: 16),
+                    icon: const Icon(Iconsax.calendar_1_copy, color: Colors.white, size: 18),
                   ),
               ],
             ),
