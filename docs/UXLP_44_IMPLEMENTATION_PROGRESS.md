@@ -1258,3 +1258,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Fixed `lib/features/player/screens/global_search_screen.dart`: repository failures no longer leave the search spinner active indefinitely or appear as a valid no-results response; the screen now shows localized retry guidance.
 - Each search request is generation-scoped. Editing the query invalidates the in-flight request immediately, so a slower earlier query cannot overwrite results for the newer query.
 - Search scope and ranking are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `ad7c6137ba301321c58efd54d1d159bfc238b85c`, `c0ca92c08f303ecf2a5998678f45919a7df1ceab`.
+
+
+## Owner profile stadium-count state correction — 2026-11-01
+
+- Fixed `lib/features/owner/screens/owner_profile_screen.dart`: the managed-stadium badge no longer presents a transient loading state or an initial stream failure as “0 stadiums”. It now shows localized loading/unavailable copy and a warning treatment when the count cannot be confirmed.
+- Stadium ownership and count queries are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `0083175c4c04cd7eea33c7216a2a8df9d258b8d6`.
