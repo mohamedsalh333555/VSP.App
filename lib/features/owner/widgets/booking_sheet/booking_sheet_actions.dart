@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -196,6 +197,11 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final initiatingOwnerId =
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+                if (initiatingOwnerId == null || initiatingOwnerId != booking.ownerId) {
+                  return;
+                }
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
@@ -236,7 +242,12 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                     ],
                   ),
                 );
-                if (confirmed != true || !context.mounted) return;
+                if (confirmed != true ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
 
                 final res = await Provider.of<BookingProvider>(context, listen: false)
                     .requestEmergencyClosure(
@@ -245,7 +256,9 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   reason: isArabic ? 'عطل طارئ وصيانة بالملعب' : 'Emergency fault and stadium maintenance',
                   durationHours: 24,
                 );
-                if (context.mounted) {
+                if (context.mounted &&
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+                        initiatingOwnerId) {
                   if (res['success'] == true) {
                     VSPFeedback.showSuccess(
                       context,
