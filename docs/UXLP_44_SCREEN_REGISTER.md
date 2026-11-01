@@ -686,3 +686,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/widgets/booking/booking_slot_calculator.dart`: slot generation now emits only complete 30-minute slots that finish at or before the stadium closing time; a partial final interval can no longer extend a booking past closing.
+
+
+- `lib/features/owner/widgets/bookings/owner_schedule_slots_builder.dart`: owner schedule generation now starts on the exact configured opening minute and stops before any incomplete 30-minute interval beyond the exact closing minute, including overnight and 24-hour schedules.
