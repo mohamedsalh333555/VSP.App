@@ -177,12 +177,16 @@ class VSPStateView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: VSPDSizes.stateLoadingIndicator,
                   height: VSPDSizes.stateLoadingIndicator,
                   child: CircularProgressIndicator(
                     strokeWidth: VSPDSizes.progressStroke,
                     color: VSPDSSemanticColors.accent,
+                    semanticsLabel:
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'جارٍ التحميل'
+                            : 'Loading',
                   ),
                 ),
                 const SizedBox(height: VSPDSSpacing.md),
