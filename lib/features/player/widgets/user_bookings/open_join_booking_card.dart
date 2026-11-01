@@ -166,16 +166,28 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     }
   }
 
-  void _shareMatch() {
+  Future<void> _shareMatch() async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    SharingService.shareMatch(
-      bookingId: widget.booking.id,
-      teamName: widget.booking.playerTeamName ??
-          widget.booking.hostName ??
-          (isArabic ? 'مباراة تجميعية' : 'Open Join Match'),
-      stadiumName: widget.booking.stadiumName,
-      date: '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
-    );
+    try {
+      await SharingService.shareMatch(
+        bookingId: widget.booking.id,
+        teamName: widget.booking.playerTeamName ??
+            widget.booking.hostName ??
+            (isArabic ? 'مباراة تجميعية' : 'Open Join Match'),
+        stadiumName: widget.booking.stadiumName,
+        date: '${widget.booking.formattedDate} - ${widget.booking.formattedTimeRange}',
+      );
+    } catch (e) {
+      debugPrint('Open Join match sharing failed: $e');
+      if (mounted) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تعذرت مشاركة المباراة. حاول مرة أخرى.'
+              : 'Could not share the match. Please try again.',
+        );
+      }
+    }
   }
 
   bool _canHostCancel() {
