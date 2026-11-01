@@ -36,7 +36,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
         onTap: () => onSelectQuickAmount(amount),
         borderRadius: BorderRadius.circular(VSPRadius.full),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
+          duration: VSPDSMotion.microInteraction,
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
