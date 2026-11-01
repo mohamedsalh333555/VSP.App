@@ -1968,3 +1968,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `owner_time_period_dropdown.dart`: selected period label now uses `AlignmentDirectional.centerEnd` rather than physical right alignment.
 - Added ten more embedded owner components to the register: timeline, operational finance, PRO insights/overview/segmented tabs, period dropdown, today's pitch schedule, venue filters, verification/subscription banners, and document explanation card. Their real-data mapping, entitlement states, and runtime behavior remain pending caller-level review.
 - Code commits: `23c400d1b5e20981df5e6d921f700a5a9e43e672`, `55118920b49738ef0c3fce29ab0edd6fbc3f2384`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Owner quick-booking duration RTL correction and embedded inventory — 2026-11-01
+
+- `lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart`: compact duration chips now use a directional start inset for the gap between options, replacing locale-branching physical left/right padding; the horizontally scrollable duration list also uses directional start spacing.
+- Added ten visible owner components to the register: three document-upload steps and their step indicator, ledger balance cards, quick-booking customer/duration/payment sections, and owner cup card/empty state. Their actual data, upload recovery, payment-state mapping, and runtime behavior remain pending caller-level verification.
+- Code commit: `bae0250fadc563e53baf9096889f266dc7086147`. No tests, analyzer, CI, runtime checks, or APK build were run.
