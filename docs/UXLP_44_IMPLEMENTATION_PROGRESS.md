@@ -1744,3 +1744,11 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart`: cash confirmation and phone-call controls now meet a 48dp minimum target (previously 36dp); the post-confirmation receipt bottom sheet is scrollable and respects the device safe area, including short-height screens and bottom system insets. Payment eligibility, `updatePaymentStatus` call, receipt content, and WhatsApp action are unchanged.
 - Source commit: `55c3992dd9bf091fea1d29b55effc710a9212554`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Supabase function ACL review — tournament participation helper exposure — 2026-11-01
+
+- **Live evidence (read-only):** `public.vsp_user_is_tournament_participant(uuid, uuid)` is `SECURITY DEFINER`, and `has_function_privilege('authenticated', ..., 'EXECUTE')` returns true. Its body accepts an arbitrary `p_user_id` and returns whether that user is the championship owner, captain, or team member in a pending/confirmed registration. The function itself does not compare `p_user_id` with `auth.uid()`.
+- **Observed dependency:** `public.create_direct_chat_atomic(...)` calls this helper twice from its own `SECURITY DEFINER` body to verify both tournament chat participants. No direct client RPC call was found in the inspected repository source, but the helper is currently directly callable by authenticated clients at the database ACL level.
+- **Risk:** an authenticated user can probe arbitrary user/championship pairs and infer tournament participation, outside the intended chat-creation flow. This is an information-disclosure surface; it is separate from the earlier TL-01/TL-02 team-league authorization findings.
+- **Proposed fix (not applied):** revoke direct `EXECUTE` from `authenticated` (and explicitly from `anon` if granted) for this helper, while retaining owner/service execution needed by the definer wrapper. Before applying, confirm there is no direct RPC dependency in any external client. No SQL, grants, policies, migrations, or production data were changed.
