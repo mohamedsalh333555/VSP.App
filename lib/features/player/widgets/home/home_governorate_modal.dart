@@ -49,10 +49,26 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                       ),
                     ),
                     trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
-                    onTap: () {
-                      auth.updateProfile({'governorate': gov});
-                      context.read<StadiumProvider>().applyGovernorateFilter(gov);
-                      Navigator.pop(context);
+                    onTap: () async {
+                      try {
+                        await auth.updateProfile({'governorate': gov});
+                        if (!context.mounted) return;
+                        context.read<StadiumProvider>().applyGovernorateFilter(gov);
+                        Navigator.pop(context);
+                      } catch (error, stackTrace) {
+                        VSPLogger.e(
+                          'Failed to save selected governorate',
+                          error,
+                          stackTrace,
+                        );
+                        if (!context.mounted) return;
+                        VSPFeedback.showError(
+                          context,
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعذر حفظ المحافظة. حاول مرة أخرى.'
+                              : 'Could not save your location. Please try again.',
+                        );
+                      }
                     },
                   );
                 },
