@@ -330,3 +330,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 
 | `lib/features/auth/widgets/owner_onboarding/owner_onboarding_location_section.dart` | owner | source reviewed—runtime pending (governorate selector; GPS auto-detect hit target 48dp with localized tooltip) |
+
+
+### Newly inventoried owner embedded surfaces — 2026-11-01
+
+| `lib/features/owner/widgets/bookings/owner_slot_card.dart` | owner | source reviewed—runtime pending (booking/payment states are bilingual; payment status uses booking values; trailing detail chevron mirrors in RTL) |
+| `lib/features/owner/widgets/bookings/owner_time_slot_row.dart` | owner | source reviewed—runtime pending (tap and long-press booking actions preserved; tap now uses keyboard-focusable InkWell semantics and feedback) |
+| `lib/features/owner/widgets/dashboard/owner_dashboard_header.dart` | owner | source reviewed—runtime pending (profile-photo action has localized tooltip and focus semantics; verified-account tooltip bilingual; role/plan gates unchanged) |
