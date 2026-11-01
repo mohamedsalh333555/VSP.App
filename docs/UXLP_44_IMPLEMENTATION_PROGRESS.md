@@ -1107,3 +1107,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Open-join chat stale-session error guard — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: `_openChat` already verified the initiating player before navigation, but its exception handler only checked whether the card remained mounted. A chat lookup failure after an account switch could therefore display an error in the new account's session. The catch path now also verifies the initiating player ID before showing feedback.
 - Chat creation/navigation behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 3feeec54cdd116bb62f44965b610d69bb506bc87.
+
+
+## Booking confirmation location-check session boundary — 2026-11-01
+- Fixed `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: if location verification threw after the player had changed accounts, the handler marked the booking as online-preferred but still proceeded to query stadium availability before checking the active account. It now checks that the screen is mounted and the initiating player is still signed in immediately after the location-check/fallback stage, before starting the availability lookup.
+- Location fallback policy, booking eligibility, and payment routing are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d4a454d47be990b4102f796f89580733670e0e36.
