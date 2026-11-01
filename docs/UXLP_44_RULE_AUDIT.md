@@ -1234,3 +1234,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29 and 36 — input validation and bilingual feedback:** stadium wizard price/deposit/ball-rental inputs now reject invalid or non-finite values before save, and the image-upload wait message is localized. Runtime validation remains pending.
+
+
+- **Rules 29, 36, and 43 — team persistence feedback and media consistency:** a successful team insert is no longer misreported as a failed create solely because the follow-up list refresh failed; selected logo upload failure now blocks the team write and is surfaced to the user. Runtime verification remains pending.
