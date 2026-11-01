@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface paths: 209 unique paths
+- Registered Dart screen/surface paths: 210 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 235, including 26 repeated paths that document separate embedded-component findings
+- Table records: 236, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 209 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -87,6 +87,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart` | owner | source reviewed—runtime pending (notes controller is disposed after modal close; prize-handover failure copy is localized and technical details stay in diagnostics) |
 | `lib/features/player/screens/all_stadiums_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/booking_confirmation_screen.dart` | player | source reviewed—runtime pending (AppBar and sticky booking bottom bar; verify bottom bar safe inset at runtime) |
+| `lib/features/player/widgets/booking/booking_date_selector.dart` | player | source reviewed—runtime pending (horizontal date-strip start padding and inter-item spacing now use directional insets for RTL/LTR; 60×70dp date targets) |
 | `lib/features/player/screens/booking_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated loading state; refresh awaits server response; cached list stays visible on refresh failure with localized retry warning) |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (strict account-scoped team lookup; loading/empty/error/retry states; create-team recovery; challenge continuation re-verifies team and blocks duplicate/stale actions) |
