@@ -1010,3 +1010,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - `lib/features/player/widgets/my_team/team_action_buttons.dart`: WhatsApp team-invitation message and leave-team/captaincy-transfer action now follow the active Arabic/English locale instead of displaying Arabic-only copy in English mode. Team name interpolation, WhatsApp launch, and captaincy handoff callback remain unchanged.
 - Source commit: `84a0b126eec4f7c2e331cad1204b7463f42216b1`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner cash collection controls and receipt sheet — 2026-11-01
+
+- `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart`: cash confirmation and phone-call controls now meet a 48dp minimum target (previously 36dp); the post-confirmation receipt bottom sheet is scrollable and respects the device safe area, including short-height screens and bottom system insets. Payment eligibility, `updatePaymentStatus` call, receipt content, and WhatsApp action are unchanged.
+- Source commit: `55c3992dd9bf091fea1d29b55effc710a9212554`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
