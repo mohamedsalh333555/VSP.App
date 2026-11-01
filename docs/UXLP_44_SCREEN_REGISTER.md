@@ -5,7 +5,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
 - Registered Dart screen/surface and embedded-component paths: 338 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 365, including 27 repeated paths that document separate embedded-component findings
+- Table records: 368, including 30 repeated paths that document separate embedded-component findings (recounted from the current register table on 2026-11-01)
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. That scan covered 128 of the 215 paths registered at the time; it has not been rerun across the current 338-path register.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
