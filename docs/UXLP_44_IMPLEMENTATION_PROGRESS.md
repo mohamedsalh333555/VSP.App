@@ -1478,3 +1478,11 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `challenge_team_card.dart`: the champion badge no longer renders Arabic text in English mode; it now uses localized Arabic and English labels.
 - Code commit: `b0b59cb80841d674dd7bbc0070d830bb182de3d5`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Additional auth, stadium, booking, and challenge surface fixes — 2026-11-01
+
+- Auth: signup GPS hit target corrected to 48dp; welcome Skip target corrected to 48dp; owner/player onboarding exit dialog actions corrected to 48dp; login/signup safe-area keyboard padding and RTL alignment updated.
+- Player booking/discovery: booking-success reference copy and all-stadium sort actions now have 48dp targets; challenge-code sheet is viewport-bounded, scrollable, bottom-safe, and its copy/share actions are 48dp; stadium details tabs now fill a 48dp row with InkWell semantics.
+- Updated screen register and rule audit alongside the source changes. Team League findings TL-01, TL-02, and TL-03 remain approval-required; no Supabase SQL was changed.
+- No tests, analyzer, CI, runtime checks, or APK build were run. This is not a final UXLP-44 completion claim.
