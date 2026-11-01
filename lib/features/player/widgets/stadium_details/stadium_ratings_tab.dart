@@ -373,16 +373,46 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
           );
         }
 
+        final hasStaleError = snapshot.hasError && docs.isNotEmpty;
         return ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           padding: const EdgeInsets.all(VSPSpacing.md),
-          itemCount: docs.length + 1,
+          itemCount: docs.length + 1 + (hasStaleError ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == 0) {
               return buildReviewHeader();
             }
+            if (hasStaleError && index == 1) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                decoration: BoxDecoration(
+                  color: VSPColors.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
+                    const SizedBox(width: VSPSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        isArabic ? 'تعذر تحديث التقييمات. نعرض آخر بيانات تم تحميلها.' : 'Could not refresh reviews. Showing the last loaded data.',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
+                      onPressed: _retryReviews,
+                      child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-            final doc = docs[index - 1];
+            final reviewIndex = index - (hasStaleError ? 2 : 1);
+            final doc = docs[reviewIndex];
             final createdAtStr = doc['created_at'] as String?;
             final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
             final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
