@@ -38,6 +38,7 @@ class _RootScreenState extends State<RootScreen> {
  _initRemoteConfig();
  // Trigger location check and pending deep link check after first frame
  WidgetsBinding.instance.addPostFrameCallback((_) {
+ if (!mounted) return;
  final auth = Provider.of<AuthProvider>(context, listen: false);
  // معالجة الرابط العميق المعلق بعد نجاح التحقق والدخول
  if (auth.isAuthenticated && auth.userModel != null) {
