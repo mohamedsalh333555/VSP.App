@@ -28,6 +28,18 @@ class TournamentWizardCoordinator {
           ? 'يرجى إدخال قيمة الجائزة الكبرى'
           : 'Please enter grand prize amount';
     }
+    final parsedFee = double.tryParse(fee.trim());
+    if (parsedFee == null || !parsedFee.isFinite || parsedFee < 0) {
+      return isAr
+          ? 'يرجى إدخال رسوم اشتراك صحيحة لا تقل عن صفر.'
+          : 'Enter a valid tournament entry fee of zero or more.';
+    }
+    final parsedPrize = double.tryParse(prize.trim());
+    if (parsedPrize == null || !parsedPrize.isFinite || parsedPrize < 0) {
+      return isAr
+          ? 'يرجى إدخال قيمة جائزة صحيحة لا تقل عن صفر.'
+          : 'Enter a valid grand prize amount of zero or more.';
+    }
     if (startDate == null) {
       return isAr
           ? 'يرجى تحديد تاريخ بدء البطولة'
