@@ -111,7 +111,11 @@ class BookingSheetPastPanel extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: isSaving
                   ? null
-                  : (onReportNoShow ?? () => BookingSheetWhatsAppUtils.launchWhatsAppSupport(booking, isArabic)),
+                  : (onReportNoShow ?? () => BookingSheetWhatsAppUtils.launchWhatsAppSupport(
+                      booking,
+                      isArabic,
+                      context: context,
+                    )),
               icon: isSaving
                   ? const SizedBox(
                       width: 18,
@@ -275,6 +279,7 @@ class BookingSheetCashPanel extends StatelessWidget {
                       await BookingSheetWhatsAppUtils.launchWhatsAppSupport(
                         booking,
                         isArabic,
+                        context: context,
                       );
                     }
                   },
@@ -388,7 +393,10 @@ class BookingSheetDefaultPanel extends StatelessWidget {
                       : () {
                           if (isEdit && isUpcomingOnlinePaid && booking != null) {
                             BookingSheetWhatsAppUtils.launchWhatsAppSupport(
-                                booking!, isArabic);
+                              booking!,
+                              isArabic,
+                              context: context,
+                            );
                           } else {
                             Navigator.pop(context);
                           }
