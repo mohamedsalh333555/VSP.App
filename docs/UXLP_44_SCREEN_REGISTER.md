@@ -617,7 +617,7 @@ The following registered screens now use `VSPStateView` with localized Arabic/En
 
 ## Supporting logic files excluded from the UI-surface count
 
-The recursive `lib/**/{screens,widgets}/**.dart` tree contains 356 paths. The 338 registered paths above are UI screens or embedded visual components. The following 31 remaining paths were inspected as non-standalone UI support code (services, controllers, calculators, data models, parsers, payload builders, or compatibility exports) and are intentionally not counted as separate visible surfaces:
+The recursive `lib/**/{screens,widgets}/**.dart` tree contains 356 paths: 325 are registered visual screens/embedded UI components and the remaining 31 were inspected as non-standalone UI support code (services, controllers, calculators, data models, parsers, payload builders, or compatibility exports) and are intentionally not counted as separate visible surfaces:
 
 - `lib/features/owner/widgets/add_stadium/stadium_location_geocoder.dart`
 - `lib/features/owner/widgets/add_stadium/stadium_wizard_controllers.dart`
@@ -651,4 +651,4 @@ The recursive `lib/**/{screens,widgets}/**.dart` tree contains 356 paths. The 33
 - `lib/shared/widgets/date_picker/vsp_date_picker_calculator.dart`
 - `lib/shared/widgets/match_card/public_match_card_formatter.dart`
 
-These files still affect behavior and data integrity through their callers; excluding them from the visual-surface count does not exclude them from code-flow or business-rule review.
+The 338 unique register paths also include 13 cross-cutting core/navigation/design-system/provider/service files outside that recursive screen/widget glob. The 31 support files above still affect behavior and data integrity through their callers; excluding them from the visual-surface count does not exclude them from code-flow or business-rule review.
