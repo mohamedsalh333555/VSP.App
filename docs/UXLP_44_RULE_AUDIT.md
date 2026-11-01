@@ -1143,3 +1143,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Bilingual visual integrity:** the date-picker header's asymmetric inset now uses directional start/end geometry, and the owner manual-team section label uses directional start padding. Both previously encoded physical left/right positioning and now mirror consistently between Arabic RTL and English LTR. Runtime rendering and the remaining surfaces are still pending.
+
+
+- **Rules 29, 31, and 36:** Team League match-result submission now has a handler-level single-flight guard, and result choices are disabled during the pending save. Existing localized failure recovery remains intact. Backend authorization and result-window enforcement remain separate approval-required server findings; this client guard does not replace them.
