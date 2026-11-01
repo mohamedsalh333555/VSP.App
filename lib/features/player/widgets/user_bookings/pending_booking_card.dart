@@ -54,85 +54,69 @@ class PendingBookingCard extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
-              IconButton(
-                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                padding: const EdgeInsets.all(12),
-                icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
-                tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
-                onPressed: () async {
-                  final initiatingUserId = Provider.of<app_auth.AuthProvider>(
-                    context,
-                    listen: false,
-                  ).currentUser?.id;
-                  if (initiatingUserId == null) return;
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      scrollable: true,
-                      backgroundColor: VSPColors.surface,
-                      title: Text(
-                        isArabic ? 'إلغاء الحجز المعلّق؟' : 'Cancel pending booking?',
-                      ),
-                      content: Text(
-                        isArabic
+              if (!isRefundPending)
+                IconButton(
+                  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                  padding: const EdgeInsets.all(12),
+                  icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
+                  tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
+                  onPressed: () async {
+                    final initiatingUserId = Provider.of<app_auth.AuthProvider>(
+                      context,
+                      listen: false,
+                    ).currentUser?.id;
+                    if (initiatingUserId == null) return;
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        scrollable: true,
+                        backgroundColor: VSPColors.surface,
+                        title: Text(isArabic ? 'إلغاء الحجز المعلّق؟' : 'Cancel pending booking?'),
+                        content: Text(isArabic
                             ? 'سيتم إلغاء الحجز المعلّق وتحرير الموعد. هل تريد المتابعة؟'
-                            : 'This pending booking will be cancelled and its time slot released. Continue?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, false),
-                          child: Text(isArabic ? 'الاحتفاظ بالحجز' : 'Keep booking'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(dialogContext, true),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: VSPColors.error,
-                            foregroundColor: Colors.white,
+                            : 'This pending booking will be cancelled and its time slot released. Continue?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext, false),
+                            child: Text(isArabic ? 'الاحتفاظ بالحجز' : 'Keep booking'),
                           ),
-                          child: Text(isArabic ? 'تأكيد الإلغاء' : 'Confirm cancellation'),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirmed != true ||
-                      !context.mounted ||
-                      Provider.of<app_auth.AuthProvider>(context, listen: false)
-                              .currentUser
-                              ?.id !=
-                          initiatingUserId) {
-                    return;
-                  }
-
-                  final bp = Provider.of<BookingProvider>(context, listen: false);
-                  final success = await bp.cancelBooking(pendingBooking.id);
-                  if (!context.mounted ||
-                      Provider.of<app_auth.AuthProvider>(context, listen: false)
-                              .currentUser
-                              ?.id !=
-                          initiatingUserId) {
-                    return;
-                  }
-
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                        isArabic ? 'تم إلغاء الحجز المعلّق.' : 'Pending booking cancelled.',
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(dialogContext, true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: VSPColors.error,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(isArabic ? 'تأكيد الإلغاء' : 'Confirm cancellation'),
+                          ),
+                        ],
                       ),
-                      backgroundColor: VSPColors.accent,
-                    ));
-                    await bp.loadUserBookings(initiatingUserId);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(
-                        isArabic
-                            ? 'تعذر إلغاء الحجز. حاول مرة أخرى.'
-                            : 'Could not cancel booking. Please try again.',
-                      ),
-                      backgroundColor: VSPColors.error,
-                    ));
-                  }
-                },
-              ),
+                    );
+                    if (confirmed != true || !context.mounted ||
+                        Provider.of<app_auth.AuthProvider>(context, listen: false)
+                                .currentUser?.id != initiatingUserId) {
+                      return;
+                    }
+                    final bp = Provider.of<BookingProvider>(context, listen: false);
+                    final success = await bp.cancelBooking(pendingBooking.id);
+                    if (!context.mounted ||
+                        Provider.of<app_auth.AuthProvider>(context, listen: false)
+                                .currentUser?.id != initiatingUserId) {
+                      return;
+                    }
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(isArabic ? 'تم إلغاء الحجز المعلّق.' : 'Pending booking cancelled.'),
+                        backgroundColor: VSPColors.accent,
+                      ));
+                      await bp.loadUserBookings(initiatingUserId);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(isArabic ? 'تعذر إلغاء الحجز. حاول مرة أخرى.' : 'Could not cancel booking. Please try again.'),
+                        backgroundColor: VSPColors.error,
+                      ));
+                    }
+                  },
+                )
             ],
           ),
           const SizedBox(height: 6),
