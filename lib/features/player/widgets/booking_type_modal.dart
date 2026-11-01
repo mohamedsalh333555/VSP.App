@@ -139,12 +139,9 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final media = MediaQuery.of(context);
-    final availableHeight = (media.size.height -
-            media.viewInsets.bottom -
-            media.padding.top -
-            media.padding.bottom)
-        .clamp(240.0, media.size.height)
-        .toDouble();
+    // The scroll-controlled modal route already applies keyboard/system
+    // insets; this is only a preferred content-height cap.
+    final availableHeight = media.size.height;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
