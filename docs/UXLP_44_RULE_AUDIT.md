@@ -1201,3 +1201,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 10, 29, and 36 — schedule accuracy and identity integrity:** player slot generation now honors all `breakTimes` intervals saved by the stadium wizard (with legacy `breakTime` fallback), preventing slots from being offered during secondary stadium breaks. Manual tournament-team creation now rejects an empty captain ID instead of inserting a hard-coded placeholder UUID. Runtime and server-side validation remain pending.
+
+
+- **Rules 28, 36, and 43 — media lifecycle and persisted data integrity:** edit-mode stadium photos are no longer deleted from Storage before the edited record is saved; upload progress callbacks are guarded against disposed screen contexts. Cleanup of Storage objects removed from a successfully saved edit remains pending; the current behavior prioritizes avoiding broken persisted image URLs.
