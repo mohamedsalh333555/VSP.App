@@ -1385,3 +1385,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - `player_onboarding_screen.dart` and `owner_onboarding_location_section.dart`: GPS auto-detect controls now use localized tooltips and 48×48dp targets.
 - Code commits: `4d6bd7cfa9726f3d6ecff1992f5de842fa8ea15a`, `b4eef846e7614448575f81b6bcfad21c6a9add82`, `3d08f560651a8619efd93acf46fdf9bbdff045a5`, `b0b47a09e993add33200b2ac7665be0edad0814d`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Match details realtime failure recovery — 2026-11-01
+
+- `lib/features/player/screens/match_details_screen.dart` previously relied on the initial fetch error flag but did not surface errors from the live `StreamBuilder` once a booking had loaded. The screen now keeps the last loaded booking visible, shows a localized stale-data warning, and recreates the realtime stream when the user retries.
+- Initial loading/error/not-found states remain distinct; no booking eligibility or join/cancel rules changed.
+- Code commit: `d0980d16fd9b020a10283babbb154e94adc68662`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
