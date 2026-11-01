@@ -10,6 +10,7 @@ import '../../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../screens/championship_details_screen.dart';
 import '../championship_card.dart';
 import 'champion_empty_state.dart';
+import 'champion_podium_components.dart';
 
 class ChampionshipsListTab extends StatefulWidget {
   final Stream<List<Championship>>? championshipsStream;
@@ -183,7 +184,9 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        isArabic ? 'تتصفح بطولات: ${widget.selectedLocation}' : 'Viewing: ${widget.selectedLocation}',
+                        isArabic
+                            ? 'تتصفح بطولات: ${championTranslateItem(context, widget.selectedLocation)}'
+                            : 'Viewing: ${championTranslateItem(context, widget.selectedLocation)}',
                         style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -193,7 +196,9 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         child: Text(
-                          isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
+                          isArabic
+                              ? 'بطولاتي (${championTranslateItem(context, userGov)})'
+                              : 'My City (${championTranslateItem(context, userGov)})',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
