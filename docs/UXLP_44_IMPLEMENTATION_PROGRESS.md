@@ -1032,3 +1032,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Reschedule phone-launch feedback and dismissal guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: after sending a reschedule proposal, the optional `tel:` launch was previously fire-and-forget. A device with no handler or a failed launch could silently do nothing or surface an unhandled asynchronous error, and an exception could prevent the booking sheet from closing. The launch is now awaited, a localized error is shown when it returns false or throws, and the sheet is dismissed only while its context remains mounted.
 - Reschedule proposal behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: f1fd913284eb53db998e8ae04694b2a5ae435573.
+
+
+## Quick-booking payment chip touch targets — 2026-11-01
+- Fixed `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart`: quick amount chips were implemented as bare `GestureDetector`s with only about 25–30 px vertical content height, below the 48×48 dp mobile accessibility/touch-target baseline. Replaced them with Material `InkWell` controls and minimum 48×48 dp constraints while preserving selection callbacks and styling.
+- Amount options and payment calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: c6b7dd0203d891fd7caf656fcbf602f85fa4f3a8.
