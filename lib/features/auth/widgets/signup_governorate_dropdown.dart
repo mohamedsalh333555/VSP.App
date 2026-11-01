@@ -41,7 +41,7 @@ class SignupGovernorateDropdown extends StatelessWidget {
                 EgyptGovernorates.getLocalizedName(value, isArabic),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white),
               ),
             );
           }).toList(),
