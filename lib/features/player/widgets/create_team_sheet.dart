@@ -221,16 +221,10 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final media = MediaQuery.of(context);
-    // Reduce the available sheet height when the keyboard opens instead of
-    // adding the keyboard inset inside a fixed-height sheet (which can push
-    // the header or action buttons outside the visible viewport).
-    final availableHeight = (media.size.height -
-            media.viewInsets.bottom -
-            media.padding.top -
-            media.padding.bottom -
-            24)
-        .clamp(0.0, media.size.height)
-        .toDouble();
+    // The scroll-controlled SafeArea modal route already constrains the
+    // sheet to the keyboard-safe viewport. Do not subtract keyboard/system
+    // insets again from the full screen height.
+    final availableHeight = media.size.height;
     final bottomInset = media.padding.bottom + 16;
 
     return Container(
