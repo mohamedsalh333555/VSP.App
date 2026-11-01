@@ -211,7 +211,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         ),
       ),
       body: SafeArea(
-        top: true,
+        top: false,
         bottom: false,
         child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, List<Booking> pending, bool loading, String? error})>(
           selector: (_, provider) => (
