@@ -660,3 +660,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Replaced the support-ticket creation sheet's hard-coded 24px viewport clearance with the canonical `VSPSpacing.xxl` token (24px), preserving the existing keyboard/safe-area sizing behavior while removing an orphan spacing literal.
 - Commit: `8418f678ac268e5e33687a7048ef4b99b70eaf9a`.
 - Source-only. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run. This does not close the support sheet's compact-device/keyboard runtime verification gate.
+
+
+## Profile governorate update recovery — 2026-11-01
+
+- The profile location picker now catches failed governorate updates and shows localized retry guidance instead of allowing an uncaught async error to escape the tap handler.
+- The sheet closes and the in-memory stadium filter updates only after the profile update succeeds and both relevant contexts remain mounted. Technical exceptions are not exposed in user-facing copy.
+- Source-only. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: b9823301be19a9cfc89dc4a50b22bb94df4166b5.
