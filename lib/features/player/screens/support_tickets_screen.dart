@@ -69,7 +69,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           // double-counts them and can collapse the usable sheet viewport.
           maxHeight: (MediaQuery.sizeOf(ctx).height -
                     MediaQuery.viewInsetsOf(ctx).bottom -
-                    24)
+                    VSPSpacing.xxl)
                 .clamp(0.0, MediaQuery.sizeOf(ctx).height)
                 .toDouble(),
           ),
