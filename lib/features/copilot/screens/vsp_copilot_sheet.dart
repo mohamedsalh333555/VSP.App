@@ -309,7 +309,10 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                           '${s.pricePerHour.toInt()} ${widget.isArabic ? "ج.م/ساعة" : "EGP/hr"}',
                           style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-                        const Icon(Iconsax.arrow_right_3_copy, size: 10, color: VSPColors.textMuted),
+                        Transform.flip(
+                          flipX: widget.isArabic,
+                          child: const Icon(Iconsax.arrow_right_3_copy, size: 10, color: VSPColors.textMuted),
+                        ),
                       ],
                     ),
                   ],
