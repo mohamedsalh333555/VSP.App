@@ -34,7 +34,7 @@ class CheckoutGuestPlayersSection extends StatelessWidget {
           children: [
             Text(
               isArabic ? 'إضافة أصدقاء من خارج التطبيق:' : 'Add External Guests:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.white),
             ),
             TextButton.icon(
               onPressed: onPasteFromWhatsApp,
@@ -79,7 +79,7 @@ class CheckoutGuestPlayersSection extends StatelessWidget {
                 controller: guestController,
                 textInputAction: TextInputAction.next,
                 onSubmitted: (_) => onAddGuest(),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(color: VSPColors.white, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: isArabic ? 'اسم الصديق (اضغط التالي للإضافة السريعة)' : 'Guest name (press Next to add)',
                   hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
@@ -98,7 +98,7 @@ class CheckoutGuestPlayersSection extends StatelessWidget {
               onPressed: onAddGuest,
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -116,7 +116,7 @@ class CheckoutGuestPlayersSection extends StatelessWidget {
             children: offlineGuestNames.map((name) {
               return Chip(
                 backgroundColor: VSPColors.surface,
-                label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                label: Text(name, style: const TextStyle(color: VSPColors.white, fontSize: 12)),
                 deleteIcon: const Icon(Iconsax.close_circle_copy, size: 14, color: VSPColors.error),
                 onDeleted: () => onRemoveGuest(name),
                 shape: RoundedRectangleBorder(
