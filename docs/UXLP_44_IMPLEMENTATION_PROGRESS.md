@@ -1726,3 +1726,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/auth/widgets/login_footer.dart`: the sign-up entry is now a wrapping, 48dp-minimum `TextButton` instead of a bare gesture; the role-selection bottom sheet now respects bottom safe area and scrolls on short screens; role title, subtitle, and both role descriptions now have Arabic and English copy; the trailing role arrow mirrors in RTL; role cards use focusable `InkWell` targets with an 80dp minimum height.
 - Existing routes and player/owner role destinations are unchanged. Source commit: `b3cd4f1cf2dcd43283037aa92e6820230b1d0f98`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Signup governorate display localization — 2026-11-01
+
+- `lib/features/auth/widgets/signup_governorate_dropdown.dart`: dropdown values remain canonical English identifiers for AuthProvider/database consistency, while visible option labels now use `EgyptGovernorates.getLocalizedName` according to the active locale and are bounded to one line. This fixes English governorate names appearing in Arabic signup without changing stored values.
+- Source commit: `f30af5466d6d7c1fe073cde0b7c43b72e8b7589e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
