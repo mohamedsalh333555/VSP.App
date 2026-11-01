@@ -987,3 +987,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Owner quick phone booking session guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: manual booking creation now captures the initiating owner identity before the request and verifies it after the request before refreshing owner bookings, dismissing the sheet, or showing the receipt/success UI. Error feedback and loading-state recovery are also scoped to that same account. The captured identity is kept in scope for both success and exception paths.
 - Owner selection fallback and booking payload are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 1996a32a64bf4581422bdb97c1feda03a8ea7f02; 62139a2aac1b139d10d97ead4297662915c258a8.
+
+
+## Owner quick-slot booking session feedback guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: after the quick phone-booking `createBooking` request returned, the row previously checked only whether its context remained mounted. It now also verifies the initiating owner account is still active before displaying success/failure feedback or invoking the completion callback.
+- Booking creation request and data are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 2d48214f079c063de3e686d7e11de611f52c7e3e.
