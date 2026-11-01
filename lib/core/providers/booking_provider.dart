@@ -439,12 +439,24 @@ class BookingProvider with ChangeNotifier {
 
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
-    final success = await _repository.updatePaymentStatus(bookingId, isPaid);
-    if (success) {
-      BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+    try {
+      final success = await _repository.updatePaymentStatus(bookingId, isPaid);
+      if (success) {
+        BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
+        _errorMessage = null;
+        notifyListeners();
+      }
+      return success;
+    } catch (error, stackTrace) {
+      // Payment confirmation is a user-facing owner action. Keep repository
+      // and network details in diagnostics; callers receive a safe failure
+      // result and can restore their loading state without an uncaught error.
+      debugPrint('Booking payment-status update failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      _errorMessage = 'تعذر تحديث حالة الدفع';
       notifyListeners();
+      return false;
     }
-    return success;
   }
 
   /// Update manual booking details (owner operation)
