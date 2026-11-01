@@ -236,4 +236,3 @@ class HomeTopBar extends StatelessWidget {
     );
   }
 }
-}
