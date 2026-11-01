@@ -5,6 +5,7 @@ import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/stadium_repository.dart';
 import '../../../../core/services/logger_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -22,13 +23,20 @@ class StadiumRatingsTab extends StatefulWidget {
 }
 
 class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
-  late final Stream<List<Map<String, dynamic>>> _reviewsStream;
+  late Stream<List<Map<String, dynamic>>> _reviewsStream;
   static const Color _ratingUnselectedColor = VSPColors.surfaceAlt;
 
   @override
   void initState() {
     super.initState();
     _reviewsStream = StadiumRepository().streamReviews(widget.stadium.id);
+  }
+
+  void _retryReviews() {
+    if (!mounted) return;
+    setState(() {
+      _reviewsStream = StadiumRepository().streamReviews(widget.stadium.id);
+    });
   }
 
   Future<void> _showAddReviewSheet(BuildContext context) async {
@@ -328,8 +336,21 @@ class _StadiumRatingsTabState extends State<StadiumRatingsTab> {
           );
         }
 
+        if (snapshot.hasError && docs.isEmpty) {
+          return VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل التقييمات' : 'Could not load reviews',
+            message: isArabic ? 'تحقق من اتصالك وحاول تحميل التقييمات مرة أخرى.' : 'Check your connection and retry loading reviews.',
+            onRetry: _retryReviews,
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل التقييمات' : 'Loading reviews',
+            message: isArabic ? 'نحدّث تقييمات وآراء اللاعبين.' : 'Fetching player ratings and reviews.',
+          );
         }
 
         if (docs.isEmpty) {
