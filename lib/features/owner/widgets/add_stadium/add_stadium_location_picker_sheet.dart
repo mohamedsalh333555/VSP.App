@@ -258,6 +258,7 @@ class AddStadiumLocationPickerSheet {
                                   timeLimit: Duration(seconds: 5),
                                 ),
                               );
+                              if (!sheetContext.mounted) return;
                               final target = LatLng(position.latitude, position.longitude);
                               selectedCoords = target;
                               mapController.move(target, 16.0);
