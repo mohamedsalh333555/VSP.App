@@ -62,11 +62,16 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
    user = await UserRepository().getUserByPhoneStrict(normalized);
  } catch (_) {
    if (mounted) {
-     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     final requestIsCurrent =
+         PhoneUtils.normalize(_phoneController.text.trim()) == normalized &&
+         context.read<AuthProvider>().currentUser?.id == requestUserId;
      setState(() => _isSearching = false);
-     ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
-     );
+     if (requestIsCurrent) {
+       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
+       );
+     }
    }
    return;
  }
