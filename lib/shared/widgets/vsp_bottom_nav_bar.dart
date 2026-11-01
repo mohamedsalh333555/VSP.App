@@ -8,12 +8,16 @@ class VspNavItem {
   final IconData inactiveIcon;
   final String label;
   final bool hasNotification;
+  final bool hasWarning;
+  final String? warningLabel;
 
   VspNavItem({
     required this.activeIcon,
     required this.inactiveIcon,
     required this.label,
     this.hasNotification = false,
+    this.hasWarning = false,
+    this.warningLabel,
   });
 }
 
@@ -72,7 +76,9 @@ class VspBottomNavBar extends StatelessWidget {
             child: Semantics(
               button: true,
               selected: isSelected,
-              label: item.label,
+              label: item.hasWarning && item.warningLabel != null
+                  ? '${item.label}, ${item.warningLabel}'
+                  : item.label,
               child: InkWell(
                 excludeFromSemantics: true,
                 borderRadius: BorderRadius.circular(VSPDSRadius.md),
@@ -135,6 +141,22 @@ class VspBottomNavBar extends StatelessWidget {
                                   VSPDSComponentEffects
                                       .navigationNotificationGlow,
                                 ],
+                              ),
+                            ),
+                          ),
+                        if (item.hasWarning)
+                          PositionedDirectional(
+                            top: VSPDSizes.navigationNotificationTop,
+                            start: VSPDSizes.navigationNotificationRight,
+                            child: Tooltip(
+                              message: item.warningLabel ?? '',
+                              child: Container(
+                                width: VSPDSizes.notificationDot,
+                                height: VSPDSizes.notificationDot,
+                                decoration: const BoxDecoration(
+                                  color: VSPDSSemanticColors.warning,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
                             ),
                           ),
