@@ -734,7 +734,7 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 ## Auth safe-area, RTL, and location-target corrections — 2026-11-01
 
 - `login_screen.dart`: removed duplicated bottom system inset inside `SafeArea`; forgot-password action now aligns to `AlignmentDirectional.centerEnd` so its placement mirrors correctly in Arabic and English.
-- `signup_screen.dart`: removed duplicated bottom system inset inside `SafeArea`; GPS auto-detect is now a localized 48×48dp `IconButton`.
+- `signup_screen.dart`: removed duplicated bottom system inset inside `SafeArea`; GPS auto-detect is now a localized 48×48dp `IconButton` (verified against the updated source).
 - `player_onboarding_screen.dart` and `owner_onboarding_location_section.dart`: GPS auto-detect controls now use localized tooltips and 48×48dp targets.
 - These are source-level findings only. Dialog/device/keyboard runtime validation remains pending.
 
