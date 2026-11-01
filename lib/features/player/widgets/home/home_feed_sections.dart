@@ -202,7 +202,7 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
                             alignment: Alignment.topCenter,
                             child: Container(
                               width: 320,
-                              margin: const EdgeInsets.only(right: 6),
+                              margin: const EdgeInsetsDirectional.only(end: 6),
                               child: PublicMatchCard(booking: matches[i]),
                             ),
                           ),
@@ -309,7 +309,7 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
                             alignment: Alignment.topCenter,
                             child: Container(
                               width: 320,
-                              margin: const EdgeInsets.only(right: 6),
+                              margin: const EdgeInsetsDirectional.only(end: 6),
                               child: ChampionshipCard(championship: championships[i]),
                             ),
                           ),
