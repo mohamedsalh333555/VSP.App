@@ -96,7 +96,11 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
           stream: _getStadiumsStream(uid),
           builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
- return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+ return VSPStateView(
+   state: VSPUiState.loading,
+   title: isAr ? 'جارٍ تحميل ملاعبك' : 'Loading your stadiums',
+   message: isAr ? 'نحدّث قائمة الملاعب المرتبطة بحسابك.' : 'Fetching the stadiums linked to your account.',
+ );
  }
  if (snapshot.hasError) {
  VSPLogger.w('FacilityOnboardingScreen stream notice (gracefully handled): ${snapshot.error}');
