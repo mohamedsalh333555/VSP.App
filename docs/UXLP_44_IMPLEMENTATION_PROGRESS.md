@@ -1083,3 +1083,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Pending booking cancellation confirmation session guard — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the pending-booking cancellation action previously captured the current player only after the confirmation dialog. Switching accounts while the dialog was open could therefore submit the cancellation using the newly active account. The initiating player is now captured before the dialog and verified immediately after confirmation and again after the cancellation request.
 - Cancellation behavior and booking rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 591b6a115864639f63a2e427f27e021e8e256c66.
+
+
+## Owner booking sheet parent-context lifecycle guards — 2026-11-01
+- Fixed `lib/features/owner/widgets/owner_booking_sheet.dart`: manual booking create/edit, no-show reporting, and maintenance-slot locking now verify both the sheet and its parent route contexts are still mounted before reading providers or starting work. This prevents actions from starting with a disposed parent context if the underlying owner screen was removed while the sheet remained visible.
+- Booking, no-show, and maintenance business rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 16d6aa07ff00c1f30db9049ebf480abe5f8bf2d4.
