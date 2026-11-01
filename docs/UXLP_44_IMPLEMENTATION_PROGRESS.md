@@ -1144,3 +1144,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Owner booking history no longer labels a WhatsApp support fallback as “Report Player No-Show”. The no-show action is rendered only when the actual no-show callback is supplied; this prevents a misleading control from opening an unrelated support chat.
 - Code commit: `fcec5ac7f7472d0a24cfc17f59525b0091721a28`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Pending refund state copy correction — 2026-11-01
+
+- Player pending-booking card now distinguishes `refund_pending` from payment verification: the heading/body explicitly describe an in-progress refund, and the checkout action remains locked to prevent a new payment attempt against that booking. The check-status action remains available.
+- Code commit: `1e3edbf34ad4b0d8567b5a8d2f4cd4c62ee5272f`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
