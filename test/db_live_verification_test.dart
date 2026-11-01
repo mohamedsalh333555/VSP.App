@@ -7,7 +7,7 @@ class RealHttpOverrides extends HttpOverrides {}
 const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 const _runLiveTests = bool.fromEnvironment('VSP_RUN_LIVE_TESTS', defaultValue: false);
-const _canRunLiveTests = _runLiveTests && _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty;
+const _canRunLiveTests = _runLiveTests && _supabaseUrl != '' && _supabaseAnonKey != '';
 
 void main() {
  TestWidgetsFlutterBinding.ensureInitialized();
