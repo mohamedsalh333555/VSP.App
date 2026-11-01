@@ -383,9 +383,16 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final full = booking.currentPlayers >= booking.totalFieldCapacity;
     final ended = booking.endTime.isBefore(DateTime.now());
     final maxManual = (booking.totalFieldCapacity - booking.joinedUserIds.length).clamp(0, booking.totalFieldCapacity);
+    final media = MediaQuery.of(context);
+    final availableSheetHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom)
+        .clamp(240.0, media.size.height)
+        .toDouble();
 
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .90),
+      constraints: BoxConstraints(maxHeight: availableSheetHeight * .90),
       decoration: const BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl))),
       child: Column(children: [
         const SizedBox(height: 10),
