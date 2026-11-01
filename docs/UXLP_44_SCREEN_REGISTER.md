@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 327 unique paths
+- Registered Dart screen/surface and embedded-component paths: 336 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 354, including 27 repeated paths that document separate embedded-component findings
+- Table records: 363, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -235,6 +235,15 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/team_profile/team_profile_roster_section.dart` | player | source reviewed—runtime pending (roster loading/error/empty branches and retry callback present; device verification pending) |
 | `lib/features/player/widgets/team_profile/team_profile_stats_grid.dart` | player | source reviewed—runtime pending (team stats grid; zero-data and actual-result consistency pending) |
 | `lib/features/player/widgets/user_bookings/reschedule_action_banner.dart` | player | source reviewed—runtime pending (reschedule action banner; loading and eligibility copy reviewed; state-driven action runtime verification pending) |
+| `lib/features/owner/widgets/inbox/owner_chat_item_card.dart` | owner | source reviewed—runtime pending (conversation preview/time overflow constrained; unread badge and navigation behavior pending) |
+| `lib/features/owner/widgets/inbox/user_search_delegate.dart` | owner | source reviewed—runtime pending (user search delegate; query, empty/error and keyboard behavior pending) |
+| `lib/features/owner/widgets/ledger/owner_ledger_transaction_item.dart` | owner | source reviewed—runtime pending (ledger transaction row; locale-aware timestamp source and amount formatting pending) |
+| `lib/features/owner/widgets/tournament/bracket_preview_canvas.dart` | owner | source reviewed—runtime pending (interactive bracket canvas; pan/zoom, compact viewport and RTL verification pending) |
+| `lib/features/owner/widgets/tournament/cups/cups_filter_dropdowns.dart` | owner | source reviewed—runtime pending (cup filters; selection/query mapping and locale behavior pending) |
+| `lib/features/owner/widgets/tournament/cups/cups_tab_selector.dart` | owner | source reviewed—runtime pending (cup tab selector; selected-state and RTL navigation pending) |
+| `lib/features/player/widgets/championship_checkout/checkout_team_members_list.dart` | player | source reviewed—runtime pending (checkout roster list; team membership, guest distinction and capacity mapping pending) |
+| `lib/features/player/widgets/payment/payment_background_glow.dart` | player | source reviewed—runtime pending (payment background decoration; contrast and reduced-motion review pending) |
+| `lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart` | shared | source reviewed—runtime pending (date-picker step chip; accessible selected/disabled state and RTL order pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
