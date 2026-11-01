@@ -683,3 +683,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/screens/manage_tournament_roster_screen.dart`: initial roster loading now uses the shared bilingual `VSPStateView`; the existing retryable load-error and empty/loaded roster branches are preserved.
+
+
+- `lib/features/player/widgets/booking/booking_slot_calculator.dart`: slot generation now emits only complete 30-minute slots that finish at or before the stadium closing time; a partial final interval can no longer extend a booking past closing.
