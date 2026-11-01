@@ -108,12 +108,16 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
+      builder: (ctx) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -160,6 +164,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -346,7 +351,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
             children: [
               Expanded(
                 child: SizedBox(
-                  height: 36,
+                  height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.success,
@@ -373,8 +378,8 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               if (b.playerPhone != null && b.playerPhone!.isNotEmpty) ...[
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: 36,
-                  height: 36,
+                  width: 48,
+                  height: 48,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.02),
