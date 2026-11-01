@@ -1231,3 +1231,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Safe Area:** the Add Player modal route now enables `useSafeArea` so its top edge respects system bars/cutouts. Keyboard and gesture-navigation rendering remain pending device verification.
+
+
+- **Rules 29 and 36 — input validation and bilingual feedback:** stadium wizard price/deposit/ball-rental inputs now reject invalid or non-finite values before save, and the image-upload wait message is localized. Runtime validation remains pending.
