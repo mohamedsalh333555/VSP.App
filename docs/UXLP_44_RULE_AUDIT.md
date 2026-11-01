@@ -668,3 +668,25 @@ Nine additional embedded UI components were discovered by comparing the register
 ### Source remediation — 2026-11-01
 
 A 1v1 empty-state action referenced `/edit-profile` through `Navigator.pushNamed`, while the application uses GoRouter and had no registered route at that path. The action now uses `context.push('/edit-profile')`, and the route is registered to `EditProfileScreen`. This is a source-level navigation correction only; runtime verification remains pending.
+
+
+## Approval-required findings — no server changes applied
+
+### TL-01 — Team League result submission is guarded in UI but not by the RPC
+
+**Severity:** High — server-side business-rule enforcement gap  
+**Affected rules:** 18, 22, 25, 31, 38
+
+**Evidence**
+- `lib/features/player/widgets/league/team_league_fixtures_view.dart` checks `match.bookingId` before exposing result entry (around lines 614–629), and only exposes submission after `scheduledTime` has passed (around lines 632–650).
+- `supabase/migrations/20260930040000_vsp_team_league_master_architecture.sql` originally included a scheduled-time check in `submit_team_league_match_result` (around lines 715–717).
+- `supabase/migrations/20260930050000_vsp_team_league_ssot_and_creator_authority.sql` explicitly drops and recreates that RPC. The later current definition in `supabase/migrations/20260930070000_vsp_team_league_fix_critical_bugs.sql` checks authentication, team membership, match participation, and the 15-minute result lock, but proceeds to the submission upsert without checking `booking_id` or `scheduled_time`.
+- The later `20261001022000_vsp_team_league_runtime_linkage_fix.sql` updates the active-league read function and does not redefine the result-submission RPC.
+
+**Root cause**
+The booking and kickoff constraints exist only in the Flutter presentation path. The active `SECURITY DEFINER` submission RPC does not repeat those two checks, so a direct authenticated RPC call can bypass the UI-only gate.
+
+**Proposed fix for approval**
+Before the submission upsert, make the RPC reject a fixture with no `booking_id`, a null `scheduled_time`, or a `scheduled_time` later than `clock_timestamp()`. Keep the existing auth, team-membership, participation, and result-lock checks intact. Then add a focused SQL verification proving the RPC rejects both an unbooked fixture and a future fixture, and accepts an eligible booked fixture.
+
+**Status:** Awaiting explicit approval of the exact migration SQL. No SQL has been drafted, applied, or deployed in this pass.
