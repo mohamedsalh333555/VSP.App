@@ -717,3 +717,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/auth/screens/signup_screen.dart`: unexpected auth exceptions and secure-storage failures are now handled separately; the loading lock is released, and a post-creation storage failure is not misreported as a failed account creation or an instruction to register again.
+
+
+- `lib/features/player/services/payment_checkout_coordinator.dart`: payment poll generations are invalidated when polling is replaced or cancelled, so an already-running network request from an old checkout cannot report success into a newer/abandoned checkout.
