@@ -221,6 +221,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   Future<void> _handleLookupCode() async {
+    if (_isLookingUpCode) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final code = _challengeCodeController.text.trim();
     if (code.isEmpty) {
@@ -756,7 +757,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             ),
                             const SizedBox(width: 10),
                             SizedBox(
-                              height: 46,
+                              height: 48,
                               child: ElevatedButton(
                                 onPressed: _isLookingUpCode ? null : _handleLookupCode,
                                 style: ElevatedButton.styleFrom(
