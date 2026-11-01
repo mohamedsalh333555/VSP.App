@@ -211,9 +211,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
             Expanded(
               child: championships.isEmpty
                   ? ChampionshipsEmptyState(
-                      locationName: isArabic
-                          ? (EgyptGovernorates.governorateToArabic[widget.selectedLocation] ?? widget.selectedLocation)
-                          : widget.selectedLocation,
+                      locationName: championTranslateItem(context, widget.selectedLocation),
                       showReturnButton: isDifferentGov,
                       onReturn: () => widget.onLocationChanged(userGov),
                     )
