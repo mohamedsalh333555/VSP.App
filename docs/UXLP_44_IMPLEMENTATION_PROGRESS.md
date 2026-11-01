@@ -719,3 +719,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Completed the signed-out support-ticket correction: the empty state previously still displayed an “Open Ticket” action and copy telling the user to open a ticket, even though the floating action was hidden and the flow required authentication.
 - Signed-out users now receive explicit bilingual sign-in guidance and no create-ticket button. Authenticated users retain the existing empty-state action. No authentication, ticket, or backend rules changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `c84d1893ec5672f9613ead796e209c4bc008aff2`.
+
+
+## Support ticket list title bounds — 2026-11-01
+
+- Support-ticket subjects in the ticket list are now limited to two lines with ellipsis. Long user-entered Arabic/English subjects can no longer expand a row without bound or crowd its status/navigation affordance on narrow screens.
+- Ticket subject data is preserved and the full title remains available in the ticket detail screen. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `dbcb227f63213dbb42a57cc4f1d12575462168dc`.
