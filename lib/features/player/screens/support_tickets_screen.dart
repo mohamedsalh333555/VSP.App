@@ -348,6 +348,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                             ),
                             title: Text(
                               title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
