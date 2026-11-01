@@ -3,7 +3,7 @@ name: Build Android Release APK
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-# QA build trigger: automatically create an installable test APK on main updates.
+# Final-phase gate: run manually only after source work and consolidated validation are complete.
 
 on:
   workflow_dispatch:
