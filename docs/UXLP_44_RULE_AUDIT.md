@@ -635,3 +635,7 @@ Following the product owner's explicit instruction to implement the previously l
 - No-show GPS appeal: radius 150m → 200m; accuracy is stated as no worse than 50m. The existing 60-minute appeal period was retained unchanged.
 
 These are client-facing policy-copy changes only. No booking/refund RPC, database migration, RLS policy, payment calculation, refund eligibility logic, or GPS enforcement logic was changed. Runtime/legal review remains required before treating the terms as externally approved.
+
+### Screen-register reconciliation — 2026-11-01
+
+Nine additional embedded UI components were discovered by comparing the register with repository paths and were added as `not yet inspected`. The current register now contains 225 table records across 199 unique Dart paths (26 repeated entries). These nine components are not source-reviewed and must not be treated as passing any UXLP rule.
