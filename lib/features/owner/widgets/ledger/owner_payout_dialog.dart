@@ -261,16 +261,39 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
               ),
             ),
             const SizedBox(height: 6),
-            Align(
-              alignment: widget.isAr ? Alignment.centerLeft : Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  _amountController.text = widget.digitalBalance.toStringAsFixed(0);
-                  _validateAmount(_amountController.text);
-                },
-                child: Text(
-                  widget.isAr ? 'سحب كامل الرصيد (${widget.digitalBalance.toInt()} ج.م)' : 'Withdraw Full Balance (${widget.digitalBalance.toInt()} EGP)',
-                  style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+            SizedBox(
+              height: VSPSize.touchTarget,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Semantics(
+                  button: true,
+                  label: widget.isAr
+                      ? 'سحب كامل الرصيد'
+                      : 'Withdraw full balance',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    onTap: () {
+                      _amountController.text =
+                          widget.digitalBalance.toStringAsFixed(0);
+                      _validateAmount(_amountController.text);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: VSPSpacing.xs,
+                        vertical: VSPSpacing.sm,
+                      ),
+                      child: Text(
+                        widget.isAr
+                            ? 'سحب كامل الرصيد (${widget.digitalBalance.toInt()} ج.م)'
+                            : 'Withdraw Full Balance (${widget.digitalBalance.toInt()} EGP)',
+                        style: const TextStyle(
+                          color: VSPColors.accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
