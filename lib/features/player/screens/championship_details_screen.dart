@@ -324,7 +324,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                           isArabic
                               ? 'فريقك [${_myTeam!.name}] مسجّل رسمياً في هذه البطولة '
                               : 'Your team [${_myTeam!.name}] is registered in this tournament ',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ),
                     ],
