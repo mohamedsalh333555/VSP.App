@@ -44,8 +44,11 @@ class OwnerDashboardHeader extends StatelessWidget {
           child: Row(
             children: [
               // 1. Avatar with Neon Green Glow Ring & Quick Edit Badge
-              GestureDetector(
-                onTap: () async {
+              Tooltip(
+                message: isArabic ? 'تغيير الصورة الشخصية' : 'Change profile photo',
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () async {
                   HapticFeedback.lightImpact();
                   final picked = await ImagePickService.pick(
                     context,
@@ -160,6 +163,7 @@ class OwnerDashboardHeader extends StatelessWidget {
                       ),
                     ),
                   ],
+                  ),
                 ),
               ),
 
@@ -188,9 +192,9 @@ class OwnerDashboardHeader extends StatelessWidget {
                         ),
                         if (user?.isIdentityVerified == true || user?.verificationStatus == 'approved') ...[
                           const SizedBox(width: 5),
-                          const Tooltip(
-                            message: 'حساب موثق ومعتمد',
-                            child: Icon(
+                          Tooltip(
+                            message: isArabic ? 'حساب موثق ومعتمد' : 'Verified account',
+                            child: const Icon(
                               Icons.verified,
                               color: VSPColors.accent,
                               size: 16,
