@@ -1137,3 +1137,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Owner booking reschedule session guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: the reschedule action previously allowed the owner to select a new date and time and submit the proposal without confirming that the same owner account remained active across the date picker, time picker, and repository request. It now captures the initiating owner, requires it to match the booking owner, and verifies the same session after each asynchronous boundary before proceeding or showing the result.
 - Reschedule proposal rules, selected times, and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 2afc93df3681143a67af1874bc45002364692fb5.
+
+
+## No-show action truthfulness correction — 2026-11-01
+
+- Owner booking history no longer labels a WhatsApp support fallback as “Report Player No-Show”. The no-show action is rendered only when the actual no-show callback is supplied; this prevents a misleading control from opening an unrelated support chat.
+- Code commit: `fcec5ac7f7472d0a24cfc17f59525b0091721a28`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
