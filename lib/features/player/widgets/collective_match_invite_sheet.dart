@@ -426,15 +426,10 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ended = booking.endTime.isBefore(DateTime.now());
     final maxManual = (booking.totalFieldCapacity - booking.joinedUserIds.length).clamp(0, booking.totalFieldCapacity);
     final media = MediaQuery.of(context);
-    final availableSheetHeight = (media.size.height -
-            media.viewInsets.bottom -
-            media.padding.top -
-            media.padding.bottom)
-        .clamp(240.0, media.size.height)
-        .toDouble();
 
     return Container(
-      constraints: BoxConstraints(maxHeight: availableSheetHeight * .90),
+      // The scroll-controlled modal route owns keyboard/system insets.
+      constraints: BoxConstraints(maxHeight: media.size.height * .90),
       decoration: const BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl))),
       child: Column(children: [
         const SizedBox(height: 10),
@@ -454,7 +449,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
           ),
           IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary)),
         ])),
-        Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 20), children: [
+        Expanded(child: ListView(padding: EdgeInsets.fromLTRB(20, 4, 20, MediaQuery.paddingOf(context).bottom + 20), children: [
           if (_loadFailed)
             Container(
               margin: const EdgeInsets.only(bottom: 12),
