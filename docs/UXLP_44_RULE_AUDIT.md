@@ -1191,3 +1191,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 9, 28, and 36:** stadium review streams now preserve the last loaded reviews after a refresh error and expose a localized stale-data warning plus 48dp retry action. The retry replaces the stream subscription without first clearing visible data. Runtime verification remains pending.
+
+
+- **Rule 10 — Bilingual visual integrity:** the add-stadium amenities heading now uses `AlignmentDirectional.centerStart` rather than a locale-conditional physical alignment. Runtime RTL/LTR rendering remains pending.
