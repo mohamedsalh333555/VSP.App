@@ -931,3 +931,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 27, 30, 33, and 38:** booking time-slot selection now uses InkWell semantics/focus/feedback while booked/past slots remain disabled; slot-state calculations and the challenge-result prompt use the centralized VSP time service to avoid conflicting clock sources.
 - Source commits: `d5badce48843ca21bfe6249dd57a0db9530ff768`, `fcca24c89c7ce717b4b55e5b3c5eaefca136ea25`, `04875c4918530f3da9759fb0b33717fa4202d2c6`. Runtime/device verification remains pending; no tests or build were run.
+
+
+### Championship checkout narrow-width text constraints — 2026-11-01
+
+- **Rules 8, 11, 23, and 35:** checkout championship title, governorate/team metadata, and roster heading now have bounded line counts/flexible widths with ellipsis so long localized labels do not force row overflow; the roster count badge retains its visible space.
+- Source commits: `345275ef60b2ddf4c6fe7d70cac0314a0563935b`, `b9ffda958156bf540e14b76b46ef855421982836`. Device/large-text verification remains pending; no tests or build were run.
