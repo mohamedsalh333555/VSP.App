@@ -20,7 +20,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; forgot-password alignment follows RTL/LTR direction) |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (safe-area form and sticky footer; async location/date callbacks guarded against disposal) |
-| `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback guard against disposal; GPS auto-detect hit target 48dp; form and fixed CTA respect system insets) |
+|| `lib/features/auth/screens/player_onboarding_screen.dart` | auth | source reviewed—runtime pending (scrollable exit dialog; continue/cancel actions minimum 48dp; onboarding content protected by SafeArea) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (app-bar body avoids duplicate top safe inset) (safe-area protected form scroll layout) |
 | `lib/features/auth/screens/signup_screen.dart` | auth | source reviewed—runtime pending (system bottom safe-area wrapper; GPS auto-detect 48dp target with localized tooltip) |
@@ -28,7 +28,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
 | `lib/features/auth/screens/welcome_screen.dart` | auth | source reviewed—runtime pending (top/bottom controls protected by SafeArea; Skip target minimum 48dp; next-page control 54dp) |
 | `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | source reviewed—runtime pending (scrollable on compact/keyboard layouts; cancel and submit actions meet 48dp minimum height) (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
-| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
+|| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | auth | source reviewed—runtime pending (scrollable exit dialog; continue/cancel actions minimum 48dp; default showDialog safe-area protection) |
 | `lib/features/copilot/screens/copilot_test_playground.dart` | shared | source reviewed—runtime pending (body bottom safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_screen.dart` | shared | source reviewed—runtime pending (owner-only screen gate; chat body and composer safe-area protected) |
 | `lib/features/copilot/screens/vsp_copilot_sheet.dart` | shared | source reviewed—runtime pending (bottom sheet useSafeArea enabled; content handles keyboard insets; assistant loading bubble and stadium navigation cue now mirror directionally and have Arabic/English copy) |
