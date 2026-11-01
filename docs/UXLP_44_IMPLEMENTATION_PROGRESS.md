@@ -896,3 +896,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Added a mounted-context check immediately after the asynchronous current-position lookup and before updating selected coordinates or moving the map controller. If the sheet has been dismissed while GPS is resolving, the callback now exits safely; the existing `finally` block remains responsible for resetting the loading state whenever the sheet is still mounted.
 - Location permission behavior, GPS accuracy, timeout, and location-selection rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: de75f2e01b1feefa2902c25e77790042d44c22de.
+
+
+## Team league dispute resolution lifecycle guard — 2026-11-01
+- Added a `mounted` check after awaiting the dispute-confirmation dialog and before changing the sheet's loading state or starting the resolution callback. This prevents `setState` or continued work on a league sheet that was dismissed while its confirmation dialog was open.
+- Dispute confirmation wording, resolution choices, and league result behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: 76b6c864cbf4c13bc2120d58e154b88343a411ec.
