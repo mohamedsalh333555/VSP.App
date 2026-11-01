@@ -2181,3 +2181,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `booking_provider.dart`: payment-status repository exceptions previously escaped from the provider. They are now logged for diagnostics, mapped to a safe failure result, and notify listeners so owner cash-confirmation UI can exit its loading state and show its existing localized retry feedback.
 - Source commits: `c7469c7291df82d43a12ec57bb14ea9345395dc1`, `d246323b829ed59c81053b731b04056a3f49f86f`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+- `owner_quick_cash_card.dart`: replaced the single in-flight booking ID with a per-booking set. Confirming one cash booking no longer overwrites another row's loading indicator or allows duplicate taps on the same booking; each row releases only its own in-flight state. Source commit: `c5e339451d8e5e8672e651c3f168fe386c60cb1b`.
