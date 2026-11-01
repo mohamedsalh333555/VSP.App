@@ -88,8 +88,19 @@ class PendingBookingCard extends StatelessWidget {
                   if (confirmed != true || !context.mounted) return;
 
                   final bp = Provider.of<BookingProvider>(context, listen: false);
+                  final initiatingUserId = Provider.of<app_auth.AuthProvider>(
+                    context,
+                    listen: false,
+                  ).currentUser?.id;
                   final success = await bp.cancelBooking(pendingBooking.id);
-                  if (!context.mounted) return;
+                  if (!context.mounted ||
+                      initiatingUserId == null ||
+                      Provider.of<app_auth.AuthProvider>(context, listen: false)
+                              .currentUser
+                              ?.id !=
+                          initiatingUserId) {
+                    return;
+                  }
 
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -98,11 +109,7 @@ class PendingBookingCard extends StatelessWidget {
                       ),
                       backgroundColor: VSPColors.accent,
                     ));
-                    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                    final userId = auth.currentUser?.id;
-                    if (userId != null) {
-                      await bp.loadUserBookings(userId);
-                    }
+                    await bp.loadUserBookings(initiatingUserId);
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(
@@ -135,9 +142,20 @@ class PendingBookingCard extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: () async {
                     final bp = Provider.of<BookingProvider>(context, listen: false);
+                    final initiatingUserId = Provider.of<app_auth.AuthProvider>(
+                      context,
+                      listen: false,
+                    ).currentUser?.id;
+                    if (initiatingUserId == null) return;
                     try {
                       final updated = await bp.getBookingById(pendingBooking.id);
-                      if (!context.mounted) return;
+                      if (!context.mounted ||
+                          Provider.of<app_auth.AuthProvider>(context, listen: false)
+                                  .currentUser
+                                  ?.id !=
+                              initiatingUserId) {
+                        return;
+                      }
                       final updatedPaymentState = updated?.paymentStatus.toLowerCase().trim();
                       final isAwaitingPaymentConfirmation = updated != null &&
                           (updated.isPaid ||
@@ -156,13 +174,7 @@ class PendingBookingCard extends StatelessWidget {
                             backgroundColor: VSPColors.accent,
                           ),
                         );
-                        final userId = Provider.of<app_auth.AuthProvider>(
-                          context,
-                          listen: false,
-                        ).currentUser?.id;
-                        if (userId != null) {
-                          await bp.loadUserBookings(userId);
-                        }
+                        await bp.loadUserBookings(initiatingUserId);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
