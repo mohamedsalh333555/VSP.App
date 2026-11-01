@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -12,6 +13,9 @@ class PlayerBookingCancelDialog {
 
   static Future<void> show(BuildContext context, Booking booking) {
     final l10n = AppLocalizations.of(context)!;
+    final initiatingUserId =
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    if (initiatingUserId == null) return Future<void>.value();
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     // The cancellation RPC/Paymob worker calculates the actual refundable
@@ -80,6 +84,7 @@ class PlayerBookingCancelDialog {
             context: context,
             dialogCtx: dialogCtx,
             booking: booking,
+            initiatingUserId: initiatingUserId,
             refundInfo: refundInfo,
             l10n: l10n,
             isArabic: isArabic,
@@ -94,6 +99,7 @@ class _CancelDialogActions extends StatelessWidget {
   final BuildContext context;
   final BuildContext dialogCtx;
   final Booking booking;
+  final String initiatingUserId;
   final RefundInfo refundInfo;
   final AppLocalizations l10n;
   final bool isArabic;
@@ -102,6 +108,7 @@ class _CancelDialogActions extends StatelessWidget {
     required this.context,
     required this.dialogCtx,
     required this.booking,
+    required this.initiatingUserId,
     required this.refundInfo,
     required this.l10n,
     required this.isArabic,
@@ -151,6 +158,11 @@ class _CancelDialogActions extends StatelessWidget {
   }
 
   Future<void> _performCancellation() async {
+    if (!context.mounted ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+            initiatingUserId) {
+      return;
+    }
     final provider = Provider.of<BookingProvider>(context, listen: false);
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(SnackBar(
@@ -161,8 +173,12 @@ class _CancelDialogActions extends StatelessWidget {
     final success = await provider.cancelBooking(booking.id);
     // The dialog has been dismissed while the cancellation request was in
     // flight. Do not use its route's messenger if the owning screen was also
-    // removed (for example, after a navigation/account change).
-    if (!context.mounted) return;
+    // removed or the initiating account changed.
+    if (!context.mounted ||
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+            initiatingUserId) {
+      return;
+    }
     if (success) {
       final successMsg = isArabic
           ? refundInfo.refundSuccessText()
