@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/arabic_plural_utils.dart';
 import '../../../../data/models.dart';
@@ -22,7 +23,7 @@ class OwnerPendingActionsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
+    final now = VSPTimeService.now;
     // حساب عدد الحجوزات النقدية غير المؤكدة بعد لليوم وللملعب المختار
     final unconfirmedCashBookings = allBookings.where((b) {
       if (b.status == BookingStatus.cancelled || b.status == BookingStatus.completed) {
