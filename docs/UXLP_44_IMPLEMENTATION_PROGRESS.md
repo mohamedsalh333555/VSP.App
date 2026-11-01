@@ -1355,3 +1355,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Updated `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: Check Status, locked payment/refund status, and Resume Checkout actions now have 48dp minimum heights. The cancel icon already had a 48×48dp minimum target.
 - Action state and payment rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `5d7ded90676ab95c7c5a80238a23ae6f56785fc4`.
+
+
+## Approval-required Team League server guard finding — 2026-11-01
+
+- Source review confirms the Team League fixture UI requires a booking and waits until the scheduled match time before showing result entry, but the active `submit_team_league_match_result` RPC definition does not enforce either condition before writing a submission.
+- Evidence and proposed fix are recorded under `TL-01` in `docs/UXLP_44_RULE_AUDIT.md`.
+- This is a server/business-rule enforcement change. No migration SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
