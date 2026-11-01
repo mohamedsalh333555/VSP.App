@@ -1362,3 +1362,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Source review confirms the Team League fixture UI requires a booking and waits until the scheduled match time before showing result entry, but the active `submit_team_league_match_result` RPC definition does not enforce either condition before writing a submission.
 - Evidence and proposed fix are recorded under `TL-01` in `docs/UXLP_44_RULE_AUDIT.md`.
 - This is a server/business-rule enforcement change. No migration SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Critical approval-required Team League read authorization finding — 2026-11-01
+
+- Source review found `get_team_active_league(p_team_id)` is `SECURITY DEFINER`, accepts a client-supplied team ID, returns league teams/matches/submissions and captain contact fields, but does not check `auth.uid()`, participant membership, captain identity, or league-creator identity before returning data. Its EXECUTE grant to `authenticated` is not a membership check.
+- Evidence and a proposed authorization gate are recorded as `TL-02` in `docs/UXLP_44_RULE_AUDIT.md`.
+- This is a critical server-side access-control change. No SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
