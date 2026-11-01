@@ -33,8 +33,13 @@ class OtpResendSection extends StatelessWidget {
                     color: VSPColors.textSecondary,
                   ),
             ),
-            GestureDetector(
-              onTap: canResend ? onResend : null,
+            TextButton(
+              onPressed: canResend ? onResend : null,
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
                 style: TextStyle(
