@@ -24,6 +24,39 @@ class League1v1StandingsView extends StatefulWidget {
 }
 
 class _League1v1StandingsViewState extends State<League1v1StandingsView> {
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر ترتيب متاح؛ تعذر التحديث اللحظي.'
+                  : 'Showing the latest standings; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -34,11 +67,9 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
-        if (snapshot.hasError) {
-          return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
-            onRetry: () => setState(() {}),
-          );
+        if (snapshot.hasError &&
+            (!snapshot.hasData || snapshot.data!.isEmpty)) {
+          return VSPErrorState(onRetry: widget.onRetry);
         }
         final players = snapshot.data ?? [];
         if (players.isEmpty) {
@@ -84,6 +115,8 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              if (snapshot.hasError)
+                _buildStaleDataWarning(isArabic),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(14),
