@@ -7,7 +7,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Additional shared navigation component entry: 1
 - Table records: 241, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
-- Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 214 currently registered paths.
+- Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
 - Status values: not yet inspected / source reviewed—runtime pending / pass / fail / needs product decision / not applicable.
 - Do not mark a file complete until Arabic and English, role, loading/empty/error/success states, keyboard, safe area, and navigation have been considered where applicable.
@@ -15,7 +15,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | File | Role | Status |
 |---|---|---|
 | `lib/core/navigation/offline_error_screen.dart` | player/owner | source reviewed—runtime pending (safe-area + primary action updated) |
-| `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance + forced-update dialogs scroll-safe; offline banner overlay still needs runtime check) |
+| `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance + forced-update dialogs scroll-safe; account-profile loading now uses localized shared loading state inside SafeArea; offline banner overlay still needs runtime check) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; forgot-password alignment follows RTL/LTR direction) |
@@ -43,7 +43,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard flow and safe-area layout reviewed; body below app bar no longer double-counts the top safe inset; Supabase auth ID reads corrected to User.id; upload failures show localized retry guidance instead of raw exceptions; cancel-upload and under-review dialogs are scrollable on compact/large-text screens) |
 | `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (initial conversation stream failure or error after an empty snapshot now shows localized retry instead of false empty state; refresh failure preserves loaded conversations with stale-data warning; shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper; initial transaction-stream failure has localized retry; refresh preserves loaded transactions with stale-data warning; financial-summary failure no longer throws unhandled or presents an unverified zero balance; retry reloads summary) |
-| `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved; account-verification dialog scroll-safe) |
+| `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved; account-verification dialog scroll-safe; deferred celebration listener now guards disposal lifecycle) |
 | `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (profile/role flow reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` | owner | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
 | `lib/features/owner/screens/subscription_plans_screen.dart` | owner | source reviewed—runtime pending (plan prices, trial days, stadium limits, descriptions, and feature flags now load from public_subscription_plans; monthly/annual choices use server billing periods; retry state on read failure) |
