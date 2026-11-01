@@ -1223,3 +1223,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Corrected the UXLP rule audit so the numbered matrix contains exactly rules 1–44. The separate notification-retention concern is now recorded as an open product decision, not a duplicate rule 41. No retention/deletion backend behavior was added.
 - Repaired four malformed screen-register rows that had multiple screen paths concatenated into a single Markdown row. The register now contains 216 table records across 190 unique Dart paths, including 26 repeated path entries for separate findings.
 - Corrected the register's summary counts to match its actual table content. All registered paths remain source-reviewed/runtime-pending; this documentation repair does not claim runtime validation.
+
+### Embedded UI coverage reconciliation — 2026-11-01
+
+- Repository filename reconciliation identified nine additional embedded UI components omitted from the previous register: tournament dashboard/wizard steps and action bars, the player booking bottom bar, and championship/1v1 empty states.
+- Added all nine as `not yet inspected`; no source-review status was inferred.
+- The register now contains 225 table records across 199 unique Dart paths, including 26 repeated entries for separate findings. This supersedes the earlier 216-record / 190-path count.
+- A filename-based candidate scan is triage only. It does not establish that every embedded widget or state variant has been discovered.
