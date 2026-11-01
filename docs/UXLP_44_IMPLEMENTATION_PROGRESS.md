@@ -992,3 +992,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Owner quick-slot booking session feedback guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: after the quick phone-booking `createBooking` request returned, the row previously checked only whether its context remained mounted. It now also verifies the initiating owner account is still active before displaying success/failure feedback or invoking the completion callback.
 - Booking creation request and data are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 2d48214f079c063de3e686d7e11de611f52c7e3e.
+
+
+## Collective invite share/cancel exception scoping — 2026-11-01
+- Extended `lib/features/player/widgets/collective_match_invite_sheet.dart` account-scope protection to the invitation-sharing and collective-cancellation exception paths. The initiating user ID is now captured outside each `try` block so both success and error handling can reliably verify the same session; errors from an old session are not surfaced to a newly signed-in account.
+- No invitation eligibility, cancellation policy, or repository behavior changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: c1ceb9fd16d7ee9bb7e1849f3cf07e47fc8b3230.
