@@ -1919,3 +1919,9 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/shared/widgets/vsp_date_picker_dialog.dart`: changed the asymmetric header inset from physical `EdgeInsets.fromLTRB(20, 18, 16, 14)` to `EdgeInsetsDirectional.fromSTEB(20, 18, 16, 14)`, preserving the intended leading/trailing spacing while mirroring it in Arabic.
 - `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart`: changed the manual-team section-label inset from physical `left: 4` to directional `start: 4`.
 - These are layout-only corrections. Date selection and tournament roster behavior are unchanged. Runtime RTL/device verification remains pending; no tests, analyzer, CI, or APK build were run. Code commits: `5a2ebddf816be23f4bebb8e9041910471e8863a6`, `4b16222200c65656b31664a127ec2a827376400e`.
+
+
+## Team League result-sheet single-flight guard — 2026-11-01
+
+- `lib/features/player/widgets/league/team_league_match_dialog.dart`: `_submit()` now returns immediately when a save is already in flight; result-choice controls are disabled during submission so the selected outcome cannot be changed while the request is pending. The existing loading feedback, repository callback, and localized error recovery are preserved.
+- No match eligibility, scoring, result authority, or persistence rules changed. Source-only; final device interaction validation remains pending. No tests, analyzer, CI, runtime checks, or APK build were run. Code commit: `65f2b72a6a97ec164fdab89873030c9fc05586cb`.
