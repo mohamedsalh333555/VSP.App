@@ -145,7 +145,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
           isArabic
               ? 'بعد إغلاق المواجهة لن تتمكن من إضافة نتائج جديدة لهذه الجلسة وسيتم اعتماد الترتيب النهائي.'
               : 'After closing, no more results can be added to this session and the final standings will be locked.',
-          style: TextStyle(color: VSPColors.textSecondary),
+          style: const TextStyle(color: VSPColors.textSecondary),
         ),
         actions: [
           TextButton(
