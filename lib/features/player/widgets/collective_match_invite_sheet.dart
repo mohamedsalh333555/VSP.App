@@ -30,12 +30,12 @@ class CollectiveMatchInviteSheet extends StatefulWidget {
       : assert(bookingId != null || inviteToken != null);
 
   static Future<void> showForBooking(BuildContext context, {required String bookingId, Booking? initialBooking}) => showModalBottomSheet<void>(
-        context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: Colors.transparent,
+        context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: VSPColors.transparent,
         builder: (_) => CollectiveMatchInviteSheet(bookingId: bookingId, initialBooking: initialBooking),
       );
 
   static Future<void> showForInvite(BuildContext context, {required String inviteToken, Map<String, dynamic>? initialInviteData}) => showModalBottomSheet<void>(
-        context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: Colors.transparent,
+        context: context, isScrollControlled: true, useSafeArea: true, backgroundColor: VSPColors.transparent,
         builder: (_) => CollectiveMatchInviteSheet(inviteToken: inviteToken, initialInviteData: initialInviteData),
       );
 
@@ -171,7 +171,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: Text(ar ? 'مغادرة التجميعية؟' : 'Leave collective match?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text(ar ? 'مغادرة التجميعية؟' : 'Leave collective match?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800)),
         content: Text(ar ? 'سيتم إتاحة مكانك مرة أخرى.' : 'Your place will become available again.', style: const TextStyle(color: VSPColors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ar ? 'إلغاء' : 'Cancel')),
@@ -255,7 +255,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         title: Text(
           ar ? 'إزالة $name؟' : 'Remove $name?',
           style: const TextStyle(
-            color: Colors.white,
+            color: VSPColors.white,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -360,7 +360,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: Text(ar ? 'إلغاء التجميعية؟' : 'Cancel collective match?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text(ar ? 'إلغاء التجميعية؟' : 'Cancel collective match?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800)),
         content: Text(ar ? 'سيتم إلغاء الحجز وإيقاف رابط الدعوة.' : 'The booking will be cancelled and the invitation will stop working.', style: const TextStyle(color: VSPColors.textSecondary)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ar ? 'رجوع' : 'Back')),
@@ -513,7 +513,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
           Row(children: [
             CircleAvatar(radius: 23, backgroundColor: VSPColors.surface, backgroundImage: booking.hostAvatarUrl?.isNotEmpty == true ? CachedNetworkImageProvider(booking.hostAvatarUrl!) : null, child: booking.hostAvatarUrl?.isNotEmpty == true ? null : const Icon(Iconsax.user_copy, color: VSPColors.accent)),
             const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(booking.hostName ?? (ar ? 'منشئ الحجز' : 'Host'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)), Text(booking.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w700))])),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(booking.hostName ?? (ar ? 'منشئ الحجز' : 'Host'), style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.w900)), Text(booking.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w700))])),
             _badge(ar ? 'خاص' : 'PRIVATE'),
           ]),
           const SizedBox(height: 14),
@@ -532,7 +532,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
             final hostRow = id == booking.createdByUserId;
             return ListTile(contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(backgroundColor: VSPColors.surface, backgroundImage: user?.profileImageUrl?.isNotEmpty == true ? CachedNetworkImageProvider(user!.profileImageUrl!) : null, child: user?.profileImageUrl?.isNotEmpty == true ? null : const Icon(Iconsax.user_copy, color: VSPColors.textSecondary)),
-              title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              title: Text(name, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w700)),
               subtitle: hostRow ? Text(ar ? 'منشئ الحجز' : 'Host', style: const TextStyle(color: VSPColors.accent, fontSize: 11)) : null,
               trailing: isHost && !hostRow ? IconButton(onPressed: () => _remove(id), icon: const Icon(Icons.remove_circle_outline, color: VSPColors.error)) : null,
             );
@@ -552,18 +552,18 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   }
 
   Widget _manualCounter(bool ar, int value, int max) => Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.divider)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(ar ? 'إضافة لاعبين بدون تطبيق' : 'Add players without the app', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w900)),
+    Text(ar ? 'إضافة لاعبين بدون تطبيق' : 'Add players without the app', style: const TextStyle(color: VSPColors.white, fontSize: 14, fontWeight: FontWeight.w900)),
     const SizedBox(height: 4),
     Text(ar ? 'للأشخاص الذين أكدوا حضورهم خارج VSP.' : 'For people who confirmed outside VSP.', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
     const SizedBox(height: 12),
-    Row(children: [_counter(Iconsax.minus_copy, value > 0 && !_updatingManual, () => _setManual(value - 1)), Expanded(child: Center(child: _updatingManual ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)) : Text(value.toString(), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)))), _counter(Iconsax.add_copy, value < max && !_updatingManual, () => _setManual(value + 1))]),
+    Row(children: [_counter(Iconsax.minus_copy, value > 0 && !_updatingManual, () => _setManual(value - 1)), Expanded(child: Center(child: _updatingManual ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)) : Text(value.toString(), style: const TextStyle(color: VSPColors.white, fontSize: 22, fontWeight: FontWeight.w900)))), _counter(Iconsax.add_copy, value < max && !_updatingManual, () => _setManual(value + 1))]),
     const SizedBox(height: 8),
     Center(child: Text(ar ? 'الإجمالي: ' + (_booking?.currentPlayers.toString() ?? '0') + ' من ' + (_booking?.totalFieldCapacity.toString() ?? '0') : 'Total: ' + (_booking?.currentPlayers.toString() ?? '0') + ' of ' + (_booking?.totalFieldCapacity.toString() ?? '0'), style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.w800))),
   ]));
 
   Widget _codeCard(bool ar) => Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.divider)), child: Row(children: [
     const Icon(Iconsax.key_copy, color: VSPColors.accent), const SizedBox(width: 10),
-    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(ar ? 'كود الدعوة' : 'Invite code', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)), const SizedBox(height: 2), Text(_inviteCode ?? '', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2))])),
+    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(ar ? 'كود الدعوة' : 'Invite code', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)), const SizedBox(height: 2), Text(_inviteCode ?? '', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, letterSpacing: 1.2))])),
     IconButton(onPressed: () { Clipboard.setData(ClipboardData(text: _inviteCode ?? '')); VSPFeedback.showSuccess(context, ar ? 'تم نسخ الكود.' : 'Code copied.'); }, icon: const Icon(Iconsax.copy_copy, color: VSPColors.accent)),
   ]));
 
@@ -575,10 +575,10 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   }
 
   ButtonStyle _outline(Color color) => OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color.withValues(alpha: .5)), minimumSize: const Size.fromHeight(50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)));
-  Widget _counter(IconData icon, bool enabled, VoidCallback onTap) => SizedBox(width: 48, height: 48, child: IconButton(onPressed: enabled ? onTap : null, constraints: const BoxConstraints(minWidth: 48, minHeight: 48), style: IconButton.styleFrom(backgroundColor: VSPColors.surfaceAlt, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))), icon: Icon(icon, size: 18)));
-  Widget _sectionHeader(String title, String count) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)), Text(count, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900))]);
+  Widget _counter(IconData icon, bool enabled, VoidCallback onTap) => SizedBox(width: 48, height: 48, child: IconButton(onPressed: enabled ? onTap : null, constraints: const BoxConstraints(minWidth: 48, minHeight: 48), style: IconButton.styleFrom(backgroundColor: VSPColors.surfaceAlt, foregroundColor: VSPColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))), icon: Icon(icon, size: 18)));
+  Widget _sectionHeader(String title, String count) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(color: VSPColors.white, fontSize: 15, fontWeight: FontWeight.w900)), Text(count, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900))]);
   Widget _badge(String text) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: .12), borderRadius: BorderRadius.circular(VSPRadius.full), border: Border.all(color: VSPColors.accent.withValues(alpha: .35))), child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.w800)));
-  Widget _infoRow(IconData icon, String label, String value) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: VSPColors.accent, size: 18), const SizedBox(width: 10), Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)), const SizedBox(width: 8), Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)))]));
+  Widget _infoRow(IconData icon, String label, String value) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: VSPColors.accent, size: 18), const SizedBox(width: 10), Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)), const SizedBox(width: 8), Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w700, fontSize: 12)))]));
   Widget _loadFailure(bool ar) => SizedBox(
         height: 360,
         child: Center(
@@ -643,5 +643,5 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         ),
       );
 
-  Widget _empty(bool ar) => SizedBox(height: 320, child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [Container(width: 76, height: 76, decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: VSPColors.divider)), child: const Icon(Iconsax.link_2_copy, color: VSPColors.textSecondary, size: 38)), const SizedBox(height: 18), Text(ar ? 'الدعوة غير متاحة' : 'Invitation unavailable', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)), const SizedBox(height: 8), Text(ar ? 'قد يكون الحجز أُلغي أو انتهى أو لم يعد الرابط صالحاً.' : 'The booking may be cancelled, ended, or the invitation is no longer valid.', textAlign: TextAlign.center, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.55))]))));
+  Widget _empty(bool ar) => SizedBox(height: 320, child: Center(child: Padding(padding: const EdgeInsets.all(28), child: Column(mainAxisSize: MainAxisSize.min, children: [Container(width: 76, height: 76, decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(22), border: Border.all(color: VSPColors.divider)), child: const Icon(Iconsax.link_2_copy, color: VSPColors.textSecondary, size: 38)), const SizedBox(height: 18), Text(ar ? 'الدعوة غير متاحة' : 'Invitation unavailable', style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.w800)), const SizedBox(height: 8), Text(ar ? 'قد يكون الحجز أُلغي أو انتهى أو لم يعد الرابط صالحاً.' : 'The booking may be cancelled, ended, or the invitation is no longer valid.', textAlign: TextAlign.center, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.55))]))));
 }
