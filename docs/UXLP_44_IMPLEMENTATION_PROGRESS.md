@@ -1655,3 +1655,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/player/widgets/booking/booking_slot_stream_section.dart`: current-day, next-available, ongoing, and past-slot calculations now use `VSPTimeService.now` rather than a separate device-clock read.
 - `lib/features/player/widgets/user_bookings/challenge_result_actions.dart`: the result-submission prompt now evaluates booking end time against the same centralized VSP clock used by booking screens.
 - No booking eligibility, time-window policy, result-submission, or scoring rules changed. Source commits: `d5badce48843ca21bfe6249dd57a0db9530ff768`, `fcca24c89c7ce717b4b55e5b3c5eaefca136ea25`, `04875c4918530f3da9759fb0b33717fa4202d2c6`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Championship checkout compact-width resilience — 2026-11-01
+
+- `lib/features/player/widgets/championship_checkout/checkout_championship_header.dart`: championship title is bounded to two lines; governorate and team labels now flex within the metadata row and ellipsize instead of forcing horizontal overflow on compact widths or with long names.
+- `lib/features/player/widgets/championship_checkout/checkout_squad_requirement_card.dart`: roster heading now yields space to the count badge and truncates cleanly rather than overflowing when localized text or large text scaling is used.
+- Checkout values and roster min/max validation are unchanged. Source commits: `345275ef60b2ddf4c6fe7d70cac0314a0563935b`, `b9ffda958156bf540e14b76b46ef855421982836`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
