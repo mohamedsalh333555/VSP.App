@@ -1931,3 +1931,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/owner/widgets/brackets/tournament_score_modal.dart`: added a handler-level `isSubmitting` guard before starting the score-save operation. This complements the existing loading button state and prevents repeated callback entry from issuing duplicate score/result writes.
 - Score calculations, winner selection, goal details, audit logging, and repository calls are unchanged. Source-only; runtime validation remains pending. No tests, analyzer, CI, or APK build were run. Code commit: `4afbab98c7a1119e2525fa3ee2d98727cf349720`.
+
+
+## Live ACL recheck — Team League fixture generator — 2026-11-01
+
+- A fresh read-only Supabase ACL query now confirms `generate_team_league_fixtures(uuid)` has EXECUTE only for `postgres` and `service_role`; both `anon` and `authenticated` return false. `confirm_team_league_payment(...)` is likewise service-role-only. The helper is invoked internally by the SECURITY DEFINER payment-confirmation path and by `join_team_league(...)`; the latter checks captain identity and an open registration before adding a team, while fixture generation occurs only when the paid-team count reaches the league maximum.
+- Therefore the historical TL-03 direct authenticated fixture-regeneration exposure is closed in the live ACL and should not be treated as an outstanding client RPC exposure. This recheck did not alter SQL, grants, migrations, or data. Residual helper invariants remain defense-in-depth; TL-01 (booking/kickoff checks in result submission) and TL-02 (participant authorization on active-league reads) remain open and approval-required. The separate tournament-participation helper exposure remains under review.
