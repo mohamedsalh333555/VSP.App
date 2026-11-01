@@ -204,7 +204,11 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         builder: (context, ticketSnapshot) {
           if (ticketSnapshot.connectionState == ConnectionState.waiting &&
               ticketSnapshot.data == null) {
-            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل طلب الدعم' : 'Loading support ticket',
+              message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفاصيل الطلب والرسائل.' : 'Fetching ticket details and messages.',
+            );
           }
           if (ticketSnapshot.hasError && !ticketSnapshot.hasData) {
             return Center(
@@ -296,7 +300,11 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       (snapshot.data == null || snapshot.data!.isEmpty)) {
-                    return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                    return VSPStateView(
+              state: VSPUiState.loading,
+              title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل طلب الدعم' : 'Loading support ticket',
+              message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفاصيل الطلب والرسائل.' : 'Fetching ticket details and messages.',
+            );
                   }
                   if (snapshot.hasError && !snapshot.hasData) {
                     return Center(
