@@ -114,8 +114,8 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: VSPColors.background.withValues(alpha: 0.6),
           shape: BoxShape.circle,
