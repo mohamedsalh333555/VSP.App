@@ -26,7 +26,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/signup_screen.dart` | auth | source reviewed—runtime pending (system bottom safe-area wrapper; GPS auto-detect 48dp target with localized tooltip) |
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
 | `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
-| `lib/features/auth/screens/welcome_screen.dart` | player/owner | source reviewed—runtime pending (top and bottom controls individually safe-area protected) |
+| `lib/features/auth/screens/welcome_screen.dart` | auth | source reviewed—runtime pending (top/bottom controls protected by SafeArea; Skip target minimum 48dp; next-page control 54dp) |
 | `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | source reviewed—runtime pending (scrollable on compact/keyboard layouts; cancel and submit actions meet 48dp minimum height) (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
 | `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | player/owner | source reviewed—runtime pending (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
 | `lib/features/copilot/screens/copilot_test_playground.dart` | shared | source reviewed—runtime pending (body bottom safe-area protected) |
