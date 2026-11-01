@@ -7,6 +7,7 @@ class OtpBox extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool hasError;
+  final double width;
   final ValueChanged<String> onChanged;
   final void Function(KeyEvent) onKey;
 
@@ -15,6 +16,7 @@ class OtpBox extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.hasError,
+    this.width = 46,
     required this.onChanged,
     required this.onKey,
   });
@@ -23,7 +25,7 @@ class OtpBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFilled = controller.text.isNotEmpty;
     return Container(
-      width: 46,
+      width: width,
       height: 56,
       margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
