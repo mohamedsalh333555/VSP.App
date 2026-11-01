@@ -1441,3 +1441,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `championship_checkout_screen.dart` now wraps the scroll body in `SafeArea(top: false, bottom: false)`: the AppBar owns the top inset and the existing `VSPBottomActionBar` already adds the bottom system inset. This prevents content spacing from double-counting either edge while keeping the sticky payment/registration action protected.
 - Code commits: `c586a40b8bbf7b50c2e574b89bbe9735756dc0da`, `1bb0f1364e696e105a6e965cbc3d5ce77bad0dae`, `871854150764c1bea43c55c620b3c5b251536c40`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Copilot stadium card directional cue — 2026-11-01
+
+- `vsp_copilot_sheet.dart`: the stadium-card forward chevron now mirrors in Arabic RTL while retaining its LTR orientation in English.
+- Code commit: `90d93d88b48722742cc33d91d78e9363e6dca7f9`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
