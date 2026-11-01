@@ -293,6 +293,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         images: _images,
         stadiumId: widget.stadiumId,
         uploadPhotoError: AppLocalizations.of(context)!.uploadPhotoError,
+        isArabic: isArabic,
       );
       if (error != null) {
         VSPFeedback.showError(context, error);
