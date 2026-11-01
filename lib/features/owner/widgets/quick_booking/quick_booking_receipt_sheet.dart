@@ -35,7 +35,7 @@ void showQuickBookingReceiptSheet({
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetCtx) {
       final media = MediaQuery.of(sheetCtx);
       final bottomPadding = media.padding.bottom;
@@ -81,7 +81,7 @@ void showQuickBookingReceiptSheet({
             const SizedBox(height: 12),
             Text(
               isAr ? 'تم تأكيد الحجز بنجاح!' : 'Booking Confirmed!',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(height: 6),
             Text(
@@ -110,7 +110,7 @@ void showQuickBookingReceiptSheet({
               text: isAr ? 'تم، إغلاق' : 'Done / Close',
               height: 48,
               color: VSPColors.surfaceAlt,
-              textColor: Colors.white,
+              textColor: VSPColors.white,
               onPressed: () => Navigator.pop(sheetCtx),
             ),
             ],
