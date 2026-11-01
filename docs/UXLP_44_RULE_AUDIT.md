@@ -1307,3 +1307,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 - **Rule 35:** The current PR diff review found six added bottom-sheet entry points, all explicitly using `useSafeArea: true`; the reviewed full-screen gallery keeps its close action inside `SafeArea`. Flutter `showDialog` safe-area defaults remain in effect for the inspected AlertDialogs.
 - **Static evidence limitation:** The changed-file scan covers diff additions/hunks, not every unchanged line in the 303 registered paths touched by the PR. The 69 full-file checks deepen coverage but do not make this a full-file 338-path audit. It does not prove runtime contrast, keyboard reachability, large-text behavior, RTL rendering, or state transitions.
 - **Status unchanged:** 39 rules remain `source reviewed—runtime pending`; rules 25, 31, 38, 39, and 41 remain `needs product decision`; no runtime pass is claimed. The full per-screen/per-state 44-rule matrix remains outstanding.
+
+## Financial identifier bidi correction — 2026-11-01
+
+- **Rules 10 and 34:** Shared `CustomTextField` now supports an explicit text-direction override without changing its existing automatic LTR behavior for email, phone, URL, and numeric keyboards. Owner onboarding Instapay uses the email keyboard; IBAN is explicitly LTR.
+- The then-35 unchanged registered paths were scanned for literal Text/placeholder/tooltip candidates; only three payout-format examples were found, not untranslated UI copy. The payout identifier fields now render with the intended LTR direction.
+- Keyboard, caret, paste, and bidi runtime checks remain pending. Rule 10 and rule 34 remain source-reviewed/runtime-pending; no pass is claimed.
