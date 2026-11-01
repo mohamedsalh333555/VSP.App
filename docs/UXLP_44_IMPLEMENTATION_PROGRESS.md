@@ -908,3 +908,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed the cash booking sheet's null-result branch: if `createBooking` returns `null` while the sheet is still mounted, the action now always clears its navigating/loading state and displays the existing localized failure message. Previously this recovery only ran when `BookingProvider.errorMessage` was non-null, which could leave the cash option permanently disabled with no feedback if the provider returned null without setting an error string.
 - Booking creation, eligibility, payment values, and server-side rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: 3b7f99ba5b0c0bf3ec0fa7ca23ff08a888f90bf7.
+
+
+## Booking calendar selected-date label overflow — 2026-11-01
+- Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: the selected-date banner placed a full localized weekday/date string directly in a `Row`, with no width constraint. Long Arabic/English dates could overflow narrow dialog widths. The label now uses the remaining row width, wraps to at most two lines, and ellipsizes excess text while remaining centered.
+- Date selection, allowed date range, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: cba47f826f08ee318704ec1933e38ace45fa326a.
