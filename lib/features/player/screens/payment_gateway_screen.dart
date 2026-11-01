@@ -66,12 +66,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isFeePolicyLoading = true;
   String? _paymentUserId;
   bool _hasAccountChanged = false;
+  bool _isOnlinePaymentUnavailable = false;
   int _feePolicyRequestGeneration = 0;
 
   @override
   void initState() {
     super.initState();
     _paymentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+    _isOnlinePaymentUnavailable = !Provider.of<RemoteConfigService>(
+      context,
+      listen: false,
+    ).isFeatureEnabled('online_payment_enabled', defaultValue: true);
+    if (_isOnlinePaymentUnavailable) return;
+
     _startCountdownTimer();
     _loadFeePolicy();
     _createPendingBooking();
@@ -606,6 +613,38 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         : 'The account changed during checkout. Payment has been paused to protect the booking.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: VSPColors.textPrimary),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(isArabic ? 'رجوع' : 'Go back'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_isOnlinePaymentUnavailable) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(VSPSpacing.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 32),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(
+                    isArabic
+                        ? 'الدفع الإلكتروني غير متاح حالياً. لم يتم إنشاء حجز مؤقت أو حجز الموعد.'
+                        : 'Online payment is currently unavailable. No pending booking or time slot has been created.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textPrimary, height: 1.4),
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   TextButton(
