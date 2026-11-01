@@ -855,3 +855,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Existing category content remains independently scrollable and reset/apply actions remain fixed within the sheet.
 - No filter semantics, booking rules, pricing, or backend behavior changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 0b0d9adaec15b9071132058b28b59142f4d889b5.
+
+
+## Collective invitation title overflow guard — 2026-11-01
+- The private collective booking invitation sheet title is now limited to two lines with ellipsis. This prevents long localized text or larger text scaling from pushing the close control out of the header row.
+- No booking eligibility, participant, payment, or invitation behavior changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 1f9b198cf5e6050f7f28f55076f10082d812b755.
