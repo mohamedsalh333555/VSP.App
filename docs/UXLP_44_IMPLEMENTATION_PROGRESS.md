@@ -2121,3 +2121,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Signup password-strength localization — 2026-11-01
 
 - The signup password-strength meter previously displayed English-only labels in Arabic mode. `calculatePasswordStrength` now accepts the active locale and returns localized Weak/Medium/Strong labels; the widget supplies the current locale. Code commits: `3ff184467582f733dad5a2e1753621e20f407d34`, `008346d1aa2636a1809612558ed49cda97ba046e`. No tests/analyzer/CI/device/APK run.
+
+
+## Signup asynchronous failure recovery — 2026-11-01
+
+- `SignupScreen._handleSignup` previously allowed an unexpected `AuthProvider.signUp` exception or a secure-storage write failure after successful account creation to escape before `_isLoading` was reset. Auth exceptions now receive localized retry guidance; post-signup storage failures are logged and explicitly reported as an account that was created, avoiding a misleading invitation to register again. The loading state is released on both paths. Code commit: `9ae0f80395b00ac32c51fc27e281d64a14a6f2d5`. No tests/analyzer/CI/device/APK run.
