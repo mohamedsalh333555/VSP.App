@@ -1559,3 +1559,9 @@ Read-only inspection was performed against the connected production VSP project 
 - Fixed `lib/shared/widgets/vsp_empty_state.dart`: the general-purpose empty-state icon previously used the brighter `zinc100`, while the championship empty-state family uses the muted `zinc400` tone. It now uses the same charcoal-system icon tone.
 - Fixed `lib/core/ui/vsp_ui.dart`: shared `VSPStateView` empty/disabled states now use the same 28dp empty-state icon token as `VSPEmptyState` and `ChampionEmptyState`, while error/success states retain the larger status icon.
 - Empty-state tile geometry, action behavior, and state copy are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `20b07e2bb584426de7a86b625a0b80b2bb81fe6d`, `869014683a6328af5283ba2f74a023baf56df8b7`.
+
+
+## Support ticket sheet keyboard inset correction — 2026-11-01
+
+- Fixed `lib/features/player/screens/support_tickets_screen.dart`: the new-ticket modal route already applies the keyboard view inset, but the sheet's own `maxHeight` calculation subtracted `MediaQuery.viewInsets.bottom` a second time. Removed the duplicate subtraction while retaining the viewport cap, scrollable form, route `useSafeArea`, and bottom system padding. This prevents the available sheet height from collapsing by counting the keyboard twice.
+- Ticket creation, account-generation guard, and submit behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `a098bb1c594a1eba3c5a807498884102f6ab3e85`.
