@@ -913,3 +913,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 27, 30, 33, and 38:** challenge team cards now expose a keyboard/focus-accessible InkWell selection surface and bound long team names to two lines; owner slot tap and long-press expiry checks now share the centralized VSP time source, preventing the two gestures from evaluating the same slot against different clocks.
 - Source commits: `fa061708ed0c944b6306e4408ac32b3f15b5717a`, `bd4ac74abe24a113967bfe37bbc551c578231985`. Runtime/device verification remains pending; no tests or build were run.
+
+
+### Tournament schedule action and pending-cash time source — 2026-11-01
+
+- **Rules 10, 27, 33, and 38:** tournament match scheduling now has a localized tooltip and 48dp IconButton target; schedule text is bounded on narrow widths; date/time defaults and owner pending-cash day filtering use the centralized VSP time service rather than independent device-clock reads.
+- Source commits: `bf9728854a4fd82ac517a0c5a9965fbf1afb3163`, `986d4ac9d8c8be36e10c8caaeee001f2a85a1bdf`. Runtime/device verification remains pending; no tests or build were run.
