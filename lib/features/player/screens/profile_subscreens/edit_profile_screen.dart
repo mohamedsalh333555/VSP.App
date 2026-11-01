@@ -137,7 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  ),
  centerTitle: true,
  ),
- body: SafeArea(
+ body: SafeArea(top: false, bottom: false,
  child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
  padding: EdgeInsets.only(
  left: VSPSpacing.lg,
