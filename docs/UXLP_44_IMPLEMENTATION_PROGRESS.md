@@ -1872,3 +1872,13 @@ Read-only inspection was performed against the connected production VSP project 
 - Challenge code lookup: added a handler-level duplicate-request guard (in addition to the disabled button state) and raised the lookup action from 46dp to the 48dp minimum. Code validation and repository behavior are unchanged.
 
 - Profile team-card sharing: validate that the card still has a render boundary and that PNG encoding returns data; always dispose the temporary `ui.Image` after encoding, including the encoding-failure path. Share payload and user-facing success/failure behavior are unchanged.
+
+
+## Consolidated player/owner loading-state pass — 2026-11-01
+
+- Owner facility onboarding and championship list now use the shared Arabic/English loading state instead of an unlabeled full-page spinner.
+- Owner inbox and subscription-plan retrieval now show localized loading title and context while preserving existing retry/error branches.
+- Tournament bracket loading, match details, and live matchup loading now use the shared state component inside their existing safe-area layouts.
+- Support ticket details and message streams, the support-ticket list, team profile, My Team, and notification preferences now use localized shared loading states rather than raw page-level spinners.
+- This pass changes presentation only: repository queries, booking/tournament permissions, payment behavior, stream lifecycles, and retry handlers are unchanged. Inline action/image progress indicators remain intentionally compact.
+- Source-level changes only. No analyzer, tests, CI, device validation, or APK build was run.
