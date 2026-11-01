@@ -25,7 +25,14 @@ Future<void> showIncompleteSquadBridgeSheet({
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
-      return Container(
+      final mediaQuery = MediaQuery.of(sheetCtx);
+      final availableHeight = mediaQuery.size.height -
+          mediaQuery.viewInsets.vertical -
+          (VSPSpacing.xl * 2);
+      return ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+        child: SingleChildScrollView(
+          child: Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
@@ -109,7 +116,9 @@ Future<void> showIncompleteSquadBridgeSheet({
                   );
                   if (created == true && context.mounted) {
                     final auth = Provider.of<AuthProvider>(context, listen: false);
-                    final newTeam = await TeamRepository().getUserTeam(auth.currentUser!.uid);
+                    final userId = auth.currentUser?.uid;
+                    if (userId == null) return;
+                    final newTeam = await TeamRepository().getUserTeam(userId);
                     if (newTeam != null && context.mounted) {
                       Navigator.push(
                         context,
@@ -145,6 +154,8 @@ Future<void> showIncompleteSquadBridgeSheet({
             ],
             const SizedBox(height: 10),
           ],
+        ),
+          ),
         ),
       );
     },
