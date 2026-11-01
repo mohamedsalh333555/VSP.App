@@ -112,12 +112,12 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                   children: [
                     Text(
                       isArabic ? 'نتيجة المباراة' : 'Match result',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       isArabic ? 'ماذا كانت نتيجة فريقك؟' : 'What was your team’s result?',
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -299,7 +299,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
         title: Text(isArabic ? 'اعتماد نتيجة المباراة' : 'Confirm match result', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: Text(
           isArabic ? 'سيتم اعتماد هذه النتيجة وتحديث جدول الدوري.' : 'This result will be confirmed and the league table will be updated.',
-          style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -384,12 +384,12 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                   children: [
                     Text(
                       isArabic ? 'مراجعة نتيجة المباراة' : 'Review match result',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
                       isArabic ? 'يوجد اختلاف في تسجيل النتيجة بين الفريقين' : 'The two teams submitted different results',
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -464,7 +464,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
 
           Text(
             isArabic ? 'اختر النتيجة المعتمدة للمباراة:' : 'Choose the final match result:', 
-            style: TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
 
