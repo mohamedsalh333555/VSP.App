@@ -714,3 +714,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/auth/widgets/signup/signup_password_strength_bar.dart` and `lib/features/auth/services/signup_validation_service.dart`: password-strength labels (Weak/Medium/Strong) now follow the active Arabic/English locale; the score still uses five distinct strength signals.
+
+
+- `lib/features/auth/screens/signup_screen.dart`: unexpected auth exceptions and secure-storage failures are now handled separately; the loading lock is released, and a post-creation storage failure is not misreported as a failed account creation or an instruction to register again.
