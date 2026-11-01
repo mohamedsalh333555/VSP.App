@@ -36,21 +36,16 @@ void showTournamentManualTeamSheet(
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
-          maxHeight: (MediaQuery.of(sheetContext).size.height -
-                  MediaQuery.of(sheetContext).viewInsets.bottom -
-                  MediaQuery.of(sheetContext).padding.top -
-                  MediaQuery.of(sheetContext).padding.bottom)
-              .clamp(240.0, MediaQuery.of(sheetContext).size.height)
-              .toDouble() *
-              0.88,
+          // The scroll-controlled modal route owns keyboard/system insets.
+          // This is only a preferred content-height cap; parent constraints
+          // enforce the actual available viewport.
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.88,
         ),
         padding: EdgeInsets.fromLTRB(
           20,
           20,
           20,
-          MediaQuery.of(sheetContext).padding.bottom +
-              MediaQuery.of(sheetContext).viewInsets.bottom +
-              16,
+          MediaQuery.paddingOf(sheetContext).bottom + 16,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
