@@ -504,7 +504,7 @@ Source corrections in this group:
 - Championship and team-ranking tabs now retain non-empty last-known data when their streams fail and show an explicit localized retry warning. The championship error state no longer tells users to pull-to-refresh when no pull-to-refresh control is present.
 - Selecting the “All governorates” filter no longer triggers the misleading “viewing another governorate” banner or return action.
 - The 1v1 tournament, roster, and standings streams now distinguish unavailable data from a confirmed empty state. Failed streams with prior data preserve it and show a retry warning; standings retry now invokes the parent stream-recreation callback and no longer exposes raw backend exception text.
-- 1v1 registration cancellation and governorate-switch controls now meet the 48dp minimum; the join action uses a null disabled callback while payment is processing rather than a no-op callback.
+- 1v1 registration cancellation and governorate-switch controls now meet the 48dp minimum; the join action uses a null disabled callback and displays the shared loading state while payment is processing.
 - The 1v1 roster now normalizes missing player names and displays an initial while avatar images load or fail, rather than leaving an empty image circle.
 - The 1v1 hero card now displays the tournament governorate using the shared Arabic/English governorate translation, so the location value passed by the parent is no longer unused.
 - These changes do not alter tournament registration, payment, refund, or scoring rules. Runtime validation remains pending.
