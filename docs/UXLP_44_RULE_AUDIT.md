@@ -752,3 +752,9 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - `welcome_screen.dart`: the Skip action no longer opts out of the Material tap-target minimum; it now has a 48×48dp minimum target. The next-page FAB remains 54×54dp.
 - `signup_screen.dart`: source rechecked after the auth batch; GPS auto-detect now uses a 48×48dp `IconButton` with Arabic/English tooltip.
 - `forgot_password_dialog.dart` already uses a scrollable AlertDialog and 48dp action buttons. `verify_email_screen.dart` and both onboarding screens are inside SafeArea + scrollable content; keyboard/device runtime validation is still pending.
+
+
+## Onboarding exit dialog target-size correction — 2026-11-01
+
+- `owner_onboarding_exit_dialog.dart` and the player onboarding exit dialog now enforce 48dp minimum heights for both continue-registration and cancel/sign-out actions. Both dialogs are scrollable AlertDialogs and use the default safe-area behavior of `showDialog`.
+- No registration or sign-out behavior changed. Device/keyboard layout verification remains pending.
