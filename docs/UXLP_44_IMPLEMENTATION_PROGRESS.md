@@ -1202,3 +1202,8 @@ The automatically triggered PR workflow run `41263244452` reached Flutter Analyz
 - `payment_verification_modal.dart`: one missing closing parenthesis for the outer PopScope/Center composition.
 
 These source corrections are committed on `uxlp-44-implementation`. They are not yet verified by a subsequent successful analyzer run. The original run stopped at Analyze; its Test and APK steps were skipped. The consolidated final validation gate remains open, and all UXLP-44 rule statuses remain runtime-pending.
+
+
+### Filter header parser follow-up — 2026-11-01
+
+The next automatic Analyze run reduced the previous blocker set to one remaining parser error in `filter_bottom_sheet.dart`: the nested title Row's child list had been closed as a widget call during the grouped correction. The child list and enclosing Expanded are now closed in the correct order. This follow-up is source-only and awaits the next Analyze result; the preceding run skipped tests and APK build.
