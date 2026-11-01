@@ -362,3 +362,9 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/booking/booking_slot_card.dart` | player | source reviewed—runtime pending (available slots use focusable InkWell; booked/past slots stay disabled; selection and status visuals preserved) |
 | `lib/features/player/widgets/booking/booking_slot_stream_section.dart` | player | source reviewed—runtime pending (initial loading/error/empty states separated; current-day and slot lifecycle calculations use VSPTimeService) |
 | `lib/features/player/widgets/user_bookings/challenge_result_actions.dart` | player | source reviewed—runtime pending (captain/result lifecycle and localized feedback retained; submit-result time gate uses VSPTimeService) |
+
+
+### Newly inventoried championship checkout embedded surfaces — 2026-11-01
+
+| `lib/features/player/widgets/championship_checkout/checkout_championship_header.dart` | player | source reviewed—runtime pending (championship title and governorate/team metadata are bounded for long names and compact widths) |
+| `lib/features/player/widgets/championship_checkout/checkout_squad_requirement_card.dart` | player | source reviewed—runtime pending (roster heading yields to the count badge; min/max requirement copy remains localized) |
