@@ -1173,3 +1173,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The pending-booking card no longer offers the trash/cancel action while `payment_status = refund_pending`. A refund already in progress is not presented as an ordinary unpaid pending booking with a second cancellation action.
 - Code commit: `e2d2e4b38dc69f23309cf67fb8756bff835b5551`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Booking confirmation empty-slot guard — 2026-11-01
+- Fixed `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: the confirmation handler sorted and accessed the first selected slot in both availability checking and draft construction. An empty or blank slot selection could therefore reach an invalid `first` access and fail without a useful message. The handler now rejects empty/blank selections before starting asynchronous booking work and shows localized feedback.
+- Booking pricing, availability, and payment rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: e27f7a1bb7f49de7a023923acc46fe79c30430e2.
