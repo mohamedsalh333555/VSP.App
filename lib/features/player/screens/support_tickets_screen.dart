@@ -166,7 +166,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                               bookingId: booking?.id,
                               priority: category == 'refund' || category == 'payment' ? 'high' : 'normal',
                             );
-                            if (ctx.mounted) {
+                            if (ctx.mounted && mounted) {
                               final stillInitiatingAccount =
                                   context.read<AuthProvider>().currentUser?.id == initiatingUserId;
                               Navigator.pop(
@@ -177,6 +177,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                           } catch (e) {
                             VSPLogger.w('Support ticket creation failed: $e');
                             if (ctx.mounted &&
+                                mounted &&
                                 context.read<AuthProvider>().currentUser?.id == initiatingUserId) {
                               ScaffoldMessenger.of(ctx).showSnackBar(
                                 SnackBar(content: Text(isArabic ? 'تعذر فتح التذكرة.' : 'Could not create the ticket.')),
