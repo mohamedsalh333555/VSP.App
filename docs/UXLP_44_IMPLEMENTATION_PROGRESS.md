@@ -1007,3 +1007,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Team leave callback lifecycle guard — 2026-11-01
 - Fixed `lib/features/player/widgets/my_team/team_dialogs.dart`: the leave-team async action invoked its parent `onSavingFinished` callback unconditionally from `finally`, even if the owning team screen had been disposed while the repository request was pending. The callback now runs only while the parent context remains mounted, preventing a disposed parent from receiving a late state update.
 - Team membership operation and captaincy-transfer behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 40b3d91d4851354303a428c86b739e0fe6ec4c65.
+
+
+## Team deletion false-result feedback — 2026-11-01
+- Fixed `lib/features/player/widgets/my_team/team_dialogs.dart`: `TeamRepository.deleteTeam` could return `false` without throwing, but the dialog handled only the `true` result and silently left the user without an outcome. Added localized failure feedback for the false result; exception formatting remains unchanged.
+- Team deletion authorization and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: a6d21d6d4547e4b1e28b1fa125d9ce7a64c9921b.
