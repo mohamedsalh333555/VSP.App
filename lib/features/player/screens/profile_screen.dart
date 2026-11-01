@@ -455,6 +455,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
    context: context,
    isScrollControlled: true,
    useSafeArea: true,
+   // Keep the in-progress team creation flow open; users can still cancel
+   // explicitly through the sheet's own Cancel / close controls.
+   isDismissible: false,
+   enableDrag: false,
    backgroundColor: Colors.transparent,
    builder: (_) => const CreateTeamSheet(),
  );
