@@ -2063,3 +2063,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Active cash-booking policy fail-closed correction — 2026-11-01
 
 - `booking_confirmation_handler.dart` previously used `getUserBookingsDirectly`, whose documented compatibility behavior catches query failures and returns an empty list. That read gates the rule requiring full online payment when the player already has an active unpaid cash booking. A transient Supabase read failure could therefore be mistaken for no active cash booking and incorrectly expose cash payment. The handler now uses `getUserBookingsDirectlyStrict`; on read failure it logs the diagnostic, clears the loading state, shows localized retry guidance, and stops before payment routing. Code commit: `e720c7f239ea2e0d0b36ed2dc583345babd92375`. No payment rule changed; this enforces the existing rule fail-closed. No tests/analyzer/CI/device/APK run.
+
+
+## Tournament rescheduling lock boundary — 2026-11-01
+
+- `TournamentRoundScheduleCalculator.isRoundLocked` documented that a round becomes immutable once a match starts, but previously only checked `winnerId` and `homeScore`. A scheduled match could therefore be auto-rescheduled after kickoff if no score had yet been entered; an away-only partial score was also missed. The guard now checks both score fields, winner, and `scheduledTime <= referenceTime`; optional `now` supports deterministic boundary checks. Code commit: `5b5da6ff87b08d9e686fdb0dfb0a40b861b65d39`. Existing unit tests were inspected but not executed, per the agreed final-only validation policy.
