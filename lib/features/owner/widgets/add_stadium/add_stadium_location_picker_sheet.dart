@@ -48,7 +48,7 @@ class AddStadiumLocationPickerSheet {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (BuildContext builderContext, StateSetter setSheetState) {
@@ -103,7 +103,7 @@ class AddStadiumLocationPickerSheet {
                           size: 48,
                           shadows: [
                             Shadow(
-                              color: Colors.black45,
+                              color: VSPVSPColors.black.withValues(alpha: 0.45),
                               offset: Offset(0, 4),
                               blurRadius: 6,
                             ),
@@ -128,7 +128,7 @@ class AddStadiumLocationPickerSheet {
                               border: Border.all(color: VSPColors.divider),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black26,
+                                  color: VSPVSPColors.black.withValues(alpha: 0.26),
                                   blurRadius: 10,
                                   offset: Offset(0, 4),
                                 ),
@@ -142,7 +142,7 @@ class AddStadiumLocationPickerSheet {
                                   child: TextField(
                                     controller: searchController,
                                     textInputAction: TextInputAction.search,
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    style: const TextStyle(color: VSPColors.white, fontSize: 14),
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
                                       hintText: isArabic
@@ -195,7 +195,7 @@ class AddStadiumLocationPickerSheet {
                                       result['display_name'],
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                      style: const TextStyle(color: VSPColors.white, fontSize: 13),
                                     ),
                                     onTap: () {
                                       final target = LatLng(result['lat'], result['lon']);
@@ -224,7 +224,7 @@ class AddStadiumLocationPickerSheet {
                           border: Border.all(color: VSPColors.divider),
                         ),
                         child: IconButton(
-                          icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 20),
+                          icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.white, size: 20),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ),
@@ -241,7 +241,7 @@ class AddStadiumLocationPickerSheet {
                           border: Border.all(color: VSPColors.divider),
                           boxShadow: const [
                             BoxShadow(
-                              color: Colors.black26,
+                              color: VSPVSPColors.black.withValues(alpha: 0.26),
                               blurRadius: 6,
                               offset: Offset(0, 3),
                             ),
@@ -302,7 +302,7 @@ class AddStadiumLocationPickerSheet {
                               border: Border.all(color: VSPColors.divider),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black26,
+                                  color: VSPVSPColors.black.withValues(alpha: 0.26),
                                   blurRadius: 6,
                                   offset: Offset(0, 2),
                                 ),
@@ -364,7 +364,7 @@ class AddStadiumLocationPickerSheet {
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.accent,
-                          foregroundColor: Colors.black,
+                          foregroundColor: VSPColors.black,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -377,7 +377,7 @@ class AddStadiumLocationPickerSheet {
                                 height: 22,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.5,
-                                  color: Colors.black,
+                                  color: VSPColors.black,
                                 ),
                               )
                             : Text(
@@ -416,7 +416,7 @@ class AddStadiumLocationPickerSheet {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (modalContext) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
@@ -465,7 +465,7 @@ class AddStadiumLocationPickerSheet {
                           child: Text(
                             isArabic ? 'إدخال موقع الملعب يدوياً' : 'Enter Stadium Location Manually',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: VSPColors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -524,7 +524,7 @@ class AddStadiumLocationPickerSheet {
                           value: selectedGovernorate,
                           isExpanded: true,
                           dropdownColor: VSPColors.surface,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          style: const TextStyle(color: VSPColors.white, fontSize: 14),
                           icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 18),
                           items: EgyptGovernorates.allGovernorates.map((gov) {
                             final arName = EgyptGovernorates.governorateToArabic[gov] ?? gov;
@@ -551,7 +551,7 @@ class AddStadiumLocationPickerSheet {
                     TextField(
                       controller: addressController,
                       maxLines: 2,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style: const TextStyle(color: VSPColors.white, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: isArabic
                             ? 'اسم الشارع، المنطقة، أو أقرب علامة مميزة...'
@@ -599,7 +599,7 @@ class AddStadiumLocationPickerSheet {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: VSPColors.accent,
-                        foregroundColor: Colors.black,
+                        foregroundColor: VSPColors.black,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(VSPRadius.md),
