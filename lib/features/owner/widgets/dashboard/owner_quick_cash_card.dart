@@ -377,18 +377,21 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
               ),
               if (b.playerPhone != null && b.playerPhone!.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.02),
-                      side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-                      padding: EdgeInsets.zero,
+                Tooltip(
+                  message: widget.isArabic ? 'الاتصال باللاعب' : 'Call player',
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.02),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+                        padding: EdgeInsets.zero,
+                      ),
+                      onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
+                      child: const Icon(Iconsax.call_copy, size: 15, color: Colors.white70),
                     ),
-                    onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
-                    child: const Icon(Iconsax.call_copy, size: 15, color: Colors.white70),
                   ),
                 ),
               ],
