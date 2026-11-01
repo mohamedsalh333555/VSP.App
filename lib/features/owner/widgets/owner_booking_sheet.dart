@@ -121,6 +121,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       );
 
   Future<void> _handleConfirmBooking(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final String customerName = _nameController.text.trim().isNotEmpty
         ? _nameController.text.trim()
         : (isArabic ? 'حجز يدوي' : 'Manual Booking');
@@ -307,6 +308,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
   Future<void> _handleReportNoShow(Booking booking, bool isArabic) async {
     final parentContext = widget.parentContext;
+    if (!mounted || !parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
     final uid = authProvider.currentUser?.id;
@@ -373,6 +375,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   }
 
   Future<void> _lockSlotForMaintenance(AppLocalizations l10n, bool isArabic) async {
+    if (!mounted || !widget.parentContext.mounted) return;
     final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
     final ownerId = authProvider.currentUser?.id;
     if (ownerId == null) {
