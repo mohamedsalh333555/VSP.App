@@ -861,3 +861,13 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The private collective booking invitation sheet title is now limited to two lines with ellipsis. This prevents long localized text or larger text scaling from pushing the close control out of the header row.
 - No booking eligibility, participant, payment, or invitation behavior changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 1f9b198cf5e6050f7f28f55076f10082d812b755.
+
+
+## Tournament round schedule reset recovery — 2026-11-01
+- The round-schedule reset confirmation now catches repository exceptions and shows localized recovery feedback if the reset request throws. A disposed screen is checked before presenting feedback.
+- The reset operation, target round, and scheduling rules are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 924bf9537315f5f7d4934d0d55c44f27f39b49fa.
+
+## Earlier modal viewport fixes recorded — 2026-11-01
+- Added the previously omitted progress entries for the collective-match invitation sheet and booking-type modal keyboard/safe-area height constraints.
+- Commits: 08a3bf1e6313830a749f20075df77890beefec9f; 6fb489053843cb4c09ebcd0fee55e87182931f55.
