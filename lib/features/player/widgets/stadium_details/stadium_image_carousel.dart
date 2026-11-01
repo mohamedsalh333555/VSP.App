@@ -44,7 +44,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
     int activeIdx = initialIndex;
     final dialogPageController = PageController(initialPage: initialIndex);
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -103,7 +103,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
           );
         },
       ),
-    );
+    ).whenComplete(dialogPageController.dispose);
   }
 
   Widget _buildCircularIcon({
@@ -237,7 +237,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     VSPBackButton(
-                      size: 40,
+                      size: 48,
                       backgroundColor: VSPColors.background.withValues(alpha: 0.6),
                     ),
                     Row(
