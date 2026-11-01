@@ -68,7 +68,7 @@ class BookingSlotCalculator {
       }
 
       final List<TimeSlotItem> slots = [];
-      for (int m = startMinutes; m < endMinutes; m += 30) {
+      for (int m = startMinutes; m + 30 <= endMinutes; m += 30) {
         final slotStart = m;
         final slotEnd = m + 30;
 
