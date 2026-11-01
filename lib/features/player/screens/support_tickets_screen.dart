@@ -57,6 +57,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      // Prevent accidental dismissal while a ticket is being created.
+      // An explicit Cancel action remains available before submission.
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: VSPColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
@@ -114,9 +118,17 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                 onChanged: (v) => setSheetState(() => category = v ?? category),
               ),
               const SizedBox(height: VSPSpacing.lg),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                      child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.sm),
+                  Expanded(
+                    child: ElevatedButton(
                   onPressed: isSubmitting
                       ? null
                       : () async {
@@ -157,7 +169,9 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   child: isSubmitting
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
                       : Text(isArabic ? 'فتح التذكرة' : 'Open Ticket'),
-                ),
+                    ),
+                  ),
+                ],
               ),
               ],
             ),
