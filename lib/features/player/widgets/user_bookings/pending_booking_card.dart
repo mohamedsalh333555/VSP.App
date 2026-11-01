@@ -56,6 +56,11 @@ class PendingBookingCard extends StatelessWidget {
                 icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 18),
                 tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
                 onPressed: () async {
+                  final initiatingUserId = Provider.of<app_auth.AuthProvider>(
+                    context,
+                    listen: false,
+                  ).currentUser?.id;
+                  if (initiatingUserId == null) return;
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (dialogContext) => AlertDialog(
@@ -85,16 +90,18 @@ class PendingBookingCard extends StatelessWidget {
                       ],
                     ),
                   );
-                  if (confirmed != true || !context.mounted) return;
+                  if (confirmed != true ||
+                      !context.mounted ||
+                      Provider.of<app_auth.AuthProvider>(context, listen: false)
+                              .currentUser
+                              ?.id !=
+                          initiatingUserId) {
+                    return;
+                  }
 
                   final bp = Provider.of<BookingProvider>(context, listen: false);
-                  final initiatingUserId = Provider.of<app_auth.AuthProvider>(
-                    context,
-                    listen: false,
-                  ).currentUser?.id;
                   final success = await bp.cancelBooking(pendingBooking.id);
                   if (!context.mounted ||
-                      initiatingUserId == null ||
                       Provider.of<app_auth.AuthProvider>(context, listen: false)
                               .currentUser
                               ?.id !=
