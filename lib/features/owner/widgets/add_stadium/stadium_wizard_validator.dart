@@ -48,6 +48,12 @@ class StadiumWizardValidator {
           ? 'يرجى إدخال سعر حجز الملعب للساعة'
           : 'Please enter stadium hourly price';
     }
+    final hourlyPrice = double.tryParse(price.trim());
+    if (hourlyPrice == null || !hourlyPrice.isFinite || hourlyPrice < 0) {
+      return isArabic
+          ? 'يرجى إدخال سعر صحيح للساعة لا يقل عن صفر.'
+          : 'Enter a valid hourly price of zero or more.';
+    }
 
     if (startTime == null || endTime == null) {
       return isArabic
@@ -109,21 +115,21 @@ class StadiumWizardValidator {
     }
 
     if (hasBall == true) {
-      final ballPrice = double.tryParse(ballPriceText) ?? 0.0;
-      if (ballPrice < 5.0) {
+      final ballPrice = double.tryParse(ballPriceText.trim());
+      if (ballPrice == null || !ballPrice.isFinite || ballPrice < 5.0) {
         return ballPriceMinError;
       }
     }
 
     if (requireDeposit) {
-      final deposit = double.tryParse(depositText.trim()) ?? 0.0;
-      final price = double.tryParse(priceText.trim()) ?? 0.0;
-      if (deposit <= 0) {
+      final deposit = double.tryParse(depositText.trim());
+      final price = double.tryParse(priceText.trim());
+      if (deposit == null || !deposit.isFinite || deposit <= 0) {
         return isArabic
             ? 'يرجى إدخال مبلغ عربون صحيح أكبر من الصفر عند تفعيل خيار العربون.'
             : 'Please enter a valid deposit amount greater than zero when deposit is required.';
       }
-      if (price > 0 && deposit > (price * 0.5)) {
+      if (price != null && price.isFinite && price > 0 && deposit > (price * 0.5)) {
         return isArabic
             ? 'مبلغ العربون لا يمكن أن يتجاوز 50% من سعر الساعة (${(price * 0.5).toStringAsFixed(0)} ج.م).'
             : 'Deposit amount cannot exceed 50% of the hourly price (${(price * 0.5).toStringAsFixed(0)} EGP).';
@@ -139,12 +145,15 @@ class StadiumWizardValidator {
     required List<Map<String, dynamic>> images,
     required String? stadiumId,
     required String uploadPhotoError,
+    required bool isArabic,
   }) {
     if (images.isEmpty && stadiumId == null) {
       return uploadPhotoError;
     }
     if (images.any((img) => img['isUploading'] == true)) {
-      return 'Please wait for all images to finish uploading.';
+      return isArabic
+          ? 'يرجى الانتظار حتى يكتمل رفع جميع الصور.'
+          : 'Please wait for all images to finish uploading.';
     }
     return null;
   }
