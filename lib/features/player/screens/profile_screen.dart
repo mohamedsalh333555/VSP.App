@@ -285,13 +285,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
  future: _teamFuture,
  builder: (context, teamSnapshot) {
  if (teamSnapshot.connectionState == ConnectionState.waiting && !teamSnapshot.hasData) {
- return const Center(
- child: Padding(
- padding: EdgeInsets.all(40),
- child: CircularProgressIndicator(color: VSPColors.accent),
- ),
+ return VSPStateView(
+ state: VSPUiState.loading,
+ title: isArabic ? 'جارٍ تحميل الفريق' : 'Loading team',
+ message: isArabic
+ ? 'نتحقق من بيانات فريقك.'
+ : 'Checking your team details.',
  );
- }
+}
 
  if (teamSnapshot.hasError) {
    return VSPStateView(
