@@ -883,3 +883,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The live bracket reveal animation now checks that its dialog context remains mounted after each asynchronous delay and before its final state update. If the dialog is dismissed during the reveal, the animation exits without calling setState on a disposed dialog.
 - Draw generation, randomized pairing, reveal timing, and tournament confirmation behavior are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 34adeaebb02a6f38fd4f9a6590ead19e4c6de7ed.
+
+
+## Tournament prize handover dialog resilience — 2026-11-01
+- The prize handover dialog now uses a scrollable AlertDialog and constrains its bilingual title to two lines with ellipsis, preventing long localized text from overflowing the title row on compact screens or larger text settings.
+- The success path now verifies both the dialog route context and parent screen context are mounted before popping the dialog and presenting success feedback.
+- Prize amount selection, ledger recording call, notes, and delivery business rules are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 6774cad4b1289fda7a396720c930002fc6087cd3.
