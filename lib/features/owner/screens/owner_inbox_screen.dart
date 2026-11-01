@@ -9,6 +9,7 @@ import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/support_service.dart';
 import '../widgets/inbox/owner_chat_item_card.dart';
@@ -85,6 +86,20 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  }
 
  final conversations = snapshot.data ?? [];
+ 
+ // A failed initial read must not masquerade as a genuinely empty inbox.
+ if (snapshot.hasError && !snapshot.hasData) {
+   return VSPErrorState(
+     customMessage: isArabic
+         ? 'تعذر تحميل المحادثات. تحقق من الاتصال ثم أعد المحاولة.'
+         : 'Could not load conversations. Check your connection and try again.',
+     retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
+     onRetry: () {
+       if (mounted) setState(() {});
+     },
+   );
+ }
+
 
  // N+1 FIX: Collect all other-user IDs and batch-fetch missing profiles once.
  final otherUserIds = conversations
@@ -110,9 +125,43 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  return ListView.builder(
  padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true),
- itemCount: conversations.length,
+ itemCount: conversations.length + (snapshot.hasError ? 1 : 0),
  itemBuilder: (context, index) {
- final conv = conversations[index];
+ if (snapshot.hasError && index == 0) {
+   return Padding(
+     padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+     child: Container(
+       padding: const EdgeInsets.all(VSPSpacing.md),
+       decoration: BoxDecoration(
+         color: VSPColors.warning.withValues(alpha: 0.10),
+         borderRadius: BorderRadius.circular(VSPRadius.md),
+         border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+       ),
+       child: Row(
+         children: [
+           const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+           const SizedBox(width: VSPSpacing.sm),
+           Expanded(
+             child: Text(
+               isArabic
+                   ? 'تعذر تحديث المحادثات. المعروض هو آخر بيانات تم تحميلها.'
+                   : 'Conversations could not be refreshed. Showing the last loaded data.',
+               style: const TextStyle(color: VSPColors.textSecondary),
+             ),
+           ),
+           TextButton(
+             onPressed: () {
+               if (mounted) setState(() {});
+             },
+             child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+           ),
+         ],
+       ),
+     ),
+   );
+ }
+ final conversationIndex = index - (snapshot.hasError ? 1 : 0);
+ final conv = conversations[conversationIndex];
  final convId = conv['id'].toString();
  final type = conv['type']?.toString() ?? 'direct';
  final participants = (conv['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];
