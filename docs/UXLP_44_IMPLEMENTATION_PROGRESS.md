@@ -2058,3 +2058,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Tournament wizard numeric validation — 2026-11-01
 
 - `tournament_wizard_coordinator.dart` previously checked only that fee/prize fields were non-empty, while payload construction converted invalid numeric text to `0.0`. It now validates both values as finite, non-negative numbers and returns localized field-specific guidance before submission. Zero remains allowed for free entry/no-prize configurations; no commercial pricing policy was changed. Code commit: `322bebf5f2ee1a8ba4c5b2a00d0ef755245db8cb`. No tests/analyzer/CI/device/APK run.
+
+
+## Active cash-booking policy fail-closed correction — 2026-11-01
+
+- `booking_confirmation_handler.dart` previously used `getUserBookingsDirectly`, whose documented compatibility behavior catches query failures and returns an empty list. That read gates the rule requiring full online payment when the player already has an active unpaid cash booking. A transient Supabase read failure could therefore be mistaken for no active cash booking and incorrectly expose cash payment. The handler now uses `getUserBookingsDirectlyStrict`; on read failure it logs the diagnostic, clears the loading state, shows localized retry guidance, and stops before payment routing. Code commit: `e720c7f239ea2e0d0b36ed2dc583345babd92375`. No payment rule changed; this enforces the existing rule fail-closed. No tests/analyzer/CI/device/APK run.
