@@ -91,7 +91,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
       ),
       child: Row(
         children: [
-          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+          const Icon(Iconsax.info_circle_copy, color: VSPColors.warning, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
