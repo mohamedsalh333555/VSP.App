@@ -255,7 +255,7 @@ class BookingProvider with ChangeNotifier {
 
     if (_activeOwnerId != ownerId || _activeUserId != null) {
       if (_activeOwnerId != null || _activeUserId != null) {
-        _clearDraftOnAccountScopeChange();
+        await _clearDraftOnAccountScopeChange();
       }
       _activeUserId = null;
       _activeOwnerId = ownerId;
