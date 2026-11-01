@@ -2106,3 +2106,8 @@ Read-only inspection was performed against the connected production VSP project 
 - `SignupValidationService.calculatePasswordStrength` previously awarded the same 0.2 points twice for `password.length >= 8`, while lowercase letters had no independent contribution. The duplicate condition is now a lowercase-letter check, so the five criteria are distinct and the score remains bounded by 1.0. Code commit: `df07c01dca6597173cef41bf26fecb1eea1fe395`.
 - `OwnerDashboardController.loadDashboardData` now discards stale success/error completions when a newer filter request has started. Disposal invalidates pending requests and prevents late asynchronous completions from notifying listeners. Code commit: `d0272b1fe31f2dc09633d229b502e75148b4e1f6`.
 - No analyzer, tests, CI, runtime/device checks, or APK build were run.
+
+
+## Payment status polling single-flight protection — 2026-11-01
+
+- The periodic booking and tournament-order pollers used `Timer.periodic` with asynchronous callbacks. If a network read took longer than the interval, later ticks could overlap and multiple callbacks could observe the same successful payment. Both pollers now skip ticks while a read is in flight and latch the first confirmed result before invoking the completion callback. Code commit: `7abc2ff0d1d31af67aa74c65b8017771a7890fd0`. No tests/analyzer/CI/device/APK run.
