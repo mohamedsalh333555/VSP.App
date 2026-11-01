@@ -58,7 +58,7 @@ class PlayerBookingCard extends StatelessWidget {
     return Text(
       text,
       style: TextStyle(
-        color: color ?? Colors.white.withValues(alpha: 0.9),
+        color: color ?? VSPColors.white.withValues(alpha: 0.9),
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
@@ -73,7 +73,7 @@ class PlayerBookingCard extends StatelessWidget {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: VSPColors.white.withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -181,7 +181,7 @@ class PlayerBookingCard extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: () => _openDetails(context),
@@ -483,7 +483,7 @@ class PlayerBookingCard extends StatelessWidget {
             VSPAnimatedButton(
               text: isArabic ? 'لوحة المواجهة والنتائج الحية' : 'Live Matchup Dashboard',
               color: VSPColors.accent,
-              textColor: Colors.black,
+              textColor: VSPColors.black,
               onPressed: () {
                 Navigator.push(
                   context,
@@ -527,7 +527,7 @@ class PlayerBookingCard extends StatelessWidget {
                   child: VSPAnimatedButton(
                     text: isArabic ? 'مشاركة' : 'Share',
                     color: VSPColors.accent,
-                    textColor: Colors.black,
+                    textColor: VSPColors.black,
                     onPressed: () => SharingService.shareMatch(
                       bookingId: booking.id,
                       teamName: booking.playerTeamName ?? (isArabic ? 'فريقي' : 'My Team'),
