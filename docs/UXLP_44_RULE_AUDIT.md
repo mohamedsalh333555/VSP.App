@@ -853,3 +853,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `support_tickets_screen.dart`:** the `showModalBottomSheet` route already applies `viewInsets.bottom`; the sheet then subtracted the same inset again when computing `maxHeight`. Removed the second subtraction, retaining safe-area and scroll protections so keyboard-open compact layouts retain usable height.
 - Source commit: `a098bb1c594a1eba3c5a807498884102f6ab3e85`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Add Player modal double-inset correction — 2026-11-01
+
+- **Rules 11 and 35 — `AddPlayerSheet`:** its caller already enables a scroll-controlled, SafeArea modal route, but the sheet also subtracted keyboard and system insets from full screen height. Removed that duplicate viewport calculation, preserving bottom safe padding and scroll behavior.
+- Source commit: `cb8327b5f52d019a58f9ce071fa94c2afae1107c`. Keyboard/device verification remains pending; no tests or build were run.
