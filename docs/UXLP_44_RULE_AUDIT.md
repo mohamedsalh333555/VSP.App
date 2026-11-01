@@ -943,3 +943,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11, 27, 33, and 36:** stadium location badge now exposes a localized, focusable map action; long address text is bounded on compact screens; a false/failed external-launch result produces localized recovery feedback instead of silently doing nothing.
 - Source commits: `aed4b1aab8511b80493aeb6daed0133a5e8875b8`, `6231c0f438cd5e5ce73d3f24c404323383f279ec`. Device/launch verification remains pending; no tests or build were run.
+
+
+### Stadium gallery controls accessibility — 2026-11-01
+
+- **Rules 5, 27, 30, and 33:** share/favorite controls now expose focusable 48dp targets and localized state-aware tooltips; tapping the hero image or gallery indicator is now keyboard/focus accessible without changing swipe navigation or the full-screen gallery flow.
+- Source commit: `c308b47cca78448cf7eb3aa8f6b19f16f43d505f`. Runtime/device verification remains pending; no tests or build were run.
