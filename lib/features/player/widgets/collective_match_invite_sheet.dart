@@ -284,9 +284,9 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final booking = _booking;
     if (booking == null) return;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (uid == null) return;
     try {
-      final uid = context.read<AuthProvider>().currentUser?.id;
-      if (uid == null) return;
       final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
       if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       final token = credentials?['invite_token']?.toString();
@@ -316,7 +316,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       );
     } catch (e) {
       VSPLogger.w('Collective invite sharing failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         VSPFeedback.showError(
           context,
           ar
@@ -345,17 +345,17 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       ),
     );
     if (ok != true || !mounted) return;
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (uid == null) return;
     setState(() => _cancelling = true);
     try {
-      final uid = context.read<AuthProvider>().currentUser?.id;
-      if (uid == null) return;
       final success = await context.read<BookingProvider>().cancelBooking(booking.id);
       if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       if (!success) throw Exception(ar ? 'تعذر إلغاء الحجز.' : 'Unable to cancel booking.');
       Navigator.pop(context);
     } catch (e) {
       VSPLogger.w('Collective booking cancellation failed: $e');
-      if (mounted) {
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
         VSPFeedback.showError(
           context,
           ar ? 'تعذر إلغاء الحجز. حاول مرة أخرى.' : 'Could not cancel the booking. Please try again.',
