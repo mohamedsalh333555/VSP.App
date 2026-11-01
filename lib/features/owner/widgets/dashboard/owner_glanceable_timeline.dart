@@ -140,7 +140,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                             Container(
                               width: 6,
                               height: 6,
-                              margin: const EdgeInsets.only(right: 5),
+                              margin: const EdgeInsetsDirectional.only(end: 5),
                               decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: VSPColors.success,
