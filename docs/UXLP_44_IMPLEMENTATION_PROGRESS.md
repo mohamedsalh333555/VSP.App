@@ -1404,3 +1404,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `lib/features/owner/screens/owner_documentation_wizard.dart` had two upload catch paths that interpolated `e.toString()` into the localized user-facing message. Both now show localized generic retry guidance through the existing upload-failed localization, avoiding raw backend/filesystem exception details.
 - Code commit: `9df785b4cc7720f12a5bd4eba8090071b45e3ea7`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner documentation dialog responsiveness — 2026-11-01
+
+- `doc_wizard_dialogs.dart`: cancel-upload confirmation now uses a scrollable AlertDialog.
+- `doc_under_review_dialog.dart`: the longer bilingual verification-status explanation now uses a scrollable AlertDialog, preserving the 48dp primary action.
+- Code commits: `4aea3905ff98fb8f0b3f31c6c57838a097668586`, `49fc6c81aa6eba99f22b15e535795faf76568898`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
