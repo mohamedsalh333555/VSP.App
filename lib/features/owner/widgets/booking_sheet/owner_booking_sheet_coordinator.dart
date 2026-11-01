@@ -185,6 +185,10 @@ class OwnerBookingSheetCoordinator {
     required bool isArabic,
     required ValueSetter<bool> setDeleting,
   }) async {
+    if (!context.mounted || !parentContext.mounted) return;
+    final auth = Provider.of<AuthProvider>(parentContext, listen: false);
+    final initiatingUserId = auth.currentUser?.id;
+    if (initiatingUserId == null) return;
     final nav = Navigator.of(context);
     final isManual = (booking.paymentTransactionId?.contains('MANUAL') ?? false) ||
         booking.bookingType == BookingType.personal;
@@ -201,11 +205,14 @@ class OwnerBookingSheetCoordinator {
         return;
       }
 
-      if (!context.mounted || !parentContext.mounted) return;
+      if (!context.mounted ||
+          !parentContext.mounted ||
+          auth.currentUser?.id != initiatingUserId) {
+        return;
+      }
       setDeleting(true);
       try {
-        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-        final uid = auth.currentUser?.id ?? booking.ownerId;
+        final uid = initiatingUserId;
         final bool refund = decision == ManualBookingCancelDecision.refund;
 
         final res = await OwnerRepository().cancelManualBookingAtomic(
@@ -216,6 +223,11 @@ class OwnerBookingSheetCoordinator {
 
         if (res is Map && res['success'] == false) {
           throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
+        }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
         }
 
         if (context.mounted) {
@@ -231,11 +243,14 @@ class OwnerBookingSheetCoordinator {
           );
         }
 
-        if (parentContext.mounted) {
-          await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        if (parentContext.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
         }
       } catch (e) {
-        if (context.mounted) {
+        if (context.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
@@ -254,12 +269,13 @@ class OwnerBookingSheetCoordinator {
       confirmBtn: l10n.confirmBtn,
     );
 
-    if (confirm == true && context.mounted) {
+    if (confirm == true &&
+        context.mounted &&
+        parentContext.mounted &&
+        auth.currentUser?.id == initiatingUserId) {
       setDeleting(true);
-      if (!parentContext.mounted) return;
       try {
-        final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-        final uid = auth.currentUser?.id ?? booking.ownerId;
+        final uid = initiatingUserId;
 
         if (isManual) {
           final res = await OwnerRepository().cancelManualBookingAtomic(
@@ -270,9 +286,18 @@ class OwnerBookingSheetCoordinator {
           if (res is Map && res['success'] == false) {
             throw Exception(res['message']?.toString() ?? 'Failed to cancel manual booking');
           }
+          if (!context.mounted ||
+              !parentContext.mounted ||
+              auth.currentUser?.id != initiatingUserId) {
+            return;
+          }
         } else {
           final success = await Provider.of<BookingProvider>(parentContext, listen: false).cancelBooking(booking.id);
-          if (!context.mounted) return;
+          if (!context.mounted ||
+              !parentContext.mounted ||
+              auth.currentUser?.id != initiatingUserId) {
+            return;
+          }
           if (!success) {
             final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
             VSPFeedback.showError(
@@ -287,7 +312,8 @@ class OwnerBookingSheetCoordinator {
           await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
         }
       } catch (e) {
-        if (context.mounted) {
+        if (context.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
           VSPFeedback.showError(context, e.toString().replaceAll('Exception:', '').trim());
         }
       } finally {
