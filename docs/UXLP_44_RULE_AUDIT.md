@@ -919,3 +919,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 10, 27, 33, and 38:** tournament match scheduling now has a localized tooltip and 48dp IconButton target; schedule text is bounded on narrow widths; date/time defaults and owner pending-cash day filtering use the centralized VSP time service rather than independent device-clock reads.
 - Source commits: `bf9728854a4fd82ac517a0c5a9965fbf1afb3163`, `986d4ac9d8c8be36e10c8caaeee001f2a85a1bdf`. Runtime/device verification remains pending; no tests or build were run.
+
+
+### Player home/chat accessibility and payment wording — 2026-11-01
+
+- **Rules 10, 18, 27, 33, and 36:** home profile/search/filter actions now have focusable InkWell surfaces and localized tooltips; home avatar image failures and empty URLs render a fallback; chat send has a localized tooltip and focusable 48dp target; payment-method selector no longer promises “100% secure” and instead names the Paymob gateway.
+- Source commits: `7358e28a0103eaa6fd76ba3a8272cc826f2ab1e9`, `29867442c66dab84ce359672d104df9e261b4de8`, `50ffd573c2efc1026b487ac1a322a545373ce265`, `50893601929d447510918b1099ff9a0bb604c279`. Runtime/device and payment-flow verification remain pending; no tests or build were run.
