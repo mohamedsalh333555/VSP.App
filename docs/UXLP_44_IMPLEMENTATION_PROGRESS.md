@@ -1095,3 +1095,5 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Acceptance/rejection/removal RPCs and notification behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 2a0dc91686b87e61c33f582db4e7ec9af3836c40; 61ee1029ea83cf5cb3c0aef049ccc22d5f7123fc; c4c43b8fe46334ffbe71d558cac5063f5f0d85b9.
 
 - Follow-up source correction: aligned the refresh-fallback log call with the actual `VSPLogger.e(message, error, stackTrace)` signature (`VSPLogger.w` accepts only a message). Commit: 22bd7e569b33520998660300e805bd775f98d8bb.
+
+- Additional participant-modal edge cases fixed: the refresh helper now exits before reading providers if the sheet was disposed, and the zero-participant branch clears both displayed lists instead of leaving removed players visible. Commit: fbb513044d77499729868ef44c3cf53a4183ec84.
