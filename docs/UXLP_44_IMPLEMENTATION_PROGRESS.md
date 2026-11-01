@@ -1975,3 +1975,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart`: compact duration chips now use a directional start inset for the gap between options, replacing locale-branching physical left/right padding; the horizontally scrollable duration list also uses directional start spacing.
 - Added ten visible owner components to the register: three document-upload steps and their step indicator, ledger balance cards, quick-booking customer/duration/payment sections, and owner cup card/empty state. Their actual data, upload recovery, payment-state mapping, and runtime behavior remain pending caller-level verification.
 - Code commit: `bae0250fadc563e53baf9096889f266dc7086147`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Manual tournament team options RTL and embedded surfaces — 2026-11-01
+
+- `lib/features/owner/widgets/tournament/tournament_manual_team_options_section.dart`: section-label inset now uses directional `start`; color-option chip spacing now uses directional `end`. This mirrors the labels and palette gaps in Arabic RTL without changing team creation or color selection.
+- Added nine embedded UI components to the register: draw-room matchup tile, manual team options/roster, tournament overview/team cards, booking financial summary, guest-player checkout section, and chat title/system banner. Their server-data mapping, eligibility and runtime states remain pending caller-level review.
+- Code commit: `80a542547d524d9a534ed1fa441d2fe7a9f2bbcc`. No tests, analyzer, CI, runtime checks, or APK build were run.
