@@ -812,3 +812,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The non-dismissible payment-verification modal now constrains its content to the available viewport after keyboard/system insets and permits vertical scrolling. The delayed-wait actions and progress content remain reachable on short displays instead of being clipped outside the visible dialog area.
 - Payment verification timing, payment state, support destination, and navigation callbacks are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 60a768e2112a76d49c9512b7f5f587a49efa089d.
+
+
+## Tournament location confirmation and squad-builder modal resilience — 2026-11-01
+
+- The cross-governorate tournament confirmation now uses a scrollable AlertDialog so long Arabic/English commitment copy and its actions remain reachable on compact displays.
+- The incomplete-squad bridge sheet now caps its height to the available viewport after keyboard/system insets and scrolls its content. The post-create team lookup no longer force-unwraps the authenticated user; if the session is absent, it exits safely instead of throwing.
+- Tournament eligibility, minimum roster size, team creation, and registration rules are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: b3af961ef27795dd22f0d87460d47d9406fbac96, ab06266497b4f527f512fd4a43cd8db5c7de03ce.
