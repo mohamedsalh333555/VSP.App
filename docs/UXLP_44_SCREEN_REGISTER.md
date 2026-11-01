@@ -493,3 +493,5 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 - `lib/features/player/screens/global_search_screen.dart`: active search now uses the shared localized loading state rather than a bare spinner; existing request-generation protection and retryable error state remain intact.
 
 - `lib/features/auth/screens/verify_email_screen.dart`: OTP verification and resend now recover from unexpected exceptions with localized messages and restore their in-flight controls; local email-cleanup failure no longer masks successful server verification.
+
+- `lib/features/player/screens/profile_screen.dart`: the profile team-card initial fetch now uses the shared localized loading state instead of an unlabeled spinner; existing explicit error/retry behavior remains unchanged.
