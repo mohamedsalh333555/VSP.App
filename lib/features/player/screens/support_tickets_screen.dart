@@ -48,6 +48,8 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
   }
 
   Future<void> _newTicket() async {
+    final initiatingUserId = context.read<AuthProvider>().currentUser?.id;
+    if (initiatingUserId == null || initiatingUserId.isEmpty) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final subjectController = TextEditingController();
     String category = widget.initialCategory ?? 'general';
@@ -139,6 +141,19 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                             );
                             return;
                           }
+                          if (!ctx.mounted ||
+                              context.read<AuthProvider>().currentUser?.id != initiatingUserId) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isArabic
+                                      ? 'تغيّر الحساب. أغلق النافذة وافتحها من الحساب الحالي.'
+                                      : 'The active account changed. Close this sheet and reopen it from the current account.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           setSheetState(() => isSubmitting = true);
                           try {
                             final booking = widget.contextBooking;
@@ -150,7 +165,14 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                               bookingId: booking?.id,
                               priority: category == 'refund' || category == 'payment' ? 'high' : 'normal',
                             );
-                            if (ctx.mounted) Navigator.pop(ctx, ticket['id']?.toString());
+                            if (ctx.mounted) {
+                              final stillInitiatingAccount =
+                                  context.read<AuthProvider>().currentUser?.id == initiatingUserId;
+                              Navigator.pop(
+                                ctx,
+                                stillInitiatingAccount ? ticket['id']?.toString() : null,
+                              );
+                            }
                           } catch (e) {
                             VSPLogger.w('Support ticket creation failed: $e');
                             if (ctx.mounted) {
