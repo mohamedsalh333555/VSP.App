@@ -33,10 +33,19 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  bool _isSearching = false;
  bool _hasSearched = false;
  bool _governorateMismatch = false;
+ int _searchGeneration = 0;
+
+ @override
+ void dispose() {
+   _searchGeneration++;
+   _phoneController.dispose();
+   super.dispose();
+ }
 
  Future<void> _searchPlayer() async {
  final phone = _phoneController.text.trim();
  if (phone.isEmpty) return;
+ final generation = ++_searchGeneration;
 
  setState(() {
  _isSearching = true;
@@ -61,18 +70,17 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  try {
    user = await UserRepository().getUserByPhoneStrict(normalized);
  } catch (_) {
-   if (mounted) {
-     final requestIsCurrent =
-         PhoneUtils.normalize(_phoneController.text.trim()) == normalized &&
-         context.read<AuthProvider>().currentUser?.id == requestUserId;
-     setState(() => _isSearching = false);
-     if (requestIsCurrent) {
-       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
-       );
-     }
-   }
+   if (!mounted) return;
+   final requestIsCurrent =
+       generation == _searchGeneration &&
+       PhoneUtils.normalize(_phoneController.text.trim()) == normalized &&
+       context.read<AuthProvider>().currentUser?.id == requestUserId;
+   if (!requestIsCurrent) return;
+   setState(() => _isSearching = false);
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   ScaffoldMessenger.of(context).showSnackBar(
+     SnackBar(content: Text(isArabic ? 'تعذر البحث عن اللاعب. تحقق من الاتصال وحاول مرة أخرى.' : 'Could not search for this player. Check your connection and try again.')),
+   );
    return;
  }
 
@@ -80,9 +88,9 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  // Ignore a late response if the phone field or signed-in account changed
  // while the lookup was in flight; otherwise an old result can be added.
  final activeUserId = context.read<AuthProvider>().currentUser?.id;
- if (PhoneUtils.normalize(_phoneController.text.trim()) != normalized ||
+ if (generation != _searchGeneration ||
+     PhoneUtils.normalize(_phoneController.text.trim()) != normalized ||
      activeUserId != requestUserId) {
-   setState(() => _isSearching = false);
    return;
  }
  if (mounted) {
