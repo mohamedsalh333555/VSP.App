@@ -695,3 +695,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/widgets/my_team/my_team_controller.dart` now opens the scroll-controlled Add Player sheet with `useSafeArea: true`, protecting its header from status-bar/notch overlap while retaining the sheet's existing keyboard and bottom-inset handling.
+
+
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_validator.dart` and `add_stadium_wizard.dart`: hourly price, ball-rental price, and deposit values now reject invalid/non-finite values before payload creation; the image-upload-in-progress validation message is localized in Arabic and English.
