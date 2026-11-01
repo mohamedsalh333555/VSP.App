@@ -18,21 +18,28 @@ class LoginFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final l10n = AppLocalizations.of(context)!;
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 6,
       children: [
         Text(
-          AppLocalizations.of(context)!.dontHaveAccount,
+          l10n.dontHaveAccount,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: VSPColors.textSecondary,
                 fontSize: 14,
               ),
         ),
-        const SizedBox(width: 6),
-        GestureDetector(
-          onTap: () => _showRoleSheet(context),
+        TextButton(
+          onPressed: () => _showRoleSheet(context),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
           child: Text(
-            AppLocalizations.of(context)!.signUp,
+            l10n.signUp,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: VSPColors.accent,
                   fontWeight: FontWeight.bold,
@@ -50,15 +57,19 @@ class _RoleSelectionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(VSPRadius.bottomSheet),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-      child: Column(
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        child: Container(
+          decoration: const BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(VSPRadius.bottomSheet),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
@@ -74,7 +85,7 @@ class _RoleSelectionSheet extends StatelessWidget {
 
           // Title
           Text(
-            'إنشاء حساب جديد',
+            isArabic ? 'إنشاء حساب جديد' : 'Create a new account',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.bold,
@@ -83,7 +94,9 @@ class _RoleSelectionSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'اختار نوع حسابك عشان نكمل معاك',
+            isArabic
+                ? 'اختار نوع حسابك عشان نكمل معاك'
+                : 'Choose your account type to continue',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: VSPColors.textSecondary,
                   fontSize: 14,
@@ -94,8 +107,10 @@ class _RoleSelectionSheet extends StatelessWidget {
           // زر لاعب
           _RoleCard(
             icon: Iconsax.cup_copy,
-            title: 'لاعب',
-            subtitle: 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك',
+            title: isArabic ? 'لاعب' : 'Player',
+            subtitle: isArabic
+                ? 'احجز ملاعب، انضم لمباريات، وتابع إحصائياتك'
+                : 'Book pitches, join matches, and track your stats',
             onTap: () {
               Navigator.pop(context);
               context.push('/create-account-player');
@@ -106,15 +121,20 @@ class _RoleSelectionSheet extends StatelessWidget {
           // زر صاحب ملعب
           _RoleCard(
             icon: Iconsax.building_3_copy,
-            title: 'صاحب ملعب',
-            subtitle: 'سجّل ملعبك وابدأ استقبال الحجوزات',
+            title: isArabic ? 'صاحب ملعب' : 'Stadium owner',
+            subtitle: isArabic
+                ? 'سجّل ملعبك وابدأ استقبال الحجوزات'
+                : 'Register your stadium and start accepting bookings',
             onTap: () {
               Navigator.pop(context);
               context.push('/create-account-owner');
             },
           ),
           const SizedBox(height: 8),
-        ],
+          ],
+          ),
+          ),
+        ),
       ),
     );
   }
@@ -135,11 +155,15 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.card),
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 80),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
           color: VSPColors.surfaceAlt,
           borderRadius: BorderRadius.circular(VSPRadius.card),
@@ -190,10 +214,13 @@ class _RoleCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Iconsax.arrow_right_3_copy,
-              color: VSPColors.textMuted,
-              size: 16,
+            Transform.flip(
+              flipX: Directionality.of(context) == TextDirection.rtl,
+              child: const Icon(
+                Iconsax.arrow_right_3_copy,
+                color: VSPColors.textMuted,
+                size: 16,
+              ),
             ),
           ],
         ),
