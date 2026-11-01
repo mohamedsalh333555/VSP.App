@@ -42,7 +42,7 @@ class VSPTermsAndPrivacyModal {
                 children: [
                   // Header
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 16, 14),
+                    padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 16, 14),
                     child: Row(
                       children: [
                         const VSPIconBadge(
