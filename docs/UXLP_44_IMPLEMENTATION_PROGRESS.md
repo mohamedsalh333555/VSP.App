@@ -1982,3 +1982,9 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/tournament/tournament_manual_team_options_section.dart`: section-label inset now uses directional `start`; color-option chip spacing now uses directional `end`. This mirrors the labels and palette gaps in Arabic RTL without changing team creation or color selection.
 - Added nine embedded UI components to the register: draw-room matchup tile, manual team options/roster, tournament overview/team cards, booking financial summary, guest-player checkout section, and chat title/system banner. Their server-data mapping, eligibility and runtime states remain pending caller-level review.
 - Code commit: `80a542547d524d9a534ed1fa441d2fe7a9f2bbcc`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Player filter/home/team embedded component coverage — 2026-11-01
+
+- Added ten player UI components to the explicit register: six filter panels/sidebar, home booking CTA and feed composition, matchup result card, and team achievements section. The source review identified no confirmed physical left/right padding or alignment defect in this group; filter/query mapping, live data, empty/error behavior, and runtime Arabic/English layout remain pending caller-level review.
+- No application source changes were needed in this group. No tests, analyzer, CI, runtime checks, or APK build were run.
