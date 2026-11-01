@@ -21,7 +21,7 @@ class TournamentDashboardDialogs {
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(l10n.warning, style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold)),
         content: Text(
@@ -49,7 +49,7 @@ class TournamentDashboardDialogs {
                       : l10n.proceedAnyway,
                   height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, entryFee <= 0),
                 ),
               ),
@@ -73,7 +73,7 @@ class TournamentDashboardDialogs {
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(l10n.forceStartTournament, style: Theme.of(ctx).textTheme.titleLarge),
         content: Text(
@@ -99,7 +99,7 @@ class TournamentDashboardDialogs {
                   text: l10n.forceStart,
                   height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),
@@ -126,7 +126,7 @@ class TournamentDashboardDialogs {
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -199,7 +199,7 @@ class TournamentDashboardDialogs {
                   text: isAr ? 'تأكيد الإلغاء' : 'Confirm Cancel',
                   height: 48,
                   color: VSPColors.warning,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),
@@ -223,7 +223,7 @@ class TournamentDashboardDialogs {
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -273,7 +273,7 @@ class TournamentDashboardDialogs {
                   text: isAr ? 'حذف نهائي' : 'Delete',
                   height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.white,
                   onPressed: () => Navigator.pop(ctx, true),
                 ),
               ),
