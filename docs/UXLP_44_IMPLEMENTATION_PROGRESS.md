@@ -827,3 +827,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The stadium image carousel's share and favorite circular actions now have a 48dp hit area instead of 40dp, meeting the shared minimum touch-target requirement while retaining their existing icons, placement, and behavior.
 - Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 886f6c22f72dc2e607f5d9566e00870bce420cc3.
+
+
+## Tournament modal viewport fixes (2026-11-01)
+- Tournament score editor, auto-schedule sheet, and manual team registration sheet now cap their height using the viewport after keyboard and safe-area insets.
+- Existing score, scheduling, and team-registration behavior is unchanged. No tests, CI, analyzer, migrations, or APK build were run.
+- Commits: adcd0e3de3ea1639ed1395eb19c8c3053a5e8812; 569e28aa289ec0bfaad773e2cf049d7e2f251107; 1a7f0a2917ee14f277aae1a88595f1c45e01f8a6.
