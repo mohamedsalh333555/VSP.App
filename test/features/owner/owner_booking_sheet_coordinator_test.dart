@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:vsp_application/core/providers/auth_provider.dart';
+import '../../helpers/test_owner_auth_provider.dart';
 import 'package:vsp_application/core/repositories/owner_repository.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart';
@@ -90,7 +93,9 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
-          home: Scaffold(
+          home: ChangeNotifierProvider<TestOwnerAuthProvider>.value(
+            value: TestOwnerAuthProvider(),
+            child: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () {
@@ -107,6 +112,7 @@ void main() {
                 },
                 child: const Text('Confirm Cash'),
               ),
+            ),
             ),
           ),
         ),
