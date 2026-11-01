@@ -1492,3 +1492,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/champion/championships_list_tab.dart`: the Arabic championship browsing banner previously interpolated canonical governorate identifiers directly, which could leave English governorate names inside Arabic copy. Both the selected-governorate label and the return-to-home-governorate label now use the existing `championTranslateItem` helper, matching the 1v1 banner's localization behavior.
 - Filter values, stream scope, navigation, and tournament eligibility are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `66e05af0a2c483f4a3e21128d9c7b651e2375b9c`.
+
+
+## Directional bottom action-bar inset preservation — 2026-11-01
+
+- Fixed `lib/core/ui/vsp_ui.dart` (`VSPBottomActionBar`): the component accepts `EdgeInsetsGeometry`, but previously only preserved values when the runtime type was `EdgeInsets`; a supplied `EdgeInsetsDirectional` silently fell back to hardcoded physical padding. The component now applies the caller's padding unchanged and adds the device bottom safe inset in a separate nested `Padding`, preserving directional geometry.
+- This changes layout composition only; no action behavior or booking policy changed. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `025643a19457b5d21568958e531b7126cc465fe1`.
