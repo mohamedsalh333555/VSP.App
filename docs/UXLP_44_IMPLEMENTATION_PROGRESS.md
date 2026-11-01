@@ -2191,3 +2191,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `booking_payment_method_sheet.dart`: when a stadium requires an online deposit but the online-payment feature is disabled, the sheet previously fell through to the cash-payment branch. It now blocks confirmation with a localized explanation; a required deposit can no longer be bypassed through the client UI.
 - Source commits: `a3ad428826aa1f03e120fffff163f3401ef99cb8`, `3f35b105b4d14f5fa6154fb8bd05e6d81d48eda8`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+
+## Checkout feature-flag enforcement — 2026-11-01
+
+- `payment_gateway_screen.dart`: the online-payment Remote Config flag is now enforced inside the checkout screen itself, not only in the payment-method sheet. This closes direct-route paths (such as forced online payment) that could otherwise bypass the flag. The checkout CTA is disabled with a localized explanation while online payment is off, and the action rechecks the flag before requesting a Paymob intention.
+- Source commit: `ba2e08b20e661b15b7d4b2cdb28dccb3484f8f39`.
+- No tests, analyzer, CI, device checks, or APK build were run.
