@@ -346,7 +346,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           ),
           centerTitle: true,
         ),
-        body: SafeArea(
+        body: SafeArea(top: false,
           child: Column(
             children: [
               const SizedBox(height: VSPSpacing.sm),
