@@ -61,7 +61,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                     Text(
                       league.name,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -115,7 +115,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
           Text(
             isArabic ? 'الفرق المنضمة حتى الآن:' : 'Teams that have joined:',
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -163,7 +163,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                         child: Text(
                           team.name,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -328,7 +328,7 @@ Join code: ${league.id}
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.whatsApp,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(VSPRadius.button),
