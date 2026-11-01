@@ -977,3 +977,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Collective invite account-scoped async actions — 2026-11-01
 - Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: join, leave, manual-player-count update, participant removal, invitation credential lookup/share, and collective cancellation now verify the initiating authenticated account after asynchronous work before refreshing state, navigating, or presenting feedback. Error feedback for join/leave/count/removal is also suppressed if the active account changed while the request was pending.
 - The repository operations and product eligibility rules are unchanged; this only prevents stale async results from crossing account sessions. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: eb36c3c26203a5cd5147c281cb6701fb9da8802b; 84c2a6264c0948adab02faf4fe6d5f1f2f202a48.
+
+
+## Public match action account-scope protection — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: leaving a public match and cancelling a join request previously accepted the initiating user ID but only checked whether the widget remained mounted after the asynchronous repository call. They now verify that the same user is still authenticated before displaying either success/failure feedback; exception feedback is also suppressed after an account switch.
+- Match repository calls and join/leave eligibility are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: ef65a835778dda957a28ec5db18fad25d6db6e57.
