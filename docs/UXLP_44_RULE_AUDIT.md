@@ -1103,3 +1103,8 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 9, 10, 11, and 36:** email OTP verification and resend now recover from unexpected thrown errors with localized retry guidance and restore their in-flight controls; local pending-email cleanup failure after a successful server verification no longer presents a false verification failure. Profile team-card loading and global search loading now use the shared bilingual state renderer instead of bare spinners. Existing explicit profile/search error and retry branches remain intact.
 - These are source-level changes only. No rule is promoted to pass; Arabic/English rendering, keyboard behavior, and failure recovery still require the single consolidated runtime validation pass. No tests, analyzer, CI, device run, or APK build was run.
+
+
+### Challenge code lookup ergonomics — 2026-11-01
+
+- **Rules 27, 29, and 33:** challenge-code lookup now rejects duplicate handler invocations even if triggered outside the disabled button, and its action target is 48dp rather than 46dp. No challenge-code validation, team eligibility, or repository behavior changed. Source-only evidence; keyboard and device verification remain pending.
