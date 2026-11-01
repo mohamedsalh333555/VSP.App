@@ -309,6 +309,14 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final parentContext = widget.parentContext;
     final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
     final bookingProvider = Provider.of<BookingProvider>(parentContext, listen: false);
+    final uid = authProvider.currentUser?.id;
+    if (uid == null) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى.' : 'Your session expired. Please sign in again.',
+      );
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -332,14 +340,17 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true ||
+        !mounted ||
+        authProvider.currentUser?.id != uid) {
+      return;
+    }
     setState(() => _isSaving = true);
     try {
       await OwnerRepository().recordPlayerNoShow(bookingId: booking.id);
-      final uid = authProvider.currentUser?.id;
-      if (uid != null) {
-        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
-      }
+      if (!mounted || authProvider.currentUser?.id != uid) return;
+      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+      if (!mounted || authProvider.currentUser?.id != uid) return;
       if (mounted) {
         Navigator.pop(context);
         if (widget.parentContext.mounted) {
@@ -348,7 +359,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
       }
     } catch (e) {
       VSPLogger.w('Owner no-show report failed: $e');
-      if (mounted) {
+      if (mounted && authProvider.currentUser?.id == uid) {
         VSPFeedback.showError(
           context,
           isArabic
@@ -400,9 +411,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         throw Exception(result['error']?.toString() ?? 'Failed to lock slot');
       }
 
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       await bookingProvider.loadOwnerBookings(ownerId, forceRefresh: true);
 
-      if (!mounted) return;
+      if (!mounted || authProvider.currentUser?.id != ownerId) return;
       navigator.pop();
       if (parentContext.mounted) {
         VSPFeedback.showSuccess(
@@ -411,7 +423,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && authProvider.currentUser?.id == ownerId) {
         VSPFeedback.showError(
           context,
           isArabic ? 'تعذر قفل الفترة للصيانة.' : 'Could not lock this slot for maintenance.',
