@@ -316,14 +316,14 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
  else
  SizedBox(
  width: 80,
- height: 40,
+ height: 48,
  child: PrimaryButton(
  text: isArabic ? 'إضافة' : 'Add',
  onPressed: () {
  widget.onPlayerAdded(_foundUser!);
  Navigator.pop(context);
  },
- height: 40,
+ height: 48,
  ),
  ),
  ],
