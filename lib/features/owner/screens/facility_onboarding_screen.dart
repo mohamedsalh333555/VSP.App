@@ -149,7 +149,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),
@@ -261,7 +261,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  Text(
  isAr ? 'تقدم إكتمال ملفك الرياضي' : 'Profile Completion',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 13,
  fontWeight: FontWeight.bold,
  ),
@@ -367,14 +367,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: ElevatedButton.icon(
  // Gate: Check subscription before allowing second stadium
  onPressed: () => _onAddAnotherStadium(context, stadiums, isAr),
- icon: const Icon(Iconsax.add_circle_copy, color: Colors.white),
+ icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.white),
  label: Text(
  isAr ? 'إضافة ملعب آخر' : 'Add another stadium',
  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
  ),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.surfaceAlt,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  side: const BorderSide(color: VSPColors.divider),
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -405,7 +405,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  },
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
- foregroundColor: Colors.black,
+ foregroundColor: VSPColors.black,
  shape: RoundedRectangleBorder(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  ),
