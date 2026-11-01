@@ -1230,3 +1230,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Added all nine as `not yet inspected`; no source-review status was inferred.
 - The register now contains 225 table records across 199 unique Dart paths, including 26 repeated entries for separate findings. This supersedes the earlier 216-record / 190-path count.
 - A filename-based candidate scan is triage only. It does not establish that every embedded widget or state variant has been discovered.
+
+### Newly discovered UI components — source review and navigation fix (2026-11-01)
+
+- Completed source review of the nine newly registered components: owner tournament dashboard action bar; tournament basics/system/scheduling steps; tournament step indicator and wizard footer; player booking footer; championship empty states; and 1v1 empty-state/banner components.
+- Found a concrete navigation defect in `League1v1NoGovernorateState`: it called `Navigator.pushNamed('/edit-profile')`, but the app's GoRouter had no `/edit-profile` route. Added the authenticated app route and changed the action to `context.push('/edit-profile')`.
+- Updated all nine register rows from `not yet inspected` to `source reviewed—runtime pending`, with specific source evidence and remaining runtime caveats.
+- No booking/payment/tournament eligibility or server policy was changed. No tests or APK build were run; route behavior remains unverified at runtime.
