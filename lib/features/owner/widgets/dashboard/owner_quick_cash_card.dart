@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/app_date_formatter.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -166,7 +167,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
 
   @override
   Widget build(BuildContext context) {
-    final now = widget.currentTime ?? DateTime.now();
+    final now = widget.currentTime ?? VSPTimeService.now;
 
     final pendingCashBookings = widget.allBookings.where((b) {
       if (b.status == BookingStatus.cancelled || !b.isCash) return false;
