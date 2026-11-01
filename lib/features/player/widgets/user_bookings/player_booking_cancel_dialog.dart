@@ -57,6 +57,7 @@ class PlayerBookingCancelDialog {
 
     return showDialog<void>(
       context: context,
+      useSafeArea: true,
       builder: (dialogCtx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
