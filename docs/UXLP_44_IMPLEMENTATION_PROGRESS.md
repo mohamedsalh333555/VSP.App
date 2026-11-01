@@ -890,3 +890,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The success path now verifies both the dialog route context and parent screen context are mounted before popping the dialog and presenting success feedback.
 - Prize amount selection, ledger recording call, notes, and delivery business rules are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 6774cad4b1289fda7a396720c930002fc6087cd3.
+
+
+## Stadium location picker GPS lifecycle guard — 2026-11-01
+- Added a mounted-context check immediately after the asynchronous current-position lookup and before updating selected coordinates or moving the map controller. If the sheet has been dismissed while GPS is resolving, the callback now exits safely; the existing `finally` block remains responsible for resetting the loading state whenever the sheet is still mounted.
+- Location permission behavior, GPS accuracy, timeout, and location-selection rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: de75f2e01b1feefa2902c25e77790042d44c22de.
