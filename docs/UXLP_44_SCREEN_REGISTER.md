@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 250 unique paths
+- Registered Dart screen/surface and embedded-component paths: 260 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 277, including 27 repeated paths that document separate embedded-component findings
+- Table records: 287, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -158,6 +158,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/widgets/welcome/scale_animated_button.dart` | auth | source reviewed—runtime pending (welcome CTA animation and touch target verification pending) |
 | `lib/features/auth/widgets/welcome/welcome_language_button.dart` | auth | source reviewed—runtime pending (welcome language selector; RTL and locale-switch behavior pending) |
 | `lib/features/auth/widgets/welcome/welcome_onboarding_slide.dart` | auth | source reviewed—runtime pending (onboarding slide layout and localized text overflow verification pending) |
+| `lib/features/copilot/widgets/copilot_chat_bubble.dart` | owner | source reviewed—runtime pending (assistant message/loading bubbles; role gate, localized copy and message overflow verification pending) |
+| `lib/features/copilot/widgets/copilot_conversations_drawer.dart` | owner | source reviewed—runtime pending (conversation drawer; navigation, empty/loading/error and compact-height behavior pending) |
+| `lib/features/owner/widgets/account/owner_avatar_header.dart` | owner | source reviewed—runtime pending (owner avatar/header; profile image fallback and layout verification pending) |
+| `lib/features/owner/widgets/account/owner_delete_account_card.dart` | owner | source reviewed—runtime pending (destructive account action; confirmation and consequence copy verification pending) |
+| `lib/features/owner/widgets/account/owner_payout_settings_card.dart` | owner | source reviewed—runtime pending (payout settings labels now use directional start padding; locale and form behavior pending) |
+| `lib/features/owner/widgets/account/owner_profile_form.dart` | owner | source reviewed—runtime pending (profile labels/help text use directional start padding; field validation and locale verification pending) |
+| `lib/features/owner/widgets/account/owner_stadiums_carousel.dart` | owner | source reviewed—runtime pending (stadium carousel item spacing now uses directional end padding; scroll/RTL verification pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step1_details.dart` | owner | source reviewed—runtime pending (note-template chip spacing now uses directional end padding; form/keyboard behavior pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart` | owner | source reviewed—runtime pending (opening-hours editor; validation, locale and responsive behavior pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step1_location_field.dart` | owner | source reviewed—runtime pending (stadium location input; geolocation, permissions and error recovery verification pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
