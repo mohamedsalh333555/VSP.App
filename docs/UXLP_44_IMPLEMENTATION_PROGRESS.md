@@ -1596,3 +1596,11 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/owner/widgets/brackets/tournament_score_modal.dart`: the scroll-controlled SafeArea route already applies keyboard insets, but the sheet also subtracted `viewInsets.bottom` from its maximum height and added the same inset again below the footer actions. Removed both duplicate applications and the unsafe 240dp minimum clamp. The sheet now uses a preferred 92% content-height cap and the route's actual parent constraints; the footer retains the system bottom inset.
 - Score entry, goal details, penalties, edit reason, and submit behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `7ea2f5a740d42b5ed7bd732fc99b6a1f66c600c6`.
+
+
+## Additional owner sheet keyboard inset corrections — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/owner_booking_sheet.dart`: removed the manual keyboard/top/bottom inset subtraction from its max-height calculation. Its scroll-controlled, SafeArea route now owns the actual keyboard-safe viewport; the sheet retains a 92% preferred height cap and system bottom padding.
+- Fixed `lib/features/owner/widgets/quick_phone_booking_modal.dart`: removed the extra keyboard-bottom `Padding` around the sheet and stopped switching bottom padding based on keyboard visibility. The modal route already moves/resizes the sheet; system bottom padding remains.
+- Fixed `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart`: removed duplicate keyboard/system inset subtraction from both the height calculation and footer padding, and removed the unsafe 240dp minimum. The route owns viewport constraints; footer retains the system bottom inset.
+- Booking, payment, manual team registration, and customer input behavior are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `068d381b19a96f935560c9a8b69ca558a088ba2f`, `d96527b83cd298ae44d32edd414950a3d1e9f0e2`, `981951eebe65b85d4953b60a8806b1aea97d18b7`.
