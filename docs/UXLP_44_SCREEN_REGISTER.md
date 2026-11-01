@@ -701,3 +701,7 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/widgets/my_team/my_team_controller.dart`: team creation success is no longer reported as a failure if the subsequent list refresh fails; it now reports that the team was created and the view needs reopening. Selected team-logo uploads are required to succeed before create/update continues.
+
+
+- `lib/features/auth/services/signup_validation_service.dart`: password-strength scoring now evaluates five distinct signals (minimum length, lowercase, uppercase, digit, and special character); the duplicated minimum-length check no longer inflates the score.
+- `lib/features/owner/controllers/owner_dashboard_controller.dart`: dashboard requests now use a monotonically increasing request token; late responses from an older date/court filter are ignored, and pending responses are invalidated when the controller is disposed.
