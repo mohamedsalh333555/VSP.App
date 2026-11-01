@@ -1024,3 +1024,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Observed dependency:** `public.create_direct_chat_atomic(...)` calls this helper twice from its own `SECURITY DEFINER` body to verify both tournament chat participants. No direct client RPC call was found in the inspected repository source, but the helper is currently directly callable by authenticated clients at the database ACL level.
 - **Risk:** an authenticated user can probe arbitrary user/championship pairs and infer tournament participation, outside the intended chat-creation flow. This is an information-disclosure surface; it is separate from the earlier TL-01/TL-02 team-league authorization findings.
 - **Proposed fix (not applied):** revoke direct `EXECUTE` from `authenticated` (and explicitly from `anon` if granted) for this helper, while retaining owner/service execution needed by the definer wrapper. Before applying, confirm there is no direct RPC dependency in any external client. No SQL, grants, policies, migrations, or production data were changed.
+
+
+- Follow-up to the owner cash-card controls: the 48dp phone-call icon action now exposes a localized tooltip (`Call player` / `الاتصال باللاعب`) so its purpose is announced and discoverable. Source commit: `f6f2679f84f941bc81ccc47e4064445a61fa8e32`.
