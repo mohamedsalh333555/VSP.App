@@ -247,18 +247,25 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     offset: Offset(_shakeAnim.value, 0),
                     child: child,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      6,
-                      (i) => OtpBox(
-                        controller: _controllers[i],
-                        focusNode: _focusNodes[i],
-                        hasError: _errorMessage != null,
-                        onChanged: (v) => _onDigitChanged(i, v),
-                        onKey: (e) => _onKeyDown(i, e),
-                      ),
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final boxWidth =
+                          ((constraints.maxWidth - 60) / 6).clamp(32.0, 46.0);
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          6,
+                          (i) => OtpBox(
+                            width: boxWidth,
+                            controller: _controllers[i],
+                            focusNode: _focusNodes[i],
+                            hasError: _errorMessage != null,
+                            onChanged: (v) => _onDigitChanged(i, v),
+                            onKey: (e) => _onKeyDown(i, e),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
 
