@@ -52,34 +52,52 @@ class HomeNotificationBadge extends StatefulWidget {
 }
 
 class _HomeNotificationBadgeState extends State<HomeNotificationBadge> {
-  late final Stream<int> _unreadStream;
+  late Stream<int> _unreadStream;
+
+  void _bindUnreadStream(String userId) {
+    _unreadStream = NotificationRepository().getUnreadNotificationCount(userId);
+  }
 
   @override
   void initState() {
     super.initState();
-    _unreadStream = NotificationRepository().getUnreadNotificationCount(widget.userId);
+    _bindUnreadStream(widget.userId);
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeNotificationBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _bindUnreadStream(widget.userId);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return StreamBuilder<int>(
+      key: ValueKey(widget.userId),
       stream: _unreadStream,
       builder: (context, snapshot) {
         final hasUnread = (snapshot.data ?? 0) > 0;
+        final hasWarning = snapshot.hasError;
         return Stack(
           alignment: Alignment.center,
           children: [
             IconButton(
+              tooltip: hasWarning
+                  ? (isArabic ? 'تعذر تحديث حالة الإشعارات' : 'Notification status unavailable')
+                  : (isArabic ? 'الإشعارات' : 'Notifications'),
               icon: const Icon(Iconsax.notification_copy, color: Colors.white),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
               ),
             ),
-            if (hasUnread)
-              Positioned(
+            if (hasUnread || hasWarning)
+              PositionedDirectional(
                 top: 8,
-                right: 8,
+                end: 8,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 400),
@@ -90,11 +108,11 @@ class _HomeNotificationBadgeState extends State<HomeNotificationBadge> {
                       width: 9,
                       height: 9,
                       decoration: BoxDecoration(
-                        color: VSPColors.error,
+                        color: hasUnread ? VSPColors.error : VSPColors.warning,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: VSPColors.error.withValues(alpha: 0.6),
+                            color: (hasUnread ? VSPColors.error : VSPColors.warning).withValues(alpha: 0.6),
                             blurRadius: 4,
                             spreadRadius: 1,
                           ),
