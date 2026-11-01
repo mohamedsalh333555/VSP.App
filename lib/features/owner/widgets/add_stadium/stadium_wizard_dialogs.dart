@@ -26,10 +26,18 @@ class StadiumWizardDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(isArabic ? 'خروج' : 'Exit', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
@@ -64,6 +72,10 @@ class StadiumWizardDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
@@ -71,6 +83,8 @@ class StadiumWizardDialogs {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
