@@ -287,7 +287,7 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 
 ## Semantic color alias cleanup — 2026-11-01
 
-- Replaced raw black/white/transparent UI literals with existing VSP design-system aliases in 31 auth/owner/player surfaces and embedded widgets: welcome, forgot-password dialog, create-tournament wizard, owner dashboard, owner tournament dashboard, subscription plans, tournament brackets, owner bookings, owner booking filter bar, owner profile, and owner payout OTP sheet.
+- Replaced raw black/white/transparent UI literals with existing VSP design-system aliases in 37 auth/owner/player surfaces and embedded widgets: welcome, forgot-password dialog, create-tournament wizard, owner dashboard, owner tournament dashboard, subscription plans, tournament brackets, owner bookings, owner booking filter bar, owner profile, and owner payout OTP sheet.
 - Added canonical alpha primitives `black26`, `black45`, `black87`, and `white70` to `VSPDSColors` and exposed compatibility aliases in `VSPColors`; remaining raw opacity literals in the reviewed surfaces now use those tokens.
-- The changes reuse existing semantic/primitive colors and cover auth, owner, and player booking/tournament surfaces. Four owner tournament dialogs now explicitly opt into route safe-area protection. No business, payment, authorization, or data behavior changed.
+- The changes reuse existing semantic/primitive colors and cover auth, owner, and player booking/tournament surfaces, including challenge selection, checkout financial summary, championship details, match details, live matchup, and notifications. Four owner tournament dialogs and six player dialogs now explicitly opt into route safe-area protection. No business, payment, authorization, or data behavior changed.
 - Runtime contrast and state verification remain pending.
