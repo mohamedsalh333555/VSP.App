@@ -411,7 +411,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
-          child: SafeArea(
+          child: SafeArea(top: false,
             child: Column(
               children: [
                 const SizedBox(height: 10),
