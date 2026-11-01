@@ -1213,3 +1213,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 36, and 43 — payment policy fail-closed:** the pre-payment active-cash-booking check now uses the strict Supabase query. A failed read can no longer masquerade as an empty booking history and permit the cash-payment route; it stops submission and asks the player to retry. Server-side enforcement remains authoritative.
+
+
+- **Rules 29, 31, and 36 — protect in-progress tournament matches:** automatic round rescheduling is blocked after scheduled kickoff or any recorded home/away score/winner, rather than waiting for a winner/home score only. Runtime verification remains pending.
