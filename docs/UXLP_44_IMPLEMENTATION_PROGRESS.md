@@ -683,3 +683,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The WhatsApp escalation flow now captures the initiating account/session generation and revalidates it after loading support settings and after the optional escalation-tracking write. If the user switches accounts or the ticket screen is disposed during either await, the stale flow stops before opening WhatsApp for the previous account's ticket.
 - No ticket permissions, support destination, escalation metadata contract, or backend behavior was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 00375153271e9805b37d2b5caec30c95ac029d2e.
+
+
+## Support-ticket account-scope and signed-out state follow-up — 2026-11-01
+
+- WhatsApp escalation failure feedback is now suppressed if the initiating account/session changed while the asynchronous escalation flow was running, preventing a stale request from surfacing an unrelated error in the newly active account.
+- The support-ticket detail screen now presents an explicit localized sign-in-required state when no authenticated user is active, rather than falling through to the generic “ticket unavailable” state.
+- No ticket access policy, escalation destination, or backend behavior was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: `4ab9ec22a2bdd86483d6f1dbd247bcfb431cfa2c`, `e39906e3140c7d3663adcd10abd6d98a2e295cfc`.
