@@ -461,8 +461,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 
 | `lib/features/player/widgets/collective_match_invite_sheet.dart` | Collective booking/invite bottom sheet: 48dp close/counter controls; localized close tooltip |
-| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | Tournament governorate confirmation: primary action now 48dp |
-| `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | Payout password verification sheet: cancel action 48dp; scroll and keyboard behavior retained |
+| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | Tournament governorate confirmation: primary action 48dp; removed literal square brackets around interpolated governorate in AR/EN copy |
+| `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | Payout password verification sheet: cancel action 48dp; duplicate password re-auth requests blocked; scroll and keyboard behavior retained |
 
 
 ## Grouped narrow-screen and touch-target remediation — 2026-11-01
