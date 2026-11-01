@@ -25,7 +25,10 @@ class SignupDateOfBirthField extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8.0),
           child: Text(
             l10n.dateOfBirth,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium
+                ?.copyWith(fontWeight: FontWeight.w500),
           ),
         ),
         Tooltip(
@@ -37,28 +40,44 @@ class SignupDateOfBirthField extends StatelessWidget {
               onTap: onTap,
               child: Container(
                 height: VSPSize.inputHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(VSPRadius.input),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
-                const SizedBox(width: 12),
-                Text(
-                  dateOfBirth != null
-                      ? '${dateOfBirth!.year}-${dateOfBirth!.month.toString().padLeft(2, '0')}-${dateOfBirth!.day.toString().padLeft(2, '0')}'
-                      : l10n.dateOfBirthPlaceholder,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary,
-                      ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.input),
+                  border: Border.all(
+                    color: VSPColors.accent.withValues(alpha: 0.1),
+                  ),
                 ),
-                const Spacer(),
-                if (dateOfBirth != null)
-                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(
+                      Iconsax.calendar_1_copy,
+                      color: VSPColors.textSecondary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        dateOfBirth != null
+                            ? '${dateOfBirth!.year}-${dateOfBirth!.month.toString().padLeft(2, '0')}-${dateOfBirth!.day.toString().padLeft(2, '0')}'
+                            : l10n.dateOfBirthPlaceholder,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: dateOfBirth != null
+                                  ? VSPColors.textPrimary
+                                  : VSPColors.textSecondary,
+                            ),
+                      ),
+                    ),
+                    if (dateOfBirth != null)
+                      const Icon(
+                        Iconsax.tick_circle_copy,
+                        color: VSPColors.accent,
+                        size: 16,
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
