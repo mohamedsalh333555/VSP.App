@@ -1870,3 +1870,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Profile team card: replaced its remaining page-level bare spinner with the shared Arabic/English loading state. The existing FutureBuilder error branch continues to expose a retry action and avoids presenting an unverified empty-team state.
 
 - Challenge code lookup: added a handler-level duplicate-request guard (in addition to the disabled button state) and raised the lookup action from 46dp to the 48dp minimum. Code validation and repository behavior are unchanged.
+
+- Profile team-card sharing: validate that the card still has a render boundary and that PNG encoding returns data; always dispose the temporary `ui.Image` after encoding, including the encoding-failure path. Share payload and user-facing success/failure behavior are unchanged.
