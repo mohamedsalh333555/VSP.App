@@ -1288,3 +1288,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/booking/booking_date_selector.dart`: the date-strip's left-only outer padding and right-only item margin did not mirror in RTL. Both now use directional start/end insets.
 - Date order, selectable dates, and booking rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `fb55e51df77c075d5bad9a585a0b88a0ec6c56ac`.
+
+
+## Owner ledger financial-summary failure handling — 2026-11-01
+
+- Fixed `lib/features/owner/screens/owner_ledger_screen.dart`: financial-summary fetch exceptions are now caught and logged; the screen presents localized retry guidance when no summary is available, and it hides the payout-balance card instead of rendering an unverified zero balance. If transactions are present, they remain visible while a warning and retry action explain the unavailable summary.
+- Payout eligibility and server-side balance calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `7518de714ee47eba23e6f83e6e1aae6d94d9bc28`.
