@@ -2073,3 +2073,6 @@ Read-only inspection was performed against the connected production VSP project 
 ## Player tournament roster loading state — 2026-11-01
 
 - `manage_tournament_roster_screen.dart` replaced its unlabelled full-screen spinner with the shared bilingual loading state and a concise explanation that team/tournament data is being loaded before editing controls appear. The existing explicit load-error message and retry action remain unchanged. Code commit: `bf9f553b2a6e9cbe928d4449afe998be80b630bf`. Source-only; no tests/analyzer/CI/device/APK run.
+
+
+- Additional booking boundary correction: `BookingSlotCalculator.generateDynamicTimeSlots` now requires `slotStart + 30 <= closingMinutes`; when operating hours end between half-hour boundaries, the incomplete tail is not offered as a 30-minute booking. Code commit: `bc3ec06696bdad970a39435becd1a093f3b00d3c`.
