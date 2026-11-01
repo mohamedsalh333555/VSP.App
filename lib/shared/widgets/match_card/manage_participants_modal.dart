@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/services/notification_handler.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -40,16 +41,33 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   bool _isProcessing = false; // click lock state
   List<UserModel> _participants = [];
   List<UserModel> _pending = [];
+  late List<String> _joinedUserIds;
+  late List<String> _pendingUserIds;
 
   @override
   void initState() {
     super.initState();
+    _joinedUserIds = List<String>.from(widget.booking.joinedUserIds);
+    _pendingUserIds = List<String>.from(widget.booking.pendingUserIds);
     _fetchUsers();
+  }
+
+  Future<void> _refreshBookingAndUsers() async {
+    final updatedBooking = await Provider.of<BookingProvider>(
+      context,
+      listen: false,
+    ).getBookingById(widget.booking.id);
+    if (!mounted) return;
+    if (updatedBooking != null) {
+      _joinedUserIds = List<String>.from(updatedBooking.joinedUserIds);
+      _pendingUserIds = List<String>.from(updatedBooking.pendingUserIds);
+    }
+    await _fetchUsers();
   }
 
   Future<void> _fetchUsers() async {
     try {
-      final allUserIds = [...widget.booking.joinedUserIds, ...widget.booking.pendingUserIds];
+      final allUserIds = [..._joinedUserIds, ..._pendingUserIds];
       if (allUserIds.isEmpty) {
         if (mounted) setState(() => _isLoading = false);
         return;
@@ -59,8 +77,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
 
       if (mounted) {
         setState(() {
-          _participants = users.where((u) => widget.booking.joinedUserIds.contains(u.uid)).toList();
-          _pending = users.where((u) => widget.booking.pendingUserIds.contains(u.uid)).toList();
+          _participants = users.where((u) => _joinedUserIds.contains(u.uid)).toList();
+          _pending = users.where((u) => _pendingUserIds.contains(u.uid)).toList();
           _isLoading = false;
           _hasLoadError = false;
         });
@@ -95,7 +113,9 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
           stackTrace,
         );
       }
-      await _fetchUsers();
+      _pendingUserIds.remove(userId);
+      if (!_joinedUserIds.contains(userId)) _joinedUserIds.add(userId);
+      await _refreshBookingAndUsers();
     } catch (e, stackTrace) {
       debugPrint('Participant acceptance failed: $e\n$stackTrace');
       if (!mounted) return;
@@ -133,7 +153,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
           stackTrace,
         );
       }
-      await _fetchUsers();
+      _pendingUserIds.remove(userId);
+      await _refreshBookingAndUsers();
     } catch (e, stackTrace) {
       debugPrint('Participant request rejection failed: $e\n$stackTrace');
       if (!mounted) return;
@@ -156,7 +177,8 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
     try {
       final removed = await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
       if (!removed) throw StateError('remove_participant_failed');
-      await _fetchUsers();
+      _joinedUserIds.remove(userId);
+      await _refreshBookingAndUsers();
     } catch (e, stackTrace) {
       debugPrint('Participant removal failed: $e\n$stackTrace');
       if (!mounted) return;
