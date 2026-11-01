@@ -43,7 +43,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
             text: isArabic ? 'عرض شجرة القرعة والمواجهات' : 'View Tournament Brackets',
             height: 48,
             color: VSPColors.accent,
-            textColor: Colors.black,
+            textColor: VSPColors.black,
             onPressed: () {
               Navigator.push(
                 context,
@@ -123,7 +123,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                       Text(
                         isArabic ? 'لم يتم إعداد المباريات بعد' : 'No Matches Scheduled Yet',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: VSPColors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
                         ),
@@ -226,7 +226,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                     ),
                   Text(
                     isArabic ? 'المباريات والمواجهات' : 'Match Fixtures',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 15),
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   ...sortedRounds.map((roundIdx) {
@@ -343,7 +343,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                                           homeName.isNotEmpty ? homeName : (isArabic ? 'فريق 1' : 'Team 1'),
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: VSPColors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
                                           ),
@@ -373,7 +373,7 @@ class ChampionshipMatchesTab extends StatelessWidget {
                                           awayName.isNotEmpty ? awayName : (isArabic ? 'فريق 2' : 'Team 2'),
                                           textAlign: TextAlign.center,
                                           style: const TextStyle(
-                                            color: Colors.white,
+                                            color: VSPColors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 13,
                                           ),
