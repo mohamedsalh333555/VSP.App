@@ -84,7 +84,7 @@ class ChatInputBar extends StatelessWidget {
           Tooltip(
             message: ar ? 'إرسال الرسالة' : 'Send message',
             child: Material(
-              color: Colors.transparent,
+              color: VSPColors.transparent,
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: isSending ? null : onSendMessage,
@@ -95,7 +95,7 @@ class ChatInputBar extends StatelessWidget {
                   child: Center(
                     child: Transform.rotate(
                       angle: ar ? 3.14159 : 0,
-                      child: const Icon(Iconsax.send_1_copy, color: Colors.black, size: 20),
+                      child: const Icon(Iconsax.send_1_copy, color: VSPColors.black, size: 20),
                     ),
                   ),
                 ),
