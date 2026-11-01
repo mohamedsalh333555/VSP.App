@@ -914,3 +914,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: the selected-date banner placed a full localized weekday/date string directly in a `Row`, with no width constraint. Long Arabic/English dates could overflow narrow dialog widths. The label now uses the remaining row width, wraps to at most two lines, and ellipsizes excess text while remaining centered.
 - Date selection, allowed date range, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: cba47f826f08ee318704ec1933e38ace45fa326a.
+
+
+## Booking cancellation feedback route guard — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart`: cancellation dismisses its dialog before awaiting the provider. If the owning screen was also removed during that request, the completion path previously attempted to show a SnackBar through a `ScaffoldMessenger` captured from a disposed route. It now checks the owning screen's `context.mounted` immediately after the await and exits before using the messenger when that route no longer exists.
+- The cancellation request itself and refund calculation/policy are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: 702f076e22f78e82ea250a21ace57c0aec4d53de.
