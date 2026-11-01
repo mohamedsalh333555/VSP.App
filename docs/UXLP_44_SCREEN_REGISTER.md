@@ -664,3 +664,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 - `lib/features/player/widgets/booking/booking_slot_calculator.dart`: availability generation now excludes every configured `breakTimes` interval, while retaining backward compatibility with legacy `breakTime` records.
 - `lib/features/owner/widgets/tournament/tournament_manual_team_service.dart`: manual team creation now rejects an empty captain identity and empty team name; it no longer inserts a hard-coded placeholder UUID into `memberUids`.
+
+
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_media_coordinator.dart` and its image loaders: persisted stadium images are distinguished from newly uploaded draft images. Removing an existing image during an edit no longer deletes its Storage object before the edit is saved; upload progress callbacks also avoid invoking widget state updates after the owning context is disposed.
