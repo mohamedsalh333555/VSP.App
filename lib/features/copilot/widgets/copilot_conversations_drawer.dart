@@ -126,7 +126,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Iconsax.message_text_copy, size: 36, color: Colors.white.withValues(alpha: 0.2)),
+            Icon(Iconsax.message_text_copy, size: 36, color: VSPColors.white20),
             const SizedBox(height: 10),
             const Text(
               'لا توجد محادثات سابقة بعد',
@@ -157,7 +157,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
                 side: BorderSide(
                   color: isActive
                       ? VSPColors.accent.withValues(alpha: 0.4)
-                      : Colors.white.withValues(alpha: 0.04),
+                      : VSPColors.white04,
                 ),
               ),
               dense: true,
@@ -171,7 +171,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isActive ? Colors.white : VSPColors.textPrimary,
+                  color: isActive ? VSPColors.white : VSPColors.textPrimary,
                   fontSize: 13,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
