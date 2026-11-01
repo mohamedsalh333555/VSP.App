@@ -50,7 +50,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   isArabic ? 'انتهى الدوري — المتصدر' : 'League champion',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: VSPColors.medalGold,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -199,7 +199,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                         ),
                         child: Text(
                           isArabic ? 'رسوم مشاركة الفريق: مدفوعة' : 'Team fee paid',
-                          style: TextStyle(color: VSPColors.accent, fontSize: 10.5, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: VSPColors.accent, fontSize: 10.5, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -224,11 +224,11 @@ class TeamLeagueDetailsView extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Iconsax.ranking_copy, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 8),
                   Text(
                     isArabic ? 'جدول الدوري' : 'League standings',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -239,7 +239,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 isArabic ? 'الفوز = 3 نقاط | التعادل = 1 نقطة | الخسارة = 0' : 'Win = 3 pts | Draw = 1 pt | Loss = 0',
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
               ),
               const Divider(color: VSPColors.divider, height: 20),
 
@@ -252,48 +252,48 @@ class TeamLeagueDetailsView extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 24,
-                      child: Text(
+                      child: const Text(
                         '#',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       flex: 4,
                       child: Text(
                         isArabic ? 'الفريق' : 'Team',
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         isArabic ? 'لعب' : 'P',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         isArabic ? 'فاز' : 'W',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         isArabic ? 'تعادل' : 'D',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
                       child: Text(
                         isArabic ? 'خسر' : 'L',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Expanded(
@@ -301,7 +301,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                       child: Text(
                         isArabic ? 'النقاط' : 'Pts',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -316,7 +316,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   child: Center(
                     child: Text(
                       isArabic ? 'لا توجد مباريات مكتملة في جدول الترتيب حتى الآن' : 'No completed matches to show in the standings yet',
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     ),
                   ),
                 )
