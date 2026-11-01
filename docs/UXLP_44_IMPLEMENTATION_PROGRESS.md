@@ -820,3 +820,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The incomplete-squad bridge sheet now caps its height to the available viewport after keyboard/system insets and scrolls its content. The post-create team lookup no longer force-unwraps the authenticated user; if the session is absent, it exits safely instead of throwing.
 - Tournament eligibility, minimum roster size, team creation, and registration rules are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: b3af961ef27795dd22f0d87460d47d9406fbac96, ab06266497b4f527f512fd4a43cd8db5c7de03ce.
+
+
+## Stadium gallery action touch-target correction — 2026-11-01
+
+- The stadium image carousel's share and favorite circular actions now have a 48dp hit area instead of 40dp, meeting the shared minimum touch-target requirement while retaining their existing icons, placement, and behavior.
+- Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 886f6c22f72dc2e607f5d9566e00870bce420cc3.
