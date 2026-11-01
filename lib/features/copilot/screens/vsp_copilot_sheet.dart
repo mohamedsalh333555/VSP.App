@@ -324,7 +324,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
 
   Widget _buildLoadingBubble() {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -332,18 +332,18 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
           borderRadius: BorderRadius.circular(VSPRadius.input),
           border: Border.all(color: VSPColors.borderLight),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 14,
               height: 14,
               child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
-              'كابتن VSP يبحث الآن...',
-              style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              widget.isArabic ? 'كابتن VSP يبحث الآن...' : 'VSP Captain is searching...',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
             ),
           ],
         ),
