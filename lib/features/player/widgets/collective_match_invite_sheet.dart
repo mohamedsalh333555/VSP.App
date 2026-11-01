@@ -446,7 +446,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       child: Column(children: [
         const SizedBox(height: 10),
         Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(4))),
-        Padding(padding: const EdgeInsets.fromLTRB(20, 14, 12, 8), child: Row(children: [
+        Padding(padding: const EdgeInsetsDirectional.fromSTEB(20, 14, 12, 8), child: Row(children: [
           const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 22), const SizedBox(width: 10),
           Expanded(
             child: Text(
