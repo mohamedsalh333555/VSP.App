@@ -373,3 +373,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried stadium information surface — 2026-11-01
 
 | `lib/features/player/widgets/stadium_details/stadium_information_tab.dart` | player | source reviewed—runtime pending (map-location action is focusable/localized; address is bounded; external launch failure has localized feedback) |
+
+
+### Newly inventoried stadium gallery surface — 2026-11-01
+
+| `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart` | player | source reviewed—runtime pending (share/favorite actions have localized tooltips and focusable 48dp targets; image and indicator open the accessible full-screen gallery) |
