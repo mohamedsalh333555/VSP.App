@@ -38,7 +38,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  final bottomPadding = MediaQuery.of(context).padding.bottom;
 
  return Dialog(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  insetPadding: EdgeInsets.fromLTRB(
  16, 
  24, 
