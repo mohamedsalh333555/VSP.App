@@ -185,6 +185,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       if (!mounted ||
           _hasAccountChanged ||
           Provider.of<AuthProvider>(context, listen: false).currentUser?.id != userId) {
+        // The pending lock was created for the checkout's original account.
+        // Do not leave it reserved when that checkout is no longer active.
+        if (booking != null) {
+          await _coordinator.releaseBookingSafely(
+            isTournamentPayment: false,
+            booking: booking,
+          );
+        }
         return;
       }
       setState(() {
