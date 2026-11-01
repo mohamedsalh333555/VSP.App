@@ -3,11 +3,11 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface paths: 213 unique paths
+- Registered Dart screen/surface paths: 214 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 239, including 26 repeated paths that document separate embedded-component findings
+- Table records: 240, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
-- Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 213 currently registered paths.
+- Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 214 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
 - Status values: not yet inspected / source reviewed—runtime pending / pass / fail / needs product decision / not applicable.
 - Do not mark a file complete until Arabic and English, role, loading/empty/error/success states, keyboard, safe area, and navigation have been considered where applicable.
@@ -93,6 +93,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (strict account-scoped team lookup; loading/empty/error/retry states; create-team recovery; challenge continuation re-verifies team and blocks duplicate/stale actions) |
 | `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (championship/teams/1v1 tabs and RTL indicator; governorate and sport filter controls meet 48dp minimum height) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (checkout layout and insets reviewed; Supabase auth ID reads corrected to User.id) |
+| `lib/features/player/widgets/championship_checkout/checkout_financial_card.dart` | player | source reviewed—runtime pending (fee-transparency sheet uses SafeArea and scrollable content; long bilingual title is width-bounded and acknowledgement action meets 48dp minimum height) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup; live championship and matches streams can be recreated on retry; stale header data now shows a warning/retry banner) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
