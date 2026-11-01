@@ -50,7 +50,7 @@ class FilterCategorySidebar extends StatelessWidget {
                 excludeFromSemantics: true,
                 onTap: () => onSelectCategory(key),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
+                  duration: VSPDSMotion.navigationSwitch,
                   constraints: const BoxConstraints(minHeight: 48),
                   padding: const EdgeInsets.symmetric(
                     vertical: 14,
