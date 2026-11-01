@@ -24,6 +24,8 @@ class GlobalSearchScreen extends StatefulWidget {
 class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   late TextEditingController _searchController;
   bool _isSearching = false;
+  bool _searchError = false;
+  int _searchRequestGeneration = 0;
   Map<String, List<dynamic>> _results = {'stadiums': [], 'teams': [], 'championships': []};
   
   // Recent searches will be populated from user interaction
@@ -47,22 +49,38 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   }
 
   Future<void> _performSearch(String query) async {
-    if (query.isEmpty) {
+    final requestGeneration = ++_searchRequestGeneration;
+    if (query.trim().isEmpty) {
+      if (!mounted) return;
       setState(() {
         _results = {'stadiums': [], 'teams': [], 'championships': []};
         _isSearching = false;
+        _searchError = false;
       });
       return;
     }
 
-    setState(() => _isSearching = true);
-    
-    final results = await SearchRepository().globalUnifiedSearch(query);
-    
-    if (mounted) {
+    if (!mounted) return;
+    setState(() {
+      _isSearching = true;
+      _searchError = false;
+    });
+
+    try {
+      final results = await SearchRepository().globalUnifiedSearch(query);
+      if (!mounted || requestGeneration != _searchRequestGeneration) return;
       setState(() {
         _results = results;
         _isSearching = false;
+        _searchError = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Global search failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted || requestGeneration != _searchRequestGeneration) return;
+      setState(() {
+        _isSearching = false;
+        _searchError = true;
       });
     }
   }
@@ -222,6 +240,28 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           _performSearch(s);
                         },
                       )).toList(),
+                    ),
+                  ] else if (_searchError) ...[
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: VSPSpacing.xl),
+                        child: Column(
+                          children: [
+                            Text(
+                              ar
+                                  ? 'تعذر إكمال البحث. تحقق من الاتصال وحاول مرة أخرى.'
+                                  : 'Search could not be completed. Check your connection and try again.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: VSPColors.textSecondary),
+                            ),
+                            const SizedBox(height: VSPSpacing.sm),
+                            TextButton(
+                              onPressed: () => _performSearch(_searchController.text),
+                              child: Text(ar ? 'إعادة المحاولة' : 'Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ] else if (!hasResults) ...[
                     Center(
