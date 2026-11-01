@@ -31,6 +31,7 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => AddPlayerSheet(
         requiredGovernorate: currentTeam?.governorate ?? auth.userModel?.governorate?.trim(),
