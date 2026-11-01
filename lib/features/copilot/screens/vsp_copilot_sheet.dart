@@ -123,19 +123,12 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final bottomInset = media.viewInsets.bottom;
-    final availableHeight = (media.size.height -
-            bottomInset -
-            media.padding.top -
-            16)
-        .clamp(0.0, media.size.height)
-        .toDouble();
-    final sheetHeight = (media.size.height * 0.78)
-        .clamp(0.0, availableHeight)
-        .toDouble();
+    // The scroll-controlled modal route already applies keyboard insets and
+    // constrains the sheet to the available viewport. Keep a preferred height
+    // only; avoid offsetting/shrinking the same keyboard inset a second time.
+    final sheetHeight = media.size.height * 0.78;
     return Container(
       height: sheetHeight,
-      margin: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.bottomSheet)),
