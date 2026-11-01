@@ -76,7 +76,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
@@ -297,7 +297,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onChanged: onChanged,
           activeColor: VSPColors.accent,
           activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
-          inactiveThumbColor: Colors.white.withValues(alpha: 0.8),
+          inactiveThumbColor: VSPColors.white.withValues(alpha: 0.8),
           inactiveTrackColor: VSPColors.surfaceAlt,
         ),
       ],
