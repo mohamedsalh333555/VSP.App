@@ -30,6 +30,7 @@ class TeamDialogs {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -63,7 +64,7 @@ class TeamDialogs {
                   text: isArabic ? 'تأكيد المغادرة' : 'Confirm Leave',
                   height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.white,
                   onPressed: () async {
                     Navigator.pop(ctx);
                     onSavingStarted();
@@ -107,6 +108,7 @@ class TeamDialogs {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
