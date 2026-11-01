@@ -1584,3 +1584,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart`: the scroll-controlled, SafeArea modal route already applies the keyboard view inset, while the manual-address sheet also added `viewInsets.bottom` to its own bottom padding. Removed the duplicate keyboard inset and retained the system bottom padding plus content spacing so the address field and actions remain reachable without double-counting keyboard height.
 - Address entry, governorate selection, and location resolution are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `ac329b8bdf6ca1790b5e11e14d2a74ed06917528`.
+
+
+## Owner Copilot sheet keyboard viewport correction — 2026-11-01
+
+- Fixed `lib/features/copilot/screens/vsp_copilot_sheet.dart`: its scroll-controlled, SafeArea modal route already handles keyboard insets, while the sheet also reduced its own height by `viewInsets.bottom` and added a matching bottom margin. Removed that duplicate keyboard offset/shrink; the sheet now uses its preferred 78% height and lets the route's parent constraints provide the actual keyboard-safe viewport. Internal bottom SafeArea and chat composer remain.
+- Copilot role gate, messages, tool access, and navigation behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `9e01276e39b1a7b80e05d8a5517a45497c9cde48`.
