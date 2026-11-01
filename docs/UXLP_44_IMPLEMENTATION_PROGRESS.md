@@ -1674,3 +1674,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart`: share and favorite controls now use focusable 48dp InkWell targets with localized tooltips; favorite tooltip changes between add/remove state. Image taps and the gallery indicator now expose a localized, focusable gallery-opening action while preserving swipe paging, Hero transition, and full-screen gallery behavior.
 - Favorite state, sharing payload, and image loading/fallback behavior are unchanged. Source commit: `c308b47cca78448cf7eb3aa8f6b19f16f43d505f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner quick-cash clock consistency — 2026-11-01
+
+- `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart`: when no explicit `currentTime` is injected, the quick-cash card now defaults to `VSPTimeService.now`, matching the owner pending-cash bar, booking slots, and other date-sensitive UI. Explicit caller-supplied time remains supported.
+- Cash confirmation and payment-status mutation are unchanged. Source commit: `8a3a2007566590cb90779b0d31d774dbdb99f89d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
