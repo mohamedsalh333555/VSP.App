@@ -39,7 +39,7 @@ class CardSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width * 0.85,
-      margin: const EdgeInsets.only(right: 16),
+      margin: const EdgeInsetsDirectional.only(end: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
