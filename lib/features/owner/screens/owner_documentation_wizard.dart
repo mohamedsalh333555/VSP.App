@@ -290,7 +290,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       if (mounted && context.mounted) {
         context.go('/owner');
       }
-    } catch (e) {
+    } catch (_) {
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
       VSPFeedback.showError(
