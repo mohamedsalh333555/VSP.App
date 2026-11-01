@@ -235,7 +235,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
           padding: EdgeInsets.only(
@@ -260,7 +260,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     Text(
                       isArabic ? 'إنشاء دوري' : 'Create League',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -272,7 +272,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 // 1. League Name
                 TextField(
                   controller: nameController,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     labelText: isArabic ? 'اسم الدوري' : 'League name',
                     hintText: isArabic ? 'اكتب اسم الدوري' : 'Enter league name',
@@ -288,7 +288,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 // 2. Number of Teams (4 to 8 Stepper / Selector)
                 Text(
                   isArabic ? 'عدد الفرق المشاركة:' : 'Number of participating teams:',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -310,7 +310,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           '$n',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSel ? Colors.black : Colors.white,
+                            color: isSel ? VSPColors.black : VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -338,7 +338,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           const SizedBox(width: 6),
                           Text(
                             isArabic ? 'نظام الدوري: دوري — دور واحد' : 'League format: Single round-robin',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                           ),
                         ],
                       ),
@@ -355,7 +355,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 // 4. Match Scheduling Interval
                 Text(
                   isArabic ? 'الفترة بين المباريات:' : 'Interval between matches:',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -380,7 +380,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                         child: Text(
                           isArabic ? 'كل $d أيام' : 'Every $d days',
                           style: TextStyle(
-                            color: isSel ? Colors.black : Colors.white,
+                            color: isSel ? VSPColors.black : VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -410,7 +410,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                   ),
@@ -439,7 +439,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (pCtx) => StatefulBuilder(
         builder: (context, setPSheetState) {
           final feePerTeam = _configuredFee;
@@ -465,7 +465,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 children: [
                   Text(
                     isArabic ? 'طريقة دفع رسوم الدوري' : 'League fee payment method',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -523,7 +523,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(isArabic ? 'عدد الفرق التي ستدفع عنها:' : 'Number of teams to pay for:', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                          Text(isArabic ? 'عدد الفرق التي ستدفع عنها:' : 'Number of teams to pay for:', style: const TextStyle(color: VSPColors.white, fontSize: 13)),
                           Row(
                             children: [
                               IconButton(
@@ -532,7 +532,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                                     ? () => setPSheetState(() => customPaidCount--)
                                     : null,
                               ),
-                              Text('$customPaidCount', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text('$customPaidCount', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                               IconButton(
                                 icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent),
                                 onPressed: customPaidCount < maxTeams
@@ -585,12 +585,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
+                      foregroundColor: VSPColors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
                     child: isSubmitting
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black))
                         : Text(
                             selectedPayOption == 'my_team'
                                 ? (isArabic ? 'ادفع ${totalForTeam.toStringAsFixed(0)} جنيه' : 'Pay ${totalForTeam.toStringAsFixed(0)} EGP')
@@ -641,7 +641,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 2),
                   Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5)),
                 ],
@@ -661,6 +661,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
           backgroundColor: VSPColors.surface,
@@ -679,7 +680,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 Text(
                   isArabic ? 'الانضمام لدوري عبر دعوة / كود' : 'Join a league by invite code',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -691,7 +692,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
 
                 TextField(
                   controller: codeController,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     labelText: isArabic ? 'كود أو معرف الدوري' : 'League code or ID',
                     labelStyle: const TextStyle(color: VSPColors.textSecondary),
@@ -772,7 +773,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                           foregroundColor: VSPColors.background,
                         ),
                         child: isSubmitting
-                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black))
                             : Text(isArabic ? 'انضمام' : 'Join', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
@@ -804,7 +805,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: const BoxDecoration(
@@ -824,7 +825,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     isArabic
                         ? 'اختر ملعب لمباراة: ${match.homeTeamName} × ${match.awayTeamName}'
                         : 'Choose a stadium for: ${match.homeTeamName} vs ${match.awayTeamName}',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
                 IconButton(
@@ -848,7 +849,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     child: ListTile(
                       title: Text(
                         stadium.name,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         isArabic
@@ -895,8 +896,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   void _onRecordScore(TeamLeagueMatch match) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => TeamLeagueMatchResultSheet(
         match: match,
         userTeamId: widget.userTeam!.id,
@@ -917,8 +919,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   void _onResolveDispute(TeamLeagueMatch match) {
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => TeamLeagueDisputeResolutionSheet(
         match: match,
         onResolveDispute: (resolution) async {
@@ -937,10 +940,11 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        title: Text(isArabic ? 'إلغاء الدوري' : 'Cancel league', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(isArabic ? 'إلغاء الدوري' : 'Cancel league', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(
           isArabic
               ? 'هل أنت متأكد من إلغاء هذا الدوري؟ ستتم مراجعة المبالغ المؤهلة للاسترداد وفق سياسة الاسترداد. المصاريف الإدارية غير قابلة للاسترداد.'
@@ -952,7 +956,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
-            child: Text(isArabic ? 'نعم، إلغاء' : 'Yes, cancel', style: const TextStyle(color: Colors.white)),
+            child: Text(isArabic ? 'نعم، إلغاء' : 'Yes, cancel', style: const TextStyle(color: VSPColors.white)),
           ),
         ],
       ),
@@ -1020,7 +1024,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
             children: [
               Icon(Iconsax.people_copy, size: 72, color: VSPColors.accent.withValues(alpha: 0.3)),
               const SizedBox(height: VSPSpacing.md),
-              Text(isArabic ? 'ليس لديك فريق حالياً' : 'You are not in a team yet', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+              Text(isArabic ? 'ليس لديك فريق حالياً' : 'You are not in a team yet', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 6),
               Text(
                 isArabic
@@ -1036,7 +1040,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     context: context,
                     isScrollControlled: true,
                     useSafeArea: true,
-                    backgroundColor: Colors.transparent,
+                    backgroundColor: VSPColors.transparent,
                     builder: (ctx) => const CreateTeamSheet(),
                   ).then((_) => widget.onTeamCreated());
                 },
@@ -1174,14 +1178,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       onTap: () => setState(() => _selectedSubTab = 0),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _selectedSubTab == 0 ? VSPColors.accent : Colors.transparent,
+                          color: _selectedSubTab == 0 ? VSPColors.accent : VSPColors.transparent,
                           borderRadius: BorderRadius.circular(21),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           isArabic ? 'جدول المباريات' : 'Fixtures',
                           style: TextStyle(
-                            color: _selectedSubTab == 0 ? Colors.black : VSPColors.textSecondary,
+                            color: _selectedSubTab == 0 ? VSPColors.black : VSPColors.textSecondary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -1194,14 +1198,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       onTap: () => setState(() => _selectedSubTab = 1),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: _selectedSubTab == 1 ? VSPColors.accent : Colors.transparent,
+                          color: _selectedSubTab == 1 ? VSPColors.accent : VSPColors.transparent,
                           borderRadius: BorderRadius.circular(21),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           isArabic ? 'تفاصيل الدوري' : 'League details',
                           style: TextStyle(
-                            color: _selectedSubTab == 1 ? Colors.black : VSPColors.textSecondary,
+                            color: _selectedSubTab == 1 ? VSPColors.black : VSPColors.textSecondary,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
