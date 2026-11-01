@@ -80,6 +80,39 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
     widget.onRetry();
   }
 
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر التحديث اللحظي.'
+                  : 'Showing the latest available data; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _handleRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -106,8 +139,8 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                   const SizedBox(height: 12),
                   Text(
                     isArabic
-                        ? 'تعذر التحديث اللحظي، اسحب للأسفل للتحديث'
-                        : 'Realtime update unavailable, pull to refresh',
+                        ? 'تعذر تحميل البطولات. حاول مرة أخرى.'
+                        : 'Could not load tournaments. Please try again.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                   ),
@@ -130,6 +163,8 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
 
         return Column(
           children: [
+            if (snapshot.hasError)
+              _buildStaleDataWarning(isArabic),
             // Quick return banner if browsing a different governorate
             if (isDifferentGov)
               Container(
