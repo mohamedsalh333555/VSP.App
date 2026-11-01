@@ -342,3 +342,9 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried player challenge surface — 2026-11-01
 
 | `lib/features/player/widgets/challenge/challenge_team_card.dart` | player | source reviewed—runtime pending (team selection uses keyboard-focusable InkWell; selected-state animation and H2H states retained; long names bounded to two lines) |
+
+
+### Newly inventoried owner tournament/dashboard surfaces — 2026-11-01
+
+| `lib/features/owner/widgets/brackets/tournament_match_card.dart` | owner | source reviewed—runtime pending (localized 48dp schedule action; schedule text bounded; date/time defaults use VSPTimeService) |
+| `lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart` | owner | source reviewed—runtime pending (cash action count scoped to selected stadium and current app-local day via VSPTimeService; direction-aware arrow; InkWell action) |
