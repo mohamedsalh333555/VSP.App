@@ -175,6 +175,7 @@ void showResetRoundScheduleConfirmationDialog(
 
   showDialog(
     context: context,
+    useSafeArea: true,
     builder: (dialogCtx) {
       return AlertDialog(
         scrollable: true,
