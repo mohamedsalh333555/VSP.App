@@ -926,3 +926,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/player/widgets/create_team_sheet.dart`: the success path popped the creation sheet and then looked up both `ScaffoldMessenger` and `Theme` using the sheet's route context. That context may already be deactivated after the pop. The messenger and text style are now captured while the context is mounted, before dismissing the sheet; the success SnackBar is then shown through the captured messenger.
 - Team creation data and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: fccfaa0909a02b77b9008b3aea1d99066e71b97a.
+
+
+## Owner account deletion dialog narrow-screen actions — 2026-11-01
+- Fixed `lib/features/owner/widgets/account/owner_delete_account_card.dart`: the confirmation dialog always placed Cancel and Delete in one horizontal `Row` with equal-width buttons. On narrow devices, Arabic labels and the loading state could become cramped or overflow. Actions now stack vertically below 360 logical pixels and remain side-by-side on wider dialogs.
+- Password reauthentication, deletion flow, and account rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: 5d8e1d554aa8557e138c727dd9574d4694c6144d.
