@@ -34,7 +34,7 @@ class PaymentCancelDialog {
         scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(dialogTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(dialogTitle, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(
           dialogContent,
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
