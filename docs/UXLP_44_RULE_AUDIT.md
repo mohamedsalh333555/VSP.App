@@ -1188,3 +1188,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - Shared refund badge and notice components are now explicitly registered. Their localized status/ETA/amount copy is source-reviewed; authoritative refund lifecycle, amount consistency and theme contrast remain pending verification against actual refund states.
+
+
+- **Rules 9, 28, and 36:** stadium review streams now preserve the last loaded reviews after a refresh error and expose a localized stale-data warning plus 48dp retry action. The retry replaces the stream subscription without first clearing visible data. Runtime verification remains pending.
