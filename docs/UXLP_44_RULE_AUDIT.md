@@ -1135,3 +1135,5 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Rule 33:** owner document-upload cancellation, add-stadium discard/delete, and Paymob still-waiting dialog actions now have explicit 48dp minimum height and padded hit targets. Source-only; final touch-area validation remains pending.
 
 - **Rules 11, 33, and 35:** chat report dialog now scrolls under keyboard pressure; all report/delete dialog actions have explicit 48dp minimum hit targets.
+
+- Prize handover dialog actions were also raised to the 48dp target. All source-only touch-target changes remain runtime pending.
