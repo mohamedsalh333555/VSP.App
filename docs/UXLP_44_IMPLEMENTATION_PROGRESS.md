@@ -691,3 +691,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The support-ticket detail screen now presents an explicit localized sign-in-required state when no authenticated user is active, rather than falling through to the generic “ticket unavailable” state.
 - No ticket access policy, escalation destination, or backend behavior was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: `4ab9ec22a2bdd86483d6f1dbd247bcfb431cfa2c`, `e39906e3140c7d3663adcd10abd6d98a2e295cfc`.
+
+
+## Support-ticket creation modal dismissal guard — 2026-11-01
+
+- The new-support-ticket sheet can no longer be dismissed by tapping outside or dragging while its asynchronous create request is in progress. An explicit Cancel action is available before submission and is disabled during submission; this avoids accidental dismissal and uncertainty about whether a ticket was created.
+- Ticket fields, category mapping, priority mapping, and the create-ticket backend call are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `76765152aa85c8fed8a882798ce26f2d3cd6e4c5`.
