@@ -248,6 +248,11 @@ class OwnerBookingSheetCoordinator {
           await Provider.of<BookingProvider>(parentContext, listen: false)
               .loadOwnerBookings(uid, forceRefresh: true);
         }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
+        }
       } catch (e) {
         if (context.mounted &&
             auth.currentUser?.id == initiatingUserId) {
@@ -308,8 +313,15 @@ class OwnerBookingSheetCoordinator {
           }
         }
 
-        if (parentContext.mounted) {
-          await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        if (parentContext.mounted &&
+            auth.currentUser?.id == initiatingUserId) {
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
+        }
+        if (!context.mounted ||
+            !parentContext.mounted ||
+            auth.currentUser?.id != initiatingUserId) {
+          return;
         }
       } catch (e) {
         if (context.mounted &&
