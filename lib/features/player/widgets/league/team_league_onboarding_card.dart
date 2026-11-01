@@ -64,7 +64,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
             isArabic ? '🏆 دوري الفرق الخاص' : '🏆 Private Team League',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontWeight: FontWeight.bold,
               fontSize: 22,
             ),
@@ -160,7 +160,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
         color: highlight ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: highlight ? VSPColors.accent.withValues(alpha: 0.3) : Colors.transparent,
+          color: highlight ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.transparent,
         ),
       ),
       child: Row(
@@ -178,7 +178,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    color: highlight ? VSPColors.accent : Colors.white,
+                    color: highlight ? VSPColors.accent : VSPColors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
