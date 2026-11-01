@@ -54,15 +54,20 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
   }
 
   Future<void> _refreshBookingAndUsers() async {
-    final updatedBooking = await Provider.of<BookingProvider>(
-      context,
-      listen: false,
-    ).getBookingById(widget.booking.id);
-    if (!mounted) return;
-    if (updatedBooking != null) {
-      _joinedUserIds = List<String>.from(updatedBooking.joinedUserIds);
-      _pendingUserIds = List<String>.from(updatedBooking.pendingUserIds);
+    try {
+      final updatedBooking = await Provider.of<BookingProvider>(
+        context,
+        listen: false,
+      ).getBookingById(widget.booking.id);
+      if (!mounted) return;
+      if (updatedBooking != null) {
+        _joinedUserIds = List<String>.from(updatedBooking.joinedUserIds);
+        _pendingUserIds = List<String>.from(updatedBooking.pendingUserIds);
+      }
+    } catch (e, stack) {
+      VSPLogger.w('Could not refresh booking participants from server', e, stack);
     }
+    if (!mounted) return;
     await _fetchUsers();
   }
 
