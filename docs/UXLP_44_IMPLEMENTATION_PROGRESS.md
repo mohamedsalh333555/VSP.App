@@ -1411,3 +1411,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - `doc_wizard_dialogs.dart`: cancel-upload confirmation now uses a scrollable AlertDialog.
 - `doc_under_review_dialog.dart`: the longer bilingual verification-status explanation now uses a scrollable AlertDialog, preserving the 48dp primary action.
 - Code commits: `4aea3905ff98fb8f0b3f31c6c57838a097668586`, `49fc6c81aa6eba99f22b15e535795faf76568898`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner setup wizard top-inset correction — 2026-11-01
+
+- `add_stadium_wizard.dart` and `owner_documentation_wizard.dart` both placed a default top SafeArea inside a Scaffold body that already begins below an AppBar, adding the status-bar inset a second time. Their body SafeAreas now use `top: false`; bottom/system navigation protection remains enabled.
+- Code commits: `f2a741b3b412ca5a9e06c001732057326d41c43f`, `c383c574ef022db4ab112c6d768f1299c8eb3f08`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
