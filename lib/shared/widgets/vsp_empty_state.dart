@@ -41,7 +41,7 @@ class VSPEmptyState extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                color: VSPDSColors.zinc100,
+                color: VSPDSColors.zinc400,
                 size: VSPDSizes.emptyIconSize,
               ),
             ),
