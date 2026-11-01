@@ -61,9 +61,10 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
 
  void _startCelebrationListener() {
  WidgetsBinding.instance.addPostFrameCallback((_) {
+ if (!mounted) return;
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  _celebrationSubscription = authProvider.celebrationEvents.listen((_) {
- _triggerCelebration();
+ if (mounted) _triggerCelebration();
  });
  });
  }
