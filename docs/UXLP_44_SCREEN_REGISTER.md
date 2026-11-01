@@ -383,3 +383,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried owner quick-cash surface — 2026-11-01
 
 | `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart` | owner | source reviewed—runtime pending (date-sensitive cash actions use VSPTimeService unless an explicit currentTime is injected; success/failure feedback retained) |
+
+
+### Newly inventoried player chat message surface — 2026-11-01
+
+| `lib/features/player/widgets/chat/chat_message_bubble.dart` | player | source reviewed—runtime pending (message edit custom action is localized for assistive technology; sender names bounded; timestamps use active locale) |
