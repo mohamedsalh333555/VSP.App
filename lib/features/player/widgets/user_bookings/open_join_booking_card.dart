@@ -48,7 +48,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     setState(() => _isProcessing = true);
     try {
       final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
         VSPFeedback.showSuccess(context, isArabic ? 'تم خروجك من المباراة بنجاح.' : 'You left the match successfully.');
@@ -57,7 +60,8 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       }
     } catch (e) {
       debugPrint('Open Join leave failed: $e');
-      if (mounted) {
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
@@ -76,7 +80,10 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     setState(() => _isProcessing = true);
     try {
       final success = await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      if (!mounted) return;
+      if (!mounted ||
+          context.read<app_auth.AuthProvider>().currentUser?.id != userId) {
+        return;
+      }
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       if (success) {
         VSPFeedback.showSuccess(context, isArabic ? 'تم إلغاء طلب الانضمام.' : 'Join request cancelled.');
@@ -85,7 +92,8 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
       }
     } catch (e) {
       debugPrint('Open Join request cancellation failed: $e');
-      if (mounted) {
+      if (mounted &&
+          context.read<app_auth.AuthProvider>().currentUser?.id == userId) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
