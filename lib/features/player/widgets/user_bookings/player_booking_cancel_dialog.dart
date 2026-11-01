@@ -116,9 +116,8 @@ class _CancelDialogActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext _) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final keepButton = PrimaryButton(
+    final isNarrow = MediaQuery.sizeOf(dialogCtx).width < 400;
+    final keepButton = PrimaryButton(
           text: l10n.keepBooking,
           height: 48,
           color: VSPColors.surfaceAlt,
@@ -133,27 +132,26 @@ class _CancelDialogActions extends StatelessWidget {
           onPressed: _performCancellation,
         );
 
-        // Stack actions on narrow screens so Arabic labels and touch targets
-        // remain readable without compressing two buttons into one short row.
-        if (constraints.maxWidth < 360) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              keepButton,
-              const SizedBox(height: VSPSpacing.sm),
-              cancelButton,
-            ],
-          );
-        }
+    // AlertDialog measures its actions intrinsically. LayoutBuilder is not
+    // supported in that slot, so use the available screen width instead.
+    // Stack actions on narrow screens to preserve readable labels and 48dp targets.
+    if (isNarrow) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          keepButton,
+          const SizedBox(height: VSPSpacing.sm),
+          cancelButton,
+        ],
+      );
+    }
 
-        return Row(
-          children: [
-            Expanded(child: keepButton),
-            const SizedBox(width: VSPSpacing.md),
-            Expanded(child: cancelButton),
-          ],
-        );
-      },
+    return Row(
+      children: [
+        Expanded(child: keepButton),
+        const SizedBox(width: VSPSpacing.md),
+        Expanded(child: cancelButton),
+      ],
     );
   }
 
