@@ -1860,3 +1860,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Owner payout password verification now guards the handler itself against concurrent submissions, including keyboard `onSubmitted` events that can fire independently of the disabled button.
 - Tournament governorate confirmation no longer displays literal square brackets around the interpolated governorate name in Arabic or English.
 - These are source-level fixes only; no analyzer, tests, CI, device validation, or APK build was run.
+
+- Private collective-invite bottom sheet: replaced the unlabeled fixed-height spinner with the shared Arabic/English loading state while retaining the scroll-controlled, `useSafeArea` modal route and existing retry/error behavior.
