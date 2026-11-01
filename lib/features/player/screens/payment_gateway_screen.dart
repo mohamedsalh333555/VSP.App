@@ -15,6 +15,7 @@ import '../../../core/repositories/booking/booking_domain_rules.dart';
 import '../services/payment_checkout_coordinator.dart';
 import '../services/payment_checkout_service.dart';
 import '../../../core/services/paymob_service.dart';
+import '../../../core/services/remote_config_service.dart';
 import '../../../core/repositories/league_repository.dart';
 import '../widgets/payment/payment_background_glow.dart';
 import '../widgets/payment/payment_breakdown_card.dart';
@@ -267,6 +268,20 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _startPaymobCheckout() async {
+    final onlinePaymentEnabled = Provider.of<RemoteConfigService>(
+      context,
+      listen: false,
+    ).isFeatureEnabled('online_payment_enabled', defaultValue: true);
+    if (!onlinePaymentEnabled) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'الدفع الإلكتروني غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+            : 'Online payment is currently unavailable. Please try again later.',
+      );
+      return;
+    }
     if (_paymentUserId == null || _hasAccountChanged ||
         Provider.of<AuthProvider>(context, listen: false).currentUser?.id != _paymentUserId) {
       return;
@@ -648,6 +663,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
 
     final l10n = AppLocalizations.of(context)!;
+    final isOnlinePaymentEnabled = context
+        .watch<RemoteConfigService>()
+        .isFeatureEnabled('online_payment_enabled', defaultValue: true);
     final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:') || widget.bookingDraft.stadiumName.contains('دوري:');
     final effectiveForceFullPayment = widget.forceFullPayment;
     final effectiveDraft = _booking == null
@@ -760,11 +778,37 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       ),
                     ),
                     const SizedBox(height: VSPSpacing.lg),
+                    if (!isOnlinePaymentEnabled) ...[
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        padding: const EdgeInsets.all(VSPSpacing.md),
+                        decoration: BoxDecoration(
+                          color: VSPColors.warning.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(
+                            color: VSPColors.warning.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          isArabic
+                              ? 'الدفع الإلكتروني متوقف حالياً. لم يتم إرسال طلب دفع جديد.'
+                              : 'Online payment is currently disabled. No new payment request can be started.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: VSPColors.warning,
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
                     PaymentSecurityFooter(
                       isLoading: _isLoading,
                       isAwaitingWebhook: _isAwaitingWebhook,
                       isArabic: isArabic,
-                      canProceed: !(_booking == null && !widget.isTournamentPayment) &&
+                      canProceed: isOnlinePaymentEnabled &&
+                          !(_booking == null && !widget.isTournamentPayment) &&
                           !_isFeePolicyLoading &&
                           _feePolicy?.isValidForElectronicCheckout == true,
                       totalAmount: totalWithFees,
