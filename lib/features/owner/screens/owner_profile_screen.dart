@@ -35,7 +35,7 @@ class OwnerProfileScreen extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               isAr ? 'تسجيل الخروج' : 'Log Out',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -54,7 +54,7 @@ class OwnerProfileScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
             ),
             child: Text(isAr ? 'تسجيل الخروج' : 'Log Out'),
           ),
