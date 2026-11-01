@@ -1287,3 +1287,13 @@ The already-existing GitHub Actions run [41286819423](https://github.com/mohamed
 - `facility_onboarding_screen.dart:104`: `VSPErrorState` was unresolved because `lib/shared/widgets/vsp_error_state.dart` was not imported.
 
 The current branch now contains the narrow source fixes in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`. The failed workflow predates both fixes, so it cannot validate them. No build was re-triggered, no artifact was created, and all 44 rule statuses remain runtime-pending.
+
+## Additional Design System and RTL source remediation — 2026-11-01
+
+- **Rules 6 and 42:** Added exact alpha tokens `white02`, `white04`, `white06`, `white50`, `white54`, `black15`, `black55`, and `black60`, with compatibility aliases. Replaced raw Flutter black/white/transparent color constants in 19 registered auth, owner, player, and shared surfaces; alpha values were preserved rather than visually redesigned.
+- **Rule 42:** Added `VSPDSMotion.microInteraction` (160ms), exposed the canonical motion-token class through the compatibility facade, and replaced inline 160ms/180ms durations in four interaction surfaces without changing timing.
+- **Rules 7 and 10:** `CopyablePhoneText` now aligns to the locale-aware start edge while its phone-number text remains explicitly LTR.
+- **Rules 10, 11, and 35:** Re-reviewed newly added modal entry points in the PR diff. All six added bottom-sheet entry points specify `useSafeArea: true`; the reviewed `showDialog` calls use Flutter's safe-area default; the full-screen stadium gallery keeps its image edge-to-edge while its close control is wrapped in `SafeArea`.
+- The screen register's malformed embedded rows were normalized so all 366 data rows now have three columns and an explicit source/runtime status; the 338 unique-path count is unchanged.
+- **Evidence limitation:** These checks are static source/diff review only. They do not prove visual contrast, touch reachability, keyboard insets, RTL rendering, or animation behavior on devices.
+- **Status unchanged:** 39 rules remain `source reviewed—runtime pending`; rules 25, 31, 38, 39, and 41 remain `needs product decision`; no runtime pass is claimed. The complete per-screen/per-state 44-rule matrix and consolidated runtime validation remain outstanding.
