@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 336 unique paths
+- Registered Dart screen/surface and embedded-component paths: 338 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 363, including 27 repeated paths that document separate embedded-component findings
+- Table records: 365, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -244,6 +244,8 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_checkout/checkout_team_members_list.dart` | player | source reviewed—runtime pending (checkout roster list; team membership, guest distinction and capacity mapping pending) |
 | `lib/features/player/widgets/payment/payment_background_glow.dart` | player | source reviewed—runtime pending (payment background decoration; contrast and reduced-motion review pending) |
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart` | shared | source reviewed—runtime pending (date-picker step chip; accessible selected/disabled state and RTL order pending) |
+| `lib/widgets/refund_badge_widget.dart` | shared/player | source reviewed—runtime pending (refund badge uses localized status/ETA copy; actual refund lifecycle and theme contrast verification pending) |
+| `lib/widgets/refund_notice_widget.dart` | shared/player | source reviewed—runtime pending (refund notice uses localized amount/status copy; fee/amount and lifecycle consistency pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
