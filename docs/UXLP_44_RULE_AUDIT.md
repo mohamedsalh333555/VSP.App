@@ -490,6 +490,12 @@ These findings are implementation evidence only. No rule has been promoted to `p
 - **Rules 27, 29, and 31 — owner tournament dashboard action bar:** fixture-navigation actions are now disabled while the tournament mutation is loading, matching the loading/disabled behavior of the primary state-changing action and preventing navigation away during an in-flight operation.
 - These are source corrections only. Locale switching, loading interaction, and navigation behavior remain runtime pending; no tournament lifecycle or backend rule was changed.
 
+### Championship filters and owner navigation feedback — 2026-11-01
+
+- **Rules 27 and 33 — championship filters:** governorate and sport dropdown containers were constrained to 44dp. Their minimum height is now 48dp, matching the touch-target baseline.
+- **Rules 9, 28, 36, and 42 — owner bottom navigation:** unread-count stream failures previously collapsed to `snapshot.data ?? 0`, making unavailable data look like a verified zero. The shared navigation item now supports an amber warning indicator and accessible warning label; the owner chat item uses it when the unread stream reports an error. Any last delivered unread count remains visible if the stream errors after data.
+- These are source-level corrections. Compact-device hit testing, RTL rendering, assistive-technology announcements, and live stream failure/recovery remain runtime pending. No chat or notification data policy changed.
+
 ## Product decisions and backend approvals still open
 
 These findings are explicitly classified as **needs product decision**. They are not implementation defects that may be silently “fixed” in the client, and no SQL, Edge Function, permission, or business-rule change is authorized by this audit.
