@@ -11,6 +11,7 @@ class PaymobStillWaitingDialog {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         scrollable: true,
