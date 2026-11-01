@@ -1767,3 +1767,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/owner/widgets/inbox/owner_chat_item_card.dart`: the conversation time label is constrained to a 76dp maximum width and one line; the latest-message preview is also one line with ellipsis. This prevents long localized timestamps/previews from pushing the unread badge or shrinking the conversation title on narrow devices.
 - Source commit: `a5f8310c26dbd44238ced22b2c57e002fd40bd79`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner ledger locale-aware date/time — 2026-11-01
+
+- `lib/features/owner/widgets/ledger/owner_ledger_transaction_item.dart`: transaction timestamps now use locale-aware `yMMMd + jm` formatting instead of a fixed numeric `yyyy/MM/dd — hh:mm a` pattern, so month/date order and time conventions follow Arabic or English locale.
+- Source commit: `6190c0c85d55ef17aa3ed555752cbf84cbbc2157`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
