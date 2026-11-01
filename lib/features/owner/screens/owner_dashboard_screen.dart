@@ -345,7 +345,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       backgroundColor: VSPColors.background,
       body: SafeArea(
         top: false,
-        bottom: false,
         child: RefreshIndicator(
           color: VSPColors.accent,
           backgroundColor: VSPColors.surface,
