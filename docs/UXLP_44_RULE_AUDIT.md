@@ -745,3 +745,10 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - Cross-checked all 21 screen imports declared by `lib/core/navigation/app_router.dart`; every routed screen file is represented in the register.
 - Repository tree contains 647 Dart files total. The remaining 432 Dart files outside this register are not automatically missing screens: they include repositories, services, models, providers, helpers, and reusable UI building blocks. They require call-site discovery where they render visible surfaces; the register is a screen/surface inventory, not a complete Dart-file inventory.
 - All 44 rule rows remain present. Their status is source-reviewed/runtime-pending, not a verified pass. Full state, modal, locale, and device coverage is still in progress.
+
+
+## Welcome/auth touch-target follow-up — 2026-11-01
+
+- `welcome_screen.dart`: the Skip action no longer opts out of the Material tap-target minimum; it now has a 48×48dp minimum target. The next-page FAB remains 54×54dp.
+- `signup_screen.dart`: source rechecked after the auth batch; GPS auto-detect now uses a 48×48dp `IconButton` with Arabic/English tooltip.
+- `forgot_password_dialog.dart` already uses a scrollable AlertDialog and 48dp action buttons. `verify_email_screen.dart` and both onboarding screens are inside SafeArea + scrollable content; keyboard/device runtime validation is still pending.
