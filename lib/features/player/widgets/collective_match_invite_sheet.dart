@@ -447,7 +447,12 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
                   ?.copyWith(fontWeight: FontWeight.w900),
             ),
           ),
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary)),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            tooltip: ar ? 'إغلاق' : 'Close',
+            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+            icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
+          ),
         ])),
         Expanded(child: ListView(padding: EdgeInsets.fromLTRB(20, 4, 20, MediaQuery.paddingOf(context).bottom + 20), children: [
           if (_loadFailed)
@@ -555,7 +560,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
   }
 
   ButtonStyle _outline(Color color) => OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color.withValues(alpha: .5)), minimumSize: const Size.fromHeight(50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.button)));
-  Widget _counter(IconData icon, bool enabled, VoidCallback onTap) => SizedBox(width: 44, height: 44, child: IconButton(onPressed: enabled ? onTap : null, style: IconButton.styleFrom(backgroundColor: VSPColors.surfaceAlt, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))), icon: Icon(icon, size: 18)));
+  Widget _counter(IconData icon, bool enabled, VoidCallback onTap) => SizedBox(width: 48, height: 48, child: IconButton(onPressed: enabled ? onTap : null, constraints: const BoxConstraints(minWidth: 48, minHeight: 48), style: IconButton.styleFrom(backgroundColor: VSPColors.surfaceAlt, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))), icon: Icon(icon, size: 18)));
   Widget _sectionHeader(String title, String count) => Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)), Text(count, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900))]);
   Widget _badge(String text) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: .12), borderRadius: BorderRadius.circular(VSPRadius.full), border: Border.all(color: VSPColors.accent.withValues(alpha: .35))), child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.w800)));
   Widget _infoRow(IconData icon, String label, String value) => Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: VSPColors.accent, size: 18), const SizedBox(width: 10), Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)), const SizedBox(width: 8), Expanded(child: Text(value, textAlign: TextAlign.end, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)))]));
