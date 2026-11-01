@@ -148,7 +148,9 @@ class SignupValidationService {
   }
 
   /// Computes password strength, percentage and visual color indicator.
-  static PasswordStrength calculatePasswordStrength(String password) {
+  static PasswordStrength calculatePasswordStrength(
+    String password, {bool isArabic = false}
+  ) {
     double strength = 0.0;
     if (password.length >= 8) strength += 0.2;
     if (RegExp(r'[a-z]').hasMatch(password)) strength += 0.2;
@@ -157,14 +159,14 @@ class SignupValidationService {
     if (RegExp(r'[!@#\$&*~]').hasMatch(password)) strength += 0.2;
 
     Color color = Colors.red;
-    String label = 'Weak';
+    String label = isArabic ? 'ضعيفة' : 'Weak';
     if (strength > 0.4) {
       color = Colors.orange;
-      label = 'Medium';
+      label = isArabic ? 'متوسطة' : 'Medium';
     }
     if (strength >= 0.8) {
       color = VSPColors.accent;
-      label = 'Strong';
+      label = isArabic ? 'قوية' : 'Strong';
     }
 
     return PasswordStrength(
