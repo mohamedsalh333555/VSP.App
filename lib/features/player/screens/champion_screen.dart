@@ -269,7 +269,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      height: 44,
+      height: 48,
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
