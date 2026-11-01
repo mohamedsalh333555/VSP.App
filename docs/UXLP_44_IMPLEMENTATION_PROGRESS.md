@@ -1300,3 +1300,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/home/home_stadiums_section.dart`: the horizontal stadium carousel used a physical right margin, so card spacing did not mirror with Arabic direction. It now uses a directional end margin.
 - Stadium ordering and discovery behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `8f4ec24465196ea015207f48f562940defdb9a99`.
+
+
+## Home feed and team-member RTL spacing — 2026-11-01
+
+- Fixed `lib/features/player/widgets/home/home_feed_sections.dart`: public-match and championship horizontal carousels now use directional end spacing instead of a physical right margin.
+- Fixed `lib/features/player/widgets/my_team/team_members_section.dart`: captain/member trophy-badge spacing and the captain remove-member action now use directional insets so they mirror with RTL/LTR.
+- Match/championship ordering, team roster, and removal permissions are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `d3860809397a96238b0ea875144781cd59e1ab8e`, `1f9917a827b389c6bb49f09356c5ad2fad722ddd`.
