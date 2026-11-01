@@ -289,19 +289,14 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
     final startTimeStr = AppDateFormatter.formatTime(widget.startTime.toLocal(), isAr ? 'ar' : 'en');
     final endTimeStr = AppDateFormatter.formatTime(_effectiveEndTime.toLocal(), isAr ? 'ar' : 'en');
     final dynamicSlotWindow = '$startTimeStr - $endTimeStr';
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: bottomInset,
-      ),
-      child: Container(
+    return Container(
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
           VSPSpacing.lg,
-          bottomInset > 0 ? VSPSpacing.md : (bottomPadding > 0 ? bottomPadding + 16 : 24),
+          bottomPadding + 16,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
@@ -419,7 +414,6 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
             ],
           ),
         ),
-      ),
     );
   }
 }
