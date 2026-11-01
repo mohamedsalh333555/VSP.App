@@ -287,17 +287,17 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                                   : '${filteredStadiums.length} stadiums found',
                               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                             ),
-                            GestureDetector(
-                              onTap: () => _showFilterBottomSheet(context, isArabic),
-                              child: Row(
-                                children: [
-                                  const Icon(Iconsax.sort_copy, color: VSPColors.accent, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _getSortLabel(isArabic),
-                                    style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
+                            TextButton.icon(
+                              onPressed: () => _showFilterBottomSheet(context, isArabic),
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                tapTargetSize: MaterialTapTargetSize.padded,
+                              ),
+                              icon: const Icon(Iconsax.sort_copy, color: VSPColors.accent, size: 16),
+                              label: Text(
+                                _getSortLabel(isArabic),
+                                style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ],
