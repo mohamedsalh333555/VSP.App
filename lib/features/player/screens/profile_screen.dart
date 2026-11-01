@@ -54,10 +54,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
  setState(() => _isSharing = true);
  final l10n = AppLocalizations.of(context)!;
  try {
- RenderRepaintBoundary boundary = _teamCardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
- ui.Image image = await boundary.toImage(pixelRatio: 3.0); 
- ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
- Uint8List pngBytes = byteData!.buffer.asUint8List();
+ final renderObject = _teamCardKey.currentContext?.findRenderObject();
+ if (renderObject is! RenderRepaintBoundary) {
+   throw StateError('Team card is not ready to capture.');
+ }
+ final image = await renderObject.toImage(pixelRatio: 3.0);
+ late final Uint8List pngBytes;
+ try {
+   final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+   if (byteData == null) {
+     throw StateError('Team card image encoding returned no data.');
+   }
+   pngBytes = byteData.buffer.asUint8List();
+ } finally {
+   image.dispose();
+ }
 
  final xFile = XFile.fromData(pngBytes, mimeType: 'image/png', name: 'vsp_team_card.png');
  
