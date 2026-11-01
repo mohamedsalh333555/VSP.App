@@ -336,6 +336,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  context: context,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) => AlertDialog(
+ scrollable: true,
  backgroundColor: VSPColors.surface,
  title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: Colors.white)),
  content: Column(
