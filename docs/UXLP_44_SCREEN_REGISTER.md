@@ -7,6 +7,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 - Additional shared navigation component entry: 1
 - Table data rows: 366, including 28 repeated paths that document separate embedded-component findings (recounted from the current register table on 2026-11-01)
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
+- Current global UXLP-44 matrix: 39 rules are source-reviewed/runtime-pending and 5 rules (25, 31, 38, 39, 41) are classified as `needs product decision`; no rule has a runtime pass. The full per-screen/per-state matrix remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. That scan covered 128 of the 215 paths registered at the time; it has not been rerun across the current 338-path register.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
 - Status values: not yet inspected / source reviewed—runtime pending / pass / fail / needs product decision / not applicable.
