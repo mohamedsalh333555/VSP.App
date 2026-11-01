@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -242,14 +243,39 @@ class BookingSheetCashPanel extends StatelessWidget {
               child: SizedBox(
                 height: VSPSize.buttonHeight,
                 child: OutlinedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
                     final phone = booking.playerPhone ?? '';
                     if (phone.isNotEmpty) {
-                      launchUrl(Uri.parse(
-                          'https://wa.me/${phone.replaceAll('+', '').replaceAll(' ', '')}'));
+                      try {
+                        final launched = await launchUrl(
+                          Uri.parse(
+                            'https://wa.me/${phone.replaceAll('+', '').replaceAll(' ', '')}',
+                          ),
+                          mode: LaunchMode.externalApplication,
+                        );
+                        if (!launched && context.mounted) {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر فتح واتساب لهذا الرقم.'
+                                : 'Could not open WhatsApp for this number.',
+                          );
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          VSPFeedback.showError(
+                            context,
+                            isArabic
+                                ? 'تعذر فتح واتساب لهذا الرقم.'
+                                : 'Could not open WhatsApp for this number.',
+                          );
+                        }
+                      }
                     } else {
-                      BookingSheetWhatsAppUtils.launchWhatsAppSupport(
-                          booking, isArabic);
+                      await BookingSheetWhatsAppUtils.launchWhatsAppSupport(
+                        booking,
+                        isArabic,
+                      );
                     }
                   },
                   icon: const Icon(Iconsax.message_copy, size: 16),
