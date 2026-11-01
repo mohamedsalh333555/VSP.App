@@ -1204,3 +1204,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 28, 36, and 43 — media lifecycle and persisted data integrity:** edit-mode stadium photos are no longer deleted from Storage before the edited record is saved; upload progress callbacks are guarded against disposed screen contexts. Cleanup of Storage objects removed from a successfully saved edit remains pending; the current behavior prioritizes avoiding broken persisted image URLs.
+
+
+- **Rules 10, 29, and 36 — schedule parity and authenticated actions:** owner schedule rendering now consumes the same multi-break configuration as player availability and excludes partial-overlap slots; team update actions no longer upload under a synthetic `unknown` user path when authentication context is absent. Runtime verification remains pending.
