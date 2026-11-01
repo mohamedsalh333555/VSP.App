@@ -348,3 +348,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 | `lib/features/owner/widgets/brackets/tournament_match_card.dart` | owner | source reviewed—runtime pending (localized 48dp schedule action; schedule text bounded; date/time defaults use VSPTimeService) |
 | `lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart` | owner | source reviewed—runtime pending (cash action count scoped to selected stadium and current app-local day via VSPTimeService; direction-aware arrow; InkWell action) |
+
+
+### Newly inventoried player home/chat/payment surfaces — 2026-11-01
+
+| `lib/features/player/widgets/home/home_top_bar.dart` | player | source reviewed—runtime pending (profile/search/filter controls have focusable targets and localized tooltips; profile image has loading and error fallback; filter result remains bound to StadiumProvider) |
+| `lib/features/player/widgets/chat/chat_input_bar.dart` | player | source reviewed—runtime pending (message input remains localized/direction-aware; send action has a localized tooltip and focusable 48dp target; send remains disabled while sending) |
+| `lib/features/player/widgets/payment/payment_method_selector.dart` | player | source reviewed—runtime pending (accepted payment methods are explained bilingually; gateway label is factual and no longer claims absolute 100% security) |
