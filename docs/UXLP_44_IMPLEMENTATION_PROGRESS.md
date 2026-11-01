@@ -1732,3 +1732,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/auth/widgets/signup_governorate_dropdown.dart`: dropdown values remain canonical English identifiers for AuthProvider/database consistency, while visible option labels now use `EgyptGovernorates.getLocalizedName` according to the active locale and are bounded to one line. This fixes English governorate names appearing in Arabic signup without changing stored values.
 - Source commit: `f30af5466d6d7c1fe073cde0b7c43b72e8b7589e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Team management action copy localization — 2026-11-01
+
+- `lib/features/player/widgets/my_team/team_action_buttons.dart`: WhatsApp team-invitation message and leave-team/captaincy-transfer action now follow the active Arabic/English locale instead of displaying Arabic-only copy in English mode. Team name interpolation, WhatsApp launch, and captaincy handoff callback remain unchanged.
+- Source commit: `84a0b126eec4f7c2e331cad1204b7463f42216b1`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
