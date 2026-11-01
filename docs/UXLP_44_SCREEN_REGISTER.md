@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
-- Registered Dart screen/surface paths: 190 unique paths
+- Registered Dart screen/surface paths: 199 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 216, including 26 repeated paths that document separate embedded-component findings
+- Table records: 225, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Static source scan: all 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -245,7 +245,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending |
 
-The source fixes above are not runtime passes. The 190 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
+The source fixes above are not runtime passes. The 199 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
 
 
 ### Additional shared upload surface inspected
@@ -300,3 +300,16 @@ The source fixes above are not runtime passes. The 190 unique registered paths s
 | `lib/features/player/widgets/roster/roster_guest_players_section.dart` | player | source reviewed—runtime pending (clipboard import action labeled “Paste/لصق”; no WhatsApp-specific dependency implied)
 `lib/core/utils/roster_parser_utils.dart` | shared/player | source reviewed—runtime pending (manual import dialog disposes its text controller; dialog remains scrollable)
 `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart` | player | source reviewed—runtime pending (fullscreen gallery page indicator now respects bottom system inset; top controls already use SafeArea) |
+
+## Newly discovered embedded UI components — 2026-11-01
+
+| `lib/features/owner/widgets/tournament/tournament_dashboard_bottom_bar.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_basics_step.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_scheduling_step.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_step_indicator.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_system_step.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_wizard_bottom_bar.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/player/widgets/booking/booking_bottom_bar.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/player/widgets/champion/champion_empty_state.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart` | player/owner | not yet inspected (embedded UI component discovered during repository reconciliation; source review required) |
+
