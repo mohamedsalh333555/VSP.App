@@ -175,6 +175,14 @@ class PendingBookingCard extends StatelessWidget {
                           ),
                         );
                         await bp.loadUserBookings(initiatingUserId);
+                        if (!context.mounted ||
+                            Provider.of<app_auth.AuthProvider>(
+                                  context,
+                                  listen: false,
+                                ).currentUser?.id !=
+                                initiatingUserId) {
+                          return;
+                        }
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -192,7 +200,14 @@ class PendingBookingCard extends StatelessWidget {
                         );
                       }
                     } catch (_) {
-                      if (!context.mounted) return;
+                      if (!context.mounted ||
+                          Provider.of<app_auth.AuthProvider>(
+                                context,
+                                listen: false,
+                              ).currentUser?.id !=
+                              initiatingUserId) {
+                        return;
+                      }
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(isArabic
