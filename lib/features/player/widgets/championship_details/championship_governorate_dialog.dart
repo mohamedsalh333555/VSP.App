@@ -47,7 +47,7 @@ class ChampionshipGovernorateDialog {
                 isArabic ? 'تأكيد موقع البطولة' : 'Confirm Tournament Location',
                 style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: VSPColors.white,
                     ),
               ),
             ),
