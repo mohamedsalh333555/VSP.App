@@ -67,10 +67,10 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/booking_sheet/owner_booking_modal.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) |
 | `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart` | owner | source reviewed—runtime pending (owner booking actions, form composition, duration constraints, controller lifecycle, and safe-area handling reviewed) |
-| `lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart` | owner | source updated—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
-| `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
-| `lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart` | owner | source reviewed—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart` | owner | source updated—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
+| `lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart` | owner | source updated—runtime pending (score-entry components, document upload states, tournament preview, and invite surfaces reviewed) |
 | `lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart` | owner | source reviewed—runtime pending (dialog/sheet constraints, action state, async lifecycle, and controller ownership reviewed) (preferred 88% content cap respects route viewport; removed duplicate keyboard/system inset subtraction and unsafe 240dp minimum) |
 | `lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart` | owner | source updated—runtime pending (confirmation AlertDialog uses standard safe-area route) |
 | `lib/features/owner/widgets/brackets/tournament_score_modal.dart` | owner | source reviewed—runtime pending (score submission has a handler-level duplicate-submit guard and logs diagnostics and retains localized recovery copy; score title and fields are width-bounded) |
@@ -120,7 +120,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea; missing Material/Expanded closure corrected after monitored compile diagnostic; runtime pending) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected; ticket and message streams distinguish loading/error/empty and expose retry) |
-| `lib/features/player/screens/support_tickets_screen.dart` | player | source reviewed—runtime pending (new-ticket sheet constrains complete padded content including bottom safe-area inside keyboard-safe viewport; scrollable form and single-flight submit; ticket list distinguishes loading/error/empty) (new-ticket sheet no longer double-subtracts keyboard viewInsets; viewport remains scrollable and SafeArea protected) |
+| `lib/features/player/screens/support_tickets_screen.dart` | player | source updated—runtime pending (new-ticket sheet constrains complete padded content including bottom safe-area inside keyboard-safe viewport; scrollable form and single-flight submit; ticket list distinguishes loading/error/empty) (new-ticket sheet no longer double-subtracts keyboard viewInsets; viewport remains scrollable and SafeArea protected) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | source reviewed—runtime pending (strict team-membership fetch; account-scoped async refresh; separate loading/error/retry from no-team state) |
 | `lib/features/player/screens/team_profile_screen.dart` | player | source reviewed—runtime pending (strict team/roster fetches with retry; captain identified by `captain_id`; invite modal opens only after a non-empty successful RPC code) |
 | `lib/features/player/screens/terms_and_privacy_screen.dart` | player | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
@@ -154,31 +154,31 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/widgets/shimmer_image.dart` | shared | source reviewed—runtime pending (shared shimmer image placeholder; image loading/error caller behavior remains to verify) |
 | `lib/core/widgets/skeleton_loader.dart` | shared | source reviewed—runtime pending (CardSkeleton trailing margin uses directional end spacing for RTL/LTR mirroring) |
 | `lib/features/auth/widgets/login_social_auth_row.dart` | auth | source reviewed—runtime pending (social sign-in row; provider availability, locale and touch-target verification pending) |
-| `lib/features/auth/widgets/owner_onboarding/owner_payout_info_card.dart` | owner | source reviewed—runtime pending (payout information card; data/locale rendering verification pending) |
+| `lib/features/auth/widgets/owner_onboarding/owner_payout_info_card.dart` | owner | source updated—runtime pending (payout information card; data/locale rendering verification pending) |
 | `lib/features/auth/widgets/signup/signup_name_fields.dart` | auth | source reviewed—runtime pending (responsive first/last-name fields; narrow-width behavior source-reviewed) |
 | `lib/features/auth/widgets/signup_governorate_dropdown.dart` | auth | source reviewed—runtime pending (localized governorate labels preserve canonical stored values) |
 | `lib/features/auth/widgets/social_auth_buttons_row.dart` | auth | source reviewed—runtime pending (shared social-auth controls; provider state and error recovery verification pending) |
-| `lib/features/auth/widgets/welcome/scale_animated_button.dart` | auth | source reviewed—runtime pending (welcome CTA animation and touch target verification pending) |
+| `lib/features/auth/widgets/welcome/scale_animated_button.dart` | auth | source updated—runtime pending (welcome CTA animation and touch target verification pending) |
 | `lib/features/auth/widgets/welcome/welcome_language_button.dart` | auth | source reviewed—runtime pending (welcome language selector; RTL and locale-switch behavior pending) |
 | `lib/features/auth/widgets/welcome/welcome_onboarding_slide.dart` | auth | source reviewed—runtime pending (onboarding slide layout and localized text overflow verification pending) |
-| `lib/features/copilot/widgets/copilot_chat_bubble.dart` | owner | source reviewed—runtime pending (assistant message/loading bubbles; role gate, localized copy and message overflow verification pending) |
-| `lib/features/copilot/widgets/copilot_conversations_drawer.dart` | owner | source reviewed—runtime pending (conversation drawer; navigation, empty/loading/error and compact-height behavior pending) |
-| `lib/features/owner/widgets/account/owner_avatar_header.dart` | owner | source reviewed—runtime pending (owner avatar/header; profile image fallback and layout verification pending) |
+| `lib/features/copilot/widgets/copilot_chat_bubble.dart` | owner | source updated—runtime pending (assistant message/loading bubbles; role gate, localized copy and message overflow verification pending) |
+| `lib/features/copilot/widgets/copilot_conversations_drawer.dart` | owner | source updated—runtime pending (conversation drawer; navigation, empty/loading/error and compact-height behavior pending) |
+| `lib/features/owner/widgets/account/owner_avatar_header.dart` | owner | source updated—runtime pending (owner avatar/header; profile image fallback and layout verification pending) |
 | `lib/features/owner/widgets/account/owner_delete_account_card.dart` | owner | source reviewed—runtime pending (destructive account action; confirmation and consequence copy verification pending) |
 | `lib/features/owner/widgets/account/owner_payout_settings_card.dart` | owner | source reviewed—runtime pending (payout settings labels now use directional start padding; locale and form behavior pending) |
 | `lib/features/owner/widgets/account/owner_profile_form.dart` | owner | source reviewed—runtime pending (profile labels/help text use directional start padding; field validation and locale verification pending) |
 | `lib/features/owner/widgets/account/owner_stadiums_carousel.dart` | owner | source reviewed—runtime pending (stadium carousel item spacing now uses directional end padding; scroll/RTL verification pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_details.dart` | owner | source reviewed—runtime pending (note-template chip spacing now uses directional end padding; form/keyboard behavior pending) |
-| `lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart` | owner | source reviewed—runtime pending (opening-hours editor; validation, locale and responsive behavior pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart` | owner | source updated—runtime pending (opening-hours editor; validation, locale and responsive behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_location_field.dart` | owner | source reviewed—runtime pending (stadium location input; geolocation, permissions and error recovery verification pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart` | owner | source reviewed—runtime pending (feature/amenity selection; amenities heading now uses directional start alignment; responsive option layout and locale behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step3_images.dart` | owner | source reviewed—runtime pending (stadium image selection/upload; permission, progress and failure recovery pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step_indicator.dart` | owner | source reviewed—runtime pending (stadium wizard step indicator; localized label and narrow-width behavior pending) |
 | `lib/features/owner/widgets/brackets/tournament_champion_banner.dart` | owner | source reviewed—runtime pending (champion outcome banner; result data and long team-name rendering pending) |
 | `lib/features/owner/widgets/dashboard/insights/insights_booking_types_card.dart` | owner | source reviewed—runtime pending (booking-type insight visualization; source data and empty-state mapping pending) |
-| `lib/features/owner/widgets/dashboard/insights/insights_radial_hero_card.dart` | owner | source reviewed—runtime pending (radial KPI visualization; data bounds and compact-layout verification pending) |
-| `lib/features/owner/widgets/dashboard/insights/insights_revenue_sources_card.dart` | owner | source reviewed—runtime pending (revenue-source metrics; currency/locale and zero-data behavior pending) |
-| `lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart` | owner | source reviewed—runtime pending (strategic KPI grid; responsive density and metric-state verification pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_radial_hero_card.dart` | owner | source updated—runtime pending (radial KPI visualization; data bounds and compact-layout verification pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_revenue_sources_card.dart` | owner | source updated—runtime pending (revenue-source metrics; currency/locale and zero-data behavior pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart` | owner | source updated—runtime pending (strategic KPI grid; responsive density and metric-state verification pending) |
 | `lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart` | owner | source reviewed—runtime pending (dropdown selected values now align to `AlignmentDirectional.centerEnd`; RTL/LTR and filter behavior pending) |
 | `lib/features/owner/widgets/dashboard/owner_basic_financial_glance.dart` | owner | source reviewed—runtime pending (financial summary card; actual Supabase values and zero/error state verification pending) |
 | `lib/features/owner/widgets/dashboard/owner_glanceable_timeline.dart` | owner | source reviewed—runtime pending (ongoing marker spacing now uses directional end margin; timeline time/state mapping pending) |
@@ -187,15 +187,15 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/dashboard/owner_pro_overview_card.dart` | owner | source reviewed—runtime pending (PRO overview card; plan state and KPI source verification pending) |
 | `lib/features/owner/widgets/dashboard/owner_pro_segmented_tabs.dart` | owner | source reviewed—runtime pending (PRO segmented tabs; selected state, keyboard and touch behavior pending) |
 | `lib/features/owner/widgets/dashboard/owner_time_period_dropdown.dart` | owner | source reviewed—runtime pending (selected period now uses directional trailing alignment; locale and selection behavior pending) |
-| `lib/features/owner/widgets/dashboard/owner_today_pitch_schedule_card.dart` | owner | source reviewed—runtime pending (today schedule card; time zone, empty and stale-data states pending) |
+| `lib/features/owner/widgets/dashboard/owner_today_pitch_schedule_card.dart` | owner | source updated—runtime pending (today schedule card; time zone, empty and stale-data states pending) |
 | `lib/features/owner/widgets/dashboard/owner_venue_filter_chips.dart` | owner | source reviewed—runtime pending (venue filter chips; selection state and scroll behavior pending) |
-| `lib/features/owner/widgets/dashboard/owner_verification_banner.dart` | owner | source reviewed—runtime pending (verification/subscription/grace-period banners; status-specific copy and actions pending) |
-| `lib/features/owner/widgets/documentation/doc_explanation_card.dart` | owner | source reviewed—runtime pending (document-step explanation card; localized instructions and responsive text pending) |
+| `lib/features/owner/widgets/dashboard/owner_verification_banner.dart` | owner | source updated—runtime pending (verification/subscription/grace-period banners; status-specific copy and actions pending) |
+| `lib/features/owner/widgets/documentation/doc_explanation_card.dart` | owner | source updated—runtime pending (document-step explanation card; localized instructions and responsive text pending) |
 | `lib/features/owner/widgets/documentation/doc_step_commercial_register.dart` | owner | source reviewed—runtime pending (commercial-register document capture; image/file error and permission states pending) |
 | `lib/features/owner/widgets/documentation/doc_step_national_id.dart` | owner | source reviewed—runtime pending (national-ID document capture; image/file error and permission states pending) |
 | `lib/features/owner/widgets/documentation/doc_step_tax_card.dart` | owner | source reviewed—runtime pending (tax-card document capture; image/file error and permission states pending) |
-| `lib/features/owner/widgets/documentation/doc_wizard_step_indicator.dart` | owner | source reviewed—runtime pending (document wizard progress indicator; locale and narrow-width behavior pending) |
-| `lib/features/owner/widgets/ledger/owner_ledger_balance_cards.dart` | owner | source reviewed—runtime pending (digital balance and pitch-cash cards; real balance source and zero/error state pending) |
+| `lib/features/owner/widgets/documentation/doc_wizard_step_indicator.dart` | owner | source updated—runtime pending (document wizard progress indicator; locale and narrow-width behavior pending) |
+| `lib/features/owner/widgets/ledger/owner_ledger_balance_cards.dart` | owner | source updated—runtime pending (digital balance and pitch-cash cards; real balance source and zero/error state pending) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_customer_fields.dart` | owner | source reviewed—runtime pending (quick-booking customer fields; phone validation and optional WhatsApp receipt copy pending) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart` | owner | source reviewed—runtime pending (duration-chip gaps now use directional start spacing in both compact and horizontal layouts) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart` | owner | source reviewed—runtime pending (quick-booking payment section; amount/fee data and state-dependent actions pending) |
@@ -209,25 +209,25 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/booking/booking_financial_summary.dart` | player | source reviewed—runtime pending (booking financial summary; authoritative server totals, fees and deposit states pending) |
 | `lib/features/player/widgets/championship_checkout/checkout_guest_players_section.dart` | player | source reviewed—runtime pending (guest-player checkout section; roster limits, validation and saved data behavior pending) |
 | `lib/features/player/widgets/chat/chat_app_bar_title.dart` | player | source reviewed—runtime pending (chat title/participant header; participant state and long-name rendering pending) |
-| `lib/features/player/widgets/chat/chat_system_banner.dart` | player | source reviewed—runtime pending (chat system status banner; lifecycle copy and locale behavior pending) |
-| `lib/features/player/widgets/filter/filter_amenities_panel.dart` | player | source reviewed—runtime pending (amenity filter panel; selected-state and applied-filter consistency pending) |
-| `lib/features/player/widgets/filter/filter_category_sidebar.dart` | player | source reviewed—runtime pending (filter category navigation; active state and RTL order pending) |
-| `lib/features/player/widgets/filter/filter_location_panel.dart` | player | source reviewed—runtime pending (location/governorate filter; localized values and server-filter consistency pending) |
-| `lib/features/player/widgets/filter/filter_price_panel.dart` | player | source reviewed—runtime pending (price/deposit filter; currency, range bounds and query mapping pending) |
-| `lib/features/player/widgets/filter/filter_specs_panel.dart` | player | source reviewed—runtime pending (pitch specification filter; selected state and query mapping pending) |
-| `lib/features/player/widgets/filter/filter_sports_panel.dart` | player | source reviewed—runtime pending (sport filter; option availability and query mapping pending) |
-| `lib/features/player/widgets/home/book_tonight_card.dart` | player | source reviewed—runtime pending (home booking CTA card; eligibility, time-window and navigation behavior pending) |
-| `lib/features/player/widgets/home/home_feed_content.dart` | player | source reviewed—runtime pending (home feed composition; empty/loading/error and source-data mapping pending) |
+| `lib/features/player/widgets/chat/chat_system_banner.dart` | player | source updated—runtime pending (chat system status banner; lifecycle copy and locale behavior pending) |
+| `lib/features/player/widgets/filter/filter_amenities_panel.dart` | player | source updated—runtime pending (amenity filter panel; selected-state and applied-filter consistency pending) |
+| `lib/features/player/widgets/filter/filter_category_sidebar.dart` | player | source updated—runtime pending (filter category navigation; active state and RTL order pending) |
+| `lib/features/player/widgets/filter/filter_location_panel.dart` | player | source updated—runtime pending (location/governorate filter; localized values and server-filter consistency pending) |
+| `lib/features/player/widgets/filter/filter_price_panel.dart` | player | source updated—runtime pending (price/deposit filter; currency, range bounds and query mapping pending) |
+| `lib/features/player/widgets/filter/filter_specs_panel.dart` | player | source updated—runtime pending (pitch specification filter; selected state and query mapping pending) |
+| `lib/features/player/widgets/filter/filter_sports_panel.dart` | player | source updated—runtime pending (sport filter; option availability and query mapping pending) |
+| `lib/features/player/widgets/home/book_tonight_card.dart` | player | source updated—runtime pending (home booking CTA card; eligibility, time-window and navigation behavior pending) |
+| `lib/features/player/widgets/home/home_feed_content.dart` | player | source updated—runtime pending (home feed composition; empty/loading/error and source-data mapping pending) |
 | `lib/features/player/widgets/matchup/matchup_record_result_card.dart` | player | source reviewed—runtime pending (matchup result card; participant/result state and action visibility pending) |
 | `lib/features/player/widgets/my_team/team_achievements_section.dart` | player | source reviewed—runtime pending (team achievements section; actual result source and empty-state behavior pending) |
 | `lib/features/player/widgets/my_team/team_action_buttons.dart` | player | source reviewed—runtime pending (team invite/leave/captaincy actions are localized; role/state eligibility and destructive confirmation pending) |
 | `lib/features/player/widgets/my_team/team_profile_form.dart` | player | source reviewed—runtime pending (team profile edit fields; validation, image upload and persistence states pending) |
 | `lib/features/player/widgets/my_team/team_stats_header.dart` | player | source reviewed—runtime pending (team statistics header; actual result source and empty-data behavior pending) |
 | `lib/features/player/widgets/payment/paymob_web_fallback_view.dart` | player | source reviewed—runtime pending (web payment fallback instructions; return/deep-link and paid-state reconciliation pending) |
-| `lib/features/player/widgets/roster/roster_capacity_card.dart` | player | source reviewed—runtime pending (roster capacity indicator; min/max and over-capacity state mapping pending) |
+| `lib/features/player/widgets/roster/roster_capacity_card.dart` | player | source updated—runtime pending (roster capacity indicator; min/max and over-capacity state mapping pending) |
 | `lib/features/player/widgets/roster/roster_team_members_section.dart` | player | source reviewed—runtime pending (team-member roster; role labels, guest/member distinction and overflow pending) |
 | `lib/features/player/widgets/roster/roster_tournament_header.dart` | player | source reviewed—runtime pending (tournament roster header; registration and payment state mapping pending) |
-| `lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart` | player | source reviewed—runtime pending (stadium booking action bar; availability/price state and safe-area reachability pending) |
+| `lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart` | player | source updated—runtime pending (stadium booking action bar; availability/price state and safe-area reachability pending) |
 | `lib/features/player/widgets/stadium_details/stadium_pitch_conditions_tab.dart` | player | source reviewed—runtime pending (pitch condition details; data source, empty state and locale behavior pending) |
 | `lib/features/player/widgets/stadium_details/stadium_ratings_tab.dart` | player | source reviewed—runtime pending (review stream now has shared bilingual loading/error states and retry by recreating the stream; stale loaded reviews remain visible with a localized warning and retry action after refresh failure; runtime verification pending) |
 | `lib/features/player/widgets/team_profile/team_profile_achievements_section.dart` | player | source reviewed—runtime pending (team achievement list; source result mapping and empty state pending) |
@@ -247,39 +247,39 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/championship_checkout/checkout_team_members_list.dart` | player | source reviewed—runtime pending (checkout roster list; team membership, guest distinction and capacity mapping pending) |
 | `lib/features/player/widgets/payment/payment_background_glow.dart` | player | source reviewed—runtime pending (payment background decoration; contrast and reduced-motion review pending) |
 | `lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart` | shared | source reviewed—runtime pending (date-picker step chip; accessible selected/disabled state and RTL order pending) |
-| `lib/widgets/refund_badge_widget.dart` | shared/player | source reviewed—runtime pending (refund badge uses localized status/ETA copy; actual refund lifecycle and theme contrast verification pending) |
+| `lib/widgets/refund_badge_widget.dart` | shared/player | source updated—runtime pending (refund badge uses localized status/ETA copy; actual refund lifecycle and theme contrast verification pending) |
 | `lib/widgets/refund_notice_widget.dart` | shared/player | source reviewed—runtime pending (refund notice uses localized amount/status copy; fee/amount and lifecycle consistency pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
 | Surface path | Role | Status |
 |---|---|---|
-| `lib/shared/widgets/custom_text_field.dart` | shared | source reviewed—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
+| `lib/shared/widgets/custom_text_field.dart` | shared | source updated—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
 | `lib/shared/widgets/primary_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton adapter, haptics and debounce documented; call-site/runtime pending) |
 | `lib/shared/widgets/social_auth_button.dart` | shared | source reviewed—runtime pending (V2 semantic button state and 48dp target documented; provider/auth error runtime pending) |
 | `lib/shared/widgets/stadium_card.dart` | shared | source reviewed—runtime pending (V2 semantic color/radius migration documented; content-density and locale runtime pending) |
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
-| `lib/shared/widgets/vsp_back_button.dart` | shared | source reviewed—runtime pending (48dp hit area and semantic interaction documented; navigation/back-stack runtime pending) |
+| `lib/shared/widgets/vsp_back_button.dart` | shared | source updated—runtime pending (48dp hit area and semantic interaction documented; navigation/back-stack runtime pending) |
 | `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, semantics, SafeArea, selected/unselected glyphs; optional warning indicator for unavailable badge data) |
 | `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (delegates to canonical VSPStateView; bounded scroll-safe layout, charcoal tile, shared typography/spacing, and optional 48dp primary action) |
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) (connectivity changes update visible offline/server state reactively; live-region announcement) |
-| `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source reviewed—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
+| `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source updated—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
 | `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
 | `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
 | `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
 | `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
 | `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height; unread-stream failures now surface a localized warning instead of appearing as zero unread) |
-| `lib/shared/widgets/banner_slider_widget.dart` | shared | source reviewed—runtime pending (REST and realtime banner sources, autoplay/pointer lifecycle, image fallback; optional banner fetch failure hides the carousel without blocking the screen) |
-| `lib/shared/widgets/copyable_phone_text.dart` | shared | source reviewed—runtime pending (long-press copy now has semantic label, localized clipboard failure feedback, and a 48dp minimum hit area; call-site runtime pending) |
+| `lib/shared/widgets/banner_slider_widget.dart` | shared | source updated—runtime pending (REST and realtime banner sources, autoplay/pointer lifecycle, image fallback; optional banner fetch failure hides the carousel without blocking the screen) |
+| `lib/shared/widgets/copyable_phone_text.dart` | shared | source updated—runtime pending (long-press copy now has semantic label, localized clipboard failure feedback, and a 48dp minimum hit area; call-site runtime pending) |
 | `lib/shared/widgets/public_match_card.dart` | player | source reviewed—runtime pending (cancelled/ended states override host badge and route to booking details, not active invite sheet; join/leave/request/share failures are localized; backend details are logged; RPC JSONB success is now honored so false server results are not shown as success; self-cancel request remains blocked by the current host-only reject RPC and requires an approved caller-owned server RPC; share action retains 48dp target) |
 | `lib/shared/widgets/vsp_ai_spark_icon.dart` | shared | source reviewed—runtime pending (custom unequal four-point spark geometry; visual identity and contrast runtime pending) |
-| `lib/shared/widgets/vsp_ambient_background.dart` | shared | source reviewed—runtime pending (shared ambient decoration uses the compatibility token facade; contrast and low-performance rendering pending) |
+| `lib/shared/widgets/vsp_ambient_background.dart` | shared | source updated—runtime pending (shared ambient decoration uses the compatibility token facade; contrast and low-performance rendering pending) |
 | `lib/shared/widgets/vsp_auth_header.dart` | shared | source reviewed—runtime pending (shared auth title/back affordance; parent safe-area and keyboard layout pending) |
 | `lib/shared/widgets/vsp_countdown_timer.dart` | shared | source reviewed—runtime pending (timer stops at zero, cancels on disposal, and recalculates when targetDate changes; locale/large-text runtime pending) |
 | `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | source reviewed—runtime pending (48dp checkbox hit area, checked semantics, and separate terms/privacy link actions; keyboard/focus runtime pending) |
-| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source reviewed—runtime pending (upload card disabled state and uploaded-item delete action; caller permission/error/confirmation behavior pending) |
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source updated—runtime pending (upload card disabled state and uploaded-item delete action; caller permission/error/confirmation behavior pending) |
 | `lib/core/ui/components/vsp_menu_item.dart` | shared | source reviewed—runtime pending (canonical V2 menu component; minimum hit area and focus/semantics runtime pending) |
 | `lib/core/ui/components/vsp_section_title.dart` | shared | source reviewed—runtime pending (canonical V2 section heading component; long Arabic/English title wrapping pending) |
 | `lib/features/player/widgets/championship_card.dart` | player | source reviewed—runtime pending (open/full/ongoing/cancelled/completed/unknown states no longer appear joinable; countdown only for open state; dynamic fee/prize and 48dp share action) |
@@ -359,7 +359,7 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source reviewed—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent) |
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source updated—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent) |
 
 
 ### Additional booking surface source review
@@ -399,7 +399,7 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart` | owner | source reviewed—runtime pending (emergency closure confirmation scrollable; success states 24-hour closure without implying immediate refund; failures localized) |
 `lib/features/player/widgets/matchup/matchup_record_result_card.dart` | player | source reviewed—runtime pending (result entry card bilingual; heading bounded) |
 | `lib/features/player/widgets/matchup/matchup_results_timeline.dart` | player | source reviewed—runtime pending (empty state, fallbacks, and outcome labels bilingual; row labels bounded) |
-| `lib/features/player/widgets/matchup/matchup_standings_table.dart` | player | source reviewed—runtime pending (standings and points explanation bilingual; stats constrained on narrow rows) |
+| `lib/features/player/widgets/matchup/matchup_standings_table.dart` | player | source updated—runtime pending (standings and points explanation bilingual; stats constrained on narrow rows) |
 | `lib/features/player/services/matchup_dashboard_service.dart` | player | source reviewed—runtime pending (validation and outcome presentation localized; scoring values unchanged) |
 `lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart` | owner | source reviewed—runtime pending (penalty labels and fallback team names localized)
 `lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart` | owner | source reviewed—runtime pending (reset confirmation scrollable; Arabic copy corrected; reset failure now has localized feedback)
@@ -411,22 +411,22 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ## Newly discovered embedded UI components — 2026-11-01
 
 | `lib/features/owner/widgets/tournament/tournament_dashboard_bottom_bar.dart` | player/owner | source reviewed—runtime pending (status-gated owner actions, nullable kickoff callback, fixture navigation disabled during async actions, champion summary, bottom inset) |
-| `lib/features/owner/widgets/tournament/wizard/tournament_basics_step.dart` | player/owner | source reviewed—runtime pending (editable-field gates, sport/format selection, bilingual labels, controller ownership external) |
-| `lib/features/owner/widgets/tournament/wizard/tournament_scheduling_step.dart` | player/owner | source reviewed—runtime pending (date/duration/prize edit gates, numeric input direction, scroll handled by parent wizard) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_basics_step.dart` | player/owner | source updated—runtime pending (editable-field gates, sport/format selection, bilingual labels, controller ownership external) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_scheduling_step.dart` | player/owner | source updated—runtime pending (date/duration/prize edit gates, numeric input direction, scroll handled by parent wizard) |
 | `lib/features/owner/widgets/tournament/wizard/tournament_step_indicator.dart` | player/owner | source reviewed—runtime pending (three-step progress semantics and bilingual labels; narrow-width text fit still needs device review) |
-| `lib/features/owner/widgets/tournament/wizard/tournament_system_step.dart` | player/owner | source reviewed—runtime pending (team/group/qualifier/legs controls gated by editable policy; static option values) |
+| `lib/features/owner/widgets/tournament/wizard/tournament_system_step.dart` | player/owner | source updated—runtime pending (team/group/qualifier/legs controls gated by editable policy; static option values) |
 | `lib/features/owner/widgets/tournament/wizard/tournament_wizard_bottom_bar.dart` | player/owner | source reviewed—runtime pending (back and next/save actions disabled during async save; bottom system inset reviewed) |
 | `lib/features/player/widgets/booking/booking_bottom_bar.dart` | player/owner | source reviewed—runtime pending (collective booking displays full total without deposit-only hint; currency suffix normalized to EGP; player counter +/- controls enforce 48dp minimum targets; optional ball and confirm disabled without slot/loading; compact-width runtime review pending) |
 | `lib/features/player/widgets/champion/champion_empty_state.dart` | player/owner | source reviewed—runtime pending (championship/team/1v1 empty variants now delegate to VSPEmptyState; Arabic/English and explicit locale override preserved; optional return action retained) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart` | player/owner | source reviewed—runtime pending (missing-governorate and no-tournament states use VSPEmptyState; localized profile navigation action and directional governorate banner preserved) |
-| `lib/features/player/widgets/champion/champion_podium_components.dart` | player | source reviewed—runtime pending (localized governorate/sport filter labels, podium rank and team identity presentation, network-image fallback) |
+| `lib/features/player/widgets/champion/champion_podium_components.dart` | player | source updated—runtime pending (localized governorate/sport filter labels, podium rank and team identity presentation, network-image fallback) |
 | `lib/features/player/widgets/champion/championships_list_tab.dart` | player | source reviewed—runtime pending (championship stream loading/error/empty states; preserves last data and shows retry warning on realtime failure; All locations no longer triggers a false other-governorate banner; Arabic governorate banner and empty-state labels use the shared locale translator) |
 | `lib/features/player/widgets/champion/teams_ranking_tab.dart` | player | source reviewed—runtime pending (team ranking filter and podium/list states; preserves last ranking snapshot and surfaces retry warning after stream failure) |
 | `lib/features/player/widgets/champion/vsp_1v1_league_tab.dart` | player | source reviewed—runtime pending (1v1 tournament and roster stream loading/error/stale states; payment and cancellation lifecycle unchanged) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_hero_card.dart` | player | source reviewed—runtime pending (localized tournament name and governorate, capacity counts, and bounded progress value) |
-| `lib/features/player/widgets/champion/league_1v1/league_1v1_prize_card.dart` | player | source reviewed—runtime pending (entry fee and prize values displayed from supplied server data with EGP localization) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_prize_card.dart` | player | source updated—runtime pending (entry fee and prize values displayed from supplied server data with EGP localization) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart` | player | source reviewed—runtime pending (registration/refund/location states; 48dp cancel/switch actions and disabled join action with loading feedback while payment is processing) |
-| `lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart` | player | source reviewed—runtime pending (server-confirmed roster presentation, localized player-name fallback, and empty state; avatar loading/network failures render the player's initial) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart` | player | source updated—runtime pending (server-confirmed roster presentation, localized player-name fallback, and empty state; avatar loading/network failures render the player's initial) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart` | player | source reviewed—runtime pending (standings loading/error/empty states; uses parent retry and preserves last data with stale warning) |
 
 
@@ -436,31 +436,31 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried owner embedded surfaces — 2026-11-01
 
 | `lib/features/owner/widgets/bookings/owner_slot_card.dart` | owner | source reviewed—runtime pending (booking/payment states are bilingual; payment status uses booking values; trailing detail chevron mirrors in RTL) |
-| `lib/features/owner/widgets/bookings/owner_time_slot_row.dart` | owner | source reviewed—runtime pending (tap and long-press booking actions preserved; tap now uses keyboard-focusable InkWell semantics and feedback) |
+| `lib/features/owner/widgets/bookings/owner_time_slot_row.dart` | owner | source updated—runtime pending (tap and long-press booking actions preserved; tap now uses keyboard-focusable InkWell semantics and feedback) |
 | `lib/features/owner/widgets/dashboard/owner_dashboard_header.dart` | owner | source reviewed—runtime pending (profile-photo action has localized tooltip and focus semantics; verified-account tooltip bilingual; role/plan gates unchanged) |
 
 
 ### Newly inventoried player challenge surface — 2026-11-01
 
-| `lib/features/player/widgets/challenge/challenge_team_card.dart` | player | source reviewed—runtime pending (team selection uses keyboard-focusable InkWell; selected-state animation and H2H states retained; long names bounded to two lines) |
+| `lib/features/player/widgets/challenge/challenge_team_card.dart` | player | source updated—runtime pending (team selection uses keyboard-focusable InkWell; selected-state animation and H2H states retained; long names bounded to two lines) |
 
 
 ### Newly inventoried owner tournament/dashboard surfaces — 2026-11-01
 
-| `lib/features/owner/widgets/brackets/tournament_match_card.dart` | owner | source reviewed—runtime pending (localized 48dp schedule action; schedule text bounded; date/time defaults use VSPTimeService) |
+| `lib/features/owner/widgets/brackets/tournament_match_card.dart` | owner | source updated—runtime pending (localized 48dp schedule action; schedule text bounded; date/time defaults use VSPTimeService) |
 | `lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart` | owner | source reviewed—runtime pending (cash action count scoped to selected stadium and current app-local day via VSPTimeService; direction-aware arrow; InkWell action) |
 
 
 ### Newly inventoried player home/chat/payment surfaces — 2026-11-01
 
-| `lib/features/player/widgets/home/home_top_bar.dart` | player | source reviewed—runtime pending (profile/search/filter controls have focusable targets and localized tooltips; profile image has loading and error fallback; filter result remains bound to StadiumProvider) |
-| `lib/features/player/widgets/chat/chat_input_bar.dart` | player | source reviewed—runtime pending (message input remains localized/direction-aware; send action has a localized tooltip and focusable 48dp target; send remains disabled while sending) |
+| `lib/features/player/widgets/home/home_top_bar.dart` | player | source updated—runtime pending (profile/search/filter controls have focusable targets and localized tooltips; profile image has loading and error fallback; filter result remains bound to StadiumProvider) |
+| `lib/features/player/widgets/chat/chat_input_bar.dart` | player | source updated—runtime pending (message input remains localized/direction-aware; send action has a localized tooltip and focusable 48dp target; send remains disabled while sending) |
 | `lib/features/player/widgets/payment/payment_method_selector.dart` | player | source reviewed—runtime pending (accepted payment methods are explained bilingually; gateway label is factual and no longer claims absolute 100% security) |
 
 
 ### Newly inventoried player booking/result surfaces — 2026-11-01
 
-| `lib/features/player/widgets/booking/booking_slot_card.dart` | player | source reviewed—runtime pending (available slots use focusable InkWell; booked/past slots stay disabled; selection and status visuals preserved) |
+| `lib/features/player/widgets/booking/booking_slot_card.dart` | player | source updated—runtime pending (available slots use focusable InkWell; booked/past slots stay disabled; selection and status visuals preserved) |
 | `lib/features/player/widgets/booking/booking_slot_stream_section.dart` | player | source reviewed—runtime pending (initial loading/error/empty states separated; current-day and slot lifecycle calculations use VSPTimeService) |
 | `lib/features/player/widgets/user_bookings/challenge_result_actions.dart` | player | source reviewed—runtime pending (captain/result lifecycle and localized feedback retained; submit-result time gate uses VSPTimeService) |
 
@@ -473,17 +473,17 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 ### Newly inventoried stadium information surface — 2026-11-01
 
-| `lib/features/player/widgets/stadium_details/stadium_information_tab.dart` | player | source reviewed—runtime pending (map-location action is focusable/localized; address is bounded; external launch failure has localized feedback) |
+| `lib/features/player/widgets/stadium_details/stadium_information_tab.dart` | player | source updated—runtime pending (map-location action is focusable/localized; address is bounded; external launch failure has localized feedback) |
 
 
 ### Newly inventoried stadium gallery surface — 2026-11-01
 
-| `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart` | player | source reviewed—runtime pending (share/favorite actions have localized tooltips and focusable 48dp targets; image and indicator open the accessible full-screen gallery) |
+| `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart` | player | source updated—runtime pending (share/favorite actions have localized tooltips and focusable 48dp targets; image and indicator open the accessible full-screen gallery) |
 
 
 ### Newly inventoried owner quick-cash surface — 2026-11-01
 
-| `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart` | owner | source reviewed—runtime pending (date-sensitive cash actions use VSPTimeService unless an explicit currentTime is injected; success/failure feedback retained) |
+| `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart` | owner | source updated—runtime pending (date-sensitive cash actions use VSPTimeService unless an explicit currentTime is injected; success/failure feedback retained) |
 
 
 ### Newly inventoried player chat message surface — 2026-11-01
@@ -493,7 +493,7 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 ### Newly inventoried signup and email-verification surfaces — 2026-11-01
 
-| `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart` | auth | source reviewed—runtime pending (date-of-birth field has focusable InkWell and localized label tooltip) |
+| `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart` | auth | source updated—runtime pending (date-of-birth field has focusable InkWell and localized label tooltip) |
 | `lib/features/auth/widgets/verify_email/otp_box.dart` | auth | source reviewed—runtime pending (keyboard event listener no longer creates an undisposed FocusNode in build; numeric LTR input retained) |
 | `lib/features/auth/widgets/verify_email/otp_resend_section.dart` | auth | source reviewed—runtime pending (resend is a 48dp TextButton and remains disabled during countdown/resend; change-email action retained) |
 
@@ -506,12 +506,12 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 ### Newly inventoried owner upgrade surface — 2026-11-01
 
-| `lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart` | owner | source reviewed—runtime pending (upgrade action is focusable, at least 48dp high, and supports two-line localized copy) |
+| `lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart` | owner | source updated—runtime pending (upgrade action is focusable, at least 48dp high, and supports two-line localized copy) |
 
 
 ### Newly inventoried login role-selection surface — 2026-11-01
 
-| `lib/features/auth/widgets/login_footer.dart` | auth | source reviewed—runtime pending (sign-up action is focusable; role sheet is safe-area aware/scrollable, bilingual, and RTL-aware) |
+| `lib/features/auth/widgets/login_footer.dart` | auth | source updated—runtime pending (sign-up action is focusable; role sheet is safe-area aware/scrollable, bilingual, and RTL-aware) |
 
 
 ## Signup governorate display localization — 2026-11-01
