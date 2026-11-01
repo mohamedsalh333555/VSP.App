@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import '../../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../../shared/widgets/vsp_empty_state.dart';
 
 class ChampionEmptyState extends StatelessWidget {
@@ -63,14 +64,15 @@ class ChampionshipsEmptyState extends StatelessWidget {
         if (showReturnButton && onReturn != null)
           Padding(
             padding: const EdgeInsetsDirectional.only(
-              start: 16,
-              end: 16,
-              bottom: 16,
+              start: VSPDSSpacing.md,
+              end: VSPDSSpacing.md,
+              bottom: VSPDSSpacing.md,
             ),
             child: TextButton(
               onPressed: onReturn,
               child: Text(
                 isArabic ? 'العودة لمحافظتي' : 'Return to my location',
+                style: VSPDSTypography.actionLabel,
               ),
             ),
           ),
