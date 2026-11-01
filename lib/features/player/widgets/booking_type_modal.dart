@@ -138,12 +138,20 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
+    final media = MediaQuery.of(context);
+    final availableHeight = (media.size.height -
+            media.viewInsets.bottom -
+            media.padding.top -
+            media.padding.bottom)
+        .clamp(240.0, media.size.height)
+        .toDouble();
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         VSPSpacing.md,
         VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom + VSPSpacing.md,
+        media.padding.bottom + VSPSpacing.md,
       ),
       decoration: const BoxDecoration(
         color: VSPColors.surface,
@@ -151,7 +159,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.82,
+          maxHeight: availableHeight * 0.82,
         ),
         child: SingleChildScrollView(
           child: Column(
