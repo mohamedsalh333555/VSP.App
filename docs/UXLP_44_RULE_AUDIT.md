@@ -1259,3 +1259,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 36, and 43 — owner dashboard data freshness:** stale championship refresh responses/errors are ignored when a newer refresh starts or the active owner scope changes. Runtime refresh-race validation remains pending.
+
+
+- **Rules 31, 38, 39, and 43 — owner-scope isolation:** championship approval-notice claim responses are now discarded if the authenticated owner or owner-scope generation changes while the request is in flight. This prevents an old account's asynchronous result from contaminating the next owner's local dashboard state. Source-level correction; runtime account-switch validation remains pending.
