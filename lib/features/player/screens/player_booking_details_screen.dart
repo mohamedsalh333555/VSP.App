@@ -52,6 +52,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
     final detailsController = TextEditingController();
     final submitted = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -73,7 +74,7 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(ar ? 'إلغاء' : 'Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, reasonController.text.trim().isNotEmpty),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white),
             child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
           ),
         ],
@@ -181,9 +182,9 @@ class PlayerBookingDetailsScreen extends StatelessWidget {
           const SizedBox(height: VSPSpacing.md),
           ElevatedButton.icon(
             onPressed: () => _openChat(context),
-            icon: const Icon(Iconsax.message_copy, color: Colors.black),
+            icon: const Icon(Iconsax.message_copy, color: VSPColors.black),
             label: Text(ar ? 'المحادثة المرتبطة بالحجز' : 'Chat with the related participant'),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: VSPColors.black),
           ),
           const SizedBox(height: VSPSpacing.sm),
           OutlinedButton.icon(
