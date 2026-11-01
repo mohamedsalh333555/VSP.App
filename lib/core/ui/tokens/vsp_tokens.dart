@@ -32,6 +32,8 @@ class VSPColors {
   static const error = VSPDSSemanticColors.error;
   static const success = VSPDSSemanticColors.success;
   static const warning = VSPDSSemanticColors.warning;
+  static const warningSoft = VSPDSSemanticColors.warningSoft;
+  static const warningBorder = VSPDSSemanticColors.warningBorder;
   static const info = VSPDSSemanticColors.info;
   static const Color black = VSPDSColors.black;
   static const Color black26 = VSPDSColors.black26;
@@ -54,6 +56,13 @@ class VSPColors {
   static const Color white06 = VSPDSColors.white06;
   static const Color white50 = VSPDSColors.white50;
   static const Color white54 = VSPDSColors.white54;
+  static const Color white03 = VSPDSColors.white03;
+  static const Color white20 = VSPDSColors.white20;
+  static const Color white25 = VSPDSColors.white25;
+  static const Color black10 = VSPDSColors.black10;
+  static const Color black25 = VSPDSColors.black25;
+  static const Color black30 = VSPDSColors.black30;
+  static const Color black85 = VSPDSColors.black85;
   static const Color whatsApp = VSPDSColors.whatsappGreen;
   static const Color proAccent = accent;
   static const Color proAccentSoft = accentSoft;
