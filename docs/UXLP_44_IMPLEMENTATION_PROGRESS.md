@@ -2200,3 +2200,5 @@ Read-only inspection was performed against the connected production VSP project 
 - No tests, analyzer, CI, device checks, or APK build were run.
 
 - Follow-up: checkout initialization now checks the same flag before starting timers, loading fee data, or creating a pending booking. When online payment is disabled, the screen explains that no temporary booking/slot was created and offers a safe return path. Source commit: `8e7e0928745182928e3f04e6e6c317d105bef541`.
+
+- Account-lifecycle follow-up: if the authenticated account changes (or the checkout screen is disposed) while the initial pending-booking request is in flight, the returned pending lock is now released instead of being orphaned outside the active screen. Source commit: `4c3e3169290864b83091f0fb0def8f3f0a42d3fd`.
