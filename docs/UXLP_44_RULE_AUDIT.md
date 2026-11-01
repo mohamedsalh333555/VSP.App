@@ -1116,3 +1116,5 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 9, 10, 28, 36, and 42:** full-page loading states in facility onboarding, owner championships/inbox/subscription plans, tournament brackets, match details/live matchup, support ticket detail/list streams, team profile, My Team, and notification preferences now use the shared bilingual state component with a localized title and contextual message. Existing retry/error/empty branches and data operations were preserved. Small inline progress indicators for button submissions and image loading remain intentionally local.
 - No rule is marked pass from source edits alone. Locale rendering, narrow viewport behavior, keyboard interaction, and stream recovery remain part of the single final runtime validation pass.
+
+- **Rule 33:** owner tournament dashboard confirmation, force-start, cancellation, and destructive dialog actions now use 48dp primary-action heights instead of 44dp. Source-only; tap-area verification remains part of final device validation.
