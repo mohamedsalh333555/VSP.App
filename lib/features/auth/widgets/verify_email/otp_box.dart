@@ -44,9 +44,11 @@ class OtpBox extends StatelessWidget {
               ]
             : [],
       ),
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: onKey,
+      child: Focus(
+        onKeyEvent: (node, event) {
+          onKey(event);
+          return KeyEventResult.ignored;
+        },
         child: TextField(
           controller: controller,
           focusNode: focusNode,
