@@ -513,3 +513,5 @@ The following registered screens now use `VSPStateView` with localized Arabic/En
 - Dialog touch-target pass: owner document-upload, stadium discard/delete, Paymob still-waiting, and tournament dashboard dialogs now use explicit 48dp minimum action heights/tap targets where their previous dimensions were below the standard.
 
 - Chat dialog follow-up: `player/widgets/chat/chat_dialogs.dart` report form is keyboard-scrollable and all report/delete actions use explicit 48dp hit targets.
+
+- `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart`: prize handover dialog actions now use explicit 48dp minimum targets.
