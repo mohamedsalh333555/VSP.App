@@ -1250,3 +1250,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 9 and 10 — bilingual signup feedback:** password-strength status labels now render in Arabic or English according to the active locale. Device/readability verification remains pending.
+
+
+- **Rules 9, 29, 36, and 43 — signup recovery and truthful status:** unexpected auth failures no longer strand the submit button in loading; secure-storage failure after account creation is distinguished from auth failure to reduce duplicate-registration risk. Runtime verification remains pending.
