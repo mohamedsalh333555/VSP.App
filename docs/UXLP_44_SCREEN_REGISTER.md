@@ -318,7 +318,7 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/champion/vsp_1v1_league_tab.dart` | player | source reviewed—runtime pending (1v1 tournament and roster stream loading/error/stale states; payment and cancellation lifecycle unchanged) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_hero_card.dart` | player | source reviewed—runtime pending (localized tournament name and governorate, capacity counts, and bounded progress value) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_prize_card.dart` | player | source reviewed—runtime pending (entry fee and prize values displayed from supplied server data with EGP localization) |
-| `lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart` | player | source reviewed—runtime pending (registration/refund/location states; 48dp cancel/switch actions and disabled join action while payment is processing) |
+| `lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart` | player | source reviewed—runtime pending (registration/refund/location states; 48dp cancel/switch actions and disabled join action with loading feedback while payment is processing) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart` | player | source reviewed—runtime pending (server-confirmed roster presentation, localized player-name fallback, and empty state; avatar loading/network failures render the player's initial) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart` | player | source reviewed—runtime pending (standings loading/error/empty states; uses parent retry and preserves last data with stale warning) |
 
