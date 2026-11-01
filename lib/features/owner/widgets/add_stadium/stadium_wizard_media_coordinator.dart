@@ -96,7 +96,7 @@ class StadiumWizardMediaCoordinator {
       ownerId: ownerId,
       onProgress: (progress) {
         imageEntry['progress'] = progress;
-        onStateChanged();
+        if (context.mounted) onStateChanged();
       },
     );
 
