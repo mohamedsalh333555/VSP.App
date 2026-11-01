@@ -2088,3 +2088,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 
 - Safe-area audit found the Add Player sheet was opened scroll-controlled without `useSafeArea`, and the sheet root itself had no top SafeArea. The caller now sets `useSafeArea: true`; its existing keyboard-aware scroll and bottom inset remain unchanged. Code commit: `c8d23b63b58feec37065412e496187c021e5e909`. No device/keyboard validation run.
+
+
+## Stadium wizard numeric and bilingual validation — 2026-11-01
+
+- `StadiumWizardValidator.validateStep0` previously checked only that the hourly price was non-empty; malformed text could later be converted to `0.0` in the payload. It now requires a finite non-negative numeric value. Step 1 similarly rejects non-finite/invalid ball-rental values when ball rental is enabled and rejects non-finite or non-positive deposits. Existing deposit cap behavior (50% of hourly price when price is positive) remains unchanged.
+- `validateStep2` now receives the current locale and displays a bilingual message while images are uploading instead of always showing English. Updated caller in `add_stadium_wizard.dart`. Code commits: `101c7ddb214485930be7ef65e84d95171a6af534`, `4d37c62faef5b6648c82cf81b8c01880ac2f3659`. No tests/analyzer/CI/device/APK run.
