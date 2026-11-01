@@ -9,7 +9,20 @@ class BookingSlotCalculator {
 
   static bool _isValidTime(String value) {
     final match = RegExp(
-      r'^\\s*(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM|ص|م|مساءً|صباحاً)?\\s*(int totalMinutes, bool isArabic) {
+      r'^\s*(\d{1,2})(?::(\d{1,2}))?\s*(AM|PM|ص|م|مساءً|صباحاً)?\s*$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    if (match == null) return false;
+    final hour = int.tryParse(match.group(1) ?? '');
+    final minute = int.tryParse(match.group(2) ?? '0');
+    if (hour == null || minute == null || minute < 0 || minute > 59) {
+      return false;
+    }
+    final hasPeriod = match.group(3) != null;
+    return hasPeriod ? hour >= 1 && hour <= 12 : hour >= 0 && hour <= 23;
+  }
+
+  static String _formatMinutesToTime(int totalMinutes, bool isArabic) {
     return AppDateFormatter.formatMinutesToTime(totalMinutes, isArabic);
   }
 
