@@ -412,6 +412,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       ),
       body: SafeArea(
         top: false,
+        bottom: false,
         child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
