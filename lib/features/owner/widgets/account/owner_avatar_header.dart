@@ -67,7 +67,7 @@ class OwnerAvatarHeader extends StatelessWidget {
                       )
                     : null,
                 color: isPro ? null : VSPColors.surfaceAlt,
-                border: isPro ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                border: isPro ? null : Border.all(color: VSPColors.white15, width: 1.5),
                 boxShadow: isPro
                     ? [
                         BoxShadow(color: VSPColors.proAccent.withValues(alpha: 0.35), blurRadius: 14),
@@ -95,9 +95,9 @@ class OwnerAvatarHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: VSPColors.accent,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 2),
+                  border: Border.all(color: VSPColors.black, width: 2),
                 ),
-                child: const Icon(Iconsax.camera_copy, size: 13, color: Colors.black),
+                child: const Icon(Iconsax.camera_copy, size: 13, color: VSPColors.black),
               ),
             ),
           ],
