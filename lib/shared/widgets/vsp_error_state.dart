@@ -21,33 +21,40 @@ class VSPErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
-    final isOnline = ConnectivityService.instance.isCurrentOnline;
 
-    final title = !isOnline
-        ? (isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection')
-        : (isArabic ? 'تعذر تحميل البيانات' : 'Could not load data');
+    // Connectivity is a ValueNotifier. Listen to it so an already-visible
+    // error state switches between offline and server messaging immediately
+    // when the device regains or loses a network connection.
+    return ValueListenableBuilder<bool>(
+      valueListenable: ConnectivityService.instance.isOnlineNotifier,
+      builder: (context, isOnline, _) {
+        final title = !isOnline
+            ? (isArabic ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection')
+            : (isArabic ? 'تعذر تحميل البيانات' : 'Could not load data');
 
-    final message = !isOnline
-        ? (isArabic
-            ? 'تحقق من الاتصال ثم جرّب مرة أخرى.'
-            : 'Check your connection and try again.')
-        : (customMessage ??
-            (isArabic
-                ? 'تعذر الوصول إلى الخادم في الوقت الحالي.'
-                : 'The server could not be reached right now.'));
+        final message = !isOnline
+            ? (isArabic
+                ? 'تحقق من الاتصال ثم جرّب مرة أخرى.'
+                : 'Check your connection and try again.')
+            : (customMessage ??
+                (isArabic
+                    ? 'تعذر الوصول إلى الخادم في الوقت الحالي.'
+                    : 'The server could not be reached right now.'));
 
-    return VSPStateView(
-      state: !isOnline ? VSPUiState.offline : VSPUiState.error,
-      title: title,
-      message: message,
-      icon: !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy,
-      onRetry: onRetry,
-      action: retryButtonText != null
-          ? PrimaryButton(
-              text: retryButtonText!,
-              onPressed: onRetry,
-            )
-          : null,
+        return VSPStateView(
+          state: !isOnline ? VSPUiState.offline : VSPUiState.error,
+          title: title,
+          message: message,
+          icon: !isOnline ? Iconsax.wifi_square_copy : Iconsax.cloud_cross_copy,
+          onRetry: onRetry,
+          action: retryButtonText != null
+              ? PrimaryButton(
+                  text: retryButtonText!,
+                  onPressed: onRetry,
+                )
+              : null,
+        );
+      },
     );
   }
 }
