@@ -760,3 +760,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Owner-report submission now catches repository exceptions, logs the technical error, and presents localized retry guidance instead of allowing an unhandled async failure. A submission guard prevents duplicate report requests while the request is in flight.
 - Report target, booking linkage, repository contract, and moderation policy are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `35a2742a61a08f3420d8c560e57fd48787d5fde6`.
+
+
+## Match-report dialog compact-viewport correction — 2026-11-01
+
+- The match-report reason selector dialog now uses scrollable AlertDialog content so its explanatory text, reason selector, and actions remain accessible on compact screens and when the keyboard/insets reduce available height.
+- Report submission behavior and moderation rules are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `8fa0d4e595881a198e2294f9f87f5f2363b9b893`.
