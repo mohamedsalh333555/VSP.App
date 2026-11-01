@@ -188,7 +188,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                           subtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? VSPVSPColors.black87 : VSPColors.textSecondary,
+                            color: isSelected ? VSPColors.black87 : VSPColors.textSecondary,
                             fontSize: 10,
                           ),
                         ),
@@ -355,7 +355,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                 for (final bullet in summaryBullets) ...[
                   Text(
                     bullet,
-                    style: const TextStyle(color: VSPVSPColors.white70, fontSize: 12, height: 1.4),
+                    style: const TextStyle(color: VSPColors.white70, fontSize: 12, height: 1.4),
                   ),
                   const SizedBox(height: 4),
                 ],
