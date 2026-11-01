@@ -2134,3 +2134,9 @@ Read-only inspection was performed against the connected production VSP project 
 ## Owner championship refresh ordering — 2026-11-01
 
 - The owner dashboard could receive overlapping championship refreshes from initial scope setup, pull-to-refresh, home visibility, and retry. A request-generation guard now prevents an older fetch/error from overwriting the latest result, and owner-scope changes invalidate outstanding requests. Code commit: `56dc2ef543c7991539a77c6b47f8742b939c42f2`. No tests/analyzer/CI/device/APK run.
+
+
+## Owner approval notice account-switch race — 2026-11-01
+
+- `owner_dashboard_screen.dart`: approval-notice claim responses are now scoped to the authenticated owner and the active owner-scope generation. If the account changes while a claim request is in flight, its late response is ignored and cannot repopulate the next owner's local notice state. The owner ID is passed explicitly into the claim routine; request errors remain diagnostic-only because the dashboard already has the championship refresh recovery path.
+- Source-only correction. No RPC signature, database policy, notification retention, business rule, analyzer, tests, CI, runtime checks, or APK build was changed/run.
