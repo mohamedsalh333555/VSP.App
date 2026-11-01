@@ -883,3 +883,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `tournament_score_modal.dart`:** removed duplicate keyboard inset subtraction from sheet height and duplicate keyboard inset padding below the footer. Also removed the 240dp minimum that could exceed a compact viewport. The modal route now owns keyboard constraints; footer keeps the system bottom inset.
 - Source commit: `7ea2f5a740d42b5ed7bd732fc99b6a1f66c600c6`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Owner booking, quick-phone booking, and manual-team sheet viewport corrections — 2026-11-01
+
+- **Rules 11 and 35 — `owner_booking_sheet.dart`, `quick_phone_booking_modal.dart`, and `tournament_manual_team_sheet.dart`:** these scroll-controlled SafeArea routes were manually subtracting/adding keyboard view insets in addition to the route's own keyboard handling. Removed duplicate keyboard/system inset calculations, retained system bottom padding, and removed the manual-team sheet's unsafe 240dp minimum. Parent route constraints now determine actual keyboard-safe height.
+- Source commits: `068d381b19a96f935560c9a8b69ca558a088ba2f`, `d96527b83cd298ae44d32edd414950a3d1e9f0e2`, `981951eebe65b85d4953b60a8806b1aea97d18b7`. Keyboard/device verification remains pending; no tests or build were run.
