@@ -42,7 +42,7 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
     );
 
     // Use explicit delay if provided, otherwise fall back to index-based stagger
-    final effectiveDelay = widget.delay ?? Duration(milliseconds: widget.index * VSPDSMotion.staggerStepMilliseconds);
+    final effectiveDelay = widget.delay ?? VSPDSMotion.staggerDelay(widget.index);
     Future.delayed(effectiveDelay, () {
       if (mounted) _controller.forward();
     });
