@@ -202,7 +202,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             const SizedBox(width: 8),
             Text(
               isAr ? 'بدء المنافسة رسميًا' : 'Kickoff Competition',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -221,7 +221,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
             ),
             child: Text(isAr ? 'تأكيد الانطلاق' : 'Confirm Kickoff', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -380,7 +380,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
