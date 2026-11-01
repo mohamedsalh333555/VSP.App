@@ -368,3 +368,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 | `lib/features/player/widgets/championship_checkout/checkout_championship_header.dart` | player | source reviewed—runtime pending (championship title and governorate/team metadata are bounded for long names and compact widths) |
 | `lib/features/player/widgets/championship_checkout/checkout_squad_requirement_card.dart` | player | source reviewed—runtime pending (roster heading yields to the count badge; min/max requirement copy remains localized) |
+
+
+### Newly inventoried stadium information surface — 2026-11-01
+
+| `lib/features/player/widgets/stadium_details/stadium_information_tab.dart` | player | source reviewed—runtime pending (map-location action is focusable/localized; address is bounded; external launch failure has localized feedback) |
