@@ -81,16 +81,23 @@ class ChatInputBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          GestureDetector(
-            onTap: isSending ? null : onSendMessage,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-              child: Center(
-                child: Transform.rotate(
-                  angle: ar ? 3.14159 : 0,
-                  child: const Icon(Iconsax.send_1_copy, color: Colors.black, size: 20),
+          Tooltip(
+            message: ar ? 'إرسال الرسالة' : 'Send message',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: isSending ? null : onSendMessage,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
+                  child: Center(
+                    child: Transform.rotate(
+                      angle: ar ? 3.14159 : 0,
+                      child: const Icon(Iconsax.send_1_copy, color: Colors.black, size: 20),
+                    ),
+                  ),
                 ),
               ),
             ),
