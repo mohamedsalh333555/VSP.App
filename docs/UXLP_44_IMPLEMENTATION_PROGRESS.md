@@ -1800,3 +1800,16 @@ Read-only inspection was performed against the connected production VSP project 
 - Reviewed shared loading and error presentation in `VSPStateView` and `VSPErrorState`: loading/processing content is bounded and scrollable, has a localized progress semantic label, and error/offline states distinguish connectivity from server failures, announce the state through a live region, and provide retry.
 - Source commits: `d62fbf3cd79e307b98168e15739c8f95768e9320`, `579addbd0da8e7d00c39be5aafe473a72d9a8da1`, `13690300262d064c25a47c7f78de5caee1fff00c`, `8f2a0799e9a0e7f67d1d6fb8c216e7f061fae8e9`.
 - Scope of this pass: 3 Dart source files consolidated; shared loading/error components source-reviewed, not changed. This is not proof that every caller uses the shared components correctly. Caller-by-caller coverage and runtime checks remain pending. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Dialog action target and Supabase observability review — 2026-11-01
+
+- `payment_cancel_dialog.dart`: both checkout exit/continue actions now have a minimum 48×48dp hit target while preserving the existing localized copy and cancellation callback contract.
+- `booking_sheet_cancel_dialog.dart`: the standard cancellation dialog actions and manual-deposit abort action now have minimum 48×48dp hit targets; refund/penalty decisions and ledger wording were not changed.
+- Supabase read-only inspection for project `mktqkddbcddrxjxabdua`:
+  - Unified logs sources currently available: `edge_logs`, `postgres_logs`, `postgrest_logs`.
+  - Last-24-hour error-pattern query surfaced 121 PostgREST entries matching the Warp server timeout message; the sample message is dated 2026-10-31 09:11 UTC. This is a log-pattern count, not 121 unique user incidents.
+  - Security advisors report 1 SECURITY DEFINER view (`public.teams_public`), 198 authenticated-executable SECURITY DEFINER function findings, and leaked-password protection disabled.
+  - Direct ACL query confirms `get_team_active_league`, `submit_team_league_match_result`, and `vsp_user_is_tournament_participant` are SECURITY DEFINER and executable by authenticated.
+- No Supabase grants, RLS policies, views, functions, auth settings, migrations, or production data were changed. The broad 198-function advisor result must be triaged by intended client entry points and internal wrapper dependencies; blanket revocation would risk breaking app workflows.
+- No tests, analyzer, CI, runtime validation, or APK build were run.
