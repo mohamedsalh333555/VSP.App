@@ -143,7 +143,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(Localizations.localeOf(context).languageCode == 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.'));
       }
     }
   }
@@ -198,7 +198,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(Localizations.localeOf(context).languageCode == 'ar' ? 'يرجى المحاولة مرة أخرى.' : 'Please try again.'));
       }
     }
   }
