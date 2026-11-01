@@ -147,7 +147,7 @@ void showBookingPaymentMethodSheet({
                       leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                       title: Text(
                         isArabic ? 'دفع كامل المبلغ أونلاين' : 'Pay Full Amount Online',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
                         isArabic
@@ -216,7 +216,7 @@ void showBookingPaymentMethodSheet({
                         leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                         title: Text(
                           isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
@@ -253,7 +253,7 @@ void showBookingPaymentMethodSheet({
                       title: Text(
                         isArabic ? 'دفع نقدي بالكامل في الملعب' : 'Pay Full Cash at Pitch',
                         style: TextStyle(
-                          color: isCrossGovernorate ? VSPColors.textSecondary : Colors.white,
+                          color: isCrossGovernorate ? VSPColors.textSecondary : VSPColors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
