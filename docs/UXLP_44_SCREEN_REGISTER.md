@@ -3,11 +3,11 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface paths: 211 unique paths
+- Registered Dart screen/surface paths: 213 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 237, including 26 repeated paths that document separate embedded-component findings
+- Table records: 239, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
-- Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 211 currently registered paths.
+- Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 213 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
 - Status values: not yet inspected / source reviewed—runtime pending / pass / fail / needs product decision / not applicable.
 - Do not mark a file complete until Arabic and English, role, loading/empty/error/success states, keyboard, safe area, and navigation have been considered where applicable.
@@ -106,11 +106,13 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/player_booking_details_screen.dart` | player | source reviewed—runtime pending (report dialog scroll-safe; report success/failure feedback correct; booking lifecycle statuses localized in Arabic/English) |
 | `lib/features/player/screens/player_home_screen.dart` | player | source reviewed—runtime pending (post-match prompts require participating captain, eligible booking state, and independent opposing captain for second review) |
 | `lib/features/player/widgets/home/home_stadiums_section.dart` | player | source reviewed—runtime pending (horizontal home-stadium carousel inter-card spacing now uses directional end margin for RTL/LTR consistency) |
+| `lib/features/player/widgets/home/home_feed_sections.dart` | player | source reviewed—runtime pending (horizontal public-match and championship carousel spacing now uses directional end margins for RTL/LTR consistency) |
 | `lib/features/player/screens/profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, action states, and consistent profile-avatar loading/error fallback across header and no-team card) |
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (team actions reviewed; Supabase auth ID reads corrected to User.id) |
+| `lib/features/player/widgets/my_team/team_members_section.dart` | player | source reviewed—runtime pending (captain/member trophy badges and remove-member action spacing now use directional insets for RTL/LTR consistency) |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | source reviewed—runtime pending (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source reviewed—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected; ticket and message streams distinguish loading/error/empty and expose retry) |
