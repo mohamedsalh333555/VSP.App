@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 280 unique paths
+- Registered Dart screen/surface and embedded-component paths: 290 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 307, including 27 repeated paths that document separate embedded-component findings
+- Table records: 317, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -188,6 +188,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/dashboard/owner_venue_filter_chips.dart` | owner | source reviewed—runtime pending (venue filter chips; selection state and scroll behavior pending) |
 | `lib/features/owner/widgets/dashboard/owner_verification_banner.dart` | owner | source reviewed—runtime pending (verification/subscription/grace-period banners; status-specific copy and actions pending) |
 | `lib/features/owner/widgets/documentation/doc_explanation_card.dart` | owner | source reviewed—runtime pending (document-step explanation card; localized instructions and responsive text pending) |
+| `lib/features/owner/widgets/documentation/doc_step_commercial_register.dart` | owner | source reviewed—runtime pending (commercial-register document capture; image/file error and permission states pending) |
+| `lib/features/owner/widgets/documentation/doc_step_national_id.dart` | owner | source reviewed—runtime pending (national-ID document capture; image/file error and permission states pending) |
+| `lib/features/owner/widgets/documentation/doc_step_tax_card.dart` | owner | source reviewed—runtime pending (tax-card document capture; image/file error and permission states pending) |
+| `lib/features/owner/widgets/documentation/doc_wizard_step_indicator.dart` | owner | source reviewed—runtime pending (document wizard progress indicator; locale and narrow-width behavior pending) |
+| `lib/features/owner/widgets/ledger/owner_ledger_balance_cards.dart` | owner | source reviewed—runtime pending (digital balance and pitch-cash cards; real balance source and zero/error state pending) |
+| `lib/features/owner/widgets/quick_booking/quick_booking_customer_fields.dart` | owner | source reviewed—runtime pending (quick-booking customer fields; phone validation and optional WhatsApp receipt copy pending) |
+| `lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart` | owner | source reviewed—runtime pending (duration-chip gaps now use directional start spacing in both compact and horizontal layouts) |
+| `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart` | owner | source reviewed—runtime pending (quick-booking payment section; amount/fee data and state-dependent actions pending) |
+| `lib/features/owner/widgets/tournament/cups/owner_cup_card.dart` | owner | source reviewed—runtime pending (owner cup card; tournament status/actions and long-title rendering pending) |
+| `lib/features/owner/widgets/tournament/cups/owner_cup_empty_view.dart` | owner | source reviewed—runtime pending (owner cup empty state; neutral icon styling and CTA relevance pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
