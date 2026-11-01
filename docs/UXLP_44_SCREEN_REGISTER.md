@@ -720,3 +720,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/services/payment_checkout_coordinator.dart`: payment poll generations are invalidated when polling is replaced or cancelled, so an already-running network request from an old checkout cannot report success into a newer/abandoned checkout.
+
+
+- `lib/features/owner/screens/owner_dashboard_screen.dart`: overlapping owner-championship refreshes now use a request generation; results and errors from an earlier refresh are ignored, and changing the active owner scope invalidates pending refreshes.
