@@ -1097,3 +1097,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - Rule 11/35: verify-email OTP row now sizes six digit boxes against the actual available width (32–46dp), removing the fixed-width overflow on narrow phones.
 - Rule 39/40: RootScreen deferred post-frame auth lookup and SignupScreen deferred auto-location now exit safely when disposed.
 - Source-only evidence. Device/large-text and Arabic/English runtime rendering remain pending.
+
+
+### Auth and player state-recovery follow-up — 2026-11-01
+
+- **Rules 9, 10, 11, and 36:** email OTP verification and resend now recover from unexpected thrown errors with localized retry guidance and restore their in-flight controls; local pending-email cleanup failure after a successful server verification no longer presents a false verification failure. Profile team-card loading and global search loading now use the shared bilingual state renderer instead of bare spinners. Existing explicit profile/search error and retry branches remain intact.
+- These are source-level changes only. No rule is promoted to pass; Arabic/English rendering, keyboard behavior, and failure recovery still require the single consolidated runtime validation pass. No tests, analyzer, CI, device run, or APK build was run.
