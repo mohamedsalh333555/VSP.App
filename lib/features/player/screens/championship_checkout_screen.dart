@@ -410,7 +410,9 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
@@ -507,6 +509,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           isLoading: _isSubmitting,
           onPressed: isSelectionValid ? _handleConfirmAndPay : null,
         ),
+      ),
       ),
     );
   }
