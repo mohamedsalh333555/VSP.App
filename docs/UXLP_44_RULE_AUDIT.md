@@ -1133,3 +1133,5 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Rules 10, 13, and 36:** My Team's unauthenticated fallback no longer exposes a raw English-only diagnostic; it now presents a safe-area-protected Arabic/English account error with a clear sign-in recovery instruction.
 
 - **Rule 33:** owner document-upload cancellation, add-stadium discard/delete, and Paymob still-waiting dialog actions now have explicit 48dp minimum height and padded hit targets. Source-only; final touch-area validation remains pending.
+
+- **Rules 11, 33, and 35:** chat report dialog now scrolls under keyboard pressure; all report/delete dialog actions have explicit 48dp minimum hit targets.
