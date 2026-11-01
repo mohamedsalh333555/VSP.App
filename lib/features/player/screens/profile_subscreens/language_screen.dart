@@ -27,7 +27,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(
@@ -65,7 +65,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: VSPColors.accent,
-                        foregroundColor: Colors.black,
+                        foregroundColor: VSPColors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(VSPRadius.md),
                         ),
@@ -74,7 +74,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                       child: Text(
                         AppLocalizations.of(context)!.done,
                         style: const TextStyle(
-                          color: Colors.black,
+                          color: VSPColors.black,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -103,7 +103,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
       selected: isSelected,
       label: name,
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         child: InkWell(
           onTap: () => onSelect(code),
           borderRadius: BorderRadius.circular(VSPRadius.md),
