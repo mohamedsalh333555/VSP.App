@@ -168,7 +168,17 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         leading: const VSPBackButton(), title: Text(widget.title),
         actions: [IconButton(tooltip: ar ? 'تصعيد عبر واتساب' : 'Escalate via WhatsApp', onPressed: _whatsappFallback, icon: const Icon(Iconsax.message_text_1_copy, color: VSPColors.accent))],
       ),
-      body: StreamBuilder<Map<String, dynamic>?>(
+      body: userId.isEmpty
+          ? Center(
+              child: Text(
+                ar
+                    ? 'سجّل الدخول لعرض تذكرة الدعم.'
+                    : 'Sign in to view this support ticket.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+            )
+          : StreamBuilder<Map<String, dynamic>?>(
         key: ValueKey(_streamUserId),
         stream: _ticketStream,
         builder: (context, ticketSnapshot) {
