@@ -1953,3 +1953,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `add_stadium_step1_details.dart`: note-template chip spacing now uses directional `end` rather than physical `right`.
 - Registered these owner components plus owner avatar/delete/payout cards, add-stadium hours/location sections, and the two Copilot conversation/message widgets for explicit caller-level review. No payout, profile, stadium, geolocation, Copilot permission, or data behavior changed.
 - Code commits: `0a5d7a360eab02616241d4be756710d7a82712ec`, `e3ba1d2d331741b4c25fd3c9761c5dfca8b7d386`, `4c88bb9e4dfb18933e5f81f343f9b8b1b1f46e79`, `1df1e3239ad5fad3912f5f666e782a25b53e7891`. Source-only; no tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Owner dashboard and stadium-wizard RTL pass — 2026-11-01
+
+- `lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart`: both selected-value dropdown alignments now use `AlignmentDirectional.centerEnd` instead of physical `Alignment.centerRight`, so the displayed filter value follows RTL/LTR reading direction.
+- Added ten previously unregistered owner embedded components to the coverage register: stadium feature/image/step-indicator widgets, tournament champion banner, booking/revenue/KPI insight cards and grid, top filters, and basic financial glance. Their underlying Supabase data, caller integration, and runtime behavior remain pending individual review.
+- Code commit: `e54b53d957dbc27fb894eed8007de70879867f7e`. No tests, analyzer, CI, runtime checks, or APK build were run.
