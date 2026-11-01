@@ -35,7 +35,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -47,7 +47,7 @@ class TournamentDashboardDialogs {
                   text: entryFee > 0
                       ? (isAr ? 'فهمت ذلك' : 'Understood')
                       : l10n.proceedAnyway,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
                   textColor: Colors.black,
                   onPressed: () => Navigator.pop(ctx, entryFee <= 0),
@@ -87,7 +87,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -97,7 +97,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.forceStart,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
                   textColor: Colors.black,
                   onPressed: () => Navigator.pop(ctx, true),
@@ -187,7 +187,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -197,7 +197,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: isAr ? 'تأكيد الإلغاء' : 'Confirm Cancel',
-                  height: 44,
+                  height: 48,
                   color: VSPColors.warning,
                   textColor: Colors.black,
                   onPressed: () => Navigator.pop(ctx, true),
@@ -261,7 +261,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx, false),
@@ -271,7 +271,7 @@ class TournamentDashboardDialogs {
               Expanded(
                 child: PrimaryButton(
                   text: isAr ? 'حذف نهائي' : 'Delete',
-                  height: 44,
+                  height: 48,
                   color: VSPColors.error,
                   textColor: Colors.white,
                   onPressed: () => Navigator.pop(ctx, true),
