@@ -293,7 +293,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
