@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
@@ -57,7 +58,7 @@ class ChallengeResultActions extends StatelessWidget {
       );
     }
 
-    if (booking.endTime.isBefore(DateTime.now())) {
+    if (booking.endTime.isBefore(VSPTimeService.now)) {
       return buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
 
