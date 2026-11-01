@@ -42,6 +42,8 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
       stream: _getUnreadStream(userId),
       builder: (context, snapshot) {
         final hasUnread = (snapshot.data ?? 0) > 0;
+        final unreadStatusFailed = snapshot.hasError;
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         return VspBottomNavBar(
           selectedIndex: widget.currentIndex,
           onItemTapped: widget.onTap,
@@ -61,6 +63,10 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
             activeIcon: Iconsax.messages_3_copy,
               label: AppLocalizations.of(context)!.chat,
               hasNotification: hasUnread, // النقطة الحمراء
+              hasWarning: unreadStatusFailed,
+              warningLabel: isArabic
+                  ? 'تعذر تحديث حالة الرسائل'
+                  : 'Message status unavailable',
             ),
             VspNavItem(
               inactiveIcon: Iconsax.calendar_1,
