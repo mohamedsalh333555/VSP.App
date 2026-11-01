@@ -121,12 +121,18 @@ class HomeMatchesSection extends StatefulWidget {
 }
 
 class _HomeMatchesSectionState extends State<HomeMatchesSection> {
-  late final Stream<List<Booking>> _matchesStream;
+  late Stream<List<Booking>> _matchesStream;
 
   @override
   void initState() {
     super.initState();
     _matchesStream = MatchRepository().getPublicMatches();
+  }
+
+  void _retryMatches() {
+    setState(() {
+      _matchesStream = MatchRepository().getPublicMatches();
+    });
   }
 
   @override
@@ -135,22 +141,27 @@ class _HomeMatchesSectionState extends State<HomeMatchesSection> {
       stream: _matchesStream,
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        if (snapshot.hasError) {
+        final matches = snapshot.data ?? [];
+        if (snapshot.hasError && matches.isEmpty) {
           debugPrint('Matches Stream Error: ${snapshot.error}');
           return VSPStateView(
             state: VSPUiState.error,
             title: isArabic ? 'تعذر تحميل المباريات' : 'Could not load matches',
             message: isArabic
-                ? 'حصلت مشكلة أثناء تحديث المباريات. حاول مرة تانية.'
-                : 'We could not refresh matches right now. Please try again.',
+                ? 'حصلت مشكلة أثناء تحميل المباريات. حاول مرة تانية.'
+                : 'We could not load matches right now. Please try again.',
+            onRetry: _retryMatches,
           );
         }
-
-        final matches = snapshot.data ?? [];
         final isLoading = snapshot.connectionState == ConnectionState.waiting && matches.isEmpty;
 
         return Column(
           children: [
+            if (snapshot.hasError)
+              _HomeFeedStaleWarning(
+                isArabic: isArabic,
+                onRetry: _retryMatches,
+              ),
             HomeSectionHeader(
               title: AppLocalizations.of(context)!.joinMatches,
               onSeeAll: matches.isNotEmpty ? () => widget.onNavigate(1) : null,
@@ -226,12 +237,18 @@ class HomeChampionshipsSection extends StatefulWidget {
 }
 
 class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
-  late final Stream<List<Championship>> _championshipsStream;
+  late Stream<List<Championship>> _championshipsStream;
 
   @override
   void initState() {
     super.initState();
     _championshipsStream = TournamentRepository().getChampionshipsStream();
+  }
+
+  void _retryChampionships() {
+    setState(() {
+      _championshipsStream = TournamentRepository().getChampionshipsStream();
+    });
   }
 
   @override
@@ -240,22 +257,27 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
       stream: _championshipsStream,
       builder: (context, snapshot) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        if (snapshot.hasError) {
+        final championships = snapshot.data ?? [];
+        if (snapshot.hasError && championships.isEmpty) {
           debugPrint('Championships Stream Error: ${snapshot.error}');
           return VSPStateView(
             state: VSPUiState.error,
             title: isArabic ? 'تعذر تحميل البطولات' : 'Could not load tournaments',
             message: isArabic
-                ? 'حصلت مشكلة أثناء تحديث البطولات. حاول مرة تانية.'
-                : 'We could not refresh tournaments right now. Please try again.',
+                ? 'حصلت مشكلة أثناء تحميل البطولات. حاول مرة تانية.'
+                : 'We could not load tournaments right now. Please try again.',
+            onRetry: _retryChampionships,
           );
         }
-
-        final championships = snapshot.data ?? [];
         final isLoading = snapshot.connectionState == ConnectionState.waiting && championships.isEmpty;
 
         return Column(
           children: [
+            if (snapshot.hasError)
+              _HomeFeedStaleWarning(
+                isArabic: isArabic,
+                onRetry: _retryChampionships,
+              ),
             HomeSectionHeader(
               title: AppLocalizations.of(context)!.joinChampionships,
               onSeeAll: championships.isNotEmpty
@@ -321,4 +343,39 @@ class _HomeChampionshipsSectionState extends State<HomeChampionshipsSection> {
     );
   }
 
+}
+
+class _HomeFeedStaleWarning extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onRetry;
+
+  const _HomeFeedStaleWarning({
+    required this.isArabic,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 16),
+          const SizedBox(width: VSPSpacing.xs),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تعذر التحديث. المعروض آخر بيانات تم تحميلها.'
+                  : 'Refresh failed. Showing the last loaded data.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+            ),
+          ),
+          TextButton(
+            onPressed: onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
 }
