@@ -18,6 +18,7 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -70,6 +71,7 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -123,6 +125,7 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -220,6 +223,7 @@ class TournamentDashboardDialogs {
 
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
