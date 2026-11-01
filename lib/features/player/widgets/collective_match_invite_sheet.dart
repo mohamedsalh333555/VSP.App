@@ -399,7 +399,17 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
         Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(4))),
         Padding(padding: const EdgeInsets.fromLTRB(20, 14, 12, 8), child: Row(children: [
           const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 22), const SizedBox(width: 10),
-          Expanded(child: Text(ar ? 'التجميعية الخاصة' : 'Private Collective Match', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900))),
+          Expanded(
+            child: Text(
+              ar ? 'التجميعية الخاصة' : 'Private Collective Match',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w900),
+            ),
+          ),
           IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary)),
         ])),
         Expanded(child: ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 20), children: [
