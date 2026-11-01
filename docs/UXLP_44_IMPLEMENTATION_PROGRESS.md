@@ -1680,3 +1680,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart`: when no explicit `currentTime` is injected, the quick-cash card now defaults to `VSPTimeService.now`, matching the owner pending-cash bar, booking slots, and other date-sensitive UI. Explicit caller-supplied time remains supported.
 - Cash confirmation and payment-status mutation are unchanged. Source commit: `8a3a2007566590cb90779b0d31d774dbdb99f89d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Chat message accessibility and localized timestamp — 2026-11-01
+
+- `lib/features/player/widgets/chat/chat_message_bubble.dart`: the owner-authored message edit action remains available by long press and is now also exposed as a localized screen-reader custom action; sender names are constrained to one line with ellipsis, and message timestamps use the active locale's `DateFormat.jm` rather than a fixed English AM/PM format.
+- Message edit authorization, repository mutation, read state, and message content are unchanged. Source commit: `2f48a9caa58f078ffc48b29a5566238403db96b2`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
