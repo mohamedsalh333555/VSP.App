@@ -312,20 +312,11 @@ class VSPBottomActionBar extends StatelessWidget {
           VSPDSElevation.medium,
         ],
       ),
-      padding: padding is EdgeInsets
-          ? EdgeInsets.fromLTRB(
-              (padding as EdgeInsets).left,
-              (padding as EdgeInsets).top,
-              (padding as EdgeInsets).right,
-              (padding as EdgeInsets).bottom + safeBottom,
-            )
-          : EdgeInsets.fromLTRB(
-              VSPDSSpacing.md,
-              VSPDSSpacing.sm,
-              VSPDSSpacing.md,
-              VSPDSSpacing.md + safeBottom,
-            ),
-      child: child,
+      padding: padding,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: safeBottom),
+        child: child,
+      ),
     );
   }
 }
