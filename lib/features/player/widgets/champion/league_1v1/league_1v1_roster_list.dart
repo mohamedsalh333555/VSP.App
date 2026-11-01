@@ -18,6 +18,18 @@ class League1v1RosterList extends StatelessWidget {
     required this.isArabic,
   });
 
+  Widget _buildInitial(String initial, bool isMe) {
+    return Center(
+      child: Text(
+        initial,
+        style: TextStyle(
+          color: isMe ? VSPColors.accent : Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -72,8 +84,12 @@ class League1v1RosterList extends StatelessWidget {
             itemCount: players.length,
             itemBuilder: (ctx, idx) {
               final p = players[idx];
-              final pName = p['player_name'] ?? 'لاعب';
-              final pAvatar = p['avatar_url'] as String? ?? '';
+              final rawName = p['player_name']?.toString().trim() ?? '';
+              final pName = rawName.isNotEmpty
+                  ? rawName
+                  : (isArabic ? 'لاعب' : 'Player');
+              final pAvatar = p['avatar_url']?.toString().trim() ?? '';
+              final initial = pName.substring(0, 1).toUpperCase();
               final isMe = currentUserId != null && p['user_id'] == currentUserId;
 
               return Container(
@@ -110,16 +126,15 @@ class League1v1RosterList extends StatelessWidget {
                       ),
                       child: ClipOval(
                         child: pAvatar.isNotEmpty
-                            ? CachedNetworkImage(imageUrl: pAvatar, fit: BoxFit.cover)
-                            : Center(
-                                child: Text(
-                                  pName.isNotEmpty ? pName[0].toUpperCase() : 'P',
-                                  style: TextStyle(
-                                    color: isMe ? VSPColors.accent : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                            ? CachedNetworkImage(
+                                imageUrl: pAvatar,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) =>
+                                    _buildInitial(initial, isMe),
+                                placeholder: (_, __) =>
+                                    _buildInitial(initial, isMe),
+                              )
+                            : _buildInitial(initial, isMe),
                       ),
                     ),
                     const SizedBox(width: 12),
