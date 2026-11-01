@@ -190,9 +190,17 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_isLoading) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: SafeArea(top: false, bottom: true, child: Center(child: CircularProgressIndicator(color: VSPColors.accent))),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل المواجهة' : 'Loading matchup',
+            message: isArabic ? 'نحدّث تفاصيل المواجهة والإحصائيات.' : 'Fetching matchup details and statistics.',
+          ),
+        ),
       );
     }
 
