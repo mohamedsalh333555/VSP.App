@@ -1078,3 +1078,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Pending-booking payment status session feedback guard — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the Check Status action already captured the initiating player before the asynchronous booking lookup, but its exception path could still display a failure snackbar after that player had signed out and another account had become active. It now suppresses stale-session errors and verifies the same account again after refreshing the player's booking list.
 - Payment-state interpretation and checkout actions are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: c38e6c1220706f6fd9b834f6331f257576106229.
+
+
+## Pending booking cancellation confirmation session guard — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the pending-booking cancellation action previously captured the current player only after the confirmation dialog. Switching accounts while the dialog was open could therefore submit the cancellation using the newly active account. The initiating player is now captured before the dialog and verified immediately after confirmation and again after the cancellation request.
+- Cancellation behavior and booking rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 591b6a115864639f63a2e427f27e021e8e256c66.
