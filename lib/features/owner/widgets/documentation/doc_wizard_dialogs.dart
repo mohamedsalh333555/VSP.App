@@ -26,6 +26,10 @@ class DocWizardDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               isArabic ? 'متابعة الرفع' : 'Continue Upload',
@@ -34,7 +38,11 @@ class DocWizardDialogs {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.error,
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             child: Text(isArabic ? 'إلغاء وخروج' : 'Cancel & Exit'),
           ),
         ],
