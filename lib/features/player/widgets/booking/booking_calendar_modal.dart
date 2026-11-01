@@ -24,6 +24,8 @@ void showBookingCalendarModal({
       return StatefulBuilder(
         builder: (context, setModalState) {
           final mediaQuery = MediaQuery.of(context);
+          final isRtl = Directionality.of(context) == TextDirection.rtl;
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           final availableHeight = mediaQuery.size.height -
               mediaQuery.viewInsets.vertical -
               (VSPSpacing.xl * 2);
@@ -48,8 +50,9 @@ void showBookingCalendarModal({
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
+                        tooltip: isArabic ? 'الشهر السابق' : 'Previous month',
                         icon: Icon(
-                          Iconsax.arrow_left_2_copy,
+                          isRtl ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
                           color: currentMonth.isAfter(todayMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -67,8 +70,9 @@ void showBookingCalendarModal({
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       IconButton(
+                        tooltip: isArabic ? 'الشهر التالي' : 'Next month',
                         icon: Icon(
-                          Iconsax.arrow_right_1_copy,
+                          isRtl ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                           color: currentMonth.isBefore(maxMonth)
                               ? VSPColors.textSecondary
                               : VSPColors.textSecondary.withValues(alpha: 0.25),
