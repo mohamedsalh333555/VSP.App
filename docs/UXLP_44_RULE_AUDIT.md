@@ -841,3 +841,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 28 and 33 — `VSPErrorState`:** the widget previously sampled connectivity once and did not subscribe to the service notifier, allowing stale offline messaging to remain visible after the device regained a connection. It now listens to connectivity changes, swaps state/copy/icon immediately, and exposes the updated error state as a live region.
 - Source commits: `d6f20e446b907636add2cfb0c46046fa4da48e87`, `88a89f23515752def1cf2350bd063e37ab344ca1`. Runtime connectivity and screen-reader verification remains pending; no tests or build were run.
+
+
+### Empty-state icon tone and geometry consistency — 2026-11-01
+
+- **Rules 1, 2, 3, and 5 — `VSPEmptyState`, `ChampionEmptyState`, and `VSPStateView`:** the generic empty-state icon was brighter than the championship family, and the shared state view used a larger 32dp icon. Empty/disabled states now share the charcoal `zinc400` icon tone and 28dp icon-size token; error/success status icons remain unchanged.
+- Source commits: `20b07e2bb584426de7a86b625a0b80b2bb81fe6d`, `869014683a6328af5283ba2f74a023baf56df8b7`. Visual/device verification remains pending; no tests or build were run.
