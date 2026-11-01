@@ -118,7 +118,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  ),
  centerTitle: true,
  ),
- body: SafeArea(
+ body: SafeArea(top: false,
  child: SingleChildScrollView(
  padding: const EdgeInsets.all(VSPSpacing.xl),
  child: Form(
