@@ -224,13 +224,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
    final submitted = await showDialog<bool>(
      context: context,
+     useSafeArea: true,
      builder: (dlgCtx) => AlertDialog(
        scrollable: true,
        backgroundColor: VSPColors.surface,
        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
        title: Text(
          ar ? 'إبلاغ عن مشكلة بالملعب/المالك' : 'Report Stadium/Owner Issue',
-         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+         style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
        ),
        content: Column(
          mainAxisSize: MainAxisSize.min,
@@ -267,7 +268,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
            onPressed: () => Navigator.pop(dlgCtx, reasonController.text.trim().isNotEmpty),
            style: ElevatedButton.styleFrom(
              backgroundColor: VSPColors.error,
-             foregroundColor: Colors.white,
+             foregroundColor: VSPColors.white,
            ),
            child: Text(ar ? 'إرسال البلاغ' : 'Submit Report'),
          ),
@@ -347,11 +348,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
  showDialog(
  context: context,
+ useSafeArea: true,
  builder: (context) => StatefulBuilder(
  builder: (context, setDialogState) => AlertDialog(
  scrollable: true,
  backgroundColor: VSPColors.surface,
- title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: Colors.white)),
+ title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: VSPColors.white)),
  content: Column(
  mainAxisSize: MainAxisSize.min,
  children: [
@@ -366,7 +368,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  isExpanded: true,
  items: reasons.entries.map((entry) => DropdownMenuItem(
  value: entry.key,
- child: Text(entry.value, style: const TextStyle(color: Colors.white)),
+ child: Text(entry.value, style: const TextStyle(color: VSPColors.white)),
  )).toList(),
  onChanged: (val) {
  if (val != null) setDialogState(() => selectedReason = val);
@@ -394,7 +396,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  height: 48,
  isLoading: isSubmittingReport,
  color: VSPColors.error,
- textColor: Colors.white,
+ textColor: VSPColors.white,
  onPressed: isSubmittingReport ? null : () async {
  setDialogState(() => isSubmittingReport = true);
  try {
@@ -441,6 +443,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -450,7 +453,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
             const SizedBox(width: 8),
             Text(
               isArabic ? 'مغادرة المباراة' : 'Leave Match',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -468,7 +471,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -571,7 +574,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  if (_booking == null && _hasLoadError) {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- appBar: AppBar(backgroundColor: Colors.transparent),
+ appBar: AppBar(backgroundColor: VSPColors.transparent),
  body: SafeArea(
    child: VSPErrorState(
      customMessage: isAr
@@ -587,7 +590,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  if (_booking == null) {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
- appBar: AppBar(backgroundColor: Colors.transparent),
+ appBar: AppBar(backgroundColor: VSPColors.transparent),
  body: SafeArea(
    child: Center(
  child: Column(
@@ -595,7 +598,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  children: [
  const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 48),
  const SizedBox(height: 16),
- Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
+ Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: VSPColors.white)),
  TextButton(
  onPressed: () => Navigator.pop(context),
  child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
@@ -663,7 +666,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  actions: [
  if (_booking?.isOpenJoin != true || isHost)
  IconButton(
- icon: const Icon(Iconsax.share_copy, color: Colors.white),
+ icon: const Icon(Iconsax.share_copy, color: VSPColors.white),
  onPressed: () async {
  if (_booking == null) return;
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
@@ -820,7 +823,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                const SizedBox(height: 8),
                Text(
                  _booking!.playerTeamName ?? (isAr ? 'فريقنا' : 'Our Team'),
-                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                  textAlign: TextAlign.center,
                  maxLines: 1,
                  overflow: TextOverflow.ellipsis,
@@ -855,7 +858,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                const SizedBox(height: 8),
                Text(
                  _booking!.opponentTeamName ?? (isAr ? 'الخصم' : 'Opponent'),
-                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                 style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                  textAlign: TextAlign.center,
                  maxLines: 1,
                  overflow: TextOverflow.ellipsis,
@@ -884,7 +887,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  : 'Invite Friends via WhatsApp Group ',
  height: 48,
  color: VSPColors.whatsApp,
- textColor: Colors.white,
+ textColor: VSPColors.white,
  onPressed: () async {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  final msg = VSPMatchInviteFormatter.buildInviteMessage(
@@ -971,7 +974,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                         ),
                         title: Text(
                           displayName,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w600),
                         ),
                         subtitle: user?.position != null
                             ? Text(user!.position!, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12))
@@ -1101,7 +1104,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
  Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
- Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+ Text(value, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
  ],
  ),
  ],
