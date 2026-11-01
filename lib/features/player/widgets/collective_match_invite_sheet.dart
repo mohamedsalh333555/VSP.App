@@ -125,8 +125,11 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     setState(() => _joining = true);
     try {
       await _repo.joinPrivateCollectiveMatch(inviteToken: _inviteToken!, userId: uid);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       await _reload();
-      if (mounted) VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تم انضمامك للمباراة بنجاح.' : 'You joined the match successfully.');
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
+        VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تم انضمامك للمباراة بنجاح.' : 'You joined the match successfully.');
+      }
     } catch (e) {
       VSPLogger.w('Collective invite join failed: $e');
       if (mounted) {
@@ -163,8 +166,11 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     setState(() => _leaving = true);
     try {
       await _repo.leavePrivateCollectiveMatch(booking.id, uid);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       await _reload();
-      if (mounted) VSPFeedback.showSuccess(context, ar ? 'تمت المغادرة.' : 'You left the match.');
+      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
+        VSPFeedback.showSuccess(context, ar ? 'تمت المغادرة.' : 'You left the match.');
+      }
     } catch (e) {
       VSPLogger.w('Collective invite leave failed: $e');
       if (mounted) {
@@ -180,7 +186,8 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _setManual(int value) async {
     final booking = _booking;
-    if (booking == null || _updatingManual) return;
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (booking == null || uid == null || _updatingManual) return;
     final max = (booking.totalFieldCapacity - booking.joinedUserIds.length).clamp(0, booking.totalFieldCapacity);
     final next = value.clamp(0, max);
     if (next == booking.manualPlayerCount) return;
@@ -188,6 +195,7 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     try {
       final ok = await _repo.updateCollectiveManualPlayers(bookingId: booking.id, manualPlayerCount: next);
       if (!ok) throw Exception('تعذر تحديث عدد اللاعبين.');
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       await _reload();
     } catch (e) {
       VSPLogger.w('Collective manual-player update failed: $e');
@@ -205,7 +213,8 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _remove(String participantId) async {
     final booking = _booking;
-    if (booking == null || participantId == booking.createdByUserId) return;
+    final uid = context.read<AuthProvider>().currentUser?.id;
+    if (booking == null || uid == null || participantId == booking.createdByUserId) return;
 
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final user = _users[participantId];
@@ -250,10 +259,15 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       ),
     );
 
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true ||
+        !mounted ||
+        context.read<AuthProvider>().currentUser?.id != uid) {
+      return;
+    }
 
     try {
       await _repo.removePrivateCollectiveParticipant(booking.id, participantId);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       await _reload();
     } catch (e) {
       VSPLogger.w('Collective participant removal failed: $e');
@@ -271,7 +285,10 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     if (booking == null) return;
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     try {
+      final uid = context.read<AuthProvider>().currentUser?.id;
+      if (uid == null) return;
       final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       final token = credentials?['invite_token']?.toString();
       final code = credentials?['invite_code']?.toString();
       final active = credentials?['active'] == true &&
@@ -330,9 +347,12 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     if (ok != true || !mounted) return;
     setState(() => _cancelling = true);
     try {
+      final uid = context.read<AuthProvider>().currentUser?.id;
+      if (uid == null) return;
       final success = await context.read<BookingProvider>().cancelBooking(booking.id);
+      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) return;
       if (!success) throw Exception(ar ? 'تعذر إلغاء الحجز.' : 'Unable to cancel booking.');
-      if (mounted) Navigator.pop(context);
+      Navigator.pop(context);
     } catch (e) {
       VSPLogger.w('Collective booking cancellation failed: $e');
       if (mounted) {
