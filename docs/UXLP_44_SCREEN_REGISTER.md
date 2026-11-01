@@ -453,3 +453,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 - `lib/features/auth/widgets/signup/signup_name_fields.dart`: first/last-name inputs now stack vertically when the available field width is below 360dp, while retaining the two-column layout on wider screens. This avoids cramped text fields and label/input collisions on compact phones and under larger text scaling. Input controllers, labels, validation ownership, and submission order are unchanged.
 - Source commit: `53dbbea2a3a5bea13615403e40041669433ebb8d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Authentication and owner onboarding component review — 2026-11-01
+
+- Reviewed the social sign-in row, owner payout information card, and responsive signup name fields. The social buttons already use the shared `SocialAuthButton` semantic Material target at 56dp and the owner payout fields use localized labels from generated app localizations. Signup name fields already switch to a vertical layout below 360dp and use localized labels/hints. No source change was made where the existing implementation already met the inspected criterion; device/large-text verification remains pending.
