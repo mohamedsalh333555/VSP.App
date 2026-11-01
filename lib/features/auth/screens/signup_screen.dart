@@ -55,6 +55,7 @@ class _SignupScreenState extends State<SignupScreen> {
  }
 
  Future<void> _fetchAutoLocation() async {
+ if (!mounted) return;
  setState(() => _isFetchingLocation = true);
  try {
  await Provider.of<AuthProvider>(context, listen: false).updateUserLocation(force: true);
