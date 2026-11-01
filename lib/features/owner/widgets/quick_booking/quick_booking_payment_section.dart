@@ -31,7 +31,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
     required bool isSelected,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         onTap: () => onSelectQuickAmount(amount),
         borderRadius: BorderRadius.circular(VSPRadius.full),
