@@ -80,7 +80,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                         )),
                   ];
                   return items
-                      .map((item) => Align(alignment: Alignment.centerRight, child: item.child))
+                      .map((item) => Align(alignment: AlignmentDirectional.centerEnd, child: item.child))
                       .toList();
                 },
                 items: [
@@ -139,7 +139,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                 selectedItemBuilder: (context) {
                   return periodOptions.map((p) {
                     return Align(
-                      alignment: Alignment.centerRight,
+                      alignment: AlignmentDirectional.centerEnd,
                       child: Text(
                         p['label']!,
                         maxLines: 1,
