@@ -1062,3 +1062,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Owner cash-confirmation session guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart`: cash confirmation previously looked up the active owner again after the atomic confirmation RPC and could refresh a different account's booking list or show stale success after an account switch. It now captures the initiating owner, uses that captured ID for the refresh, and verifies the same session before success/navigation and before showing errors. Loading state is reset when the sheet remains mounted but the account changes.
 - Cash confirmation RPC, amount calculation, and notification behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 190f74b9db262ee6967de8c87af921acb7789dd8.
+
+
+## Booking cancellation loading callback lifecycle guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart`: both manual-deposit and standard cancellation flows invoked the parent `setDeleting(false)` callback unconditionally in `finally`. If the booking sheet had been disposed while cancellation was pending, this could call `setState` on a disposed owner sheet. Both finalizers now invoke the callback only while the sheet context remains mounted.
+- Cancellation decisions, refund/penalty options, and repository calls are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 7b7e3421ac547745ad202aac97ffbb7a626f0353.
