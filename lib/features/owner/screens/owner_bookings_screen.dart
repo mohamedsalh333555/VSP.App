@@ -137,14 +137,22 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           final selectedStadium = _getEffectiveStadium(stadiums);
 
           if (_isInitialLoadPending) {
-            return const Center(
-              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
             );
           }
 
           if (stadiums.isEmpty && stadiumProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
             );
           }
 
@@ -192,8 +200,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 },
               );
             }
-            return const Center(
-              child: CircularProgressIndicator(color: VSPDSSemanticColors.accent),
+            return VSPStateView(
+              state: VSPUiState.loading,
+              title: isArabic ? 'جارٍ تحميل جدول الملاعب' : 'Loading stadium schedule',
+              message: isArabic
+                  ? 'نحدّث الملاعب والحجوزات المتاحة.'
+                  : 'Updating your stadiums and booking schedule.',
             );
           }
 
