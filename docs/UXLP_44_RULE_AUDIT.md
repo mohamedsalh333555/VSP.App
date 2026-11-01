@@ -765,3 +765,10 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - `booking_success_screen.dart`: booking-reference copy control changed from a 32dp padded InkWell to a 48×48dp IconButton with localized tooltip.
 - `all_stadiums_screen.dart`: sort/filter action changed from a compact GestureDetector to a TextButton with a 48dp minimum target. Existing filter sheet uses `useSafeArea: true`, keyboard inset padding, a viewport height bound, and scrollable content.
 - Booking confirmation bottom bar already applies the system bottom inset itself; its primary confirmation action is 52dp. Booking success main actions are 50–52dp or standard Material text actions.
+
+
+## Challenge code sheet compact-viewport correction — 2026-11-01
+
+- `challenge_select_team_screen.dart`: generated challenge-code bottom sheet now has a 90%-viewport maximum height, a scrollable body, explicit bottom SafeArea, and 48dp minimum copy/WhatsApp action heights. This prevents the lower actions from being pushed off-screen on short devices or with large text.
+- Existing create-team sheet already uses `useSafeArea: true`; no challenge-code, team eligibility, or booking logic changed.
+- Source structure was manually re-read after the edit. Runtime/keyboard/device verification remains pending.
