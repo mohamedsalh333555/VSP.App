@@ -1343,3 +1343,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/screens/profile_subscreens/favorites_screen.dart`: favorite stadium fetch failures now display a localized retryable error instead of “Stadiums Not Found”. The future is retained for the same favorite-ID set, avoiding needless refetches on unrelated rebuilds; a retry explicitly reissues the request.
 - Favorite membership and stadium queries are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `72225b48fb7f699d509c8327b2cd7bb93accbe19`.
+
+
+## Pending booking action-state correction — 2026-11-01
+
+- Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: the cancel/delete action is no longer shown while payment is awaiting server confirmation or a refund is being processed. During those states the user sees status checking and the locked payment/refund state; once the booking is confirmed, cancellation remains available through the dedicated cancellation/refund flow.
+- No payment, cancellation, refund, or server eligibility rules were changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `0c2ac37a580fa92efcf9cbbaa156c5b8c29015fd`.
