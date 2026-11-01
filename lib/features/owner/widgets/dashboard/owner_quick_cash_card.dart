@@ -169,8 +169,12 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
     final now = widget.currentTime ?? DateTime.now();
 
     final pendingCashBookings = widget.allBookings.where((b) {
-      if (b.status == BookingStatus.cancelled) return false;
-      if (b.isPaid || b.paymentStatus == 'paid') return false;
+      if (b.status == BookingStatus.cancelled || !b.isCash) return false;
+      if (b.effectivePaymentState == 'fully_paid' ||
+          b.effectivePaymentState == 'refunded' ||
+          b.effectivePaymentState == 'refund_pending') {
+        return false;
+      }
       if (widget.selectedStadiumFilter != 'all' && b.stadiumId != widget.selectedStadiumFilter) return false;
       return DateUtils.isSameDay(b.startTime.toLocal(), now);
     }).toList()
@@ -178,8 +182,9 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
 
     if (pendingCashBookings.isEmpty) {
       final todayPaidBookings = widget.allBookings.where((b) {
-        if (b.status == BookingStatus.cancelled) return false;
-        if (!b.isPaid && b.paymentStatus != 'paid') return false;
+        if (b.status == BookingStatus.cancelled || !b.isCash) return false;
+        if (b.effectivePaymentState != 'fully_paid') return false;
+        if (widget.selectedStadiumFilter != 'all' && b.stadiumId != widget.selectedStadiumFilter) return false;
         return DateUtils.isSameDay(b.startTime.toLocal(), now);
       });
 
@@ -208,10 +213,10 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
       );
     }
 
-    final totalRemainingCash = pendingCashBookings.fold<double>(0.0, (sum, b) {
-      final deposit = b.depositPaid;
-      return sum + (b.totalPrice - deposit).clamp(0.0, 999999.0);
-    });
+    final totalRemainingCash = pendingCashBookings.fold<double>(
+      0.0,
+      (sum, booking) => sum + booking.remainingAmount,
+    );
 
     final String locale = widget.isArabic ? 'ar' : 'en';
 
