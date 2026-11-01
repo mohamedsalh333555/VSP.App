@@ -1866,3 +1866,5 @@ Read-only inspection was performed against the connected production VSP project 
 - Global search: replaced the raw progress spinner with the shared Arabic/English loading state. Search repository calls, request-generation stale-result protection, and existing retry/error handling were not changed.
 
 - Email verification: added explicit exception recovery for both OTP verification and resend. Previously an unexpected thrown error could leave `_isVerifying` or `_isResending` true indefinitely; now controls recover with localized retry guidance. A local secure-storage cleanup failure after server verification is logged without converting successful verification into a false failure.
+
+- Profile team card: replaced its remaining page-level bare spinner with the shared Arabic/English loading state. The existing FutureBuilder error branch continues to expose a retry action and avoids presenting an unverified empty-team state.
