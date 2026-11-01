@@ -39,7 +39,7 @@ class TournamentManualTeamService {
     }
 
     final teamId = await _teamRepository.createTeam({
-      'name': teamName,
+      'name': teamName.trim(),
       'captainName': isArabic ? 'تسجيل يدوي' : 'Manual Registration',
       'captainImageUrl': '',
       'logoUrl': '',
