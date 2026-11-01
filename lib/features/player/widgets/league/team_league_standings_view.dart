@@ -61,7 +61,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   topTeam.teamName,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: VSPColors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
                   ),
@@ -97,7 +97,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                       league.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -146,7 +146,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     isArabic ? 'الفرق المشاركة (${league.teams.length})' : 'Participating teams (${league.teams.length})',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ],
               ),
@@ -173,7 +173,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                           child: Text(
                             '${idx + 1}',
                             style: TextStyle(
-                              color: isMyTeam ? VSPColors.accent : Colors.white,
+                              color: isMyTeam ? VSPColors.accent : VSPColors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -185,7 +185,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                         child: Text(
                           t.name,
                           style: TextStyle(
-                            color: isMyTeam ? VSPColors.accent : Colors.white,
+                            color: isMyTeam ? VSPColors.accent : VSPColors.white,
                             fontWeight: isMyTeam ? FontWeight.bold : FontWeight.normal,
                             fontSize: 14,
                           ),
@@ -229,7 +229,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                   Text(
                     isArabic ? 'جدول الدوري' : 'League standings',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: VSPColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -336,7 +336,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isUserTeam
                             ? VSPColors.accent.withValues(alpha: 0.1)
-                            : Colors.transparent,
+                            : VSPColors.transparent,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -355,7 +355,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                             child: Text(
                               '${item.rank}',
                               style: TextStyle(
-                                color: isFirst ? Colors.black : VSPColors.textPrimary,
+                                color: isFirst ? VSPColors.black : VSPColors.textPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 11,
                               ),
@@ -372,7 +372,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                                   child: Text(
                                     item.teamName,
                                     style: TextStyle(
-                                      color: isUserTeam ? VSPColors.accent : Colors.white,
+                                      color: isUserTeam ? VSPColors.accent : VSPColors.white,
                                       fontWeight: isUserTeam ? FontWeight.bold : FontWeight.w500,
                                       fontSize: 12.5,
                                     ),
@@ -393,7 +393,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                             child: Text(
                               '${item.played}',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 12),
                             ),
                           ),
                           // Won
@@ -401,7 +401,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                             child: Text(
                               '${item.won}',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 12),
                             ),
                           ),
                           // Drawn
@@ -409,7 +409,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                             child: Text(
                               '${item.drawn}',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 12),
                             ),
                           ),
                           // Lost
@@ -417,7 +417,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
                             child: Text(
                               '${item.lost}',
                               textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 12),
                             ),
                           ),
                           // Points
@@ -473,7 +473,7 @@ class TeamLeagueDetailsView extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.end,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
         ],
