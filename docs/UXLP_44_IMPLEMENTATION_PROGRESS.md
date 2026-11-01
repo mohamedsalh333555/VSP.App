@@ -1166,3 +1166,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The pending-booking Check Status response now preserves the distinction between a refund still processing and a payment awaiting server confirmation. It no longer tells a player to wait for payment confirmation when the actual state is `refund_pending`.
 - Code commit: `02d3fcfeb8af4467ad98e7cd91dd4431dcfbc165`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Prevent duplicate cancel during refund processing — 2026-11-01
+
+- The pending-booking card no longer offers the trash/cancel action while `payment_status = refund_pending`. A refund already in progress is not presented as an ordinary unpaid pending booking with a second cancellation action.
+- Code commit: `e2d2e4b38dc69f23309cf67fb8756bff835b5551`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
