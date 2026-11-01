@@ -63,7 +63,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
           Text(
             isArabic ? '🏆 دوري الفرق الخاص' : '🏆 Private Team League',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 22,
@@ -75,7 +75,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
                 ? 'أنشئ دوري خاص لفريقك وادعُ من 4 إلى 8 فرق للمنافسة'
                 : 'Create a private league for your team and invite 4–8 teams to compete',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: VSPColors.textSecondary,
               fontSize: 14,
             ),
@@ -132,7 +132,7 @@ class TeamLeagueOnboardingCard extends StatelessWidget {
             icon: const Icon(Iconsax.login_copy, size: 18),
             label: Text(
               isArabic ? 'الانضمام لدوري عبر دعوة / كود' : 'Join a league with an invite code',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: VSPColors.textPrimary,
