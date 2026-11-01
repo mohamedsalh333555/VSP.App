@@ -1331,3 +1331,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/player/widgets/championship_checkout/checkout_financial_card.dart`: the long Arabic/English fee-transparency title now wraps within the modal width instead of competing with the leading icon; the acknowledgement action has a 48dp minimum height. Existing SafeArea and scrollable sheet behavior are retained.
 - Fee text and calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `f48bfbf4f179da8a994d3b2e7775dc5293ef46fd`.
+
+
+## Tournament bracket preview dialog compact-screen correction — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart`: both the bracket preview and live-draw room now bound their content height to the available viewport instead of fixed proportions/heights that could crowd dialog actions on short screens. Primary dialog actions now meet a 48dp height.
+- Draw order and tournament operations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `89e87ad474d37d5dbde1d395ae3f1c8bb085d25a`.
