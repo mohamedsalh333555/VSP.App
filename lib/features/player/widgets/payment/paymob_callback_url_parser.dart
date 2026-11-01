@@ -84,7 +84,10 @@ class PaymobCallbackUrlParser {
     final params = uri.queryParametersAll.map(
       (key, values) => MapEntry(key.toLowerCase(), values.map((v) => v.toLowerCase()).toList()),
     );
-    String? firstValue(String key) => params[key]?.firstOrNull;
+    String? firstValue(String key) {
+      final values = params[key];
+      return values == null || values.isEmpty ? null : values.first;
+    }
 
     final success = firstValue('success');
     final approved = firstValue('approved');
@@ -94,6 +97,7 @@ class PaymobCallbackUrlParser {
     final isExplicitFailure = success == 'false' ||
         approved == 'false' ||
         responseCode == 'declined' ||
+        responseCode == 'authentication_not_supported' ||
         status == 'failed' ||
         status == 'declined' ||
         status == 'cancelled' ||
