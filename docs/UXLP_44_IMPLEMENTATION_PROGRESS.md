@@ -668,3 +668,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The sheet closes and the in-memory stadium filter updates only after the profile update succeeds and both relevant contexts remain mounted. Technical exceptions are not exposed in user-facing copy.
 - Source-only. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: b9823301be19a9cfc89dc4a50b22bb94df4166b5.
+
+
+## Create-team flow dismissal guard — 2026-11-01
+
+- The profile screen now disables barrier-tap and swipe dismissal for the create-team bottom sheet. This prevents accidental route dismissal while asynchronous logo upload/team creation is running and avoids leaving the user uncertain about whether the operation completed.
+- Explicit Cancel and close controls inside the sheet remain available; the sheet already disables those controls while submission is active.
+- Source-only. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: b3891f2cbfe29b131c97ab168022c822d6bc8663.
