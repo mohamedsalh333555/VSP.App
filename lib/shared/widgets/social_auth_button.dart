@@ -34,9 +34,9 @@ class SocialAuthButton extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
+                  VSPDSVSPDSColors.white.withValues(alpha: 0.30),
+                  VSPDSColors.transparent,
                   VSPDSColors.white.withValues(alpha: 0.30),
-                  Colors.transparent,
-                  Colors.white.withValues(alpha: 0.30),
                 ],
                 stops: const [0.0, 0.5, 1.0],
               ),
