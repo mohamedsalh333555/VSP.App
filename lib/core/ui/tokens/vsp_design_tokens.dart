@@ -577,6 +577,7 @@ abstract final class VSPDSMotion {
   // [PROPOSED] centralized timings; current screen behavior remains unchanged
   // until individual components are migrated to these tokens.
   static const Duration fast = Duration(milliseconds: 150);
+  static const Duration microInteraction = Duration(milliseconds: 160);
   static const Duration standard = Duration(milliseconds: 250);
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
