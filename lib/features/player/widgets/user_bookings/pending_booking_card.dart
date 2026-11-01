@@ -54,7 +54,7 @@ class PendingBookingCard extends StatelessWidget {
                   style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
-              if (!isRefundPending)
+              if (!isPaymentActionLocked)
                 IconButton(
                   constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                   padding: const EdgeInsets.all(12),
