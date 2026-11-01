@@ -49,7 +49,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
       builder: (dialogCtx) => StatefulBuilder(
         builder: (context, setDialogState) {
           return Dialog.fullscreen(
-            backgroundColor: Colors.black,
+            backgroundColor: VSPColors.black,
             child: Stack(
               children: [
                 PageView.builder(
@@ -74,7 +74,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: IconButton(
-                        icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 28),
+                        icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.white, size: 28),
                         onPressed: () => Navigator.pop(dialogCtx),
                       ),
                     ),
@@ -88,12 +88,12 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white24,
+                        color: VSPColors.white24,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${activeIdx + 1} / ${widget.displayImages.length}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -115,7 +115,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
@@ -126,12 +126,12 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
               color: VSPColors.background.withValues(alpha: 0.6),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: VSPColors.white12,
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
+                  color: VSPColors.black15,
                   blurRadius: 4,
                   offset: const Offset(0, 1),
                 ),
@@ -187,7 +187,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                             ? 'فتح معرض الصور'
                             : 'Open image gallery',
                         child: Material(
-                          color: Colors.transparent,
+                          color: VSPColors.transparent,
                           child: InkWell(
                             onTap: () => _openFullScreenGallery(index),
                             child: index == 0
@@ -213,9 +213,9 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.6),
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.6),
+                      VSPColors.black60,
+                      VSPColors.transparent,
+                      VSPColors.black60,
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -289,16 +289,16 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                       ? 'فتح معرض الصور'
                       : 'Open image gallery',
                   child: Material(
-                    color: Colors.transparent,
+                    color: VSPColors.transparent,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(20),
                       onTap: () => _openFullScreenGallery(_currentImageIndex),
                       child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.55),
+                      color: VSPColors.black55,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                      border: Border.all(color: VSPColors.white15),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -310,7 +310,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                           height: 6,
                           margin: const EdgeInsets.symmetric(horizontal: 3),
                           decoration: BoxDecoration(
-                            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.5),
+                            color: isSelected ? VSPColors.accent : VSPColors.white50,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         );
