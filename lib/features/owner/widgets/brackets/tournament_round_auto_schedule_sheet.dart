@@ -209,24 +209,37 @@ void showResetRoundScheduleConfirmationDialog(
             ),
             onPressed: () async {
               Navigator.pop(dialogCtx);
-              final success = await TournamentRepository().clearRoundMatchSchedules(
-                championshipId: championshipId,
-                roundIndex: roundIndex,
-                matches: matches,
-              );
-
-              if (success && context.mounted) {
-                onScheduleReset();
-                VSPFeedback.showSuccess(
-                  context,
-                  isArabic
-                      ? 'تم إلغاء مواعيد مباريات $roundName بنجاح.'
-                      : 'The schedule for $roundName was reset successfully.', 
+              try {
+                final success =
+                    await TournamentRepository().clearRoundMatchSchedules(
+                  championshipId: championshipId,
+                  roundIndex: roundIndex,
+                  matches: matches,
                 );
-              } else if (context.mounted) {
+
+                if (success && context.mounted) {
+                  onScheduleReset();
+                  VSPFeedback.showSuccess(
+                    context,
+                    isArabic
+                        ? 'تم إلغاء مواعيد مباريات $roundName بنجاح.'
+                        : 'The schedule for $roundName was reset successfully.',
+                  );
+                } else if (context.mounted) {
+                  VSPFeedback.showError(
+                    context,
+                    isArabic
+                        ? 'تعذر تصفير جدول المباريات. حاول مرة أخرى.'
+                        : 'Could not reset the match schedule. Please try again.',
+                  );
+                }
+              } catch (_) {
+                if (!context.mounted) return;
                 VSPFeedback.showError(
                   context,
-                  isArabic ? 'تعذر تصفير جدول المباريات. حاول مرة أخرى.' : 'Could not reset the match schedule. Please try again.',
+                  isArabic
+                      ? 'حدث خطأ أثناء تصفير جدول المباريات. حاول مرة أخرى.'
+                      : 'An error occurred while resetting the match schedule. Please try again.',
                 );
               }
             },
