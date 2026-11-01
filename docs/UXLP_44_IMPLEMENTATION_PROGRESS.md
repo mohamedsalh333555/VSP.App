@@ -1988,3 +1988,10 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Added ten player UI components to the explicit register: six filter panels/sidebar, home booking CTA and feed composition, matchup result card, and team achievements section. The source review identified no confirmed physical left/right padding or alignment defect in this group; filter/query mapping, live data, empty/error behavior, and runtime Arabic/English layout remain pending caller-level review.
 - No application source changes were needed in this group. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Stadium review-stream recovery and player embedded-component coverage — 2026-11-01
+
+- `lib/features/player/widgets/stadium_details/stadium_ratings_tab.dart`: the initial review stream no longer shows an unlabeled spinner; it uses the shared bilingual loading state. A first-load stream error now has a distinct localized error state and retry action that recreates the stream instead of incorrectly presenting “no reviews.” Existing reviews remain visible when a later stream event fails after data has loaded.
+- Added ten player embedded components to the register: team actions/profile/stats, Paymob web fallback, tournament roster capacity/members/header, and stadium booking bar/conditions/ratings. Their caller eligibility, payment reconciliation, real data, and device behavior remain pending.
+- Code commit: `25c7df59fb04bc785f49b45a08784e417a55b5a7`. No tests, analyzer, CI, runtime checks, or APK build were run.
