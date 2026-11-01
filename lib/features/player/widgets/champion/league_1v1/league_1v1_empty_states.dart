@@ -84,6 +84,7 @@ class League1v1NoTournamentState extends StatelessWidget {
           'لا توجد بطولة واحد ضد واحد نشطة حالياً في $locationName. ترقب إعلان البطولة القادمة.',
       descriptionEnglish:
           'There is no active 1vs1 tournament in $locationName right now. Stay tuned for the next tournament.',
+      isArabic: isArabic,
     );
   }
 }
