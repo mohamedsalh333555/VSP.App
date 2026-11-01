@@ -25,18 +25,19 @@ class OwnerBookingSheetCoordinator {
     String? currentUserId,
   }) async {
     setLoading(true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
     try {
       final repo = ownerRepository ?? OwnerRepository();
       final totalPrice = booking.totalPrice > 0 ? booking.totalPrice : selectedStadium.basePrice;
-      
+
       String? uid = currentUserId;
-      if (uid == null) {
-        try {
-          final authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
-          uid = authProvider.currentUser?.id ?? booking.ownerId;
-        } catch (_) {
-          uid = booking.ownerId;
-        }
+      try {
+        authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+        initiatingUserId = authProvider.currentUser?.id;
+        uid ??= initiatingUserId ?? booking.ownerId;
+      } catch (_) {
+        uid ??= booking.ownerId;
       }
 
       final double remainingCash = (booking.totalPrice - booking.depositPaid).clamp(0.0, 999999.0);
@@ -51,6 +52,13 @@ class OwnerBookingSheetCoordinator {
 
       if (rpcRes is Map && rpcRes['success'] == false) {
         throw Exception(rpcRes['message']?.toString() ?? 'Failed to confirm cash payment');
+      }
+
+      if (!context.mounted ||
+          (authProvider != null &&
+              authProvider.currentUser?.id != initiatingUserId)) {
+        if (context.mounted) setLoading(false);
+        return;
       }
 
       final isAlreadyConfirmed = rpcRes is Map && rpcRes['already_confirmed'] == true;
@@ -69,26 +77,31 @@ class OwnerBookingSheetCoordinator {
         }
       }
 
-      if (context.mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isAlreadyConfirmed
-              ? (isArabic ? 'الحجز مؤكد ومسدد بالفعل مسبقاً.' : 'Booking is already confirmed and paid.')
-              : (isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.'),
-        );
-      }
-      if (parentContext.mounted) {
+      if (parentContext.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         try {
-          final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = currentUserId ?? auth.currentUser?.id;
-          if (currentUid != null) {
-            await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-          }
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(uid, forceRefresh: true);
         } catch (_) {}
       }
-      if (context.mounted) Navigator.pop(context);
+      if (!context.mounted ||
+          (authProvider != null &&
+              authProvider.currentUser?.id != initiatingUserId)) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isAlreadyConfirmed
+            ? (isArabic ? 'الحجز مؤكد ومسدد بالفعل مسبقاً.' : 'Booking is already confirmed and paid.')
+            : (isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.'),
+      );
+      Navigator.pop(context);
     } catch (e) {
-      if (context.mounted) {
+      if (context.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         setLoading(false);
         VSPFeedback.showError(context, '${isArabic ? "تعذر تأكيد الدفع:" : "Failed to confirm cash:"} $e');
       }
