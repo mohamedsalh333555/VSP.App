@@ -1625,3 +1625,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/bookings/owner_slot_card.dart`: the trailing booking-detail chevron now mirrors in RTL instead of always pointing right.
 - `lib/features/owner/widgets/dashboard/owner_dashboard_header.dart`: the profile-photo action now has a localized tooltip and an InkWell focus/semantic target; the verified-account tooltip is now localized in Arabic and English.
 - These are presentation/accessibility-only changes; booking, profile upload, and identity-verification logic are unchanged. Source commits: `c853ea69ab5634790fc167021aa2a08b19e120da`, `0555e1a17c1cfce2a6ca0f80fcf0dbb3ccfc4a6e`, `f880179e87a87ccc2a4db8781254e02fa9830e3d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Challenge selection and owner schedule interaction follow-up — 2026-11-01
+
+- `lib/features/player/widgets/challenge/challenge_team_card.dart`: replaced the non-focusable `GestureDetector` selection surface with `Material` + `InkWell`, preserving the selected-state animation and tap callback; long team names are now bounded to two lines with ellipsis so the champion badge and selection affordance remain readable.
+- `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: long-press expiry checks now use `VSPTimeService.now`, matching tap handling and the app's centralized time source instead of reading the device clock directly.
+- Source commits: `fa061708ed0c944b6306e4408ac32b3f15b5717a`, `bd4ac74abe24a113967bfe37bbc551c578231985`. Source-only; no tests, analyzer, CI, runtime checks, migrations, or APK build were run.
