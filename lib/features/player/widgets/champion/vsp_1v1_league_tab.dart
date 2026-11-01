@@ -8,6 +8,7 @@ import '../../../../core/services/paymob_service.dart';
 import '../../../../core/services/remote_config_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../data/models.dart';
 import '../../screens/paymob_web_view_screen.dart';
@@ -74,7 +75,11 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       stream: widget.getActive1v1Stream(effectiveLocation),
       builder: (context, tourneySnap) {
         if (tourneySnap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل دوري 1 ضد 1' : 'Loading 1v1 league',
+            message: isArabic ? 'نحدّث البطولة النشطة في محافظتك.' : 'Fetching the active tournament in your governorate.',
+          );
         }
 
         final tournament = tourneySnap.data;
@@ -189,8 +194,10 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
       builder: (context, playersSnap) {
         if (playersSnap.connectionState == ConnectionState.waiting &&
             !playersSnap.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: VSPColors.accent),
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل اللاعبين' : 'Loading players',
+            message: isArabic ? 'نحدّث قائمة المشاركين.' : 'Fetching the participant list.',
           );
         }
         if (playersSnap.hasError && !playersSnap.hasData) {
