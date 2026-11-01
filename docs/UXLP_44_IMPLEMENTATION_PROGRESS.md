@@ -2218,3 +2218,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `remote_config_service.dart`: realtime config parsing previously merged each incoming feature map into the existing map without clearing removed keys. A flag deleted from Supabase could therefore retain its previous value indefinitely on connected clients. Parsing now replaces the dynamic feature snapshot before applying the latest row; built-in 1v1/Copilot flags are then re-derived from their canonical columns as before.
 - Source commit: `20f33b46ed238e17236320b03303d67c882a36e8`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+- Break-time validation follow-up: both the current multi-break schema and legacy single-break shape now validate start/end strings before parsing. Malformed break schedules fail closed to an empty slot list instead of being interpreted as midnight intervals. Source commits: `c99f1a3fc924d6e5ba7f00b81f6c0e84e6373dbe`, `414ce82870b27fc15410074802e9809aacb74848`.
