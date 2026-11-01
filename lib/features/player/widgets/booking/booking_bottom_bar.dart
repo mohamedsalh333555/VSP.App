@@ -114,29 +114,36 @@ class BookingBottomBar extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isArabic ? 'إجمالي عدد لاعبي الحجز' : 'Total players in booking',
-                      style: const TextStyle(
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'إجمالي عدد لاعبي الحجز' : 'Total players in booking',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isArabic ? 'يشمل أنت وأي لاعبين ستضيفهم قبل إرسال الدعوة' : 'Includes you and any players you add before sharing the invite',
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic ? 'يشمل أنت وأي لاعبين ستضيفهم قبل إرسال الدعوة' : 'Includes you and any players you add before sharing the invite',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
                     color: VSPColors.surfaceAlt,
