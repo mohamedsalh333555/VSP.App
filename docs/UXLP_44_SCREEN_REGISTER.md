@@ -89,7 +89,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/booking_success_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/bookings_screen.dart` | player | source reviewed—runtime pending (dedicated loading state; refresh awaits server response; cached list stays visible on refresh failure with localized retry warning) |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | player | source reviewed—runtime pending (strict account-scoped team lookup; loading/empty/error/retry states; create-team recovery; challenge continuation re-verifies team and blocks duplicate/stale actions) |
-| `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
+| `lib/features/player/screens/champion_screen.dart` | player | source reviewed—runtime pending (championship/teams/1v1 tabs and RTL indicator; governorate and sport filter controls meet 48dp minimum height) |
 | `lib/features/player/screens/championship_checkout_screen.dart` | player | source reviewed—runtime pending (checkout layout and insets reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup; live championship and matches streams can be recreated on retry; stale header data now shows a warning/retry banner) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
@@ -154,7 +154,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
 | `lib/shared/widgets/vsp_back_button.dart` | shared | source reviewed—runtime pending (48dp hit area and semantic interaction documented; navigation/back-stack runtime pending) |
-| `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, focusable selection and SafeArea documented; selected/unselected runtime pending) |
+| `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source reviewed—runtime pending (canonical V2 navigation metrics, semantics, SafeArea, selected/unselected glyphs; optional warning indicator for unavailable badge data) |
 | `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (shared state/empty pattern documented; every screen usage and state runtime pending) |
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) |
 | `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source reviewed—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
@@ -163,7 +163,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
 | `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
-| `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height documented; runtime pending) |
+| `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height; unread-stream failures now surface a localized warning instead of appearing as zero unread) |
 | `lib/shared/widgets/banner_slider_widget.dart` | shared | source reviewed—runtime pending (REST and realtime banner sources, autoplay/pointer lifecycle, image fallback; optional banner fetch failure hides the carousel without blocking the screen) |
 | `lib/shared/widgets/copyable_phone_text.dart` | shared | source reviewed—runtime pending (long-press copy now has semantic label, localized clipboard failure feedback, and a 48dp minimum hit area; call-site runtime pending) |
 | `lib/shared/widgets/public_match_card.dart` | player | source reviewed—runtime pending (cancelled/ended states override host badge and route to booking details, not active invite sheet) (join/leave/request/share failures are localized; backend details are logged; request result is checked; share action retains 48dp target) |
