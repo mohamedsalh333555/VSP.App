@@ -489,3 +489,5 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 - No production database DDL, RLS policy, RPC grant, or Edge Function deployment was changed during this review.
 
 - `lib/features/player/widgets/collective_match_invite_sheet.dart`: initial private-invite load now uses the shared bilingual loading state; modal route retains `useSafeArea` and scroll-controlled layout.
+
+- `lib/features/player/screens/global_search_screen.dart`: active search now uses the shared localized loading state rather than a bare spinner; existing request-generation protection and retryable error state remain intact.
