@@ -67,7 +67,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
                 subtitle: isCaptain
                     ? Text(
                         isArabic ? 'قائد الفريق (إجباري)' : 'Team captain (required)',
-                        style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                       )
                     : null,
                 secondary: CircleAvatar(
