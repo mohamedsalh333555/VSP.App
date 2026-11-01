@@ -226,7 +226,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: _selectedMainTab == 0 ? Colors.black : Colors.white,
+                                          color: _selectedMainTab == 0 ? VSPColors.black : VSPColors.white,
                                           fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -258,7 +258,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: _selectedMainTab == 1 ? Colors.black : Colors.white,
+                                          color: _selectedMainTab == 1 ? VSPColors.black : VSPColors.white,
                                           fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
                                           fontSize: 14,
                                         ),
@@ -443,8 +443,9 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     VSPFeedback.triggerSuccess();
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
