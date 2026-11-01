@@ -177,7 +177,20 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.id;
 
-    if (uid == null) return const VSPScaffold(body: Center(child: Text("Not authenticated")));
+    if (uid == null) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر التحقق من الحساب' : 'Account unavailable',
+            message: isArabic
+                ? 'سجّل الدخول مرة أخرى لعرض بيانات فريقك.'
+                : 'Sign in again to view your team details.',
+          ),
+        ),
+      );
+    }
 
     if (_isLoadingMembers && localTeam == null) {
       return VSPScaffold(
