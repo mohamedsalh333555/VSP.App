@@ -86,13 +86,10 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
 
     return Container(
       constraints: BoxConstraints(
-        maxHeight: (MediaQuery.of(context).size.height -
-                MediaQuery.of(context).viewInsets.bottom -
-                MediaQuery.of(context).padding.top -
-                MediaQuery.of(context).padding.bottom)
-            .clamp(240.0, MediaQuery.of(context).size.height)
-            .toDouble() *
-            0.88,
+        // The modal route already applies keyboard/system insets. This is
+        // only a preferred height cap; parent constraints enforce the actual
+        // available viewport on compact and keyboard-open layouts.
+        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
       ),
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).padding.bottom + 20),
       decoration: const BoxDecoration(
