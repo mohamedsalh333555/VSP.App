@@ -865,3 +865,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `OwnerPayoutOtpDialog` and `TournamentAutoScheduleModalSheet`:** both are opened through scroll-controlled, SafeArea modal routes but previously subtracted keyboard/system insets again from full screen height. The auto-schedule sheet also forced a 240dp minimum that could exceed short viewports. Both now use a preferred 88% content-height cap and rely on parent route constraints for the actual keyboard-safe viewport; bottom padding and scrollable content remain.
 - Source commits: `33dc6d1b5c43a4fc25ce3811273f0fa926453171`, `947cee3bf2d21f785914ee12114f1bbf568c89dc`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Manual stadium-location sheet duplicate keyboard inset — 2026-11-01
+
+- **Rules 11 and 35 — `add_stadium_location_picker_sheet.dart`:** the scroll-controlled modal route already applies keyboard insets, but the manual-address sheet also included `viewInsets.bottom` in its own padding. Removed the duplicate keyboard inset while retaining system bottom padding and scrollable content.
+- Source commit: `ac329b8bdf6ca1790b5e11e14d2a74ed06917528`. Keyboard/device verification remains pending; no tests or build were run.
