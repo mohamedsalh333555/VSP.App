@@ -877,3 +877,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The automatic round-scheduling action now catches repository exceptions and presents localized retry guidance instead of allowing an unhandled asynchronous failure. It checks that the parent screen remains mounted before showing feedback.
 - Scheduling inputs, match ordering, date/time selection, and repository behavior are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: 59a162650d674ac9e78755e8727fbe09ea158da5.
+
+
+## Tournament live-draw dialog lifecycle guard — 2026-11-01
+- The live bracket reveal animation now checks that its dialog context remains mounted after each asynchronous delay and before its final state update. If the dialog is dismissed during the reveal, the animation exits without calling setState on a disposed dialog.
+- Draw generation, randomized pairing, reveal timing, and tournament confirmation behavior are unchanged. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 34adeaebb02a6f38fd4f9a6590ead19e4c6de7ed.
