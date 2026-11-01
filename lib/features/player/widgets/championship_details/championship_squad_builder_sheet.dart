@@ -106,6 +106,9 @@ Future<void> showIncompleteSquadBridgeSheet({
                 color: VSPColors.accent,
                 textColor: Colors.black,
                 onPressed: () async {
+                  final auth = Provider.of<AuthProvider>(context, listen: false);
+                  final initiatingUserId = auth.currentUser?.uid;
+                  if (initiatingUserId == null) return;
                   Navigator.pop(sheetCtx);
                   final created = await showModalBottomSheet<bool>(
                     context: context,
@@ -114,22 +117,24 @@ Future<void> showIncompleteSquadBridgeSheet({
                     backgroundColor: Colors.transparent,
                     builder: (ctx) => const CreateTeamSheet(),
                   );
-                  if (created == true && context.mounted) {
-                    final auth = Provider.of<AuthProvider>(context, listen: false);
-                    final userId = auth.currentUser?.uid;
-                    if (userId == null) return;
-                    final newTeam = await TeamRepository().getUserTeam(userId);
-                    if (newTeam != null && context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (ctx) => ChampionshipCheckoutScreen(
-                            championship: championship,
-                            team: newTeam,
-                          ),
+                  if (created != true ||
+                      !context.mounted ||
+                      auth.currentUser?.uid != initiatingUserId) {
+                    return;
+                  }
+                  final newTeam = await TeamRepository().getUserTeam(initiatingUserId);
+                  if (newTeam != null &&
+                      context.mounted &&
+                      auth.currentUser?.uid == initiatingUserId) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) => ChampionshipCheckoutScreen(
+                          championship: championship,
+                          team: newTeam,
                         ),
-                      );
-                    }
+                      ),
+                    );
                   }
                 },
               ),
