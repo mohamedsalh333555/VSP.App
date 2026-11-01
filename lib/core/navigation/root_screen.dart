@@ -146,9 +146,18 @@ class _RootScreenState extends State<RootScreen> {
  // Never choose the Player shell until the authenticated profile has resolved; this prevents an owner/player flicker.
  if (auth.isAuthenticated && auth.userModel == null) {
    if (_loadingTimedOut) return const OfflineErrorScreen();
-   return const VSPScaffold(
+   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+   return VSPScaffold(
      backgroundColor: VSPColors.background,
-     body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+     body: SafeArea(
+       child: VSPStateView(
+         state: VSPUiState.loading,
+         title: isArabic ? 'جارٍ تجهيز حسابك' : 'Preparing your account',
+         message: isArabic
+             ? 'نحمّل بيانات حسابك قبل فتح الصفحة الرئيسية.'
+             : 'Loading your account details before opening the home screen.',
+       ),
+     ),
    );
  }
 
