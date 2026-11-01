@@ -113,6 +113,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
       final phone = settings.whatsappNumber.isNotEmpty
           ? settings.whatsappNumber
           : settings.supportPhone;
+      if (!mounted) return;
       if (phone.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -134,7 +135,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
         // Escalation tracking is secondary; opening the configured support
         // channel remains available even if this metadata update fails.
       }
-      if (!requestStillBelongsToActiveAccount()) return;
+      if (!mounted || !requestStillBelongsToActiveAccount()) return;
       await VSPLauncherUtils.openWhatsApp(
         context,
         phone: phone,
@@ -143,7 +144,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
             : 'I need to escalate VSP support ticket #$ref.',
       );
     } catch (_) {
-      if (requestStillBelongsToActiveAccount()) {
+      if (mounted && requestStillBelongsToActiveAccount()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
