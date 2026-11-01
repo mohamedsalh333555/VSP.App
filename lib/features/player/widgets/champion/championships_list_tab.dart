@@ -120,7 +120,9 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
     final userGovRaw = auth.userModel?.governorate ?? auth.governorate;
     final userGov = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? userGovRaw;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final isDifferentGov = userGov.isNotEmpty && widget.selectedLocation.toLowerCase() != userGov.toLowerCase();
+    final isDifferentGov = userGov.isNotEmpty &&
+        widget.selectedLocation != 'All' &&
+        widget.selectedLocation.toLowerCase() != userGov.toLowerCase();
 
     return StreamBuilder<List<Championship>>(
       stream: _stream,
