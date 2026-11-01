@@ -34,7 +34,7 @@ class ChallengeTeamCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         onTap: onTap,
