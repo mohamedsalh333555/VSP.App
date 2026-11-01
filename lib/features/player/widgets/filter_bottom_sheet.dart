@@ -243,9 +243,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
-                    IconButton(
+                  ),
+                  IconButton(
                       visualDensity: VisualDensity.compact,
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(
