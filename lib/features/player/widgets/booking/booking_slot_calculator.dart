@@ -113,6 +113,11 @@ class BookingSlotCalculator {
     }
     if (openStr.isEmpty) openStr = stadium.openingTime;
     if (closeStr.isEmpty) closeStr = stadium.closingTime;
+    // Keep the fallback hours identical to generateDynamicTimeSlots().
+    // Otherwise overnight slots generated from the fallback schedule (e.g.
+    // 12:00 AM–3:00 AM) are incorrectly assigned to the selected calendar day.
+    if (openStr.isEmpty) openStr = '04:00 PM';
+    if (closeStr.isEmpty) closeStr = '03:00 AM';
     int openMin = _parseTimeToMinutes(openStr);
     int closeMin = _parseTimeToMinutes(closeStr);
 
