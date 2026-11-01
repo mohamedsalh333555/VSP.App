@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/vsp_time_service.dart';
 import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import 'booking_slot_calculator.dart';
@@ -98,7 +99,7 @@ class BookingSlotStreamSection extends StatelessWidget {
                 : 'This stadium has no bookable slots for this day.',
           );
         }
-        final now = DateTime.now();
+        final now = VSPTimeService.now;
         final bool isToday = selectedDate.year == now.year &&
             selectedDate.month == now.month &&
             selectedDate.day == now.day;
