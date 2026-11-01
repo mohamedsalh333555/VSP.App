@@ -492,6 +492,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 ),
               ],
             ),
+              ],
+            ),
           ),
         ),
       ),
