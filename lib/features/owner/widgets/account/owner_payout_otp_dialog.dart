@@ -88,16 +88,12 @@ class _OwnerPayoutOtpDialogState extends State<OwnerPayoutOtpDialog> {
     final email = Provider.of<AuthProvider>(context, listen: false).currentUser?.email ?? '';
 
     final media = MediaQuery.of(context);
-    final availableHeight = (media.size.height -
-            media.viewInsets.bottom -
-            media.padding.top -
-            media.padding.bottom -
-            24)
-        .clamp(0.0, media.size.height)
-        .toDouble();
 
+    // The scroll-controlled modal route already removes keyboard insets and
+    // constrains the sheet to the remaining viewport. Keep only a preferred
+    // content-height cap; the route's parent constraints take precedence.
     return Container(
-      constraints: BoxConstraints(maxHeight: availableHeight),
+      constraints: BoxConstraints(maxHeight: media.size.height * 0.88),
       padding: EdgeInsets.fromLTRB(
         20,
         20,
