@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_design_tokens.dart';
@@ -63,7 +64,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
         button: true,
         label: isRtl ? 'رجوع' : 'Back',
         child: Material(
-          color: Colors.transparent,
+          color: VSPColors.transparent,
           child: InkWell(
             excludeFromSemantics: true,
             customBorder: const CircleBorder(),
