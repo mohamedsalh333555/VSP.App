@@ -1319,3 +1319,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/owner/screens/tournament_brackets_screen.dart`: when the realtime match stream fails after loading, existing rounds remain visible with a localized stale-data warning and retry action. The warning appears in both standings and round tabs; an initial error retains the dedicated bilingual retry state.
 - Tournament progression and result-entry rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `e229a8acde8e4f7744268cd18606a29e112d6de7`.
+
+
+## Player home notification badge account/error handling — 2026-11-01
+
+- Fixed `HomeNotificationBadge` in `lib/features/player/widgets/home/home_feed_sections.dart`: the unread-count stream now rebinds when the authenticated user changes; an unread-count stream failure displays an amber warning indicator and localized tooltip rather than silently appearing as zero unread. Indicator placement is directional for RTL/LTR.
+- Notification read/delete behavior and repository queries are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `8b8a070e903722c1193cac749489a19feb845b72`.
