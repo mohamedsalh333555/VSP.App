@@ -195,7 +195,8 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final ownerId = authProvider.currentUser?.id ?? widget.stadium.ownerId;
+      final initiatingUserId = authProvider.currentUser?.id;
+      final ownerId = initiatingUserId ?? widget.stadium.ownerId;
       final bookingRef = 'MAN_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       final cleanPhone = rawPhone.isNotEmpty ? PhoneUtils.normalize(rawPhone) : null;
@@ -218,7 +219,10 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
 
       final createdBookingId = response?['booking_id']?.toString() ?? response?['id']?.toString() ?? bookingRef;
 
-      if (!mounted) return;
+      if (!mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        return;
+      }
       HapticFeedback.lightImpact();
       final parentContext = Navigator.of(context).context;
       final parentNavigator = Navigator.of(context);
@@ -252,7 +256,9 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       }
     } catch (e, stackTrace) {
       debugPrint('Owner quick phone booking failed: $e\n$stackTrace');
-      if (mounted) {
+      if (mounted &&
+          Provider.of<AuthProvider>(context, listen: false).currentUser?.id ==
+              initiatingUserId) {
         setState(() => _isSaving = false);
         final err = e.toString().toLowerCase();
         final isAr = Localizations.localeOf(context).languageCode == 'ar';
