@@ -2,7 +2,7 @@
 
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
-- Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-10-31)
+- Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
 - Registered Dart screen/surface paths: 208 unique paths
 - Additional shared navigation component entry: 1
 - Table records: 234, including 26 repeated paths that document separate embedded-component findings
