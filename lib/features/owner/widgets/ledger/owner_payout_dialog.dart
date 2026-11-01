@@ -216,8 +216,7 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
         widget.isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
       ),
-      content: SingleChildScrollView(
-        child: Column(
+      content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -370,7 +369,6 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
             ),
           ],
         ),
-      ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actions: [
         LayoutBuilder(
