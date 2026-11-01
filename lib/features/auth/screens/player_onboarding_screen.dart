@@ -420,6 +420,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     final l10n = AppLocalizations.of(context)!;
     return showDialog<bool>(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
