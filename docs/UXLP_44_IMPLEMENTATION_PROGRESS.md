@@ -1102,3 +1102,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Player booking cancellation dialog account-session guard — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart`: the dialog previously dismissed itself and awaited `BookingProvider.cancelBooking`, then showed success/failure feedback based only on whether the parent screen remained mounted. If the user account changed while the cancellation was in flight, the old booking result could be surfaced in the new account's session. The dialog now captures the initiating player when opened, verifies that account before starting cancellation, and suppresses stale-session feedback after the request completes.
 - Cancellation and refund calculation behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d86aaf636e2cd1042ca9622e09213ff9fb087ee8.
+
+
+## Open-join chat stale-session error guard — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: `_openChat` already verified the initiating player before navigation, but its exception handler only checked whether the card remained mounted. A chat lookup failure after an account switch could therefore display an error in the new account's session. The catch path now also verifies the initiating player ID before showing feedback.
+- Chat creation/navigation behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 3feeec54cdd116bb62f44965b610d69bb506bc87.
