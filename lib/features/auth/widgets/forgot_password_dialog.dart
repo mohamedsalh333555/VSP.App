@@ -93,7 +93,7 @@ class ForgotPasswordDialog {
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(0, 48),
                           backgroundColor: VSPColors.accent,
-                          foregroundColor: Colors.black,
+                          foregroundColor: VSPColors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
                           ),
@@ -102,7 +102,7 @@ class ForgotPasswordDialog {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                               )
                             : Text(
                                 AppLocalizations.of(context)!.submit,
