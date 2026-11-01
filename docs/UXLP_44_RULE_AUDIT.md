@@ -1207,3 +1207,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 10, 29, and 36 — schedule parity and authenticated actions:** owner schedule rendering now consumes the same multi-break configuration as player availability and excludes partial-overlap slots; team update actions no longer upload under a synthetic `unknown` user path when authentication context is absent. Runtime verification remains pending.
+
+
+- **Rules 29 and 36 — input validation and error prevention:** tournament wizard fee and prize fields now reject invalid, infinite, or negative numeric values before payload construction; zero remains permitted. Runtime form behavior remains pending.
