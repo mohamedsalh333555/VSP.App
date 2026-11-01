@@ -1151,3 +1151,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Player pending-booking card now distinguishes `refund_pending` from payment verification: the heading/body explicitly describe an in-progress refund, and the checkout action remains locked to prevent a new payment attempt against that booking. The check-status action remains available.
 - Code commit: `1e3edbf34ad4b0d8567b5a8d2f4cd4c62ee5272f`.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Player booking-state and sharing recovery follow-up — 2026-11-01
+
+- Pending player bookings now present `refund_pending` as a refund-in-progress state rather than incorrectly describing it as payment verification. Resume Checkout remains disabled while the refund is pending; Check Status remains available.
+- Open Join match sharing now awaits the native share operation, logs platform errors, and presents localized failure feedback instead of allowing an unhandled asynchronous error.
+- Code commits: `1e3edbf34ad4b0d8567b5a8d2f4cd4c62ee5272f`, `f58f822648acf10c22f8a3ef12e8af9b8044b376`.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
