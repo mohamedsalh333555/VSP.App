@@ -285,7 +285,7 @@ void showBookingPaymentMethodSheet({
                                   nav.pushReplacement(
                                     MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
                                   );
-                                } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
+                                } else if (sheetContext.mounted) {
                                   HapticFeedback.vibrate();
                                   setSheetState(() => isNavigating = false);
                                   VSPFeedback.showError(
