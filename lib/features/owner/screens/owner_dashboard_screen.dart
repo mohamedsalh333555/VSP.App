@@ -344,6 +344,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
+        top: false,
+        bottom: false,
         child: RefreshIndicator(
           color: VSPColors.accent,
           backgroundColor: VSPColors.surface,
