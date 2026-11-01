@@ -992,3 +992,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - Rewrote the `SignupDateOfBirthField` wrapper with balanced Tooltip/Material/InkWell/Container nesting and bounded the selected date to one line. The accessible tap target and original date display/callback are preserved.
 - Follow-up source commit: `524148fc4ee6925b06b422ad600d0f2deb8b7c22`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+### Login role-selection sheet — 2026-11-01
+
+- **Rules 5, 11, 27, 30, 33, and 34:** sign-up action is keyboard accessible with a 48dp minimum target; role sheet is safe-area aware and scrollable; role copy is bilingual; role-card actions are focusable with larger targets; directional arrow mirrors in RTL.
+- Source commit: `b3cd4f1cf2dcd43283037aa92e6820230b1d0f98`. Device/keyboard verification remains pending; no tests or build were run.
