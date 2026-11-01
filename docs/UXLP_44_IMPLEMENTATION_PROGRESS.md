@@ -1937,3 +1937,10 @@ Read-only inspection was performed against the connected production VSP project 
 
 - A fresh read-only Supabase ACL query now confirms `generate_team_league_fixtures(uuid)` has EXECUTE only for `postgres` and `service_role`; both `anon` and `authenticated` return false. `confirm_team_league_payment(...)` is likewise service-role-only. The helper is invoked internally by the SECURITY DEFINER payment-confirmation path and by `join_team_league(...)`; the latter checks captain identity and an open registration before adding a team, while fixture generation occurs only when the paid-team count reaches the league maximum.
 - Therefore the historical TL-03 direct authenticated fixture-regeneration exposure is closed in the live ACL and should not be treated as an outstanding client RPC exposure. This recheck did not alter SQL, grants, migrations, or data. Residual helper invariants remain defense-in-depth; TL-01 (booking/kickoff checks in result submission) and TL-02 (participant authorization on active-league reads) remain open and approval-required. The separate tournament-participation helper exposure remains under review.
+
+
+## Shared skeleton RTL correction and component inventory expansion — 2026-11-01
+
+- `lib/core/widgets/skeleton_loader.dart`: `CardSkeleton` now uses `EdgeInsetsDirectional.only(end: 16)` instead of a physical right margin, so horizontal card spacing follows the active reading direction.
+- Expanded `docs/UXLP_44_SCREEN_REGISTER.md` with ten previously unregistered shared/auth embedded UI components: shimmer image, skeleton loader, login/social-auth rows, owner payout info card, signup name/governorate controls, welcome button/language control, and onboarding slide. Their integration/runtime behavior remains pending; this does not imply full embedded-widget coverage.
+- Code commit: `daf2ee216966e7fb3ebea28858c5a1058370c128`. No tests, analyzer, CI, runtime checks, or APK build were run.
