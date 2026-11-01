@@ -231,11 +231,17 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingTeam) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: SafeArea(top: false, bottom: true, child: Center(
-          child: CircularProgressIndicator(color: VSPColors.accent),
-        )),
+        body: SafeArea(
+          top: false,
+          bottom: true,
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الفريق' : 'Loading team',
+            message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الفريق وأعضائه.' : 'Fetching team details and members.',
+          ),
+        ),
       );
     }
 
