@@ -321,6 +321,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     }
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
