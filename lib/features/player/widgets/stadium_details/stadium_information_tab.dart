@@ -88,7 +88,7 @@ class FacilitiesGrid extends StatelessWidget {
                     child: Text(
                       f.label,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                       ),
@@ -163,7 +163,7 @@ class StadiumInformationTab extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       stadium.rating.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -275,7 +275,7 @@ class StadiumInformationTab extends StatelessWidget {
               children: [
                 Text(
                   l10n.informationStadium,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.white),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -309,7 +309,7 @@ class StadiumInformationTab extends StatelessWidget {
                     Text(
                       isArabic ? 'المرافق والخدمات' : 'Amenities & Services',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                       ),
@@ -357,7 +357,7 @@ class StadiumInformationTab extends StatelessWidget {
                               Text(
                                 isArabic ? 'تأجير كرة مباراة' : 'Match Ball Rental',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: VSPColors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
