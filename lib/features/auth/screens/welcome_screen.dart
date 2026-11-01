@@ -169,9 +169,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                       style: TextButton.styleFrom(
                         foregroundColor: VSPColors.textSecondary.withValues(alpha: 0.7),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        minimumSize: const Size(48, 48),
+                        tapTargetSize: MaterialTapTargetSize.padded,
                       ),
                       child: Text(
                         l10n.skipButton,
