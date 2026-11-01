@@ -1225,3 +1225,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29 and 31 — owner/player schedule consistency:** owner schedule slots now respect exact opening and closing minutes and do not show partial final half-hours beyond closing; overnight/24-hour schedules are calculated on an operational-minute timeline. Device verification remains pending.
+
+
+- **Rule 10 — RTL geometry:** shared terms/privacy and participant-management dialogs, collective invite sheet, and booking-duration chips now use directional insets/alignment instead of physical left/right assumptions. Modal source review found safe-area configuration on the inspected sheet entry points; runtime keyboard/system-bar verification remains pending.
