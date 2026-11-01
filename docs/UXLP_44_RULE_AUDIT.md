@@ -1149,3 +1149,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 29 — No duplicate submission:** owner tournament score submission now checks `isSubmitting` inside the action handler before issuing the repository write, in addition to the existing loading button state. Team League result submission has the same handler-level guard and locks result selection during save. These are client-side safeguards only; authoritative server-side idempotency/authorization still requires separate review.
+
+
+### TL-03 live ACL revalidation — 2026-11-01
+
+- Re-ran read-only privilege checks against the active project: `generate_team_league_fixtures(uuid)` is executable by `postgres` and `service_role` only; `anon` and `authenticated` are denied. `confirm_team_league_payment(...)` is also service-role-only. The internal helper is called from the SECURITY DEFINER payment confirmation and captain-authorized `join_team_league(...)` paths.
+- TL-03 is therefore closed as a direct authenticated RPC exposure in the current live ACL. This does not claim the helper is independently safe for arbitrary invocation by a trusted service-role caller; its payment/registration invariants remain defense-in-depth. No SQL or grants were changed.
