@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 260 unique paths
+- Registered Dart screen/surface and embedded-component paths: 270 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 287, including 27 repeated paths that document separate embedded-component findings
+- Table records: 297, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -168,6 +168,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_details.dart` | owner | source reviewed—runtime pending (note-template chip spacing now uses directional end padding; form/keyboard behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart` | owner | source reviewed—runtime pending (opening-hours editor; validation, locale and responsive behavior pending) |
 | `lib/features/owner/widgets/add_stadium/add_stadium_step1_location_field.dart` | owner | source reviewed—runtime pending (stadium location input; geolocation, permissions and error recovery verification pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart` | owner | source reviewed—runtime pending (feature/amenity selection; responsive option layout and locale behavior pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step3_images.dart` | owner | source reviewed—runtime pending (stadium image selection/upload; permission, progress and failure recovery pending) |
+| `lib/features/owner/widgets/add_stadium/add_stadium_step_indicator.dart` | owner | source reviewed—runtime pending (stadium wizard step indicator; localized label and narrow-width behavior pending) |
+| `lib/features/owner/widgets/brackets/tournament_champion_banner.dart` | owner | source reviewed—runtime pending (champion outcome banner; result data and long team-name rendering pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_booking_types_card.dart` | owner | source reviewed—runtime pending (booking-type insight visualization; source data and empty-state mapping pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_radial_hero_card.dart` | owner | source reviewed—runtime pending (radial KPI visualization; data bounds and compact-layout verification pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_revenue_sources_card.dart` | owner | source reviewed—runtime pending (revenue-source metrics; currency/locale and zero-data behavior pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart` | owner | source reviewed—runtime pending (strategic KPI grid; responsive density and metric-state verification pending) |
+| `lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart` | owner | source reviewed—runtime pending (dropdown selected values now align to `AlignmentDirectional.centerEnd`; RTL/LTR and filter behavior pending) |
+| `lib/features/owner/widgets/dashboard/owner_basic_financial_glance.dart` | owner | source reviewed—runtime pending (financial summary card; actual Supabase values and zero/error state verification pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
