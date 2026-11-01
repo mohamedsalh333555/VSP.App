@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import '../../../../core/ui/tokens/vsp_design_tokens.dart';
+import '../../../../shared/widgets/vsp_empty_state.dart';
 
 class ChampionEmptyState extends StatelessWidget {
   final IconData icon;
@@ -24,42 +24,10 @@ class ChampionEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final useArabic = isArabic ??
         Localizations.localeOf(context).languageCode == 'ar';
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: VSPDSSpacing.lg,
-          vertical: VSPDSSpacing.xl,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: VSPDSizes.stateIconBox,
-              height: VSPDSizes.stateIconBox,
-              decoration: BoxDecoration(
-                color: VSPDSColors.zinc800,
-                borderRadius: BorderRadius.circular(VSPDSRadius.md),
-                border: Border.all(
-                  color: VSPDSColors.zinc750,
-                ),
-              ),
-              child: Icon(icon, size: VSPDSizes.emptyIconSize, color: VSPDSColors.zinc400),
-            ),
-            const SizedBox(height: VSPDSSpacing.md),
-            Text(
-              useArabic ? titleArabic : titleEnglish,
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: VSPDSSpacing.xs),
-            Text(
-              useArabic ? descriptionArabic : descriptionEnglish,
-              textAlign: TextAlign.center,
-              style: VSPDSTypography.stateBody,
-            ),
-          ],
-        ),
-      ),
+    return VSPEmptyState(
+      icon: icon,
+      title: useArabic ? titleArabic : titleEnglish,
+      subtitle: useArabic ? descriptionArabic : descriptionEnglish,
     );
   }
 }
@@ -95,15 +63,14 @@ class ChampionshipsEmptyState extends StatelessWidget {
         if (showReturnButton && onReturn != null)
           Padding(
             padding: const EdgeInsetsDirectional.only(
-              start: VSPDSSpacing.md,
-              end: VSPDSSpacing.md,
-              bottom: VSPDSSpacing.md,
+              start: 16,
+              end: 16,
+              bottom: 16,
             ),
             child: TextButton(
               onPressed: onReturn,
               child: Text(
                 isArabic ? 'العودة لمحافظتي' : 'Return to my location',
-                style: VSPDSTypography.actionLabel,
               ),
             ),
           ),
