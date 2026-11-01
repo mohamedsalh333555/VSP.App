@@ -907,3 +907,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 5, 10, 27, 30, 33, and 37:** owner time-slot rows now use InkWell semantics/focus/feedback while preserving tap and long-press actions; the booking-detail chevron mirrors in RTL; owner profile-photo action has localized tooltip and keyboard/focus semantics; verified-account tooltip is bilingual.
 - Source commits: `c853ea69ab5634790fc167021aa2a08b19e120da`, `0555e1a17c1cfce2a6ca0f80fcf0dbb3ccfc4a6e`, `f880179e87a87ccc2a4db8781254e02fa9830e3d`. Runtime and device verification remain pending; no tests or build were run.
+
+
+### Challenge selection and owner schedule consistency — 2026-11-01
+
+- **Rules 27, 30, 33, and 38:** challenge team cards now expose a keyboard/focus-accessible InkWell selection surface and bound long team names to two lines; owner slot tap and long-press expiry checks now share the centralized VSP time source, preventing the two gestures from evaluating the same slot against different clocks.
+- Source commits: `fa061708ed0c944b6306e4408ac32b3f15b5717a`, `bd4ac74abe24a113967bfe37bbc551c578231985`. Runtime/device verification remains pending; no tests or build were run.
