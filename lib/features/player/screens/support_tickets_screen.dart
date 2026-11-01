@@ -187,10 +187,10 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                   ),
                   child: isSubmitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black))
                       : Text(isArabic ? 'فتح التذكرة' : 'Open Ticket'),
                     ),
                   ),
@@ -411,7 +411,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
           : FloatingActionButton(
               onPressed: _newTicket,
               backgroundColor: VSPColors.accent,
-              child: const Icon(Iconsax.add_copy, color: Colors.black),
+              child: const Icon(Iconsax.add_copy, color: VSPColors.black),
             ),
     );
   }
