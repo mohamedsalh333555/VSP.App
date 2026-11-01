@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -86,12 +87,15 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
  final requiredGov = widget.requiredGovernorate?.trim();
  final playerGov = user?.governorate?.trim();
+ final normalizedRequiredGov = EgyptGovernorates.resolveGoogleName(requiredGov);
+ final normalizedPlayerGov = EgyptGovernorates.resolveGoogleName(playerGov);
  _governorateMismatch = user != null &&
      requiredGov != null &&
      requiredGov.isNotEmpty &&
      (playerGov == null ||
        playerGov.isEmpty ||
-       playerGov.toLowerCase() != requiredGov.toLowerCase());
+       (normalizedPlayerGov ?? playerGov.trim().toLowerCase()) !=
+           (normalizedRequiredGov ?? requiredGov.trim().toLowerCase()));
 
  setState(() {
  _foundUser = user;
