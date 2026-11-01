@@ -10,7 +10,11 @@ class SignupPasswordStrengthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strength = SignupValidationService.calculatePasswordStrength(password);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final strength = SignupValidationService.calculatePasswordStrength(
+      password,
+      isArabic: isArabic,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
