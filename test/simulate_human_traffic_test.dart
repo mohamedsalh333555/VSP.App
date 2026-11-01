@@ -48,7 +48,7 @@ void main() {
  await Future.wait(botFutures);
  print(' اكتملت جلسة محاكاة ضغط الـ 70 مستخدماً بنجاح دون انهيار!');
  expect(botFutures.length, equals(70));
- });
+ }, skip: !_canRunLiveTests ? 'Requires explicit VSP_RUN_LIVE_TESTS=true and Supabase credentials; avoids unintended live traffic from CI.' : false);
 }
 
 // محاكاة سلوك المالك البشري
