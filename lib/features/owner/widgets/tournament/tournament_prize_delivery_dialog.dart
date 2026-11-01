@@ -112,6 +112,10 @@ Future<void> showTournamentPrizeDeliveryDialog(
             ),
             actions: [
               TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(64, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
+                ),
                 onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
                 child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
               ),
@@ -119,6 +123,8 @@ Future<void> showTournamentPrizeDeliveryDialog(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.success,
                   foregroundColor: Colors.black,
+                  minimumSize: const Size(64, 48),
+                  tapTargetSize: MaterialTapTargetSize.padded,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
                 onPressed: isSubmitting
