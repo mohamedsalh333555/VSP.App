@@ -159,6 +159,10 @@ class _CancelDialogActions extends StatelessWidget {
     ));
     Navigator.pop(dialogCtx);
     final success = await provider.cancelBooking(booking.id);
+    // The dialog has been dismissed while the cancellation request was in
+    // flight. Do not use its route's messenger if the owning screen was also
+    // removed (for example, after a navigation/account change).
+    if (!context.mounted) return;
     if (success) {
       final successMsg = isArabic
           ? refundInfo.refundSuccessText()
