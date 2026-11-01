@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 309 unique paths
+- Registered Dart screen/surface and embedded-component paths: 319 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 336, including 27 repeated paths that document separate embedded-component findings
+- Table records: 346, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -217,6 +217,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/widgets/home/home_feed_content.dart` | player | source reviewed—runtime pending (home feed composition; empty/loading/error and source-data mapping pending) |
 | `lib/features/player/widgets/matchup/matchup_record_result_card.dart` | player | source reviewed—runtime pending (matchup result card; participant/result state and action visibility pending) |
 | `lib/features/player/widgets/my_team/team_achievements_section.dart` | player | source reviewed—runtime pending (team achievements section; actual result source and empty-state behavior pending) |
+| `lib/features/player/widgets/my_team/team_action_buttons.dart` | player | source reviewed—runtime pending (team invite/leave/captaincy actions are localized; role/state eligibility and destructive confirmation pending) |
+| `lib/features/player/widgets/my_team/team_profile_form.dart` | player | source reviewed—runtime pending (team profile edit fields; validation, image upload and persistence states pending) |
+| `lib/features/player/widgets/my_team/team_stats_header.dart` | player | source reviewed—runtime pending (team statistics header; actual result source and empty-data behavior pending) |
+| `lib/features/player/widgets/payment/paymob_web_fallback_view.dart` | player | source reviewed—runtime pending (web payment fallback instructions; return/deep-link and paid-state reconciliation pending) |
+| `lib/features/player/widgets/roster/roster_capacity_card.dart` | player | source reviewed—runtime pending (roster capacity indicator; min/max and over-capacity state mapping pending) |
+| `lib/features/player/widgets/roster/roster_team_members_section.dart` | player | source reviewed—runtime pending (team-member roster; role labels, guest/member distinction and overflow pending) |
+| `lib/features/player/widgets/roster/roster_tournament_header.dart` | player | source reviewed—runtime pending (tournament roster header; registration and payment state mapping pending) |
+| `lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart` | player | source reviewed—runtime pending (stadium booking action bar; availability/price state and safe-area reachability pending) |
+| `lib/features/player/widgets/stadium_details/stadium_pitch_conditions_tab.dart` | player | source reviewed—runtime pending (pitch condition details; data source, empty state and locale behavior pending) |
+| `lib/features/player/widgets/stadium_details/stadium_ratings_tab.dart` | player | source reviewed—runtime pending (review stream now has shared bilingual loading/error states and retry by recreating the stream; runtime verification pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
