@@ -113,7 +113,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  children: [
  // 1. Header with Neon Accent Avatar & Title
  Padding(
- padding: const EdgeInsets.fromLTRB(20, 18, 16, 14),
+ padding: const EdgeInsetsDirectional.fromSTEB(20, 18, 16, 14),
  child: Row(
  children: [
  Container(
