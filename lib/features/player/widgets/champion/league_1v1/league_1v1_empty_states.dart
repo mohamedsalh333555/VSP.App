@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_design_tokens.dart';
 import '../../../../../shared/widgets/primary_button.dart';
@@ -52,7 +53,7 @@ class League1v1NoGovernorateState extends StatelessWidget {
               child: PrimaryButton(
                 text: isArabic ? 'تحديد المحافظة الآن' : 'Set Governorate',
                 icon: Iconsax.edit_2_copy,
-                onPressed: () => Navigator.pushNamed(context, '/edit-profile'),
+                onPressed: () => context.push('/edit-profile'),
               ),
             ),
           ],
