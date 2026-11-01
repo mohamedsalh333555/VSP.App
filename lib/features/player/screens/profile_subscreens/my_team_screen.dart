@@ -180,9 +180,15 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     if (uid == null) return const VSPScaffold(body: Center(child: Text("Not authenticated")));
 
     if (_isLoadingMembers && localTeam == null) {
-      return const VSPScaffold(
+      return VSPScaffold(
         backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+        body: SafeArea(
+          child: VSPStateView(
+            state: VSPUiState.loading,
+            title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل فريقي' : 'Loading my team',
+            message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الفريق والأعضاء.' : 'Fetching team and member details.',
+          ),
+        ),
       );
     }
 
