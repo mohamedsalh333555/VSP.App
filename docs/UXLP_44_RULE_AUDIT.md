@@ -925,3 +925,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 10, 18, 27, 33, and 36:** home profile/search/filter actions now have focusable InkWell surfaces and localized tooltips; home avatar image failures and empty URLs render a fallback; chat send has a localized tooltip and focusable 48dp target; payment-method selector no longer promises “100% secure” and instead names the Paymob gateway.
 - Source commits: `7358e28a0103eaa6fd76ba3a8272cc826f2ab1e9`, `29867442c66dab84ce359672d104df9e261b4de8`, `50ffd573c2efc1026b487ac1a322a545373ce265`, `50893601929d447510918b1099ff9a0bb604c279`. Runtime/device and payment-flow verification remain pending; no tests or build were run.
+
+
+### Player booking slot accessibility and centralized time source — 2026-11-01
+
+- **Rules 27, 30, 33, and 38:** booking time-slot selection now uses InkWell semantics/focus/feedback while booked/past slots remain disabled; slot-state calculations and the challenge-result prompt use the centralized VSP time service to avoid conflicting clock sources.
+- Source commits: `d5badce48843ca21bfe6249dd57a0db9530ff768`, `fcca24c89c7ce717b4b55e5b3c5eaefca136ea25`, `04875c4918530f3da9759fb0b33717fa4202d2c6`. Runtime/device verification remains pending; no tests or build were run.
