@@ -1369,3 +1369,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Source review found `get_team_active_league(p_team_id)` is `SECURITY DEFINER`, accepts a client-supplied team ID, returns league teams/matches/submissions and captain contact fields, but does not check `auth.uid()`, participant membership, captain identity, or league-creator identity before returning data. Its EXECUTE grant to `authenticated` is not a membership check.
 - Evidence and a proposed authorization gate are recorded as `TL-02` in `docs/UXLP_44_RULE_AUDIT.md`.
 - This is a critical server-side access-control change. No SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Critical approval-required Team League fixture RPC exposure — 2026-11-01
+
+- Source review found `generate_team_league_fixtures(p_championship_id)` is `SECURITY DEFINER`, is granted to `authenticated`, accepts a caller-supplied championship ID, and can delete/recreate scheduled fixtures and move the league to `ongoing` without checking caller identity or full payment completion. The Flutter repository does not call this RPC directly; it is invoked internally by the service-role payment-confirmation flow.
+- Evidence and proposed permission/invariant fix are recorded as `TL-03` in `docs/UXLP_44_RULE_AUDIT.md`.
+- This is a critical access-control/business-integrity change. No SQL was drafted or applied; it is held for explicit approval. No tests, analyzer, CI, runtime checks, or APK build were run.
