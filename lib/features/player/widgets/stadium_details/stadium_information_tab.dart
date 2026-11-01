@@ -177,45 +177,85 @@ class StadiumInformationTab extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.md),
 
-          // Location Badge: Guaranteed working maps launch
-          GestureDetector(
-            onTap: () async {
-              try {
-                final String query = (stadium.lat != null && stadium.lng != null)
-                    ? '${stadium.lat},${stadium.lng}'
-                    : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
-                final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-                await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                debugPrint('Error launching maps: $e');
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    EgyptGovernorates.formatSmartLocation(
-                      rawAddress: stadium.area.isNotEmpty
-                          ? stadium.area
-                          : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
-                      administrativeArea: stadium.governorate,
+          // Location badge opens the stadium in the external maps app.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: (MediaQuery.sizeOf(context).width - 64).clamp(0.0, double.infinity),
+            ),
+            child: Tooltip(
+              message: Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'فتح الموقع على الخريطة'
+                  : 'Open location in maps',
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                  onTap: () async {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    try {
+                      final String query = (stadium.lat != null && stadium.lng != null)
+                          ? '${stadium.lat},${stadium.lng}'
+                          : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
+                      final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                      final launched = await launchUrl(
+                        googleMapsUrl,
+                        mode: LaunchMode.externalApplication,
+                      );
+                      if (!launched && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح تطبيق الخرائط.'
+                                : 'Could not open the maps app.'),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint('Error launching maps: $e');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر فتح الموقع. حاول مرة أخرى.'
+                                : 'Could not open this location. Please try again.'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.xl),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: VSPColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            EgyptGovernorates.formatSmartLocation(
+                              rawAddress: stadium.area.isNotEmpty
+                                  ? stadium.area
+                                  : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
+                              administrativeArea: stadium.governorate,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                          ),
                         ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
