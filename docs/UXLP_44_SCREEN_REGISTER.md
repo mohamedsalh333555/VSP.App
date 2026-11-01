@@ -94,7 +94,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/championship_details_screen.dart` | player | source reviewed—runtime pending (strict team lookup; live championship and matches streams can be recreated on retry; stale header data now shows a warning/retry banner) |
 | `lib/features/player/screens/chat_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
 | `lib/features/player/screens/faq_and_support_screen.dart` | player | source reviewed—runtime pending (wizard scrolling, fixed action-bar insets, form lifecycle, and screen-state layout reviewed) |
-| `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
+| `lib/features/player/screens/global_search_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area and keyboard-aware scroll layout; failed searches show localized retry instead of endless loading/no-results; request generations prevent older query results overwriting newer searches) |
 | `lib/features/player/screens/manage_tournament_roster_screen.dart` | player | source reviewed—runtime pending (roster load failure now distinct from empty roster with retry; save disabled until verified; raw backend errors hidden) |
 | `lib/features/player/screens/match_details_screen.dart` | player | source reviewed—runtime pending (match report submission guarded; join failures mapped to localized safe copy; actions remain lifecycle-gated) |
 | `lib/features/player/screens/matchup_live_dashboard_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper applied) |
