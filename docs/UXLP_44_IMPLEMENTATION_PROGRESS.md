@@ -1465,3 +1465,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Follow-up source review retained the dashboard's bottom SafeArea because the dashboard scroll content still needs system-navigation protection while the parent OwnerMain shell deliberately sets `bottom: false` for its bottom navigation bar. Only the already-applied parent top inset is suppressed in the nested dashboard body.
 - Corrective code commit: `7d8aa46757d1116fb7547d1e9b4d9fcf1aee6f99`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Challenge H2H loading/error/empty distinction — 2026-11-01
+
+- `TeamRepository.getHeadToHeadStats` previously converted any Supabase query failure into a fabricated all-zero result, causing the challenge opponent card to say this was the teams' first match. It now returns `null` on query failure.
+- `challenge_select_team_screen.dart` tracks H2H failure separately; `challenge_team_card.dart` now distinguishes loading, failed/unavailable history, genuine zero prior matches, and populated statistics with localized copy.
+- Code commits: `f580fcb26469a825bdba692c5de569158fcfc0a9`, `d11219722c9084275454ada24ac873ec64b0f98f`, `4c68bb50a462667508b8a21a1899019ee401f110`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
