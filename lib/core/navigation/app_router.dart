@@ -21,6 +21,7 @@ import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/widgets/collective_match_invite_route.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
+import '../../features/player/screens/profile_subscreens/edit_profile_screen.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
@@ -210,6 +211,10 @@ class AppRouter {
  },
  );
  },
+ ),
+ GoRoute(
+ path: '/edit-profile',
+ builder: (context, state) => const EditProfileScreen(),
  ),
  GoRoute(
  path: '/notifications',
