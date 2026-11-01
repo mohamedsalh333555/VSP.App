@@ -204,7 +204,7 @@ class BookingBottomBar extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'إيجار كرة / ${ballPrice.toInt()} ج.م' : 'Ball / ${ballPrice.toInt()}eg',
+                            isArabic ? 'إيجار كرة / ${ballPrice.toInt()} ج.م' : 'Ball / ${ballPrice.toInt()} EGP',
                             style: TextStyle(
                               color: isBallRented ? Colors.white : VSPColors.textPrimary,
                               fontSize: 15,
@@ -268,7 +268,7 @@ class BookingBottomBar extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${totalPrice.toInt()} ${isArabic ? "ج.م" : "eg"}',
+                        '${totalPrice.toInt()} ${isArabic ? "ج.م" : "EGP"}',
                         style: TextStyle(
                           color: isSlotSelected ? VSPColors.accent : VSPColors.textPrimary,
                           fontSize: 22,
@@ -276,7 +276,7 @@ class BookingBottomBar extends StatelessWidget {
                           letterSpacing: -0.5,
                         ).merge(VSPTypography.numericStyle),
                       ),
-                      if (depositAmount > 0 && needsDeposit) ...[
+                      if (!isOpenJoin && depositAmount > 0 && needsDeposit) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
