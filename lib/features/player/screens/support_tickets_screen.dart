@@ -254,9 +254,17 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
                   return VSPEmptyState(
                     icon: Iconsax.messages_3_copy,
                     title: isArabic ? 'لا توجد تذاكر دعم' : 'No support tickets',
-                    subtitle: isArabic ? 'افتح تذكرة وسيقوم فريق VSP بمتابعتها هنا.' : 'Open a ticket and the VSP team will follow it here.',
-                    buttonText: isArabic ? 'فتح تذكرة' : 'Open Ticket',
-                    onButtonPressed: _newTicket,
+                    subtitle: userId.isEmpty
+                        ? (isArabic
+                            ? 'سجّل الدخول لعرض تذاكر الدعم أو إنشاء تذكرة جديدة.'
+                            : 'Sign in to view your support tickets or create a new one.')
+                        : (isArabic
+                            ? 'افتح تذكرة وسيقوم فريق VSP بمتابعتها هنا.'
+                            : 'Open a ticket and the VSP team will follow it here.'),
+                    buttonText: userId.isEmpty
+                        ? null
+                        : (isArabic ? 'فتح تذكرة' : 'Open Ticket'),
+                    onButtonPressed: userId.isEmpty ? null : _newTicket,
                   );
                 }
                 return Column(
