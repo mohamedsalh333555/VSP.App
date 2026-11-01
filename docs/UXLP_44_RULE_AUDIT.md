@@ -1090,3 +1090,10 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - Rule 39/40: OwnerMainScreen deferred celebration subscription is guarded against post-frame disposal and late stream events.
 - Supabase security/authorization: read-only live review confirms all 66 public tables have RLS enabled and the previously identified six sensitive tables now have explicit policies. One SECURITY DEFINER view and 198 authenticated-callable SECURITY DEFINER functions remain under function-by-function authorization review; no blanket revoke or view mode change was applied because those operations can change team discovery and atomic workflow behavior.
 - All entries above are source/database observations only. Runtime and complete per-rule evidence remain pending.
+
+
+### 2026-11-01 auth layout/lifecycle additions
+
+- Rule 11/35: verify-email OTP row now sizes six digit boxes against the actual available width (32–46dp), removing the fixed-width overflow on narrow phones.
+- Rule 39/40: RootScreen deferred post-frame auth lookup and SignupScreen deferred auto-location now exit safely when disposed.
+- Source-only evidence. Device/large-text and Arabic/English runtime rendering remain pending.
