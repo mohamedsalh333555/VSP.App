@@ -654,3 +654,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The championship roster import action now says “لصق / Paste” rather than “لصق من واتساب / Paste from WhatsApp”; it reads clipboard text and is not tied to WhatsApp specifically.- Applied the same “لصق / Paste” wording to the team roster guest-player import action; the import parser still accepts clipboard text regardless of its source.
 - Manual roster-import dialog now owns and disposes its `TextEditingController` after the dialog closes; the existing clipboard-first behavior and parsing rules are unchanged.
 - Stadium fullscreen image-gallery page counter now offsets itself by the device's bottom system inset plus its existing visual spacing, avoiding the home/gesture indicator area.- Live matchup closure now verifies the parent screen is still mounted after the confirmation dialog returns before starting the async close operation.
+
+## Support-ticket sheet token alignment — 2026-11-01
+
+- Replaced the support-ticket creation sheet's hard-coded 24px viewport clearance with the canonical `VSPSpacing.xxl` token (24px), preserving the existing keyboard/safe-area sizing behavior while removing an orphan spacing literal.
+- Commit: `8418f678ac268e5e33687a7048ef4b99b70eaf9a`.
+- Source-only. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run. This does not close the support sheet's compact-device/keyboard runtime verification gate.
