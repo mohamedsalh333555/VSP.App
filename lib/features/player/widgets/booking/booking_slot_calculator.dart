@@ -104,13 +104,15 @@ class BookingSlotCalculator {
     required DateTime selectedDate,
   }) {
     int startMin = _parseTimeToMinutes(slotKey);
-    String openStr = stadium.openingTime;
-    String closeStr = stadium.closingTime;
+    String openStr = '';
+    String closeStr = '';
     final features = stadium.features;
-    if ((openStr.isEmpty || closeStr.isEmpty) && features is Map && features['workingHours'] != null) {
-      openStr = openStr.isNotEmpty ? openStr : (features['workingHours']['start'] ?? '');
-      closeStr = closeStr.isNotEmpty ? closeStr : (features['workingHours']['end'] ?? '');
+    if (features is Map && features['workingHours'] is Map) {
+      openStr = features['workingHours']['start']?.toString() ?? '';
+      closeStr = features['workingHours']['end']?.toString() ?? '';
     }
+    if (openStr.isEmpty) openStr = stadium.openingTime;
+    if (closeStr.isEmpty) closeStr = stadium.closingTime;
     int openMin = _parseTimeToMinutes(openStr);
     int closeMin = _parseTimeToMinutes(closeStr);
 
