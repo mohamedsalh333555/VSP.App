@@ -1117,3 +1117,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Collective booking post-action refresh failure handling — 2026-11-01
 - Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: join, leave, manual-player-count update, and participant removal all perform their server mutation before `_reload()`. Previously, if the follow-up booking/profile refresh threw, the enclosing action catch could show a false message that the mutation itself failed, even though the server had already accepted it. `_reload()` now handles/logs refresh errors independently, preserving the successful mutation outcome and avoiding misleading failure feedback.
 - Collective booking permissions, mutation calls, and booking rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 4c5d8f3564621d9c01e39bfd6bdb0bf68563ad08.
+
+
+## Emergency stadium closure owner-session guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: emergency closure previously opened its confirmation dialog and submitted the 24-hour closure request using the booking's owner ID without verifying that the currently signed-in account was still that owner. The action now requires the initiating account to match the booking owner, rechecks after confirmation, and only displays the result in that same session.
+- The emergency closure request, duration, and administrative review/refund routing are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 9b7249647c13ac782975a841f47a4214af00e5be.
