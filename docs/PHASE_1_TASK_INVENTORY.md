@@ -89,3 +89,7 @@ Current documentation/source status on `uxlp-44-implementation`:
 - The user requested continued source/documentation work while explicitly deferring tests and APK extraction. Those gates remain deferred; do not interpret this follow-up as Phase 6 or Phase 7 completion.
 
 **Current phase state: Phase 2/3 source remediation and evidence mapping in progress; Phase 6 tests/runtime validation and Phase 7 APK remain intentionally not run in this batch.**
+
+### Embedded UI coverage follow-up — 2026-11-01
+
+Repository filename reconciliation identified nine additional embedded UI components that were missing from the earlier register. They were added with `not yet inspected` status. The current register therefore supersedes the previous count with 225 table records across 199 unique Dart paths, including 26 repeated entries. The historical baseline above remains unchanged.
