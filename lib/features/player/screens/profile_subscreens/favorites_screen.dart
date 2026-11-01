@@ -47,7 +47,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: const VSPBackButton(),
