@@ -40,6 +40,7 @@ class PaymentCancelDialog {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
               dialogContinueText,
@@ -47,6 +48,7 @@ class PaymentCancelDialog {
             ),
           ),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => onConfirmCancel(ctx),
             child: Text(
               isArabic ? 'الرجوع للخلف' : 'Go Back',
