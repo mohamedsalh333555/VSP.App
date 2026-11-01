@@ -343,59 +343,79 @@ class _PayoutDialogContentState extends State<_PayoutDialogContent> {
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       actions: [
-        Row(
-          children: [
-            Expanded(
-              child: TextButton(
-                onPressed: _isSubmitting ? null : widget.onCancel,
-                child: Text(widget.isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+        LayoutBuilder(
+          builder: (_, constraints) {
+            final cancelButton = TextButton(
+              onPressed: _isSubmitting ? null : widget.onCancel,
+              child: Text(
+                widget.isAr ? 'إلغاء' : 'Cancel',
+                style: const TextStyle(color: VSPColors.textSecondary),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: (_isSubmitting || _amountError != null)
-                    ? null
-                    : () async {
-                        final parsed = double.tryParse(_amountController.text.trim()) ?? 0.0;
-                        if (parsed <= 0 || parsed > widget.digitalBalance) {
-                          _validateAmount(_amountController.text);
-                          return;
-                        }
-                        setState(() => _isSubmitting = true);
-                        try {
-                          await widget.onSubmit(
-                            parsed,
-                            selectedDest['id']!,
-                            selectedDest['value']!,
-                          );
-                        } catch (e) {
-                          VSPLogger.w('Owner payout submission failed: $e');
-                          if (!context.mounted) return;
-                          setState(() => _isSubmitting = false);
-                          VSPFeedback.showError(
-                            context,
-                            widget.isAr
-                                ? 'تعذر إرسال طلب التسوية. تحقق من الاتصال وحاول مرة أخرى.'
-                                : 'Could not submit the payout request. Check your connection and try again.',
-                          );
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-                ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                      )
-                    : Text(widget.isAr ? 'تأكيد الإرسال' : 'Confirm Request', style: const TextStyle(fontWeight: FontWeight.bold)),
+            );
+            final submitButton = ElevatedButton(
+              onPressed: (_isSubmitting || _amountError != null)
+                  ? null
+                  : () async {
+                      final parsed = double.tryParse(_amountController.text.trim()) ?? 0.0;
+                      if (parsed <= 0 || parsed > widget.digitalBalance) {
+                        _validateAmount(_amountController.text);
+                        return;
+                      }
+                      setState(() => _isSubmitting = true);
+                      try {
+                        await widget.onSubmit(
+                          parsed,
+                          selectedDest['id']!,
+                          selectedDest['value']!,
+                        );
+                      } catch (e) {
+                        VSPLogger.w('Owner payout submission failed: $e');
+                        if (!context.mounted) return;
+                        setState(() => _isSubmitting = false);
+                        VSPFeedback.showError(
+                          context,
+                          widget.isAr
+                              ? 'تعذر إرسال طلب التسوية. تحقق من الاتصال وحاول مرة أخرى.'
+                              : 'Could not submit the payout request. Check your connection and try again.',
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
-            ),
-          ],
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : Text(
+                      widget.isAr ? 'تأكيد الإرسال' : 'Confirm Request',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+            );
+
+            if (constraints.maxWidth < 360) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  cancelButton,
+                  const SizedBox(height: 8),
+                  submitButton,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: cancelButton),
+                const SizedBox(width: 8),
+                Expanded(child: submitButton),
+              ],
+            );
+          },
         ),
       ],
     );
