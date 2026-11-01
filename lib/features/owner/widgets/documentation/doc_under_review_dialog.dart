@@ -8,7 +8,8 @@ Future<void> showDocUnderReviewDialog(BuildContext context) async {
 
   await showDialog(
     context: context,
-    barrierDismissible: false,
+    useSafeArea: true,
+      barrierDismissible: false,
     builder: (ctx) => AlertDialog(
         scrollable: true,
       backgroundColor: VSPColors.surface,
