@@ -32,9 +32,12 @@ class BookingSlotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    final slotWidget = GestureDetector(
-      onTap: (isBooked || isPast) ? null : onTap,
-      child: AnimatedContainer(
+    final slotWidget = Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        onTap: (isBooked || isPast) ? null : onTap,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         alignment: Alignment.center,
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
@@ -169,6 +172,7 @@ class BookingSlotCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
         ),
       ),
     );
