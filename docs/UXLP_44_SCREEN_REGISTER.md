@@ -667,3 +667,7 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/add_stadium/stadium_wizard_media_coordinator.dart` and its image loaders: persisted stadium images are distinguished from newly uploaded draft images. Removing an existing image during an edit no longer deletes its Storage object before the edit is saved; upload progress callbacks also avoid invoking widget state updates after the owning context is disposed.
+
+
+- `lib/features/owner/widgets/bookings/owner_schedule_slots_builder.dart`: owner schedule slots now honor every configured stadium `breakTimes` interval and mark any overlapping 30-minute slot as a break, matching player-side availability; legacy single-break fields remain supported.
+- `lib/features/player/widgets/my_team/my_team_controller.dart`: team updates now require a verified signed-in user instead of attempting logo uploads under a synthetic `unknown` storage path. Manual tournament team names are trimmed before persistence.
