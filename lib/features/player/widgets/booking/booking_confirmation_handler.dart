@@ -138,6 +138,12 @@ class BookingConfirmationHandler {
       isCrossGovernorate = true;
     }
 
+    if (!context.mounted) return;
+    if (!isSameUser()) {
+      onLoadingChanged(false);
+      return;
+    }
+
     // ── Pre-confirmation double-check ────────────────────────────────────────
     try {
       List<Booking> currentBookings = [];
