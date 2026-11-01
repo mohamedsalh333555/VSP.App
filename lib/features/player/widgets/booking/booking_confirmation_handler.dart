@@ -63,6 +63,19 @@ class BookingConfirmationHandler {
     required ValueChanged<bool> onLoadingChanged,
     required VoidCallback onSlotsCleared,
   }) async {
+    if (selectedTimeSlots.isEmpty ||
+        selectedTimeSlots.any((slot) => slot.trim().isEmpty)) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'اختار موعد الحجز الأول قبل التأكيد.'
+            : 'Select at least one booking time slot before confirming.',
+      );
+      onLoadingChanged(false);
+      return;
+    }
+
     onLoadingChanged(true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
