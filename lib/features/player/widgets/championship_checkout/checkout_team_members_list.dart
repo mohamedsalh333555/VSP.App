@@ -35,7 +35,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
       children: [
         Text(
           isArabic ? 'أعضاء الفريق المسجلين:' : 'Registered team members:',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.white),
         ),
         const SizedBox(height: VSPSpacing.sm),
         ListView.builder(
@@ -62,7 +62,7 @@ class CheckoutTeamMembersList extends StatelessWidget {
                 activeColor: VSPColors.accent,
                 title: Text(
                   member['name'] ?? '',
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 subtitle: isCaptain
                     ? Text(
