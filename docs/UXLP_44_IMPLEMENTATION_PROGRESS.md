@@ -1037,3 +1037,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Quick-booking payment chip touch targets — 2026-11-01
 - Fixed `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart`: quick amount chips were implemented as bare `GestureDetector`s with only about 25–30 px vertical content height, below the 48×48 dp mobile accessibility/touch-target baseline. Replaced them with Material `InkWell` controls and minimum 48×48 dp constraints while preserving selection callbacks and styling.
 - Amount options and payment calculations are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: c6b7dd0203d891fd7caf656fcbf602f85fa4f3a8.
+
+
+## Cash-booking WhatsApp launch feedback — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart`: the cash-booking “Confirm via WhatsApp” action launched `wa.me` without awaiting the result or handling `false`/exceptions, so a failed handoff was silent. It now awaits external-app launch and shows localized failure feedback when WhatsApp cannot be opened. The no-phone support fallback remains unchanged.
+- No booking or payment state changes. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 967a4a7399b5618027001d29a52f3da507272086.
