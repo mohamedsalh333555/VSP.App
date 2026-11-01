@@ -32,7 +32,7 @@ class RosterTeamMembersSection extends StatelessWidget {
               isArabic ? 'لاعبو الفريق (عبر التطبيق)' : 'Team Players (In App)',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: VSPColors.white,
                   ),
             ),
             Container(
@@ -95,14 +95,14 @@ class RosterTeamMembersSection extends StatelessWidget {
                 child: CheckboxListTile(
                   value: isSelected,
                   activeColor: VSPColors.accent,
-                  checkColor: Colors.black,
+                  checkColor: VSPColors.black,
                   onChanged: canEdit ? (_) => onTogglePlayer(uid) : null,
                   title: Row(
                     children: [
                       Text(
                         name,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : VSPColors.textPrimary,
+                          color: isSelected ? VSPColors.white : VSPColors.textPrimary,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
