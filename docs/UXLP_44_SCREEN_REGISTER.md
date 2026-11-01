@@ -495,3 +495,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 - `lib/features/auth/screens/verify_email_screen.dart`: OTP verification and resend now recover from unexpected exceptions with localized messages and restore their in-flight controls; local email-cleanup failure no longer masks successful server verification.
 
 - `lib/features/player/screens/profile_screen.dart`: the profile team-card initial fetch now uses the shared localized loading state instead of an unlabeled spinner; existing explicit error/retry behavior remains unchanged.
+
+
+### Loading-state implementation additions — 2026-11-01
+
+The following registered screens now use `VSPStateView` with localized Arabic/English titles and contextual messages for full-page/stream loading: `facility_onboarding_screen.dart`, `owner_cup_screen.dart`, `owner_inbox_screen.dart`, `subscription_plans_screen.dart`, `tournament_brackets_screen.dart`, `match_details_screen.dart`, `matchup_live_dashboard_screen.dart`, `support_ticket_screen.dart` (ticket + messages streams), `support_tickets_screen.dart`, `team_profile_screen.dart`, `profile_subscreens/my_team_screen.dart`, and `profile_subscreens/notifications_screen.dart`. Existing error/retry/empty and data-fetch logic was retained. Compact button and image placeholders were not expanded into page-level states.
