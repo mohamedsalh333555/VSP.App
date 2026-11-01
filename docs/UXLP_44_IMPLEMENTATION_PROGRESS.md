@@ -833,3 +833,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Tournament score editor, auto-schedule sheet, and manual team registration sheet now cap their height using the viewport after keyboard and safe-area insets.
 - Existing score, scheduling, and team-registration behavior is unchanged. No tests, CI, analyzer, migrations, or APK build were run.
 - Commits: adcd0e3de3ea1639ed1395eb19c8c3053a5e8812; 569e28aa289ec0bfaad773e2cf049d7e2f251107; 1a7f0a2917ee14f277aae1a88595f1c45e01f8a6.
+
+
+## Additional modal viewport and dialog resilience — 2026-11-01
+- Keyboard- and safe-area-aware height caps were added to tournament score entry, tournament auto-scheduling, and manual tournament team registration sheets. Their existing scrollable content remains intact.
+- Four tournament dashboard confirmation dialogs, the home governorate confirmation dialog, and the stadium-wizard discard confirmation dialog now use scrollable AlertDialogs for compact screens and large text.
+- No booking, tournament, payment, pricing, or registration business rules were changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commits: adcd0e3de3ea1639ed1395eb19c8c3053a5e8812; 569e28aa289ec0bfaad773e2cf049d7e2f251107; 1a7f0a2917ee14f277aae1a88595f1c45e01f8a6; b225122d05c9e471ace9fa39b77bb1d4d88e287c; 61f0bbeb1eea82c2618cd062b59a3ac448665fe4; 434ad88c021c32c0d2c893e24a0f2cb1a1590410.
