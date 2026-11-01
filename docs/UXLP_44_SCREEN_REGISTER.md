@@ -705,3 +705,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 - `lib/features/auth/services/signup_validation_service.dart`: password-strength scoring now evaluates five distinct signals (minimum length, lowercase, uppercase, digit, and special character); the duplicated minimum-length check no longer inflates the score.
 - `lib/features/owner/controllers/owner_dashboard_controller.dart`: dashboard requests now use a monotonically increasing request token; late responses from an older date/court filter are ignored, and pending responses are invalidated when the controller is disposed.
+
+
+- `lib/features/player/services/payment_checkout_coordinator.dart`: both booking and tournament fallback pollers now serialize async status reads and latch confirmed completion, preventing overlapping timer ticks from issuing duplicate requests or invoking success callbacks more than once.
