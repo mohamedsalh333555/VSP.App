@@ -67,8 +67,11 @@ class BookingSlotCalculator {
       if (features is Map && features['breakTimes'] is List) {
         for (final item in features['breakTimes'] as List) {
           if (item is! Map) continue;
-          final start = getCumulativeMinutes(item['start']?.toString() ?? '');
-          final end = getCumulativeMinutes(item['end']?.toString() ?? '');
+          final startText = item['start']?.toString() ?? '';
+          final endText = item['end']?.toString() ?? '';
+          if (!_isValidTime(startText) || !_isValidTime(endText)) continue;
+          final start = getCumulativeMinutes(startText);
+          final end = getCumulativeMinutes(endText);
           if (start >= 0 && end > start) {
             breakIntervals.add([start, end]);
           }
@@ -78,8 +81,13 @@ class BookingSlotCalculator {
       // Backward compatibility for stadium records saved with the legacy single-break shape.
       if (breakIntervals.isEmpty && features is Map && features['breakTime'] is Map) {
         final legacyBreak = features['breakTime'] as Map;
-        final start = getCumulativeMinutes(legacyBreak['start']?.toString() ?? '');
-        final end = getCumulativeMinutes(legacyBreak['end']?.toString() ?? '');
+        final startText = legacyBreak['start']?.toString() ?? '';
+        final endText = legacyBreak['end']?.toString() ?? '';
+        if (!_isValidTime(startText) || !_isValidTime(endText)) {
+          return const <TimeSlotItem>[];
+        }
+        final start = getCumulativeMinutes(startText);
+        final end = getCumulativeMinutes(endText);
         if (start >= 0 && end > start) {
           breakIntervals.add([start, end]);
         }
