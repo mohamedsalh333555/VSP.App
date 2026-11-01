@@ -711,3 +711,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/widgets/home/book_tonight_sheet.dart`: failed slot discovery now exits loading into a bilingual retryable error state instead of leaving the sheet spinning indefinitely; the loader also prevents overlapping retries.
+
+
+- `lib/features/auth/widgets/signup/signup_password_strength_bar.dart` and `lib/features/auth/services/signup_validation_service.dart`: password-strength labels (Weak/Medium/Strong) now follow the active Arabic/English locale; the score still uses five distinct strength signals.
