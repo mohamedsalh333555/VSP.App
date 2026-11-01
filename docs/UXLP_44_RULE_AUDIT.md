@@ -797,3 +797,9 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - **Rules 11 and 35 — `booking_calendar_modal.dart`:** removed the 240dp minimum dialog maximum-height fallback that could exceed the remaining height after system/keyboard insets. The scrollable dialog now clamps to the actually available viewport.
 - **Rule 35 — `AddPlayerSheet`:** inspected its caller in `create_team_sheet.dart`; the modal route sets `isScrollControlled: true` and `useSafeArea: true`, so the prior caller-configuration question is resolved at source level.
 - Calendar source commit: `c2f57c7317b9ef4bfd04f409227a8295179fbaea`. Runtime/keyboard/device verification remains pending; no tests or build were run.
+
+
+### Booking calendar directional navigation — 2026-11-01
+
+- **Rules 10, 27, and 33 — `booking_calendar_modal.dart`:** month-navigation glyphs now mirror in RTL, and previous/next controls expose localized tooltips. Date range and selection behavior are unchanged.
+- Source commit: `2a3a66cfe239a2924bb03c9ac68131e95ac656f1`. Runtime locale and focus verification remains pending; no tests or build were run.
