@@ -134,7 +134,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => const CreateTeamSheet(),
     );
     if (!mounted || created != true) return;
@@ -367,7 +367,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
         constraints: BoxConstraints(
@@ -414,7 +414,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             Text(
               isArabic ? 'كود تحدي فريقك' : 'Team Challenge Code',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -455,14 +455,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
+                      foregroundColor: VSPColors.white,
                       side: const BorderSide(color: VSPColors.divider),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
-                    icon: const Icon(Iconsax.copy_copy, size: 18, color: Colors.white),
-                    label: Text(isArabic ? 'نسخ الكود' : 'Copy', style: const TextStyle(color: Colors.white)),
+                    icon: const Icon(Iconsax.copy_copy, size: 18, color: VSPColors.white),
+                    label: Text(isArabic ? 'نسخ الكود' : 'Copy', style: const TextStyle(color: VSPColors.white)),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code));
                       Navigator.pop(ctx);
@@ -475,7 +475,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: VSPColors.whatsApp,
-                      foregroundColor: Colors.white,
+                      foregroundColor: VSPColors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
@@ -629,7 +629,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                 Text(
                                   isArabic ? 'كود التحدي لفريقك' : 'Your Team Challenge Code',
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: VSPColors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -651,7 +651,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             onPressed: _isGeneratingCode ? null : _showMyChallengeCodeModal,
                             style: TextButton.styleFrom(
                               backgroundColor: VSPColors.accent,
-                              foregroundColor: Colors.black,
+                              foregroundColor: VSPColors.black,
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
                             ),
@@ -659,7 +659,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                 ? const SizedBox(
                                     width: 14,
                                     height: 14,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                                   )
                                 : Text(
                                     isArabic ? 'مشاركة' : 'Share',
@@ -692,7 +692,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                             Text(
                               isArabic ? 'كود التحدي من كابتن الخصم' : 'Opponent Challenge Code',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -734,7 +734,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                   textCapitalization: TextCapitalization.characters,
                                   enabled: !_isLookingUpCode,
                                   style: const TextStyle(
-                                    color: Colors.white,
+                                    color: VSPColors.white,
                                     fontSize: 15,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.5,
@@ -762,7 +762,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                 onPressed: _isLookingUpCode ? null : _handleLookupCode,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: VSPColors.accent,
-                                  foregroundColor: Colors.black,
+                                  foregroundColor: VSPColors.black,
                                   padding: const EdgeInsets.symmetric(horizontal: 18),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -774,7 +774,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                                         height: 18,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
-                                          color: Colors.black,
+                                          color: VSPColors.black,
                                         ),
                                       )
                                     : Text(
