@@ -112,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => const CreateTeamSheet(),
     );
   }
@@ -178,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  title: Text(
  displayGovName,
  style: TextStyle(
- color: isSelected ? VSPColors.accent : Colors.white,
+ color: isSelected ? VSPColors.accent : VSPColors.white,
  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
  ),
  ),
@@ -271,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  centerTitle: true,
  automaticallyImplyLeading: false,
@@ -375,7 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  RepaintBoundary(
  key: _teamCardKey,
  child: Material(
- color: Colors.transparent,
+ color: VSPColors.transparent,
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  child: InkWell(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -471,7 +471,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
    // explicitly through the sheet's own Cancel / close controls.
    isDismissible: false,
    enableDrag: false,
-   backgroundColor: Colors.transparent,
+   backgroundColor: VSPColors.transparent,
    builder: (_) => const CreateTeamSheet(),
  );
  if (created == true && mounted) {
@@ -607,6 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  final isAr = Localizations.localeOf(context).languageCode == 'ar';
  final confirmed = await showDialog<bool>(
  context: context,
+ useSafeArea: true,
  builder: (ctx) => AlertDialog(
  scrollable: true,
  backgroundColor: VSPColors.surface,
@@ -617,7 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  const SizedBox(width: 8),
  Text(
  isAr ? 'تسجيل الخروج' : 'Sign Out',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+ style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
  ),
  ],
  ),
@@ -634,7 +635,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
  onPressed: () => Navigator.pop(ctx, true),
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.error,
- foregroundColor: Colors.white,
+ foregroundColor: VSPColors.white,
  ),
  child: Text(isAr ? 'تسجيل الخروج' : 'Log Out'),
  ),
