@@ -27,7 +27,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
               championship.prizePool > 0 ? championship.prizePool : championship.grandPrize;
           return AlertDialog(
             backgroundColor: VSPColors.surface,
-            surfaceTintColor: Colors.transparent,
+            surfaceTintColor: VSPColors.transparent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
             title: Row(
               children: [
@@ -39,7 +39,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: VSPColors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -64,7 +64,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                       children: [
                         Text(
                           championship.name,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                         ),
                         const SizedBox(height: 6),
                         Row(
@@ -122,7 +122,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.success,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
                   minimumSize: const Size(64, 48),
                   tapTargetSize: MaterialTapTargetSize.padded,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
@@ -165,7 +165,7 @@ Future<void> showTournamentPrizeDeliveryDialog(
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                       )
                     : Text(isAr ? 'تأكيد التسليم' : 'Confirm Handover',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
