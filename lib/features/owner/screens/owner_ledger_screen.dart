@@ -12,6 +12,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../widgets/ledger/owner_ledger_balance_cards.dart';
 import '../widgets/ledger/owner_ledger_transaction_item.dart';
 import '../widgets/ledger/owner_payout_dialog.dart';
@@ -27,7 +28,7 @@ class OwnerLedgerScreen extends StatefulWidget {
 }
 
 class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
-  late final Stream<List<Map<String, dynamic>>> _transactionsStream;
+  late Stream<List<Map<String, dynamic>>> _transactionsStream;
   Map<String, dynamic>? _summary;
 
   @override
@@ -36,6 +37,15 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
     _transactionsStream = widget.payoutOnly
         ? OwnerRepository().getPayoutSettlementsStream()
         : OwnerRepository().getTransactionsStream();
+    _loadSummary();
+  }
+
+  void _retryTransactions() {
+    setState(() {
+      _transactionsStream = widget.payoutOnly
+          ? OwnerRepository().getPayoutSettlementsStream()
+          : OwnerRepository().getTransactionsStream();
+    });
     _loadSummary();
   }
 
@@ -160,7 +170,7 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
       body: SafeArea(top: false, bottom: true, child: StreamBuilder<List<Map<String, dynamic>>>(
         stream: _transactionsStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return VSPStateView(
               state: VSPUiState.loading,
               title: isAr ? 'جاري تحميل السجل المالي' : 'Loading financial ledger',
@@ -169,6 +179,15 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           }
 
           final rawRows = snapshot.data ?? [];
+          if (snapshot.hasError && rawRows.isEmpty) {
+            return VSPErrorState(
+              customMessage: isAr
+                  ? 'تعذر تحميل السجل المالي. أعد المحاولة لتحديث البيانات.'
+                  : 'Could not load the financial ledger. Retry to refresh the data.',
+              retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+              onRetry: _retryTransactions,
+            );
+          }
           final transactions = widget.payoutOnly
               ? rawRows.map((row) {
                   final status = row['status']?.toString().toLowerCase();
@@ -209,6 +228,46 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
 
           return Column(
             children: [
+              if (snapshot.hasError)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.sm,
+                    VSPSpacing.md,
+                    0,
+                  ),
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.warning.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(
+                      color: VSPColors.warning.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Iconsax.warning_2_copy,
+                        color: VSPColors.warning,
+                        size: 18,
+                      ),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'تعذر تحديث المعاملات. المعروض هو آخر سجل تم تحميله.'
+                              : 'Could not refresh transactions. Showing the last loaded ledger.',
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _retryTransactions,
+                        child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
               // كارت الرصيد الإلكتروني المتاح للسحب
               OwnerDigitalBalanceCard(
                 digitalBalance: availableDigital,
