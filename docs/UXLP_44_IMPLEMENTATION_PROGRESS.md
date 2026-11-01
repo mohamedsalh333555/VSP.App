@@ -1944,3 +1944,12 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/core/widgets/skeleton_loader.dart`: `CardSkeleton` now uses `EdgeInsetsDirectional.only(end: 16)` instead of a physical right margin, so horizontal card spacing follows the active reading direction.
 - Expanded `docs/UXLP_44_SCREEN_REGISTER.md` with ten previously unregistered shared/auth embedded UI components: shimmer image, skeleton loader, login/social-auth rows, owner payout info card, signup name/governorate controls, welcome button/language control, and onboarding slide. Their integration/runtime behavior remains pending; this does not imply full embedded-widget coverage.
 - Code commit: `daf2ee216966e7fb3ebea28858c5a1058370c128`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Owner embedded-component RTL cleanup — 2026-11-01
+
+- `owner_payout_settings_card.dart` and `owner_profile_form.dart`: label/help-text insets now use directional `start` rather than physical `left`.
+- `owner_stadiums_carousel.dart`: both horizontal card gaps now use directional `end` rather than physical `right`.
+- `add_stadium_step1_details.dart`: note-template chip spacing now uses directional `end` rather than physical `right`.
+- Registered these owner components plus owner avatar/delete/payout cards, add-stadium hours/location sections, and the two Copilot conversation/message widgets for explicit caller-level review. No payout, profile, stadium, geolocation, Copilot permission, or data behavior changed.
+- Code commits: `0a5d7a360eab02616241d4be756710d7a82712ec`, `e3ba1d2d331741b4c25fd3c9761c5dfca8b7d386`, `4c88bb9e4dfb18933e5f81f343f9b8b1b1f46e79`, `1df1e3239ad5fad3912f5f666e782a25b53e7891`. Source-only; no tests, analyzer, CI, runtime checks, or APK build were run.
