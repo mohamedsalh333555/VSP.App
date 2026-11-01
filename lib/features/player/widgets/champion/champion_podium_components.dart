@@ -125,7 +125,7 @@ class ChampionPodiumItem extends StatelessWidget {
                   ),
                   child: Text(
                     isArabic ? 'فريقك' : 'Your Team',
-                    style: const TextStyle(color: Colors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
+                    style: const TextStyle(color: VSPColors.black, fontSize: 8.5, fontWeight: FontWeight.w900),
                   ),
                 ),
               ],
@@ -162,7 +162,7 @@ class ChampionPodiumItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
+                    color: VSPColors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: isCenter ? 13 : 11,
                   ),
@@ -198,7 +198,7 @@ class ChampionPodiumItem extends StatelessWidget {
             child: Text(
               '$rank',
               style: VSPTypography.numericStyle.copyWith(
-                color: isCenter ? Colors.black : Colors.white,
+                color: isCenter ? VSPColors.black : VSPColors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: isCenter ? 18 : 13,
               ),
