@@ -944,3 +944,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/player/screens/support_tickets_screen.dart`: after the asynchronous support-ticket creation request, the sheet context was checked but the owning screen context was not checked before reading `AuthProvider` from that parent context. If the screen was disposed while the sheet remained mounted, the success or error path could access a deactivated parent context.
 - Both post-request success and error paths now require the parent screen to remain mounted before reading its provider. Ticket creation behavior and account-identity checks are unchanged.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d1253058ff48d02bcf208ff2fc8f19a5d7da7e1c.
+
+
+## Open-join booking chat recovery and account-scope guard — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: opening the booking chat previously failed silently when no other participant existed, chat creation threw, or the repository returned no chat ID. The action now gives localized feedback for unavailable prerequisites and recoverable failures.
+- After the asynchronous chat lookup, navigation now also verifies that the same authenticated user is still active. This prevents a late result started under one account from opening that booking chat after an account switch.
+- Chat eligibility and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 24cf0feacc8b7124323534ffa9b85722094aa718; 3abe25c7059ee7272e178dfb78c25b4657e32baf.
