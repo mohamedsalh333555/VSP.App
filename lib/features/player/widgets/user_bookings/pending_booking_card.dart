@@ -172,11 +172,13 @@ class PendingBookingCard extends StatelessWidget {
                         return;
                       }
                       final updatedPaymentState = updated?.paymentStatus.toLowerCase().trim();
+                      final isRefundStillPending =
+                          updatedPaymentState == 'refund_pending';
                       final isAwaitingPaymentConfirmation = updated != null &&
                           (updated.isPaid ||
                               updatedPaymentState == 'paid' ||
                               updatedPaymentState == 'partially_paid' ||
-                              updatedPaymentState == 'refund_pending');
+                              isRefundStillPending);
                       final isConfirmed = updated != null &&
                           PaymentCheckoutService.isPaymentConfirmed(
                             status: updated.status.toDbValue(),
@@ -202,13 +204,17 @@ class PendingBookingCard extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              isAwaitingPaymentConfirmation
+                              isRefundStillPending
                                   ? (isArabic
-                                      ? 'الدفع ما زال قيد التحقق. لا تكرر الدفع؛ انتظر تأكيد الخادم.'
-                                      : 'Payment is still being verified. Do not pay again; wait for server confirmation.')
-                                  : (isArabic
-                                      ? 'لم يتم تأكيد السداد بعد، يمكنك استكمال عملية الدفع.'
-                                      : 'Payment is not confirmed yet. You can complete checkout.'),
+                                      ? 'طلب الاسترداد ما زال قيد المعالجة. لا تبدأ دفعاً جديداً لهذا الحجز.'
+                                      : 'The refund is still being processed. Do not start another payment for this booking.')
+                                  : isAwaitingPaymentConfirmation
+                                      ? (isArabic
+                                          ? 'الدفع ما زال قيد التحقق. لا تكرر الدفع؛ انتظر تأكيد الخادم.'
+                                          : 'Payment is still being verified. Do not pay again; wait for server confirmation.')
+                                      : (isArabic
+                                          ? 'لم يتم تأكيد السداد بعد، يمكنك استكمال عملية الدفع.'
+                                          : 'Payment is not confirmed yet. You can complete checkout.'),
                             ),
                             backgroundColor: VSPColors.warning,
                           ),
