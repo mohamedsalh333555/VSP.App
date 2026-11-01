@@ -162,6 +162,7 @@ void main() {
       await tester.tap(find.text('Extend Match'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 4));
+      await tester.pump(const Duration(seconds: 2)); // settle AuthProvider's 5s safe-timeout
 
       expect(loadingStates.first, isTrue);
       expect(mockRepo.matchExtended, isTrue);
