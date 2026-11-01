@@ -13,6 +13,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   showDialog(
     context: context,
+      useSafeArea: true,
     barrierDismissible: true,
     builder: (ctx) {
       return AlertDialog(
@@ -25,7 +26,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
             const SizedBox(height: 8),
             Text(
               isArabic ? 'انتهت مباراتك' : 'Match Completed',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
           ],
@@ -44,7 +45,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 minimumSize: const Size(double.infinity, 44),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),
@@ -52,6 +53,7 @@ void showPostMatchAddResultDialog(BuildContext context, Booking booking, {requir
                 Navigator.pop(ctx);
                 showDialog(
                   context: context,
+      useSafeArea: true,
                   barrierDismissible: false,
                   builder: (_) => MatchResultModal(
                     booking: booking,
@@ -153,6 +155,7 @@ void showPostMatchConfirmResultDialog(
 
   showDialog(
     context: context,
+      useSafeArea: true,
     barrierDismissible: false,
     builder: (dialogContext) {
       bool? submittingDifferentResult;
@@ -207,13 +210,13 @@ void showPostMatchConfirmResultDialog(
                         ? 'تم تأكيد النتيجة وتحديث ترتيب الدوري!'
                         : 'Result confirmed & rankings updated!',
                     style: const TextStyle(
-                      color: Colors.black,
+                      color: VSPColors.black,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   action: SnackBarAction(
                     label: isArabic ? '🏆 جدول الترتيب' : '🏆 Standings',
-                    textColor: Colors.black,
+                    textColor: VSPColors.black,
                     onPressed: () => navigateToTeamsStandings(context),
                   ),
                 ),
@@ -240,7 +243,7 @@ void showPostMatchConfirmResultDialog(
                       ? 'تأكيد نتيجة مباراة التحدي'
                       : 'Confirm Challenge Match Result',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: VSPColors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -254,7 +257,7 @@ void showPostMatchConfirmResultDialog(
                 Text(
                   claimText,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: VSPColors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -277,7 +280,7 @@ void showPostMatchConfirmResultDialog(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.accent,
-                          foregroundColor: Colors.black,
+                          foregroundColor: VSPColors.black,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -295,7 +298,7 @@ void showPostMatchConfirmResultDialog(
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.black,
+                                  color: VSPColors.black,
                                 ),
                               )
                             : Text(
