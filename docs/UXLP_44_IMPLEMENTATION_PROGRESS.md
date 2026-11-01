@@ -2094,3 +2094,8 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `StadiumWizardValidator.validateStep0` previously checked only that the hourly price was non-empty; malformed text could later be converted to `0.0` in the payload. It now requires a finite non-negative numeric value. Step 1 similarly rejects non-finite/invalid ball-rental values when ball rental is enabled and rejects non-finite or non-positive deposits. Existing deposit cap behavior (50% of hourly price when price is positive) remains unchanged.
 - `validateStep2` now receives the current locale and displays a bilingual message while images are uploading instead of always showing English. Updated caller in `add_stadium_wizard.dart`. Code commits: `101c7ddb214485930be7ef65e84d95171a6af534`, `4d37c62faef5b6648c82cf81b8c01880ac2f3659`. No tests/analyzer/CI/device/APK run.
+
+
+## Team create/update post-write recovery — 2026-11-01
+
+- `MyTeamController.handleCreateTeam` previously awaited `reloadTeam()` inside the same try block as `createTeam`; a refresh failure after a successful DB insert fell into the generic error path and could prompt a duplicate team creation. Refresh now has a separate recovery boundary and the user receives a truthful localized message that the team exists but the view needs reopening. Create/update also stop before database writes when the user selected a logo but its upload returned no URL, avoiding silent success with a missing requested logo. Code commit: `36fbb8c1aab659a0ac93afb36a4488ecac53b02e`. No tests/analyzer/CI/device/APK run.
