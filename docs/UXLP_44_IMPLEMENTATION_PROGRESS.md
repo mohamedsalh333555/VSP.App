@@ -2053,3 +2053,8 @@ Read-only inspection was performed against the connected production VSP project 
 - `owner_schedule_slots_builder.dart` previously displayed only the model's legacy single break range and tested only the slot start minute. It now reads all `features.breakTimes` intervals, normalizes overnight intervals against the operational opening time, and marks any 30-minute slot overlapping a break as unavailable. The legacy `breakStartTime`/`breakEndTime` model fields remain the fallback for older records. This brings owner schedule display in line with player slot generation. Code commit: `e2b9d89fe88832916687891d65c1cc582e29c14e`.
 - `my_team_controller.dart` no longer uses the synthetic storage owner ID `unknown` when a team update is attempted without a loaded user. It stops with localized authentication feedback before uploading or persisting. Manual tournament team names are trimmed before insertion. Code commits: `fd471aa4d34811736db5cce75e92fadf8ec89d94`, `17f726489e79fe485b9476f5aa97fae8da69c4ca`.
 - No server authorization or roster policies were modified. Source-only; final device/flow validation remains pending. No tests, analyzer, CI, or APK build were run.
+
+
+## Tournament wizard numeric validation — 2026-11-01
+
+- `tournament_wizard_coordinator.dart` previously checked only that fee/prize fields were non-empty, while payload construction converted invalid numeric text to `0.0`. It now validates both values as finite, non-negative numbers and returns localized field-specific guidance before submission. Zero remains allowed for free entry/no-prize configurations; no commercial pricing policy was changed. Code commit: `322bebf5f2ee1a8ba4c5b2a00d0ef755245db8cb`. No tests/analyzer/CI/device/APK run.
