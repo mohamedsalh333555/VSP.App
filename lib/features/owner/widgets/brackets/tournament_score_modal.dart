@@ -403,6 +403,7 @@ void showTournamentScoreModal(
                               onPressed: !isValidToSubmit
                                   ? null
                                   : () async {
+                                      if (isSubmitting) return;
                                       setModalState(() => isSubmitting = true);
                                       try {
                                         final finalWinnerId = (homeScore == awayScore)
