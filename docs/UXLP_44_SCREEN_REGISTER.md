@@ -458,3 +458,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ## Authentication and owner onboarding component review — 2026-11-01
 
 - Reviewed the social sign-in row, owner payout information card, and responsive signup name fields. The social buttons already use the shared `SocialAuthButton` semantic Material target at 56dp and the owner payout fields use localized labels from generated app localizations. Signup name fields already switch to a vertical layout below 360dp and use localized labels/hints. No source change was made where the existing implementation already met the inspected criterion; device/large-text verification remains pending.
+
+
+| `lib/features/player/widgets/collective_match_invite_sheet.dart` | Collective booking/invite bottom sheet: 48dp close/counter controls; localized close tooltip |
+| `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | Tournament governorate confirmation: primary action now 48dp |
+| `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | Payout password verification sheet: cancel action 48dp; scroll and keyboard behavior retained |
