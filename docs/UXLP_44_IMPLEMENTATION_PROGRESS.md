@@ -1183,3 +1183,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Pending booking status refresh missing-record handling — 2026-11-01
 - Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: when Check Status could not retrieve the booking (`getBookingById` returned null), the card previously continued through the payment-state logic and could tell the player that payment was not confirmed and checkout could be completed using stale card data. It now stops, displays a localized refresh error, and does not present stale data as a verified current state.
 - Payment confirmation, refund, and checkout business rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `3da9dc30c58ddcc870164a04a32c07064635530e`, `394ec70a04267de7c1e631c5ff4cd84675f37de4`.
+
+
+## Booking availability precheck fail-closed handling — 2026-11-01
+- Fixed `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: if both the booking-provider stream and direct repository fallback failed while checking the selected slot, the exception was logged but execution continued toward payment/booking confirmation. The flow now stops, resets its loading state, and tells the player that availability could not be verified. This avoids presenting an unverified slot as ready to book; the server-side booking authority remains unchanged.
+- No pricing, slot reservation, or payment rules were changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `59423c42669c8787c0db8ed2d2547f990107199e`.
