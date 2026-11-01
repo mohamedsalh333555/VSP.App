@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 270 unique paths
+- Registered Dart screen/surface and embedded-component paths: 280 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 297, including 27 repeated paths that document separate embedded-component findings
+- Table records: 307, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -178,6 +178,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart` | owner | source reviewed—runtime pending (strategic KPI grid; responsive density and metric-state verification pending) |
 | `lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart` | owner | source reviewed—runtime pending (dropdown selected values now align to `AlignmentDirectional.centerEnd`; RTL/LTR and filter behavior pending) |
 | `lib/features/owner/widgets/dashboard/owner_basic_financial_glance.dart` | owner | source reviewed—runtime pending (financial summary card; actual Supabase values and zero/error state verification pending) |
+| `lib/features/owner/widgets/dashboard/owner_glanceable_timeline.dart` | owner | source reviewed—runtime pending (ongoing marker spacing now uses directional end margin; timeline time/state mapping pending) |
+| `lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart` | owner | source reviewed—runtime pending (operational finance card and locked-money preview; actual data/entitlement state verification pending) |
+| `lib/features/owner/widgets/dashboard/owner_pro_insights_view.dart` | owner | source reviewed—runtime pending (PRO insights surface; subscription gating and real-data state mapping pending) |
+| `lib/features/owner/widgets/dashboard/owner_pro_overview_card.dart` | owner | source reviewed—runtime pending (PRO overview card; plan state and KPI source verification pending) |
+| `lib/features/owner/widgets/dashboard/owner_pro_segmented_tabs.dart` | owner | source reviewed—runtime pending (PRO segmented tabs; selected state, keyboard and touch behavior pending) |
+| `lib/features/owner/widgets/dashboard/owner_time_period_dropdown.dart` | owner | source reviewed—runtime pending (selected period now uses directional trailing alignment; locale and selection behavior pending) |
+| `lib/features/owner/widgets/dashboard/owner_today_pitch_schedule_card.dart` | owner | source reviewed—runtime pending (today schedule card; time zone, empty and stale-data states pending) |
+| `lib/features/owner/widgets/dashboard/owner_venue_filter_chips.dart` | owner | source reviewed—runtime pending (venue filter chips; selection state and scroll behavior pending) |
+| `lib/features/owner/widgets/dashboard/owner_verification_banner.dart` | owner | source reviewed—runtime pending (verification/subscription/grace-period banners; status-specific copy and actions pending) |
+| `lib/features/owner/widgets/documentation/doc_explanation_card.dart` | owner | source reviewed—runtime pending (document-step explanation card; localized instructions and responsive text pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
