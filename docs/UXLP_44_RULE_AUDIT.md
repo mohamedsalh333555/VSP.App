@@ -1051,3 +1051,12 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - `lib/features/auth/widgets/signup/signup_name_fields.dart`: first/last-name inputs now stack vertically when the available field width is below 360dp, while retaining the two-column layout on wider screens. This avoids cramped text fields and label/input collisions on compact phones and under larger text scaling. Input controllers, labels, validation ownership, and submission order are unchanged.
 - Source commit: `53dbbea2a3a5bea13615403e40041669433ebb8d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Shared state presentation consolidation — 2026-11-01
+
+- **Rules 3, 6, 9, 11, 13, 35, 36, 38, 42:** the shared empty-state adapter now delegates to the canonical `VSPStateView`, so empty-state visuals and layout no longer drift between the generic component and championship/1v1 variants. The canonical renderer provides bounded-width scrollable content and neutral charcoal empty-state treatment.
+- **Loading review:** the shared loading/processing renderer is bounded and scrollable and exposes a localized progress semantic label.
+- **Error review:** the shared error renderer distinguishes offline connectivity from server failure, uses a live-region announcement, and exposes a retry action. This is source-level review; caller-specific error messages and retry callbacks still need verification.
+- Updated source: `vsp_empty_state.dart`, `champion_empty_state.dart`, and `league_1v1_empty_states.dart`. Shared loading/error source was reviewed but not modified in this pass.
+- **Status remains source reviewed—runtime pending.** No rule is promoted to pass. Every registered caller still needs review for correct data-state mapping, Arabic/English copy, retry behavior, and device/viewport rendering. No tests, analyzer, CI, runtime checks, or APK build were run.
