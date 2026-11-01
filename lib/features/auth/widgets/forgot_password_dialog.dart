@@ -20,6 +20,7 @@ class ForgotPasswordDialog {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              scrollable: true,
               backgroundColor: VSPColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -88,6 +89,7 @@ class ForgotPasswordDialog {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(0, 48),
                           backgroundColor: VSPColors.accent,
                           foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
