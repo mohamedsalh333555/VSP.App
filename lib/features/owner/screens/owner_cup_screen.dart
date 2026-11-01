@@ -135,7 +135,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                  return VSPStateView(
+                    state: VSPUiState.loading,
+                    title: isArabic ? 'جارٍ تحميل البطولات' : 'Loading championships',
+                    message: isArabic ? 'نحدّث البطولات الخاصة بملاعبك.' : 'Fetching championships for your stadiums.',
+                  );
                 }
 
                 if (snapshot.hasError &&
