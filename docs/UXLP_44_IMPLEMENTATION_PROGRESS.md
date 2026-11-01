@@ -1505,3 +1505,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: the scrollable calendar dialog previously forced a 240dp minimum maximum-height when the remaining viewport was smaller, which could exceed the actual keyboard/short-screen space. Its maximum height now clamps to the available viewport instead of forcing that minimum.
 - Verified the `AddPlayerSheet` call site in `lib/features/player/widgets/create_team_sheet.dart`: it is opened with both `isScrollControlled: true` and `useSafeArea: true`, resolving the previously open caller-configuration check.
 - No calendar selection, booking, roster, or eligibility behavior changed. Source review only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Calendar code commit: `c2f57c7317b9ef4bfd04f409227a8295179fbaea`.
+
+
+## Booking calendar RTL navigation and accessibility — 2026-11-01
+
+- Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: previous/next month arrows now swap direction in RTL instead of retaining LTR-facing Iconsax glyphs. Both icon buttons also expose localized Arabic/English tooltips for their month-navigation action.
+- Date selection and month-boundary rules are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `2a3a66cfe239a2924bb03c9ac68131e95ac656f1`.
