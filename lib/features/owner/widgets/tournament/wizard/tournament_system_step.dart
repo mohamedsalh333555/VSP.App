@@ -36,7 +36,7 @@ class TournamentSystemStep extends StatelessWidget {
 
   Widget _buildLabel(BuildContext context, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: VSPSpacing.xs, start: 4),
       child: Text(text, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500)),
     );
   }
@@ -70,7 +70,7 @@ class TournamentSystemStep extends StatelessWidget {
           ),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: enabled ? Colors.white : VSPColors.textSecondary,
+                color: enabled ? VSPColors.white : VSPColors.textSecondary,
                 fontWeight: FontWeight.w600,
               ),
           items: items.map((item) {
@@ -95,13 +95,13 @@ class TournamentSystemStep extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.1),
+              color: VSPColors.warningSoft,
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              border: Border.all(color: VSPColors.warningBorder),
             ),
             child: Row(
               children: [
-                const Icon(Iconsax.lock_1_copy, color: Colors.amber, size: 20),
+                const Icon(Iconsax.lock_1_copy, color: VSPColors.warning, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -109,7 +109,7 @@ class TournamentSystemStep extends StatelessWidget {
                         ? 'إعدادات النظام وهيكل البطولة مقفولة: لا يمكن تعديل عدد الفرق أو نظام المجموعات بعد بدء التسجيل لحماية عدالة المنافسة.'
                         : 'Format settings are locked: Number of teams and group structure cannot be changed after registration starts.',
                     style: const TextStyle(
-                      color: Colors.amber,
+                      color: VSPColors.warning,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -121,7 +121,7 @@ class TournamentSystemStep extends StatelessWidget {
         ],
         Text(
           isArabic ? 'إعدادات وقواعد البطولة ' : 'Tournament Rules & Format ',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 16),
 
@@ -170,7 +170,7 @@ class TournamentSystemStep extends StatelessWidget {
               Text(
                 isArabic ? 'ذهاب وإياب' : 'Home & Away',
                 style: TextStyle(
-                  color: _isStructureEditable ? Colors.white : VSPColors.textSecondary,
+                  color: _isStructureEditable ? VSPColors.white : VSPColors.textSecondary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
