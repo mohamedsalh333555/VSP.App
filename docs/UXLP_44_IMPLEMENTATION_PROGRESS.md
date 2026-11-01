@@ -2227,3 +2227,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `booking_provider.dart`: an asynchronous SharedPreferences restore could complete after a newer draft had already been selected or edited, overwriting the current in-memory draft with stale persisted data. A generation guard now invalidates pending restores whenever a draft is set, updated, or cleared; a restore also refuses to replace an already-populated draft.
 - Source commit: `f92e9735bd2b8dcf0adfc832295b1d3984708b28`.
 - No tests, analyzer, CI, device checks, or APK build were run.
+
+- Account-scope follow-up: player-to-player and player/owner scope transitions now invalidate pending draft restores, clear the prior in-memory draft, and await removal of the previous session's persisted draft before continuing. Source commits: `9da854d11bffb9ff3b032b6297307b8f1ca64415`, `c9bc98d8f0c00bf6cad5d1c3fd21776ddf66e384`, `4fd9cdf4fc851231ee210c965eaac72de3f8726e`.
