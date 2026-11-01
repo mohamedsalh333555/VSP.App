@@ -73,17 +73,21 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       debugPrint('Error loading team members: $e');
     }
 
+    if (!mounted) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     for (final uid in widget.team.memberUids) {
       if (!_teamMembers.any((m) => m['id'] == uid)) {
+        final fallbackIndex = _teamMembers.length + 1;
         _teamMembers.add({
           'id': uid,
-          'name': uid == widget.team.captainId ? widget.team.captainName : 'لاعب ${_teamMembers.length + 1}',
+          'name': uid == widget.team.captainId
+              ? widget.team.captainName
+              : (isArabic ? 'لاعب $fallbackIndex' : 'Player $fallbackIndex'),
           'profile_image_url': '',
         });
       }
     }
 
-    if (!mounted) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = auth.currentUser?.id;
 
