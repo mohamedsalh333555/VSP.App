@@ -967,3 +967,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 27, 33, 34, and 35:** OTP keyboard event handling no longer allocates an undisposed FocusNode during build; resend is a keyboard-focusable TextButton with a 48dp minimum target and correct disabled countdown state; date-of-birth field is now focusable with a localized tooltip.
 - Source commits: `d03b89bbc9c303c1e74d95bfb6a722c58fe335af`, `cf7f225de5405ce3fce507e2a64b1777972c1c0e`, `5b283415b6ed5028ed3e36a48188f1b880a2c039`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Signup password and email verification semantics — 2026-11-01
+
+- **Rules 10, 11, 33, and 34:** password-strength progress now exposes semantic label/value; masked verification email remains LTR and bounded on narrow screens, preventing mixed-direction rendering and overflow.
+- Source commits: `f08220df0d53e821f714d877028c71b7aca32b22`, `854d157d9b04296a3fbcbaa44faeb60df7eb93ad`. Runtime/accessibility verification remains pending; no tests or build were run.
