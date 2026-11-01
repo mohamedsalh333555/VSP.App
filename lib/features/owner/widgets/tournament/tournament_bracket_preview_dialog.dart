@@ -44,8 +44,8 @@ void showTournamentBracketPreviewDialog(
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.height * 0.65,
+          width: MediaQuery.sizeOf(ctx).width * 0.9,
+          height: (MediaQuery.sizeOf(ctx).height * 0.55).clamp(180.0, 480.0),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(VSPRadius.md),
             child: InteractiveViewer(
@@ -68,7 +68,7 @@ void showTournamentBracketPreviewDialog(
               Expanded(
                 child: PrimaryButton(
                   text: l10n.cancel,
-                  height: 44,
+                  height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
                   onPressed: () => Navigator.pop(ctx),
@@ -143,8 +143,8 @@ Future<void> showInteractiveDrawRoomDialog(
             ],
           ),
           content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.85,
-            height: 340,
+            width: MediaQuery.sizeOf(ctx).width * 0.85,
+            height: (MediaQuery.sizeOf(ctx).height * 0.42).clamp(180.0, 320.0),
             child: Column(
               children: [
                 Text(
