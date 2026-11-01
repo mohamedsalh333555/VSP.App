@@ -1639,3 +1639,11 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/owner/widgets/brackets/tournament_match_card.dart`: replaced the 16dp GestureDetector calendar glyph with a 48dp IconButton and localized scheduling tooltip; schedule text is now bounded to two lines. Date-picker defaults and limits now use `VSPTimeService.now`, including the default time, instead of mixing device-clock reads.
 - `lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart`: today's pending cash-booking count now uses `VSPTimeService.now`, matching the app's centralized time source used by other booking flows.
 - Scheduling persistence, pending-cash eligibility, and booking/payment rules are unchanged. Source commits: `bf9728854a4fd82ac517a0c5a9965fbf1afb3163`, `986d4ac9d8c8be36e10c8caaeee001f2a85a1bdf`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Player home, chat composer, and payment copy refinement — 2026-11-01
+
+- `lib/features/player/widgets/home/home_top_bar.dart`: profile and search surfaces now use focusable InkWell actions with localized tooltips; filter action now has a localized tooltip. Player avatar uses cached image loading and an explicit initial/icon fallback when the URL is blank or the image fails, rather than leaving a blank avatar after a network failure.
+- `lib/features/player/widgets/chat/chat_input_bar.dart`: send action now uses a focusable 48dp InkWell with a localized tooltip while preserving the sending lock and RTL send-arrow direction.
+- `lib/features/player/widgets/payment/payment_method_selector.dart`: replaced the absolute “100% Secure” claim with the factual “Paymob Gateway / بوابة Paymob” label; the accompanying copy continues to state that payment selection occurs on Paymob's official gateway.
+- No navigation, messaging, payment routing, or pricing behavior changed. Source commits: `7358e28a0103eaa6fd76ba3a8272cc826f2ab1e9`, `29867442c66dab84ce359672d104df9e261b4de8`, `50ffd573c2efc1026b487ac1a322a545373ce265`, `50893601929d447510918b1099ff9a0bb604c279`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
