@@ -117,7 +117,7 @@ class _AllStadiumsFilterSheetState extends State<AllStadiumsFilterSheet> {
   Widget build(BuildContext context) {
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 180),
+      duration: VSPDSMotion.navigationSwitch,
       curve: Curves.easeOut,
       padding: EdgeInsets.only(bottom: keyboardInset),
       child: SafeArea(
