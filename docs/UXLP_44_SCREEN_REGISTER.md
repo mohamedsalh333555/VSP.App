@@ -613,3 +613,42 @@ The following registered screens now use `VSPStateView` with localized Arabic/En
 - Chat dialog follow-up: `player/widgets/chat/chat_dialogs.dart` report form is keyboard-scrollable and all report/delete actions use explicit 48dp hit targets.
 
 - `lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart`: prize handover dialog actions now use explicit 48dp minimum targets.
+
+
+## Supporting logic files excluded from the UI-surface count
+
+The recursive `lib/**/{screens,widgets}/**.dart` tree contains 356 paths. The 338 registered paths above are UI screens or embedded visual components. The following 31 remaining paths were inspected as non-standalone UI support code (services, controllers, calculators, data models, parsers, payload builders, or compatibility exports) and are intentionally not counted as separate visible surfaces:
+
+- `lib/features/owner/widgets/add_stadium/stadium_location_geocoder.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_controllers.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_data_loader.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_draft_service.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_features_state.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_image_service.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_location_coordinator.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_media_coordinator.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_payload_builder.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_submit_service.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_time_coordinator.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_time_utils.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_validator.dart`
+- `lib/features/owner/widgets/bookings/owner_schedule_slots_builder.dart`
+- `lib/features/owner/widgets/brackets/tournament_round_schedule_calculator.dart`
+- `lib/features/owner/widgets/documentation/doc_wizard_hydrator.dart`
+- `lib/features/owner/widgets/tournament/tournament_bracket_builder.dart`
+- `lib/features/owner/widgets/tournament/tournament_manual_team_service.dart`
+- `lib/features/owner/widgets/tournament/wizard/tournament_wizard_coordinator.dart`
+- `lib/features/owner/widgets/tournament/wizard/tournament_wizard_draft_service.dart`
+- `lib/features/player/widgets/booking/booking_confirmation_handler.dart`
+- `lib/features/player/widgets/booking/booking_slot_calculator.dart`
+- `lib/features/player/widgets/booking/booking_slot_models.dart`
+- `lib/features/player/widgets/chat/chat_call_utils.dart`
+- `lib/features/player/widgets/my_team/my_team_controller.dart`
+- `lib/features/player/widgets/my_team/team_management_service.dart`
+- `lib/features/player/widgets/payment/paymob_callback_url_parser.dart`
+- `lib/features/player/widgets/user_bookings/refund_badge_widget.dart`
+- `lib/features/player/widgets/user_bookings/refund_notice_widget.dart`
+- `lib/shared/widgets/date_picker/vsp_date_picker_calculator.dart`
+- `lib/shared/widgets/match_card/public_match_card_formatter.dart`
+
+These files still affect behavior and data integrity through their callers; excluding them from the visual-surface count does not exclude them from code-flow or business-rule review.
