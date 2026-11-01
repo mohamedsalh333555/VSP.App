@@ -61,7 +61,7 @@ class HomeStadiumsSection extends StatelessWidget {
                   isAr ? 'لم نصل إلى $cityName بعد! ' : 'We haven\'t reached $cityName yet! ',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -135,7 +135,7 @@ class HomeStadiumsSection extends StatelessWidget {
                         child: Text(
                           AppLocalizations.of(context)!.localeName == 'ar' ? 'تغيير' : 'Change',
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
