@@ -36,7 +36,13 @@ void showTournamentManualTeamSheet(
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
+          maxHeight: (MediaQuery.of(sheetContext).size.height -
+                  MediaQuery.of(sheetContext).viewInsets.bottom -
+                  MediaQuery.of(sheetContext).padding.top -
+                  MediaQuery.of(sheetContext).padding.bottom)
+              .clamp(240.0, MediaQuery.of(sheetContext).size.height)
+              .toDouble() *
+              0.88,
         ),
         padding: EdgeInsets.fromLTRB(
           20,
