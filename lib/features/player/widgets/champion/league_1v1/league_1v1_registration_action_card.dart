@@ -93,7 +93,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 42,
+            height: 48,
             child: OutlinedButton(
               onPressed: isCancellingRegistration ? null : onCancelRegistration,
               style: OutlinedButton.styleFrom(
@@ -166,7 +166,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 48,
             child: OutlinedButton.icon(
               onPressed: onSwitchToUserGov,
               style: OutlinedButton.styleFrom(
@@ -194,7 +194,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
         height: 50,
         color: VSPColors.accent,
         textColor: Colors.black,
-        onPressed: isProcessingPayment ? () {} : onJoinPressed,
+        onPressed: isProcessingPayment ? null : onJoinPressed,
       );
     }
     return Container(
