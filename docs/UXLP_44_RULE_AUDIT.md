@@ -10,7 +10,7 @@
 | # | Rule | Current source status | Evidence / remaining verification |
 |---:|---|---|---|
 | 1 | Clear hierarchy | source reviewed—runtime pending | Source-reviewed representative player/owner flows: booking confirmation, match details, create-team, owner dashboard, subscription plans. Screen-by-screen hierarchy and device rendering still pending. |
-| 2 | Consistent grouping | source reviewed—runtime pending | Booking, team creation, subscription, and match-detail surfaces group related decision inputs/actions; full 128-surface grouping review remains pending. |
+| 2 | Consistent grouping | source reviewed—runtime pending | Booking, team creation, subscription, and match-detail surfaces group related decision inputs/actions; full 338-path grouping review remains pending. |
 | 3 | Contrast first | source reviewed—runtime pending | Expanded V2 semantic palette and exact alpha primitives are centralized; legacy visual alpha values were preserved. Contrast ratios across every foreground/surface/state pairing still require runtime and automated contrast validation. |
 | 4 | Typography roles | source reviewed—runtime pending | V2 semantic typography roles exist; verify feature screens use the roles consistently and preserve Arabic/English legibility. |
 | 5 | One icon language | source reviewed—runtime pending | Shared navigation uses distinct Iconsax active/inactive variants; inspect all feature icons, sizes, and containers. |
