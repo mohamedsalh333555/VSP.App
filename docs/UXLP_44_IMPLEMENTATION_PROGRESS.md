@@ -1836,3 +1836,11 @@ Read-only inspection was performed against the connected production VSP project 
 - Supabase production review completed read-only: 66 public tables report RLS enabled; six previously sensitive tables have explicit policies; current Edge Function versions/JWT flags were recorded. Advisor findings are not blindly changed: one SECURITY DEFINER view, 198 authenticated-callable SECURITY DEFINER functions, leaked-password protection disabled, 44 RLS initplan, 50 multiple-permissive-policy, and 79 unused-index findings remain for controlled remediation.
 - The teams_public view's current definer behavior may be intentional for team discovery, while the base teams RLS SELECT policy limits rows to captain/member/admin. Switching it to invoker semantics without a reviewed public discovery policy could hide teams from players. This requires an explicit product/security decision and a migration plan; no production database mutation was made.
 - This remains source implementation only. No analyzer, tests, CI, device validation, database DDL, Edge Function deployment, or APK build was run. All 44 rules remain runtime-pending.
+
+
+## Auth compact-layout and lifecycle follow-up — 2026-11-01
+
+- RootScreen's initState post-frame callback now checks mounted before reading AuthProvider, closing a second deferred-context lifecycle edge.
+- Signup auto-location now checks mounted before its initial setState/Provider access, not only in finally.
+- Verify-email OTP digit boxes now calculate width from the available viewport; the previous fixed 46dp boxes plus margins exceeded the 312dp content width on a 360dp device before any text scaling. The new width is responsive (32–46dp) and preserves the default 46dp on wider screens.
+- No analyzer, tests, CI, runtime/device validation, or APK build was run.
