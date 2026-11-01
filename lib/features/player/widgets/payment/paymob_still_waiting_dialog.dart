@@ -24,7 +24,7 @@ class PaymobStillWaitingDialog {
             Expanded(
               child: Text(
                 isArabic ? 'الدفع يستغرق وقتاً أطول من المتوقع ' : 'Payment Taking Longer ',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
           ],
@@ -47,7 +47,7 @@ class PaymobStillWaitingDialog {
             onPressed: () => Navigator.pop(ctx, true), // Cancel & pop
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
               minimumSize: const Size(64, 48),
               tapTargetSize: MaterialTapTargetSize.padded,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
