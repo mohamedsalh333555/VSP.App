@@ -1237,3 +1237,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Found a concrete navigation defect in `League1v1NoGovernorateState`: it called `Navigator.pushNamed('/edit-profile')`, but the app's GoRouter had no `/edit-profile` route. Added the authenticated app route and changed the action to `context.push('/edit-profile')`.
 - Updated all nine register rows from `not yet inspected` to `source reviewed—runtime pending`, with specific source evidence and remaining runtime caveats.
 - No booking/payment/tournament eligibility or server policy was changed. No tests or APK build were run; route behavior remains unverified at runtime.
+
+
+## Owner inbox stream-state correction — 2026-11-01
+
+- Fixed `lib/features/owner/screens/owner_inbox_screen.dart`: an initial conversation-stream failure no longer appears as “No active chats”; it now shows a localized retryable error state.
+- If a refresh fails after conversations were loaded, the last loaded conversations remain visible with a localized stale-data warning and retry action.
+- No chat permissions, message behavior, database policy, or business rules changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `6deb79d17d3b40f1e8ecdc0eaeed7a973d9aaa02`.
