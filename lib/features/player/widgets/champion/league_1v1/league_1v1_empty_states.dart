@@ -76,7 +76,15 @@ class League1v1NoTournamentState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OneVsOneEmptyState(locationName: locationName);
+    return ChampionEmptyState(
+      icon: Iconsax.user_copy,
+      titleArabic: 'لا توجد بطولة واحد ضد واحد حالياً',
+      titleEnglish: 'No active 1vs1 tournament',
+      descriptionArabic:
+          'لا توجد بطولة واحد ضد واحد نشطة حالياً في $locationName. ترقب إعلان البطولة القادمة.',
+      descriptionEnglish:
+          'There is no active 1vs1 tournament in $locationName right now. Stay tuned for the next tournament.',
+    );
   }
 }
 
@@ -129,7 +137,7 @@ class League1v1GovernorateBanner extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    isArabic ? 'بطولاتي ($userGov)' : 'My City ($userGov)',
+                    isArabic ? 'بطولاتي (${championTranslateItem(context, userGov)})' : 'My City (${championTranslateItem(context, userGov)})',
                     style: VSPDSTypography.actionLabel,
                   ),
                 ),
