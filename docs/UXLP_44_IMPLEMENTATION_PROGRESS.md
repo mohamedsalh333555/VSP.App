@@ -1498,3 +1498,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/core/ui/vsp_ui.dart` (`VSPBottomActionBar`): the component accepts `EdgeInsetsGeometry`, but previously only preserved values when the runtime type was `EdgeInsets`; a supplied `EdgeInsetsDirectional` silently fell back to hardcoded physical padding. The component now applies the caller's padding unchanged and adds the device bottom safe inset in a separate nested `Padding`, preserving directional geometry.
 - This changes layout composition only; no action behavior or booking policy changed. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `025643a19457b5d21568958e531b7126cc465fe1`.
+
+
+## Booking calendar viewport and Add Player sheet caller review — 2026-11-01
+
+- Fixed `lib/features/player/widgets/booking/booking_calendar_modal.dart`: the scrollable calendar dialog previously forced a 240dp minimum maximum-height when the remaining viewport was smaller, which could exceed the actual keyboard/short-screen space. Its maximum height now clamps to the available viewport instead of forcing that minimum.
+- Verified the `AddPlayerSheet` call site in `lib/features/player/widgets/create_team_sheet.dart`: it is opened with both `isScrollControlled: true` and `useSafeArea: true`, resolving the previously open caller-configuration check.
+- No calendar selection, booking, roster, or eligibility behavior changed. Source review only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Calendar code commit: `c2f57c7317b9ef4bfd04f409227a8295179fbaea`.
