@@ -54,8 +54,8 @@ class ChampionshipGovernorateDialog {
         ),
         content: Text(
           isArabic
-              ? 'هذه البطولة تُقام في ملاعب محافظة [$champGovRaw]. هل أنت وفريقك مستعدون للالتزام بالحضور وخوض المباريات في الموعد والمكان المحدد؟'
-              : 'This tournament is hosted in [$champGovRaw]. Are you and your team committed to attending and playing on-site as scheduled?',
+              ? 'هذه البطولة تُقام في ملاعب محافظة $champGovRaw. هل أنت وفريقك مستعدون للالتزام بالحضور وخوض المباريات في الموعد والمكان المحدد؟'
+              : 'This tournament is hosted in $champGovRaw. Are you and your team committed to attending and playing on-site as scheduled?',
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
         ),
         actionsPadding: const EdgeInsets.all(16),
