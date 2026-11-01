@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface paths: 215 unique paths
+- Registered Dart screen/surface and embedded-component paths: 250 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 241, including 26 repeated paths that document separate embedded-component findings
+- Table records: 277, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -148,6 +148,16 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (keyboard-safe height; retryable load error; localized action errors with technical diagnostics; 48dp labeled controls; correct player-facing acceptance notification) |
 | `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown amount shows server-confirmation state; long timeline is bounded/scrollable and close action includes bottom system inset) |
 | `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (date-picker header padding uses directional start/end values for Arabic/English mirroring) (Dialog safe-area, bounded height, internally scrollable year/day steps) |
+| `lib/core/widgets/shimmer_image.dart` | shared | source reviewed—runtime pending (shared shimmer image placeholder; image loading/error caller behavior remains to verify) |
+| `lib/core/widgets/skeleton_loader.dart` | shared | source reviewed—runtime pending (CardSkeleton trailing margin uses directional end spacing for RTL/LTR mirroring) |
+| `lib/features/auth/widgets/login_social_auth_row.dart` | auth | source reviewed—runtime pending (social sign-in row; provider availability, locale and touch-target verification pending) |
+| `lib/features/auth/widgets/owner_onboarding/owner_payout_info_card.dart` | owner | source reviewed—runtime pending (payout information card; data/locale rendering verification pending) |
+| `lib/features/auth/widgets/signup/signup_name_fields.dart` | auth | source reviewed—runtime pending (responsive first/last-name fields; narrow-width behavior source-reviewed) |
+| `lib/features/auth/widgets/signup_governorate_dropdown.dart` | auth | source reviewed—runtime pending (localized governorate labels preserve canonical stored values) |
+| `lib/features/auth/widgets/social_auth_buttons_row.dart` | auth | source reviewed—runtime pending (shared social-auth controls; provider state and error recovery verification pending) |
+| `lib/features/auth/widgets/welcome/scale_animated_button.dart` | auth | source reviewed—runtime pending (welcome CTA animation and touch target verification pending) |
+| `lib/features/auth/widgets/welcome/welcome_language_button.dart` | auth | source reviewed—runtime pending (welcome language selector; RTL and locale-switch behavior pending) |
+| `lib/features/auth/widgets/welcome/welcome_onboarding_slide.dart` | auth | source reviewed—runtime pending (onboarding slide layout and localized text overflow verification pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
