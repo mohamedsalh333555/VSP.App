@@ -1228,3 +1228,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — RTL geometry:** shared terms/privacy and participant-management dialogs, collective invite sheet, and booking-duration chips now use directional insets/alignment instead of physical left/right assumptions. Modal source review found safe-area configuration on the inspected sheet entry points; runtime keyboard/system-bar verification remains pending.
+
+
+- **Rule 10 — Safe Area:** the Add Player modal route now enables `useSafeArea` so its top edge respects system bars/cutouts. Keyboard and gesture-navigation rendering remain pending device verification.
