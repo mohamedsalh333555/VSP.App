@@ -1785,3 +1785,8 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/auth/widgets/login_social_auth_row.dart`: Apple and Google sign-in now catch thrown provider/platform exceptions, always release the loading state while the screen is mounted, and show a localized retry message. Previously an exception escaping either awaited provider call could leave the login screen permanently showing a loading state. Successful sign-in routing and provider error-message handling are unchanged.
 - Source commit: `3cd017d817738b4c6569f0651e94c1def6b01b6f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Authentication and owner onboarding component review — 2026-11-01
+
+- Reviewed the social sign-in row, owner payout information card, and responsive signup name fields. The social buttons already use the shared `SocialAuthButton` semantic Material target at 56dp and the owner payout fields use localized labels from generated app localizations. Signup name fields already switch to a vertical layout below 360dp and use localized labels/hints. No source change was made where the existing implementation already met the inspected criterion; device/large-text verification remains pending.
