@@ -2116,3 +2116,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Book Tonight load failure recovery — 2026-11-01
 
 - `BookTonightSheet._loadTonightSlots` previously allowed a repository/network exception to escape the async callback, leaving `_isLoading` true with no visible recovery action. It now catches and logs the failure, presents a bilingual shared error state with retry, and uses an in-flight guard to prevent duplicate reload requests. The loading branch also uses the shared `VSPStateView`. Code commits: `428c90f846a6874672893fe8a7a6e993683d78cc`, `289e68e7557290533d95f0f415571ef0eb3b901d`. No analyzer/tests/CI/device/APK run.
+
+
+## Signup password-strength localization — 2026-11-01
+
+- The signup password-strength meter previously displayed English-only labels in Arabic mode. `calculatePasswordStrength` now accepts the active locale and returns localized Weak/Medium/Strong labels; the widget supplies the current locale. Code commits: `3ff184467582f733dad5a2e1753621e20f407d34`, `008346d1aa2636a1809612558ed49cda97ba046e`. No tests/analyzer/CI/device/APK run.
