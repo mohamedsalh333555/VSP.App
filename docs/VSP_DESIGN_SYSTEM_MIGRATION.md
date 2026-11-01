@@ -270,3 +270,12 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 
 
 - Championship refresh now carries a version from the parent details screen into the standings component. A retry from any child invalidates the cached per-group Future results, avoiding a stale cached error after a different stream failure.
+
+## Coverage reconciliation — 2026-11-01
+
+The coverage figures in the earlier sections above are historical checkpoints and are not the current register totals.
+
+- Current UXLP-44 screen register: 190 unique Dart paths across 216 table records (26 repeated entries for distinct embedded-component findings), plus the shared navigation component entry.
+- The recorded heuristic/static scan still covers 128 candidate files. Therefore, 62 of the currently registered unique paths are not proven to be included in that earlier scan. The scan must be rerun across the current complete register before this design-system scan gate can be closed.
+- The 190-path inventory still does not prove exhaustive embedded-widget, state, locale, or runtime coverage.
+- All 44 UXLP rules remain source-reviewed/runtime-pending. No visual/runtime pass is inferred from token usage or source notes.
