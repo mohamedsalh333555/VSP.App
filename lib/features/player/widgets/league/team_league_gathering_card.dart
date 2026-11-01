@@ -114,7 +114,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
           // Joined Teams List
           Text(
             isArabic ? 'الفرق المنضمة حتى الآن:' : 'Teams that have joined:',
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 13,
@@ -207,7 +207,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           isArabic ? 'في انتظار انضمام فريق منافس...' : 'Waiting for another team to join...', 
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: VSPColors.textSecondary,
                             fontSize: 12,
                             fontStyle: FontStyle.italic,
@@ -237,7 +237,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                     ? 'رسوم تنظيم الدوري $feeText جنيه لكل فريق. حجز ساعة الملعب لكل مباراة يتم بالتناصف بين الفريقين.'
                     : 'League organization fee: $feeText EGP per team. Stadium rental for each match is split equally between the two teams.', 
                 textAlign: TextAlign.center,
-                style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
             const SizedBox(height: 8),
@@ -272,7 +272,7 @@ class TeamLeagueGatheringCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   isArabic ? 'كود الدوري:' : 'League code:', 
-                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -324,7 +324,7 @@ Join code: ${league.id}
             icon: const Icon(Iconsax.share_copy, size: 18),
             label: Text(
               isArabic ? 'مشاركة الدعوة على واتساب' : 'Share invite on WhatsApp',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.whatsApp,
@@ -343,7 +343,7 @@ Join code: ${league.id}
                 icon: const Icon(Iconsax.trash_copy, size: 16, color: VSPColors.error),
                 label: Text(
                   isArabic ? 'إلغاء هذا الدوري' : 'Cancel this league',
-                  style: TextStyle(color: VSPColors.error, fontSize: 12),
+                  style: const TextStyle(color: VSPColors.error, fontSize: 12),
                 ),
               ),
             ),
