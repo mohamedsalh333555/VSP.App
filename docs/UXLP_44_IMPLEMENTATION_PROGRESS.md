@@ -2126,3 +2126,6 @@ Read-only inspection was performed against the connected production VSP project 
 ## Signup asynchronous failure recovery — 2026-11-01
 
 - `SignupScreen._handleSignup` previously allowed an unexpected `AuthProvider.signUp` exception or a secure-storage write failure after successful account creation to escape before `_isLoading` was reset. Auth exceptions now receive localized retry guidance; post-signup storage failures are logged and explicitly reported as an account that was created, avoiding a misleading invitation to register again. The loading state is released on both paths. Code commit: `9ae0f80395b00ac32c51fc27e281d64a14a6f2d5`. No tests/analyzer/CI/device/APK run.
+
+
+- Follow-up hardening: both payment pollers now carry a generation token checked after each awaited status read. Replacing/cancelling a poll or releasing checkout invalidates outstanding reads, preventing a late response from a previous checkout from firing its success callback. Code commit: `2ab5ead3671871e3e12a80a513209749fd7fc7ff`. Runtime cancellation/race validation remains pending.
