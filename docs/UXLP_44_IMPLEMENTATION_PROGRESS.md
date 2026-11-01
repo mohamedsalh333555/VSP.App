@@ -2173,3 +2173,11 @@ Read-only inspection was performed against the connected production VSP project 
 - Applied Supabase migrations: `harden_teams_public_directory_view`, `make_teams_public_view_security_invoker`, `limit_team_select_to_public_columns`.
 - Verified live catalog: `teams_public` has `security_invoker=true` and `security_barrier=true`; sensitive-column SELECT privileges are false for all three fields; authenticated no longer has table-level SELECT on `teams`; the `security_definer_view` advisor finding is gone. The remaining 197 SECURITY DEFINER function warnings are a separate review queue and were not mass-modified.
 - No app tests, analyzer, CI, or APK build were run.
+
+
+## Booking confirmation and payment error recovery — 2026-11-01
+
+- `booking_confirmation_handler.dart`: the pre-confirmation availability recheck previously checked only the first selected half-hour. Multi-slot bookings could therefore proceed when a later selected slot had become occupied. The recheck now validates every selected slot against the latest booking snapshot and blocks the submission if any one conflicts. The server-side atomic booking rule remains authoritative.
+- `booking_provider.dart`: payment-status repository exceptions previously escaped from the provider. They are now logged for diagnostics, mapped to a safe failure result, and notify listeners so owner cash-confirmation UI can exit its loading state and show its existing localized retry feedback.
+- Source commits: `c7469c7291df82d43a12ec57bb14ea9345395dc1`, `d246323b829ed59c81053b731b04056a3f49f86f`.
+- No tests, analyzer, CI, device checks, or APK build were run.
