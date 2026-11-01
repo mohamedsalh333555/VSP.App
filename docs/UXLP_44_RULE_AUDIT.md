@@ -1210,3 +1210,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29 and 36 — input validation and error prevention:** tournament wizard fee and prize fields now reject invalid, infinite, or negative numeric values before payload construction; zero remains permitted. Runtime form behavior remains pending.
+
+
+- **Rules 29, 36, and 43 — payment policy fail-closed:** the pre-payment active-cash-booking check now uses the strict Supabase query. A failed read can no longer masquerade as an empty booking history and permit the cash-payment route; it stops submission and asks the player to retry. Server-side enforcement remains authoritative.
