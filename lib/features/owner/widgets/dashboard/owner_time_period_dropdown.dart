@@ -47,7 +47,7 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
           selectedItemBuilder: (context) {
             return periods.map((p) {
               return Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: Text(
                   p['label']!,
                   style: const TextStyle(
