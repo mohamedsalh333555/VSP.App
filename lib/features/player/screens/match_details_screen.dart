@@ -35,6 +35,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Stadium? _stadium;
  bool _isJoining = false;
   bool _isActionProcessing = false;
+  bool _isReportingOwnerIssue = false;
   final Map<String, UserModel> _joinedUserProfiles = {};
   late final Stream<Booking?> _bookingStream;
 
@@ -199,6 +200,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  Future<void> _reportOwnerIssue() async {
+   if (_isReportingOwnerIssue) return;
    final booking = _booking;
    final ownerId = booking?.ownerId;
    if (booking == null || ownerId == null || ownerId.isEmpty) return;
@@ -210,6 +212,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    final submitted = await showDialog<bool>(
      context: context,
      builder: (dlgCtx) => AlertDialog(
+       scrollable: true,
        backgroundColor: VSPColors.surface,
        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
        title: Text(
@@ -269,24 +272,39 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
    final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
    if (currentUserId == null) return;
 
-   final ok = await ReportRepository().reportEntity(
-     reporterId: currentUserId,
-     targetId: ownerId,
-     targetType: 'user',
-     reason: reason,
-     details: details.isEmpty ? null : details,
-     contextType: 'booking',
-     contextId: booking.id,
-     bookingId: booking.id,
-   );
+   if (!mounted) return;
+   setState(() => _isReportingOwnerIssue = true);
+   var ok = false;
+   try {
+     ok = await ReportRepository().reportEntity(
+       reporterId: currentUserId,
+       targetId: ownerId,
+       targetType: 'user',
+       reason: reason,
+       details: details.isEmpty ? null : details,
+       contextType: 'booking',
+       contextId: booking.id,
+       bookingId: booking.id,
+     );
+   } catch (error, stackTrace) {
+     debugPrint('Error submitting booking owner report: $error');
+     debugPrintStack(stackTrace: stackTrace);
+   } finally {
+     if (mounted) setState(() => _isReportingOwnerIssue = false);
+   }
 
    if (mounted) {
-     VSPFeedback.showSuccess(
-       context,
-       ok
-           ? (ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.')
-           : (ar ? 'تعذر إرسال البلاغ.' : 'Could not submit report.'),
-     );
+     if (ok) {
+       VSPFeedback.showSuccess(
+         context,
+         ar ? 'تم إرسال البلاغ للمراجعة الإدارية.' : 'Report submitted for administrative review.',
+       );
+     } else {
+       VSPFeedback.showError(
+         context,
+         ar ? 'تعذر إرسال البلاغ. حاول مرة أخرى.' : 'Could not submit the report. Please try again.',
+       );
+     }
    }
  }
 
