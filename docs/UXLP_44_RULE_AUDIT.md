@@ -790,3 +790,10 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 
 - **Rules 7, 10, 11, 35, and 42 — `VSPBottomActionBar`:** its public padding type is `EdgeInsetsGeometry`, but the previous implementation discarded any non-`EdgeInsets` value and substituted physical left/right defaults. The component now preserves the supplied directional or physical padding and adds the system bottom inset independently.
 - Source commit: `025643a19457b5d21568958e531b7126cc465fe1`. Runtime device/RTL verification remains pending; no tests or build were run.
+
+
+### Booking calendar short-viewport correction — 2026-11-01
+
+- **Rules 11 and 35 — `booking_calendar_modal.dart`:** removed the 240dp minimum dialog maximum-height fallback that could exceed the remaining height after system/keyboard insets. The scrollable dialog now clamps to the actually available viewport.
+- **Rule 35 — `AddPlayerSheet`:** inspected its caller in `create_team_sheet.dart`; the modal route sets `isScrollControlled: true` and `useSafeArea: true`, so the prior caller-configuration question is resolved at source level.
+- Calendar source commit: `c2f57c7317b9ef4bfd04f409227a8295179fbaea`. Runtime/keyboard/device verification remains pending; no tests or build were run.
