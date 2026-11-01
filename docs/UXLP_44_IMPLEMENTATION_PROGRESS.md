@@ -920,3 +920,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart`: cancellation dismisses its dialog before awaiting the provider. If the owning screen was also removed during that request, the completion path previously attempted to show a SnackBar through a `ScaffoldMessenger` captured from a disposed route. It now checks the owning screen's `context.mounted` immediately after the await and exits before using the messenger when that route no longer exists.
 - The cancellation request itself and refund calculation/policy are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
 - Commit: 702f076e22f78e82ea250a21ace57c0aec4d53de.
+
+
+## Team creation success feedback after sheet dismissal — 2026-11-01
+- Fixed `lib/features/player/widgets/create_team_sheet.dart`: the success path popped the creation sheet and then looked up both `ScaffoldMessenger` and `Theme` using the sheet's route context. That context may already be deactivated after the pop. The messenger and text style are now captured while the context is mounted, before dismissing the sheet; the success SnackBar is then shown through the captured messenger.
+- Team creation data and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+- Commit: fccfaa0909a02b77b9008b3aea1d99066e71b97a.
