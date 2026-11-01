@@ -157,8 +157,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     final bottomPadding = safeBottomInset > keyboardInset
         ? safeBottomInset
         : keyboardInset;
-    final availableHeight =
-        (MediaQuery.sizeOf(context).height - keyboardInset).clamp(0.0, double.infinity).toDouble();
+    final availableHeight = (MediaQuery.sizeOf(context).height -
+            MediaQuery.paddingOf(context).top -
+            bottomPadding)
+        .clamp(0.0, MediaQuery.sizeOf(context).height)
+        .toDouble();
     final maxDbPrice = context.watch<StadiumProvider>().maxStadiumPrice;
     final activeCount = _activeFiltersCount;
 
