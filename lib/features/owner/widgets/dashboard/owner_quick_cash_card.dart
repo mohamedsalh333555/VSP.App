@@ -34,17 +34,24 @@ class OwnerQuickCashCard extends StatefulWidget {
 }
 
 class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
-  String? _confirmingBookingId;
+  final Set<String> _confirmingBookingIds = <String>{};
 
   Future<void> _onConfirmCash(Booking booking) async {
-    setState(() => _confirmingBookingId = booking.id);
+    if (_confirmingBookingIds.contains(booking.id)) return;
+    setState(() => _confirmingBookingIds.add(booking.id));
     HapticFeedback.heavyImpact();
 
-    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-    final success = await bookingProvider.updatePaymentStatus(booking.id, true);
-
-    if (mounted) {
-      setState(() => _confirmingBookingId = null);
+    var success = false;
+    try {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      success = await bookingProvider.updatePaymentStatus(booking.id, true);
+    } catch (error, stackTrace) {
+      debugPrint('Cash confirmation UI failed for booking ${booking.id}: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      if (mounted) {
+        setState(() => _confirmingBookingIds.remove(booking.id));
+      }
     }
 
     if (success && mounted) {
@@ -298,7 +305,7 @@ class _OwnerQuickCashCardState extends State<OwnerQuickCashCard> {
   }
 
   Widget _buildBookingCard(Booking b, String locale) {
-    final isConfirming = _confirmingBookingId == b.id;
+    final isConfirming = _confirmingBookingIds.contains(b.id);
     final deposit = b.depositPaid;
     final cashRemaining = (b.totalPrice - deposit).clamp(0.0, 999999.0);
 
