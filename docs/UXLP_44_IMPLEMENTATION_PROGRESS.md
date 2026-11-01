@@ -805,3 +805,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The booking date-picker dialog now caps its height to the available viewport after system insets and keyboard obstruction, and its content scrolls vertically when the calendar plus actions cannot fit. This prevents the fixed-height month grid and action row from being pushed outside short screens or keyboard-constrained layouts.
 - Date eligibility, month navigation range, selected-date behavior, and booking callback are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: c31868dab68e683c1a668b81ad687a9ae76e3fb6.
+
+
+## Payment verification modal short-screen accessibility — 2026-11-01
+
+- The non-dismissible payment-verification modal now constrains its content to the available viewport after keyboard/system insets and permits vertical scrolling. The delayed-wait actions and progress content remain reachable on short displays instead of being clipped outside the visible dialog area.
+- Payment verification timing, payment state, support destination, and navigation callbacks are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 60a768e2112a76d49c9512b7f5f587a49efa089d.
