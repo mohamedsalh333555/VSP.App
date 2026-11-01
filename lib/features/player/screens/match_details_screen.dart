@@ -556,13 +556,15 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  }
 
  if (_isLoading) {
- return const VSPScaffold(
- backgroundColor: VSPColors.background,
- body: SafeArea(
-   child: Center(
-     child: CircularProgressIndicator(color: VSPColors.accent),
+ return VSPScaffold(
+   backgroundColor: VSPColors.background,
+   body: SafeArea(
+     child: VSPStateView(
+       state: VSPUiState.loading,
+       title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل تفاصيل المباراة' : 'Loading match details',
+       message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث بيانات الحجز واللاعبين.' : 'Fetching booking and player details.',
+     ),
    ),
- ),
  );
  }
 
