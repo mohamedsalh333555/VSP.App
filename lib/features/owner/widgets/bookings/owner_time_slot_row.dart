@@ -38,7 +38,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
     final bool isMerged = slot['merged'] == true;
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.md),
         onTap: () => _handleTap(context),
