@@ -40,7 +40,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding; auth ID read corrected to User.id) |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (analytics errors localized with retry; stale responses invalidated by request generation; tab switcher meets 48dp minimum height) |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard flow reviewed; Supabase auth ID reads corrected to User.id) |
-| `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (inbox list uses shared bottom-navigation scroll padding) |
+| `lib/features/owner/screens/owner_inbox_screen.dart` | owner | source reviewed—runtime pending (initial conversation stream failure now shows localized retry instead of false empty state; refresh failure preserves loaded conversations with stale-data warning; shared bottom-navigation scroll padding) |
 | `lib/features/owner/screens/owner_ledger_screen.dart` | owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/owner/screens/owner_main_screen.dart` | owner | source reviewed—runtime pending (top safe-area protected; floating nav preserved; account-verification dialog scroll-safe) |
 | `lib/features/owner/screens/owner_profile_screen.dart` | owner | source reviewed—runtime pending (profile/role flow reviewed; Supabase auth ID access corrected to User.id) |
