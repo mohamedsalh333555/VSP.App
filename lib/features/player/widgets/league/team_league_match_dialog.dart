@@ -315,7 +315,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
       ),
     );
 
-    if (confirmed != true) return;
+    if (!mounted || confirmed != true) return;
 
     setState(() => _isLoading = true);
     try {
