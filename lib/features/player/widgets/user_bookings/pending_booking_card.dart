@@ -155,7 +155,18 @@ class PendingBookingCard extends StatelessWidget {
                               initiatingUserId) {
                         return;
                       }
-                      final updatedPaymentState = updated?.paymentStatus.toLowerCase().trim();
+                      if (updated == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic
+                                ? 'تعذر العثور على الحجز لتحديث حالته. حدّث قائمة حجوزاتك وحاول مرة أخرى.'
+                                : 'Could not find this booking to refresh its status. Refresh your bookings and try again.'),
+                            backgroundColor: VSPColors.error,
+                          ),
+                        );
+                        return;
+                      }
+                      final updatedPaymentState = updated.paymentStatus.toLowerCase().trim();
                       final isRefundStillPending =
                           updatedPaymentState == 'refund_pending';
                       final isAwaitingPaymentConfirmation = updated != null &&
