@@ -44,7 +44,7 @@ class TournamentRoundAutoScheduleBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
-                color: Colors.white10,
+                color: VSPVSPColors.white10,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 14),
@@ -56,7 +56,7 @@ class TournamentRoundAutoScheduleBanner extends StatelessWidget {
                 children: [
                   Text(
                     isArabic ? 'جدول مباريات $roundName (مُغلق )' : '$roundName Schedule (Locked )',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -99,7 +99,7 @@ class TournamentRoundAutoScheduleBanner extends StatelessWidget {
                   isArabic
                       ? (hasScheduledMatches ? 'تعديل جدول $roundName' : 'جدولة تلقائية لمباريات $roundName')
                       : (hasScheduledMatches ? 'Manage $roundName Schedule' : 'Auto-Schedule $roundName'),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -135,7 +135,7 @@ class TournamentRoundAutoScheduleBanner extends StatelessWidget {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
@@ -180,7 +180,7 @@ void showResetRoundScheduleConfirmationDialog(
       return AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -188,7 +188,7 @@ void showResetRoundScheduleConfirmationDialog(
             const SizedBox(width: 8),
             Text(
               isArabic ? 'تصفير جدول $roundName' : 'Reset $roundName Schedule',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ),
@@ -196,7 +196,7 @@ void showResetRoundScheduleConfirmationDialog(
           isArabic
               ? 'هل أنت متأكد من إلغاء مواعيد جميع مباريات ($roundName) وإعادتها إلى "غير مجدول"؟'
               : 'Are you sure you want to reset all match dates for ($roundName) to unscheduled?',
-          style: const TextStyle(color: Colors.white70, fontSize: 13),
+          style: const TextStyle(color: VSPVSPColors.white70, fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -206,7 +206,7 @@ void showResetRoundScheduleConfirmationDialog(
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.error,
-              foregroundColor: Colors.white,
+              foregroundColor: VSPColors.white,
             ),
             onPressed: () async {
               Navigator.pop(dialogCtx);
