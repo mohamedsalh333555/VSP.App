@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -29,12 +30,19 @@ class HomeTopBar extends StatelessWidget {
           children: [
             Row(
               children: [
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    onNavigate(4); // الانتقال المباشر لتبويب الملف الشخصي
-                  },
-                  child: Container(
+                Tooltip(
+                  message: Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'الملف الشخصي'
+                      : 'Profile',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onNavigate(4);
+                      },
+                      child: Container(
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
@@ -59,15 +67,38 @@ class HomeTopBar extends StatelessWidget {
                           : null,
                     ),
                     padding: EdgeInsets.all((auth.userModel?.isPro == true) ? 2.5 : 0),
-                    child: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: VSPColors.surface,
-                      backgroundImage: auth.userModel?.profileImageUrl != null
-                          ? NetworkImage(auth.userModel!.profileImageUrl!)
-                          : null,
-                      child: auth.userModel?.profileImageUrl == null
-                          ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20)
-                          : null,
+                    child: ClipOval(
+                      child: (auth.userModel?.profileImageUrl?.trim().isNotEmpty ?? false)
+                          ? CachedNetworkImage(
+                              imageUrl: auth.userModel!.profileImageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => const Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: VSPColors.accent,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (_, __, ___) => const Icon(
+                                Iconsax.user_copy,
+                                color: VSPColors.textSecondary,
+                                size: 20,
+                              ),
+                            )
+                          : Container(
+                              color: VSPColors.surface,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Iconsax.user_copy,
+                                color: VSPColors.textSecondary,
+                                size: 20,
+                              ),
+                            ),
+                    ),
+                      ),
                     ),
                   ),
                 ),
@@ -107,90 +138,102 @@ class HomeTopBar extends StatelessWidget {
   Widget _buildSearchBar(BuildContext context) {
     const double barHeight = 52.0;
     final borderRadius = BorderRadius.circular(VSPRadius.lg);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Row(
       children: [
         Expanded(
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const GlobalSearchScreen()),
-            ),
-            child: Container(
-              height: barHeight,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
+          child: Tooltip(
+            message: isArabic ? 'البحث عن الملاعب' : 'Search stadiums',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
                 borderRadius: borderRadius,
-                border: Border.all(color: VSPColors.divider, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      AppLocalizations.of(context)!.searchStadiums,
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GlobalSearchScreen()),
+                ),
+                child: Container(
+                  height: barHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: borderRadius,
+                    border: Border.all(color: VSPColors.divider, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)!.searchStadiums,
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(width: 12),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: borderRadius,
-            onTap: () async {
-              final result = await showModalBottomSheet<Map<String, dynamic>>(
-                context: context,
-                backgroundColor: Colors.transparent,
-                isScrollControlled: true,
-                useSafeArea: true,
-                builder: (context) => FilterBottomSheet(
-                  initialFilters: context.read<StadiumProvider>().currentFilters,
-                ),
-              );
-              if (result != null && context.mounted) {
-                context.read<StadiumProvider>().applyFilters(result);
-              }
-            },
-            child: Container(
-              width: barHeight,
-              height: barHeight,
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: borderRadius,
-                border: Border.all(color: VSPColors.divider, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+        Tooltip(
+          message: isArabic ? 'تصفية الملاعب' : 'Filter stadiums',
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: borderRadius,
+              onTap: () async {
+                final result = await showModalBottomSheet<Map<String, dynamic>>(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  useSafeArea: true,
+                  builder: (context) => FilterBottomSheet(
+                    initialFilters: context.read<StadiumProvider>().currentFilters,
                   ),
-                ],
+                );
+                if (result != null && context.mounted) {
+                  context.read<StadiumProvider>().applyFilters(result);
+                }
+              },
+              child: Container(
+                width: barHeight,
+                height: barHeight,
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: borderRadius,
+                  border: Border.all(color: VSPColors.divider, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Iconsax.filter_copy, color: VSPColors.accent, size: 20),
               ),
-              child: const Icon(Iconsax.filter_copy, color: VSPColors.accent, size: 20),
             ),
           ),
         ),
       ],
     );
   }
+}
 }
