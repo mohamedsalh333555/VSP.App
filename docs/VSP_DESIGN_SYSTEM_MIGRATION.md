@@ -271,15 +271,15 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 
 - Championship refresh now carries a version from the parent details screen into the standings component. A retry from any child invalidates the cached per-group Future results, avoiding a stale cached error after a different stream failure.
 
-## Coverage reconciliation — 2026-11-01
+## Current coverage reconciliation — 2026-11-01
 
-The coverage figures in the earlier sections above are historical checkpoints and are not the current register totals.
+- Current `docs/UXLP_44_SCREEN_REGISTER.md`: 338 unique Dart paths, 366 table data rows, and 28 repeated path rows documenting separate embedded-component findings, plus one shared navigation component entry.
+- The only evidenced heuristic/static token-and-layout scan covers 128 candidate files from an earlier 215-path inventory. It has not been rerun against the current 338-path inventory; current complete Design System scan coverage is therefore **not proven**.
+- All 44 UXLP rules remain `source reviewed—runtime pending`. The rule matrix is global, not a completed 44 × screen × state runtime matrix. No visual/runtime pass is inferred from token usage or source notes.
+- The screen register contains source-review notes for its registered entries, but that does not establish every embedded component, state variant, locale, keyboard condition, safe-area interaction, or device size has passed.
 
-- Current UXLP-44 screen register: 190 unique Dart paths across 216 table records (26 repeated entries for distinct embedded-component findings), plus the shared navigation component entry.
-- The recorded heuristic/static scan still covers 128 candidate files. Therefore, 62 of the currently registered unique paths are not proven to be included in that earlier scan. The scan must be rerun across the current complete register before this design-system scan gate can be closed.
-- The 190-path inventory still does not prove exhaustive embedded-widget, state, locale, or runtime coverage.
-- All 44 UXLP rules remain source-reviewed/runtime-pending. No visual/runtime pass is inferred from token usage or source notes.
+## Monitored compiler diagnostics — 2026-11-01
 
-## Coverage update after embedded-component discovery — 2026-11-01
-
-Nine additional embedded UI components have now been registered as `not yet inspected`. The current inventory is 199 unique Dart paths across 225 table records (26 repeated entries), replacing the prior 190-path / 216-record checkpoint. The existing 128-file static scan is still not proven to cover the newly expanded register; 71 registered paths are outside the evidenced scan set until a complete rescan is recorded.
+- Existing workflow run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423) failed in the Flutter Release compile step on older commit `6eb50fdd2c4e6879a4c8a95a5a0de1415af4a5aa` because of an unmatched widget-tree delimiter in `stadium_details_screen.dart` and a missing import for the shared `VSPErrorState` in `facility_onboarding_screen.dart`.
+- Both source causes were corrected on this branch in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`. The old run does not validate the new commits; runtime and consolidated verification remain pending.
+- No build was triggered during this review and no APK artifact exists from this run.
