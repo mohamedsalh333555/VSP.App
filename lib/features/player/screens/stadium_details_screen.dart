@@ -73,6 +73,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           onTap: () => _tabController.animateTo(index),
           child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
+          height: 48,
           margin: EdgeInsets.zero,
           decoration: BoxDecoration(
             color: isSelected ? VSPColors.accent : Colors.transparent,
