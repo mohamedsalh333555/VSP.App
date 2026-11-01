@@ -67,7 +67,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     final isSelected = _tabController.index == index;
     return Expanded(
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           onTap: () => _tabController.animateTo(index),
@@ -76,7 +76,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           height: 48,
           margin: EdgeInsets.zero,
           decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.transparent,
+            color: isSelected ? VSPColors.accent : VSPColors.transparent,
             borderRadius: BorderRadius.circular(VSPRadius.xl),
           ),
           alignment: Alignment.center,
