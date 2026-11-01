@@ -381,7 +381,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           data: Theme.of(pickerCtx).copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPDSSemanticColors.accent,
-              onPrimary: Colors.black,
+              onPrimary: VSPDSColors.black,
               surface: VSPDSSemanticColors.surface,
               onSurface: VSPDSSemanticColors.textPrimary,
             ),
