@@ -28,10 +28,15 @@ class SignupDateOfBirthField extends StatelessWidget {
             style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
           ),
         ),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            height: VSPSize.inputHeight,
+        Tooltip(
+          message: l10n.dateOfBirth,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.input),
+              onTap: onTap,
+              child: Container(
+                height: VSPSize.inputHeight,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: VSPColors.surface,
@@ -54,6 +59,7 @@ class SignupDateOfBirthField extends StatelessWidget {
                 if (dateOfBirth != null)
                   const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
               ],
+              ),
             ),
           ),
         ),
