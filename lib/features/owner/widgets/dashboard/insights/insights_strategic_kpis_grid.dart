@@ -174,15 +174,15 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap?.call();
         },
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        splashColor: Colors.white.withValues(alpha: 0.05),
-        highlightColor: Colors.white.withValues(alpha: 0.03),
+        splashColor: VSPColors.white05,
+        highlightColor: VSPColors.white03,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
