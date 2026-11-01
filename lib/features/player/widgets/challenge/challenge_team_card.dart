@@ -33,9 +33,12 @@ class ChallengeTeamCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        onTap: onTap,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(VSPSpacing.md),
@@ -69,6 +72,8 @@ class ChallengeTeamCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               team.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -157,6 +162,7 @@ class ChallengeTeamCard extends StatelessWidget {
                 ),
             ],
           ],
+        ),
         ),
       ),
     );
