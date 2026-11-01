@@ -1925,3 +1925,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/player/widgets/league/team_league_match_dialog.dart`: `_submit()` now returns immediately when a save is already in flight; result-choice controls are disabled during submission so the selected outcome cannot be changed while the request is pending. The existing loading feedback, repository callback, and localized error recovery are preserved.
 - No match eligibility, scoring, result authority, or persistence rules changed. Source-only; final device interaction validation remains pending. No tests, analyzer, CI, runtime checks, or APK build were run. Code commit: `65f2b72a6a97ec164fdab89873030c9fc05586cb`.
+
+
+## Tournament score submission guard — 2026-11-01
+
+- `lib/features/owner/widgets/brackets/tournament_score_modal.dart`: added a handler-level `isSubmitting` guard before starting the score-save operation. This complements the existing loading button state and prevents repeated callback entry from issuing duplicate score/result writes.
+- Score calculations, winner selection, goal details, audit logging, and repository calls are unchanged. Source-only; runtime validation remains pending. No tests, analyzer, CI, or APK build were run. Code commit: `4afbab98c7a1119e2525fa3ee2d98727cf349720`.
