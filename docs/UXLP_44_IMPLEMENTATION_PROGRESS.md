@@ -2068,3 +2068,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Tournament rescheduling lock boundary — 2026-11-01
 
 - `TournamentRoundScheduleCalculator.isRoundLocked` documented that a round becomes immutable once a match starts, but previously only checked `winnerId` and `homeScore`. A scheduled match could therefore be auto-rescheduled after kickoff if no score had yet been entered; an away-only partial score was also missed. The guard now checks both score fields, winner, and `scheduledTime <= referenceTime`; optional `now` supports deterministic boundary checks. Code commit: `5b5da6ff87b08d9e686fdb0dfb0a40b861b65d39`. Existing unit tests were inspected but not executed, per the agreed final-only validation policy.
+
+
+## Player tournament roster loading state — 2026-11-01
+
+- `manage_tournament_roster_screen.dart` replaced its unlabelled full-screen spinner with the shared bilingual loading state and a concise explanation that team/tournament data is being loaded before editing controls appear. The existing explicit load-error message and retry action remain unchanged. Code commit: `bf9f553b2a6e9cbe928d4449afe998be80b630bf`. Source-only; no tests/analyzer/CI/device/APK run.
