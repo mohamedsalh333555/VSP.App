@@ -163,7 +163,7 @@ class TeamStatsHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 isArabic ? 'ترتيب فريقك الرسمي' : 'Official Elo Rating',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ],
@@ -185,7 +185,7 @@ class TeamStatsHeader extends StatelessWidget {
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
             ),
             icon: const Icon(Iconsax.chart_copy, size: 16),
