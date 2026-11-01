@@ -83,6 +83,12 @@ class BookingProvider with ChangeNotifier {
     _restoreDraft();
   }
 
+  void _clearDraftOnAccountScopeChange() {
+    _draftRestoreGeneration++;
+    _currentDraft = null;
+    BookingDraftStorage.clear();
+  }
+
   Future<void> _restoreDraft() async {
     final generation = ++_draftRestoreGeneration;
     final restored = await BookingDraftStorage.restore();
@@ -206,6 +212,9 @@ class BookingProvider with ChangeNotifier {
   /// Load user's bookings
   Future<bool> loadUserBookings(String userId) async {
     if (_activeUserId != userId) {
+      if (_activeUserId != null || _activeOwnerId != null) {
+        _clearDraftOnAccountScopeChange();
+      }
       _activeUserId = userId;
       _activeOwnerId = null;
       _userBookings = [];
@@ -245,6 +254,9 @@ class BookingProvider with ChangeNotifier {
     if (!forceRefresh && _activeOwnerId == ownerId) return;
 
     if (_activeOwnerId != ownerId || _activeUserId != null) {
+      if (_activeOwnerId != null || _activeUserId != null) {
+        _clearDraftOnAccountScopeChange();
+      }
       _activeUserId = null;
       _activeOwnerId = ownerId;
       _userBookings = [];
