@@ -151,9 +151,17 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         }
 
         if (!snapshot.hasData) {
-          return const VSPScaffold(
+          return VSPScaffold(
             backgroundColor: VSPColors.background,
-            body: SafeArea(top: false, bottom: true, child: Center(child: CircularProgressIndicator(color: VSPColors.accent))),
+            body: SafeArea(
+              top: false,
+              bottom: true,
+              child: VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic ? 'جارٍ تحميل المباريات' : 'Loading matches',
+                message: isArabic ? 'نحمّل جدول مباريات البطولة.' : 'Fetching the tournament match schedule.',
+              ),
+            ),
           );
         }
 
