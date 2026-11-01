@@ -38,7 +38,7 @@ class TournamentAutoScheduleModalSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => TournamentAutoScheduleModalSheet(
         championship: championship,
         roundIndex: roundIndex,
@@ -114,13 +114,13 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                child: const Icon(Iconsax.magic_star_copy, color: Colors.black, size: 14),
+                child: const Icon(Iconsax.magic_star_copy, color: VSPColors.black, size: 14),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   isArabic ? 'الجدولة التلقائية (${widget.roundName})' : 'Auto Schedule (${widget.roundName})',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.white, fontSize: 16, fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -139,7 +139,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
             isArabic
                 ? 'كيف تريد توزيع مباريات الدور (${widget.matches.length} مباراة)؟'
                 : 'How to divide ${widget.matches.length} matches?',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
           ),
           const SizedBox(height: 12),
           Row(
@@ -170,7 +170,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                       children: [
                         Icon(
                           Iconsax.calendar_1_copy,
-                          color: isSelected ? Colors.black : VSPColors.accent,
+                          color: isSelected ? VSPColors.black : VSPColors.accent,
                           size: 16,
                         ),
                         const SizedBox(height: 6),
@@ -178,7 +178,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                           title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.white,
+                            color: isSelected ? VSPColors.black : VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
                           ),
@@ -188,7 +188,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                           subtitle,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: isSelected ? Colors.black87 : VSPColors.textSecondary,
+                            color: isSelected ? VSPVSPColors.black87 : VSPColors.textSecondary,
                             fontSize: 10,
                           ),
                         ),
@@ -234,7 +234,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                             Text(
                               DateFormat('yyyy-MM-dd').format(_selectedDate),
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 14),
                           ],
@@ -270,7 +270,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                             Text(
                               _selectedTime.format(context),
                               style: const TextStyle(
-                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                  color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                             const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
                           ],
@@ -294,7 +294,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                   const SizedBox(width: 8),
                   Text(
                     isArabic ? 'مدة المباراة / الفاصل:' : 'Match Duration:',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ],
               ),
@@ -355,7 +355,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                 for (final bullet in summaryBullets) ...[
                   Text(
                     bullet,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                    style: const TextStyle(color: VSPVSPColors.white70, fontSize: 12, height: 1.4),
                   ),
                   const SizedBox(height: 4),
                 ],
