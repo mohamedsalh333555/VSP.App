@@ -337,7 +337,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.warning, foregroundColor: VSPColors.black),
             child: Text(isArabic ? 'تأكيد عدم الحضور' : 'Confirm No-Show'),
           ),
         ],
