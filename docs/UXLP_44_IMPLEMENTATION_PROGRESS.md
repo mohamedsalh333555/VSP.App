@@ -956,3 +956,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: long-press quick phone booking previously showed success only when creation returned a booking, but gave no feedback when the provider returned `null`. The owner could tap a free slot and receive no indication whether the booking was created.
 - The completion path now exits if the screen was disposed, then shows localized success or explicit failure copy stating that no booking was created and inviting a retry. Booking payload, cash designation, price, and creation rules are unchanged.
 - No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: a8006abf69a88ecef6a78c87965b53a7f1e822b9.
+
+
+## Booking confirmation guard deduplication — 2026-11-01
+- Cleaned `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: the pre-confirmation availability check repeated the exact same authenticated-user identity guard twice consecutively. Removed the redundant second check; the first guard and all subsequent identity/lifecycle checks remain intact.
+- This is a behavior-preserving cleanup only. No booking eligibility, availability, payment, or database rules changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: f534acd2d509d1f670ebe379714580897a2d8175.
