@@ -237,7 +237,9 @@ class VSPStateView extends StatelessWidget {
                 child: Icon(
                   iconData,
                   color: tint,
-                  size: VSPDSizes.iconXl,
+                  size: state == VSPUiState.empty || state == VSPUiState.disabled
+                      ? VSPDSizes.emptyIconSize
+                      : VSPDSizes.iconXl,
                 ),
               ),
               const SizedBox(height: VSPDSSpacing.md),
