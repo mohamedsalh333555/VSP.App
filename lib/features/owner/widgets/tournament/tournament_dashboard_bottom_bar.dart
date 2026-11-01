@@ -59,7 +59,7 @@ class TournamentDashboardBottomBar extends StatelessWidget {
               text: isAr ? 'مراجعة جدول المباريات' : 'Review Match Fixtures',
               color: VSPColors.accent.withValues(alpha: 0.1),
               textColor: VSPColors.accent,
-              onPressed: () {
+              onPressed: isLoading ? null : () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -77,7 +77,7 @@ class TournamentDashboardBottomBar extends StatelessWidget {
               text: isAr ? 'إدارة المباريات وجدول البطولة' : l10n.viewBrackets.toUpperCase(),
               color: VSPColors.accent.withValues(alpha: 0.1),
               textColor: VSPColors.accent,
-              onPressed: () {
+              onPressed: isLoading ? null : () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
