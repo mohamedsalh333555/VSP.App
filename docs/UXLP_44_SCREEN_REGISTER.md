@@ -674,3 +674,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/tournament/wizard/tournament_wizard_coordinator.dart`: tournament creation/edit validation now rejects non-numeric, non-finite, or negative entry-fee and prize values instead of allowing invalid text to silently become zero in the payload.
+
+
+- `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: the active-cash-booking payment gate now uses the strict booking-history query and stops with localized retry guidance if the query fails, rather than treating a failed read as an empty history and potentially allowing a cash booking.
