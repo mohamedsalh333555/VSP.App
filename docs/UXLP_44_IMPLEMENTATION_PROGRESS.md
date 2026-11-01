@@ -1906,3 +1906,9 @@ Read-only inspection was performed against the connected production VSP project 
 - Chat report/delete dialogs: report form is now scrollable when the keyboard is open, and all four dialog actions use 48dp minimum height with padded tap targets. Report submission and conversation deletion behavior are unchanged.
 
 - Owner tournament prize-delivery dialog: both cancel and confirm actions now have explicit 48dp minimum height and padded tap targets; its scrollable form and submission guard remain unchanged.
+
+
+## RTL modal audit correction — 2026-11-01
+
+- Reviewed the owner manual tournament-team sheet and found one physical-direction spacing value in its shared section-label helper: `EdgeInsets.only(left: 4)`. Replaced it with `EdgeInsetsDirectional.only(start: 4)` so the label inset mirrors correctly in Arabic RTL while preserving the same spacing in English LTR.
+- No roster, team creation, registration, or tournament business logic changed. Source-only; visual RTL rendering remains pending the consolidated device pass. No tests, analyzer, CI, runtime checks, or APK build were run. Code commit: `4b16222200c65656b31664a127ec2a827376400e`.
