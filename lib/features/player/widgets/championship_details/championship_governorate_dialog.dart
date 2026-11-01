@@ -30,6 +30,7 @@ class ChampionshipGovernorateDialog {
 
     final confirmed = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -61,6 +62,10 @@ class ChampionshipGovernorateDialog {
         actionsPadding: const EdgeInsets.all(16),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(48, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
