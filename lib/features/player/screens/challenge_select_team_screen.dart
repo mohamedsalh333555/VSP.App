@@ -369,19 +369,27 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(ctx).height * 0.9,
+        ),
+        padding: const EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.md,
           VSPSpacing.lg,
-          MediaQuery.of(ctx).padding.bottom + VSPSpacing.lg,
+          VSPSpacing.lg,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Center(
               child: Container(
                 width: 40,
@@ -449,6 +457,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: VSPColors.divider),
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
                     icon: const Icon(Iconsax.copy_copy, size: 18, color: Colors.white),
@@ -467,6 +476,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       backgroundColor: VSPColors.whatsApp,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      minimumSize: const Size(0, 48),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline, size: 18),
@@ -482,7 +492,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 ),
               ],
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
