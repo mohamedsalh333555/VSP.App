@@ -689,3 +689,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/bookings/owner_schedule_slots_builder.dart`: owner schedule generation now starts on the exact configured opening minute and stops before any incomplete 30-minute interval beyond the exact closing minute, including overnight and 24-hour schedules.
+
+
+- `lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart`, `lib/features/player/widgets/collective_match_invite_sheet.dart`, `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart`, and `lib/shared/widgets/match_card/manage_participants_modal.dart`: corrected physical right/left spacing and alignment to directional equivalents so the booking chips, invite header, legal modal header, and participant section headings mirror correctly in Arabic RTL.
