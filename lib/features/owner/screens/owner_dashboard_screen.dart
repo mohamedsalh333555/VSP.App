@@ -50,6 +50,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   String? _activeOwnerScope;
   bool _hasObservedOwnerScope = false;
   int _ownerScopeGeneration = 0;
+  int _championshipFetchGeneration = 0;
 
   String? _lastMetricsKey;
   OwnerFinancialMetrics? _cachedMetrics;
@@ -116,10 +117,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   Future<void> _fetchOwnerChampionships(String uid) async {
+    final requestGeneration = ++_championshipFetchGeneration;
     try {
       final champs = await TournamentRepository()
           .getChampionships(isOwner: true, ownerId: uid);
-      if (!mounted || context.read<AuthProvider>().currentUser?.id != uid) {
+      if (!mounted ||
+          requestGeneration != _championshipFetchGeneration ||
+          context.read<AuthProvider>().currentUser?.id != uid) {
         return;
       }
       setState(() {
@@ -129,7 +133,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       _claimApprovedChampionshipHomeNotices(champs);
     } catch (e) {
       VSPLogger.w('Failed to refresh owner championships for dashboard: $e');
-      if (mounted && context.read<AuthProvider>().currentUser?.id == uid) {
+      if (mounted &&
+          requestGeneration == _championshipFetchGeneration &&
+          context.read<AuthProvider>().currentUser?.id == uid) {
         setState(() => _hasChampionshipStreamError = true);
       }
     }
@@ -241,6 +247,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     _champSubscription = null;
     _financialSummaryRequestGeneration++;
     _analyticsRequestGeneration++;
+    _championshipFetchGeneration++;
     _financialSummary = null;
     _ownerChampionships = [];
     _hasChampionshipStreamError = false;
