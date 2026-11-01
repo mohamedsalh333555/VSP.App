@@ -69,7 +69,9 @@ class BookingSlotCalculator {
           if (item is! Map) continue;
           final startText = item['start']?.toString() ?? '';
           final endText = item['end']?.toString() ?? '';
-          if (!_isValidTime(startText) || !_isValidTime(endText)) continue;
+          if (!_isValidTime(startText) || !_isValidTime(endText)) {
+            return const <TimeSlotItem>[];
+          }
           final start = getCumulativeMinutes(startText);
           final end = getCumulativeMinutes(endText);
           if (start >= 0 && end > start) {
