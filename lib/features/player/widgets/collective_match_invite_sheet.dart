@@ -86,11 +86,20 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
       if (booking != null) {
         if (!mounted) return;
         _stadium = await context.read<StadiumProvider>().getStadiumById(booking.stadiumId);
+        if (!mounted) return;
         await _loadUsers(booking.joinedUserIds);
+        if (!mounted) return;
         if (_inviteToken == null) {
-          final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
-          _inviteToken = credentials?['invite_token']?.toString();
-          _inviteCode = credentials?['invite_code']?.toString();
+          try {
+            final credentials = await _repo.getCollectiveInviteCredentials(booking.id);
+            if (!mounted) return;
+            _inviteToken = credentials?['invite_token']?.toString();
+            _inviteCode = credentials?['invite_code']?.toString();
+          } catch (e, stack) {
+            // Booking details and participant data remain useful even if the
+            // optional share/join credentials cannot be refreshed.
+            VSPLogger.e('Collective invite credentials unavailable during load', e, stack);
+          }
         }
       }
     } catch (e) {
