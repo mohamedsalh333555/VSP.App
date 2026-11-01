@@ -1057,3 +1057,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Ongoing match extension session guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart`: extending an ongoing match previously refreshed whichever owner account was active after the RPC and could show success to a newly signed-in account. The coordinator now captures the initiating owner before the request, verifies the same session before refreshing and again before success/navigation, refreshes only that owner's bookings, and suppresses stale-session error feedback. Loading state is released if the widget remains mounted but the account changes.
 - Extension RPC and +30-minute rule are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: b12f094b405cf848ddcb293c7871c5ad4d9095ac.
+
+
+## Owner cash-confirmation session guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart`: cash confirmation previously looked up the active owner again after the atomic confirmation RPC and could refresh a different account's booking list or show stale success after an account switch. It now captures the initiating owner, uses that captured ID for the refresh, and verifies the same session before success/navigation and before showing errors. Loading state is reset when the sheet remains mounted but the account changes.
+- Cash confirmation RPC, amount calculation, and notification behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 190f74b9db262ee6967de8c87af921acb7789dd8.
