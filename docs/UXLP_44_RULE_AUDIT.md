@@ -1060,3 +1060,13 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Error review:** the shared error renderer distinguishes offline connectivity from server failure, uses a live-region announcement, and exposes a retry action. This is source-level review; caller-specific error messages and retry callbacks still need verification.
 - Updated source: `vsp_empty_state.dart`, `champion_empty_state.dart`, and `league_1v1_empty_states.dart`. Shared loading/error source was reviewed but not modified in this pass.
 - **Status remains source reviewed—runtime pending.** No rule is promoted to pass. Every registered caller still needs review for correct data-state mapping, Arabic/English copy, retry behavior, and device/viewport rendering. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Dialog target and current Supabase review — 2026-11-01
+
+- Cancellation dialogs in player checkout and owner booking now expose 48×48dp minimum action targets. The business outcomes (cancel/keep/refund/penalty) are unchanged.
+- Current Supabase advisor snapshot: `teams_public` SECURITY DEFINER view (1 ERROR); authenticated execution on SECURITY DEFINER functions (198 WARN findings); leaked password protection disabled (1 WARN).
+- Current authenticated ACL confirmed on three previously flagged team-league/participation helpers: `get_team_active_league`, `submit_team_league_match_result`, `vsp_user_is_tournament_participant`.
+- Last-24-hour PostgREST log scan returned 121 matches for a Warp timeout message; treat as repeated log entries, not unique failures. More targeted correlation by request/endpoint is required before proposing a code/database change.
+- These database findings are read-only observations. No database policy/grant/function/view/auth setting was altered. Product-safe revocation list and wrapper call graph need review before any privilege change.
+- UXLP statuses remain source-reviewed/runtime-pending; no test or runtime pass is claimed.
