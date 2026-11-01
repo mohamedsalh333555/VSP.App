@@ -499,6 +499,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           ],
         ),
       ),
+      ),
 
       // Sticky primary action
       bottomNavigationBar: VSPBottomActionBar(
@@ -509,7 +510,6 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           isLoading: _isSubmitting,
           onPressed: isSelectionValid ? _handleConfirmAndPay : null,
         ),
-      ),
       ),
     );
   }
