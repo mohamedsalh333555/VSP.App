@@ -871,3 +871,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `add_stadium_location_picker_sheet.dart`:** the scroll-controlled modal route already applies keyboard insets, but the manual-address sheet also included `viewInsets.bottom` in its own padding. Removed the duplicate keyboard inset while retaining system bottom padding and scrollable content.
 - Source commit: `ac329b8bdf6ca1790b5e11e14d2a74ed06917528`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Owner Copilot sheet duplicate keyboard inset — 2026-11-01
+
+- **Rules 11 and 35 — `VspCopilotSheet`:** the scroll-controlled modal route already applies keyboard insets, but the sheet also subtracted the inset from its height and added a matching bottom margin. Removed the duplicate offset while retaining its internal bottom SafeArea and preferred height.
+- Source commit: `9e01276e39b1a7b80e05d8a5517a45497c9cde48`. Keyboard/device verification remains pending; no tests or build were run.
