@@ -2007,3 +2007,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Added nine visible embedded components to the register: owner chat row/search, ledger transaction row, tournament bracket canvas, cup filters/tabs, checkout team-member list, payment background decoration, and shared date-picker step chip. Their data/interaction/runtime behavior remains pending explicit caller-level verification. `tournament_bracket_builder.dart` was reviewed as a builder/helper without a Widget subclass and was not misclassified as a standalone UI surface.
 - No application source change was required in this subset. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Shared refund-status component inventory — 2026-11-01
+
+- Added the canonical `RefundBadgeWidget` and `RefundNoticeWidget` in `lib/widgets/` to the embedded-component register. The player feature-path files are compatibility exports, not separate UI implementations. Source review confirms localized status/ETA/amount copy; actual refund lifecycle and runtime amount consistency remain pending.
+- No application source change was required. No tests, analyzer, CI, runtime checks, or APK build were run.
