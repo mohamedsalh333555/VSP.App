@@ -284,7 +284,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
     }
 
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: _openDetails,
@@ -460,7 +460,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                       child: VSPAnimatedButton(
                         text: isArabic ? 'تفاصيل المباراة' : 'Match details',
                         color: VSPColors.accent,
-                        textColor: Colors.black,
+                        textColor: VSPColors.black,
                         onPressed: _openDetails,
                       ),
                     ),
@@ -484,7 +484,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                       child: VSPAnimatedButton(
                         text: isArabic ? 'إدارة اللاعبين' : 'Manage players',
                         color: VSPColors.accent,
-                        textColor: Colors.black,
+                        textColor: VSPColors.black,
                         onPressed: () => ManageParticipantsModal.show(context, booking: booking),
                       ),
                     ),
@@ -556,7 +556,7 @@ class _OpenJoinBookingCardState extends State<OpenJoinBookingCard> {
                 VSPAnimatedButton(
                   text: isArabic ? 'تفاصيل المباراة' : 'Match details',
                   color: VSPColors.accent,
-                  textColor: Colors.black,
+                  textColor: VSPColors.black,
                   onPressed: _openDetails,
                 ),
               ],
