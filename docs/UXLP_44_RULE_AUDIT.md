@@ -772,3 +772,9 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - `challenge_select_team_screen.dart`: generated challenge-code bottom sheet now has a 90%-viewport maximum height, a scrollable body, explicit bottom SafeArea, and 48dp minimum copy/WhatsApp action heights. This prevents the lower actions from being pushed off-screen on short devices or with large text.
 - Existing create-team sheet already uses `useSafeArea: true`; no challenge-code, team eligibility, or booking logic changed.
 - Source structure was manually re-read after the edit. Runtime/keyboard/device verification remains pending.
+
+
+## Stadium details tab interaction correction — 2026-11-01
+
+- `stadium_details_screen.dart`: the three information/pitch/rating tabs previously had 4dp margins inside a 48dp parent, reducing the actual hit region below 48dp. Replaced the non-semantic GestureDetector with InkWell and set each tab surface to the full 48dp height.
+- The bottom booking bar already wraps its controls in SafeArea. Stadium live-stream failure preserves the supplied last-known stadium and shows a retry warning.
