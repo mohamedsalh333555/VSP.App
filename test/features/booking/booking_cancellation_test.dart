@@ -135,7 +135,7 @@ void main() {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: const Locale('ar'),
-            home: ChangeNotifierProvider<TestOwnerAuthProvider>.value(
+            home: ChangeNotifierProvider<AuthProvider>.value(
               value: TestOwnerAuthProvider(),
               child: Scaffold(
               body: Builder(
