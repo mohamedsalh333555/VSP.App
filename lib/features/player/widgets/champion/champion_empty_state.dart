@@ -91,7 +91,11 @@ class ChampionshipsEmptyState extends StatelessWidget {
         ),
         if (showReturnButton && onReturn != null)
           Padding(
-            padding: const EdgeInsets.only(left: VSPDSSpacing.md, right: VSPDSSpacing.md, bottom: VSPDSSpacing.md),
+            padding: const EdgeInsetsDirectional.only(
+              start: VSPDSSpacing.md,
+              end: VSPDSSpacing.md,
+              bottom: VSPDSSpacing.md,
+            ),
             child: TextButton(
               onPressed: onReturn,
               child: Text(
