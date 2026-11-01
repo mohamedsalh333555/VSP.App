@@ -12,6 +12,7 @@ import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
 import '../services/facility_onboarding_service.dart';
 import '../widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../shared/widgets/stadium_card.dart';
 
 class FacilityOnboardingScreen extends StatefulWidget {
