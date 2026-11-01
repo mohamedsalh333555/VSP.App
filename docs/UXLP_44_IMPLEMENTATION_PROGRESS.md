@@ -1447,3 +1447,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - `vsp_copilot_sheet.dart`: the stadium-card forward chevron now mirrors in Arabic RTL while retaining its LTR orientation in English.
 - Code commit: `90d93d88b48722742cc33d91d78e9363e6dca7f9`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Password reset dialog compact-layout and touch-target correction — 2026-11-01
+
+- `forgot_password_dialog.dart`: AlertDialog is now scrollable; Cancel and Submit controls both have 48dp minimum heights, keeping the modal usable on short screens and improving touch accessibility.
+- Code commits: `197b64fa48d08301df79505fb026b32a8ec9c3ff`, `175b8c9eefb6b5b8813e1972c061691f3a602aa1`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
