@@ -85,16 +85,24 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
   @override
   Widget build(BuildContext context) {
     final iconColor = _isProlongedWait ? VSPColors.warning : VSPColors.accent;
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight = mediaQuery.size.height -
+        mediaQuery.viewInsets.vertical -
+        (VSPSpacing.xl * 2);
 
     return PopScope(
       canPop: false,
       child: Center(
-        child: Material(
-          type: MaterialType.transparency,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl),
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl, vertical: VSPSpacing.xxl),
-            decoration: BoxDecoration(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xl),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.xxl, vertical: VSPSpacing.xxl),
+                decoration: BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.dialog),
               border: Border.all(
@@ -258,6 +266,7 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
                   ),
                 ],
               ],
+              ),
             ),
           ),
         ),
