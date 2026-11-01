@@ -10,6 +10,7 @@ class StadiumWizardDialogs {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final shouldLeave = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
@@ -56,6 +57,7 @@ class StadiumWizardDialogs {
 
     final confirm = await showDialog<bool>(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
