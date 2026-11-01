@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -242,7 +243,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   Widget build(BuildContext context) {
     // Set system status bar style to match the dark theme
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: VSPColors.transparent,
       statusBarIconBrightness: Brightness.light, // White icons
       statusBarBrightness: Brightness.dark, // iOS specific
     ));
