@@ -752,3 +752,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Commits: `1326be01e5c53fde8fffcbe32cd72a59583221ad`, `55681d98ba7692eec25cb5308de65d090184c6ff`.
 
 - Follow-up hardening: the sheet now checks its own mounted state before showing account-change feedback, and verifies the parent screen is still mounted before reading its auth provider. Commit: `270334818da6203dadb452a48d0190e97334e133`.
+
+
+## Match-details owner-report resilience — 2026-11-01
+
+- The booking-linked owner-report dialog now uses scrollable AlertDialog content so the reason/details fields and actions remain reachable on compact or keyboard-constrained screens.
+- Owner-report submission now catches repository exceptions, logs the technical error, and presents localized retry guidance instead of allowing an unhandled async failure. A submission guard prevents duplicate report requests while the request is in flight.
+- Report target, booking linkage, repository contract, and moderation policy are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `35a2742a61a08f3420d8c560e57fd48787d5fde6`.
