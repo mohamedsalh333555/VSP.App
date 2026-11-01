@@ -1042,3 +1042,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Cash-booking WhatsApp launch feedback — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart`: the cash-booking “Confirm via WhatsApp” action launched `wa.me` without awaiting the result or handling `false`/exceptions, so a failed handoff was silent. It now awaits external-app launch and shows localized failure feedback when WhatsApp cannot be opened. The no-phone support fallback remains unchanged.
 - No booking or payment state changes. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 967a4a7399b5618027001d29a52f3da507272086.
+
+
+## WhatsApp support launch feedback across booking panels — 2026-11-01
+- Updated `lib/features/owner/widgets/booking_sheet/booking_sheet_whatsapp_utils.dart` and its booking-panel call sites: the no-show/support WhatsApp helper previously swallowed launch failures after logging, leaving users with no visible outcome. It now accepts an optional mounted `BuildContext` and displays localized feedback when the external launch returns false or throws. All booking-panel support actions now pass their context.
+- Existing support message content and destination are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 5d56e6e4bc49d1a167e2828190ca24f153332560; 0f043a75bed420612ad140701e8cad5407db97e3.
