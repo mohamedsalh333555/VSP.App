@@ -1081,3 +1081,12 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - Player booking cancellation already uses 48dp actions and stacks actions on narrow screens.
 - Supabase Warp timeout log entries currently lack request method, status, or endpoint details (path only reports `/`); no reliable attribution to a VSP RPC can be made. Do not treat the repeated log rows as confirmed unique app failures.
 - Runtime status remains pending; no test or full-screen coverage claim.
+
+
+### 2026-11-01 grouped follow-up
+
+- Rule 9/11/35/36: root account-resolution loading now uses the canonical bounded/scroll-safe VSPStateView, localized Arabic/English copy, and SafeArea; tournament stepper and collective-booking counter labels are constrained for compact viewports.
+- Rule 27/35: owner ongoing-match extension action now preserves a 48dp minimum hit target.
+- Rule 39/40: OwnerMainScreen deferred celebration subscription is guarded against post-frame disposal and late stream events.
+- Supabase security/authorization: read-only live review confirms all 66 public tables have RLS enabled and the previously identified six sensitive tables now have explicit policies. One SECURITY DEFINER view and 198 authenticated-callable SECURITY DEFINER functions remain under function-by-function authorization review; no blanket revoke or view mode change was applied because those operations can change team discovery and atomic workflow behavior.
+- All entries above are source/database observations only. Runtime and complete per-rule evidence remain pending.
