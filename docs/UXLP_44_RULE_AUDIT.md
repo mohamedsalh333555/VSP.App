@@ -484,6 +484,12 @@ A further source-only truthfulness fix removed the hardcoded `1,000 EGP/month` c
 These findings are implementation evidence only. No rule has been promoted to `pass`; all 44 rule rows remain runtime-pending and the final consolidated validation gate is still closed.
 
 
+### Tournament action-state and 1v1 locale follow-up — 2026-11-01
+
+- **Rules 10 and 42 — 1v1 empty state:** the component accepted an explicit `isArabic` value but previously delegated to a renderer that independently read the device locale. The shared empty-state renderer now supports an explicit locale override, and the 1v1 caller passes its supplied locale through. This keeps the displayed copy consistent with the parent-selected locale.
+- **Rules 27, 29, and 31 — owner tournament dashboard action bar:** fixture-navigation actions are now disabled while the tournament mutation is loading, matching the loading/disabled behavior of the primary state-changing action and preventing navigation away during an in-flight operation.
+- These are source corrections only. Locale switching, loading interaction, and navigation behavior remain runtime pending; no tournament lifecycle or backend rule was changed.
+
 ## Product decisions and backend approvals still open
 
 These findings are explicitly classified as **needs product decision**. They are not implementation defects that may be silently “fixed” in the client, and no SQL, Edge Function, permission, or business-rule change is authorized by this audit.
