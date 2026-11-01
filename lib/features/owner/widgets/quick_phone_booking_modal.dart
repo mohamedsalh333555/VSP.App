@@ -190,12 +190,12 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       }
     }
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final initiatingUserId = authProvider.currentUser?.id;
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final initiatingUserId = authProvider.currentUser?.id;
       final ownerId = initiatingUserId ?? widget.stadium.ownerId;
       final bookingRef = 'MAN_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
