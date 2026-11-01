@@ -156,10 +156,6 @@ class BookingConfirmationHandler {
         onLoadingChanged(false);
         return;
       }
-      if (!isSameUser()) {
-        onLoadingChanged(false);
-        return;
-      }
 
       final sortedCheck = List<String>.from(selectedTimeSlots)
         ..sort((a, b) => BookingSlotCalculator.getSlotDateTime(
