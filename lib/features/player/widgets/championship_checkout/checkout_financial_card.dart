@@ -52,9 +52,19 @@ class CheckoutFinancialCard extends StatelessWidget {
                     child: const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    isArabic ? 'شفافية رسوم خدمات المنصة' : 'Platform Service Fee Transparency',
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'شفافية رسوم خدمات المنصة'
+                          : 'Platform Service Fee Transparency',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -74,6 +84,7 @@ class CheckoutFinancialCard extends StatelessWidget {
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
+                    minimumSize: const Size(0, 48),
                   ),
                   onPressed: () => Navigator.pop(ctx),
                   child: Text(isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
