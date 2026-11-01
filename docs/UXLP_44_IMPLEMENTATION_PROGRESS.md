@@ -2148,3 +2148,11 @@ Read-only inspection was performed against the connected production VSP project 
 - Security advisors: 198 authenticated-executable SECURITY DEFINER functions (requires function-by-function authorization review), one leaked-password-protection warning; performance advisors: 44 RLS initplan, 79 unused-index, and 50 multiple-permissive-policy findings.
 - Last 24h: 79 explicit PostgREST Warp timeout messages among 136 error-like PostgREST events; Postgres and Edge log scans returned no error-like events. Warp entries expose only generic path `/`, so caller/RPC root cause is not attributable from current logs.
 - No SQL, RLS, migration, or Edge Function deployment was performed; exact remediation is approval-gated.
+
+## Add-player lookup concurrency and lifecycle follow-up — 2026-11-01
+
+- `add_player_sheet.dart`: added a monotonically increasing search generation so an older phone lookup cannot overwrite a newer search or the current account's result.
+- A stale completion caused by a changed phone/account now releases only its own loading state when it is still the active request; stale errors cannot clear a newer request's spinner or display misleading feedback.
+- The phone controller is disposed and pending generations are invalidated when the sheet is disposed.
+- Source commits: `b796c2502c973d260954b5a802df462faef67625`, `093b36be40ba3c74dae5787effe81f0fa0cd02a5`.
+- No analyzer, tests, CI, runtime/device checks, database changes, or APK build were run.
