@@ -1022,3 +1022,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Match result false-return feedback — 2026-11-01
 - Fixed `lib/features/player/widgets/match_result_modal.dart`: when the result-submission callback returned `false` (without throwing), the modal only reset its loading state and gave no indication why submission had not completed. It now displays localized failure feedback and leaves the modal open for correction/retry.
 - Result calculation, callback, and submission rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 90ff537342410603803c4f6602f22b57f292c3a3.
+
+
+## Championship squad-to-team creation session guard — 2026-11-01
+- Fixed `lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart`: after opening the create-team sheet, the bridge previously read whichever account was currently active and could fetch that account's team and route it into championship checkout if the user switched accounts during creation. It now captures the initiating user before dismissing the bridge and verifies that same user after team creation and again after fetching the team.
+- Team creation and championship checkout rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 3cf50323faf160b56d2f891dff9d7024faafb5d0.
