@@ -395,3 +395,9 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart` | auth | source reviewed—runtime pending (date-of-birth field has focusable InkWell and localized label tooltip) |
 | `lib/features/auth/widgets/verify_email/otp_box.dart` | auth | source reviewed—runtime pending (keyboard event listener no longer creates an undisposed FocusNode in build; numeric LTR input retained) |
 | `lib/features/auth/widgets/verify_email/otp_resend_section.dart` | auth | source reviewed—runtime pending (resend is a 48dp TextButton and remains disabled during countdown/resend; change-email action retained) |
+
+
+### Newly inventoried signup/verification feedback surfaces — 2026-11-01
+
+| `lib/features/auth/widgets/signup/signup_password_strength_bar.dart` | auth | source reviewed—runtime pending (strength progress exposes accessible label and percentage semantics) |
+| `lib/features/auth/widgets/verify_email/verify_email_header.dart` | auth | source reviewed—runtime pending (masked email is LTR, centered, and bounded for narrow screens) |
