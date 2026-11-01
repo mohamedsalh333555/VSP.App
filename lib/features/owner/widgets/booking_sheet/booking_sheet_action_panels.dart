@@ -104,18 +104,12 @@ class BookingSheetPastPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
         ],
-        if (isPendingCash) ...[
+        if (isPendingCash && onReportNoShow != null) ...[
           SizedBox(
             width: double.infinity,
             height: VSPSize.buttonHeight,
             child: ElevatedButton.icon(
-              onPressed: isSaving
-                  ? null
-                  : (onReportNoShow ?? () => BookingSheetWhatsAppUtils.launchWhatsAppSupport(
-                      booking,
-                      isArabic,
-                      context: context,
-                    )),
+              onPressed: isSaving ? null : onReportNoShow,
               icon: isSaving
                   ? const SizedBox(
                       width: 18,
