@@ -2183,3 +2183,11 @@ Read-only inspection was performed against the connected production VSP project 
 - No tests, analyzer, CI, device checks, or APK build were run.
 
 - `owner_quick_cash_card.dart`: replaced the single in-flight booking ID with a per-booking set. Confirming one cash booking no longer overwrites another row's loading indicator or allows duplicate taps on the same booking; each row releases only its own in-flight state. Source commit: `c5e339451d8e5e8672e651c3f168fe386c60cb1b`.
+
+
+## Booking payment-policy and bilingual fallback follow-up — 2026-11-01
+
+- `booking_confirmation_handler.dart`: location-verification exceptions now produce a localized explanation when cash booking is restricted, rather than silently passing a null reason to the payment sheet. The active-unpaid-cash-booking notice is now localized in both Arabic and English.
+- `booking_payment_method_sheet.dart`: when a stadium requires an online deposit but the online-payment feature is disabled, the sheet previously fell through to the cash-payment branch. It now blocks confirmation with a localized explanation; a required deposit can no longer be bypassed through the client UI.
+- Source commits: `a3ad428826aa1f03e120fffff163f3401ef99cb8`, `3f35b105b4d14f5fa6154fb8bd05e6d81d48eda8`.
+- No tests, analyzer, CI, device checks, or APK build were run.
