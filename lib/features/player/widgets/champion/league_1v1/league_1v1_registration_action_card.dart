@@ -194,6 +194,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
         height: 50,
         color: VSPColors.accent,
         textColor: Colors.black,
+        isLoading: isProcessingPayment,
         onPressed: isProcessingPayment ? null : onJoinPressed,
       );
     }
