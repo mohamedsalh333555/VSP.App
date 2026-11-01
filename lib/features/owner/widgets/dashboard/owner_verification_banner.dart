@@ -90,13 +90,17 @@ class OwnerVerificationBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                context.push('/documentation');
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/documentation');
+                },
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
                   color: VSPColors.info.withValues(alpha: 0.28),
                   borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -112,9 +116,9 @@ class OwnerVerificationBanner extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
     }
 
     // 3. مطلوب التوثيق (غير موثق أو تم رفض بعض الوثائق)
@@ -185,13 +189,17 @@ class OwnerVerificationBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              context.push('/documentation');
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                context.push('/documentation');
+              },
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: primaryColor,
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -257,10 +265,14 @@ class OwnerSubscriptionExpiredAlert extends StatelessWidget {
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
-          GestureDetector(
-            onTap: onRenew,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+              onTap: onRenew,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: VSPColors.white,
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -345,10 +357,14 @@ class OwnerGracePeriodAlert extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
-            onTap: onRenew,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+              onTap: onRenew,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: VSPColors.warning,
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -442,10 +458,14 @@ class OwnerTrialEndingSoonAlert extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
-            onTap: onUpgrade,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+              onTap: onUpgrade,
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
                 color: VSPColors.warning,
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
