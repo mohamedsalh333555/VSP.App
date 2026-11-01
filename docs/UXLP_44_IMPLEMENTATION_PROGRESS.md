@@ -1132,3 +1132,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Collective invite details resilient loading — 2026-11-01
 - Fixed `lib/features/player/widgets/collective_match_invite_sheet.dart`: the initial booking-details load previously treated a failure to fetch optional invite/share credentials as a failure of the entire sheet, hiding booking and participant details that had already loaded. Credential retrieval is now isolated and logged; the booking details remain available, while invite actions stay unavailable until valid credentials are obtained. Added mounted checks after stadium and participant loads before continuing asynchronous work.
 - Invite authorization and credential-generation behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 8af23997a248232cce060105628a9d9ca0234828.
+
+
+## Owner booking reschedule session guard — 2026-11-01
+- Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: the reschedule action previously allowed the owner to select a new date and time and submit the proposal without confirming that the same owner account remained active across the date picker, time picker, and repository request. It now captures the initiating owner, requires it to match the booking owner, and verifies the same session after each asynchronous boundary before proceeding or showing the result.
+- Reschedule proposal rules, selected times, and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 2afc93df3681143a67af1874bc45002364692fb5.
