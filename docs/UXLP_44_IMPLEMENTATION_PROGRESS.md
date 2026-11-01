@@ -1251,3 +1251,10 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Fixed `lib/features/owner/screens/owner_ledger_screen.dart`: initial transaction-stream failure now shows a localized retryable error instead of an empty ledger; refresh no longer replaces loaded transactions with a loading screen, and stale transactions remain visible with a warning and a retry that rebinds the stream.
 - Fixed `lib/features/owner/screens/tournament_brackets_screen.dart`: initial bracket-load failure guidance is now bilingual and no longer tells users to pull down when the screen provides an explicit retry button.
 - Financial totals, payout behavior, tournament results, and all server-side rules remain unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `c567f456026ccb5e3eb72fc7385df65a292ade4e`, `b537d3aa7fae2708e9eb481b8416d757c3364154`.
+
+
+## Global search loading and stale-response recovery — 2026-11-01
+
+- Fixed `lib/features/player/screens/global_search_screen.dart`: repository failures no longer leave the search spinner active indefinitely or appear as a valid no-results response; the screen now shows localized retry guidance.
+- Each search request is generation-scoped. Editing the query invalidates the in-flight request immediately, so a slower earlier query cannot overwrite results for the newer query.
+- Search scope and ranking are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `ad7c6137ba301321c58efd54d1d159bfc238b85c`, `c0ca92c08f303ecf2a5998678f45919a7df1ceab`.
