@@ -58,7 +58,7 @@ class RosterTournamentHeader extends StatelessWidget {
                     Text(
                       teamName,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
