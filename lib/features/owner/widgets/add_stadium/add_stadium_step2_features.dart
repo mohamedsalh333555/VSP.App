@@ -136,7 +136,7 @@ class AddStadiumStep2Features extends StatelessWidget {
           const SizedBox(height: 20),
 
           Align(
-            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+            alignment: AlignmentDirectional.centerStart,
             child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),
