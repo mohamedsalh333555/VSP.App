@@ -758,3 +758,10 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 
 - `owner_onboarding_exit_dialog.dart` and the player onboarding exit dialog now enforce 48dp minimum heights for both continue-registration and cancel/sign-out actions. Both dialogs are scrollable AlertDialogs and use the default safe-area behavior of `showDialog`.
 - No registration or sign-out behavior changed. Device/keyboard layout verification remains pending.
+
+
+## Player booking and stadium discovery touch-target corrections — 2026-11-01
+
+- `booking_success_screen.dart`: booking-reference copy control changed from a 32dp padded InkWell to a 48×48dp IconButton with localized tooltip.
+- `all_stadiums_screen.dart`: sort/filter action changed from a compact GestureDetector to a TextButton with a 48dp minimum target. Existing filter sheet uses `useSafeArea: true`, keyboard inset padding, a viewport height bound, and scrollable content.
+- Booking confirmation bottom bar already applies the system bottom inset itself; its primary confirmation action is 52dp. Booking success main actions are 50–52dp or standard Material text actions.
