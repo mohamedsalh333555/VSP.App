@@ -594,6 +594,8 @@ abstract final class VSPDSMotion {
   static const Duration fadeIn = Duration(milliseconds: 400);
   static const Duration bannerTransition = Duration(milliseconds: 600);
   static const int staggerStepMilliseconds = 50;
+  static Duration staggerDelay(int index) =>
+      Duration(milliseconds: index * staggerStepMilliseconds);
   static const Duration emphasis = Duration(milliseconds: 350);
   static const Duration shimmer = Duration(milliseconds: 1400);
   static const Duration navigationSwitch = Duration(milliseconds: 180);
