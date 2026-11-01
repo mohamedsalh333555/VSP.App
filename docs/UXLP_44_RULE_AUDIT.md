@@ -847,3 +847,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 1, 2, 3, and 5 — `VSPEmptyState`, `ChampionEmptyState`, and `VSPStateView`:** the generic empty-state icon was brighter than the championship family, and the shared state view used a larger 32dp icon. Empty/disabled states now share the charcoal `zinc400` icon tone and 28dp icon-size token; error/success status icons remain unchanged.
 - Source commits: `20b07e2bb584426de7a86b625a0b80b2bb81fe6d`, `869014683a6328af5283ba2f74a023baf56df8b7`. Visual/device verification remains pending; no tests or build were run.
+
+
+### Support ticket modal double keyboard-inset correction — 2026-11-01
+
+- **Rules 11 and 35 — `support_tickets_screen.dart`:** the `showModalBottomSheet` route already applies `viewInsets.bottom`; the sheet then subtracted the same inset again when computing `maxHeight`. Removed the second subtraction, retaining safe-area and scroll protections so keyboard-open compact layouts retain usable height.
+- Source commit: `a098bb1c594a1eba3c5a807498884102f6ab3e85`. Keyboard/device verification remains pending; no tests or build were run.
