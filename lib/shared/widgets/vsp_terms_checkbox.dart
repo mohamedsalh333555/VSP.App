@@ -48,7 +48,7 @@ class VSPTermsCheckbox extends StatelessWidget {
               height: VSPSize.touchTarget,
               child: Center(
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
+                  duration: VSPDSMotion.navigationSwitch,
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
