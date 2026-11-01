@@ -38,7 +38,7 @@ class FramedMetricProgressBar extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -52,7 +52,7 @@ class FramedMetricProgressBar extends StatelessWidget {
             Text(
               '${amount.toStringAsFixed(0)} $displayUnit',
               style: const TextStyle(
-                color: Colors.white,
+                color: VSPColors.white,
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,
               ),
