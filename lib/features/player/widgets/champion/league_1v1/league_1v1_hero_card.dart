@@ -31,6 +31,7 @@ class League1v1HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasTarget = targetCount > 0;
+    final locationName = governorate?.trim() ?? '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -97,7 +98,7 @@ class League1v1HeroCard extends StatelessWidget {
             ],
           ),
 
-          if (governorate != null && governorate!.trim().isNotEmpty) ...[
+          if (locationName.isNotEmpty) ...[
             const SizedBox(height: 10),
             Row(
               children: [
@@ -109,7 +110,7 @@ class League1v1HeroCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    championTranslateItem(context, governorate!),
+                    championTranslateItem(context, locationName),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
