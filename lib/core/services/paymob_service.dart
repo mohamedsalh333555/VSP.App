@@ -25,19 +25,22 @@ class PaymobFeePolicy {
     paymobAppliesToElectronic: map['paymob_applies_to_electronic'] == true,
   );
 
+  // Mirrors the server's Math.round(value * 100) / 100 calculation for EGP.
+  double _roundToCents(double value) => (value * 100).roundToDouble() / 100;
+
   double platformFee(double baseAmount) =>
-      baseAmount <= 0 ? 0 : double.parse((baseAmount * vspRate).toStringAsFixed(2));
+      baseAmount <= 0 ? 0 : _roundToCents(baseAmount * vspRate);
 
   double gatewayFee(double baseAmount) =>
       baseAmount <= 0 || !paymobAppliesToElectronic
           ? 0
-          : double.parse((baseAmount * gatewayRate + fixedGatewayFee).toStringAsFixed(2));
+          : _roundToCents(baseAmount * gatewayRate + fixedGatewayFee);
 
   double serviceFee(double baseAmount) =>
-      double.parse((platformFee(baseAmount) + gatewayFee(baseAmount)).toStringAsFixed(2));
+      _roundToCents(platformFee(baseAmount) + gatewayFee(baseAmount));
 
   double total(double baseAmount) =>
-      double.parse((baseAmount + serviceFee(baseAmount)).toStringAsFixed(2));
+      _roundToCents(baseAmount + serviceFee(baseAmount));
 
   bool get isValidForElectronicCheckout =>
       paymobAppliesToElectronic &&
