@@ -1012,3 +1012,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Team deletion false-result feedback — 2026-11-01
 - Fixed `lib/features/player/widgets/my_team/team_dialogs.dart`: `TeamRepository.deleteTeam` could return `false` without throwing, but the dialog handled only the `true` result and silently left the user without an outcome. Added localized failure feedback for the false result; exception formatting remains unchanged.
 - Team deletion authorization and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: a6d21d6d4547e4b1e28b1fa125d9ce7a64c9921b.
+
+
+## Public-match participant action false-result handling — 2026-11-01
+- Fixed `lib/shared/widgets/match_card/manage_participants_modal.dart`: the repository methods `acceptJoinRequest`, `rejectJoinRequest`, and `removeParticipantFromPublicMatch` return `bool`, but the modal ignored `false`. A failed accept/reject could therefore still trigger a player notification, and a failed removal could silently refresh without telling the owner.
+- The modal now treats each `false` result as a failed action and follows its existing localized error path. Acceptance/rejection notifications and participant refresh run only after a successful repository result. Repository/RPC behavior is unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: d1499daab90240eaac58a9aee5ec14c4a352e85e.
