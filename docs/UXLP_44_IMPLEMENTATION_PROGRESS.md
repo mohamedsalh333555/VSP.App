@@ -1522,3 +1522,9 @@ Read-only inspection was performed against the connected production VSP project 
 - Confirmed `submit_team_league_match_result(uuid,uuid,text)` is still executable by `authenticated` and its active definition still lacks the booking/kickoff guard. TL-01 remains approval-required.
 - Rechecked the six previously flagged queue/security tables: RLS is enabled and each now has explicit policies (2, 2, 1, 2, 2, and 2 respectively). The old zero-policy inventory is no longer current.
 - No SQL, RLS, grants, migrations, or production data were changed. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Release APK trigger deferred to final phase — 2026-11-01
+
+- The release workflow previously had a push trigger for `uxlp-44-implementation`, which conflicted with the current instruction to defer APK generation until all 11 workstreams are complete. Removed the automatic push trigger; `.github/workflows/build-release-apk.yml` is now `workflow_dispatch` only.
+- Workflow commit: `76e27f24ac4173685197f24cb5e42892ba706356`. No manual workflow dispatch was started. The connector exposed no workflow-run cancellation/list action, so any run already triggered by earlier commits could not be confirmed or cancelled from this session. Future branch pushes will not trigger release APK builds.
