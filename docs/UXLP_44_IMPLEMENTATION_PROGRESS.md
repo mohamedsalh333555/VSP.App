@@ -2111,3 +2111,8 @@ Read-only inspection was performed against the connected production VSP project 
 ## Payment status polling single-flight protection — 2026-11-01
 
 - The periodic booking and tournament-order pollers used `Timer.periodic` with asynchronous callbacks. If a network read took longer than the interval, later ticks could overlap and multiple callbacks could observe the same successful payment. Both pollers now skip ticks while a read is in flight and latch the first confirmed result before invoking the completion callback. Code commit: `7abc2ff0d1d31af67aa74c65b8017771a7890fd0`. No tests/analyzer/CI/device/APK run.
+
+
+## Book Tonight load failure recovery — 2026-11-01
+
+- `BookTonightSheet._loadTonightSlots` previously allowed a repository/network exception to escape the async callback, leaving `_isLoading` true with no visible recovery action. It now catches and logs the failure, presents a bilingual shared error state with retry, and uses an in-flight guard to prevent duplicate reload requests. The loading branch also uses the shared `VSPStateView`. Code commits: `428c90f846a6874672893fe8a7a6e993683d78cc`, `289e68e7557290533d95f0f415571ef0eb3b901d`. No analyzer/tests/CI/device/APK run.
