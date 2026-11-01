@@ -39,12 +39,43 @@ class OwnerScheduleSlotsBuilder {
     try {
       final int startH = AppDateFormatter.parseTimeToHour(selectedStadium.openingTime);
       final int endH = AppDateFormatter.parseTimeToHour(selectedStadium.closingTime);
-      final int breakStartMin = selectedStadium.isSplitShift
-          ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakStartTime)
-          : -1;
-      final int breakEndMin = selectedStadium.isSplitShift
-          ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakEndTime)
-          : -1;
+      final breakIntervals = <List<int>>[];
+      final features = selectedStadium.features;
+      final isOvernightSchedule = startH >= endH;
+
+      int toOperationalMinutes(String value) {
+        final minutes = AppDateFormatter.parseTimeToMinutes(value);
+        return isOvernightSchedule && minutes < startH * 60
+            ? minutes + 1440
+            : minutes;
+      }
+
+      if (features is Map && features['breakTimes'] is List) {
+        for (final item in features['breakTimes'] as List) {
+          if (item is! Map) continue;
+          final startText = item['start']?.toString() ?? '';
+          final endText = item['end']?.toString() ?? '';
+          if (startText.isEmpty || endText.isEmpty) continue;
+          final breakStart = toOperationalMinutes(startText);
+          final breakEnd = toOperationalMinutes(endText);
+          if (breakEnd > breakStart) {
+            breakIntervals.add([breakStart, breakEnd]);
+          }
+        }
+      }
+
+      // Legacy compatibility for stadiums with one break stored on the model.
+      if (breakIntervals.isEmpty && selectedStadium.isSplitShift) {
+        final startText = selectedStadium.breakStartTime;
+        final endText = selectedStadium.breakEndTime;
+        if (startText.isNotEmpty && endText.isNotEmpty) {
+          final breakStart = toOperationalMinutes(startText);
+          final breakEnd = toOperationalMinutes(endText);
+          if (breakEnd > breakStart) {
+            breakIntervals.add([breakStart, breakEnd]);
+          }
+        }
+      }
 
       int currentH = startH;
       int currentM = 0;
@@ -56,15 +87,14 @@ class OwnerScheduleSlotsBuilder {
         final timeStr = AppDateFormatter.formatHourMin(currentH, currentM, isArSlot);
         if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
 
-        bool isBreak = false;
-        if (selectedStadium.isSplitShift && breakStartMin != -1 && breakEndMin != -1) {
-          final int currentSlotMin = currentH * 60 + currentM;
-          if (breakStartMin < breakEndMin) {
-            isBreak = currentSlotMin >= breakStartMin && currentSlotMin < breakEndMin;
-          } else {
-            isBreak = currentSlotMin >= breakStartMin || currentSlotMin < breakEndMin;
-          }
-        }
+        final rawSlotStart = currentH * 60 + currentM;
+        final currentSlotStart = isOvernightSchedule && rawSlotStart < startH * 60
+            ? rawSlotStart + 1440
+            : rawSlotStart;
+        final currentSlotEnd = currentSlotStart + 30;
+        final isBreak = breakIntervals.any(
+          (interval) => currentSlotStart < interval[1] && currentSlotEnd > interval[0],
+        );
         bool isOvernightSlot = (startH > endH && (currentH < startH || currentH < 12));
         DateTime slotDate = selectedDate;
         if (isOvernightSlot && currentH < 12) {
