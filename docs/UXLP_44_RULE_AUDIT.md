@@ -895,3 +895,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `booking_type_modal.dart` and `collective_match_invite_sheet.dart`:** both scroll-controlled SafeArea routes previously subtracted keyboard/system insets from their own max-height calculations, including a 240dp minimum that could exceed compact available space. Removed the duplicate calculations; collective-invite list now includes bottom system padding to keep final content/actions reachable.
 - Source commits: `422c4f223ce9e6edf62f17dbb44b0eead1cd33a5`, `a75c17dbe3344905955eb4a50d372c7750855824`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Create Team sheet duplicate keyboard inset — 2026-11-01
+
+- **Rules 11 and 35 — `CreateTeamSheet`:** its known callers use scroll-controlled SafeArea modal routes, but the sheet also subtracted keyboard/system insets from full screen height. Removed the duplicate calculation; route constraints own the keyboard-safe viewport and the sheet retains bottom system padding and scrollable form content.
+- Source commit: `ca4778a2bed9827aa9dccb4f2655d9468884d904`. Keyboard/device verification remains pending; no tests or build were run.
