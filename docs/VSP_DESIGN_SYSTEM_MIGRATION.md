@@ -305,3 +305,10 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Replaced physical left/right spacing in the inspected tournament wizard and Add Stadium hours components with directional geometry. The Copilot loading bubble now uses directional alignment and Arabic/English status copy.
 - Removed the arbitrary 800ms wait from the player-home refresh indicator; it now awaits the actual stadium refresh future.
 - Post-fix checks re-fetched all 28 files with raw-color findings and confirmed no remaining `Colors.black`, `Colors.white`, `Colors.transparent`, or `Colors.amber` references in those files. This remains static source evidence, not a runtime pass.
+
+## Explicit input-direction support — 2026-11-01
+
+- Added an optional `textDirection` override to shared `CustomTextField`; existing automatic LTR handling for email, phone, URL, and numeric fields remains unchanged.
+- Owner payout Instapay now requests the email keyboard, and IBAN is explicitly LTR in Arabic and English contexts.
+- Literal-copy triage of the 35 then-unchanged registered paths found only three payout-format examples, not untranslated user-facing labels. One of those paths has since been changed by this correction; 34 remain unchanged.
+- Runtime keyboard, caret, paste, and bidi behavior still require consolidated device validation.
