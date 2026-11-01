@@ -88,7 +88,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  final conversations = snapshot.data ?? [];
  
  // A failed initial read must not masquerade as a genuinely empty inbox.
- if (snapshot.hasError && !snapshot.hasData) {
+ if (snapshot.hasError && conversations.isEmpty) {
    return VSPErrorState(
      customMessage: isArabic
          ? 'تعذر تحميل المحادثات. تحقق من الاتصال ثم أعد المحاولة.'
