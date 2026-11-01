@@ -2156,3 +2156,9 @@ Read-only inspection was performed against the connected production VSP project 
 - The phone controller is disposed and pending generations are invalidated when the sheet is disposed.
 - Source commits: `b796c2502c973d260954b5a802df462faef67625`, `093b36be40ba3c74dae5787effe81f0fa0cd02a5`.
 - No analyzer, tests, CI, runtime/device checks, database changes, or APK build were run.
+
+## Owner Copilot send failure recovery — 2026-11-01
+
+- `vsp_copilot_sheet.dart`: a failed Edge Function/network request previously escaped the send handler and could leave the composer permanently in its loading state. The UI now catches the failure, appends a localized retry message, restores the composer, and keeps the conversation visible.
+- Source commit: `aef552d6ef07fd99f07abe8b5b31ea65e764c333`.
+- No analyzer, tests, CI, runtime/device checks, backend changes, or APK build were run.
