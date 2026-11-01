@@ -85,7 +85,6 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
         }
         if (snapshot.hasError) {
           return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
             onRetry: _handleRetry,
           );
         }
