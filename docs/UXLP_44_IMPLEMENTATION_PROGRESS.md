@@ -2140,3 +2140,11 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `owner_dashboard_screen.dart`: approval-notice claim responses are now scoped to the authenticated owner and the active owner-scope generation. If the account changes while a claim request is in flight, its late response is ignored and cannot repopulate the next owner's local notice state. The owner ID is passed explicitly into the claim routine; request errors remain diagnostic-only because the dashboard already has the championship refresh recovery path.
 - Source-only correction. No RPC signature, database policy, notification retention, business rule, analyzer, tests, CI, runtime checks, or APK build was changed/run.
+
+
+## Supabase read-only runtime review — 2026-11-01
+
+- Added `docs/UXLP_44_SUPABASE_RUNTIME_REVIEW.md` with live advisor/catalog/log evidence. Confirmed `public.teams_public` is still a SECURITY DEFINER view (`reloptions IS NULL`) with authenticated SELECT while base `teams` RLS is captain/member/admin scoped. Visibility semantics must be confirmed before changing it.
+- Security advisors: 198 authenticated-executable SECURITY DEFINER functions (requires function-by-function authorization review), one leaked-password-protection warning; performance advisors: 44 RLS initplan, 79 unused-index, and 50 multiple-permissive-policy findings.
+- Last 24h: 79 explicit PostgREST Warp timeout messages among 136 error-like PostgREST events; Postgres and Edge log scans returned no error-like events. Warp entries expose only generic path `/`, so caller/RPC root cause is not attributable from current logs.
+- No SQL, RLS, migration, or Edge Function deployment was performed; exact remediation is approval-gated.
