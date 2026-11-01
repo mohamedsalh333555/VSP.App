@@ -1241,3 +1241,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 29 and 36 — signup password feedback:** password-strength scoring now counts five distinct characteristics; minimum length is no longer counted twice in place of lowercase characters. Source-level correction only; UI/runtime feedback remains pending.
 - **Rules 29, 36, and 43 — owner dashboard consistency:** stale analytics responses from older date/court filters are ignored, and disposed controllers invalidate outstanding requests before listener notification. Runtime filter-race validation remains pending.
+
+
+- **Rules 29, 31, 36, and 43 — payment state idempotency:** booking and tournament fallback pollers now prevent overlapping asynchronous timer reads and latch confirmed status before the success callback. Runtime webhook-delay and slow-network validation remains pending.
