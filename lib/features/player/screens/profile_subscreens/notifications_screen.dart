@@ -90,7 +90,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: SafeArea(
         top: false,
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+            ? VSPStateView(
+                state: VSPUiState.loading,
+                title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل الإشعارات' : 'Loading notifications',
+                message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث تفضيلات الإشعارات.' : 'Fetching notification preferences.',
+              )
             : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
