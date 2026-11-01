@@ -83,8 +83,10 @@ class ChallengeTeamCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: VSPColors.warning, width: 1),
                               ),
-                              child: const Text(
-                                ' يضم بطل 1 ضد 1',
+                              child: Text(
+                                Localizations.localeOf(context).languageCode == 'ar'
+                                    ? 'يضم بطل 1 ضد 1'
+                                    : 'Includes a 1v1 champion',
                                 style: TextStyle(
                                   color: VSPColors.warning,
                                   fontSize: 10,
