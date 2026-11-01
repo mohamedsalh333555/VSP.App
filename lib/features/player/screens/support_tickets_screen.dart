@@ -243,7 +243,11 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
               stream: _ticketsStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                  return VSPStateView(
+                  state: VSPUiState.loading,
+                  title: Localizations.localeOf(context).languageCode == 'ar' ? 'جارٍ تحميل طلبات الدعم' : 'Loading support tickets',
+                  message: Localizations.localeOf(context).languageCode == 'ar' ? 'نحدّث قائمة طلباتك.' : 'Fetching your support requests.',
+                );
                 }
                 if (snapshot.hasError &&
                     (snapshot.data == null || snapshot.data!.isEmpty)) {
