@@ -75,3 +75,17 @@ Status meanings:
 - [x] Phases 2–7 and their boundaries recorded.
 
 **Phase 1 result: COMPLETE — inventory only. No implementation phase has been started by this inventory.**
+
+## Follow-up status — 2026-11-01
+
+The evidence baseline above is a historical snapshot from 2026-10-31 and is intentionally preserved. It must not be read as the current branch state.
+
+Current documentation/source status on `uxlp-44-implementation`:
+- UXLP-44 rule matrix: exactly 44 numbered rows; every rule remains source-reviewed/runtime-pending. Notification retention is recorded separately as an open product decision, not as a duplicate numbered rule.
+- Screen register: 216 table records across 190 unique Dart paths, including 26 repeated entries for separate findings. Four malformed concatenated rows were split; no multi-path table rows remain.
+- The register is an implementation tracking inventory, not proof that every embedded widget, modal, state, or route is covered.
+- Grouped source changes and test-fixture corrections have continued since the inventory snapshot. They have not been given a final validation pass; no runtime pass is claimed.
+- Product decisions remain open for team-booking authorization (member vs captain), multiple-team selection semantics, notification retention/refund-notification reconciliation, and server-side result eligibility/time guards. No SQL, RLS, RPC, payment, refund, or retention behavior was changed as part of this follow-up.
+- The user requested continued source/documentation work while explicitly deferring tests and APK extraction. Those gates remain deferred; do not interpret this follow-up as Phase 6 or Phase 7 completion.
+
+**Current phase state: Phase 2/3 source remediation and evidence mapping in progress; Phase 6 tests/runtime validation and Phase 7 APK remain intentionally not run in this batch.**
