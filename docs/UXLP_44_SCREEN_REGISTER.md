@@ -742,3 +742,9 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - Existing workflow run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423), on older commit `6eb50fdd2c4e6879a4c8a95a5a0de1415af4a5aa`, reached the Release compile step and failed with two Dart source diagnostics: an unmatched widget-tree delimiter in `stadium_details_screen.dart` and an unresolved `VSPErrorState` reference in `facility_onboarding_screen.dart`.
 - Corrected the missing `Material`/outer `Expanded` closure and added the explicit shared error-state import on the current branch. These fixes are recorded in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`.
 - The failed run predates those commits; it is root-cause evidence only, not verification of the fixes. No artifact was produced and no new build was started.
+
+
+## Semantic color cleanup — 2026-11-01
+
+- Replaced remaining raw black/white/transparent UI color literals with VSP Design System aliases in: `welcome_screen.dart`, `forgot_password_dialog.dart`, `create_tournament_wizard.dart`, `owner_dashboard_screen.dart`, `owner_tournament_dashboard_screen.dart`, `subscription_plans_screen.dart`, `tournament_brackets_screen.dart`, `owner_bookings_screen.dart`, `owner_bookings_filter_bar.dart`, `owner_profile_screen.dart`, and `owner_payout_otp_dialog.dart`.
+- These are source-level token-alignment changes only. They do not establish contrast or runtime pass; all affected screen entries remain runtime-pending.
