@@ -313,3 +313,10 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Literal-copy triage of the 35 then-unchanged registered paths found only three payout-format examples, not untranslated user-facing labels. One of those paths has since been changed by this correction; 34 remain unchanged.
 - Runtime keyboard, caret, paste, and bidi behavior still require consolidated device validation.
 - The current screen register now marks **62 distinct paths / 63 rows** as `source updated—runtime pending` after the grouped palette, motion, RTL, refresh, and input-direction corrections. This remains source status only; none of those entries is a runtime pass.
+
+
+## Re-fetched full-file static triage — 2026-11-01
+
+The 34 unique registered Dart paths unchanged by PR #35 were re-fetched from the current branch and scanned in full. The scan found zero raw `Colors.black`, `Colors.white`, `Colors.transparent`, `Colors.amber`, `Colors.redAccent`, or `Colors.blue` references. Two directional-layout findings were corrected with `PositionedDirectional`: the create-account decorative glow now uses locale-relative `end`, and the owner-cup team-avatar stack uses locale-relative `start`. The two fixed positions in the VSP AI spark icon are intentional non-directional brand geometry. Eleven numeric duration matches in the owner insights view are all one-second date-boundary comparisons, not motion durations.
+
+This is a complete-file scan of that 34-path unchanged subset only. It does not close the full-file audit for all 338 registered paths, does not replace the per-screen/per-state 44-rule matrix, and does not provide runtime evidence. All 44 rules remain in their existing conservative statuses: 39 source-reviewed/runtime-pending, five needs-product-decision, and zero runtime passes.
