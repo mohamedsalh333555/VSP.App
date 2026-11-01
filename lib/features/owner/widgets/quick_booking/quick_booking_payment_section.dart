@@ -41,10 +41,10 @@ class QuickBookingPaymentSection extends StatelessWidget {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.05),
+            color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(VSPRadius.full),
             border: Border.all(
-              color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.1),
+              color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.1),
               width: isSelected ? 1.2 : 0.8,
             ),
           ),
@@ -52,7 +52,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white70,
+              color: isSelected ? VSPColors.black : VSPColors.white70,
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
             ),
@@ -76,7 +76,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
             Expanded(
               child: Text(
                 isAr ? 'المبلغ المستلم / المدفوع (ج.م)' : 'Amount Received (EGP)',
-                style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: VSPColors.white, fontSize: 12.5, fontWeight: FontWeight.bold),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -86,7 +86,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.07),
+                  color: VSPColors.white.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(VSPRadius.full),
                 ),
                 child: Text(
@@ -164,14 +164,14 @@ class QuickBookingPaymentSection extends StatelessWidget {
                 ? VSPColors.accent.withValues(alpha: 0.12)
                 : (isPartiallyPaid
                     ? VSPColors.info.withValues(alpha: 0.12)
-                    : Colors.white.withValues(alpha: 0.04)),
+                    : VSPColors.white.withValues(alpha: 0.04)),
             borderRadius: BorderRadius.circular(VSPRadius.md),
             border: Border.all(
               color: isFullyPaid
                   ? VSPColors.accent.withValues(alpha: 0.3)
                   : (isPartiallyPaid
                       ? VSPColors.info.withValues(alpha: 0.3)
-                      : Colors.white.withValues(alpha: 0.08)),
+                      : VSPColors.white.withValues(alpha: 0.08)),
             ),
           ),
           child: Row(
@@ -202,7 +202,7 @@ class QuickBookingPaymentSection extends StatelessWidget {
                   style: TextStyle(
                     color: isFullyPaid
                         ? VSPColors.accent
-                        : (isPartiallyPaid ? VSPColors.info : Colors.white70),
+                        : (isPartiallyPaid ? VSPColors.info : VSPColors.white70),
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
                   ),
