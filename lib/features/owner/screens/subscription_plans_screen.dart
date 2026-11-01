@@ -125,7 +125,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     return VSPScaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: VSPColors.transparent,
         elevation: 0,
         leading: const VSPBackButton(),
         centerTitle: true,
@@ -577,7 +577,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     : () => _startSubscriptionPayment(context, 'monthly', isArabic),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
+                  foregroundColor: VSPColors.black,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -589,7 +589,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.black,
+                          color: VSPColors.black,
                         ),
                       )
                     : Text(
