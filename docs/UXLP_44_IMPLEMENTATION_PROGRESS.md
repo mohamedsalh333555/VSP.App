@@ -2019,3 +2019,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Follow-up to `stadium_ratings_tab.dart`: when a review stream refresh fails after reviews have loaded, the list now retains the last loaded reviews and shows a localized stale-data warning with a 48dp Retry action. Retry recreates the stream; it does not clear the visible review snapshot first.
 - No review submission, rating calculation, or database query behavior changed. Source-only; runtime/device verification remains pending. No tests, analyzer, CI, or APK build were run. Code commit: `bbb50fe27acf70b0e87f11fb0614616105a30e3a`.
+
+
+## Stadium feature form directional alignment — 2026-11-01
+
+- `lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart`: amenities section heading now uses `AlignmentDirectional.centerStart` rather than a locale-specific physical left/right ternary, keeping alignment tied to reading direction.
+- No feature selection or stadium persistence behavior changed. Source-only; no tests, analyzer, CI, runtime checks, or APK build were run. Code commit: `4a03894df24e97a65ad20399778a0ba941d45d01`.
