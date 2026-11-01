@@ -6,6 +6,8 @@ import '../../core/ui/tokens/vsp_design_tokens.dart';
 /// introducing a new color or icon family.
 ///
 /// The geometry is a component rule, not a screen-local decoration.
+/// Keep the diagonal placement fixed in both locales: this is a non-directional
+/// brand mark, not a reading-order layout.
 class VSPAiSparkIcon extends StatelessWidget {
   final double size;
   final Color color;
