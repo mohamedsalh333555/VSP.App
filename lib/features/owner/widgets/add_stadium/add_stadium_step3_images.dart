@@ -137,7 +137,7 @@ class AddStadiumStep3Images extends StatelessWidget {
                       right: -4,
                       bottom: -4,
                       child: Container(
-                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        decoration: const BoxDecoration(color: VSPColors.white, shape: BoxShape.circle),
                         padding: const EdgeInsets.all(1),
                         child: const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 14),
                       ),
@@ -157,7 +157,7 @@ class AddStadiumStep3Images extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   if (isUploading)
