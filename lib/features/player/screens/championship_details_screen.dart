@@ -185,6 +185,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (context) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
