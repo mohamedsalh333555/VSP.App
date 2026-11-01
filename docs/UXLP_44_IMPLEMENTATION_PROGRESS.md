@@ -1898,3 +1898,5 @@ Read-only inspection was performed against the connected production VSP project 
 - `teams_public` security-advisor context: migration review confirms the view was intentionally created as the authenticated team-discovery surface after raw `public.teams` SELECT was restricted to captain/member/admin. The view excludes `captain_phone` and `active_invite_code`; invite codes are exposed through a separate captain/admin-checked RPC. A blanket `security_invoker` change would make discovery obey the restrictive raw-table RLS and hide other teams. The advisor ERROR remains tracked, but a safe redesign must preserve public-safe directory discovery without reopening raw-table columns. No view or policy changes were applied.
 
 - Player league/ranking surfaces: team-league membership and league loading, team rankings, and 1v1 standings now use shared bilingual loading states. Existing retry/error/empty branches and join/payment actions remain unchanged; compact submit-button spinners remain local.
+
+- My Team screen: replaced the raw English-only `Not authenticated` fallback with a safe-area-protected, localized error state and clear sign-in recovery guidance.
