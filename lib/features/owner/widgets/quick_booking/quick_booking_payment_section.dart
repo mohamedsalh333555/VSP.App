@@ -30,25 +30,32 @@ class QuickBookingPaymentSection extends StatelessWidget {
     required double amount,
     required bool isSelected,
   }) {
-    return GestureDetector(
-      onTap: () => onSelectQuickAmount(amount),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(VSPRadius.full),
-          border: Border.all(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.1),
-            width: isSelected ? 1.2 : 0.8,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onSelectQuickAmount(amount),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(VSPRadius.full),
+            border: Border.all(
+              color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.1),
+              width: isSelected ? 1.2 : 0.8,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white70,
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? Colors.black : Colors.white70,
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+            ),
           ),
         ),
       ),
