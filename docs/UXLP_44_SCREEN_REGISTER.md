@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface and embedded-component paths: 290 unique paths
+- Registered Dart screen/surface and embedded-component paths: 299 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 317, including 27 repeated paths that document separate embedded-component findings
+- Table records: 326, including 27 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan: 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a complete scan of all 215 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -198,6 +198,15 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart` | owner | source reviewed—runtime pending (quick-booking payment section; amount/fee data and state-dependent actions pending) |
 | `lib/features/owner/widgets/tournament/cups/owner_cup_card.dart` | owner | source reviewed—runtime pending (owner cup card; tournament status/actions and long-title rendering pending) |
 | `lib/features/owner/widgets/tournament/cups/owner_cup_empty_view.dart` | owner | source reviewed—runtime pending (owner cup empty state; neutral icon styling and CTA relevance pending) |
+| `lib/features/owner/widgets/tournament/draw_room_matchup_tile.dart` | owner | source reviewed—runtime pending (draw-room matchup tile; team-name overflow and draw-state behavior pending) |
+| `lib/features/owner/widgets/tournament/tournament_manual_team_options_section.dart` | owner | source reviewed—runtime pending (section labels and color-option gaps now use directional start/end geometry) |
+| `lib/features/owner/widgets/tournament/tournament_manual_team_roster_section.dart` | owner | source reviewed—runtime pending (manual tournament roster section; capacity, duplicate-player and validation feedback pending) |
+| `lib/features/owner/widgets/tournament/tournament_overview_card.dart` | owner | source reviewed—runtime pending (tournament overview card; status, dates and action relevance pending) |
+| `lib/features/owner/widgets/tournament/tournament_team_card.dart` | owner | source reviewed—runtime pending (tournament team card; roster/registration state and long-name rendering pending) |
+| `lib/features/player/widgets/booking/booking_financial_summary.dart` | player | source reviewed—runtime pending (booking financial summary; authoritative server totals, fees and deposit states pending) |
+| `lib/features/player/widgets/championship_checkout/checkout_guest_players_section.dart` | player | source reviewed—runtime pending (guest-player checkout section; roster limits, validation and saved data behavior pending) |
+| `lib/features/player/widgets/chat/chat_app_bar_title.dart` | player | source reviewed—runtime pending (chat title/participant header; participant state and long-name rendering pending) |
+| `lib/features/player/widgets/chat/chat_system_banner.dart` | player | source reviewed—runtime pending (chat system status banner; lifecycle copy and locale behavior pending) |
 
 ## Non-screen UI surfaces still requiring discovery
 
