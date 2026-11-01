@@ -19,6 +19,7 @@ import 'league_1v1/league_1v1_prize_card.dart';
 import 'league_1v1/league_1v1_registration_action_card.dart';
 import 'league_1v1/league_1v1_roster_list.dart';
 import 'league_1v1/league_1v1_standings_view.dart';
+import '../../../../shared/widgets/vsp_error_state.dart';
 
 /// 1v1 individual tournament tab on the Champion screen.
 class Vsp1v1LeagueTab extends StatefulWidget {
@@ -77,6 +78,9 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
         }
 
         final tournament = tourneySnap.data;
+        if (tourneySnap.hasError && tournament == null) {
+          return VSPErrorState(onRetry: widget.onRetry);
+        }
         if (tournament == null) {
           final locName = championTranslateItem(context, effectiveLocation);
           return Column(
@@ -100,6 +104,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
 
         return Column(
           children: [
+            if (tourneySnap.hasError)
+              _buildStaleDataWarning(isArabic),
             if (isBrowsingDifferentGov)
               League1v1GovernorateBanner(
                 selectedLocation: widget.selectedLocation,
@@ -181,6 +187,15 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: widget.getTournamentPlayersStream(tournamentId),
       builder: (context, playersSnap) {
+        if (playersSnap.connectionState == ConnectionState.waiting &&
+            !playersSnap.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(color: VSPColors.accent),
+          );
+        }
+        if (playersSnap.hasError && !playersSnap.hasData) {
+          return VSPErrorState(onRetry: widget.onRetry);
+        }
         final players = playersSnap.data ?? [];
         final registeredCount = players.length;
         final remainingCount = (targetCount - registeredCount).clamp(0, 999);
@@ -197,6 +212,8 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (playersSnap.hasError)
+                _buildStaleDataWarning(isArabic),
               League1v1HeroCard(
                 tourneyName: tourneyName,
                 governorate: tournament['governorate']?.toString(),
@@ -246,6 +263,39 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStaleDataWarning(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.warning.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'نعرض آخر بيانات متاحة؛ تعذر تحديث البيانات لحظياً.'
+                  : 'Showing the latest available data; live updates are unavailable.',
+              style: const TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: widget.onRetry,
+            child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
+          ),
+        ],
+      ),
     );
   }
 
