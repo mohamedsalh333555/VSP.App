@@ -698,3 +698,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The new-support-ticket sheet can no longer be dismissed by tapping outside or dragging while its asynchronous create request is in progress. An explicit Cancel action is available before submission and is disabled during submission; this avoids accidental dismissal and uncertainty about whether a ticket was created.
 - Ticket fields, category mapping, priority mapping, and the create-ticket backend call are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `76765152aa85c8fed8a882798ce26f2d3cd6e4c5`.
+
+
+## Support-ticket signed-out action visibility — 2026-11-01
+
+- The floating “open ticket” action is now hidden when there is no authenticated user. Previously the screen showed a sign-in-required empty state but still exposed an action that launched the ticket-creation flow, creating a misleading and potentially failing path.
+- Authenticated-user behavior is unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `6f045e18696fb71c1b685a05bd2bbc671ee6e439`.
