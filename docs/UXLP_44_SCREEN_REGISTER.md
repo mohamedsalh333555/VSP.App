@@ -507,3 +507,5 @@ The following registered screens now use `VSPStateView` with localized Arabic/En
 - `lib/features/player/widgets/collective_match_invite_route.dart`, `lib/features/player/widgets/champion/vsp_1v1_league_tab.dart`, and `lib/features/player/widgets/champion/championships_list_tab.dart`: replaced bare full-surface/stream loading spinners with localized shared loading states.
 - `lib/core/repositories/match_repository.dart`: `acceptJoinRequest` and `rejectJoinRequest` now return success only when the server JSONB explicitly reports `success: true`; transport exceptions are logged. This prevents UI success messages/local participant updates after a server-side rejection.
 - `lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart`: all eight explicitly 44dp primary actions raised to 48dp.
+
+- Player league/ranking follow-up: `league/team_league_tab.dart`, `champion/teams_ranking_tab.dart`, and `champion/league_1v1/league_1v1_standings_view.dart` now use localized shared loading states for initial data reads.
