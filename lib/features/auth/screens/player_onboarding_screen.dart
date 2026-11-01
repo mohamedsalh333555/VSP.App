@@ -432,11 +432,12 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
+              style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
               child: Text(l10n.continueRegistration, style: const TextStyle(color: VSPColors.accent)),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, elevation: 0, minimumSize: const Size(0, 48)),
               child: Text(l10n.cancelAndSignOut),
             ),
           ],
