@@ -5,6 +5,8 @@
 **Scope:** Shared foundations and 338 unique registered Dart paths: 325 visual surfaces within the recursive screen/widget tree plus 13 cross-cutting core/shared foundations (366 table data rows, including 28 repeated paths documenting separate embedded-component findings), plus one shared navigation component and separately recorded embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
+**Current status breakdown (2026-11-01):** 39 rules are `source reviewed—runtime pending`; rules 25, 31, 38, 39, and 41 are `needs product decision`; 0 runtime passes. This is still a global rule matrix, not a complete per-screen/per-state matrix.
+
 | # | Rule | Current source status | Evidence / remaining verification |
 |---:|---|---|---|
 | 1 | Clear hierarchy | source reviewed—runtime pending | Source-reviewed representative player/owner flows: booking confirmation, match details, create-team, owner dashboard, subscription plans. Screen-by-screen hierarchy and device rendering still pending. |
