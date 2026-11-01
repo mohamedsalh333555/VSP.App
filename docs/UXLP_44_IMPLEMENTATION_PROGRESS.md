@@ -1276,3 +1276,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/owner/widgets/bookings/owner_bookings_filter_bar.dart`: horizontal day-strip spacing used a physical right margin, which did not mirror with the active text direction. It now uses a directional end margin so spacing remains consistent in Arabic and English.
 - Day selection, date ordering, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `7d5009b855f619c7be83a15855e0fb2cb1adbd30`.
+
+
+## Match details initial-load recovery — 2026-11-01
+
+- Fixed `lib/features/player/screens/match_details_screen.dart`: an initial repository/network failure no longer falls through to the “match not found” screen. It now presents a localized, safe-area-protected error state with retry; a successful lookup returning no match still uses the not-found state.
+- Match eligibility, join, payment, and booking behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `9077f2d85ad6bc41e2b78da1a4c7505afaa16429`.
