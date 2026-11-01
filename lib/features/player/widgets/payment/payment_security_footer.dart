@@ -36,7 +36,7 @@ class PaymentSecurityFooter extends StatelessWidget {
           Text(
             isArabic ? 'جاري إصدار وتأكيد تذكرة الحجز... ' : 'Issuing your booking ticket... ',
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
