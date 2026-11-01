@@ -211,6 +211,20 @@ class BookingConfirmationHandler {
       }
     } catch (e, stack) {
       VSPLogger.e('Error checking slot availability before booking', e, stack);
+      if (!context.mounted) return;
+      if (!isSameUser()) {
+        onLoadingChanged(false);
+        return;
+      }
+      onLoadingChanged(false);
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تعذر التحقق من إتاحة الموعد حالياً. لم يتم إرسال الحجز؛ حاول مرة أخرى.'
+            : 'Could not verify this time slot right now. No booking was submitted; please try again.',
+      );
+      return;
     }
 
     if (!context.mounted) return;
