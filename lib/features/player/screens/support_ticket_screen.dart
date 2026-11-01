@@ -388,7 +388,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
                           ),
                           child: Text(
                             m['body']?.toString() ?? '',
-                            style: TextStyle(color: me ? Colors.black : Colors.white),
+                            style: TextStyle(color: me ? VSPColors.black : VSPColors.white),
                           ),
                         ),
                       );
