@@ -901,3 +901,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `CreateTeamSheet`:** its known callers use scroll-controlled SafeArea modal routes, but the sheet also subtracted keyboard/system insets from full screen height. Removed the duplicate calculation; route constraints own the keyboard-safe viewport and the sheet retains bottom system padding and scrollable form content.
 - Source commit: `ca4778a2bed9827aa9dccb4f2655d9468884d904`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Owner schedule row and dashboard header accessibility/RTL refinements — 2026-11-01
+
+- **Rules 5, 10, 27, 30, 33, and 37:** owner time-slot rows now use InkWell semantics/focus/feedback while preserving tap and long-press actions; the booking-detail chevron mirrors in RTL; owner profile-photo action has localized tooltip and keyboard/focus semantics; verified-account tooltip is bilingual.
+- Source commits: `c853ea69ab5634790fc167021aa2a08b19e120da`, `0555e1a17c1cfce2a6ca0f80fcf0dbb3ccfc4a6e`, `f880179e87a87ccc2a4db8781254e02fa9830e3d`. Runtime and device verification remain pending; no tests or build were run.
