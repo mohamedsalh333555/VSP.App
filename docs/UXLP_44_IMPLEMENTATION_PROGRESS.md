@@ -1122,3 +1122,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Emergency stadium closure owner-session guard — 2026-11-01
 - Fixed `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: emergency closure previously opened its confirmation dialog and submitted the 24-hour closure request using the booking's owner ID without verifying that the currently signed-in account was still that owner. The action now requires the initiating account to match the booking owner, rechecks after confirmation, and only displays the result in that same session.
 - The emergency closure request, duration, and administrative review/refund routing are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 9b7249647c13ac782975a841f47a4214af00e5be.
+
+
+## Quick phone booking receipt payment wording — 2026-11-01
+- Fixed `lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart`: the quick-phone-booking flow collects the amount received directly from the stadium owner, but the receipt formatter's `isCashConfirmed` flag was never passed. When the full booking total had been collected, the receipt could therefore label it as paid online. The receipt now marks cash as confirmed only when the positive total has been collected in full; partial collection remains correctly represented as a deposit with the balance due on arrival.
+- No payment amounts, booking writes, or collection rules changed. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: 71415521482a5ed30ee1b8c9312f7d2d749ce4c4.
