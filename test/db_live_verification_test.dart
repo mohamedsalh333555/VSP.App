@@ -4,6 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RealHttpOverrides extends HttpOverrides {}
 
+const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+const _runLiveTests = bool.fromEnvironment('VSP_RUN_LIVE_TESTS', defaultValue: false);
+const _canRunLiveTests = _runLiveTests && _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty;
+
 void main() {
  TestWidgetsFlutterBinding.ensureInitialized();
  HttpOverrides.global = RealHttpOverrides();
@@ -14,8 +19,8 @@ void main() {
  print('=================================================================\n');
 
  final supabase = SupabaseClient(
-    const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co'),
-    const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key'),
+    _supabaseUrl,
+    _supabaseAnonKey,
   );
 
  int passed = 0;
