@@ -42,7 +42,7 @@ class MatchupStandingsTable extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             isArabic ? 'حساب النقاط: (فوز = 3 نقاط | تعادل = 1 نقطة)' : 'Points: Win = 3 | Draw = 1',
-            stconst yle: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
           ),
           const Divider(color: VSPColors.divider, height: 24),
           ListView.separated(
