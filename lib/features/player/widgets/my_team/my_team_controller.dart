@@ -138,7 +138,14 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
           SnackBar(content: Text(l10n.enterTeamNameError), backgroundColor: VSPColors.error));
       return;
     }
-    if (user == null) return;
+    if (user == null) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'انتهت جلسة تسجيل الدخول. سجّل الدخول مرة أخرى.' : 'Your session has expired. Please sign in again.',
+      );
+      return;
+    }
 
     isSavingValue = true;
     setState(() {});
@@ -179,11 +186,20 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
   // ── Update team ───────────────────────────────────────────────────────────
   Future<void> handleUpdateTeam(Team team) async {
     final l10n = AppLocalizations.of(context)!;
+    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+    if (user == null || user.uid.trim().isEmpty) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'تعذر التحقق من حسابك. سجّل الدخول مرة أخرى.' : 'Your account could not be verified. Please sign in again.',
+      );
+      return;
+    }
+
     isSavingValue = true;
     setState(() {});
     try {
-      final user = Provider.of<AuthProvider>(context, listen: false).userModel;
-      final logoUrl = await _uploadLogoIfSelected(user?.uid ?? 'unknown');
+      final logoUrl = await _uploadLogoIfSelected(user.uid);
 
       final payload = TeamManagementService.buildUpdateTeamPayload(
         name: teamNameText,
