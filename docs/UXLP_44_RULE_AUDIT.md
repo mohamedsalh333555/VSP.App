@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and all 199 unique registered Dart screen/surface paths (225 register rows, including 26 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and all 208 unique registered Dart screen/surface paths (234 register rows, including 26 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -48,7 +48,7 @@
 | 39 | Role-based relevance | source reviewed—runtime pending | Copilot remains owner-gated; result actions in both home and booking cards require captain identity for a participating team, suppress dual-side captain actions, and recalculate on account changes. Owner schedule is hidden outside owner role. Audit other role boundaries. |
 | 40 | Lifecycle consistency | source reviewed—runtime pending | Player booking details/cards distinguish booking lifecycle states; challenge result prompts now compare team IDs to team IDs, and a mismatched result is described as waiting for the other captain (matching the atomic RPC) rather than an admin dispute. Full lifecycle consistency remains pending. |
 | 41 | Persistent communication | source reviewed—runtime pending | Opening marks read, not delete; swipe-to-dismiss deletes and Undo restores the original payload/time. Delete/Undo callbacks are bound to the originating account. UI stream is capped at 50; no DELETE trigger or retention cron was found. Refund notifications are emitted only after refund ledger recording succeeds; a durable reconciliation notification retry remains a server-side gap. |
-| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 199 unique registered Dart paths are represented in the current screen register (225 rows including 26 repeated paths); the nine components added in the latest reconciliation have source-review notes, while per-rule and per-state mapping remains incomplete, but screen-level rule/state coverage is incomplete. |
+| 42 | Design-system governance | source reviewed—runtime pending | V2 tokens/shared components are canonical; all 208 unique registered Dart paths are represented in the current screen register (234 rows including 26 repeated paths); the latest nine championship/1v1 embedded components have source-review notes, while per-rule and per-state mapping remains incomplete. |
 | 43 | Operational observability | source reviewed—runtime pending | Booking/owner actions, team-league create/join/cancel/outcomes, prize handover, GPS lookup, cash booking, score submission, and participant management separate technical diagnostics from localized user errors. Audit all remaining critical failure surfaces. |
 | 44 | Optimal cognitive load | source reviewed—runtime pending | Owner dashboard tabs/analytics feedback and checkout loading/error states reviewed; refund and plan surfaces are scroll-bounded. Motion intensity and real-device cognitive-load validation pending. |
 
@@ -85,7 +85,7 @@ The CI run stopped at Analyze; automated tests and APK build were skipped. No te
 
 ## Gates still open
 
-1. Complete screen-by-screen rule mapping for all 199 registered unique paths, the 26 separately tracked repeated embedded-component findings, and applicable state variants.
+1. Complete screen-by-screen rule mapping for all 208 registered unique paths, the 26 separately tracked repeated embedded-component findings, and applicable state variants.
 2. Finish Arabic/English copy and RTL/LTR review.
 3. Resolve findings that require product decisions (including notification retention policy) before changing business/data behavior.
 4. Complete one consolidated validation pass after all grouped source changes.
@@ -495,6 +495,16 @@ These findings are implementation evidence only. No rule has been promoted to `p
 - **Rules 27 and 33 — championship filters:** governorate and sport dropdown containers were constrained to 44dp. Their minimum height is now 48dp, matching the touch-target baseline.
 - **Rules 9, 28, 36, and 42 — owner bottom navigation:** unread-count stream failures previously collapsed to `snapshot.data ?? 0`, making unavailable data look like a verified zero. The shared navigation item now supports an amber warning indicator and accessible warning label; the owner chat item uses it when the unread stream reports an error. Any last delivered unread count remains visible if the stream errors after data.
 - These are source-level corrections. Compact-device hit testing, RTL rendering, assistive-technology announcements, and live stream failure/recovery remain runtime pending. No chat or notification data policy changed.
+
+### Championship/1v1 embedded component reconciliation — 2026-11-01
+
+Recursive inspection of `lib/features/player/widgets/champion` found nine additional embedded surfaces absent from the screen register: the podium/filter component, championship list tab, team ranking tab, 1v1 league tab, and five 1v1 hero/prize/action/roster/standings components. They have been added as source-reviewed/runtime-pending rows. The current register now contains **208 unique Dart paths and 234 rows**, including the existing 26 repeated-path findings.
+
+Source corrections in this group:
+- Championship and team-ranking tabs now retain non-empty last-known data when their streams fail and show an explicit localized retry warning. The championship error state no longer tells users to pull-to-refresh when no pull-to-refresh control is present.
+- The 1v1 tournament, roster, and standings streams now distinguish unavailable data from a confirmed empty state. Failed streams with prior data preserve it and show a retry warning; standings retry now invokes the parent stream-recreation callback and no longer exposes raw backend exception text.
+- 1v1 registration cancellation and governorate-switch controls now meet the 48dp minimum; the join action uses a null disabled callback while payment is processing rather than a no-op callback.
+- These changes do not alter tournament registration, payment, refund, or scoring rules. Runtime validation remains pending.
 
 ## Product decisions and backend approvals still open
 
