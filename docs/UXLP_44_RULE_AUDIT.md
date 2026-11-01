@@ -1253,3 +1253,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 9, 29, 36, and 43 — signup recovery and truthful status:** unexpected auth failures no longer strand the submit button in loading; secure-storage failure after account creation is distinguished from auth failure to reduce duplicate-registration risk. Runtime verification remains pending.
+
+
+- **Rules 29, 31, 36, and 43 — stale checkout response isolation:** payment polling generation tokens invalidate in-flight responses when a poll is replaced or checkout cleanup cancels polling; a late response cannot update a superseding checkout. Runtime race validation remains pending.
