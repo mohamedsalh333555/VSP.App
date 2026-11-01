@@ -22,7 +22,7 @@ class BookingTypeModal extends StatefulWidget {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => BookingTypeModal(stadium: stadium),
     );
   }
@@ -60,7 +60,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
             context: context,
             isScrollControlled: true,
             useSafeArea: true,
-            backgroundColor: Colors.transparent,
+            backgroundColor: VSPColors.transparent,
             builder: (_) => const CreateTeamSheet(),
           );
           if (!mounted) return;
@@ -251,7 +251,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         child: Material(
-          color: Colors.transparent,
+          color: VSPColors.transparent,
           child: InkWell(
             onTap: () => _handleOptionSelect(id),
             child: Padding(
@@ -278,7 +278,7 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
