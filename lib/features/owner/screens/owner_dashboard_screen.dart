@@ -399,7 +399,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 if (_isLoadingAnalytics) ...[
                   const LinearProgressIndicator(
                     minHeight: 2,
-                    backgroundColor: Colors.transparent,
+                    backgroundColor: VSPColors.transparent,
                     valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
                   ),
                   const SizedBox(height: 8),
@@ -496,14 +496,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _selectedDashboardTab == 0 ? VSPColors.accent : Colors.transparent,
+                                color: _selectedDashboardTab == 0 ? VSPColors.accent : VSPColors.transparent,
                                 borderRadius: BorderRadius.circular(21),
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 isArabic ? 'التشغيل اليومي' : 'Operations',
                                 style: TextStyle(
-                                  color: _selectedDashboardTab == 0 ? Colors.black : VSPColors.textSecondary,
+                                  color: _selectedDashboardTab == 0 ? VSPColors.black : VSPColors.textSecondary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -524,14 +524,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                             },
                             child: Container(
                               decoration: BoxDecoration(
-                                color: _selectedDashboardTab == 1 ? VSPColors.proAccent : Colors.transparent,
+                                color: _selectedDashboardTab == 1 ? VSPColors.proAccent : VSPColors.transparent,
                                 borderRadius: BorderRadius.circular(21),
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 isArabic ? 'التحليلات الذكية' : 'Insights',
                                 style: TextStyle(
-                                  color: _selectedDashboardTab == 1 ? Colors.black : VSPColors.textSecondary,
+                                  color: _selectedDashboardTab == 1 ? VSPColors.black : VSPColors.textSecondary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13,
                                 ),
@@ -906,7 +906,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               onPressed: () => _showProUpgradeSheet(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -947,7 +947,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                 Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
               ],
             ),
@@ -1019,7 +1019,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.input),
