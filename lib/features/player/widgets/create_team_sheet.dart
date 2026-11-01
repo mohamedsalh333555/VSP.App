@@ -56,7 +56,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (context) => AddPlayerSheet(
         requiredGovernorate: context.read<AuthProvider>().userModel?.governorate?.trim(),
         onPlayerAdded: (user) {
