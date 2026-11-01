@@ -105,12 +105,22 @@ class OwnerBookingSheetCoordinator {
     OwnerRepository? ownerRepository,
   }) async {
     setLoading(true);
+    AuthProvider? authProvider;
+    String? initiatingUserId;
     try {
+      authProvider = Provider.of<AuthProvider>(parentContext, listen: false);
+      initiatingUserId = authProvider.currentUser?.id;
       final repo = ownerRepository ?? OwnerRepository();
       final res = await repo.extendOngoingMatchAtomic(
         bookingId: booking.id,
         addedMinutes: 30,
       );
+
+      if (!context.mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
 
       if (res is Map && res['success'] == false) {
         if (context.mounted) {
@@ -124,24 +134,28 @@ class OwnerBookingSheetCoordinator {
         return;
       }
 
-      if (context.mounted) {
-        VSPFeedback.showSuccess(
-          context,
-          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
-        );
-      }
-      if (parentContext.mounted) {
+      if (parentContext.mounted &&
+          authProvider.currentUser?.id == initiatingUserId &&
+          initiatingUserId != null) {
         try {
-          final auth = Provider.of<AuthProvider>(parentContext, listen: false);
-          final currentUid = auth.currentUser?.id;
-          if (currentUid != null) {
-            await Provider.of<BookingProvider>(parentContext, listen: false).loadOwnerBookings(currentUid, forceRefresh: true);
-          }
+          await Provider.of<BookingProvider>(parentContext, listen: false)
+              .loadOwnerBookings(initiatingUserId, forceRefresh: true);
         } catch (_) {}
       }
-      if (context.mounted) Navigator.pop(context);
+      if (!context.mounted ||
+          authProvider.currentUser?.id != initiatingUserId) {
+        if (context.mounted) setLoading(false);
+        return;
+      }
+      VSPFeedback.showSuccess(
+        context,
+        isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
+      );
+      Navigator.pop(context);
     } catch (e) {
-      if (context.mounted) {
+      if (context.mounted &&
+          (authProvider == null ||
+              authProvider.currentUser?.id == initiatingUserId)) {
         setLoading(false);
         final cleanMsg = e.toString().replaceAll('Exception:', '').trim();
         VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $cleanMsg');
