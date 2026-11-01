@@ -1244,3 +1244,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 31, 36, and 43 — payment state idempotency:** booking and tournament fallback pollers now prevent overlapping asynchronous timer reads and latch confirmed status before the success callback. Runtime webhook-delay and slow-network validation remains pending.
+
+
+- **Rules 9, 10, 29, and 36 — Book Tonight async state recovery:** slot discovery now has a shared bilingual loading state, a retryable error state, and single-flight reload protection. Runtime slow-network/offline retry behavior remains pending.
