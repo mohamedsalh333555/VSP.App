@@ -2001,3 +2001,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Registered eight player embedded components: team achievements, action bar, captain card, head-to-head, hero header, roster section, stats grid, and reschedule action banner. Source review confirmed that the roster section distinguishes loading/error/empty and accepts a retry callback; the action-bar and reschedule progress indicators are compact in-action feedback rather than page-level loading states. Role/data/eligibility and device behavior remain pending.
 - No application source change was required in this subset. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Owner inbox/ledger/tournament and shared date-picker component inventory — 2026-11-01
+
+- Added nine visible embedded components to the register: owner chat row/search, ledger transaction row, tournament bracket canvas, cup filters/tabs, checkout team-member list, payment background decoration, and shared date-picker step chip. Their data/interaction/runtime behavior remains pending explicit caller-level verification. `tournament_bracket_builder.dart` was reviewed as a builder/helper without a Widget subclass and was not misclassified as a standalone UI surface.
+- No application source change was required in this subset. No tests, analyzer, CI, runtime checks, or APK build were run.
