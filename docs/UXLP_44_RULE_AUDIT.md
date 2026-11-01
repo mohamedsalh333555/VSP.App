@@ -1045,3 +1045,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - `lib/features/owner/widgets/ledger/owner_ledger_transaction_item.dart`: transaction timestamps now use locale-aware `yMMMd + jm` formatting instead of a fixed numeric `yyyy/MM/dd — hh:mm a` pattern, so month/date order and time conventions follow Arabic or English locale.
 - Source commit: `6190c0c85d55ef17aa3ed555752cbf84cbbc2157`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Signup name-field narrow-screen layout — 2026-11-01
+
+- `lib/features/auth/widgets/signup/signup_name_fields.dart`: first/last-name inputs now stack vertically when the available field width is below 360dp, while retaining the two-column layout on wider screens. This avoids cramped text fields and label/input collisions on compact phones and under larger text scaling. Input controllers, labels, validation ownership, and submission order are unchanged.
+- Source commit: `53dbbea2a3a5bea13615403e40041669433ebb8d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
