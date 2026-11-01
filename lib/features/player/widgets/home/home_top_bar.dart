@@ -35,7 +35,7 @@ class HomeTopBar extends StatelessWidget {
                       ? 'الملف الشخصي'
                       : 'Profile',
                   child: Material(
-                    color: Colors.transparent,
+                    color: VSPColors.transparent,
                     child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: () {
@@ -55,7 +55,7 @@ class HomeTopBar extends StatelessWidget {
                       color: (auth.userModel?.isPro == true) ? null : VSPColors.surface,
                       border: (auth.userModel?.isPro == true)
                           ? null
-                          : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                          : Border.all(color: VSPColors.white15, width: 1.5),
                       boxShadow: (auth.userModel?.isPro == true)
                           ? [
                               BoxShadow(
@@ -146,7 +146,7 @@ class HomeTopBar extends StatelessWidget {
           child: Tooltip(
             message: isArabic ? 'البحث عن الملاعب' : 'Search stadiums',
             child: Material(
-              color: Colors.transparent,
+              color: VSPColors.transparent,
               child: InkWell(
                 borderRadius: borderRadius,
                 onTap: () => Navigator.push(
@@ -162,7 +162,7 @@ class HomeTopBar extends StatelessWidget {
                     border: Border.all(color: VSPColors.divider, width: 1),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: VSPColors.black15,
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -195,13 +195,13 @@ class HomeTopBar extends StatelessWidget {
         Tooltip(
           message: isArabic ? 'تصفية الملاعب' : 'Filter stadiums',
           child: Material(
-            color: Colors.transparent,
+            color: VSPColors.transparent,
             child: InkWell(
               borderRadius: borderRadius,
               onTap: () async {
                 final result = await showModalBottomSheet<Map<String, dynamic>>(
                   context: context,
-                  backgroundColor: Colors.transparent,
+                  backgroundColor: VSPColors.transparent,
                   isScrollControlled: true,
                   useSafeArea: true,
                   builder: (context) => FilterBottomSheet(
@@ -221,7 +221,7 @@ class HomeTopBar extends StatelessWidget {
                   border: Border.all(color: VSPColors.divider, width: 1),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
+                      color: VSPColors.black15,
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
