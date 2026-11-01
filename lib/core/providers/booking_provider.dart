@@ -30,6 +30,7 @@ class BookingProvider with ChangeNotifier {
   bool _hasMoreMatches = true;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
+  int _draftRestoreGeneration = 0;
 
   // Getters - _userBookings is the Single Source of Truth (SSOT)
   List<Booking> get userBookings =>
@@ -83,7 +84,9 @@ class BookingProvider with ChangeNotifier {
   }
 
   Future<void> _restoreDraft() async {
+    final generation = ++_draftRestoreGeneration;
     final restored = await BookingDraftStorage.restore();
+    if (generation != _draftRestoreGeneration || _currentDraft != null) return;
     if (restored != null) {
       _currentDraft = restored;
       notifyListeners();
@@ -92,6 +95,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Set the current booking draft (used between screens)
   void setDraft(BookingDraft draft) {
+    _draftRestoreGeneration++;
     _currentDraft = draft;
     BookingDraftStorage.save(draft);
     notifyListeners();
@@ -116,6 +120,7 @@ class BookingProvider with ChangeNotifier {
     String? challengeCode,
   }) {
     if (_currentDraft != null) {
+      _draftRestoreGeneration++;
       _currentDraft = BookingListModifier.applyDraftUpdates(
         _currentDraft!,
         paymentMethod: paymentMethod,
@@ -141,6 +146,7 @@ class BookingProvider with ChangeNotifier {
 
   /// Clear the current draft
   void clearDraft() {
+    _draftRestoreGeneration++;
     _currentDraft = null;
     BookingDraftStorage.clear();
     notifyListeners();
