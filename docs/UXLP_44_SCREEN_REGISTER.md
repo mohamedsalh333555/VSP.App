@@ -692,3 +692,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart`, `lib/features/player/widgets/collective_match_invite_sheet.dart`, `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart`, and `lib/shared/widgets/match_card/manage_participants_modal.dart`: corrected physical right/left spacing and alignment to directional equivalents so the booking chips, invite header, legal modal header, and participant section headings mirror correctly in Arabic RTL.
+
+
+- `lib/features/player/widgets/my_team/my_team_controller.dart` now opens the scroll-controlled Add Player sheet with `useSafeArea: true`, protecting its header from status-bar/notch overlap while retaining the sheet's existing keyboard and bottom-inset handling.
