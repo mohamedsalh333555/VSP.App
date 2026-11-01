@@ -14,6 +14,7 @@ import '../../../core/repositories/user_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/vsp_ui.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 
@@ -416,7 +417,18 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final booking = _booking;
     final uid = context.read<AuthProvider>().currentUser?.id;
-    if (_loading && booking == null) return const SizedBox(height: 420, child: Center(child: CircularProgressIndicator(color: VSPColors.accent)));
+    if (_loading && booking == null) {
+      return SizedBox(
+        height: 420,
+        child: VSPStateView(
+          state: VSPUiState.loading,
+          title: ar ? 'جارٍ تحميل تفاصيل التجميعية' : 'Loading match details',
+          message: ar
+              ? 'نحمّل بيانات الحجز والملعب واللاعبين.'
+              : 'Fetching booking, stadium, and player details.',
+        ),
+      );
+    }
     if (booking == null) {
       return _loadFailed ? _loadFailure(ar) : _empty(ar);
     }
