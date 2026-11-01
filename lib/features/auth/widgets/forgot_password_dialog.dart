@@ -55,6 +55,7 @@ class ForgotPasswordDialog {
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
                         child: Text(
                           AppLocalizations.of(context)!.cancel,
                           style: const TextStyle(color: VSPColors.textSecondary),
