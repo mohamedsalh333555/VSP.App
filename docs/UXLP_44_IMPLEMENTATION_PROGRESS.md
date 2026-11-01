@@ -1647,3 +1647,11 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/player/widgets/chat/chat_input_bar.dart`: send action now uses a focusable 48dp InkWell with a localized tooltip while preserving the sending lock and RTL send-arrow direction.
 - `lib/features/player/widgets/payment/payment_method_selector.dart`: replaced the absolute “100% Secure” claim with the factual “Paymob Gateway / بوابة Paymob” label; the accompanying copy continues to state that payment selection occurs on Paymob's official gateway.
 - No navigation, messaging, payment routing, or pricing behavior changed. Source commits: `7358e28a0103eaa6fd76ba3a8272cc826f2ab1e9`, `29867442c66dab84ce359672d104df9e261b4de8`, `50ffd573c2efc1026b487ac1a322a545373ce265`, `50893601929d447510918b1099ff9a0bb604c279`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Player booking slot selection and challenge-result time consistency — 2026-11-01
+
+- `lib/features/player/widgets/booking/booking_slot_card.dart`: available slot cards now use a Material/InkWell selection surface, exposing keyboard focus, button semantics, and standard feedback while booked/past slots remain disabled and all visual states stay unchanged.
+- `lib/features/player/widgets/booking/booking_slot_stream_section.dart`: current-day, next-available, ongoing, and past-slot calculations now use `VSPTimeService.now` rather than a separate device-clock read.
+- `lib/features/player/widgets/user_bookings/challenge_result_actions.dart`: the result-submission prompt now evaluates booking end time against the same centralized VSP clock used by booking screens.
+- No booking eligibility, time-window policy, result-submission, or scoring rules changed. Source commits: `d5badce48843ca21bfe6249dd57a0db9530ff768`, `fcca24c89c7ce717b4b55e5b3c5eaefca136ea25`, `04875c4918530f3da9759fb0b33717fa4202d2c6`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
