@@ -121,6 +121,7 @@ void main() {
       await tester.tap(find.text('Confirm Cash'));
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 4));
+      await tester.pump(const Duration(seconds: 2)); // settle AuthProvider's 5s safe-timeout
 
       expect(loadingStates.first, isTrue);
       expect(mockRepo.cashConfirmed, isTrue);
@@ -135,7 +136,9 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en'),
-          home: Scaffold(
+          home: ChangeNotifierProvider<AuthProvider>.value(
+            value: TestOwnerAuthProvider(),
+            child: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () {
@@ -150,6 +153,7 @@ void main() {
                 },
                 child: const Text('Extend Match'),
               ),
+            ),
             ),
           ),
         ),
