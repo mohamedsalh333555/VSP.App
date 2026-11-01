@@ -18,7 +18,7 @@ class DocWizardStepIndicator extends StatelessWidget {
       children: List.generate(totalSteps, (index) {
         final isActive = currentStep == index;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: VSPDSMotion.standard,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           width: isActive ? 24 : 8,
           height: 4,
