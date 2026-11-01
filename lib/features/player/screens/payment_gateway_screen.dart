@@ -548,6 +548,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _isVerificationModalShowing = true;
     showDialog(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       barrierColor: VSPColors.black.withValues(alpha: 0.85),
       builder: (modalCtx) {
