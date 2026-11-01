@@ -31,6 +31,7 @@ class _RootScreenState extends State<RootScreen> {
  bool _deepLinkChecked = false;
  // ignore: unused_field
  bool _loadingTimedOut = false;
+ String? _loadingUserId;
 
  @override
  void initState() {
@@ -46,16 +47,37 @@ class _RootScreenState extends State<RootScreen> {
  _handlePendingDeepLink();
  }
 
- // Safety Net: If user is authenticated but userModel never loads within
- // 5 seconds (e.g. Firestore offline), show a Connection Error screen.
- if (auth.isAuthenticated && auth.userModel == null) {
- _loadingTimeout = Timer(const Duration(seconds: 5), () {
- if (mounted && auth.userModel == null) {
- setState(() => _loadingTimedOut = true);
- }
  });
  }
- });
+
+ @override
+ void didChangeDependencies() {
+   super.didChangeDependencies();
+   final auth = Provider.of<AuthProvider>(context);
+   final userId = auth.currentUser?.id;
+
+   if (!auth.isAuthenticated || auth.userModel != null || userId == null) {
+     _loadingTimeout?.cancel();
+     _loadingTimeout = null;
+     _loadingUserId = null;
+     if (_loadingTimedOut) _loadingTimedOut = false;
+     return;
+   }
+
+   if (_loadingUserId == userId && _loadingTimeout != null) return;
+
+   _loadingTimeout?.cancel();
+   _loadingUserId = userId;
+   _loadingTimedOut = false;
+   _loadingTimeout = Timer(const Duration(seconds: 5), () {
+     if (!mounted) return;
+     final currentAuth = Provider.of<AuthProvider>(context, listen: false);
+     if (currentAuth.currentUser?.id == userId &&
+         currentAuth.isAuthenticated &&
+         currentAuth.userModel == null) {
+       setState(() => _loadingTimedOut = true);
+     }
+   });
  }
 
  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق بشكل آمن ومتوافق مع جميع الهياكل
