@@ -31,7 +31,8 @@ void showTournamentBracketPreviewDialog(
 
   showDialog(
     context: context,
-    builder: (ctx) {
+    useSafeArea: true,
+      builder: (ctx) {
       final l10n = AppLocalizations.of(context)!;
       return AlertDialog(
       scrollable: true,
@@ -119,7 +120,8 @@ Future<void> showInteractiveDrawRoomDialog(
 
   await showDialog(
     context: context,
-    barrierDismissible: false,
+    useSafeArea: true,
+      barrierDismissible: false,
     builder: (dialogCtx) => StatefulBuilder(
       builder: (ctx, setModalState) {
         return AlertDialog(
