@@ -1779,3 +1779,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/auth/widgets/signup/signup_name_fields.dart`: first/last-name inputs now stack vertically when the available field width is below 360dp, while retaining the two-column layout on wider screens. This avoids cramped text fields and label/input collisions on compact phones and under larger text scaling. Input controllers, labels, validation ownership, and submission order are unchanged.
 - Source commit: `53dbbea2a3a5bea13615403e40041669433ebb8d`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Social sign-in exception recovery — 2026-11-01
+
+- `lib/features/auth/widgets/login_social_auth_row.dart`: Apple and Google sign-in now catch thrown provider/platform exceptions, always release the loading state while the screen is mounted, and show a localized retry message. Previously an exception escaping either awaited provider call could leave the login screen permanently showing a loading state. Successful sign-in routing and provider error-message handling are unchanged.
+- Source commit: `3cd017d817738b4c6569f0651e94c1def6b01b6f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
