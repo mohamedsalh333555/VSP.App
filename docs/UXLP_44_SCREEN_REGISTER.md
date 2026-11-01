@@ -15,7 +15,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | File | Role | Status |
 |---|---|---|
 | `lib/core/navigation/offline_error_screen.dart` | player/owner | source reviewed—runtime pending (safe-area + primary action updated) |
-| `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance + forced-update dialogs scroll-safe; account-profile loading now uses localized shared loading state inside SafeArea; offline banner overlay still needs runtime check) |
+| `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance + forced-update dialogs scroll-safe; account-profile loading uses localized shared loading state inside SafeArea; both deferred auth/deep-link callbacks guard disposal; offline banner overlay still needs runtime check) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; forgot-password alignment follows RTL/LTR direction) |
@@ -25,7 +25,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (app-bar body avoids duplicate top safe inset) (safe-area protected form scroll layout) |
 | `lib/features/auth/screens/signup_screen.dart` | auth | source reviewed—runtime pending (system bottom safe-area wrapper; GPS auto-detect 48dp target with localized tooltip) |
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
-| `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
+| `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow; six-digit row now calculates responsive box widths for narrow viewports) |
 | `lib/features/auth/screens/welcome_screen.dart` | auth | source reviewed—runtime pending (top/bottom controls protected by SafeArea; Skip target minimum 48dp; next-page control 54dp) |
 | `lib/features/auth/widgets/forgot_password_dialog.dart` | player/owner | source reviewed—runtime pending (scrollable on compact/keyboard layouts; cancel and submit actions meet 48dp minimum height) (showDialog default safe-area behavior; keyboard/layout still needs runtime check) |
 || `lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart` | auth | source reviewed—runtime pending (scrollable exit dialog; continue/cancel actions minimum 48dp; default showDialog safe-area protection) |
