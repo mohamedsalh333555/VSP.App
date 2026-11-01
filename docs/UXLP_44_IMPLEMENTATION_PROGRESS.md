@@ -1546,3 +1546,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/core/ui/vsp_ui.dart`: the canonical VSP loading indicator now exposes a localized semantics label (`جارٍ التحميل` / `Loading`) so assistive technology can identify the in-progress state.
 - Visual appearance and loading lifecycle are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `749a144d77da65abffbf90536886c90f6f627a3b`.
+
+
+## Reactive connectivity error-state correction — 2026-11-01
+
+- Fixed `lib/shared/widgets/vsp_error_state.dart`: it previously read `ConnectivityService.instance.isCurrentOnline` once during `build`, so an error screen already on display could keep showing stale offline/server copy after connectivity changed until an unrelated parent rebuild. It now listens to `isOnlineNotifier` via `ValueListenableBuilder`, switches the title/message/icon/state immediately, and marks the changing state as a live region for assistive technology.
+- Retry callback, custom online-server message, and button behavior remain unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `d6f20e446b907636add2cfb0c46046fa4da48e87`, `88a89f23515752def1cf2350bd063e37ab344ca1`.
