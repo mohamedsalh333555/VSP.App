@@ -24,7 +24,7 @@ class MatchupResultsTimeline extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(
           isArabic ? 'لم تُسجل أي مباريات في هذه المواجهة بعد' : 'No matches have been recorded in this matchup yet',
-          style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
         ),
       );
     }
