@@ -1862,3 +1862,5 @@ Read-only inspection was performed against the connected production VSP project 
 - These are source-level fixes only; no analyzer, tests, CI, device validation, or APK build was run.
 
 - Private collective-invite bottom sheet: replaced the unlabeled fixed-height spinner with the shared Arabic/English loading state while retaining the scroll-controlled, `useSafeArea` modal route and existing retry/error behavior.
+
+- Global search: replaced the raw progress spinner with the shared Arabic/English loading state. Search repository calls, request-generation stale-result protection, and existing retry/error handling were not changed.
