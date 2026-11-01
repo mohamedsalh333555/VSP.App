@@ -26,6 +26,7 @@ class PaymentVerificationModal extends StatefulWidget {
   }) {
     return showDialog(
       context: context,
+      useSafeArea: true,
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.85),
       builder: (_) => PaymentVerificationModal(
@@ -94,7 +95,7 @@ class _PaymentVerificationModalState extends State<PaymentVerificationModal>
       canPop: false,
       child: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+          constraints: BoxConstraints(maxHeight: availableHeight.clamp(0.0, mediaQuery.size.height).toDouble()),
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xl),
             child: Material(
