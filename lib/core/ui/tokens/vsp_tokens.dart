@@ -36,6 +36,8 @@ class VSPColors {
   static const Color black = VSPDSColors.black;
   static const Color black26 = VSPDSColors.black26;
   static const Color black45 = VSPDSColors.black45;
+  static const Color black87 = VSPDSColors.black87;
+  static const Color white70 = VSPDSColors.white70;
   static const Color transparent = VSPDSColors.transparent;
   static const Color white05 = VSPDSColors.white05;
   static const Color white08 = VSPDSColors.white08;
