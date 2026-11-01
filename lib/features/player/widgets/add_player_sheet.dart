@@ -56,6 +56,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
    return;
  }
 
+ final requestUserId = context.read<AuthProvider>().currentUser?.id;
  UserModel? user;
  try {
    user = await UserRepository().getUserByPhoneStrict(normalized);
@@ -70,9 +71,18 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
    return;
  }
 
+ if (!mounted) return;
+ // Ignore a late response if the phone field or signed-in account changed
+ // while the lookup was in flight; otherwise an old result can be added.
+ final activeUserId = context.read<AuthProvider>().currentUser?.id;
+ if (PhoneUtils.normalize(_phoneController.text.trim()) != normalized ||
+     activeUserId != requestUserId) {
+   setState(() => _isSearching = false);
+   return;
+ }
  if (mounted) {
  if (user != null) {
- final currentUid = context.read<AuthProvider>().currentUser?.id;
+ final currentUid = activeUserId;
  if (user.uid == currentUid) {
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(content: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'أنت قائد الفريق بالفعل.' : 'You are already the team captain.'), backgroundColor: VSPColors.accent),
