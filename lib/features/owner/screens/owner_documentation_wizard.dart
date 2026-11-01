@@ -138,7 +138,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       });
 
       VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _uploadingStatus[key] = false;
@@ -193,7 +193,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       });
 
       VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
-    } catch (e) {
+    } catch (_) {
       if (mounted && context.mounted) {
         setState(() {
           _uploadingStatus[key] = false;
