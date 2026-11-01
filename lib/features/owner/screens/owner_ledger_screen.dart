@@ -100,7 +100,10 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
                         : rawMethod)
             : rawMethod;
 
-        csv.writeln('"$dateStr","$id","$type","$amount","$method"');
+        final csvRow = [dateStr, id, type, amount, method]
+            .map((value) => '"${value.toString().replaceAll('"', '""')}"')
+            .join(',');
+        csv.writeln(csvRow);
       }
 
       final tempDir = await getTemporaryDirectory();
@@ -115,7 +118,9 @@ class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
           subject: isAr ? "كشف الحساب المالي للمنشأة" : "Facility Financial Ledger",
         ),
       );
-    } catch (e) {
+    } catch (error, stackTrace) {
+      debugPrint('Error exporting owner financial ledger: $error');
+      debugPrintStack(stackTrace: stackTrace);
       if (context.mounted) {
         VSPFeedback.showError(context, isAr ? 'تعذر تصدير السجل المالي. حاول مرة أخرى.' : 'Could not export the financial ledger. Please try again.');
       }
