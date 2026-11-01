@@ -157,7 +157,7 @@ class TeamAchievementsSection extends StatelessWidget {
                               ),
                               child: Icon(
                                 isUnlocked ? Iconsax.tick_circle_copy : Iconsax.lock_1_copy,
-                                color: isUnlocked ? Colors.black : VSPColors.textSecondary,
+                                color: isUnlocked ? VSPColors.black : VSPColors.textSecondary,
                                 size: 10,
                               ),
                             ),
@@ -171,7 +171,7 @@ class TeamAchievementsSection extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isUnlocked ? Colors.white : VSPColors.textSecondary,
+                          color: isUnlocked ? VSPColors.white : VSPColors.textSecondary,
                           fontSize: 10.5,
                           fontWeight: isUnlocked ? FontWeight.bold : FontWeight.w500,
                         ),
@@ -214,7 +214,7 @@ class TeamAchievementsSection extends StatelessWidget {
               child: Text(
                 name,
                 style: TextStyle(
-                  color: isUnlocked ? Colors.white : VSPColors.textPrimary,
+                  color: isUnlocked ? VSPColors.white : VSPColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
