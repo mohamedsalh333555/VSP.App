@@ -1686,3 +1686,11 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/player/widgets/chat/chat_message_bubble.dart`: the owner-authored message edit action remains available by long press and is now also exposed as a localized screen-reader custom action; sender names are constrained to one line with ellipsis, and message timestamps use the active locale's `DateFormat.jm` rather than a fixed English AM/PM format.
 - Message edit authorization, repository mutation, read state, and message content are unchanged. Source commit: `2f48a9caa58f078ffc48b29a5566238403db96b2`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Signup and email-verification interaction corrections — 2026-11-01
+
+- `lib/features/auth/widgets/verify_email/otp_box.dart`: removed the transient `FocusNode()` allocation from `build` in the keyboard-listener wrapper. The parent `Focus` now handles key events while the externally owned TextField focus node remains the single input focus owner, avoiding a new undisposed node on every rebuild.
+- `lib/features/auth/widgets/verify_email/otp_resend_section.dart`: resend is now a real TextButton with a 48dp minimum target and remains disabled during countdown/resend.
+- `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart`: date-of-birth picker surface now uses a focusable InkWell and localized label tooltip while retaining its existing field height and callback.
+- OTP value distribution, resend timing, age validation, and signup policy are unchanged. Source commits: `d03b89bbc9c303c1e74d95bfb6a722c58fe335af`, `cf7f225de5405ce3fce507e2a64b1777972c1c0e`, `5b283415b6ed5028ed3e36a48188f1b880a2c039`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
