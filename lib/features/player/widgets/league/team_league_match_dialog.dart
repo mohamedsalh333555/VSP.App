@@ -106,7 +106,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
                 child: const Icon(Iconsax.judge_copy, color: VSPColors.accent, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -378,7 +378,7 @@ class _TeamLeagueDisputeResolutionSheetState extends State<TeamLeagueDisputeReso
                 child: const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 22),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
