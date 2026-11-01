@@ -47,11 +47,12 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
       amountText = '${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
     }
 
+    final locale = isAr ? 'ar' : 'en';
     String formattedDate;
     try {
-      formattedDate = DateFormat('yyyy/MM/dd — hh:mm a', isAr ? 'ar' : 'en').format(date.toLocal());
+      formattedDate = DateFormat.yMMMd(locale).add_jm(locale).format(date.toLocal());
     } catch (_) {
-      formattedDate = DateFormat('yyyy/MM/dd — hh:mm a').format(date.toLocal());
+      formattedDate = DateFormat.yMMMd().add_jm().format(date.toLocal());
     }
 
     return Container(
