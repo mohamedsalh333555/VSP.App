@@ -85,6 +85,7 @@ void showGovernorateChangeAlert(
       final noBtn = isArabic ? 'لا، شكراً' : 'No, thanks';
 
       return AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
