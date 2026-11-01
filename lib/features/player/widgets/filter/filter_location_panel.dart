@@ -22,7 +22,7 @@ class FilterLocationPanel extends StatelessWidget {
       children: [
         Text(
           isArabic ? 'اختر المحافظة' : 'Select Governorate',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 12),
         Container(
@@ -45,14 +45,14 @@ class FilterLocationPanel extends StatelessWidget {
               dropdownColor: VSPColors.surfaceAlt,
               icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
               isExpanded: true,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
               onChanged: onSelectGov,
               items: [
                 DropdownMenuItem<String>(
                   value: null,
                   child: Text(
                     isArabic ? 'كل المحافظات' : 'All Governorates',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white, fontSize: 13),
                   ),
                 ),
                 ...EgyptGovernorates.allGovernorates.map((gov) {
@@ -60,7 +60,7 @@ class FilterLocationPanel extends StatelessWidget {
                     value: gov,
                     child: Text(
                       gov,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white, fontSize: 13),
                     ),
                   );
                 }),
