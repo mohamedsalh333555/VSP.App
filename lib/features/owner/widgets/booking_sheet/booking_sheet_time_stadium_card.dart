@@ -27,7 +27,7 @@ class BookingSheetTimeStadiumCard extends StatelessWidget {
           Expanded(
             child: Text(
               formattedTime,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
         ],
