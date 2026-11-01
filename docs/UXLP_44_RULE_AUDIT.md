@@ -823,3 +823,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - Removed the release workflow's automatic push trigger for `main` and `uxlp-44-implementation`; the workflow now runs only through `workflow_dispatch`, preserving the agreed final-phase APK gate.
 - Workflow commit: `76e27f24ac4173685197f24cb5e42892ba706356`. No manual release build was started. Previously triggered run status was not available through the connected GitHub actions controls in this session.
+
+
+### Add Player sheet touch target — 2026-11-01
+
+- **Rule 33 — `add_player_sheet.dart`:** the found-player Add action was 40dp high; its minimum hit area is now 48dp. Lookup and roster behavior are unchanged.
+- Source commit: `d15526e2233ede46bd2f7fa527c00dfb7f2062ee`. Device/touch verification remains pending; no tests or build were run.
