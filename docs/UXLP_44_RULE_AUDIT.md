@@ -639,3 +639,7 @@ These are client-facing policy-copy changes only. No booking/refund RPC, databas
 ### Screen-register reconciliation — 2026-11-01
 
 Nine additional embedded UI components were discovered by comparing the register with repository paths and were added as `not yet inspected`. The current register now contains 225 table records across 199 unique Dart paths (26 repeated entries). These nine components are not source-reviewed and must not be treated as passing any UXLP rule.
+
+### Source remediation — 2026-11-01
+
+A 1v1 empty-state action referenced `/edit-profile` through `Navigator.pushNamed`, while the application uses GoRouter and had no registered route at that path. The action now uses `context.push('/edit-profile')`, and the route is registered to `EditProfileScreen`. This is a source-level navigation correction only; runtime verification remains pending.
