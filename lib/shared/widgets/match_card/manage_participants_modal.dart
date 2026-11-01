@@ -27,7 +27,7 @@ class ManageParticipantsModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (context) => ManageParticipantsModal(booking: booking),
     );
   }
@@ -350,7 +350,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                         children: [
                                           Text(
                                             u.name ?? (isArabic ? 'اسم غير متاح' : 'Name unavailable'),
-                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -367,7 +367,7 @@ class _ManageParticipantsModalState extends State<ManageParticipantsModal> {
                                       IconButton(
                                         tooltip: isArabic ? 'اتصال' : 'Call',
                                         constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                                        icon: const Icon(Iconsax.call_copy, color: Colors.blue, size: 16),
+                                        icon: const Icon(Iconsax.call_copy, color: VSPColors.info, size: 16),
                                         onPressed: _isProcessing
                                             ? null
                                             : () async {
