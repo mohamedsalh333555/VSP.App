@@ -44,7 +44,7 @@ class TournamentRoundAutoScheduleBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(
-                color: VSPVSPColors.white10,
+                color: VSPColors.white10,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 14),
@@ -196,7 +196,7 @@ void showResetRoundScheduleConfirmationDialog(
           isArabic
               ? 'هل أنت متأكد من إلغاء مواعيد جميع مباريات ($roundName) وإعادتها إلى "غير مجدول"؟'
               : 'Are you sure you want to reset all match dates for ($roundName) to unscheduled?',
-          style: const TextStyle(color: VSPVSPColors.white70, fontSize: 13),
+          style: const TextStyle(color: VSPColors.white70, fontSize: 13),
         ),
         actions: [
           TextButton(
