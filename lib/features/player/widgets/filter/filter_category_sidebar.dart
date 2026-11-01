@@ -57,10 +57,10 @@ class FilterCategorySidebar extends StatelessWidget {
                     horizontal: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.surface : Colors.transparent,
+                    color: isSelected ? VSPColors.surface : VSPColors.transparent,
                     border: BorderDirectional(
                       start: BorderSide(
-                        color: isSelected ? VSPColors.accent : Colors.transparent,
+                        color: isSelected ? VSPColors.accent : VSPColors.transparent,
                         width: 3.5,
                       ),
                     ),
