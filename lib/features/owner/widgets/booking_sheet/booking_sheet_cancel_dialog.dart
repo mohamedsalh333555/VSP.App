@@ -26,7 +26,7 @@ class BookingSheetCancelDialog {
         scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(title, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
         content: Text(content, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
         actions: [
           TextButton(
@@ -66,7 +66,7 @@ class BookingSheetCancelDialog {
                 isArabic ? 'إلغاء حجز بعربون' : 'Cancel Deposit Booking',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ],
@@ -103,7 +103,7 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'تم رد العربون للعميل' : 'Refund Deposit to Client',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -141,7 +141,7 @@ class BookingSheetCancelDialog {
                         children: [
                           Text(
                             isArabic ? 'احتساب العربون كشرط جزائي' : 'Keep Deposit as Penalty',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
