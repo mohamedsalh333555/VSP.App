@@ -1912,3 +1912,10 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Reviewed the owner manual tournament-team sheet and found one physical-direction spacing value in its shared section-label helper: `EdgeInsets.only(left: 4)`. Replaced it with `EdgeInsetsDirectional.only(start: 4)` so the label inset mirrors correctly in Arabic RTL while preserving the same spacing in English LTR.
 - No roster, team creation, registration, or tournament business logic changed. Source-only; visual RTL rendering remains pending the consolidated device pass. No tests, analyzer, CI, runtime checks, or APK build were run. Code commit: `4b16222200c65656b31664a127ec2a827376400e`.
+
+
+## Additional RTL geometry corrections — 2026-11-01
+
+- `lib/shared/widgets/vsp_date_picker_dialog.dart`: changed the asymmetric header inset from physical `EdgeInsets.fromLTRB(20, 18, 16, 14)` to `EdgeInsetsDirectional.fromSTEB(20, 18, 16, 14)`, preserving the intended leading/trailing spacing while mirroring it in Arabic.
+- `lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart`: changed the manual-team section-label inset from physical `left: 4` to directional `start: 4`.
+- These are layout-only corrections. Date selection and tournament roster behavior are unchanged. Runtime RTL/device verification remains pending; no tests, analyzer, CI, or APK build were run. Code commits: `5a2ebddf816be23f4bebb8e9041910471e8863a6`, `4b16222200c65656b31664a127ec2a827376400e`.
