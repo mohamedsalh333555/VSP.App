@@ -3,9 +3,9 @@
 This register is the inventory of Dart files whose names indicate screens, pages, dialogs, sheets, modals, or popups in the current repository tree. It is a starting inventory, not proof that every UI surface is represented: embedded widgets and state variants must also be discovered from call sites.
 
 - Base: current branch `uxlp-44-implementation` (inventory refreshed 2026-11-01)
-- Registered Dart screen/surface paths: 208 unique paths
+- Registered Dart screen/surface paths: 209 unique paths
 - Additional shared navigation component entry: 1
-- Table records: 234, including 26 repeated paths that document separate embedded-component findings
+- Table records: 235, including 26 repeated paths that document separate embedded-component findings
 - Current status: inventory updated; detailed per-rule and per-state inspection remains incomplete.
 - Historical static source scan (before the latest inventory expansion): 128 candidate files were fetched and scanned for legacy/V2 token imports, raw color and text-style declarations, hard-coded motion durations, SafeArea/useSafeArea markers, and modal entry points. This is not a scan of all 208 currently registered paths.
 - Static scan is triage evidence only. No screen has been marked pass from source heuristics; parent route behavior, modal constraints, runtime overflow, Arabic/English rendering, and actual state coverage still require direct verification.
@@ -37,6 +37,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/screens/facility_onboarding_screen.dart` | owner | source reviewed—runtime pending (SafeArea wraps onboarding states; Supabase auth ID reads corrected to User.id) |
 | `lib/features/owner/screens/owner_account_management_screen.dart` | owner | source reviewed—runtime pending (form lifecycle reviewed; Supabase auth ID access corrected to User.id) |
 | `lib/features/owner/screens/owner_bookings_screen.dart` | owner | source reviewed—runtime pending (stadium/booking streams distinguish loading/error from empty/free; owner stream reloads on authenticated owner-scope changes) |
+| `lib/features/owner/widgets/bookings/owner_bookings_filter_bar.dart` | owner | source reviewed—runtime pending (horizontal day-strip spacing now uses directional end margin so the calendar spacing mirrors in RTL/LTR; 60×80dp day targets remain comfortably above minimum) |
 | `lib/features/owner/screens/owner_cup_screen.dart` | owner | source reviewed—runtime pending (cup list uses shared bottom-navigation scroll padding; auth ID read corrected to User.id) |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source reviewed—runtime pending (analytics errors localized with retry; stale responses invalidated by request generation; tab switcher meets 48dp minimum height) |
 | `lib/features/owner/screens/owner_documentation_wizard.dart` | owner | source reviewed—runtime pending (wizard flow reviewed; Supabase auth ID reads corrected to User.id) |
