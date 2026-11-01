@@ -1668,3 +1668,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - `lib/features/player/widgets/stadium_details/stadium_information_tab.dart`: the location badge is now a focusable InkWell with a localized map-action tooltip; long addresses are bounded to one line within the available screen width. The map launcher now checks the returned launch result and shows localized recovery feedback when the external maps app cannot open, while keeping technical exceptions in diagnostics.
 - Coordinates/address selection and map URL behavior are unchanged. Source commits: `aed4b1aab8511b80493aeb6daed0133a5e8875b8`, `6231c0f438cd5e5ce73d3f24c404323383f279ec`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Stadium image gallery action accessibility — 2026-11-01
+
+- `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart`: share and favorite controls now use focusable 48dp InkWell targets with localized tooltips; favorite tooltip changes between add/remove state. Image taps and the gallery indicator now expose a localized, focusable gallery-opening action while preserving swipe paging, Hero transition, and full-screen gallery behavior.
+- Favorite state, sharing payload, and image loading/fallback behavior are unchanged. Source commit: `c308b47cca78448cf7eb3aa8f6b19f16f43d505f`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
