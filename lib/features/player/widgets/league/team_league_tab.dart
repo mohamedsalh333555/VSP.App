@@ -287,7 +287,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 // 2. Number of Teams (4 to 8 Stepper / Selector)
                 Text(
                   isArabic ? 'عدد الفرق المشاركة:' : 'Number of participating teams:',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -333,18 +333,18 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     children: [
                       Row(
                         children: [
-                          Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 16),
-                          SizedBox(width: 6),
+                          const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 16),
+                          const SizedBox(width: 6),
                           Text(
                             isArabic ? 'نظام الدوري: دوري — دور واحد' : 'League format: Single round-robin',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                           ),
                         ],
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         isArabic ? 'كل فريق يواجه كل فريق مرة واحدة (دوري خاص بدون ذهاب وإياب).' : 'Each team plays every other team once (single round-robin).',
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -354,12 +354,12 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 // 4. Match Scheduling Interval
                 Text(
                   isArabic ? 'الفترة بين المباريات:' : 'Interval between matches:',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   isArabic ? 'VSP يحدد يوم المباراة حسب الفترة التي تختارها، والفرق تحدد الملعب والساعة.' : 'VSP sets match days from your chosen interval; teams choose the venue and kickoff time.',
-                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -464,14 +464,14 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 children: [
                   Text(
                     isArabic ? 'طريقة دفع رسوم الدوري' : 'League fee payment method',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     isArabic
                         ? 'رسوم مشاركة الفريق: ${feePerTeam.toStringAsFixed(0)} جنيه للفريق الواحد'
                         : 'Team entry fee: ${feePerTeam.toStringAsFixed(0)} EGP per team',
-                    style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
 
@@ -678,13 +678,13 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                 Text(
                   isArabic ? 'الانضمام لدوري عبر دعوة / كود' : 'Join a league by invite code',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   isArabic ? 'الدوري خاص، أدخل كود الدوري للانضمام' : 'This league is private. Enter its code to join.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
                 const SizedBox(height: 16),
 
@@ -706,7 +706,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                       ? 'رسوم مشاركة الفريق: ${_configuredFee.toStringAsFixed(0)} جنيه للفريق الواحد'
                       : 'Team entry fee: ${_configuredFee.toStringAsFixed(0)} EGP per team',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
 
@@ -1024,7 +1024,7 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
                     ? 'الدوري يتطلب وجود فريق للمشاركة والمنافسة على اللقب.'
                     : 'You need a team to join a league and compete for the title.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: VSPSpacing.xl),
               ElevatedButton(
