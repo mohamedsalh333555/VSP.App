@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../../core/ui/vsp_ui.dart';
 import '../../../../../data/models.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../../shared/widgets/vsp_error_state.dart';
@@ -65,7 +66,11 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
       stream: widget.standingsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          return VSPStateView(
+            state: VSPUiState.loading,
+            title: isArabic ? 'جارٍ تحميل الترتيب' : 'Loading standings',
+            message: isArabic ? 'نحدّث ترتيب اللاعبين ونقاطهم.' : 'Fetching player standings and points.',
+          );
         }
         if (snapshot.hasError &&
             (!snapshot.hasData || snapshot.data!.isEmpty)) {
