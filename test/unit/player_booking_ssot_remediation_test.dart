@@ -1020,10 +1020,13 @@ void main() {
       streamController.add([b1Cancelled]);
       await Future.delayed(const Duration(milliseconds: 10));
 
-      expect(receivedBatches.length, equals(3));
-      expect(receivedBatches[0].first.status, equals(BookingStatus.pending));
-      expect(receivedBatches[1].first.status, equals(BookingStatus.confirmed));
-      expect(receivedBatches[2].first.status, equals(BookingStatus.cancelled));
+      expect(receivedBatches.length, equals(4),
+          reason: 'One authoritative empty REST snapshot plus three Realtime events');
+      expect(receivedBatches[0], isEmpty,
+          reason: 'The initial authoritative REST snapshot is empty');
+      expect(receivedBatches[1].first.status, equals(BookingStatus.pending));
+      expect(receivedBatches[2].first.status, equals(BookingStatus.confirmed));
+      expect(receivedBatches[3].first.status, equals(BookingStatus.cancelled));
 
       coordinator.cancelSubscription();
       await streamController.close();
