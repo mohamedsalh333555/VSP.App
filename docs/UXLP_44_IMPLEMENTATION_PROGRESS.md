@@ -1178,3 +1178,8 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 ## Booking confirmation empty-slot guard — 2026-11-01
 - Fixed `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: the confirmation handler sorted and accessed the first selected slot in both availability checking and draft construction. An empty or blank slot selection could therefore reach an invalid `first` access and fail without a useful message. The handler now rejects empty/blank selections before starting asynchronous booking work and shows localized feedback.
 - Booking pricing, availability, and payment rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: e27f7a1bb7f49de7a023923acc46fe79c30430e2.
+
+
+## Pending booking status refresh missing-record handling — 2026-11-01
+- Fixed `lib/features/player/widgets/user_bookings/pending_booking_card.dart`: when Check Status could not retrieve the booking (`getBookingById` returned null), the card previously continued through the payment-state logic and could tell the player that payment was not confirmed and checkout could be completed using stale card data. It now stops, displays a localized refresh error, and does not present stale data as a verified current state.
+- Payment confirmation, refund, and checkout business rules are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `3da9dc30c58ddcc870164a04a32c07064635530e`, `394ec70a04267de7c1e631c5ff4cd84675f37de4`.
