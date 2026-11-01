@@ -1264,3 +1264,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 
 - Fixed `lib/features/owner/screens/owner_profile_screen.dart`: the managed-stadium badge no longer presents a transient loading state or an initial stream failure as “0 stadiums”. It now shows localized loading/unavailable copy and a warning treatment when the count cannot be confirmed.
 - Stadium ownership and count queries are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `0083175c4c04cd7eea33c7216a2a8df9d258b8d6`.
+
+
+## Owner payout RTL and touch-target correction — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/ledger/owner_payout_dialog.dart`: the “Withdraw full balance” action previously aligned to the physical left in Arabic and physical right in English. It now uses directional start alignment and a focusable 48dp InkWell target with a semantic action label.
+- Payout amount and request behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `851e699c19b51c1f5d9adfca13b34480e69bab3d`.
