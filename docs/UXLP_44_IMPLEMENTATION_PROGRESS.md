@@ -1578,3 +1578,9 @@ Read-only inspection was performed against the connected production VSP project 
 - Fixed `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart`: the scroll-controlled `useSafeArea` route already applies keyboard/system viewport constraints, but the sheet also subtracted `viewInsets.bottom` and system padding from full screen height. It now uses only an 88% preferred content-height cap; the route's parent constraints enforce the actual available viewport. Bottom safe padding and scrollable password form remain.
 - Fixed `lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart`: removed the same duplicate keyboard/system inset subtraction and the unsafe 240dp minimum clamp that could exceed a compact viewport. It now uses an 88% preferred cap while respecting the modal route's actual constraints.
 - Password verification, schedule calculation, and persistence behavior are unchanged. Source-level corrections only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commits: `33dc6d1b5c43a4fc25ce3811273f0fa926453171`, `947cee3bf2d21f785914ee12114f1bbf568c89dc`.
+
+
+## Manual stadium-location sheet keyboard inset correction — 2026-11-01
+
+- Fixed `lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart`: the scroll-controlled, SafeArea modal route already applies the keyboard view inset, while the manual-address sheet also added `viewInsets.bottom` to its own bottom padding. Removed the duplicate keyboard inset and retained the system bottom padding plus content spacing so the address field and actions remain reachable without double-counting keyboard height.
+- Address entry, governorate selection, and location resolution are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `ac329b8bdf6ca1790b5e11e14d2a74ed06917528`.
