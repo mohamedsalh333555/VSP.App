@@ -1540,3 +1540,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Fixed `lib/features/player/widgets/add_player_sheet.dart`: the Add action in the found-player card was 40dp high. It now uses a 48dp hit area, matching the VSP touch-target standard.
 - Player lookup, governorate eligibility, roster insertion, and invitation behavior are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `d15526e2233ede46bd2f7fa527c00dfb7f2062ee`.
+
+
+## Shared loading-state accessibility — 2026-11-01
+
+- Fixed `lib/core/ui/vsp_ui.dart`: the canonical VSP loading indicator now exposes a localized semantics label (`جارٍ التحميل` / `Loading`) so assistive technology can identify the in-progress state.
+- Visual appearance and loading lifecycle are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `749a144d77da65abffbf90536886c90f6f627a3b`.
