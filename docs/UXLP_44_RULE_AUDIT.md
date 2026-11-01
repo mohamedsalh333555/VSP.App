@@ -1140,3 +1140,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Bilingual visual integrity:** corrected a physical `left` inset in `tournament_manual_team_sheet.dart` to directional `start` padding. This removes one confirmed RTL asymmetry in the manual-team sheet. Device rendering and the rest of the 215 registered surfaces remain subject to final verification; no rule is marked pass from this source correction alone.
+
+
+- **Rule 10 — Bilingual visual integrity:** the date-picker header's asymmetric inset now uses directional start/end geometry, and the owner manual-team section label uses directional start padding. Both previously encoded physical left/right positioning and now mirror consistently between Arabic RTL and English LTR. Runtime rendering and the remaining surfaces are still pending.
