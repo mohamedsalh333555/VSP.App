@@ -73,9 +73,7 @@ class _SupportTicketsScreenState extends State<SupportTicketsScreen> {
             // The modal already applies the keyboard inset, while useSafeArea
           // protects the system bars. Subtracting those insets again here
           // double-counts them and can collapse the usable sheet viewport.
-          maxHeight: (MediaQuery.sizeOf(ctx).height -
-                    MediaQuery.viewInsetsOf(ctx).bottom -
-                    VSPSpacing.xxl)
+          maxHeight: (MediaQuery.sizeOf(ctx).height - VSPSpacing.xxl)
                 .clamp(0.0, MediaQuery.sizeOf(ctx).height)
                 .toDouble(),
           ),
