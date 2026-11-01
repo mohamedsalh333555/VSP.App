@@ -1472,3 +1472,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - `TeamRepository.getHeadToHeadStats` previously converted any Supabase query failure into a fabricated all-zero result, causing the challenge opponent card to say this was the teams' first match. It now returns `null` on query failure.
 - `challenge_select_team_screen.dart` tracks H2H failure separately; `challenge_team_card.dart` now distinguishes loading, failed/unavailable history, genuine zero prior matches, and populated statistics with localized copy.
 - Code commits: `f580fcb26469a825bdba692c5de569158fcfc0a9`, `d11219722c9084275454ada24ac873ec64b0f98f`, `4c68bb50a462667508b8a21a1899019ee401f110`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Challenge team champion badge localization — 2026-11-01
+
+- `challenge_team_card.dart`: the champion badge no longer renders Arabic text in English mode; it now uses localized Arabic and English labels.
+- Code commit: `b0b59cb80841d674dd7bbc0070d830bb182de3d5`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
