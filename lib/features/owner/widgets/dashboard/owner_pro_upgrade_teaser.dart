@@ -53,7 +53,7 @@ class OwnerProUpgradeTeaser extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.md),
           Material(
-            color: Colors.transparent,
+            color: VSPColors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.md),
               onTap: onUpgrade,
