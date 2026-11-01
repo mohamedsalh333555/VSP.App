@@ -1632,3 +1632,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/player/widgets/challenge/challenge_team_card.dart`: replaced the non-focusable `GestureDetector` selection surface with `Material` + `InkWell`, preserving the selected-state animation and tap callback; long team names are now bounded to two lines with ellipsis so the champion badge and selection affordance remain readable.
 - `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: long-press expiry checks now use `VSPTimeService.now`, matching tap handling and the app's centralized time source instead of reading the device clock directly.
 - Source commits: `fa061708ed0c944b6306e4408ac32b3f15b5717a`, `bd4ac74abe24a113967bfe37bbc551c578231985`. Source-only; no tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Tournament scheduling and pending-cash date consistency — 2026-11-01
+
+- `lib/features/owner/widgets/brackets/tournament_match_card.dart`: replaced the 16dp GestureDetector calendar glyph with a 48dp IconButton and localized scheduling tooltip; schedule text is now bounded to two lines. Date-picker defaults and limits now use `VSPTimeService.now`, including the default time, instead of mixing device-clock reads.
+- `lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart`: today's pending cash-booking count now uses `VSPTimeService.now`, matching the app's centralized time source used by other booking flows.
+- Scheduling persistence, pending-cash eligibility, and booking/payment rules are unchanged. Source commits: `bf9728854a4fd82ac517a0c5a9965fbf1afb3163`, `986d4ac9d8c8be36e10c8caaeee001f2a85a1bdf`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
