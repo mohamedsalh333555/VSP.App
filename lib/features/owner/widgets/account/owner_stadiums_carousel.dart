@@ -76,7 +76,7 @@ class OwnerStadiumsCarousel extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: VSPColors.white.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(VSPRadius.input),
                   border: Border.all(color: VSPColors.divider),
                 ),
