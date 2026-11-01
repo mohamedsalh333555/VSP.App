@@ -70,9 +70,9 @@ class OngoingMatchBanner extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
               foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              minimumSize: const Size(48, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
             ),
           ),
         ],
