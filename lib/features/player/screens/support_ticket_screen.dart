@@ -140,7 +140,7 @@ class _SupportTicketScreenState extends State<SupportTicketScreen> {
             : 'I need to escalate VSP support ticket #$ref.',
       );
     } catch (_) {
-      if (mounted) {
+      if (requestStillBelongsToActiveAccount()) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
