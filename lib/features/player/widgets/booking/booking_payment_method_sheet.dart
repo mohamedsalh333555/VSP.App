@@ -29,6 +29,18 @@ void showBookingPaymentMethodSheet({
   final config = Provider.of<RemoteConfigService>(context, listen: false);
   final isOnlineEnabled = config.isFeatureEnabled('online_payment_enabled', defaultValue: true);
 
+  // A stadium-required deposit is a booking condition, not an optional payment
+  // preference. Never expose cash as a fallback when online checkout is disabled.
+  if (requiresDeposit && depositAmount > 0 && !isOnlineEnabled) {
+    VSPFeedback.showError(
+      context,
+      isArabic
+          ? 'الملعب يشترط دفع عربون لتأكيد الحجز، لكن الدفع الإلكتروني غير متاح حالياً. حاول مرة أخرى لاحقاً.'
+          : 'This stadium requires an online deposit to confirm the booking, but online payment is currently unavailable. Please try again later.',
+    );
+    return;
+  }
+
   // Collective bookings are always fully paid online by the host.
   // Keep this guard here as a second line of defense if this sheet is reused.
   if (draft.bookingType == BookingType.openJoin) {
