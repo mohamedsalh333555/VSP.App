@@ -66,7 +66,7 @@ class ChampionshipGovernorateDialog {
           ),
           PrimaryButton(
             text: isArabic ? 'نعم، ملتزمون بالحضور' : 'Yes, We Will Attend',
-            height: 44,
+            height: 48,
             onPressed: () => Navigator.pop(ctx, true),
           ),
         ],
