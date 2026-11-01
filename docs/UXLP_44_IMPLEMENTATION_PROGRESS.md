@@ -950,3 +950,9 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Fixed `lib/features/player/widgets/user_bookings/open_join_booking_card.dart`: opening the booking chat previously failed silently when no other participant existed, chat creation threw, or the repository returned no chat ID. The action now gives localized feedback for unavailable prerequisites and recoverable failures.
 - After the asynchronous chat lookup, navigation now also verifies that the same authenticated user is still active. This prevents a late result started under one account from opening that booking chat after an account switch.
 - Chat eligibility and repository behavior are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commits: 24cf0feacc8b7124323534ffa9b85722094aa718; 3abe25c7059ee7272e178dfb78c25b4657e32baf.
+
+
+## Owner quick phone booking failure feedback — 2026-11-01
+- Fixed `lib/features/owner/widgets/bookings/owner_time_slot_row.dart`: long-press quick phone booking previously showed success only when creation returned a booking, but gave no feedback when the provider returned `null`. The owner could tap a free slot and receive no indication whether the booking was created.
+- The completion path now exits if the screen was disposed, then shows localized success or explicit failure copy stating that no booking was created and inviting a retry. Booking payload, cash designation, price, and creation rules are unchanged.
+- No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Commit: a8006abf69a88ecef6a78c87965b53a7f1e822b9.
