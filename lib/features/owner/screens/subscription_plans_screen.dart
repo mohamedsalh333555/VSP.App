@@ -141,7 +141,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       body: SafeArea(
         bottom: true,
         child: _isPlansLoading
-            ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+            ? VSPStateView(
+                state: VSPUiState.loading,
+                title: isArabic ? 'جارٍ تحميل الباقات' : 'Loading plans',
+                message: isArabic ? 'نحدّث تفاصيل الاشتراكات والأسعار.' : 'Fetching subscription details and pricing.',
+              )
             : _hasPlansError || _freePlan == null || _proPlan == null
                 ? Center(
                     child: Padding(
