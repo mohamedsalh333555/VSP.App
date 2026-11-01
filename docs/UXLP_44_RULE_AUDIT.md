@@ -889,3 +889,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11 and 35 — `owner_booking_sheet.dart`, `quick_phone_booking_modal.dart`, and `tournament_manual_team_sheet.dart`:** these scroll-controlled SafeArea routes were manually subtracting/adding keyboard view insets in addition to the route's own keyboard handling. Removed duplicate keyboard/system inset calculations, retained system bottom padding, and removed the manual-team sheet's unsafe 240dp minimum. Parent route constraints now determine actual keyboard-safe height.
 - Source commits: `068d381b19a96f935560c9a8b69ca558a088ba2f`, `d96527b83cd298ae44d32edd414950a3d1e9f0e2`, `981951eebe65b85d4953b60a8806b1aea97d18b7`. Keyboard/device verification remains pending; no tests or build were run.
+
+
+### Booking-type and collective-invite sheet viewport corrections — 2026-11-01
+
+- **Rules 11 and 35 — `booking_type_modal.dart` and `collective_match_invite_sheet.dart`:** both scroll-controlled SafeArea routes previously subtracted keyboard/system insets from their own max-height calculations, including a 240dp minimum that could exceed compact available space. Removed the duplicate calculations; collective-invite list now includes bottom system padding to keep final content/actions reachable.
+- Source commits: `422c4f223ce9e6edf62f17dbb44b0eead1cd33a5`, `a75c17dbe3344905955eb4a50d372c7750855824`. Keyboard/device verification remains pending; no tests or build were run.
