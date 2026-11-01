@@ -1846,3 +1846,10 @@ Read-only inspection was performed against the connected production VSP project 
 - No analyzer, tests, CI, runtime/device validation, or APK build was run.
 
 - Follow-up: VerifyEmailScreen now guards `_verify()` against duplicate submissions while a previous OTP verification request is in flight; this covers repeated final-digit/paste callbacks. Source-only, not runtime-tested.
+
+
+## Player and owner booking loading-state consolidation — 2026-11-01
+
+- Player bookings: replaced the raw initial circular spinner with `VSPStateView(state: loading)` and concise Arabic/English title/message. Existing error and empty branches are preserved.
+- Owner bookings: replaced all three raw loading spinners (owner-scope initialization, stadium fetch, and booking fetch) with the same shared bilingual state component. Existing retry/error and no-stadium empty branches are preserved.
+- No database behavior or booking business rules were changed. No tests, analyzer, CI, device validation, or APK build was run.
