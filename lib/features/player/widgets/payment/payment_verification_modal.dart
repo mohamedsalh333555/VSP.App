@@ -28,7 +28,7 @@ class PaymentVerificationModal extends StatefulWidget {
       context: context,
       useSafeArea: true,
       barrierDismissible: false,
-      barrierColor: Colors.black.withValues(alpha: 0.85),
+      barrierColor: VSPColors.black.withValues(alpha: 0.85),
       builder: (_) => PaymentVerificationModal(
         bookingId: bookingId,
         isArabic: isArabic,
