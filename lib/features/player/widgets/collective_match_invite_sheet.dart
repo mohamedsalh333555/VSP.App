@@ -102,11 +102,17 @@ class _CollectiveMatchInviteSheetState extends State<CollectiveMatchInviteSheet>
 
   Future<void> _reload() async {
     final id = _booking?.id ?? widget.bookingId;
-    if (id == null || id.isEmpty) return;
-    final booking = await _repo.getPrivateCollectiveMatchDetails(id);
-    if (!mounted || booking == null) return;
-    setState(() => _booking = booking);
-    await _loadUsers(booking.joinedUserIds);
+    if (id == null || id.isEmpty || !mounted) return;
+    try {
+      final booking = await _repo.getPrivateCollectiveMatchDetails(id);
+      if (!mounted || booking == null) return;
+      setState(() => _booking = booking);
+      await _loadUsers(booking.joinedUserIds);
+    } catch (e, stack) {
+      // The mutation has already succeeded on the server. A failed UI refresh
+      // must not turn that success into a misleading join/leave/update error.
+      VSPLogger.e('Collective booking refresh failed after action', e, stack);
+    }
   }
 
   Future<void> _loadUsers(List<String> ids) async {
