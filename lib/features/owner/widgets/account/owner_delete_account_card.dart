@@ -64,7 +64,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
               LayoutBuilder(
-                builder: (actionsContext, constraints) {
+                builder: (_, constraints) {
                   final cancelButton = PrimaryButton(
                     text: isArabic ? 'إلغاء' : 'Cancel',
                     height: 48,
