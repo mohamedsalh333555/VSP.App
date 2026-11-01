@@ -677,3 +677,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/player/widgets/booking/booking_confirmation_handler.dart`: the active-cash-booking payment gate now uses the strict booking-history query and stops with localized retry guidance if the query fails, rather than treating a failed read as an empty history and potentially allowing a cash booking.
+
+
+- `lib/features/owner/widgets/brackets/tournament_round_schedule_calculator.dart`: a round is now locked when any match has a recorded home/away score or winner, or its scheduled kickoff time has passed; the optional `now` argument keeps the time boundary deterministic for validation.
