@@ -461,6 +461,7 @@ class _NotificationCard extends StatelessWidget {
     // Default announcement dialog for system / informational notifications
     showDialog(
       context: context,
+      useSafeArea: true,
       builder: (ctx) => AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
