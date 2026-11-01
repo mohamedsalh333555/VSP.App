@@ -737,3 +737,11 @@ Revoke direct execution from `authenticated`, `anon`, and `PUBLIC`; retain only 
 - `signup_screen.dart`: removed duplicated bottom system inset inside `SafeArea`; GPS auto-detect is now a localized 48×48dp `IconButton`.
 - `player_onboarding_screen.dart` and `owner_onboarding_location_section.dart`: GPS auto-detect controls now use localized tooltips and 48×48dp targets.
 - These are source-level findings only. Dialog/device/keyboard runtime validation remains pending.
+
+
+## Inventory reconciliation — 2026-11-01
+
+- Current screen/surface register: **215 unique Dart paths**, **241 table rows**, including 26 repeated paths for separately documented embedded surfaces.
+- Cross-checked all 21 screen imports declared by `lib/core/navigation/app_router.dart`; every routed screen file is represented in the register.
+- Repository tree contains 647 Dart files total. The remaining 432 Dart files outside this register are not automatically missing screens: they include repositories, services, models, providers, helpers, and reusable UI building blocks. They require call-site discovery where they render visible surfaces; the register is a screen/surface inventory, not a complete Dart-file inventory.
+- All 44 rule rows remain present. Their status is source-reviewed/runtime-pending, not a verified pass. Full state, modal, locale, and device coverage is still in progress.
