@@ -411,3 +411,9 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 ### Newly inventoried login role-selection surface — 2026-11-01
 
 | `lib/features/auth/widgets/login_footer.dart` | auth | source reviewed—runtime pending (sign-up action is focusable; role sheet is safe-area aware/scrollable, bilingual, and RTL-aware) |
+
+
+## Signup governorate display localization — 2026-11-01
+
+- `lib/features/auth/widgets/signup_governorate_dropdown.dart`: dropdown values remain canonical English identifiers for AuthProvider/database consistency, while visible option labels now use `EgyptGovernorates.getLocalizedName` according to the active locale and are bounded to one line. This fixes English governorate names appearing in Arabic signup without changing stored values.
+- Source commit: `f30af5466d6d7c1fe073cde0b7c43b72e8b7589e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
