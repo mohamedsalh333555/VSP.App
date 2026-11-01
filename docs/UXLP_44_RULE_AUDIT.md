@@ -986,3 +986,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 11, 27, and 33:** PRO upgrade CTA is now keyboard/focus accessible through InkWell, meets a 48dp minimum target, and constrains long localized labels.
 - Source commit: `e824ab825bcc5f501c7d267a93370191a57a6205`. Device verification remains pending; no tests or build were run.
+
+
+### Date-of-birth field structure follow-up — 2026-11-01
+
+- Rewrote the `SignupDateOfBirthField` wrapper with balanced Tooltip/Material/InkWell/Container nesting and bounded the selected date to one line. The accessible tap target and original date display/callback are preserved.
+- Follow-up source commit: `524148fc4ee6925b06b422ad600d0f2deb8b7c22`. No tests, analyzer, CI, runtime checks, or APK build were run.
