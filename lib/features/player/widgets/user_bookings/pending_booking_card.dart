@@ -169,13 +169,12 @@ class PendingBookingCard extends StatelessWidget {
                       final updatedPaymentState = updated.paymentStatus.toLowerCase().trim();
                       final isRefundStillPending =
                           updatedPaymentState == 'refund_pending';
-                      final isAwaitingPaymentConfirmation = updated != null &&
-                          (updated.isPaid ||
-                              updatedPaymentState == 'paid' ||
-                              updatedPaymentState == 'partially_paid' ||
-                              isRefundStillPending);
-                      final isConfirmed = updated != null &&
-                          PaymentCheckoutService.isPaymentConfirmed(
+                      final isAwaitingPaymentConfirmation =
+                          updated.isPaid ||
+                          updatedPaymentState == 'paid' ||
+                          updatedPaymentState == 'partially_paid' ||
+                          isRefundStillPending;
+                      final isConfirmed = PaymentCheckoutService.isPaymentConfirmed(
                             status: updated.status.toDbValue(),
                             paymentStatus: updated.paymentStatus,
                           );
