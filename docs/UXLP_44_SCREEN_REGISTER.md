@@ -337,3 +337,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/owner/widgets/bookings/owner_slot_card.dart` | owner | source reviewed—runtime pending (booking/payment states are bilingual; payment status uses booking values; trailing detail chevron mirrors in RTL) |
 | `lib/features/owner/widgets/bookings/owner_time_slot_row.dart` | owner | source reviewed—runtime pending (tap and long-press booking actions preserved; tap now uses keyboard-focusable InkWell semantics and feedback) |
 | `lib/features/owner/widgets/dashboard/owner_dashboard_header.dart` | owner | source reviewed—runtime pending (profile-photo action has localized tooltip and focus semantics; verified-account tooltip bilingual; role/plan gates unchanged) |
+
+
+### Newly inventoried player challenge surface — 2026-11-01
+
+| `lib/features/player/widgets/challenge/challenge_team_card.dart` | player | source reviewed—runtime pending (team selection uses keyboard-focusable InkWell; selected-state animation and H2H states retained; long names bounded to two lines) |
