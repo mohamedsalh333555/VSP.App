@@ -37,11 +37,13 @@ class OwnerTimeSlotRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isMerged = slot['merged'] == true;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _handleTap(context),
-      onLongPress: () => _handleLongPress(context),
-      child: Row(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        onTap: () => _handleTap(context),
+        onLongPress: () => _handleLongPress(context),
+        child: Row(
         crossAxisAlignment: isMerged ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           // Time Column
@@ -96,6 +98,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
             child: OwnerSlotCard(slot: slot),
           ),
         ],
+        ),
       ),
     );
   }
