@@ -106,14 +106,26 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       return;
     }
 
-    final response = await widget.copilotService.sendMessage(
-      message: text,
-      governorate: userGov,
-    );
+    try {
+      final response = await widget.copilotService.sendMessage(
+        message: text,
+        governorate: userGov,
+      );
 
-    if (mounted) {
+      if (!mounted) return;
       setState(() {
         _messages.add(response);
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(CopilotMessage.assistant(
+          widget.isArabic
+              ? 'تعذر إرسال الرسالة الآن. تحقق من الاتصال وحاول مرة أخرى.'
+              : 'The message could not be sent. Check your connection and try again.',
+        ));
         _isLoading = false;
       });
       _scrollToBottom();
