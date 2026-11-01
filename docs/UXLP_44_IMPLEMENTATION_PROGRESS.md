@@ -798,3 +798,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Increased the fee-explanation info affordance to a 48dp IconButton with a localized tooltip, and made its bottom sheet scrollable within safe areas on compact screens.
 - Displayed fee amounts and the existing fee explanation remain unchanged; no fee calculation, pricing, or payment behavior changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commit: `4306975177eebb97646641350304a58eb94708b6`.
+
+
+## Booking calendar compact-viewport and keyboard-inset correction — 2026-11-01
+
+- The booking date-picker dialog now caps its height to the available viewport after system insets and keyboard obstruction, and its content scrolls vertically when the calendar plus actions cannot fit. This prevents the fixed-height month grid and action row from being pushed outside short screens or keyboard-constrained layouts.
+- Date eligibility, month navigation range, selected-date behavior, and booking callback are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: c31868dab68e683c1a668b81ad687a9ae76e3fb6.
