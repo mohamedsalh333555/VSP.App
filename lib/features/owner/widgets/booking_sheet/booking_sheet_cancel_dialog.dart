@@ -29,10 +29,12 @@ class BookingSheetCancelDialog {
         content: Text(content, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(cancelBtn, style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(confirmBtn, style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
           ),
@@ -157,6 +159,7 @@ class BookingSheetCancelDialog {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(minimumSize: const Size(48, 48), tapTargetSize: MaterialTapTargetSize.padded),
             onPressed: () => Navigator.pop(ctx, ManualBookingCancelDecision.abort),
             child: Text(
               isArabic ? 'تراجع وعدم الإلغاء' : 'Keep Booking',
