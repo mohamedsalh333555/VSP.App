@@ -782,3 +782,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Corrected the team-member list heading and required-captain subtitle, which were previously Arabic-only even when the app locale was English. Both now follow the active locale.
 - Selection rules and captain-required behavior are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: `9d009469cd21290b3b649a9b7c0eeebb230a1832`, `eaf66799f4de56fc1d53d0a5177d16e1b0eeaf2b`.
+
+
+## Championship checkout roster fallback localization and lifecycle guard — 2026-11-01
+
+- Fallback roster labels now follow Arabic/English locale instead of always showing Arabic “Player” labels in English UI.
+- Added a mounted-state guard immediately after the asynchronous roster lookup and before fallback-list mutation or context access, preventing the disposed checkout screen from continuing its post-request work.
+- Captain selection and roster eligibility are unchanged. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `d4daffc1c40aa6dfd139f8d466eaa2e4941aec92`.
