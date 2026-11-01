@@ -34,6 +34,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     return _stadiumsStream!;
   }
 
+  void _retryStadiums() {
+    final uid = _cachedUid;
+    if (uid == null || uid.isEmpty) return;
+    setState(() {
+      _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
+    });
+  }
+
   /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
   Future<void> _onAddAnotherStadium(
     BuildContext context,
@@ -92,6 +100,15 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  }
  if (snapshot.hasError) {
  VSPLogger.w('FacilityOnboardingScreen stream notice (gracefully handled): ${snapshot.error}');
+   if (snapshot.data == null || snapshot.data!.isEmpty) {
+     return VSPErrorState(
+       customMessage: isAr
+           ? 'تعذر تحميل ملاعبك الآن. تحقق من الاتصال ثم أعد المحاولة.'
+           : 'Could not load your stadiums. Check your connection and try again.',
+       retryButtonText: isAr ? 'إعادة المحاولة' : 'Retry',
+       onRetry: _retryStadiums,
+     );
+   }
  }
  final stadiums = snapshot.data ?? [];
  final hasStadiums = stadiums.isNotEmpty;
@@ -178,6 +195,35 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.center,
  children: [
+ if (snapshot.hasError)
+   Container(
+     width: double.infinity,
+     margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+     padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+     decoration: BoxDecoration(
+       color: VSPColors.warning.withValues(alpha: 0.10),
+       borderRadius: BorderRadius.circular(VSPRadius.md),
+       border: Border.all(color: VSPColors.warning.withValues(alpha: 0.30)),
+     ),
+     child: Row(
+       children: [
+         const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 18),
+         const SizedBox(width: VSPSpacing.sm),
+         Expanded(
+           child: Text(
+             isAr
+                 ? 'تعذر تحديث قائمة الملاعب. نعرض آخر بيانات تم تحميلها.'
+                 : 'Could not refresh stadiums. Showing the last loaded data.',
+             style: const TextStyle(color: VSPColors.warning, fontSize: 11.5),
+           ),
+         ),
+         TextButton(
+           onPressed: _retryStadiums,
+           child: Text(isAr ? 'إعادة المحاولة' : 'Retry'),
+         ),
+       ],
+     ),
+   ),
  const SizedBox(height: 16),
  Text(
  isAr ? 'ملاعبك المضافة' : 'Your Stadiums',
