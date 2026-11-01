@@ -355,3 +355,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/home/home_top_bar.dart` | player | source reviewed—runtime pending (profile/search/filter controls have focusable targets and localized tooltips; profile image has loading and error fallback; filter result remains bound to StadiumProvider) |
 | `lib/features/player/widgets/chat/chat_input_bar.dart` | player | source reviewed—runtime pending (message input remains localized/direction-aware; send action has a localized tooltip and focusable 48dp target; send remains disabled while sending) |
 | `lib/features/player/widgets/payment/payment_method_selector.dart` | player | source reviewed—runtime pending (accepted payment methods are explained bilingually; gateway label is factual and no longer claims absolute 100% security) |
+
+
+### Newly inventoried player booking/result surfaces — 2026-11-01
+
+| `lib/features/player/widgets/booking/booking_slot_card.dart` | player | source reviewed—runtime pending (available slots use focusable InkWell; booked/past slots stay disabled; selection and status visuals preserved) |
+| `lib/features/player/widgets/booking/booking_slot_stream_section.dart` | player | source reviewed—runtime pending (initial loading/error/empty states separated; current-day and slot lifecycle calculations use VSPTimeService) |
+| `lib/features/player/widgets/user_bookings/challenge_result_actions.dart` | player | source reviewed—runtime pending (captain/result lifecycle and localized feedback retained; submit-result time gate uses VSPTimeService) |
