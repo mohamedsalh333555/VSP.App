@@ -59,7 +59,7 @@ class BookingDateSelector extends StatelessWidget {
           ),
           const SizedBox(height: VSPSpacing.md),
           Padding(
-            padding: const EdgeInsets.only(left: VSPSpacing.md),
+            padding: const EdgeInsetsDirectional.only(start: VSPSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -77,7 +77,7 @@ class BookingDateSelector extends StatelessWidget {
                         onTap: () => onDateChanged(date),
                         child: Container(
                           width: 60,
-                          margin: const EdgeInsets.only(right: VSPSpacing.sm),
+                          margin: const EdgeInsetsDirectional.only(end: VSPSpacing.sm),
                           decoration: BoxDecoration(
                             color: isSelected ? VSPColors.accent : Colors.transparent,
                             borderRadius: BorderRadius.circular(VSPRadius.md),
