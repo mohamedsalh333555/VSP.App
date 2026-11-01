@@ -92,7 +92,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           Localizations.localeOf(context).languageCode == 'ar'
               ? Iconsax.arrow_left_2_copy
               : Iconsax.arrow_right_3_copy,
-          color: Colors.black,
+          color: VSPColors.black,
           size: 20,
         ),
       ),
