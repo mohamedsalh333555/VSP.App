@@ -848,3 +848,10 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - The owner quick-booking receipt sheet is now height-constrained and scrollable, preserving both WhatsApp-send and close actions on compact screens or with larger text.
 - No pricing, payment, booking, or eligibility rules changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: fc6c243d9102fc6e4a2cf0dc4d64b62a77fba405; 22df76dd446cc9dc8ef3a628ec26bdab416ec5d8; 1f9cfc975fe4ff5a4832562bbc45e0b0ef90bbcd; 9b3eb1caee26c0e768125e7bd591424fae37fd4e.
+
+
+## Stadium filter viewport correction — 2026-11-01
+- Corrected the stadium filter bottom sheet's available-height calculation to subtract the top system inset and the larger of the keyboard or bottom safe-area inset. The fixed action row is therefore included within the actual usable viewport rather than sizing the sheet against keyboard height alone.
+- Existing category content remains independently scrollable and reset/apply actions remain fixed within the sheet.
+- No filter semantics, booking rules, pricing, or backend behavior changed. No analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: 0b0d9adaec15b9071132058b28b59142f4d889b5.
