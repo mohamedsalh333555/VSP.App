@@ -60,7 +60,7 @@ class CheckoutFinancialCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -81,7 +81,7 @@ class CheckoutFinancialCard extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
+                    foregroundColor: VSPColors.black,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     minimumSize: const Size(0, 48),
@@ -115,14 +115,14 @@ class CheckoutFinancialCard extends StatelessWidget {
         children: [
           Text(
             isArabic ? 'تفاصيل الرسوم والاشتراك' : 'Fees and registration details',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.white, fontWeight: FontWeight.bold),
           ),
           const Divider(color: VSPColors.divider, height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(isArabic ? 'رسوم اشتراك البطولة:' : 'Tournament entry fee:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-              Text('${entryFee.toInt()} $currencyLabel', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text('${entryFee.toInt()} $currencyLabel', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -156,7 +156,7 @@ class CheckoutFinancialCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(isArabic ? 'المبلغ الإجمالي المطلـوب:' : 'Total amount due:', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(isArabic ? 'المبلغ الإجمالي المطلـوب:' : 'Total amount due:', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15)),
               Text(
                 '${totalCheckoutPrice.toStringAsFixed(1)} $currencyLabel',
                 style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 18),
