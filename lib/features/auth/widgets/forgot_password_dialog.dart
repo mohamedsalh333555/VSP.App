@@ -15,6 +15,7 @@ class ForgotPasswordDialog {
     final resetEmailController = TextEditingController();
     return showDialog(
       context: context,
+      useSafeArea: true,
       builder: (dialogContext) {
         bool isLoading = false;
         return StatefulBuilder(
