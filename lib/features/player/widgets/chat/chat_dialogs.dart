@@ -22,6 +22,7 @@ class ChatDialogs {
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
+        scrollable: true,
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.dialog)),
         title: Text(
@@ -58,10 +59,18 @@ class ChatDialogs {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () => Navigator.pop(dlgCtx),
             child: Text(ar ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () async {
               final reason = reasonController.text.trim();
               if (reason.isEmpty) return;
@@ -109,6 +118,10 @@ class ChatDialogs {
         actions: [
           TextButton(onPressed: () => Navigator.pop(dlgCtx), child: Text(ar ? 'إلغاء' : 'Cancel')),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, 48),
+              tapTargetSize: MaterialTapTargetSize.padded,
+            ),
             onPressed: () async {
               Navigator.pop(dlgCtx);
               try {
