@@ -37,12 +37,12 @@ void showTournamentBracketPreviewDialog(
       return AlertDialog(
       scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         insetPadding: const EdgeInsets.all(16),
         title: Text(
           l10n.tournamentBrackets,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
         ),
         content: SizedBox(
           width: MediaQuery.sizeOf(ctx).width * 0.9,
@@ -139,7 +139,7 @@ Future<void> showInteractiveDrawRoomDialog(
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ],
