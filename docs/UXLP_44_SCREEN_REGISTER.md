@@ -652,3 +652,9 @@ The recursive `lib/**/{screens,widgets}/**.dart` tree contains 356 paths: 325 ar
 - `lib/shared/widgets/match_card/public_match_card_formatter.dart`
 
 The 338 unique register paths also include 13 cross-cutting core/navigation/design-system/provider/service files outside that recursive screen/widget glob. The 31 support files above still affect behavior and data integrity through their callers; excluding them from the visual-surface count does not exclude them from code-flow or business-rule review.
+
+
+## 2026-11-01 source corrections
+
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_submit_service.dart`: stadium persistence is now treated separately from post-save owner-profile synchronization. If the stadium write succeeds but profile refresh fails, the UI no longer reports that the stadium save itself failed; it surfaces a localized account-sync warning and closes the completed wizard. The default stadium usage note is localized in Arabic and English, and blocked/auth-expired feedback is bilingual.
+- `lib/features/player/widgets/payment/paymob_callback_url_parser.dart`: payment callback decisions now require an HTTP(S) URL on an exact trusted payment domain or its subdomain, a recognized payment endpoint, and an explicit success/failure status parameter. Path-only `/payment-status`, arbitrary `standalone` substrings, and untrusted hosts no longer produce a success callback. Bank/3DS domains remain pending and rely on server-side payment-status polling.
