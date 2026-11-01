@@ -149,6 +149,10 @@ class BookingConfirmationHandler {
     } catch (e) {
       VSPLogger.w('Location verification fallback to online-preferred: $e');
       isCrossGovernorate = true;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      crossGovMessage = isArabic
+          ? 'تعذر التحقق من موقعك حالياً. لتأكيد الحجز، يرجى اختيار الدفع الإلكتروني أو دفع العربون.'
+          : 'We could not verify your location right now. Please use online payment or pay the deposit to confirm your booking.';
     }
 
     if (!context.mounted) return;
@@ -397,9 +401,12 @@ class BookingConfirmationHandler {
 
     if (hasActiveCashBooking) {
       HapticFeedback.lightImpact();
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       VSPFeedback.showInfo(
         context,
-        'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.',
+        isArabic
+            ? 'عندك حجز كاش قائم، فالحجز الجديد لازم يتدفع بالكامل أونلاين.'
+            : 'You have an active cash booking, so this booking must be paid in full online.',
       );
 
       final forcedFullDraft = draft.copyWith(
