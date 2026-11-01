@@ -35,12 +35,12 @@ class ChampionshipCard extends StatelessWidget {
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
+            color: VSPColors.white.withValues(alpha: 0.08),
             width: 0.8,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
+              color: VSPColors.black.withValues(alpha: 0.25),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -142,7 +142,7 @@ class ChampionshipCard extends StatelessWidget {
                     children: [
                       Text(championship.name,
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5),
+                              color: VSPColors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                       Text(championship.type,
@@ -162,7 +162,7 @@ class ChampionshipCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  color: VSPColors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -268,7 +268,7 @@ class ChampionshipCard extends StatelessWidget {
                     } else if (isFull) {
                       return Text(
                         isArabic ? 'البطولة مكتملة العدد ' : 'Tournament Full ',
-                        style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 12),
                       );
                     } else if (status != 'open') {
                       return Text(
@@ -343,7 +343,7 @@ class ChampionshipCard extends StatelessWidget {
                                 ? (isArabic ? 'عرض البطولة' : 'View Tournament')
                                 : AppLocalizations.of(context)!.join,
                             style: TextStyle(
-                              color: isClosed ? VSPColors.accent : Colors.black,
+                              color: isClosed ? VSPColors.accent : VSPColors.black,
                               fontWeight: FontWeight.w900,
                               fontSize: 13,
                               letterSpacing: 0.5,
@@ -353,7 +353,7 @@ class ChampionshipCard extends StatelessWidget {
                           Icon(
                             isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                             size: 16,
-                            color: isClosed ? VSPColors.accent : Colors.black,
+                            color: isClosed ? VSPColors.accent : VSPColors.black,
                           ),
                         ],
                       ),
@@ -369,7 +369,7 @@ class ChampionshipCard extends StatelessWidget {
   }
 
   Widget _buildTypeBadge(String text) =>
-      Text(text, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold));
+      Text(text, style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold));
 
   Widget _buildStatusBadge(String text, Color color) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -391,7 +391,7 @@ class ChampionshipCard extends StatelessWidget {
         Text(
           headerTitle,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: VSPColors.white.withValues(alpha: 0.5),
             fontSize: 9.5,
             fontWeight: FontWeight.w600,
           ),
@@ -404,12 +404,12 @@ class ChampionshipCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: VSPColors.white, fontSize: 11, fontWeight: FontWeight.bold),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
+  Widget _buildDivider() => Container(width: 1, height: 22, color: VSPColors.white10);
 }
