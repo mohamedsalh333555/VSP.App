@@ -1307,3 +1307,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Fixed `lib/features/player/widgets/home/home_feed_sections.dart`: public-match and championship horizontal carousels now use directional end spacing instead of a physical right margin.
 - Fixed `lib/features/player/widgets/my_team/team_members_section.dart`: captain/member trophy-badge spacing and the captain remove-member action now use directional insets so they mirror with RTL/LTR.
 - Match/championship ordering, team roster, and removal permissions are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commits: `d3860809397a96238b0ea875144781cd59e1ab8e`, `1f9917a827b389c6bb49f09356c5ad2fad722ddd`.
+
+
+## Player home feed stream recovery — 2026-11-01
+
+- Fixed `lib/features/player/widgets/home/home_feed_sections.dart`: initial public-match and championship feed errors now show localized retryable error states. If a realtime refresh fails after cards were loaded, the last loaded cards remain visible with a bilingual stale-data warning and retry action instead of replacing the section with a full error state.
+- Stream scope and match/championship eligibility are unchanged. No tests, analyzer, CI, runtime checks, migrations, or APK build were run. Code commit: `cef9bdfa47ff40c385b9d16ca1bc12602152e575`.
