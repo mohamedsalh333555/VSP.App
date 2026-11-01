@@ -72,6 +72,7 @@ class StadiumWizardMediaCoordinator {
       'file': null,
       'url': null,
       'isUploading': true,
+      'isNewUpload': true,
       'progress': 10,
       'statusLabel': progressLabel,
     };
