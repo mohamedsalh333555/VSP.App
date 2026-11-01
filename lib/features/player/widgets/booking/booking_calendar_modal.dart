@@ -14,6 +14,7 @@ void showBookingCalendarModal({
   final l10n = AppLocalizations.of(context)!;
   showDialog(
     context: context,
+    useSafeArea: true,
     barrierColor: VSPColors.background.withValues(alpha: 0.8),
     builder: (context) {
       DateTime tempSelectedDate = initialDate;
