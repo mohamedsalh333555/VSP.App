@@ -152,6 +152,12 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     setState(() {});
     try {
       final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        throw Exception(
+          isArabic ? 'تعذر رفع شعار الفريق. لم يتم إنشاء الفريق؛ حاول مرة أخرى.' : 'Team logo upload failed. The team was not created; please try again.',
+        );
+      }
       final payload = TeamManagementService.buildCreateTeamPayload(
         name: teamName,
         sportType: selectedSport,
@@ -163,13 +169,34 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
       final teamId = await TeamRepository().createTeam(payload);
 
       if (teamId != null && mounted) {
-        await reloadTeam();
+        var refreshFailed = false;
+        try {
+          await reloadTeam();
+        } catch (refreshError) {
+          refreshFailed = true;
+          debugPrint('Team was created, but the team view could not be refreshed: $refreshError');
+        }
         if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.teamCreatedSuccess), backgroundColor: VSPColors.accent));
+            SnackBar(
+              content: Text(
+                refreshFailed
+                    ? (isArabic
+                        ? 'تم إنشاء الفريق، لكن تعذر تحديث العرض. أعد فتح الصفحة لرؤية الفريق.'
+                        : 'Team created, but the view could not refresh. Reopen the page to see it.')
+                    : l10n.teamCreatedSuccess,
+              ),
+              backgroundColor: refreshFailed ? VSPColors.warning : VSPColors.accent,
+            ),
+          );
         }
       } else if (mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء الفريق. يرجى إعادة المحاولة.');
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'فشل إنشاء الفريق. يرجى إعادة المحاولة.' : 'Team creation failed. Please try again.',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -201,6 +228,12 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     setState(() {});
     try {
       final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        throw Exception(
+          isArabic ? 'تعذر رفع شعار الفريق. لم يتم حفظ التعديلات؛ حاول مرة أخرى.' : 'Team logo upload failed. Changes were not saved; please try again.',
+        );
+      }
 
       final payload = TeamManagementService.buildUpdateTeamPayload(
         name: teamNameText,
