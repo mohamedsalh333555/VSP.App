@@ -35,23 +35,16 @@ The compatibility layer preserves existing numeric geometry (including the legac
 - Added an explicit 20dp compact spacing token so the compatibility alias does not misuse the input-padding token.
 - Added the remaining legacy medium-border primitive to the V2 semantic palette.
 
-## Coverage status
+## Coverage status — current checkpoint 2026-11-01
 
-This is a shared-foundation migration, not a completed screen audit.
+This document records the shared foundation migration. It is not, by itself, a completed UXLP-44 screen audit.
 
-- UXLP-44 standard: written.
-- Initial candidate screen register: 128 Dart paths; the current register contains 181 unique Dart screen/surface paths.
-- Shared component audit: initial pass and the changes above applied.
-- A recorded static source scan covers 128 candidate paths. The current register now contains 181 unique Dart screen/surface paths; therefore 53 registered paths are not yet proven to be included in that recorded scan. Reconcile and rerun the static scan across all 181 paths before calling this gate complete.
-- Source review has now covered the shared navigation bars and the startup/auth selection plus player/owner root shells listed above; runtime checks remain pending.
-- Route-level body safe-area wrappers were added to the screens recorded in the latest register updates; screens with dedicated bottom action/navigation bars retain their own inset handling.
-- Rule-by-rule screen/state review across player and owner roles: still in progress. The 44-rule matrix remains source-reviewed/runtime-pending; static scan does not establish a pass.
-- Arabic/English runtime comparison, large-text checks, keyboard/safe-area checks, and device screenshots: not yet verified for every surface.
-- Added regression tests for token alias equivalence, primary-button interaction, and back-button touch-target size.
-- Flutter analyze, automated tests, and release APK: intentionally deferred until the grouped implementation batch is complete.
-
-Do not mark a screen as passing UXLP-44 solely because it uses one of these shared components. Check the actual screen composition, role, locale, state, navigation, and runtime layout.
-
+- Current `docs/UXLP_44_SCREEN_REGISTER.md`: **338 unique Dart screen/surface paths**, **366 table rows** (28 repeated paths record separate embedded-component findings), plus one shared navigation component entry.
+- The recorded heuristic source scan is historical: it fetched 128 candidate files from an earlier 215-path inventory. It has **not** been rerun against the current 338-path register; complete current Design System scan coverage is therefore **not proven**.
+- All 338 unique registered paths have source-review notes, but those notes are not runtime passes. Embedded caller behavior, Arabic/English direction, compact/large text, keyboard/system insets, contrast pairings, and loading/empty/error/success states still need direct verification.
+- The current global UXLP-44 matrix records 39 rules as `source reviewed—runtime pending` and rules 25, 31, 38, 39, and 41 as `needs product decision`. No rule has a runtime pass. This global matrix is not a completed 44 × screen × state matrix.
+- The next audit gate is a current-branch static scan across the full 338-path register, completion of the per-screen/per-state rule mapping, closure of objective source findings, and then one consolidated device/runtime validation.
+- Do not mark a screen or rule as passing solely because it uses a shared V2 component. Verify the actual screen composition, role, locale, state, navigation, and runtime layout.
 
 ## Additional owner-flow review batch
 
@@ -154,7 +147,7 @@ Do not mark a screen as passing UXLP-44 solely because it uses one of these shar
 
 - The exact adopted standard is `docs/UXLP_44_VSP_STANDARD.md` (44 rules across perception, decision processing, interaction, system coherence, and cognitive load).
 - Added `docs/UXLP_44_RULE_AUDIT.md` as the rule-level evidence matrix. It records the shared-foundation source evidence, findings fixed in this batch, and what remains unverified for each rule.
-- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 181-path register remains the screen inventory; it does not prove per-rule coverage.
+- Current matrix is deliberately conservative: `source reviewed—runtime pending` is not a pass, and most rules still require mapping against each applicable screen/state. The 181-path register was an earlier historical checkpoint; the current 338-path register is maintained in docs/UXLP_44_SCREEN_REGISTER.md and still does not prove per-rule coverage.
 - No final validation or APK build has been run. Continue grouped implementation first, then perform one consolidated validation pass.
 
 ## Player post-match result flow source fixes
@@ -236,12 +229,12 @@ The canonical shared bottom navigation now uses focusable InkWell interaction wh
 - Fixed the analyzer findings reported by PR CI run 41221229970 in the payout dialog, add-player invitation sheet, stadium filter sheet, challenge team-selection retry guard, auth provider, and date-picker semantics.
 - PR CI run 41222072722 then reported only one remaining informational const-constructor lint in the add-player sheet. The style was corrected in commit `1019b34c03e440ad28f365c04d07f1d11c40f70c`; this commit has not been analyzer-verified.
 - Removed a hardcoded Pro monthly amount from the owner dashboard teaser so it cannot diverge from the current public subscription-plan catalog.
-- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. The 181-path screen/state rule audit and device/runtime review remain incomplete.
+- These are source changes only. The CI run stopped at Analyze; no test or APK step completed. At that earlier 181-path checkpoint, the screen/state rule audit and device/runtime review remained incomplete; current coverage is recorded in the status section above.
 
 
 ## Nested championship detail discovery — 2026-10-31
 
-Reconciled the nine Dart components under `lib/features/player/widgets/championship_details`. Two were already registered; seven were newly tracked. The bottom action bar has source evidence for the open/ongoing/completed/cancelled/full state gates; six newly tracked components remain `not yet inspected`. This raises the inventory to 181 unique Dart screen/surface paths. The original 128-path static scan does not cover 53 added paths until a complete rescan is recorded.
+Reconciled the nine Dart components under `lib/features/player/widgets/championship_details`. Two were already registered; seven were newly tracked. The bottom action bar has source evidence for the open/ongoing/completed/cancelled/full state gates; six newly tracked components remain `not yet inspected`. At that historical checkpoint, this raised the inventory to 181 unique Dart screen/surface paths; the current inventory has since grown to 338 unique paths. The original 128-path static scan does not cover 53 added paths until a complete rescan is recorded.
 
 
 ## V2 token facade and shared interaction corrections — 2026-10-31
@@ -250,7 +243,7 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Applied the 48dp target to the terms checkbox and removed compact visual density from the public-match and championship share actions.
 - Hardened public-match action feedback, owner notification stream-error visibility, phone clipboard feedback, and countdown timer lifecycle.
 - Corrected championship card lifecycle labels/CTA state so ongoing, cancelled, completed, full, and unknown statuses do not appear as open registration.
-- These are source changes only. The 181-path inventory now has no entries marked `not yet inspected`; 53 paths are not proven to be covered by the original 128-path static scan. All 44 UXLP rules remain runtime-pending.
+- These are source changes only. At that historical checkpoint, the 181-path inventory had no entries marked `not yet inspected`; the original 128-path static scan did not prove coverage of the then-current register. All 44 UXLP rules remain runtime-pending.
 
 
 ## Championship detail state/retry implementation — 2026-10-31
@@ -258,7 +251,7 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 - Matches, standings, and top-scorers surfaces now distinguish loading, empty, error, and stale/live-update states. Retry recreates the matches stream and rebuilds the standings/scorer futures from the parent details screen.
 - The new error surfaces reuse the shared `VSPErrorState`; table overflow remains horizontally scrollable and the main details content remains vertically scrollable.
 - All nine components in the nested championship details directory are now represented by source-review notes (two were already in the inventory). The 181-path register has no `not yet inspected` entries at this checkpoint.
-- The original 128-path static scan still leaves 53 registered paths without proven scan coverage. Source review/runtime verification and the 44-rule per-screen/state matrix remain incomplete.
+- The original 128-path static scan is historical and cannot be used to infer current 338-path coverage. Source review/runtime verification and the 44-rule per-screen/state matrix remain incomplete.
 
 
 ## Championship stream resilience follow-up — 2026-10-31
@@ -294,3 +287,11 @@ Reconciled the nine Dart components under `lib/features/player/widgets/champions
 
 
 - Additional owner coverage: quick-booking customer/duration/payment sections, draw-room matchup tile, and manual-team options/roster components now use canonical semantic colors for interface chrome. The manual-team jersey swatch palette remains explicit feature data (white/red/blue/amber/black) and was intentionally not mapped to semantic status colors.
+
+## Additional VSP Design System V2 cleanup — 2026-11-01
+
+- Added exact alpha primitives `white02`, `white04`, `white06`, `white50`, `white54`, `black15`, `black55`, and `black60` to `VSPDSColors`, with compatibility aliases in `VSPColors`. These preserve existing rendered alpha values while centralizing them.
+- Replaced raw Flutter black/white/transparent color constants in 19 registered auth, owner, player, and shared UI surfaces with canonical `VSPColors` aliases. A follow-up source scan confirmed no remaining raw `Colors.black`, `Colors.white`, or `Colors.transparent` references in the 19 targeted files.
+- Added `VSPDSMotion.microInteraction` (160ms) and exposed `VSPDSMotion` through the compatibility facade. Replaced inline 160ms/180ms durations in quick-booking payment, all-stadium filter, filter-category sidebar, and terms-checkbox interactions without changing their timing.
+- `CopyablePhoneText` now uses locale-directional start alignment and explicitly renders the phone-number text LTR.
+- These corrections are source-level evidence only. Runtime contrast, Arabic/English alignment, device insets, and motion behavior remain pending; no UXLP-44 pass is claimed from this batch.
