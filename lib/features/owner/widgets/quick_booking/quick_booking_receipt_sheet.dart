@@ -32,11 +32,19 @@ void showQuickBookingReceiptSheet({
 
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (sheetCtx) {
-      final bottomPadding = MediaQuery.of(sheetCtx).padding.bottom;
+      final media = MediaQuery.of(sheetCtx);
+      final bottomPadding = media.padding.bottom;
+      final availableHeight = (media.size.height -
+              media.padding.top -
+              media.padding.bottom)
+          .clamp(240.0, media.size.height)
+          .toDouble();
       return Container(
+        constraints: BoxConstraints(maxHeight: availableHeight * 0.85),
         padding: EdgeInsets.fromLTRB(
           VSPSpacing.lg,
           VSPSpacing.lg,
@@ -47,9 +55,10 @@ void showQuickBookingReceiptSheet({
           color: VSPColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             Container(
               width: 40,
               height: 4,
@@ -103,7 +112,8 @@ void showQuickBookingReceiptSheet({
               textColor: Colors.white,
               onPressed: () => Navigator.pop(sheetCtx),
             ),
-          ],
+            ],
+          ),
         ),
       );
     },
