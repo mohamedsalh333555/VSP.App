@@ -229,7 +229,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
 
   AppBar _buildAppBar(BuildContext context, AppLocalizations l10n, Team? team) {
     return AppBar(
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       elevation: 0,
       leading: const VSPBackButton(),
       title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
