@@ -1216,3 +1216,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 31, and 36 — protect in-progress tournament matches:** automatic round rescheduling is blocked after scheduled kickoff or any recorded home/away score/winner, rather than waiting for a winner/home score only. Runtime verification remains pending.
+
+
+- **Rules 9, 10, and 36 — loading-state communication:** the player tournament roster now exposes a localized shared loading state while data is fetched; retryable error handling is preserved. Runtime verification remains pending.
