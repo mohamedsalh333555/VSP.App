@@ -23,14 +23,24 @@ void showBookingCalendarModal({
 
       return StatefulBuilder(
         builder: (context, setModalState) {
+          final mediaQuery = MediaQuery.of(context);
+          final availableHeight = mediaQuery.size.height -
+              mediaQuery.viewInsets.vertical -
+              (VSPSpacing.xl * 2);
+
           return Dialog(
             backgroundColor: VSPColors.surface,
-            insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: VSPSpacing.md,
+              vertical: VSPSpacing.xl,
+            ),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-            child: Padding(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: availableHeight > 0 ? availableHeight : 240),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -172,6 +182,8 @@ void showBookingCalendarModal({
                     ],
                   ),
                 ],
+                  ),
+                ),
               ),
             ),
           );
