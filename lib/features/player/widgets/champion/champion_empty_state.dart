@@ -8,6 +8,7 @@ class ChampionEmptyState extends StatelessWidget {
   final String titleEnglish;
   final String descriptionArabic;
   final String descriptionEnglish;
+  final bool? isArabic;
 
   const ChampionEmptyState({
     super.key,
@@ -16,11 +17,13 @@ class ChampionEmptyState extends StatelessWidget {
     required this.titleEnglish,
     required this.descriptionArabic,
     required this.descriptionEnglish,
+    this.isArabic,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final useArabic = isArabic ??
+        Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
@@ -44,13 +47,13 @@ class ChampionEmptyState extends StatelessWidget {
             ),
             const SizedBox(height: VSPDSSpacing.md),
             Text(
-              isArabic ? titleArabic : titleEnglish,
+              useArabic ? titleArabic : titleEnglish,
               textAlign: TextAlign.center,
               style: VSPDSTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: VSPDSSpacing.xs),
             Text(
-              isArabic ? descriptionArabic : descriptionEnglish,
+              useArabic ? descriptionArabic : descriptionEnglish,
               textAlign: TextAlign.center,
               style: VSPDSTypography.stateBody,
             ),
