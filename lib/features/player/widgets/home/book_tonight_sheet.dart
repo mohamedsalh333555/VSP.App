@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/ui/vsp_ui.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../screens/booking_confirmation_screen.dart';
@@ -50,6 +51,7 @@ class BookTonightSheet extends StatefulWidget {
 class _BookTonightSheetState extends State<BookTonightSheet> {
   late final BookTonightService _service;
   bool _isLoading = true;
+  bool _hasLoadError = false;
   List<TonightStadiumOffer> _offers = [];
 
   @override
@@ -62,16 +64,30 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
   }
 
   Future<void> _loadTonightSlots() async {
-    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
-    final results = await _service.findTonightOffers(
-      stadiums: widget.stadiums,
-      isArabic: isArabic,
-      currentTime: widget.currentTime,
-    );
-    if (mounted) {
+    if (!mounted || _isLoading && _hasLoadError == false && _offers.isNotEmpty) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() {
+      _isLoading = true;
+      _hasLoadError = false;
+    });
+    try {
+      final results = await _service.findTonightOffers(
+        stadiums: widget.stadiums,
+        isArabic: isArabic,
+        currentTime: widget.currentTime,
+      );
+      if (!mounted) return;
       setState(() {
         _offers = results;
         _isLoading = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Book tonight offers failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasLoadError = true;
       });
     }
   }
@@ -157,25 +173,32 @@ class _BookTonightSheetState extends State<BookTonightSheet> {
           const Divider(color: VSPColors.divider, height: 16),
           Expanded(
             child: _isLoading
-                ? _buildLoadingState()
-                : _offers.isEmpty
-                    ? _buildEmptyState(isArabic)
-                    : _buildOffersList(isArabic),
+                ? _buildLoadingState(isArabic)
+                : _hasLoadError
+                    ? VSPStateView(
+                        state: VSPUiState.error,
+                        title: isArabic ? 'تعذر تحميل المواعيد' : 'Could not load available slots',
+                        message: isArabic
+                            ? 'حدثت مشكلة أثناء جلب المواعيد. تحقق من الاتصال وحاول مرة أخرى.'
+                            : 'We could not retrieve available slots. Check your connection and try again.',
+                        onRetry: _loadTonightSlots,
+                      )
+                    : _offers.isEmpty
+                        ? _buildEmptyState(isArabic)
+                        : _buildOffersList(isArabic),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(40.0),
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
-        ),
-      ),
+  Widget _buildLoadingState(bool isArabic) {
+    return VSPStateView(
+      state: VSPUiState.loading,
+      title: isArabic ? 'جارٍ البحث عن المواعيد' : 'Finding available slots',
+      message: isArabic
+          ? 'نفحص الملاعب والمواعيد المتاحة الليلة.'
+          : 'Checking stadiums and available times for tonight.',
     );
   }
 
