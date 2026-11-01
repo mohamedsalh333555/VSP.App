@@ -1219,3 +1219,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 9, 10, and 36 — loading-state communication:** the player tournament roster now exposes a localized shared loading state while data is fetched; retryable error handling is preserved. Runtime verification remains pending.
+
+
+- **Rules 29 and 31 — booking time-boundary accuracy:** player slot generation no longer offers a 30-minute slot whose end would exceed the configured stadium closing time. Runtime and backend boundary checks remain pending.
