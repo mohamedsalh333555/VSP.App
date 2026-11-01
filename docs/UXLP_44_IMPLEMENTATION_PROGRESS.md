@@ -734,3 +734,11 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - Lookup errors are also shown only when they still belong to the active phone/account request; stale failures no longer display misleading errors over a newer search or account. Governorate eligibility and the repository lookup contract are unchanged.
 - Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: `0dcc02a29b8e0b1439a8072561bfab31dfcd1dda`, `1d128f5017efcade0d7e3a4dbd651201dbc9ea42`.
+
+
+## Support-ticket WhatsApp escalation duplicate-action guard — 2026-11-01
+
+- Added an in-flight state to the support-ticket WhatsApp escalation action. Repeated taps are blocked while settings are fetched, escalation metadata is updated, and the WhatsApp handoff is attempted; the app bar shows progress and disables the action during that interval.
+- The in-flight state is reset when the authenticated account changes, and the request's existing account-generation guard prevents an old request from updating the new account's screen.
+- No support policy, ticket ownership rule, database behavior, or WhatsApp destination was changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
+- Commit: `3af127d34764783d3fedb4b9b0474f18df61e098`.
