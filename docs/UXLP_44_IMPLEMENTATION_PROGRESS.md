@@ -1486,3 +1486,9 @@ The next automatic Analyze run reduced the previous blocker set to one remaining
 - Player booking/discovery: booking-success reference copy and all-stadium sort actions now have 48dp targets; challenge-code sheet is viewport-bounded, scrollable, bottom-safe, and its copy/share actions are 48dp; stadium details tabs now fill a 48dp row with InkWell semantics.
 - Updated screen register and rule audit alongside the source changes. Team League findings TL-01, TL-02, and TL-03 remain approval-required; no Supabase SQL was changed.
 - No tests, analyzer, CI, runtime checks, or APK build were run. This is not a final UXLP-44 completion claim.
+
+
+## Championship governorate banner localization — 2026-11-01
+
+- Fixed `lib/features/player/widgets/champion/championships_list_tab.dart`: the Arabic championship browsing banner previously interpolated canonical governorate identifiers directly, which could leave English governorate names inside Arabic copy. Both the selected-governorate label and the return-to-home-governorate label now use the existing `championTranslateItem` helper, matching the 1v1 banner's localization behavior.
+- Filter values, stream scope, navigation, and tournament eligibility are unchanged. Source-level correction only; no analyzer, tests, CI, runtime checks, migrations, or APK build were run. Code commit: `66e05af0a2c483f4a3e21128d9c7b651e2375b9c`.
