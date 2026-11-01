@@ -243,7 +243,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
                     IconButton(
                       visualDensity: VisualDensity.compact,
