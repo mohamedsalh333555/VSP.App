@@ -1108,3 +1108,5 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 ### Challenge code lookup ergonomics — 2026-11-01
 
 - **Rules 27, 29, and 33:** challenge-code lookup now rejects duplicate handler invocations even if triggered outside the disabled button, and its action target is 48dp rather than 46dp. No challenge-code validation, team eligibility, or repository behavior changed. Source-only evidence; keyboard and device verification remain pending.
+
+- **Rules 28, 36, and 43:** profile team-card capture now validates its render boundary and PNG encoding result, and releases the temporary image resource in a `finally` block to avoid leaking image memory on repeated share attempts. Source-only; device share-sheet and capture behavior remain runtime pending.
