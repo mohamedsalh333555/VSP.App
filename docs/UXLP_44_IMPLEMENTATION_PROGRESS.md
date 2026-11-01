@@ -1853,3 +1853,10 @@ Read-only inspection was performed against the connected production VSP project 
 - Player bookings: replaced the raw initial circular spinner with `VSPStateView(state: loading)` and concise Arabic/English title/message. Existing error and empty branches are preserved.
 - Owner bookings: replaced all three raw loading spinners (owner-scope initialization, stadium fetch, and booking fetch) with the same shared bilingual state component. Existing retry/error and no-stadium empty branches are preserved.
 - No database behavior or booking business rules were changed. No tests, analyzer, CI, device validation, or APK build was run.
+
+
+## Owner payout and tournament confirmation refinements — 2026-11-01
+
+- Owner payout password verification now guards the handler itself against concurrent submissions, including keyboard `onSubmitted` events that can fire independently of the disabled button.
+- Tournament governorate confirmation no longer displays literal square brackets around the interpolated governorate name in Arabic or English.
+- These are source-level fixes only; no analyzer, tests, CI, device validation, or APK build was run.
