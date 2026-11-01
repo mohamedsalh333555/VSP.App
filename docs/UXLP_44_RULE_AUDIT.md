@@ -1237,3 +1237,7 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rules 29, 36, and 43 — team persistence feedback and media consistency:** a successful team insert is no longer misreported as a failed create solely because the follow-up list refresh failed; selected logo upload failure now blocks the team write and is surfaced to the user. Runtime verification remains pending.
+
+
+- **Rules 29 and 36 — signup password feedback:** password-strength scoring now counts five distinct characteristics; minimum length is no longer counted twice in place of lowercase characters. Source-level correction only; UI/runtime feedback remains pending.
+- **Rules 29, 36, and 43 — owner dashboard consistency:** stale analytics responses from older date/court filters are ignored, and disposed controllers invalidate outstanding requests before listener notification. Runtime filter-race validation remains pending.
