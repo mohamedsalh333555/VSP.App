@@ -34,6 +34,8 @@ class VSPColors {
   static const warning = VSPDSSemanticColors.warning;
   static const info = VSPDSSemanticColors.info;
   static const Color black = VSPDSColors.black;
+  static const Color black26 = VSPDSColors.black26;
+  static const Color black45 = VSPDSColors.black45;
   static const Color transparent = VSPDSColors.transparent;
   static const Color white05 = VSPDSColors.white05;
   static const Color white08 = VSPDSColors.white08;
