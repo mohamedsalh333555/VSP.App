@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and all 270 unique registered Dart screen/surface and embedded-component paths (297 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and all 280 unique registered Dart screen/surface and embedded-component paths (307 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -1164,3 +1164,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Bilingual visual integrity:** owner dashboard insight filter selected-value alignment now uses `AlignmentDirectional.centerEnd`, eliminating physical right alignment in the Arabic/English shared filter row. Stadium wizard step components and owner dashboard insight widgets were added to the explicit embedded-component register; caller/data/runtime verification remains pending.
+
+
+- **Rule 10 — Bilingual visual integrity:** owner timeline status-marker spacing now uses directional end margin; owner time-period dropdown selected values use directional trailing alignment. Owner dashboard/PRO and documentation embedded components have been added to the register for caller-level review; runtime verification remains pending.
