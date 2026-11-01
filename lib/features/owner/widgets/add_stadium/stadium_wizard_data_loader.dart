@@ -134,7 +134,7 @@ class StadiumWizardDataLoader {
 
       final List<Map<String, dynamic>> parsedImages = [];
       for (var url in allImages) {
-        parsedImages.add({'file': null, 'url': url, 'isUploading': false});
+        parsedImages.add({'file': null, 'url': url, 'isUploading': false, 'isNewUpload': false});
       }
 
       return StadiumLoadedData(
