@@ -104,7 +104,7 @@ class TournamentMatchCard extends StatelessWidget {
                         onRefresh();
                       }
                     },
-                    icon: const Icon(Iconsax.calendar_1_copy, color: Colors.white, size: 18),
+                    icon: const Icon(Iconsax.calendar_1_copy, color: VSPColors.white, size: 18),
                   ),
               ],
             ),
@@ -112,7 +112,7 @@ class TournamentMatchCard extends StatelessWidget {
           ListTile(
             title: Text(
               '${match.homeTeamName ?? tbdText} vs ${match.awayTeamName ?? tbdText}',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               match.winnerId != null
@@ -120,7 +120,7 @@ class TournamentMatchCard extends StatelessWidget {
                       ? 'الفائز: $winnerName (${match.homeScore ?? 0} - ${match.awayScore ?? 0})${match.homePenalties != null && match.awayPenalties != null ? " [ترجيح ${match.homePenalties} - ${match.awayPenalties}]" : ""}'
                       : 'Winner: $winnerName (${match.homeScore ?? 0} - ${match.awayScore ?? 0})${match.homePenalties != null && match.awayPenalties != null ? " [Pens ${match.homePenalties} - ${match.awayPenalties}]" : ""}')
                   : (isAr ? 'قيد الانتظار' : 'Pending'),
-              style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54),
+              style: TextStyle(color: match.winnerId != null ? VSPColors.accent : VSPColors.white54),
             ),
             trailing: isOwner && match.homeTeamId != null && match.awayTeamId != null && championship.status == 'ongoing'
                 ? IconButton(
