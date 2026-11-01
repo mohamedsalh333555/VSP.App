@@ -1110,3 +1110,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 - **Rules 27, 29, and 33:** challenge-code lookup now rejects duplicate handler invocations even if triggered outside the disabled button, and its action target is 48dp rather than 46dp. No challenge-code validation, team eligibility, or repository behavior changed. Source-only evidence; keyboard and device verification remain pending.
 
 - **Rules 28, 36, and 43:** profile team-card capture now validates its render boundary and PNG encoding result, and releases the temporary image resource in a `finally` block to avoid leaking image memory on repeated share attempts. Source-only; device share-sheet and capture behavior remain runtime pending.
+
+
+### Player/owner loading-state consolidation — 2026-11-01
+
+- **Rules 9, 10, 28, 36, and 42:** full-page loading states in facility onboarding, owner championships/inbox/subscription plans, tournament brackets, match details/live matchup, support ticket detail/list streams, team profile, My Team, and notification preferences now use the shared bilingual state component with a localized title and contextual message. Existing retry/error/empty branches and data operations were preserved. Small inline progress indicators for button submissions and image loading remain intentionally local.
+- No rule is marked pass from source edits alone. Locale rendering, narrow viewport behavior, keyboard interaction, and stream recovery remain part of the single final runtime validation pass.
