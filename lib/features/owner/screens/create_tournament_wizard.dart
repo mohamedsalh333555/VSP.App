@@ -265,7 +265,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         data: Theme.of(pickerCtx).copyWith(
           colorScheme: const ColorScheme.dark(
             primary: VSPColors.accent,
-            onPrimary: Colors.black,
+            onPrimary: VSPColors.black,
             surface: VSPColors.surface,
             onSurface: VSPColors.textPrimary,
           ),
