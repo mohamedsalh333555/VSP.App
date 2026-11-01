@@ -583,8 +583,7 @@ abstract final class VSPDSTypography {
 }
 
 abstract final class VSPDSMotion {
-  // [PROPOSED] centralized timings; current screen behavior remains unchanged
-  // until individual components are migrated to these tokens.
+  // Canonical motion tokens. Preserve established timings unless an explicit UX decision changes them.
   static const Duration press = Duration(milliseconds: 120);
   static const Duration fast = Duration(milliseconds: 150);
   static const Duration microInteraction = Duration(milliseconds: 160);
