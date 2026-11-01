@@ -45,14 +45,25 @@ class BookingSlotCalculator {
         return min;
       }
 
-      int? bStart;
-      int? bEnd;
-      if (features is Map && features['breakTime'] != null) {
-        final s = features['breakTime']['start']?.toString() ?? '';
-        final e = features['breakTime']['end']?.toString() ?? '';
-        if (s.isNotEmpty && e.isNotEmpty) {
-          bStart = getCumulativeMinutes(s);
-          bEnd = getCumulativeMinutes(e);
+      final breakIntervals = <List<int>>[];
+      if (features is Map && features['breakTimes'] is List) {
+        for (final item in features['breakTimes'] as List) {
+          if (item is! Map) continue;
+          final start = getCumulativeMinutes(item['start']?.toString() ?? '');
+          final end = getCumulativeMinutes(item['end']?.toString() ?? '');
+          if (start >= 0 && end > start) {
+            breakIntervals.add([start, end]);
+          }
+        }
+      }
+
+      // Backward compatibility for stadium records saved with the legacy single-break shape.
+      if (breakIntervals.isEmpty && features is Map && features['breakTime'] is Map) {
+        final legacyBreak = features['breakTime'] as Map;
+        final start = getCumulativeMinutes(legacyBreak['start']?.toString() ?? '');
+        final end = getCumulativeMinutes(legacyBreak['end']?.toString() ?? '');
+        if (start >= 0 && end > start) {
+          breakIntervals.add([start, end]);
         }
       }
 
@@ -61,12 +72,11 @@ class BookingSlotCalculator {
         final slotStart = m;
         final slotEnd = m + 30;
 
-        // Skip slot if it overlaps with stadium break shift
-        if (bStart != null && bEnd != null && bStart != -1 && bEnd != -1) {
-          if (slotStart < bEnd && slotEnd > bStart) {
-            continue;
-          }
-        }
+        // Exclude every 30-minute slot that overlaps any configured stadium break.
+        final overlapsBreak = breakIntervals.any(
+          (interval) => slotStart < interval[1] && slotEnd > interval[0],
+        );
+        if (overlapsBreak) continue;
 
         final startTimeFormatted = _formatMinutesToTime(slotStart % (24 * 60), isArabic);
         final endTimeFormatted = _formatMinutesToTime(slotEnd % (24 * 60), isArabic);
