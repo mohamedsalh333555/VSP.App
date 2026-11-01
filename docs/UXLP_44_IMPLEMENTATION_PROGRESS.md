@@ -2079,3 +2079,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 
 - Follow-up to owner/player schedule parity: `OwnerScheduleSlotsBuilder.generateRawSlots` previously reduced opening/closing times to whole hours, starting every schedule at `HH:00` and allowing the final displayed slot to extend past a closing time with non-zero minutes. It now builds an operational-minute timeline from the exact stored times, supports overnight/24-hour windows, and emits only complete 30-minute intervals ending at or before closing. Break intervals use the same operational-minute basis. Code commit: `2056a51b46002abbc40130ffaf819e5c3062de35`.
+
+
+## Shared modal and sheet RTL pass — 2026-11-01
+
+- Converted owner booking-duration chip spacing from physical `right` to directional `end`; converted the collective-invite header inset and terms/privacy modal header inset to directional start/end geometry; converted both participant-modal section headings from `Alignment.centerLeft` to `AlignmentDirectional.centerStart`. The changes preserve the authored LTR geometry while mirroring the leading edge in Arabic. Code commits: `8eeb2fba641d66867b111809e0f056877cd39383`, `050c4a9a073cfbf755fc61ed7a52f1e63474ff90`, `331d1f3bc78d67dbb7d94948e743d4b7b71f87a2`, `b6eb92608de0873b1cf1b24cbef39850fd653e4c`.
+- Reviewed the 64 Dart paths named for dialogs/sheets/modals in the current tree. Modal entry points found in this pass use `useSafeArea: true` or an explicit `SafeArea` at the sheet root; several files are content builders invoked by those entry points. This is a source-level pattern check, not proof of every runtime inset/keyboard combination.
