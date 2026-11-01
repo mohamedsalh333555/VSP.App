@@ -102,7 +102,7 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: VSPColors.black),
                     onPressed: () => _respond(true),
                     child: Text(
                       isArabic ? ' موافقة على الموعد' : ' Accept New Time',
@@ -113,7 +113,7 @@ class _RescheduleActionBannerState extends State<RescheduleActionBanner> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: VSPColors.white),
                     onPressed: () => _respond(false),
                     child: Text(
                       isArabic ? ' رفض واسترداد كامل' : ' Reject & Refund',
