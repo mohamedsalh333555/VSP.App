@@ -33,14 +33,14 @@ class WelcomeLanguageButton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Iconsax.global_copy, size: 14, color: Colors.white),
+                    const Icon(Iconsax.global_copy, size: 14, color: VSPColors.white),
                     const SizedBox(width: 6),
                     Text(
                       langProvider.isArabic
                           ? AppLocalizations.of(context)!.english
                           : AppLocalizations.of(context)!.arabic,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
