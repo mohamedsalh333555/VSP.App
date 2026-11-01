@@ -1902,3 +1902,5 @@ Read-only inspection was performed against the connected production VSP project 
 - My Team screen: replaced the raw English-only `Not authenticated` fallback with a safe-area-protected, localized error state and clear sign-in recovery guidance.
 
 - Dialog ergonomics: owner document-upload cancellation, add-stadium discard/delete, and Paymob still-waiting dialogs now give every explicit action a 48dp minimum height and padded tap target; scrollable content and action semantics remain unchanged.
+
+- Chat report/delete dialogs: report form is now scrollable when the keyboard is open, and all four dialog actions use 48dp minimum height with padded tap targets. Report submission and conversation deletion behavior are unchanged.
