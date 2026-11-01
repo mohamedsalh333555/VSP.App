@@ -39,7 +39,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                     ? 'سيتم توليد جدول المباريات فور اكتمال فرق الدوري'
                     : 'The fixture schedule will be generated when all league teams have joined',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
               ),
             ],
           ),
@@ -269,7 +269,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
                     ),
                     child: Text(
                       isArabic ? 'مباراة فريقك ⭐' : 'Your team’s match ⭐',
-                      style: TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
               ],
@@ -296,10 +296,10 @@ class TeamLeagueFixturesView extends StatelessWidget {
                       ),
                       if (match.isConfirmed && match.winnerId == match.homeTeamId)
                         Padding(
-                          padding: EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             isArabic ? 'فوز 🟢' : 'Win 🟢',
-                            style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -358,10 +358,10 @@ class TeamLeagueFixturesView extends StatelessWidget {
                       ),
                       if (match.isConfirmed && match.winnerId == match.awayTeamId)
                         Padding(
-                          padding: EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             isArabic ? 'فوز 🟢' : 'Win 🟢',
-                            style: TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                     ],
@@ -543,7 +543,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
         ),
         child: Text(
           isArabic ? 'النتيجة قيد المراجعة من منشئ الدوري' : 'The league creator is reviewing this result',
-          style: TextStyle(color: Colors.amber, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.amber, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
       );
     }
@@ -560,7 +560,7 @@ class TeamLeagueFixturesView extends StatelessWidget {
         ),
         child: Text(
           isArabic ? 'سجل الفريقان النتيجة - بانتظار اعتماد منشئ الدوري' : 'Both teams submitted a result — awaiting league creator approval',
-          style: TextStyle(color: VSPColors.accent, fontSize: 12.5, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: VSPColors.accent, fontSize: 12.5, fontWeight: FontWeight.bold),
         ),
       );
     }
