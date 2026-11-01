@@ -20,7 +20,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/navigation/offline_error_screen.dart` | player/owner | source reviewed—runtime pending (safe-area + primary action updated) |
 | `lib/core/navigation/root_screen.dart` | player/owner | source updated—runtime pending (profile-loading timeout now starts/cancels with authenticated user identity, including sign-in after RootScreen mount; stale timer cannot mark a different account; runtime transition verification pending) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
-| `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
+| `lib/features/auth/screens/create_account_screen.dart` | player/owner | source updated—runtime pending (safe-area protected scroll layout; decorative glow now uses directional end positioning for RTL/LTR) |
 | `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; forgot-password alignment follows RTL/LTR direction) |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (safe-area form and sticky footer; async location/date callbacks guarded against disposal) |
 || `lib/features/auth/screens/player_onboarding_screen.dart` | auth | source reviewed—runtime pending (scrollable exit dialog; continue/cancel actions minimum 48dp; onboarding content protected by SafeArea) |
@@ -199,7 +199,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/quick_booking/quick_booking_customer_fields.dart` | owner | source reviewed—runtime pending (quick-booking customer fields; phone validation and optional WhatsApp receipt copy pending) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart` | owner | source reviewed—runtime pending (duration-chip gaps now use directional start spacing in both compact and horizontal layouts) |
 | `lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart` | owner | source reviewed—runtime pending (quick-booking payment section; amount/fee data and state-dependent actions pending) |
-| `lib/features/owner/widgets/tournament/cups/owner_cup_card.dart` | owner | source reviewed—runtime pending (owner cup card; tournament status/actions and long-title rendering pending) |
+| `lib/features/owner/widgets/tournament/cups/owner_cup_card.dart` | owner | source updated—runtime pending (team avatar stack now uses directional start positioning; tournament status/actions and long-title rendering still need runtime review) |
 | `lib/features/owner/widgets/tournament/cups/owner_cup_empty_view.dart` | owner | source reviewed—runtime pending (owner cup empty state; neutral icon styling and CTA relevance pending) |
 | `lib/features/owner/widgets/tournament/draw_room_matchup_tile.dart` | owner | source reviewed—runtime pending (draw-room matchup tile; team-name overflow and draw-state behavior pending) |
 | `lib/features/owner/widgets/tournament/tournament_manual_team_options_section.dart` | owner | source reviewed—runtime pending (section labels and color-option gaps now use directional start/end geometry) |
@@ -774,3 +774,51 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - Owner onboarding Instapay input now uses the email keyboard; bank IBAN input explicitly uses LTR direction so Arabic locale does not reverse or misplace the identifier.
 - The 35 registered paths that were unchanged at the time of the literal-copy sweep were checked for direct hardcoded Text/placeholder/tooltip candidates. The only candidates were three payout-format examples (`username@instapay`, phone format, and IBAN prefix), not user-facing copy; the two identifier fields are now explicitly LTR. One registered path has since changed, leaving 34 registered paths currently unchanged.
 - This is source-level bilingual-input evidence only. Keyboard display, cursor movement, paste behavior, and Arabic/English runtime rendering remain pending.
+
+
+## Full-file re-scan of the 34 paths unchanged by PR #35 — 2026-11-01
+
+All 34 unique registered paths not changed by PR #35 were re-fetched from `uxlp-44-implementation` and scanned as complete files for raw Flutter palette references (`Colors.black/white/transparent/amber/redAccent/blue`), physical `left:`/`right:` positioning, literal numeric `Duration` values, modal entry-point calls, SafeArea markers, TextStyle declarations, and direct V2-token imports.
+
+- Raw palette references: **0** across these 34 files.
+- Physical positioning: four occurrences across three files. The create-account decorative glow and owner-cup team avatar stack were changed to `PositionedDirectional`; the two fixed positions in `VSPAiSparkIcon` are intentional brand-mark geometry and are documented as non-directional.
+- Numeric Duration heuristic: 11 matches, all `Duration(seconds: 1)` date-boundary comparisons in `owner_pro_insights_view.dart`; none is an animation/motion duration.
+- Modal entry-point calls: 0 in this unchanged-path subset. This is not a claim that the app has no modal routes; their callers are registered and reviewed separately.
+- These are source-level heuristic results only. They do not establish runtime layout, contrast, keyboard, locale, or state passes. The remaining 304 changed registered paths have diff-level scan evidence and targeted full-file reviews, not a current full-file scan of all 338 paths.
+
+Paths re-fetched and scanned:
+- `lib/features/auth/screens/create_account_screen.dart`
+- `lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart`
+- `lib/features/owner/widgets/booking_sheet/booking_sheet_details_form.dart`
+- `lib/features/owner/widgets/booking_sheet/booking_sheet_header.dart`
+- `lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart`
+- `lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart`
+- `lib/core/widgets/shimmer_image.dart`
+- `lib/features/auth/widgets/social_auth_buttons_row.dart`
+- `lib/features/owner/widgets/dashboard/insights/insights_booking_types_card.dart`
+- `lib/features/owner/widgets/dashboard/owner_pro_insights_view.dart`
+- `lib/features/owner/widgets/documentation/doc_step_commercial_register.dart`
+- `lib/features/owner/widgets/documentation/doc_step_national_id.dart`
+- `lib/features/owner/widgets/documentation/doc_step_tax_card.dart`
+- `lib/features/owner/widgets/tournament/cups/owner_cup_card.dart`
+- `lib/features/owner/widgets/tournament/cups/owner_cup_empty_view.dart`
+- `lib/features/owner/widgets/tournament/tournament_overview_card.dart`
+- `lib/features/player/widgets/chat/chat_app_bar_title.dart`
+- `lib/features/player/widgets/my_team/team_profile_form.dart`
+- `lib/features/player/widgets/stadium_details/stadium_pitch_conditions_tab.dart`
+- `lib/features/player/widgets/team_profile/team_profile_achievements_section.dart`
+- `lib/features/player/widgets/team_profile/team_profile_action_bar.dart`
+- `lib/features/player/widgets/team_profile/team_profile_hero_header.dart`
+- `lib/features/player/widgets/team_profile/team_profile_stats_grid.dart`
+- `lib/features/owner/widgets/inbox/user_search_delegate.dart`
+- `lib/features/owner/widgets/tournament/cups/cups_filter_dropdowns.dart`
+- `lib/widgets/refund_notice_widget.dart`
+- `lib/shared/widgets/vsp_ai_spark_icon.dart`
+- `lib/shared/widgets/vsp_auth_header.dart`
+- `lib/core/ui/components/vsp_menu_item.dart`
+- `lib/core/ui/components/vsp_section_title.dart`
+- `lib/features/player/widgets/create_team_logo_picker_row.dart`
+- `lib/features/player/widgets/vsp_1v1_trophy_badge.dart`
+- `lib/features/owner/widgets/radial_tick_gauge_painter.dart`
+- `lib/features/player/widgets/championship_details/championship_details_header.dart`
+
