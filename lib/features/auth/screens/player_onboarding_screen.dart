@@ -347,9 +347,12 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
         if (_isFetchingLocation)
           const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
         else
-          GestureDetector(
-            onTap: _fetchAutoLocation,
-            child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
+          IconButton(
+            onPressed: _fetchAutoLocation,
+            tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'تحديد الموقع تلقائياً' : 'Detect location automatically',
+            constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+            padding: EdgeInsets.zero,
+            icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
           ),
       ],
     );
