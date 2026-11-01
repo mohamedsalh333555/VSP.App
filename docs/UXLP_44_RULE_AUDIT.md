@@ -1194,3 +1194,7 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - **Rule 10 — Bilingual visual integrity:** the add-stadium amenities heading now uses `AlignmentDirectional.centerStart` rather than a locale-conditional physical alignment. Runtime RTL/LTR rendering remains pending.
+
+
+- **Rules 9, 10, 29, and 36 — save feedback, bilingual copy, and duplicate-safe recovery:** owner stadium persistence and profile synchronization now have separate failure handling so a successful DB write is not misreported as a failed stadium save; default notes and blocked/auth-expired messages are bilingual.
+- **Rules 29, 36, and 43 — payment callback integrity and failure handling:** callback URLs are parsed by HTTP(S) URI host/path/query rather than substring matching. Untrusted hosts, path-only status URLs, and `standalone` text no longer imply payment success; only explicit success/failure parameters on trusted payment hosts are acted upon. Provider compatibility and DB polling behavior remain to be validated on device; this source change alone does not establish end-to-end payment correctness.
