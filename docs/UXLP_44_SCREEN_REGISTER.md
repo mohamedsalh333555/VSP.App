@@ -463,3 +463,10 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/collective_match_invite_sheet.dart` | Collective booking/invite bottom sheet: 48dp close/counter controls; localized close tooltip |
 | `lib/features/player/widgets/championship_details/championship_governorate_dialog.dart` | Tournament governorate confirmation: primary action now 48dp |
 | `lib/features/owner/widgets/account/owner_payout_otp_dialog.dart` | Payout password verification sheet: cancel action 48dp; scroll and keyboard behavior retained |
+
+
+## Grouped narrow-screen and touch-target remediation — 2026-11-01
+
+- `lib/features/owner/widgets/tournament/wizard/tournament_step_indicator.dart`: step labels are constrained to one third of the available width, centered, and limited to two lines with ellipsis. This prevents long Arabic/English step names from expanding the three-step row on narrow screens. Source commit: `b2f29f2d6814c17d2a426e2869b0acf0e0e398ce`.
+- `lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart`: the ongoing-match Extend (+30m) action no longer uses a shrink-wrapped tap target; its minimum interactive size is 48×48dp. Source commit: `052d25e47478a78b69a2eb82102d60b623c47cea`.
+- These are source-level remediations only. Per the agreed batch process, no test/analyzer/CI/device pass or APK build was run. Both surfaces remain runtime pending until the consolidated validation stage.
