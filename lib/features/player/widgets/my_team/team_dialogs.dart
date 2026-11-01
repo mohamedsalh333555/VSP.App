@@ -85,7 +85,7 @@ class TeamDialogs {
                         SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error),
                       );
                     } finally {
-                      onSavingFinished();
+                      if (context.mounted) onSavingFinished();
                     }
                   },
                 ),
