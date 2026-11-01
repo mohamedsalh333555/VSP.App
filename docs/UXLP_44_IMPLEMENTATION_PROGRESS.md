@@ -750,3 +750,5 @@ Source review found four material conflicts in `terms_and_privacy_screen.dart`, 
 - After the create request returns, the ticket detail route is opened only if the initiating account is still active. Failure feedback is likewise suppressed when it belongs to an account that is no longer active.
 - No ticket permissions, ownership policy, categories, priority rules, or backend behavior were changed. Source-only; no analyzer, CI, automated tests, runtime checks, migrations, or APK build were run.
 - Commits: `1326be01e5c53fde8fffcbe32cd72a59583221ad`, `55681d98ba7692eec25cb5308de65d090184c6ff`.
+
+- Follow-up hardening: the sheet now checks its own mounted state before showing account-change feedback, and verifies the parent screen is still mounted before reading its auth provider. Commit: `270334818da6203dadb452a48d0190e97334e133`.
