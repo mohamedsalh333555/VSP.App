@@ -56,7 +56,7 @@ class QuickPhoneBookingModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (_) => QuickPhoneBookingModal(
         stadium: stadium,
         date: date,
@@ -322,7 +322,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
               Text(
                 isAr ? 'حجز يدوي' : 'Manual Booking',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: VSPColors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                   letterSpacing: -0.3,
@@ -341,7 +341,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
                       widget.stadium.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: const TextStyle(color: VSPColors.white70, fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ),
                   const SizedBox(width: 6),
