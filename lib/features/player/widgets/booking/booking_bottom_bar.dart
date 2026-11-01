@@ -146,7 +146,10 @@ class BookingBottomBar extends StatelessWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
                         icon: const Icon(Iconsax.minus_copy, size: 16, color: Colors.white),
                         onPressed: initialPlayersCount > 1
                             ? () {
@@ -163,7 +166,10 @@ class BookingBottomBar extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
                         icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
                         onPressed: initialPlayersCount < maxPlayersCount
                             ? () {
