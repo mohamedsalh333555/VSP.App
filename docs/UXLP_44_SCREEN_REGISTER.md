@@ -401,3 +401,8 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 | `lib/features/auth/widgets/signup/signup_password_strength_bar.dart` | auth | source reviewed—runtime pending (strength progress exposes accessible label and percentage semantics) |
 | `lib/features/auth/widgets/verify_email/verify_email_header.dart` | auth | source reviewed—runtime pending (masked email is LTR, centered, and bounded for narrow screens) |
+
+
+### Newly inventoried owner upgrade surface — 2026-11-01
+
+| `lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart` | owner | source reviewed—runtime pending (upgrade action is focusable, at least 48dp high, and supports two-line localized copy) |
