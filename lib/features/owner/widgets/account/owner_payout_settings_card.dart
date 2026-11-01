@@ -23,7 +23,7 @@ class OwnerPayoutSettingsCard extends StatefulWidget {
 class _OwnerPayoutSettingsCardState extends State<OwnerPayoutSettingsCard> {
   Widget _buildInputLabel(BuildContext context, String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
+      padding: const EdgeInsetsDirectional.only(bottom: VSPSpacing.xs, start: 4),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
