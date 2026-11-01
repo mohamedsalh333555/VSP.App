@@ -68,6 +68,7 @@ class PendingBookingCard extends StatelessWidget {
                     if (initiatingUserId == null) return;
                     final confirmed = await showDialog<bool>(
                       context: context,
+      useSafeArea: true,
                       builder: (dialogContext) => AlertDialog(
                         scrollable: true,
                         backgroundColor: VSPColors.surface,
@@ -84,7 +85,7 @@ class PendingBookingCard extends StatelessWidget {
                             onPressed: () => Navigator.pop(dialogContext, true),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: VSPColors.error,
-                              foregroundColor: Colors.white,
+                              foregroundColor: VSPColors.white,
                             ),
                             child: Text(isArabic ? 'تأكيد الإلغاء' : 'Confirm cancellation'),
                           ),
@@ -233,10 +234,10 @@ class PendingBookingCard extends StatelessWidget {
                       );
                     }
                   },
-                  icon: const Icon(Iconsax.refresh_copy, size: 14, color: Colors.white),
+                  icon: const Icon(Iconsax.refresh_copy, size: 14, color: VSPColors.white),
                   label: Text(
                     isArabic ? 'استعلم ' : 'Check Status ',
-                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.surfaceAlt,
@@ -299,10 +300,10 @@ class PendingBookingCard extends StatelessWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Iconsax.card_copy, size: 14, color: Colors.black),
+                  icon: const Icon(Iconsax.card_copy, size: 14, color: VSPColors.black),
                   label: Text(
                     isArabic ? 'استكمل الدفع ' : 'Resume Checkout ',
-                    style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: VSPColors.black, fontSize: 11.5, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
