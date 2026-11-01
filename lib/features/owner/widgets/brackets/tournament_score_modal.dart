@@ -60,13 +60,10 @@ void showTournamentScoreModal(
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
-          maxHeight: (MediaQuery.of(sheetContext).size.height -
-                  MediaQuery.of(sheetContext).viewInsets.bottom -
-                  MediaQuery.of(sheetContext).padding.top -
-                  MediaQuery.of(sheetContext).padding.bottom)
-              .clamp(240.0, MediaQuery.of(sheetContext).size.height)
-              .toDouble() *
-              0.92,
+          // The scroll-controlled modal route already applies keyboard
+          // and system insets. This is only a preferred height cap; the route's
+          // parent constraints determine the actual available viewport.
+          maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.92,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.background,
@@ -383,9 +380,7 @@ void showTournamentScoreModal(
                         20,
                         12,
                         20,
-                        MediaQuery.of(sheetContext).padding.bottom +
-                            MediaQuery.of(sheetContext).viewInsets.bottom +
-                            16,
+                        MediaQuery.paddingOf(sheetContext).bottom + 16,
                       ),
                       decoration: const BoxDecoration(
                         border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
