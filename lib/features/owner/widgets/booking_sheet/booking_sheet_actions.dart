@@ -111,18 +111,33 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
               ),
               onPressed: () async {
+                final initiatingOwnerId =
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id;
+                if (initiatingOwnerId == null || initiatingOwnerId != booking.ownerId) {
+                  return;
+                }
                 final pickedDate = await showDatePicker(
                   context: context,
                   initialDate: booking.startTime.add(const Duration(days: 1)),
                   firstDate: DateTime.now(),
                   lastDate: DateTime.now().add(const Duration(days: 60)),
                 );
-                if (pickedDate == null || !context.mounted) return;
+                if (pickedDate == null ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
                 final pickedTime = await showTimePicker(
                   context: context,
                   initialTime: TimeOfDay.fromDateTime(booking.startTime),
                 );
-                if (pickedTime == null || !context.mounted) return;
+                if (pickedTime == null ||
+                    !context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
                 final newStart = DateTime(
                   pickedDate.year,
                   pickedDate.month,
@@ -139,7 +154,11 @@ class UpcomingOnlinePaidActions extends StatelessWidget {
                   newStartTime: newStart,
                   newEndTime: newEnd,
                 );
-                if (!context.mounted) return;
+                if (!context.mounted ||
+                    Provider.of<AuthProvider>(context, listen: false).currentUser?.id !=
+                        initiatingOwnerId) {
+                  return;
+                }
                 if (ok) {
                   VSPFeedback.showSuccess(
                     context,
