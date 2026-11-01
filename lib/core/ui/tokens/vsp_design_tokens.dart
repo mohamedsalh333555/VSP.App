@@ -50,11 +50,19 @@ abstract final class VSPDSColors {
   static const Color white08 = Color(0x14FFFFFF);
   static const Color white24 = Color(0x3DFFFFFF);
   static const Color white38 = Color(0x61FFFFFF);
+  static const Color white02 = Color(0x05FFFFFF);
+  static const Color white04 = Color(0x0AFFFFFF);
+  static const Color white06 = Color(0x0FFFFFFF);
+  static const Color white50 = Color(0x80FFFFFF);
+  static const Color white54 = Color(0x8AFFFFFF);
 
+  static const Color black15 = Color(0x26000000);
   static const Color black26 = Color(0x42000000);
   static const Color black45 = Color(0x73000000);
   static const Color black54 = Color(0x8A000000);
   static const Color black87 = Color(0xDE000000);
+  static const Color black55 = Color(0x8C000000);
+  static const Color black60 = Color(0x99000000);
   static const Color white70 = Color(0xB3FFFFFF);
   static const Color black80 = Color(0xCC000000);
 
