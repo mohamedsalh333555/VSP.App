@@ -56,7 +56,7 @@ void showTournamentScoreModal(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: VSPColors.transparent,
     builder: (sheetContext) {
       return Container(
         constraints: BoxConstraints(
@@ -360,7 +360,7 @@ void showTournamentScoreModal(
                             const SizedBox(height: 6),
                             TextField(
                               controller: reasonController,
-                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              style: const TextStyle(color: VSPColors.white, fontSize: 13),
                               decoration: InputDecoration(
                                 hintText: isArabic
                                     ? 'مثال: تصحيح خطأ كتابي في نتيجة المباراة'
