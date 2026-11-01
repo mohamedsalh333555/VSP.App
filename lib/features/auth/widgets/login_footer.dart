@@ -10,7 +10,7 @@ class LoginFooter extends StatelessWidget {
   void _showRoleSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (_) => const _RoleSelectionSheet(),
     );
@@ -155,7 +155,7 @@ class _RoleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: VSPColors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(VSPRadius.card),
         onTap: onTap,
