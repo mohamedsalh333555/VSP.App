@@ -1720,3 +1720,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Rewrote the `SignupDateOfBirthField` wrapper with balanced Tooltip/Material/InkWell/Container nesting and bounded the selected date to one line. The accessible tap target and original date display/callback are preserved.
 - Follow-up source commit: `524148fc4ee6925b06b422ad600d0f2deb8b7c22`. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Login signup-role sheet accessibility and localization — 2026-11-01
+
+- `lib/features/auth/widgets/login_footer.dart`: the sign-up entry is now a wrapping, 48dp-minimum `TextButton` instead of a bare gesture; the role-selection bottom sheet now respects bottom safe area and scrolls on short screens; role title, subtitle, and both role descriptions now have Arabic and English copy; the trailing role arrow mirrors in RTL; role cards use focusable `InkWell` targets with an 80dp minimum height.
+- Existing routes and player/owner role destinations are unchanged. Source commit: `b3cd4f1cf2dcd43283037aa92e6820230b1d0f98`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
