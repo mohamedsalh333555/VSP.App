@@ -680,3 +680,6 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 
 
 - `lib/features/owner/widgets/brackets/tournament_round_schedule_calculator.dart`: a round is now locked when any match has a recorded home/away score or winner, or its scheduled kickoff time has passed; the optional `now` argument keeps the time boundary deterministic for validation.
+
+
+- `lib/features/player/screens/manage_tournament_roster_screen.dart`: initial roster loading now uses the shared bilingual `VSPStateView`; the existing retryable load-error and empty/loaded roster branches are preserved.
