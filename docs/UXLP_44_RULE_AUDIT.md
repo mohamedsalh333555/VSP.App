@@ -1033,3 +1033,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart`: the full-screen gallery's temporary `PageController` is now disposed when the dialog closes (previously allocated for each opening and never disposed); the top back action hit area is raised from 40dp to 48dp. Image paging, zoom, hero transition, and navigation destination are unchanged.
 - Source commit: `3d3a696719a7e939b5eee8ec8c7977747ed71618`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Owner inbox preview overflow protection — 2026-11-01
+
+- `lib/features/owner/widgets/inbox/owner_chat_item_card.dart`: the conversation time label is constrained to a 76dp maximum width and one line; the latest-message preview is also one line with ellipsis. This prevents long localized timestamps/previews from pushing the unread badge or shrinking the conversation title on narrow devices.
+- Source commit: `a5f8310c26dbd44238ced22b2c57e002fd40bd79`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
