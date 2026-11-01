@@ -2129,3 +2129,8 @@ Read-only inspection was performed against the connected production VSP project 
 
 
 - Follow-up hardening: both payment pollers now carry a generation token checked after each awaited status read. Replacing/cancelling a poll or releasing checkout invalidates outstanding reads, preventing a late response from a previous checkout from firing its success callback. Code commit: `2ab5ead3671871e3e12a80a513209749fd7fc7ff`. Runtime cancellation/race validation remains pending.
+
+
+## Owner championship refresh ordering — 2026-11-01
+
+- The owner dashboard could receive overlapping championship refreshes from initial scope setup, pull-to-refresh, home visibility, and retry. A request-generation guard now prevents an older fetch/error from overwriting the latest result, and owner-scope changes invalidate outstanding requests. Code commit: `56dc2ef543c7991539a77c6b47f8742b939c42f2`. No tests/analyzer/CI/device/APK run.
