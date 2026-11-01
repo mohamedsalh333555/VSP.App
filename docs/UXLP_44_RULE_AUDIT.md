@@ -998,3 +998,9 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 - **Rules 5, 11, 27, 30, 33, and 34:** sign-up action is keyboard accessible with a 48dp minimum target; role sheet is safe-area aware and scrollable; role copy is bilingual; role-card actions are focusable with larger targets; directional arrow mirrors in RTL.
 - Source commit: `b3cd4f1cf2dcd43283037aa92e6820230b1d0f98`. Device/keyboard verification remains pending; no tests or build were run.
+
+
+## Signup governorate display localization — 2026-11-01
+
+- `lib/features/auth/widgets/signup_governorate_dropdown.dart`: dropdown values remain canonical English identifiers for AuthProvider/database consistency, while visible option labels now use `EgyptGovernorates.getLocalizedName` according to the active locale and are bounded to one line. This fixes English governorate names appearing in Arabic signup without changing stored values.
+- Source commit: `f30af5466d6d7c1fe073cde0b7c43b72e8b7589e`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
