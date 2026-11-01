@@ -2013,3 +2013,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 - Added the canonical `RefundBadgeWidget` and `RefundNoticeWidget` in `lib/widgets/` to the embedded-component register. The player feature-path files are compatibility exports, not separate UI implementations. Source review confirms localized status/ETA/amount copy; actual refund lifecycle and runtime amount consistency remain pending.
 - No application source change was required. No tests, analyzer, CI, runtime checks, or APK build were run.
+
+
+## Stadium reviews stale-data recovery — 2026-11-01
+
+- Follow-up to `stadium_ratings_tab.dart`: when a review stream refresh fails after reviews have loaded, the list now retains the last loaded reviews and shows a localized stale-data warning with a 48dp Retry action. Retry recreates the stream; it does not clear the visible review snapshot first.
+- No review submission, rating calculation, or database query behavior changed. Source-only; runtime/device verification remains pending. No tests, analyzer, CI, or APK build were run. Code commit: `bbb50fe27acf70b0e87f11fb0614616105a30e3a`.
