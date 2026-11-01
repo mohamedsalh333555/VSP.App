@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
  left: 24.0, 
  right: 24.0, 
  top: 0, 
- bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
+ bottom: MediaQuery.viewInsetsOf(context).bottom + 24,
  ),
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
  
   const SizedBox(height: 12),
   Align(
-  alignment: Alignment.centerRight,
+  alignment: AlignmentDirectional.centerEnd,
   child: TextButton(
   onPressed: () => ForgotPasswordDialog.show(context),
   child: Text(
