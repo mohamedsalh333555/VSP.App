@@ -20,7 +20,7 @@ class PaymentBackgroundGlow extends StatelessWidget {
         ),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-          child: Container(color: Colors.transparent),
+          child: Container(color: VSPColors.transparent),
         ),
       ),
     );
