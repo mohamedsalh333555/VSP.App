@@ -2099,3 +2099,10 @@ Read-only inspection was performed against the connected production VSP project 
 ## Team create/update post-write recovery — 2026-11-01
 
 - `MyTeamController.handleCreateTeam` previously awaited `reloadTeam()` inside the same try block as `createTeam`; a refresh failure after a successful DB insert fell into the generic error path and could prompt a duplicate team creation. Refresh now has a separate recovery boundary and the user receives a truthful localized message that the team exists but the view needs reopening. Create/update also stop before database writes when the user selected a logo but its upload returned no URL, avoiding silent success with a missing requested logo. Code commit: `36fbb8c1aab659a0ac93afb36a4488ecac53b02e`. No tests/analyzer/CI/device/APK run.
+
+
+## Password-strength scoring and owner-dashboard request ordering — 2026-11-01
+
+- `SignupValidationService.calculatePasswordStrength` previously awarded the same 0.2 points twice for `password.length >= 8`, while lowercase letters had no independent contribution. The duplicate condition is now a lowercase-letter check, so the five criteria are distinct and the score remains bounded by 1.0. Code commit: `df07c01dca6597173cef41bf26fecb1eea1fe395`.
+- `OwnerDashboardController.loadDashboardData` now discards stale success/error completions when a newer filter request has started. Disposal invalidates pending requests and prevents late asynchronous completions from notifying listeners. Code commit: `d0272b1fe31f2dc09633d229b502e75148b4e1f6`.
+- No analyzer, tests, CI, runtime/device checks, or APK build were run.
