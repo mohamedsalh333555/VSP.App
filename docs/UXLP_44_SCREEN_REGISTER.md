@@ -18,12 +18,12 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/core/navigation/root_screen.dart` | player/owner | source reviewed—runtime pending (maintenance + forced-update dialogs scroll-safe; offline banner overlay still needs runtime check) |
 | `lib/core/navigation/suspended_account_screen.dart` | player/owner | source reviewed—runtime pending (system safe-area wrapper applied to screen body) |
 | `lib/features/auth/screens/create_account_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected scroll layout) |
-| `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware safe-area scroll layout) |
+| `lib/features/auth/screens/login_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; forgot-password alignment follows RTL/LTR direction) |
 | `lib/features/auth/screens/owner_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (safe-area form and sticky footer; async location/date callbacks guarded against disposal) |
-| `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback now guard against disposal) |
+| `lib/features/auth/screens/player_onboarding_screen.dart` | player/owner | source reviewed—runtime pending (async location lookup and post-frame callback guard against disposal; GPS auto-detect hit target 48dp; form and fixed CTA respect system insets) |
 | `lib/features/auth/screens/select_role_screen.dart` | player/owner | source reviewed—runtime pending (localized, scroll-safe, accessible role cards) |
 | `lib/features/auth/screens/set_new_password_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected form scroll layout) |
-| `lib/features/auth/screens/signup_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware safe-area scroll layout) |
+| `lib/features/auth/screens/signup_screen.dart` | player/owner | source reviewed—runtime pending (keyboard-aware SafeArea scroll layout; removed duplicate bottom system inset; GPS auto-detect hit target 48dp) |
 | `lib/features/auth/screens/splash_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected) |
 | `lib/features/auth/screens/verify_email_screen.dart` | player/owner | source reviewed—runtime pending (safe-area protected OTP flow with scrollable content) |
 | `lib/features/auth/screens/welcome_screen.dart` | player/owner | source reviewed—runtime pending (top and bottom controls individually safe-area protected) |
@@ -328,3 +328,5 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart` | player | source reviewed—runtime pending (server-confirmed roster presentation, localized player-name fallback, and empty state; avatar loading/network failures render the player's initial) |
 | `lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart` | player | source reviewed—runtime pending (standings loading/error/empty states; uses parent retry and preserves last data with stale warning) |
 
+
+| `lib/features/auth/widgets/owner_onboarding/owner_onboarding_location_section.dart` | owner | source reviewed—runtime pending (governorate selector; GPS auto-detect hit target 48dp with localized tooltip) |
