@@ -204,6 +204,16 @@ class _MatchResultModalState extends State<MatchResultModal> {
        Navigator.of(context).pop();
      } else {
        setState(() => _isSubmitting = false);
+       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text(
+             isArabic
+                 ? 'تعذر إرسال النتيجة. تحقق من البيانات وحاول مرة أخرى.'
+                 : 'Could not submit the result. Check the details and try again.',
+           ),
+         ),
+       );
      }
    } catch (_) {
      if (!mounted) return;
