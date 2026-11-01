@@ -206,7 +206,7 @@ class OwnerTimeSlotRow extends StatelessWidget {
 
   Future<void> _handleLongPress(BuildContext context) async {
     if (slot['type'] == 'empty') {
-      final now = DateTime.now();
+      final now = VSPTimeService.now;
       final DateTime? slotTime = slot['slotTime'] as DateTime?;
       final bool isToday = selectedDayIndex == 0;
       final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
