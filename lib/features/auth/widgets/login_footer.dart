@@ -223,6 +223,7 @@ class _RoleCard extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
     );
   }
