@@ -37,15 +37,20 @@ class OwnerScheduleSlotsBuilder {
   }) {
     List<Map<String, dynamic>> slots = [];
     try {
-      final int startH = AppDateFormatter.parseTimeToHour(selectedStadium.openingTime);
-      final int endH = AppDateFormatter.parseTimeToHour(selectedStadium.closingTime);
+      final int startMinutes =
+          AppDateFormatter.parseTimeToMinutes(selectedStadium.openingTime);
+      final int closingMinutes =
+          AppDateFormatter.parseTimeToMinutes(selectedStadium.closingTime);
+      final int endMinutes = closingMinutes <= startMinutes
+          ? closingMinutes + 1440
+          : closingMinutes;
       final breakIntervals = <List<int>>[];
       final features = selectedStadium.features;
-      final isOvernightSchedule = startH >= endH;
+      final isOvernightSchedule = endMinutes > 1440;
 
       int toOperationalMinutes(String value) {
         final minutes = AppDateFormatter.parseTimeToMinutes(value);
-        return isOvernightSchedule && minutes < startH * 60
+        return isOvernightSchedule && minutes < startMinutes
             ? minutes + 1440
             : minutes;
       }
@@ -77,34 +82,30 @@ class OwnerScheduleSlotsBuilder {
         }
       }
 
-      int currentH = startH;
-      int currentM = 0;
+      var currentOperationalMinutes = startMinutes;
       int safeguard = 0;
-      bool is24h = (startH == endH && safeguard == 0);
 
       final isArSlot = Localizations.localeOf(context).languageCode == 'ar';
-      while (safeguard < 48) {
-        final timeStr = AppDateFormatter.formatHourMin(currentH, currentM, isArSlot);
-        if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
-
-        final rawSlotStart = currentH * 60 + currentM;
-        final currentSlotStart = isOvernightSchedule && rawSlotStart < startH * 60
-            ? rawSlotStart + 1440
-            : rawSlotStart;
+      while (safeguard < 48 && currentOperationalMinutes + 30 <= endMinutes) {
+        final currentSlotStart = currentOperationalMinutes;
         final currentSlotEnd = currentSlotStart + 30;
+        final currentSlotMin = currentSlotStart % 1440;
+        final currentH = currentSlotMin ~/ 60;
+        final currentM = currentSlotMin % 60;
+        final timeStr = AppDateFormatter.formatHourMin(currentH, currentM, isArSlot);
+
         final isBreak = breakIntervals.any(
           (interval) => currentSlotStart < interval[1] && currentSlotEnd > interval[0],
         );
-        bool isOvernightSlot = (startH > endH && (currentH < startH || currentH < 12));
-        DateTime slotDate = selectedDate;
-        if (isOvernightSlot && currentH < 12) {
-          slotDate = selectedDate.add(const Duration(days: 1));
-        }
-        String dayNameStr = DateFormat('EEEE', isArSlot ? 'ar' : 'en').format(slotDate);
-        String nightLabel = isOvernightSlot ? (isArSlot ? 'سهرة $dayNameStr' : '$dayNameStr Night') : '';
+        final dayOffset = currentOperationalMinutes ~/ 1440;
+        final isOvernightSlot = dayOffset > 0;
+        final slotDate = selectedDate.add(Duration(days: dayOffset));
+        final dayNameStr = DateFormat('EEEE', isArSlot ? 'ar' : 'en').format(slotDate);
+        final nightLabel = isOvernightSlot
+            ? (isArSlot ? 'سهرة $dayNameStr' : '$dayNameStr Night')
+            : '';
 
         final slotTime = DateTime(slotDate.year, slotDate.month, slotDate.day, currentH, currentM);
-        final currentSlotMin = currentH * 60 + currentM;
 
         final booking = dayBookings.cast<Booking?>().firstWhere(
           (b) {
@@ -163,11 +164,7 @@ class OwnerScheduleSlotsBuilder {
           });
         }
 
-        currentM += 30;
-        if (currentM >= 60) {
-          currentM = 0;
-          currentH = (currentH + 1) % 24;
-        }
+        currentOperationalMinutes += 30;
         safeguard++;
       }
     } catch (_) {
