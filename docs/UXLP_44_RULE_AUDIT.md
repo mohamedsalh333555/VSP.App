@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and all 327 unique registered Dart screen/surface and embedded-component paths (354 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and all 336 unique registered Dart screen/surface and embedded-component paths (363 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -1182,3 +1182,6 @@ No SQL, grants, RLS policies, migrations, or production data were changed. This 
 
 
 - Player team-profile embedded components and the reschedule action banner are now explicitly registered. Source review confirmed the roster section exposes separate loading/error/empty branches and a retry callback; runtime role, data freshness, and action-eligibility verification remains pending.
+
+
+- Owner inbox/ledger/tournament embedded surfaces, player checkout roster list, payment decoration, and shared date-picker step chip are now represented in the component register. The bracket builder helper was excluded from the UI inventory because it does not define a standalone Widget surface. Caller-level runtime checks remain pending.
