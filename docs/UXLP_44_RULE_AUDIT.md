@@ -2,7 +2,7 @@
 
 **Branch:** `uxlp-44-implementation`  
 **Standard:** `docs/UXLP_44_VSP_STANDARD.md`  
-**Scope:** Shared foundations and 338 unique registered Dart paths: 325 visual surfaces within the recursive screen/widget tree plus 13 cross-cutting core/shared foundations (365 register rows, including 27 repeated paths documenting separate embedded-component findings), plus shared navigation and embedded components.  
+**Scope:** Shared foundations and 338 unique registered Dart paths: 325 visual surfaces within the recursive screen/widget tree plus 13 cross-cutting core/shared foundations (366 table data rows, including 28 repeated paths documenting separate embedded-component findings), plus one shared navigation component and separately recorded embedded components.  
 **Audit rule:** This matrix records source evidence only. `source reviewed—runtime pending` is not a pass. No rule is considered complete until the applicable player/owner screens, states, Arabic/English layouts, device conditions, and runtime evidence are recorded.
 
 | # | Rule | Current source status | Evidence / remaining verification |
@@ -1275,3 +1275,13 @@ Read-only advisor and function-source review was performed against project `mktq
 - Auth setting: leaked-password protection is disabled. No in-chat Auth configuration action is available; enable it manually in Supabase Dashboard → Authentication → Settings → Password Security → Leaked Password Protection.
 
 These findings remain open; no runtime tests, SQL migrations, advisor cleanup, CI, build, or APK extraction were run.
+
+
+## Monitored compile failure and source remediation — 2026-11-01
+
+The already-existing GitHub Actions run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423) reached `Build installable test Release APK` and failed during Flutter compilation on commit `6eb50fdd2c4e6879a4c8a95a5a0de1415af4a5aa`. The first actionable Dart diagnostics were:
+
+- `stadium_details_screen.dart:68`: unmatched `Expanded(` because the nested `Material` widget was not closed before the outer `Expanded`.
+- `facility_onboarding_screen.dart:104`: `VSPErrorState` was unresolved because `lib/shared/widgets/vsp_error_state.dart` was not imported.
+
+The current branch now contains the narrow source fixes in commits `82f5e687f019adf986455a4eb56126f3f08902a1` and `8e76fea76083ca6eb3900f37690958cf1eddfffc`. The failed workflow predates both fixes, so it cannot validate them. No build was re-triggered, no artifact was created, and all 44 rule statuses remain runtime-pending.
