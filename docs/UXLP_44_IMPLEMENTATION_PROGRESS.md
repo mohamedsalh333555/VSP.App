@@ -1694,3 +1694,10 @@ Read-only inspection was performed against the connected production VSP project 
 - `lib/features/auth/widgets/verify_email/otp_resend_section.dart`: resend is now a real TextButton with a 48dp minimum target and remains disabled during countdown/resend.
 - `lib/features/auth/widgets/signup/signup_date_of_birth_field.dart`: date-of-birth picker surface now uses a focusable InkWell and localized label tooltip while retaining its existing field height and callback.
 - OTP value distribution, resend timing, age validation, and signup policy are unchanged. Source commits: `d03b89bbc9c303c1e74d95bfb6a722c58fe335af`, `cf7f225de5405ce3fce507e2a64b1777972c1c0e`, `5b283415b6ed5028ed3e36a48188f1b880a2c039`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
+
+
+## Password strength and verification-email presentation — 2026-11-01
+
+- `lib/features/auth/widgets/signup/signup_password_strength_bar.dart`: the password-strength progress indicator now exposes its strength label and percentage through accessibility semantics, in addition to the visible label/bar.
+- `lib/features/auth/widgets/verify_email/verify_email_header.dart`: masked email is now explicitly LTR, centered, and bounded to one line so mixed Arabic/English verification screens do not reorder or overflow the address.
+- Password scoring and email masking are unchanged. Source commits: `f08220df0d53e821f714d877028c71b7aca32b22`, `854d157d9b04296a3fbcbaa44faeb60df7eb93ad`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
