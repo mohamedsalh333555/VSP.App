@@ -1755,3 +1755,9 @@ Read-only inspection was performed against the connected production VSP project 
 
 
 - Follow-up to the owner cash-card controls: the 48dp phone-call icon action now exposes a localized tooltip (`Call player` / `الاتصال باللاعب`) so its purpose is announced and discoverable. Source commit: `f6f2679f84f941bc81ccc47e4064445a61fa8e32`.
+
+
+## Stadium image gallery lifecycle and navigation target — 2026-11-01
+
+- `lib/features/player/widgets/stadium_details/stadium_image_carousel.dart`: the full-screen gallery's temporary `PageController` is now disposed when the dialog closes (previously allocated for each opening and never disposed); the top back action hit area is raised from 40dp to 48dp. Image paging, zoom, hero transition, and navigation destination are unchanged.
+- Source commit: `3d3a696719a7e939b5eee8ec8c7977747ed71618`. No tests, analyzer, CI, runtime checks, migrations, or APK build were run.
