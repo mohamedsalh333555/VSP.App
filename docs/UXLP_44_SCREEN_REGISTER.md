@@ -320,7 +320,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/features/player/widgets/league/team_league_tab.dart` | player | source reviewed—runtime pending (creation/join/payment/stadium/cancel flows bilingual; both modal controllers disposed; join dialog scrolls with keyboard; safe-area handling; configured fee labels; cancellation copy excludes non-refundable administrative fees; raw errors replaced with localized recovery) |
+| `lib/features/player/widgets/league/team_league_tab.dart` | player | source updated—runtime pending (creation/join/payment/stadium/cancel flows bilingual; modal controllers disposed; join dialog keyboard-scrollable; safe-area handling; no-team onboarding displays current player profile photo with fallback; membership/league loading and errors remain runtime pending) |
 
 
 ### Additional payment surfaces inspected
