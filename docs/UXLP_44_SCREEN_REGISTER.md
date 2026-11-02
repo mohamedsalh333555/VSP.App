@@ -852,3 +852,9 @@ Paths re-fetched and scanned:
 
 - **Rules 6, 9, 28, 40:** gallery parsing now ignores non-string values in the optional `features.allImages` metadata instead of converting malformed values (for example null/maps) into invalid image URLs. Valid non-empty strings remain trimmed and de-duplicated.
 - Source-only status; malformed metadata, image loading failures, and live updates still require runtime verification. No pass is claimed.
+
+
+## Upload loading-state localization and accessibility — 2026-11-02
+
+- **Rules 3, 7, 19, 34:** The shared upload card now localizes its in-progress label in Arabic and English and exposes the changing upload status as a live semantic announcement. The upload action remains disabled while `isLoading` is true.
+- Source-level correction only; screen-reader announcement timing, clipping at large text scales, and actual upload lifecycle behavior still require the consolidated runtime review. No runtime pass is claimed.
