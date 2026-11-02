@@ -62,6 +62,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
       height: effectiveSize,
       child: Semantics(
         button: true,
+                excludeSemantics: true,
         label: isRtl ? 'رجوع' : 'Back',
         onTap: () {
           HapticFeedback.lightImpact();
