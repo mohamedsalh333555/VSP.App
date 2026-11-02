@@ -960,3 +960,9 @@ Paths re-fetched and scanned:
 
 - **Rules 3, 7, 34:** The shared upload card's default file-format/size guidance is now localized for Arabic and English and the same resolved copy is used for its accessibility hint. Caller-supplied helper text remains authoritative.
 - Source correction only; verify wrapping and text scaling on narrow devices in both locales. No runtime pass is claimed.
+
+
+## First-open no-team profile image — 2026-11-02
+
+- **Rules 3, 19, 34, 40:** The no-team onboarding state in the Team League tab now displays the signed-in player's current profile image when available, with a neutral avatar fallback for missing/failed images. It no longer uses a generic team/people illustration as the only identity cue on first open; the profile image is labeled for assistive technology.
+- Source correction only; verify authenticated profile changes, missing/broken image URLs, loading, and Arabic/English layout on device. No runtime pass is claimed.
