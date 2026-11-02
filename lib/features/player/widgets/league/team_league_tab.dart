@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/stadium_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/league/team_league_repository.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/ui/vsp_ui.dart';
@@ -983,6 +984,9 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final profileImageUrl = context.select<AuthProvider, String?>(
+      (auth) => auth.profileImageUrl,
+    )?.trim();
     // A failed or unfinished membership query is not equivalent to no team.
     if (widget.isLoadingUserTeam) {
       return VSPStateView(
@@ -1022,7 +1026,41 @@ class _TeamLeagueTabState extends State<TeamLeagueTab> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.people_copy, size: 72, color: VSPColors.accent.withValues(alpha: 0.3)),
+              Semantics(
+                image: true,
+                label: isArabic ? 'صورتك الشخصية' : 'Your profile photo',
+                excludeSemantics: true,
+                child: Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: VSPColors.surface,
+                    border: Border.all(
+                      color: VSPColors.accent.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: profileImageUrl != null && profileImageUrl.isNotEmpty
+                        ? Image.network(
+                            profileImageUrl,
+                            width: 88,
+                            height: 88,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Iconsax.user_copy,
+                              size: 42,
+                              color: VSPColors.textSecondary,
+                            ),
+                          )
+                        : const Icon(
+                            Iconsax.user_copy,
+                            size: 42,
+                            color: VSPColors.textSecondary,
+                          ),
+                  ),
+                ),
+              ),
               const SizedBox(height: VSPSpacing.md),
               Text(isArabic ? 'ليس لديك فريق حالياً' : 'You are not in a team yet', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 6),
