@@ -77,6 +77,10 @@ class VspBottomNavBar extends StatelessWidget {
             child: Semantics(
               button: true,
               selected: isSelected,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onItemTapped(index);
+              },
               label: <String>[
                 item.label,
                 if (item.hasNotification)
