@@ -1432,3 +1432,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 19, 20, 34, 44:** The terms/privacy text recognizers are now owned by a StatefulWidget and disposed with it, avoiding per-build `TapGestureRecognizer` allocations that were never released. The checkbox now exposes a single explicit checked-state/tap semantics node while retaining separate rich-text links for opening the terms and privacy content.
 - Source correction only; verify link-versus-toggle gesture arbitration, checkbox state announcements, focus order, and repeated modal opening/closing on device. No runtime pass is claimed.
+
+
+## Offline-banner live announcement — 2026-11-02
+
+- **Rules 19, 20, 34:** The global offline banner now exposes its localized Arabic/English status as a live region while keeping the visual text out of the accessibility tree duplicate. Screen readers can be informed when connectivity is lost or restored through the banner's visibility transition.
+- Source correction only; verify TalkBack/VoiceOver announcements, repeated connectivity transitions, and focus behavior on device. No runtime pass is claimed.
