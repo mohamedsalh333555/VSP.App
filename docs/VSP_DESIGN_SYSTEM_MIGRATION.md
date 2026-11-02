@@ -334,3 +334,10 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 - The player stadium image carousel now detects replacement image collections in didUpdateWidget, resets its active index, and moves the attached PageController to page zero after the frame. This complements the parent stadium-details stream/gallery refresh and prevents stale pager state when a route reuses its State for another stadium.
 - No booking, payment, authorization, database, or retention behavior changed.
 - Source status only: route reuse, empty/short replacement collections, swipe, image loading, and RTL/LTR runtime behavior remain pending consolidated device validation. No runtime pass is claimed.
+
+
+## Live stadium gallery data-source correction — 2026-11-02
+
+- The stadium details screen now derives its gallery list from the resolved live StreamBuilder stadium snapshot. This removes the stale route-argument-only gallery cache and keeps carousel imagery aligned with the data currently rendered in the details tabs.
+- The existing carousel lifecycle reset handles replacement lists. No business, booking, payment, authorization, database, or retention behavior changed.
+- Runtime verification of realtime image changes, empty/error fallback, route reuse, paging, and RTL/LTR remains pending. No pass is claimed.
