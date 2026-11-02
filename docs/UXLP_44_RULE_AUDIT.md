@@ -1337,3 +1337,8 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 ## Stadium detail tab reset evidence — 2026-11-02
 
 - Rules 9, 38, and 40: route reuse for a different stadium now resets the TabController to the default information tab while replacing the stadium stream. This is source evidence only; verify the indicator, gestures, and stream transition at runtime. Rule statuses remain unchanged.
+
+
+## Stadium gallery metadata validation evidence — 2026-11-02
+
+- Rules 6, 9, 28, and 40: source parser now accepts only string entries from optional `features.allImages`, skipping malformed non-string metadata rather than coercing it into a URL. Runtime validation of malformed records and image fallback remains pending; no pass is claimed.
