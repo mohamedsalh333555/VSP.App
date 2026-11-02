@@ -257,7 +257,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/custom_text_field.dart` | shared | source updated—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
 | `lib/shared/widgets/primary_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton adapter, haptics and debounce documented; call-site/runtime pending) |
 | `lib/shared/widgets/social_auth_button.dart` | shared | source reviewed—runtime pending (V2 semantic button state and 48dp target documented; provider/auth error runtime pending) |
-| `lib/shared/widgets/stadium_card.dart` | shared | source updated—runtime pending (V2 semantic color/radius migration; card tap disabled without callback; location action disabled without coordinates; content-density and locale runtime pending) |
+| `lib/shared/widgets/stadium_card.dart` | shared | source updated—runtime pending (V2 semantic colors/radii; card tap disabled without callback; location disabled without coordinates; localized favorite/edit action labels; content-density and locale runtime pending) |
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
 | `lib/shared/widgets/vsp_back_button.dart` | shared | source updated—runtime pending (48dp hit area and explicit screen-reader tap action; navigation/back-stack runtime pending) |
@@ -966,3 +966,9 @@ Paths re-fetched and scanned:
 
 - **Rules 3, 19, 34, 40:** The no-team onboarding state in the Team League tab now displays the signed-in player's current profile image when available, with a neutral avatar fallback for missing/failed images. It no longer uses a generic team/people illustration as the only identity cue on first open; the profile image is labeled for assistive technology.
 - Source correction only; verify authenticated profile changes, missing/broken image URLs, loading, and Arabic/English layout on device. No runtime pass is claimed.
+
+
+## Stadium-card icon-action labels — 2026-11-02
+
+- **Rules 19, 20, 34:** The owner edit and player favorite icon-only controls now expose localized Arabic/English tooltip labels, clarifying their action for touch and assistive-technology users without changing their callbacks.
+- Source correction only; verify tooltip/semantics announcement and tap behavior on device. No runtime pass is claimed.
