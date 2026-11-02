@@ -930,3 +930,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 34:** The Championships, Teams, and 1vs1 segmented tabs now expose mutually-exclusive selected state and explicit screen-reader activation while avoiding duplicate child semantics. The public `switchToTab` method now rejects negative indices as well as indices beyond the controller length, preventing an invalid `animateTo(-1)` call.
 - Source correction only; verify Arabic/English tab order, selected announcements, activation, and external tab-switch calls on device. No runtime pass is claimed.
+
+
+## Semantic-label de-duplication — 2026-11-02
+
+- **Rules 19, 20, 34:** Explicitly labeled navigation, date-picker, back, position, public-match, and champion-tab controls now exclude descendant semantics from their single parent action node. This prevents visible child text from being merged into or repeated alongside the authored control label while retaining the explicit tap action and selected/disabled metadata.
+- Source correction only; verify final spoken labels and activation on TalkBack/VoiceOver. No runtime pass is claimed.
