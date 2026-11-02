@@ -1360,3 +1360,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 9, 19, 28, 40:** An initial date outside the configured selectable year range is no longer preselected as a valid choice. This prevents the dialog from showing an enabled confirmation for a year that is absent from the year list and outside the caller's allowed range; users must select an in-range date.
 - Source correction only; confirm initial dates below/above bounds and valid in-range dates on device. No runtime pass is claimed.
+
+
+## Bottom-navigation notification semantics — 2026-11-02
+
+- **Rules 19, 20, 34:** The shared bottom-navigation semantics label now announces the presence of a new notification in Arabic and English, in addition to the destination and any warning label. This makes the visual notification dot available to screen-reader users without changing navigation behavior or badge appearance.
+- Source correction only; verify TalkBack announcement order, focus traversal, and selected/unselected icon states on device. No runtime pass is claimed.
