@@ -1390,3 +1390,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 19, 20, 34:** Each selectable football position now exposes its selected state and an explicit screen-reader activation action. The nested InkWell is excluded from semantics to keep one actionable node per position; pointer taps and selection haptics are unchanged.
 - Source correction only; verify selected-state announcements, keyboard navigation, RTL layout, and tap targets with TalkBack/VoiceOver in the consolidated runtime review. No runtime pass is claimed.
+
+
+## Stadium-card interaction affordance correction — 2026-11-02
+
+- **Rules 19, 20, 28:** The shared stadium card now installs its outer tap handler only when a real `onTap` callback is supplied. Previously, a non-null wrapper callback made cards appear interactive and respond to taps even when the caller had no navigation/action callback (notably owner-view cards). Nested location, favorite, and edit controls remain independent.
+- Source correction only; verify player navigation and owner nested actions on device. No runtime pass is claimed.
