@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/models/chat_model.dart';
@@ -70,7 +71,7 @@ class ChatMessageBubble extends StatelessWidget {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Semantics(
-      customActions: isMe
+      customSemanticsActions: isMe
           ? <CustomSemanticsAction, VoidCallback>{
               CustomSemanticsAction(
                 label: isArabic ? 'تعديل الرسالة' : 'Edit message',

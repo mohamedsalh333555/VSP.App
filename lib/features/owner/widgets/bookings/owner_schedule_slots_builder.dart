@@ -71,8 +71,8 @@ class OwnerScheduleSlotsBuilder {
 
       // Legacy compatibility for stadiums with one break stored on the model.
       if (breakIntervals.isEmpty && selectedStadium.isSplitShift) {
-        final startText = selectedStadium.breakStartTime;
-        final endText = selectedStadium.breakEndTime;
+        final startText = selectedStadium.breakStartTime ?? '';
+        final endText = selectedStadium.breakEndTime ?? '';
         if (startText.isNotEmpty && endText.isNotEmpty) {
           final breakStart = toOperationalMinutes(startText);
           final breakEnd = toOperationalMinutes(endText);

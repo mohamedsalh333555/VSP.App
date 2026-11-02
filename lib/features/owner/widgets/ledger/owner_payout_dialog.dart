@@ -69,8 +69,6 @@ class OwnerPayoutDialog {
                 tapTargetSize: MaterialTapTargetSize.padded,
                 backgroundColor: VSPColors.accent,
                 foregroundColor: VSPColors.black,
-                minimumSize: const Size(64, 48),
-                tapTargetSize: MaterialTapTargetSize.padded,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
               ),
               child: Text(

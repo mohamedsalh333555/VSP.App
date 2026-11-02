@@ -152,6 +152,7 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     setState(() {});
     try {
       final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (!mounted) return;
       if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         throw Exception(
@@ -228,6 +229,7 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
     setState(() {});
     try {
       final logoUrl = await _uploadLogoIfSelected(user.uid);
+      if (!mounted) return;
       if (selectedLogo != null && (logoUrl == null || logoUrl.isEmpty)) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         throw Exception(

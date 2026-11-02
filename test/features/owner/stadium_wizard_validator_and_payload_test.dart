@@ -181,6 +181,7 @@ void main() {
       final noImages = StadiumWizardValidator.validateStep2(
         images: [],
         stadiumId: null,
+        isArabic: false,
         uploadPhotoError: 'Upload a photo',
       );
       expect(noImages, equals('Upload a photo'));
@@ -190,6 +191,7 @@ void main() {
           {'url': 'https://example.com/img.jpg', 'isUploading': true}
         ],
         stadiumId: '123',
+        isArabic: false,
         uploadPhotoError: 'Upload a photo',
       );
       expect(uploadingImages, contains('Please wait'));
@@ -199,6 +201,7 @@ void main() {
           {'url': 'https://example.com/img.jpg', 'isUploading': false}
         ],
         stadiumId: null,
+        isArabic: false,
         uploadPhotoError: 'Upload a photo',
       );
       expect(validImages, isNull);

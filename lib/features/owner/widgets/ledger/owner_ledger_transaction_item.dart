@@ -50,7 +50,7 @@ class OwnerLedgerTransactionItem extends StatelessWidget {
     final locale = isAr ? 'ar' : 'en';
     String formattedDate;
     try {
-      formattedDate = DateFormat.yMMMd(locale).add_jm(locale).format(date.toLocal());
+      formattedDate = DateFormat.yMMMd(locale).add_jm().format(date.toLocal());
     } catch (_) {
       formattedDate = DateFormat.yMMMd().add_jm().format(date.toLocal());
     }

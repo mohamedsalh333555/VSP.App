@@ -396,11 +396,6 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     );
   }
 
-  @override
-  void dispose() {
- _phoneController.dispose();
- super.dispose();
- }
 }
 
 

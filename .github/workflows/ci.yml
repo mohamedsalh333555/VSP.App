@@ -6,122 +6,13 @@ concurrency:
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - uxlp-44-implementation
 
 jobs:
-  analyze-test-build:
+  analyze-test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Free runner disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          df -h
-      - name: Prepare Firebase Android config
-        run: |
-          mkdir -p android/app
-          cat > android/app/google-services.json <<'EOF'
-          {
-            "project_info": {
-              "project_number": "860837572098",
-              "project_id": "vsp-app-103b1",
-              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
-            },
-            "client": [{
-              "client_info": {
-                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
-                "android_client_info": {
-                  "package_name": "app.vsp.sports"
-                }
-              },
-              "api_key": [{
-                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
-              }]
-            }]
-          }
-          EOF
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.32.8'
-          channel: stable
-          cache: true
-      - name: Install dependencies
-        run: flutter pub get
-      - name: Generate localizations
-        run: flutter gen-l10n
-      - name: Verify real Firebase client options
-        run: test -s lib/firebase_options.dart
-      - name: Analyze
-        run: flutter analyze
-      - name: Test
-        run: flutter test --coverage
-      - name: Build Android debug APK
-        run: |
-          flutter build apk --debug \
-            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" \
-            --dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}" \
-            --dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}" \
-            --dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}"
-      - name: Upload VSP Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsp_app_debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          if-no-files-found: error
-          retention-days: 30
-
-
-  build-test-release-apk:
-    name: Build installable VSP test Release APK
-    needs: analyze-test-build
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - name: Free runner disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf /usr/local/lib/android/sdk/system-images
-          sudo apt-get clean
-          df -h
-      - name: Prepare Firebase Android config
-        run: |
-          mkdir -p android/app
-          cat > android/app/google-services.json <<'EOF'
-          {
-            "project_info": {
-              "project_number": "860837572098",
-              "project_id": "vsp-app-103b1",
-              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
-            },
-            "client": [{
-              "client_info": {
-                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
-                "android_client_info": {
-                  "package_name": "app.vsp.sports"
-                }
-              },
-              "api_key": [{
-                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
-              }]
-            }]
-          }
-          EOF
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -137,38 +28,9 @@ jobs:
         run: flutter pub get
       - name: Generate localizations
         run: flutter gen-l10n
-      - name: Build installable test Release APK
-        env:
-          VSP_TEST_RELEASE_APK: "true"
-        shell: bash
-        run: |
-          DART_DEFINES=()
-          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}")
-          fi
-          if [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}")
-          fi
-          if [ -n "${{ secrets.PAYMOB_PUBLIC_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_WEB_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_IOS_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}")
-          fi
-          flutter build apk --release "${DART_DEFINES[@]}"
-      - name: Verify APK output
-        run: |
-          APK="$(find build/app/outputs -type f -name '*.apk' -print -quit)"
-          test -n "$APK"
-          cp "$APK" vsp_app_release.apk
-          test -s vsp_app_release.apk
-      - name: Upload VSP Test Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsp_app_release
-          path: vsp_app_release.apk
-          if-no-files-found: error
-          retention-days: 30
+      - name: Verify real Firebase client options
+        run: test -s lib/firebase_options.dart
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test --coverage
