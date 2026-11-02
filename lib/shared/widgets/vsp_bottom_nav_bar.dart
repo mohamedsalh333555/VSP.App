@@ -76,6 +76,7 @@ class VspBottomNavBar extends StatelessWidget {
           return Expanded(
             child: Semantics(
               button: true,
+                excludeSemantics: true,
               selected: isSelected,
               onTap: () {
                 HapticFeedback.lightImpact();
