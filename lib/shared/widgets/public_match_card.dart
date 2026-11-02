@@ -283,6 +283,7 @@ void _manageParticipants(BuildContext context) {
  Widget _buildRawButton({required String label, required Color color, required VoidCallback? onTap, bool isOutlined = false}) {
  return Semantics(
  button: true,
+                excludeSemantics: true,
  enabled: !_isLoading && onTap != null,
  label: label,
  onTap: _isLoading ? null : onTap,
