@@ -437,3 +437,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 19, 20, 34:** Explicitly labeled navigation, date-picker, back, position, public-match, and champion-tab controls now exclude descendant semantics from their single parent action node. This prevents visible child text from being merged into or repeated alongside the authored control label while retaining the explicit tap action and selected/disabled metadata.
 - Source correction only; verify final spoken labels and activation on TalkBack/VoiceOver. No runtime pass is claimed.
+
+
+## Terms-checkbox recognizer lifecycle and semantics — 2026-11-02
+
+- **Rules 19, 20, 34, 44:** The terms/privacy text recognizers are now owned by a StatefulWidget and disposed with it, avoiding per-build `TapGestureRecognizer` allocations that were never released. The checkbox now exposes a single explicit checked-state/tap semantics node while retaining separate rich-text links for opening the terms and privacy content.
+- Source correction only; verify link-versus-toggle gesture arbitration, checkbox state announcements, focus order, and repeated modal opening/closing on device. No runtime pass is claimed.
