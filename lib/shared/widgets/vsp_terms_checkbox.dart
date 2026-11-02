@@ -7,7 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../dialogs/vsp_terms_and_privacy_modal.dart';
 
 /// مربع اختيار الموافقة على الشروط وسياسة الخصوصية مع إمكانية فتح التفاصيل
-class VSPTermsCheckbox extends StatelessWidget {
+class VSPTermsCheckbox extends StatefulWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
   final VoidCallback? onTermsTap;
@@ -26,9 +26,45 @@ class VSPTermsCheckbox extends StatelessWidget {
   }
 
   @override
+  State<VSPTermsCheckbox> createState() => _VSPTermsCheckboxState();
+}
+
+class _VSPTermsCheckboxState extends State<VSPTermsCheckbox> {
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = _openTerms;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = _openTerms;
+  }
+
+  void _openTerms() {
+    if (widget.onTermsTap != null) {
+      widget.onTermsTap!();
+    } else {
+      VSPTermsCheckbox.showTermsModal(context, isOwner: widget.isOwner);
+    }
+  }
+
+  void _toggleValue() {
+    HapticFeedback.selectionClick();
+    widget.onChanged(!widget.value);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final l10n = AppLocalizations.of(context)!;
+    final value = widget.value;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -37,11 +73,11 @@ class VSPTermsCheckbox extends StatelessWidget {
           label: isAr ? 'الموافقة على الشروط والأحكام' : 'Agree to Terms and Conditions',
           button: true,
           checked: value,
+          excludeSemantics: true,
+          onTap: _toggleValue,
           child: InkWell(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onChanged(!value);
-            },
+            excludeFromSemantics: true,
+            onTap: _toggleValue,
             borderRadius: BorderRadius.circular(VSPRadius.md),
             child: SizedBox(
               width: VSPSize.touchTarget,
@@ -74,58 +110,41 @@ class VSPTermsCheckbox extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onChanged(!value);
-            },
+            onTap: _toggleValue,
             child: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: VSPColors.textSecondary,
-                        fontSize: 12.5,
-                        height: 1.4,
-                      ),
-                  children: [
-                    TextSpan(text: l10n.iAgreeTo),
-                    TextSpan(
-                      text: l10n.termsOfService,
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          if (onTermsTap != null) {
-                            onTermsTap!();
-                          } else {
-                            showTermsModal(context, isOwner: isOwner);
-                          }
-                        },
-                      style: const TextStyle(
-                        color: VSPColors.accent,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
-                      ),
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: VSPColors.textSecondary,
+                      fontSize: 12.5,
+                      height: 1.4,
                     ),
-                    TextSpan(text: l10n.and),
-                    TextSpan(
-                      text: l10n.privacyPolicy,
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          if (onTermsTap != null) {
-                            onTermsTap!();
-                          } else {
-                            showTermsModal(context, isOwner: isOwner);
-                          }
-                        },
-                      style: const TextStyle(
-                        color: VSPColors.accent,
-                        fontWeight: FontWeight.bold,
-                        decoration: TextDecoration.underline,
-                      ),
+                children: [
+                  TextSpan(text: l10n.iAgreeTo),
+                  TextSpan(
+                    text: l10n.termsOfService,
+                    recognizer: _termsRecognizer,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
                     ),
-                  ],
-                ),
+                  ),
+                  TextSpan(text: l10n.and),
+                  TextSpan(
+                    text: l10n.privacyPolicy,
+                    recognizer: _privacyRecognizer,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }
