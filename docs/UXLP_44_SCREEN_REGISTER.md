@@ -834,3 +834,9 @@ Paths re-fetched and scanned:
 
 - **Rules 9, 38, 40, 42 — player stadium details / image carousel:** when a reused carousel receives a different image collection, its retained page index is reset to zero after the widget update. This prevents a stale page index from referencing an item outside the replacement collection or continuing to show the prior stadium's image.
 - The reset is guarded by widget lifecycle and PageController attachment checks. This is source-level evidence only; changing stadiums with shorter/empty galleries, image-list replacement during navigation, swipe behavior, and Arabic/English device rendering remain runtime-pending. No pass is claimed.
+
+
+### Live stadium gallery data-source correction — 2026-11-02
+
+- **Rules 9, 28, 38, 40:** the stadium details gallery is now derived from the resolved stadium object in the active StreamBuilder snapshot, the same data source used by the information tabs. A live database update to stadium images can therefore reach the carousel without requiring the route widget argument to be replaced.
+- Source-only status: verify realtime image additions/removals, stream errors and fallback to route data, route reuse, and pager reset on device. No runtime pass is claimed.
