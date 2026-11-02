@@ -846,3 +846,9 @@ Paths re-fetched and scanned:
 
 - **Rules 9, 38, 40:** when the route State is reused for a different stadium ID, the details screen now switches its live stream and resets the selected tab to the default information tab. This avoids carrying navigation state from the previously viewed stadium.
 - Source-only evidence. Verify route reuse, stream replacement, selected-tab indicator, and swipe/tap behavior on device; no runtime pass is claimed.
+
+
+### Stadium gallery metadata validation — 2026-11-02
+
+- **Rules 6, 9, 28, 40:** gallery parsing now ignores non-string values in the optional `features.allImages` metadata instead of converting malformed values (for example null/maps) into invalid image URLs. Valid non-empty strings remain trimmed and de-duplicated.
+- Source-only status; malformed metadata, image loading failures, and live updates still require runtime verification. No pass is claimed.
