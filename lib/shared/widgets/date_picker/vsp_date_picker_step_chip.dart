@@ -33,6 +33,12 @@ class VspDatePickerStepChip extends StatelessWidget {
         button: true,
         selected: isCurrent,
         enabled: isEnabled,
+        onTap: isEnabled
+            ? () {
+                VSPFeedback.triggerTap();
+                onTap();
+              }
+            : null,
         label: value == null ? title : '$title, $value',
         child: InkWell(
         excludeFromSemantics: true,
