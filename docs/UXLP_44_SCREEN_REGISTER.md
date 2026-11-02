@@ -257,7 +257,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/custom_text_field.dart` | shared | source updated—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
 | `lib/shared/widgets/primary_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton adapter, haptics and debounce documented; call-site/runtime pending) |
 | `lib/shared/widgets/social_auth_button.dart` | shared | source reviewed—runtime pending (V2 semantic button state and 48dp target documented; provider/auth error runtime pending) |
-| `lib/shared/widgets/stadium_card.dart` | shared | source reviewed—runtime pending (V2 semantic color/radius migration documented; content-density and locale runtime pending) |
+| `lib/shared/widgets/stadium_card.dart` | shared | source updated—runtime pending (V2 semantic color/radius migration; card tap disabled without callback; location action disabled without coordinates; content-density and locale runtime pending) |
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
 | `lib/shared/widgets/vsp_back_button.dart` | shared | source updated—runtime pending (48dp hit area and explicit screen-reader tap action; navigation/back-stack runtime pending) |
