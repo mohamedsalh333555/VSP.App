@@ -1436,5 +1436,5 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 ## Offline-banner live announcement — 2026-11-02
 
-- **Rules 19, 20, 34:** The global offline banner now exposes its localized Arabic/English status as a live region while keeping the visual text out of the accessibility tree duplicate. Screen readers can be informed when connectivity is lost or restored through the banner's visibility transition.
+- **Rules 19, 20, 34:** The global offline banner now exposes its localized Arabic/English status as a live region while keeping the visual text out of the accessibility tree duplicate. Screen readers are informed when the offline banner appears; no separate recovery announcement is claimed.
 - Source correction only; verify TalkBack/VoiceOver announcements, repeated connectivity transitions, and focus behavior on device. No runtime pass is claimed.
