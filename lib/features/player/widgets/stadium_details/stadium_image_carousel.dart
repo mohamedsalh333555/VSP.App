@@ -35,6 +35,31 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
   }
 
   @override
+  void didUpdateWidget(covariant StadiumImageCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // A reused stadium-details route can receive a different image collection
+    // without recreating this State. Reset the pager so its retained page index
+    // never points beyond the new collection or shows the previous stadium.
+    if (!_sameImages(oldWidget.displayImages, widget.displayImages)) {
+      _currentImageIndex = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_pageController.hasClients) return;
+        _pageController.jumpToPage(0);
+      });
+    }
+  }
+
+  bool _sameImages(List<String> first, List<String> second) {
+    if (identical(first, second)) return true;
+    if (first.length != second.length) return false;
+    for (var index = 0; index < first.length; index++) {
+      if (first[index] != second[index]) return false;
+    }
+    return true;
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
