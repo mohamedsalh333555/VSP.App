@@ -1332,3 +1332,8 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - Rules 9, 28, 38, and 40: the stadium image list is now derived from the resolved live stadium snapshot inside the screen's StreamBuilder, rather than being cached solely from the initial route argument. This makes live image metadata changes available to the carousel.
 - This is source evidence only. Realtime image replacement/removal, stream failure fallback, route reuse, pager reset, and bilingual runtime behavior remain unverified. Rule statuses remain unchanged; no runtime pass is claimed.
+
+
+## Stadium detail tab reset evidence — 2026-11-02
+
+- Rules 9, 38, and 40: route reuse for a different stadium now resets the TabController to the default information tab while replacing the stadium stream. This is source evidence only; verify the indicator, gestures, and stream transition at runtime. Rule statuses remain unchanged.
