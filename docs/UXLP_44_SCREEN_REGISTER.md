@@ -882,3 +882,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 28, 40:** `VspUploadedItemRow` now gives the in-progress state precedence over the presence of a local file or prior thumbnail. While `isUploading` is true it shows a progress indicator, not a success check; the success/delete controls appear only after uploading finishes. This avoids reporting an upload as complete while it is still in flight.
 - Source correction only; verify success, failure, retry, and replacement-upload transitions with real upload responses in the consolidated runtime review. No runtime pass is claimed.
+
+
+## Bottom-navigation accessible activation correction — 2026-11-02
+
+- **Rules 19, 20, 34:** The canonical navigation's parent `Semantics` node now exposes an explicit tap action. Its nested `InkWell` is intentionally excluded from semantics to avoid duplicate nodes, so this restores an actual TalkBack/VoiceOver activation action while preserving pointer taps and haptic feedback. Notification and warning announcements remain included in the same label.
+- Source correction only; verify screen-reader focus and activation on device. No runtime pass is claimed.
