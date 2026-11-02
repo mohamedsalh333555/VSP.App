@@ -912,3 +912,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 28:** The stadium-card location badge is now non-interactive when latitude or longitude is missing, instead of exposing a tappable control that silently does nothing. When coordinates exist, its existing map-launch behavior is unchanged.
 - Source correction only; verify map launch and disabled affordance with valid/missing coordinates on device. No runtime pass is claimed.
+
+
+## Position-selector exclusive-choice semantics — 2026-11-02
+
+- **Rules 19, 20:** Position options now also declare membership in a mutually exclusive choice group, so assistive technology can communicate that only one preferred position is selected at a time.
+- Source correction only; verify group announcements and selection changes on device. No runtime pass is claimed.
