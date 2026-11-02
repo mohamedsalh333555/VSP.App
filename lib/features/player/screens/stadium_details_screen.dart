@@ -65,6 +65,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     if (oldWidget.stadium.id != widget.stadium.id) {
       _stadiumStream =
           StadiumRepository().streamStadiumRaw(widget.stadium.id);
+      // A different stadium starts at the first information tab rather than
+      // inheriting the previous stadium's tab selection.
+      _tabController.index = 0;
     }
   }
 
