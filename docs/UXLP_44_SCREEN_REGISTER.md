@@ -840,3 +840,9 @@ Paths re-fetched and scanned:
 
 - **Rules 9, 28, 38, 40:** the stadium details gallery is now derived from the resolved stadium object in the active StreamBuilder snapshot, the same data source used by the information tabs. A live database update to stadium images can therefore reach the carousel without requiring the route widget argument to be replaced.
 - Source-only status: verify realtime image additions/removals, stream errors and fallback to route data, route reuse, and pager reset on device. No runtime pass is claimed.
+
+
+### Stadium detail tab state reset — 2026-11-02
+
+- **Rules 9, 38, 40:** when the route State is reused for a different stadium ID, the details screen now switches its live stream and resets the selected tab to the default information tab. This avoids carrying navigation state from the previously viewed stadium.
+- Source-only evidence. Verify route reuse, stream replacement, selected-tab indicator, and swipe/tap behavior on device; no runtime pass is claimed.
