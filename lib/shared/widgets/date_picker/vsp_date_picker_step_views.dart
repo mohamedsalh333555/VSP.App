@@ -41,6 +41,10 @@ class VspDatePickerYearStep extends StatelessWidget {
         return Semantics(
           button: true,
           selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onYearSelected(year);
+          },
           label: '$year',
           child: InkWell(
             excludeFromSemantics: true,
@@ -123,6 +127,10 @@ class VspDatePickerMonthStep extends StatelessWidget {
         return Semantics(
           button: true,
           selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onMonthSelected(monthNum);
+          },
           label: monthName,
           child: InkWell(
             excludeFromSemantics: true,
@@ -230,6 +238,10 @@ class VspDatePickerDayStep extends StatelessWidget {
         return Semantics(
           button: true,
           selected: isSelected,
+          onTap: () {
+            VSPFeedback.triggerTap();
+            onDaySelected(day);
+          },
           label: day.toString().padLeft(2, '0'),
           child: InkWell(
             excludeFromSemantics: true,
