@@ -63,6 +63,14 @@ class _VSPBackButtonState extends State<VSPBackButton>
       child: Semantics(
         button: true,
         label: isRtl ? 'رجوع' : 'Back',
+        onTap: () {
+          HapticFeedback.lightImpact();
+          if (widget.onTap != null) {
+            widget.onTap!();
+          } else {
+            Navigator.maybePop(context);
+          }
+        },
         child: Material(
           color: VSPColors.transparent,
           child: InkWell(
