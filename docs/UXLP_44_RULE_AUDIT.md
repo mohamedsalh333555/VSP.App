@@ -1314,3 +1314,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 - The then-35 unchanged registered paths were scanned for literal Text/placeholder/tooltip candidates; only three payout-format examples were found, not untranslated UI copy. The payout identifier fields now render with the intended LTR direction.
 - Keyboard, caret, paste, and bidi runtime checks remain pending. Rule 10 and rule 34 remain source-reviewed/runtime-pending; no pass is claimed.
 - The screen register now marks **62 distinct paths / 63 rows** as `source updated—runtime pending` for this grouped remediation. The global rule matrix remains 39 source-reviewed/runtime-pending and five needs-product-decision; no runtime pass is inferred from the source updates.
+
+
+## Stadium details route-reuse lifecycle correction — 2026-11-02
+
+- **Rules 9, 38, 40, 42 — stadium details:** source now refreshes the stream when a reused screen receives a different stadium ID and rebuilds the image list from current widget metadata. This addresses stale state when navigation reuses the same State object.
+- **Classification:** source updated; runtime pending. The rule statuses remain unchanged until player/owner state coverage, Arabic/English rendering, and device/runtime evidence are recorded. No pass is claimed.
