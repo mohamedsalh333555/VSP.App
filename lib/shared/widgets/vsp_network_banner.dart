@@ -16,6 +16,9 @@ class VSPNetworkBanner extends StatelessWidget {
       valueListenable: ConnectivityService.instance.isOnlineNotifier,
       builder: (context, isOnline, _) {
         final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
+        final message = isArabic
+            ? 'لا يوجد اتصال بالإنترنت — البيانات قد تكون غير محدثة'
+            : 'No internet connection — data may be outdated';
 
         return Stack(
           children: [
@@ -38,7 +41,11 @@ class VSPNetworkBanner extends StatelessWidget {
                       color: Colors.transparent,
                       child: SafeArea(
                         bottom: false,
-                        child: Container(
+                        child: Semantics(
+                          liveRegion: true,
+                          label: message,
+                          excludeSemantics: true,
+                          child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.sm, vertical: VSPDSSpacing.xxs),
                           padding: const EdgeInsets.symmetric(horizontal: VSPDSSpacing.md, vertical: VSPDSSpacing.xs),
                           decoration: BoxDecoration(
@@ -67,15 +74,14 @@ class VSPNetworkBanner extends StatelessWidget {
                               const SizedBox(width: VSPDSSpacing.xs),
                               Expanded(
                                 child: Text(
-                                  isArabic
-                                      ? 'لا يوجد اتصال بالإنترنت — البيانات قد تكون غير محدثة'
-                                      : 'No internet connection — data may be outdated',
+                                  message,
                                   style: VSPDSTypography.bodySmall.copyWith(
                                     color: VSPDSSemanticColors.textPrimary,
                                   ),
                                 ),
                               ),
                             ],
+                          ),
                           ),
                         ),
                       ),
