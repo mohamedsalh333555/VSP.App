@@ -118,7 +118,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (team actions reviewed; Supabase auth ID reads corrected to User.id) |
 | `lib/features/player/widgets/my_team/team_members_section.dart` | player | source reviewed—runtime pending (captain/member trophy badges and remove-member action spacing now use directional insets for RTL/LTR consistency) |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/stadium_details_screen.dart` | player | source updated—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea; missing Material/Expanded closure corrected after monitored compile diagnostic; runtime pending) |
+| `lib/features/player/screens/stadium_details_screen.dart` | player | source updated—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea; route-state reuse now refreshes the stadium stream when the stadium ID changes and rebuilds the image gallery from the new stadium metadata; runtime pending) |
 | `lib/features/player/screens/support_ticket_screen.dart` | player | source updated—runtime pending (reply and closed-ticket footer controls are bottom SafeArea protected; ticket and message streams distinguish loading/error/empty and expose retry) |
 | `lib/features/player/screens/support_tickets_screen.dart` | player | source updated—runtime pending (new-ticket sheet constrains complete padded content including bottom safe-area inside keyboard-safe viewport; scrollable form and single-flight submit; ticket list distinguishes loading/error/empty) (new-ticket sheet no longer double-subtracts keyboard viewInsets; viewport remains scrollable and SafeArea protected) |
 | `lib/features/player/screens/team_dashboard_screen.dart` | player | source reviewed—runtime pending (strict team-membership fetch; account-scoped async refresh; separate loading/error/retry from no-team state) |
@@ -822,3 +822,9 @@ Paths re-fetched and scanned:
 - `lib/features/owner/widgets/radial_tick_gauge_painter.dart`
 - `lib/features/player/widgets/championship_details/championship_details_header.dart`
 
+
+
+### Stadium details route-reuse correction — 2026-11-02
+
+- **Rules 9, 38, 40, 42 — player stadium details:** added `didUpdateWidget` handling so a reused route state switches its live stream when the stadium ID changes and rebuilds the gallery when stadium image metadata changes. This prevents stale stadium data/images from the previously displayed stadium remaining attached to the new route state.
+- This is a source-level lifecycle correction only. Stream transitions, same-ID metadata refresh, tab state, image ordering, Arabic/English layout, and device behavior remain runtime-pending; no pass is claimed.
