@@ -467,3 +467,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 3, 19, 34, 40:** The no-team onboarding state in the Team League tab now displays the signed-in player's current profile image when available, with a neutral avatar fallback for missing/failed images. It no longer uses a generic team/people illustration as the only identity cue on first open; the profile image is labeled for assistive technology.
 - Source correction only; verify authenticated profile changes, missing/broken image URLs, loading, and Arabic/English layout on device. No runtime pass is claimed.
+
+
+## Stadium-card icon-action labels — 2026-11-02
+
+- **Rules 19, 20, 34:** The owner edit and player favorite icon-only controls now expose localized Arabic/English tooltip labels, clarifying their action for touch and assistive-technology users without changing their callbacks.
+- Source correction only; verify tooltip/semantics announcement and tap behavior on device. No runtime pass is claimed.
