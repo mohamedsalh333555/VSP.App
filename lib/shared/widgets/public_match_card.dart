@@ -281,9 +281,15 @@ void _manageParticipants(BuildContext context) {
  Widget _buildDivider() => Container(width: 1, height: 22, color: VSPColors.white10);
 
  Widget _buildRawButton({required String label, required Color color, required VoidCallback? onTap, bool isOutlined = false}) {
- return AbsorbPointer(
+ return Semantics(
+ button: true,
+ enabled: !_isLoading && onTap != null,
+ label: label,
+ onTap: _isLoading ? null : onTap,
+ child: AbsorbPointer(
  absorbing: _isLoading,
  child: GestureDetector(
+ excludeFromSemantics: true,
  onTap: _isLoading ? null : onTap,
  child: Container(
  height: 48.0,
@@ -298,6 +304,7 @@ void _manageParticipants(BuildContext context) {
  child: _isLoading 
  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: VSPColors.black, strokeWidth: 2)) 
  : Text(label, style: TextStyle(color: isOutlined ? color : VSPColors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
+ ),
  ),
  ),
  ),
