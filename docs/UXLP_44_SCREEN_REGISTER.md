@@ -278,7 +278,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_ambient_background.dart` | shared | source updated—runtime pending (shared ambient decoration uses the compatibility token facade; contrast and low-performance rendering pending) |
 | `lib/shared/widgets/vsp_auth_header.dart` | shared | source reviewed—runtime pending (shared auth title/back affordance; parent safe-area and keyboard layout pending) |
 | `lib/shared/widgets/vsp_countdown_timer.dart` | shared | source reviewed—runtime pending (timer stops at zero, cancels on disposal, and recalculates when targetDate changes; locale/large-text runtime pending) |
-| `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | source reviewed—runtime pending (48dp checkbox hit area, checked semantics, and separate terms/privacy link actions; keyboard/focus runtime pending) |
+| `lib/shared/widgets/vsp_terms_checkbox.dart` | shared | source updated—runtime pending (48dp checkbox hit area and explicit checked/tap semantics; terms/privacy recognizers disposed with widget; link/toggle gesture and focus runtime pending) |
 | `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source updated—runtime pending (upload card disables during progress; bilingual live-region progress label; uploaded-item progress takes precedence over success; delete/permission/error behavior still requires runtime review) |
 | `lib/core/ui/components/vsp_menu_item.dart` | shared | source reviewed—runtime pending (canonical V2 menu component; minimum hit area and focus/semantics runtime pending) |
 | `lib/core/ui/components/vsp_section_title.dart` | shared | source reviewed—runtime pending (canonical V2 section heading component; long Arabic/English title wrapping pending) |
