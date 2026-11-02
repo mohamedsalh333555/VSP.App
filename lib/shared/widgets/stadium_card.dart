@@ -31,10 +31,12 @@ class StadiumCard extends StatelessWidget {
  Widget build(BuildContext context) {
  return RepaintBoundary(
  child: GestureDetector(
- onTap: () {
- HapticFeedback.lightImpact();
- onTap?.call();
- },
+ onTap: onTap == null
+     ? null
+     : () {
+         HapticFeedback.lightImpact();
+         onTap!.call();
+       },
  child: Container(
  height: isOwnerView ? 260 : 210,
  decoration: BoxDecoration(
