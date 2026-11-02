@@ -6,14 +6,14 @@ import 'dart:io';
 
 class VspUploadMainCard extends StatelessWidget {
   final String title;
-  final String helper;
+  final String? helper;
   final VoidCallback onTap;
   final bool isLoading;
 
   const VspUploadMainCard({
     super.key,
     required this.title,
-    this.helper = 'JPG, JPEG, PNG less than 10MB',
+    this.helper,
     required this.onTap,
     this.isLoading = false,
   });
@@ -21,12 +21,15 @@ class VspUploadMainCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
+    final helperText = helper ?? (isArabic
+        ? 'JPG، JPEG، PNG بحجم أقل من 10 ميجابايت'
+        : 'JPG, JPEG, PNG less than 10MB');
 
     return Semantics(
       button: true,
       enabled: !isLoading,
       label: title,
-      hint: helper,
+      hint: helperText,
       onTap: isLoading ? null : onTap,
       child: Material(
         color: VSPColors.transparent,
@@ -80,7 +83,8 @@ class VspUploadMainCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    helper,
+                    helperText,
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: VSPColors.textSecondary.withValues(alpha: 0.6),
                         ),
