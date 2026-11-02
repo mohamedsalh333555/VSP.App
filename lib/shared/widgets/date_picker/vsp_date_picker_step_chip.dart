@@ -31,6 +31,7 @@ class VspDatePickerStepChip extends StatelessWidget {
     return Expanded(
       child: Semantics(
         button: true,
+                excludeSemantics: true,
         selected: isCurrent,
         enabled: isEnabled,
         onTap: isEnabled
