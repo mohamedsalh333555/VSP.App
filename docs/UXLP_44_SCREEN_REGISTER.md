@@ -924,3 +924,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 34:** Public-match card action controls now expose a single semantic button node with the correct enabled/disabled state and explicit activation callback. Their nested GestureDetector is excluded from semantics to prevent duplicate controls; visible labels and existing match actions are unchanged.
 - Source correction only; verify TalkBack/VoiceOver announcements and disabled/full/ended/loading action states on device. No runtime pass is claimed.
+
+
+## Champion tabs accessibility and index guard — 2026-11-02
+
+- **Rules 19, 20, 34:** The Championships, Teams, and 1vs1 segmented tabs now expose mutually-exclusive selected state and explicit screen-reader activation while avoiding duplicate child semantics. The public `switchToTab` method now rejects negative indices as well as indices beyond the controller length, preventing an invalid `animateTo(-1)` call.
+- Source correction only; verify Arabic/English tab order, selected announcements, activation, and external tab-switch calls on device. No runtime pass is claimed.
