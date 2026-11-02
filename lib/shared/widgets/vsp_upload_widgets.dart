@@ -166,7 +166,13 @@ class VspUploadedItemRow extends StatelessWidget {
               ],
             ),
           ),
-          if ((thumbnailUrl?.isNotEmpty ?? false) || imageFile != null)
+          if (isUploading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
+            )
+          else if ((thumbnailUrl?.isNotEmpty ?? false) || imageFile != null)
             Row(
               children: [
                 const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
@@ -183,12 +189,6 @@ class VspUploadedItemRow extends StatelessWidget {
                   ),
                 ],
               ],
-            )
-          else if (isUploading)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
             )
           else
             const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),
