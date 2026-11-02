@@ -353,3 +353,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - Optional `features.allImages` values are now type-checked before being added to the image gallery. Non-string metadata is ignored; valid strings retain trimming and de-duplication. This prevents malformed values from becoming bogus network-image URLs.
 - No backend schema or business behavior changed. Runtime validation remains pending.
+
+
+## Upload loading-state localization and accessibility — 2026-11-02
+
+- **Rules 3, 7, 19, 34:** The shared upload card now localizes its in-progress label in Arabic and English and exposes the changing upload status as a live semantic announcement. The upload action remains disabled while `isLoading` is true.
+- Source-level correction only; screen-reader announcement timing, clipping at large text scales, and actual upload lifecycle behavior still require the consolidated runtime review. No runtime pass is claimed.
