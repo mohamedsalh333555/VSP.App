@@ -150,7 +150,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/dialogs/vsp_terms_and_privacy_modal.dart` | shared | source reviewed—runtime pending (filtering, home booking, match outcome, team lifecycle, payment status, and legal modal flows reviewed) |
 | `lib/shared/widgets/match_card/manage_participants_modal.dart` | shared | source reviewed—runtime pending (keyboard-safe height; retryable load error; localized action errors with technical diagnostics; 48dp labeled controls; correct player-facing acceptance notification) |
 | `lib/shared/widgets/refund_tracking_sheet.dart` | shared | source reviewed—runtime pending (unknown amount shows server-confirmation state; long timeline is bounded/scrollable and close action includes bottom system inset) |
-| `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source reviewed—runtime pending (date-picker header padding uses directional start/end values for Arabic/English mirroring) (Dialog safe-area, bounded height, internally scrollable year/day steps) |
+| `lib/shared/widgets/vsp_date_picker_dialog.dart` | shared | source updated—runtime pending (directional header padding; clears stale selected day when year/month changes to prevent invalid normalized dates; dialog safe-area, bounded height, internally scrollable year/day steps) |
 | `lib/core/widgets/shimmer_image.dart` | shared | source reviewed—runtime pending (shared shimmer image placeholder; image loading/error caller behavior remains to verify) |
 | `lib/core/widgets/skeleton_loader.dart` | shared | source reviewed—runtime pending (CardSkeleton trailing margin uses directional end spacing for RTL/LTR mirroring) |
 | `lib/features/auth/widgets/login_social_auth_row.dart` | auth | source reviewed—runtime pending (social sign-in row; provider availability, locale and touch-target verification pending) |
@@ -349,7 +349,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | Restored the missing close delimiter in the nested safe-area/scroll container. | source reviewed—runtime pending |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | Retry guard now uses an explicit block. | source reviewed—runtime pending (challenge H2H query failure is now distinct from a genuine zero-match history and shows a localized error state) |
 | `lib/core/providers/auth_provider.dart` | Removed the write-only user-fetch flag and assignments. | source reviewed—runtime pending |
-| `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value. | source reviewed—runtime pending |
+| `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value; selection-state runtime verification pending. | source reviewed—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending (nested under OwnerMainScreen SafeArea; dashboard does not repeat the parent top inset and retains its own bottom system protection; bottom nav owns system bottom inset) |
 
 The source fixes above are not runtime passes. The 199 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
@@ -359,7 +359,7 @@ The source fixes above are not runtime passes. The 199 unique registered paths s
 
 | Component | Role | Source finding / status |
 |---|---|---|
-| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source updated—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent) |
+| `lib/shared/widgets/vsp_upload_widgets.dart` | shared | source updated—runtime pending (upload action semantics/ink response; localized 48dp delete action; blank thumbnail URLs treated as absent; Arabic/English live-region upload progress copy) |
 
 
 ### Additional booking surface source review
