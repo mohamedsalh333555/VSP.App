@@ -50,7 +50,10 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     final features = stadium.features;
     if (features is Map && features['allImages'] is List) {
       for (final image in features['allImages'] as List) {
-        final value = image.toString().trim();
+        // Ignore malformed non-string metadata instead of turning values such
+        // as null or maps into bogus network-image URLs.
+        if (image is! String) continue;
+        final value = image.trim();
         if (value.isNotEmpty && !images.contains(value)) {
           images.add(value);
         }
