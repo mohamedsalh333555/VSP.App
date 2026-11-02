@@ -43,7 +43,7 @@ class ChampionScreenState extends State<ChampionScreen>
   }
   
   void switchToTab(int index) {
-    if (_tabController.length > index) {
+    if (index >= 0 && index < _tabController.length) {
       _tabController.animateTo(index);
     }
   }
@@ -125,10 +125,19 @@ class ChampionScreenState extends State<ChampionScreen>
                     children: [
                       // Tab 0: Championships
                       Expanded(
-                        child: GestureDetector(
+                        child: Semantics(
+                          button: true,
+                          inMutuallyExclusiveGroup: true,
+                          selected: _selectedTabIndex == 0,
+                          label: Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'البطولات'
+                              : 'Tournaments',
                           onTap: () => _tabController.animateTo(0),
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
+                          child: GestureDetector(
+                            excludeFromSemantics: true,
+                            onTap: () => _tabController.animateTo(0),
+                            behavior: HitTestBehavior.opaque,
+                            child: Center(
                             child: Builder(
                               builder: (context) {
                                 final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -150,10 +159,17 @@ class ChampionScreenState extends State<ChampionScreen>
                       ),
                       // Tab 1: Teams
                       Expanded(
-                        child: GestureDetector(
+                        child: Semantics(
+                          button: true,
+                          inMutuallyExclusiveGroup: true,
+                          selected: _selectedTabIndex == 1,
+                          label: AppLocalizations.of(context)!.teams,
                           onTap: () => _tabController.animateTo(1),
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
+                          child: GestureDetector(
+                            excludeFromSemantics: true,
+                            onTap: () => _tabController.animateTo(1),
+                            behavior: HitTestBehavior.opaque,
+                            child: Center(
                             child: Text(
                               AppLocalizations.of(context)!.teams,
                               maxLines: 1,
@@ -169,10 +185,19 @@ class ChampionScreenState extends State<ChampionScreen>
                       ),
                       // Tab 2: 1vs1
                       Expanded(
-                        child: GestureDetector(
+                        child: Semantics(
+                          button: true,
+                          inMutuallyExclusiveGroup: true,
+                          selected: _selectedTabIndex == 2,
+                          label: Localizations.localeOf(context).languageCode == 'ar'
+                              ? '1 ضد 1'
+                              : '1vs1',
                           onTap: () => _tabController.animateTo(2),
-                          behavior: HitTestBehavior.opaque,
-                          child: Center(
+                          child: GestureDetector(
+                            excludeFromSemantics: true,
+                            onTap: () => _tabController.animateTo(2),
+                            behavior: HitTestBehavior.opaque,
+                            child: Center(
                             child: Text(
                               Localizations.localeOf(context).languageCode == 'ar'
                                   ? '1 ضد 1'
