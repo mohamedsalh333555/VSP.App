@@ -20,6 +20,8 @@ class VspUploadMainCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
+
     return Semantics(
       button: true,
       enabled: !isLoading,
@@ -48,11 +50,16 @@ class VspUploadMainCard extends StatelessWidget {
                   children: [
                     const CircularProgressIndicator(color: VSPColors.accent),
                     const SizedBox(height: VSPSpacing.sm),
-                    Text(
-                      'Uploading...',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: VSPColors.textSecondary,
-                          ),
+                    Semantics(
+                      liveRegion: true,
+                      label: isArabic ? 'جارٍ رفع الملف' : 'Uploading file',
+                      child: Text(
+                        isArabic ? 'جارٍ رفع الملف' : 'Uploading file',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: VSPColors.textSecondary,
+                            ),
+                      ),
                     ),
                   ],
                 ),
