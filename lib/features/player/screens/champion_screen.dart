@@ -127,6 +127,7 @@ class ChampionScreenState extends State<ChampionScreen>
                       Expanded(
                         child: Semantics(
                           button: true,
+                excludeSemantics: true,
                           inMutuallyExclusiveGroup: true,
                           selected: _selectedTabIndex == 0,
                           label: Localizations.localeOf(context).languageCode == 'ar'
@@ -162,6 +163,7 @@ class ChampionScreenState extends State<ChampionScreen>
                       Expanded(
                         child: Semantics(
                           button: true,
+                excludeSemantics: true,
                           inMutuallyExclusiveGroup: true,
                           selected: _selectedTabIndex == 1,
                           label: AppLocalizations.of(context)!.teams,
@@ -189,6 +191,7 @@ class ChampionScreenState extends State<ChampionScreen>
                       Expanded(
                         child: Semantics(
                           button: true,
+                excludeSemantics: true,
                           inMutuallyExclusiveGroup: true,
                           selected: _selectedTabIndex == 2,
                           label: Localizations.localeOf(context).languageCode == 'ar'
