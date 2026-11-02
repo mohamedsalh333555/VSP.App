@@ -185,6 +185,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   DashboardFilter _currentFilter = DashboardFilter.today();
   DashboardAnalytics _dashboardAnalytics = const DashboardAnalytics();
   bool _isLoadingAnalytics = false;
+  bool _hasLoadedAnalytics = false;
   String? _analyticsError;
   int _analyticsRequestGeneration = 0;
 
@@ -231,6 +232,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       if (mounted) {
         setState(() {
           _dashboardAnalytics = analytics;
+          _hasLoadedAnalytics = true;
           _currentFilter = activeFilter;
           _isLoadingAnalytics = false;
         });
@@ -279,7 +281,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     _lastMetricsKey = null;
     _selectedDashboardTab = 0;
     _analyticsError = null;
-    _isLoadingAnalytics = false;
+    _hasLoadedAnalytics = false;
+    _isLoadingAnalytics = true;
     _approvalNoticeSeenUntil.clear();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -751,6 +754,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                       selectedTimePeriod: _selectedTimePeriod,
                       selectedStadiumFilter: _selectedStadiumFilter,
                       analytics: _dashboardAnalytics,
+                      isInitialLoading: !_hasLoadedAnalytics && _isLoadingAnalytics,
+                      hasInitialLoadError: !_hasLoadedAnalytics && _analyticsError != null,
                       dashboardFilter: _currentFilter,
                       onCustomRangeSelected: (start, end) {
                         final filter = DashboardFilter.custom(start, end).copyWith(
