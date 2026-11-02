@@ -419,3 +419,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 19, 20:** Position options now also declare membership in a mutually exclusive choice group, so assistive technology can communicate that only one preferred position is selected at a time.
 - Source correction only; verify group announcements and selection changes on device. No runtime pass is claimed.
+
+
+## Public-match action semantics — 2026-11-02
+
+- **Rules 19, 20, 34:** Public-match card action controls now expose a single semantic button node with the correct enabled/disabled state and explicit activation callback. Their nested GestureDetector is excluded from semantics to prevent duplicate controls; visible labels and existing match actions are unchanged.
+- Source correction only; verify TalkBack/VoiceOver announcements and disabled/full/ended/loading action states on device. No runtime pass is claimed.
