@@ -39,6 +39,7 @@ class VSPPositionSelector extends StatelessWidget {
               curve: Curves.easeOutCubic,
               child: Semantics(
                 button: true,
+                excludeSemantics: true,
                 inMutuallyExclusiveGroup: true,
                 selected: isSelected,
                 label: label,
