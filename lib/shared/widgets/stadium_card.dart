@@ -113,11 +113,13 @@ class StadiumCard extends StatelessWidget {
  // LOCATION BADGE (Clickable)
  Flexible(
  child: GestureDetector(
- onTap: () {
- if (stadium.lat != null && stadium.lng != null) {
- GeoHelper.openInMaps(stadium.lat!, stadium.lng!, stadium.name);
- }
- },
+ onTap: stadium.lat != null && stadium.lng != null
+     ? () => GeoHelper.openInMaps(
+           stadium.lat!,
+           stadium.lng!,
+           stadium.name,
+         )
+     : null,
  child: Container(
  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
  decoration: BoxDecoration(
