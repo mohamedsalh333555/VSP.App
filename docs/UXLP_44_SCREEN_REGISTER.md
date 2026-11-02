@@ -906,3 +906,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 28:** The shared stadium card now installs its outer tap handler only when a real `onTap` callback is supplied. Previously, a non-null wrapper callback made cards appear interactive and respond to taps even when the caller had no navigation/action callback (notably owner-view cards). Nested location, favorite, and edit controls remain independent.
 - Source correction only; verify player navigation and owner nested actions on device. No runtime pass is claimed.
+
+
+## Stadium location action availability correction — 2026-11-02
+
+- **Rules 19, 20, 28:** The stadium-card location badge is now non-interactive when latitude or longitude is missing, instead of exposing a tappable control that silently does nothing. When coordinates exist, its existing map-launch behavior is unchanged.
+- Source correction only; verify map launch and disabled affordance with valid/missing coordinates on device. No runtime pass is claimed.
