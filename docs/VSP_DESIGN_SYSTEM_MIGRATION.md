@@ -480,3 +480,7 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 - The changed-Dart patch scan covered 361 Dart files. Canonical `VSPDSColors` and `VSPDSMotion` definitions are the only expected raw color/duration declarations; the one feature-level transparent literal was migrated to `VSPDSColors.transparent`, and the social-auth gradient now follows directional start/end alignment.
 - Root loading timeout, temporary feedback/snackbar durations, clipboard confirmation timing, and test pump delays remain state/feedback/test timing—not component motion values.
 - This does not establish runtime correctness or full-file coverage of all changed files. The 338-path per-screen/per-state runtime audit and the 44-rule mapping remain incomplete; do not promote source review to pass.
+## Analyzer remediation checkpoint — 2026-11-02
+
+- The prior `Flutter CI` run failed at `flutter analyze` on commit `ad4141994eef7424df63440645ffb186ece54f27`; 82 diagnostics were traced to 12 files. The affected source and test causes are corrected in commits `3c4a33c2b97c58704c9d5d56a281236a50968733` and `dec1f05e3f0fd88b541c8c919802b36d4eb65e2f`.
+- The corrections are source-level only. No new analyzer/test run has been started, so compilation and test success are not claimed. CI is manual-only and contains no APK build until the final validation gate.
