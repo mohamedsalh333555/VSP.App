@@ -56,10 +56,13 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  @override
  void initState() {
  super.initState();
- if (widget.initialDate != null) {
- _selectedYear = widget.initialDate!.year;
- _selectedMonth = widget.initialDate!.month;
- _selectedDay = widget.initialDate!.day;
+ final initialDate = widget.initialDate;
+ if (initialDate != null &&
+     initialDate.year >= widget.minYear &&
+     initialDate.year <= widget.maxYear) {
+ _selectedYear = initialDate.year;
+ _selectedMonth = initialDate.month;
+ _selectedDay = initialDate.day;
  }
  }
 
