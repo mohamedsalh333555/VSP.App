@@ -1326,3 +1326,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - Rules 9, 38, 40, and 42: source correction added to the stadium image carousel. When the parent supplies a different image list to a reused State, the active index resets and the attached pager returns to page zero after the frame.
 - Statuses remain unchanged: this is not runtime proof. Test shorter/empty galleries, route reuse between stadiums, image loading/swiping, RTL/LTR, and safe-area behavior during the single consolidated device review. The five existing product-decision items remain unresolved.
+
+
+## Live stadium gallery data-source evidence — 2026-11-02
+
+- Rules 9, 28, 38, and 40: the stadium image list is now derived from the resolved live stadium snapshot inside the screen's StreamBuilder, rather than being cached solely from the initial route argument. This makes live image metadata changes available to the carousel.
+- This is source evidence only. Realtime image replacement/removal, stream failure fallback, route reuse, pager reset, and bilingual runtime behavior remain unverified. Rule statuses remain unchanged; no runtime pass is claimed.
