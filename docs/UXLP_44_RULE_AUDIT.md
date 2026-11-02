@@ -1354,3 +1354,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 9, 19, 28, 40:** Changing the selected year or month now clears the previously selected day. This prevents stale days (such as 31 when switching to February, or 29 February when switching to a non-leap year) from leaving the confirmation action enabled and being normalized by Dart into a different calendar date.
 - Source correction only; verify leap-year transitions, 28/29/30/31-day months, keyboard/screen-reader interaction, and confirmation disabled/enabled states in the consolidated runtime review. No runtime pass is claimed.
+
+
+## Date picker initial-value bounds correction — 2026-11-02
+
+- **Rules 9, 19, 28, 40:** An initial date outside the configured selectable year range is no longer preselected as a valid choice. This prevents the dialog from showing an enabled confirmation for a year that is absent from the year list and outside the caller's allowed range; users must select an in-range date.
+- Source correction only; confirm initial dates below/above bounds and valid in-range dates on device. No runtime pass is claimed.
