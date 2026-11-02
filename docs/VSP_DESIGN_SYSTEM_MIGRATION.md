@@ -341,3 +341,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 - The stadium details screen now derives its gallery list from the resolved live StreamBuilder stadium snapshot. This removes the stale route-argument-only gallery cache and keeps carousel imagery aligned with the data currently rendered in the details tabs.
 - The existing carousel lifecycle reset handles replacement lists. No business, booking, payment, authorization, database, or retention behavior changed.
 - Runtime verification of realtime image changes, empty/error fallback, route reuse, paging, and RTL/LTR remains pending. No pass is claimed.
+
+
+## Stadium detail tab state reset — 2026-11-02
+
+- On stadium-ID changes within a reused route State, the details screen now replaces its stream and resets the TabController to the default information tab. This keeps navigation context consistent with the newly displayed stadium.
+- Runtime tab indicator/gesture and route-transition validation remains pending. No business or data rules changed.
