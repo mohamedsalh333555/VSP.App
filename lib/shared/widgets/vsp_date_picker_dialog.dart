@@ -306,6 +306,9 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
         onYearSelected: (year) {
           setState(() {
             _selectedYear = year;
+            // A day selected under the previous year may be invalid now
+            // (for example, 29 February in a non-leap year).
+            _selectedDay = null;
             _currentStep = 1;
           });
         },
@@ -317,6 +320,9 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
         onMonthSelected: (month) {
           setState(() {
             _selectedMonth = month;
+            // Never carry a day into a different month: it may not exist
+            // (for example, day 31 when switching to February).
+            _selectedDay = null;
             _currentStep = 2;
           });
         },
