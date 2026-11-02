@@ -327,3 +327,10 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 - `StadiumDetailsScreen` now rebuilds its gallery source list when widget data changes and resubscribes to the stadium stream when the route reuses its State for a different stadium ID.
 - The change preserves the existing V2 token/component usage and does not alter booking, payment, or authorization behavior.
 - Source-only status: runtime checks for route reuse, live-stream refresh, image replacement, RTL/LTR rendering, and safe-area behavior remain pending. This is not a design-system or UXLP runtime pass.
+
+
+## Stadium gallery pager lifecycle correction — 2026-11-02
+
+- The player stadium image carousel now detects replacement image collections in didUpdateWidget, resets its active index, and moves the attached PageController to page zero after the frame. This complements the parent stadium-details stream/gallery refresh and prevents stale pager state when a route reuses its State for another stadium.
+- No booking, payment, authorization, database, or retention behavior changed.
+- Source status only: route reuse, empty/short replacement collections, swipe, image loading, and RTL/LTR runtime behavior remain pending consolidated device validation. No runtime pass is claimed.
