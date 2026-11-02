@@ -1438,3 +1438,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 19, 20, 34:** The global offline banner now exposes its localized Arabic/English status as a live region while keeping the visual text out of the accessibility tree duplicate. Screen readers are informed when the offline banner appears; no separate recovery announcement is claimed.
 - Source correction only; verify TalkBack/VoiceOver announcements, repeated connectivity transitions, and focus behavior on device. No runtime pass is claimed.
+
+
+## Owner Pro analytics initial-load state — 2026-11-02
+
+- **Rules 9, 19, 28, 40:** The owner dashboard now distinguishes the first analytics request from a valid empty analytics result. Before the first successful server snapshot, Pro Insights displays an explicit bilingual loading state; a first-load failure displays an error state linked to the existing page-level retry notice. After a successful load, filter refreshes continue showing the last loaded analytics rather than replacing them with a false empty/loading state.
+- Source correction only; verify first load, empty server result, first-load failure/retry, account switching, and subsequent filter refresh on device. No runtime pass is claimed.
