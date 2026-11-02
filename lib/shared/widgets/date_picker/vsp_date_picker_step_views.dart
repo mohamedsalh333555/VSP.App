@@ -40,6 +40,7 @@ class VspDatePickerYearStep extends StatelessWidget {
 
         return Semantics(
           button: true,
+                excludeSemantics: true,
           selected: isSelected,
           onTap: () {
             VSPFeedback.triggerTap();
@@ -126,6 +127,7 @@ class VspDatePickerMonthStep extends StatelessWidget {
 
         return Semantics(
           button: true,
+                excludeSemantics: true,
           selected: isSelected,
           onTap: () {
             VSPFeedback.triggerTap();
@@ -237,6 +239,7 @@ class VspDatePickerDayStep extends StatelessWidget {
 
         return Semantics(
           button: true,
+                excludeSemantics: true,
           selected: isSelected,
           onTap: () {
             VSPFeedback.triggerTap();
