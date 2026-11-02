@@ -246,7 +246,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/owner/widgets/tournament/cups/cups_tab_selector.dart` | owner | source reviewed—runtime pending (cup tab selector; selected-state and RTL navigation pending) |
 | `lib/features/player/widgets/championship_checkout/checkout_team_members_list.dart` | player | source reviewed—runtime pending (checkout roster list; team membership, guest distinction and capacity mapping pending) |
 | `lib/features/player/widgets/payment/payment_background_glow.dart` | player | source reviewed—runtime pending (payment background decoration; contrast and reduced-motion review pending) |
-| `lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart` | shared | source reviewed—runtime pending (date-picker step chip; accessible selected/disabled state and RTL order pending) |
+| `lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart` | shared | source updated—runtime pending (selected/disabled state; explicit screen-reader tap action; RTL order runtime pending) |
 | `lib/widgets/refund_badge_widget.dart` | shared/player | source updated—runtime pending (refund badge uses localized status/ETA copy; actual refund lifecycle and theme contrast verification pending) |
 | `lib/widgets/refund_notice_widget.dart` | shared/player | source reviewed—runtime pending (refund notice uses localized amount/status copy; fee/amount and lifecycle consistency pending) |
 
@@ -260,7 +260,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/stadium_card.dart` | shared | source reviewed—runtime pending (V2 semantic color/radius migration documented; content-density and locale runtime pending) |
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
-| `lib/shared/widgets/vsp_back_button.dart` | shared | source updated—runtime pending (48dp hit area and semantic interaction documented; navigation/back-stack runtime pending) |
+| `lib/shared/widgets/vsp_back_button.dart` | shared | source updated—runtime pending (48dp hit area and explicit screen-reader tap action; navigation/back-stack runtime pending) |
 | `lib/shared/widgets/vsp_bottom_nav_bar.dart` | shared | source updated—runtime pending (canonical V2 navigation metrics and SafeArea; selected/unselected glyphs; semantic tap action; notification/warning announcements) |
 | `lib/shared/widgets/vsp_empty_state.dart` | shared | source reviewed—runtime pending (delegates to canonical VSPStateView; bounded scroll-safe layout, charcoal tile, shared typography/spacing, and optional 48dp primary action) |
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) (connectivity changes update visible offline/server state reactively; live-region announcement) |
@@ -349,7 +349,7 @@ A screen passes only when its actual call sites and relevant states have been ch
 | `lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart` | Restored the missing close delimiter in the nested safe-area/scroll container. | source reviewed—runtime pending |
 | `lib/features/player/screens/challenge_select_team_screen.dart` | Retry guard now uses an explicit block. | source reviewed—runtime pending (challenge H2H query failure is now distinct from a genuine zero-match history and shows a localized error state) |
 | `lib/core/providers/auth_provider.dart` | Removed the write-only user-fetch flag and assignments. | source reviewed—runtime pending |
-| `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label without changing the displayed day value; selection-state runtime verification pending. | source reviewed—runtime pending |
+| `lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart` | Simplified the day semantic label; year/month/day rows now expose screen-reader activation actions; selection-state runtime verification pending. | source updated—runtime pending |
 | `lib/features/owner/screens/owner_dashboard_screen.dart` | Removed the hardcoded Pro monthly price from the upgrade teaser; live price remains on the plan-catalog screen. | source reviewed—runtime pending (nested under OwnerMainScreen SafeArea; dashboard does not repeat the parent top inset and retains its own bottom system protection; bottom nav owns system bottom inset) |
 
 The source fixes above are not runtime passes. The 199 unique registered paths still require the complete applicable-rule/state mapping and one final device/runtime validation pass.
