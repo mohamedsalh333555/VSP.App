@@ -347,3 +347,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - On stadium-ID changes within a reused route State, the details screen now replaces its stream and resets the TabController to the default information tab. This keeps navigation context consistent with the newly displayed stadium.
 - Runtime tab indicator/gesture and route-transition validation remains pending. No business or data rules changed.
+
+
+## Stadium gallery metadata validation — 2026-11-02
+
+- Optional `features.allImages` values are now type-checked before being added to the image gallery. Non-string metadata is ignored; valid strings retain trimming and de-duplication. This prevents malformed values from becoming bogus network-image URLs.
+- No backend schema or business behavior changed. Runtime validation remains pending.
