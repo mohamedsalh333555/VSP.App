@@ -37,9 +37,18 @@ class VSPPositionSelector extends StatelessWidget {
             child: AnimatedContainer(
               duration: VSPDSMotion.fast,
               curve: Curves.easeOutCubic,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+              child: Semantics(
+                button: true,
+                selected: isSelected,
+                label: label,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onPositionSelected(code);
+                },
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                  excludeFromSemantics: true,
                   onTap: () {
                     HapticFeedback.selectionClick();
                     onPositionSelected(code);
@@ -83,6 +92,7 @@ class VSPPositionSelector extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
                   ),
                 ),
               ),
