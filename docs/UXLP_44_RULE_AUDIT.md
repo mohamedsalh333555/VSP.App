@@ -1348,3 +1348,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 3, 7, 19, 34:** The shared upload card now localizes its in-progress label in Arabic and English and exposes the changing upload status as a live semantic announcement. The upload action remains disabled while `isLoading` is true.
 - Source-level correction only; screen-reader announcement timing, clipping at large text scales, and actual upload lifecycle behavior still require the consolidated runtime review. No runtime pass is claimed.
+
+
+## Date picker calendar-validity correction — 2026-11-02
+
+- **Rules 9, 19, 28, 40:** Changing the selected year or month now clears the previously selected day. This prevents stale days (such as 31 when switching to February, or 29 February when switching to a non-leap year) from leaving the confirmation action enabled and being normalized by Dart into a different calendar date.
+- Source correction only; verify leap-year transitions, 28/29/30/31-day months, keyboard/screen-reader interaction, and confirmation disabled/enabled states in the consolidated runtime review. No runtime pass is claimed.
