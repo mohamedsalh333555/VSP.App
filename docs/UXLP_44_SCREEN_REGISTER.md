@@ -888,3 +888,9 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 34:** The canonical navigation's parent `Semantics` node now exposes an explicit tap action. Its nested `InkWell` is intentionally excluded from semantics to avoid duplicate nodes, so this restores an actual TalkBack/VoiceOver activation action while preserving pointer taps and haptic feedback. Notification and warning announcements remain included in the same label.
 - Source correction only; verify screen-reader focus and activation on device. No runtime pass is claimed.
+
+
+## Date-picker and back-button accessible activation — 2026-11-02
+
+- **Rules 19, 20, 34:** Date-picker year/month/day rows, the three step chips, and the shared back button now expose explicit `Semantics.onTap` actions. Their nested InkWells were intentionally excluded from semantics, which previously left screen-reader users with button labels but no activation action. Pointer interaction and haptic behavior are preserved.
+- Source correction only; verify TalkBack/VoiceOver focus, enabled/disabled states, activation, and route back behavior on device. No runtime pass is claimed.
