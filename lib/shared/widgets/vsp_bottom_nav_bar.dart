@@ -42,6 +42,7 @@ class VspBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useBlur = VSPDSGlass.shouldUseBlur;
+    final isArabic = Localizations.maybeLocaleOf(context)?.languageCode == 'ar';
 
     final navContent = Container(
       decoration: BoxDecoration(
@@ -76,9 +77,13 @@ class VspBottomNavBar extends StatelessWidget {
             child: Semantics(
               button: true,
               selected: isSelected,
-              label: item.hasWarning && item.warningLabel != null
-                  ? '${item.label}, ${item.warningLabel}'
-                  : item.label,
+              label: <String>[
+                item.label,
+                if (item.hasNotification)
+                  isArabic ? 'لديك إشعار جديد' : 'You have a new notification',
+                if (item.hasWarning && item.warningLabel != null)
+                  item.warningLabel!,
+              ].join(', '),
               child: InkWell(
                 excludeFromSemantics: true,
                 borderRadius: BorderRadius.circular(VSPDSRadius.md),
