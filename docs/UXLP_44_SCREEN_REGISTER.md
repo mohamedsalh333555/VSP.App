@@ -267,7 +267,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source updated—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
 | `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
 | `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
-| `lib/shared/widgets/vsp_position_selector.dart` | shared | source reviewed—runtime pending (V2 token migration and 48dp interactive height documented; focus/selection runtime pending) |
+| `lib/shared/widgets/vsp_position_selector.dart` | shared | source updated—runtime pending (V2 token migration, 48dp interactive height, selected-state semantics, and explicit screen-reader activation; focus/selection runtime pending) |
 | `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
 | `lib/features/owner/widgets/owner_bottom_nav_bar.dart` | owner | source reviewed—runtime pending (owner navigation selection/semantics/touch height; unread-stream failures now surface a localized warning instead of appearing as zero unread) |
