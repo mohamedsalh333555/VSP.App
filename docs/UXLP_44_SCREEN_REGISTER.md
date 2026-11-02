@@ -266,7 +266,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/shared/widgets/vsp_error_state.dart` | shared | source reviewed—runtime pending (shared error/retry pattern used by route/state recovery; caller-by-caller verification pending) (connectivity changes update visible offline/server state reactively; live-region announcement) |
 | `lib/shared/widgets/vsp_fade_in_item.dart` | shared | source updated—runtime pending (animation lifecycle/disposal reviewed; caller-specific motion and reduced-motion behavior pending) |
 | `lib/shared/widgets/vsp_icon_badge.dart` | shared | source reviewed—runtime pending (canonical badge dimensions/background documented; glyph/contrast runtime pending) |
-| `lib/shared/widgets/vsp_network_banner.dart` | shared | source reviewed—runtime pending (V2 semantic token migration documented; offline/online overlay placement runtime pending) |
+| `lib/shared/widgets/vsp_network_banner.dart` | shared | source updated—runtime pending (V2 semantic tokens; localized offline live-region announcement; offline/online overlay placement and recovery announcement behavior runtime pending) |
 | `lib/shared/widgets/vsp_position_selector.dart` | shared | source updated—runtime pending (V2 token migration, 48dp interactive height, selected-state semantics, and explicit screen-reader activation; focus/selection runtime pending) |
 | `lib/core/ui/components/vsp_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton component source documented; caller/runtime pending) |
 | `lib/core/ui/components/vsp_card.dart` | shared | source reviewed—runtime pending (canonical VSPCard and low-performance blur fallback documented; actual card usage/runtime pending) |
