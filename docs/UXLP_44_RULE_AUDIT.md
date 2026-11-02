@@ -1462,3 +1462,11 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 19, 20, 34:** The owner edit and player favorite icon-only controls now expose localized Arabic/English tooltip labels, clarifying their action for touch and assistive-technology users without changing their callbacks.
 - Source correction only; verify tooltip/semantics announcement and tap behavior on device. No runtime pass is claimed.
+
+## 2026-11-02 consolidated source checkpoint
+
+- The current PR diff contains 361 changed Dart files; a full-file recheck of all 30 registered paths not present in the PR changed-file list found no raw palette, physical left/right layout, or inline motion-duration findings.
+- Added-line triage found only canonical V2 token definitions plus one feature-level transparent literal and one directional gradient. Both feature-level findings were corrected. Dynamic numeric/data labels and state/feedback/test delays were excluded from hardcoded-copy and motion-token findings.
+- No runtime pass is claimed. The 338 unique registered paths still lack the complete per-screen/per-state matrix; rules 1–24, 26–30, 32–37, 40, 42–44 remain source-reviewed/runtime-pending, while rules 25, 31, 38, 39, and 41 remain `needs product decision`.
+- The product-decision items are intentionally unchanged under the requested guardrails. In particular, the live `get_team_active_league(uuid)` SECURITY DEFINER authorization/PII exposure and missing server-side kickoff/result guard remain documented and require an explicit product/security decision; no permission, SQL, payment, or database changes were made.
+- The final consolidated review and APK gate remain blocked until the per-screen/per-state evidence is complete. The CI workflow is currently manual-only and analyze/test-only; no APK workflow was started.

@@ -31,8 +31,8 @@ class SocialAuthButton extends StatelessWidget {
               strokeWidth: VSPDSBorders.fieldFocus,
               radius: VSPDSRadius.button,
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
                 colors: [
                   VSPDSColors.white.withValues(alpha: 0.30),
                   VSPDSColors.transparent,

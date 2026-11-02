@@ -48,7 +48,7 @@ class VSPPositionSelector extends StatelessWidget {
                   onPositionSelected(code);
                 },
                 child: Material(
-                  color: Colors.transparent,
+                  color: VSPDSColors.transparent,
                   child: InkWell(
                   excludeFromSemantics: true,
                   onTap: () {

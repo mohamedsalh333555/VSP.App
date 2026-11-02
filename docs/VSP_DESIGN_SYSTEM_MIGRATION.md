@@ -473,3 +473,10 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 19, 20, 34:** The owner edit and player favorite icon-only controls now expose localized Arabic/English tooltip labels, clarifying their action for touch and assistive-technology users without changing their callbacks.
 - Source correction only; verify tooltip/semantics announcement and tap behavior on device. No runtime pass is claimed.
+
+## 2026-11-02 current-branch static sweep
+
+- Full-file recheck of the 30 registered paths not changed by PR #35 found no raw palette literals, physical left/right layout geometry, or inline animation durations.
+- The changed-Dart patch scan covered 361 Dart files. Canonical `VSPDSColors` and `VSPDSMotion` definitions are the only expected raw color/duration declarations; the one feature-level transparent literal was migrated to `VSPDSColors.transparent`, and the social-auth gradient now follows directional start/end alignment.
+- Root loading timeout, temporary feedback/snackbar durations, clipboard confirmation timing, and test pump delays remain state/feedback/test timing—not component motion values.
+- This does not establish runtime correctness or full-file coverage of all changed files. The 338-path per-screen/per-state runtime audit and the 44-rule mapping remain incomplete; do not promote source review to pass.

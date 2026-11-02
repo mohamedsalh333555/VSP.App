@@ -972,3 +972,12 @@ Paths re-fetched and scanned:
 
 - **Rules 19, 20, 34:** The owner edit and player favorite icon-only controls now expose localized Arabic/English tooltip labels, clarifying their action for touch and assistive-technology users without changing their callbacks.
 - Source correction only; verify tooltip/semantics announcement and tap behavior on device. No runtime pass is claimed.
+
+## 2026-11-02 current-branch static sweep
+
+- PR #35 currently contains 377 changed paths, including 361 changed Dart files. The register remains 338 unique paths and 366 data rows.
+- Re-fetched all 30 registered paths absent from the PR changed-file list and scanned their full contents for raw Flutter palette literals, physical left/right geometry, and inline duration values. The sweep found zero findings in those 30 files; `VSPCountdownTimer` is a semantic countdown component, not an inline motion duration.
+- Scanned added Dart diff lines for the same patterns. `VSPDSColors` primitive definitions and `VSPDSMotion` duration constants are canonical token definitions, not feature-level violations. The non-token `Colors.transparent` use in `VSPPositionSelector` was replaced with `VSPDSColors.transparent`; the social-auth border gradient now uses directional start/end anchors.
+- The remaining explicit time values are state/feedback/test timing rather than animation tokens: the root profile-loading timeout, post-match feedback display duration, clipboard confirmation duration, and widget-test pump delays. They are intentionally not classified as motion transitions.
+- This is static source evidence only. All 338 registered paths still require runtime evidence; the global matrix remains 39 `source reviewed—runtime pending`, five `needs product decision` (rules 25, 31, 38, 39, 41), and zero runtime passes. The complete per-screen/per-state matrix is still outstanding.
+- Build gate remains closed: `.github/workflows/ci.yml` is manual-only and runs analyze/tests only; it contains no APK build. `build-release-apk.yml` remains manual-only and has not been dispatched.
