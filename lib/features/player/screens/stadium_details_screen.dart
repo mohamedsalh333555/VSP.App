@@ -21,7 +21,7 @@ class StadiumDetailsScreen extends StatefulWidget {
 
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late final List<String> _displayImages;
+  late List<String> _displayImages;
   late Stream<List<Map<String, dynamic>>> _stadiumStream;
 
   void _subscribeToStadium() {
@@ -34,27 +34,43 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     _tabController = TabController(length: 3, vsync: this);
     _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
 
-    // Parse ALL genuine stadium images (primary imageUrl + images array + features['allImages'])
-    final List<String> rawImages = [];
-    if (widget.stadium.imageUrl.isNotEmpty) {
-      rawImages.add(widget.stadium.imageUrl);
+    _displayImages = _collectDisplayImages(widget.stadium);
+  }
+
+  List<String> _collectDisplayImages(Stadium stadium) {
+    // Parse all genuine stadium images while preserving their source order.
+    final images = <String>[];
+    if (stadium.imageUrl.trim().isNotEmpty) {
+      images.add(stadium.imageUrl.trim());
     }
-    for (final img in widget.stadium.images) {
-      if (img.isNotEmpty && !rawImages.contains(img)) {
-        rawImages.add(img);
+    for (final image in stadium.images) {
+      final value = image.trim();
+      if (value.isNotEmpty && !images.contains(value)) {
+        images.add(value);
       }
     }
-    final features = widget.stadium.features;
+    final features = stadium.features;
     if (features is Map && features['allImages'] is List) {
-      for (final img in (features['allImages'] as List)) {
-        final imgStr = img.toString().trim();
-        if (imgStr.isNotEmpty && !rawImages.contains(imgStr)) {
-          rawImages.add(imgStr);
+      for (final image in features['allImages'] as List) {
+        final value = image.toString().trim();
+        if (value.isNotEmpty && !images.contains(value)) {
+          images.add(value);
         }
       }
     }
+    return images;
+  }
 
-    _displayImages = rawImages;
+  @override
+  void didUpdateWidget(covariant StadiumDetailsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stadium.id != widget.stadium.id) {
+      _stadiumStream =
+          StadiumRepository().streamStadiumRaw(widget.stadium.id);
+    }
+    // The route may reuse this State for another stadium, or receive refreshed
+    // image metadata for the same stadium. Never retain the previous gallery.
+    _displayImages = _collectDisplayImages(widget.stadium);
   }
 
   @override
