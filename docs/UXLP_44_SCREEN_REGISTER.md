@@ -828,3 +828,9 @@ Paths re-fetched and scanned:
 
 - **Rules 9, 38, 40, 42 — player stadium details:** added `didUpdateWidget` handling so a reused route state switches its live stream when the stadium ID changes and rebuilds the gallery when stadium image metadata changes. This prevents stale stadium data/images from the previously displayed stadium remaining attached to the new route state.
 - This is a source-level lifecycle correction only. Stream transitions, same-ID metadata refresh, tab state, image ordering, Arabic/English layout, and device behavior remain runtime-pending; no pass is claimed.
+
+
+### Stadium gallery pager route-reuse correction — 2026-11-02
+
+- **Rules 9, 38, 40, 42 — player stadium details / image carousel:** when a reused carousel receives a different image collection, its retained page index is reset to zero after the widget update. This prevents a stale page index from referencing an item outside the replacement collection or continuing to show the prior stadium's image.
+- The reset is guarded by widget lifecycle and PageController attachment checks. This is source-level evidence only; changing stadiums with shorter/empty galleries, image-list replacement during navigation, swipe behavior, and Arabic/English device rendering remain runtime-pending. No pass is claimed.
