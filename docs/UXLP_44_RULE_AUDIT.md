@@ -1366,3 +1366,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 19, 20, 34:** The shared bottom-navigation semantics label now announces the presence of a new notification in Arabic and English, in addition to the destination and any warning label. This makes the visual notification dot available to screen-reader users without changing navigation behavior or badge appearance.
 - Source correction only; verify TalkBack announcement order, focus traversal, and selected/unselected icon states on device. No runtime pass is claimed.
+
+
+## Uploaded-file status precedence correction — 2026-11-02
+
+- **Rules 19, 28, 40:** `VspUploadedItemRow` now gives the in-progress state precedence over the presence of a local file or prior thumbnail. While `isUploading` is true it shows a progress indicator, not a success check; the success/delete controls appear only after uploading finishes. This avoids reporting an upload as complete while it is still in flight.
+- Source correction only; verify success, failure, retry, and replacement-upload transitions with real upload responses in the consolidated runtime review. No runtime pass is claimed.
