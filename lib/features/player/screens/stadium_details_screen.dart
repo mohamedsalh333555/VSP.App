@@ -21,7 +21,6 @@ class StadiumDetailsScreen extends StatefulWidget {
 
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late List<String> _displayImages;
   late Stream<List<Map<String, dynamic>>> _stadiumStream;
 
   void _subscribeToStadium() {
@@ -34,7 +33,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     _tabController = TabController(length: 3, vsync: this);
     _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
 
-    _displayImages = _collectDisplayImages(widget.stadium);
   }
 
   List<String> _collectDisplayImages(Stadium stadium) {
@@ -68,9 +66,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       _stadiumStream =
           StadiumRepository().streamStadiumRaw(widget.stadium.id);
     }
-    // The route may reuse this State for another stadium, or receive refreshed
-    // image metadata for the same stadium. Never retain the previous gallery.
-    _displayImages = _collectDisplayImages(widget.stadium);
   }
 
   @override
@@ -127,6 +122,10 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             parseFailed = true;
           }
         }
+        // Derive the gallery from the same resolved stadium snapshot used by
+        // the information tabs. This keeps images in sync with live DB updates,
+        // not only with the route's original widget argument.
+        final displayImages = _collectDisplayImages(stadium);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         final hasStreamIssue = snapshot.hasError ||
             (snapshot.hasData && snapshot.data!.isEmpty) ||
@@ -185,7 +184,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 ),
               StadiumImageCarousel(
                 stadium: stadium,
-                displayImages: _displayImages,
+                displayImages: displayImages,
               ),
               Container(
                 color: VSPColors.background,
