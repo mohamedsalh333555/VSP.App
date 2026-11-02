@@ -29,6 +29,7 @@ class StadiumCard extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return RepaintBoundary(
  child: GestureDetector(
  onTap: onTap == null
@@ -178,7 +179,9 @@ class StadiumCard extends StatelessWidget {
  const SizedBox(width: 6),
  ],
  if (isOwnerView)
- GestureDetector(
+ Tooltip(
+ message: isArabic ? 'تعديل بيانات الملعب' : 'Edit stadium',
+ child: GestureDetector(
  onTap: onEditTap,
  child: Container(
  width: 44,
@@ -194,13 +197,18 @@ class StadiumCard extends StatelessWidget {
  size: 20,
  ),
  ),
+ ),
  )
  else ...[
  // FAVORITE BUTTON
  Consumer<AuthProvider>(
  builder: (context, auth, _) {
  final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) == true;
- return GestureDetector(
+ return Tooltip(
+ message: isFav
+     ? (isArabic ? 'إزالة الملعب من المفضلة' : 'Remove stadium from favorites')
+     : (isArabic ? 'إضافة الملعب إلى المفضلة' : 'Add stadium to favorites'),
+ child: GestureDetector(
  behavior: HitTestBehavior.opaque,
  onTap: () {
  HapticFeedback.mediumImpact();
@@ -222,6 +230,7 @@ class StadiumCard extends StatelessWidget {
  ),
  );
  },
+ ),
  ),
  ],
  ],
