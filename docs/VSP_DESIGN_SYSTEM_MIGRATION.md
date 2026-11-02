@@ -395,3 +395,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 19, 20, 34:** Date-picker year/month/day rows, the three step chips, and the shared back button now expose explicit `Semantics.onTap` actions. Their nested InkWells were intentionally excluded from semantics, which previously left screen-reader users with button labels but no activation action. Pointer interaction and haptic behavior are preserved.
 - Source correction only; verify TalkBack/VoiceOver focus, enabled/disabled states, activation, and route back behavior on device. No runtime pass is claimed.
+
+
+## Position-selector selection semantics — 2026-11-02
+
+- **Rules 19, 20, 34:** Each selectable football position now exposes its selected state and an explicit screen-reader activation action. The nested InkWell is excluded from semantics to keep one actionable node per position; pointer taps and selection haptics are unchanged.
+- Source correction only; verify selected-state announcements, keyboard navigation, RTL layout, and tap targets with TalkBack/VoiceOver in the consolidated runtime review. No runtime pass is claimed.
