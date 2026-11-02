@@ -1320,3 +1320,9 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 
 - **Rules 9, 38, 40, 42 — stadium details:** source now refreshes the stream when a reused screen receives a different stadium ID and rebuilds the image list from current widget metadata. This addresses stale state when navigation reuses the same State object.
 - **Classification:** source updated; runtime pending. The rule statuses remain unchanged until player/owner state coverage, Arabic/English rendering, and device/runtime evidence are recorded. No pass is claimed.
+
+
+## Stadium gallery pager lifecycle evidence — 2026-11-02
+
+- Rules 9, 38, 40, and 42: source correction added to the stadium image carousel. When the parent supplies a different image list to a reused State, the active index resets and the attached pager returns to page zero after the frame.
+- Statuses remain unchanged: this is not runtime proof. Test shorter/empty galleries, route reuse between stadiums, image loading/swiping, RTL/LTR, and safe-area behavior during the single consolidated device review. The five existing product-decision items remain unresolved.
