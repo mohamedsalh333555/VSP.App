@@ -455,3 +455,9 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - **Rules 9, 19, 28, 40:** The owner dashboard now distinguishes the first analytics request from a valid empty analytics result. Before the first successful server snapshot, Pro Insights displays an explicit bilingual loading state; a first-load failure displays an error state linked to the existing page-level retry notice. After a successful load, filter refreshes continue showing the last loaded analytics rather than replacing them with a false empty/loading state.
 - Source correction only; verify first load, empty server result, first-load failure/retry, account switching, and subsequent filter refresh on device. No runtime pass is claimed.
+
+
+## Upload helper-copy localization — 2026-11-02
+
+- **Rules 3, 7, 34:** The shared upload card's default file-format/size guidance is now localized for Arabic and English and the same resolved copy is used for its accessibility hint. Caller-supplied helper text remains authoritative.
+- Source correction only; verify wrapping and text scaling on narrow devices in both locales. No runtime pass is claimed.
