@@ -156,6 +156,7 @@ class ChampionScreenState extends State<ChampionScreen>
                             ),
                           ),
                         ),
+                        ),
                       ),
                       // Tab 1: Teams
                       Expanded(
@@ -181,6 +182,7 @@ class ChampionScreenState extends State<ChampionScreen>
                                   ),
                             ),
                           ),
+                        ),
                         ),
                       ),
                       // Tab 2: 1vs1
@@ -211,6 +213,7 @@ class ChampionScreenState extends State<ChampionScreen>
                                   ),
                             ),
                           ),
+                        ),
                         ),
                       ),
                     ],
