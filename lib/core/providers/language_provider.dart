@@ -35,11 +35,6 @@ class LanguageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _updateLocaleSettings() async {
-    Intl.defaultLocale = _currentLanguage;
-    await initializeDateFormatting(_currentLanguage, null);
-  }
-
   /// تغيير اللغة مع الحفظ
   Future<void> changeLanguage(String languageCode) async {
     if (!_supportedLanguageCodes.contains(languageCode) ||
