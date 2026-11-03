@@ -5,6 +5,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  push:
+    branches: [uxlp-44-implementation]
   workflow_dispatch:
 
 jobs:
