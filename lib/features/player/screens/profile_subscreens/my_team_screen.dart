@@ -183,6 +183,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
         setState(() {
           localTeam = null;
           teamMembers.clear();
+          _teamNameController.clear();
+          _selectedSport = 'Football';
+          _selectedLogo = null;
           _isLoadingMembers = false;
           _hasTeamLoadError = false;
         });
