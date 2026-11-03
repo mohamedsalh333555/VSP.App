@@ -78,24 +78,19 @@ jobs:
       - name: Build installable test Release APK
         env:
           VSP_TEST_RELEASE_APK: "true"
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         shell: bash
         run: |
           DART_DEFINES=()
-          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}")
-          fi
-          if [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}")
-          fi
-          if [ -n "${{ secrets.PAYMOB_PUBLIC_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_WEB_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_IOS_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}")
-          fi
+          [[ -z "$SUPABASE_URL" ]] || DART_DEFINES+=(--dart-define=SUPABASE_URL="$SUPABASE_URL")
+          [[ -z "$SUPABASE_ANON_KEY" ]] || DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY")
+          [[ -z "$PAYMOB_PUBLIC_KEY" ]] || DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="$PAYMOB_PUBLIC_KEY")
+          [[ -z "$GOOGLE_WEB_CLIENT_ID" ]] || DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID")
+          [[ -z "$GOOGLE_IOS_CLIENT_ID" ]] || DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="$GOOGLE_IOS_CLIENT_ID")
           flutter build apk --release "${DART_DEFINES[@]}"
 
       - name: Locate generated APK
