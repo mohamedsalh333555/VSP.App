@@ -31,6 +31,9 @@ class SuccessfulMockBookingRepository implements BookingRepository {
   }
 
   @override
+  Future<Booking?> getBookingByIdStrict(String bookingId) async => null;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
