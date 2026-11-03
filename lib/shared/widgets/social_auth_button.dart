@@ -30,6 +30,7 @@ class SocialAuthButton extends StatelessWidget {
             painter: GradientBorderPainter(
               strokeWidth: VSPDSBorders.fieldFocus,
               radius: VSPDSRadius.button,
+              textDirection: Directionality.of(context),
               gradient: LinearGradient(
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
@@ -65,11 +66,13 @@ class GradientBorderPainter extends CustomPainter {
   final double strokeWidth;
   final double radius;
   final Gradient gradient;
+  final TextDirection textDirection;
 
   GradientBorderPainter({
     required this.strokeWidth,
     required this.radius,
     required this.gradient,
+    required this.textDirection,
   });
 
   @override
@@ -80,7 +83,7 @@ class GradientBorderPainter extends CustomPainter {
       Radius.circular(radius - strokeWidth / 2),
     );
     final paint = Paint()
-      ..shader = gradient.createShader(rect)
+      ..shader = gradient.createShader(rect, textDirection: textDirection)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawRRect(rrect, paint);
