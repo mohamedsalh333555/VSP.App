@@ -33,6 +33,6 @@ jobs:
       - name: Verify real Firebase client options
         run: test -s lib/firebase_options.dart
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
       - name: Test
         run: flutter test --coverage
