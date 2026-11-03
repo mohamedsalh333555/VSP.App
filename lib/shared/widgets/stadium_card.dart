@@ -228,6 +228,7 @@ class StadiumCard extends StatelessWidget {
  size: 22,
  ),
  ),
+ ),
  );
  },
  ),
