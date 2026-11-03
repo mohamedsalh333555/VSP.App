@@ -33,22 +33,19 @@ class _FakeAuth extends ChangeNotifier implements AuthProvider {
 
 void main() {
   group('MyTeamScreen — unauthenticated state', () {
-    testWidgets('shows "Not authenticated" when uid is null', (tester) async {
+    testWidgets('shows localized account recovery state when uid is null', (tester) async {
       await tester.pumpWidget(_wrap(const MyTeamScreen()));
       await tester.pump();
-      expect(find.text('Not authenticated'), findsOneWidget);
+      expect(find.text('Account unavailable'), findsOneWidget);
     });
   });
 
   group('MyTeamScreen — loading state', () {
-    testWidgets('shows CircularProgressIndicator while loading', (tester) async {
-      // uid is null → "Not authenticated" (same test for null user)
+    testWidgets('does not show loading indicator when uid is null', (tester) async {
       await tester.pumpWidget(_wrap(const MyTeamScreen()));
       await tester.pump();
-      // Either progress indicator (authenticated) or "Not authenticated" (null uid)
-      final hasProgress = find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
-      final hasText = find.text('Not authenticated').evaluate().isNotEmpty;
-      expect(hasProgress || hasText, isTrue);
+      expect(find.text('Account unavailable'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
     });
   });
 
