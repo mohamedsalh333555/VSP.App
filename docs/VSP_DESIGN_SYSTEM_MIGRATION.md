@@ -484,3 +484,13 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 
 - The prior `Flutter CI` run failed at `flutter analyze` on commit `ad4141994eef7424df63440645ffb186ece54f27`; 82 diagnostics were traced to 12 files. The affected source and test causes are corrected in commits `3c4a33c2b97c58704c9d5d56a281236a50968733` and `dec1f05e3f0fd88b541c8c919802b36d4eb65e2f`.
 - The corrections are source-level only. No new analyzer/test run has been started, so compilation and test success are not claimed. CI is manual-only and contains no APK build until the final validation gate.
+
+## 2026-11-03 grouped implementation checkpoint — runtime pending
+
+- **CI gate:** `.github/workflows/ci.yml` now uses `workflow_dispatch` only. This prevents intermediate source commits from starting analyze/test before the required consolidated review. `.github/workflows/build-release-apk.yml` remains manual-only; no APK workflow was triggered.
+- **Social auth gradient:** `GradientBorderPainter` now receives the current `TextDirection` for `AlignmentDirectional` shader resolution and repaints when direction, gradient, radius, or stroke changes. RTL visual and assistive-technology behavior remains unverified on device.
+- **My Team:** the screen now uses strict membership and roster queries, derives captain actions from `captain_id` instead of `memberUids.first`, guards account and roster requests with generations, and displays localized retry on unverifiable membership/roster. The existing first-membership selection for multi-team users was retained as a product decision; no team-selection rule or permission was changed.
+- **Paymob callback parsing:** 3DS detection now includes `3dsecure`, `/3ds`, and `challenge` paths. This only keeps the challenge pending; success still requires the trusted payment-host/endpoint/status checks.
+- **Auth timeout lifecycle:** the 5-second safe timeout is cancelled on auth-stream emission/completion or subscription cancellation, preventing a late timeout callback after disposal.
+- **Existing CI evidence:** [run 41635966258](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41635966258) ran on the previous head `4b9b7ff786a1c306ebbda77528a73bfd6d24fdc9`. Analyze passed, but the test job failed with 8 failures (795 passed, 2 skipped). Related test fixtures/expectations were corrected in later commits; they have not been rerun.
+- **Coverage gate unchanged:** 338 unique registered paths / 366 register rows; all remain runtime pending. The global 44-rule table remains 39 source-reviewed/runtime-pending and 5 product decisions. No `pass` is inferred from source review. No final consolidated review or APK build has occurred.
