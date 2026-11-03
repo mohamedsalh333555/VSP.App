@@ -146,8 +146,12 @@ void main() {
     });
 
     test('calculatePasswordStrength evaluates score, label, and colors', () {
+      final empty = SignupValidationService.calculatePasswordStrength('');
+      expect(empty.score, equals(0.0));
+      expect(empty.label, equals('Weak'));
+
       final weak = SignupValidationService.calculatePasswordStrength('abc');
-      expect(weak.score, equals(0.0));
+      expect(weak.score, equals(0.2));
       expect(weak.label, equals('Weak'));
 
       final medium = SignupValidationService.calculatePasswordStrength('abcdef12');
