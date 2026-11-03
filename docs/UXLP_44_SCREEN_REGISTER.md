@@ -728,7 +728,7 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 - `lib/features/owner/screens/owner_dashboard_screen.dart`: overlapping owner-championship refreshes now use a request generation; results and errors from an earlier refresh are ignored, and changing the active owner scope invalidates pending refreshes.
 
 
-| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source updated — approval-notice claim responses are owner-ID/generation scoped; runtime account-switch verification pending |
+| `lib/features/owner/screens/owner_dashboard_screen.dart` | owner | source updated—runtime pending (approval-notice claim responses are owner-ID/generation scoped; runtime account-switch verification pending) |
 
 
 ### Safe-area follow-up — 2026-11-01
