@@ -90,5 +90,9 @@ class GradientBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant GradientBorderPainter oldDelegate) => false;
+  bool shouldRepaint(covariant GradientBorderPainter oldDelegate) =>
+      oldDelegate.strokeWidth != strokeWidth ||
+      oldDelegate.radius != radius ||
+      oldDelegate.textDirection != textDirection ||
+      oldDelegate.gradient != gradient;
 }
