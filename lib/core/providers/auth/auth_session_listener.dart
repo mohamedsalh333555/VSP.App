@@ -15,14 +15,34 @@ class AuthSessionListener {
     required VoidCallback onTimeout,
     required Future<void> Function(User?) onAuthStateChange,
   }) {
-    Future.delayed(const Duration(seconds: 5), () {
+    final timeout = Timer(const Duration(seconds: 5), () {
       if (isInitializing()) {
         onTimeout();
         VSPLogger.w("Auth Safe-Timeout triggered: Supabase auth stream did not emit.");
       }
     });
+    final controller = StreamController<User?>();
+    StreamSubscription<User?>? sourceSubscription;
 
-    return authService.authStateChanges.listen((user) async {
+    controller.onListen = () {
+      sourceSubscription = authService.authStateChanges.listen(
+        (user) {
+          timeout.cancel();
+          controller.add(user);
+        },
+        onError: controller.addError,
+        onDone: () {
+          timeout.cancel();
+          controller.close();
+        },
+      );
+    };
+    controller.onCancel = () async {
+      timeout.cancel();
+      await sourceSubscription?.cancel();
+    };
+
+    return controller.stream.listen((user) async {
       await onAuthStateChange(user);
     });
   }
