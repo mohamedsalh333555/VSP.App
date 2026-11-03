@@ -70,6 +70,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   StreamSubscription? _membershipSubscription;
   String? _activeUserId;
   int _loadGeneration = 0;
+  int _rosterGeneration = 0;
   bool _hasTeamLoadError = false;
 
   bool _isCaptain(Team? currentTeam) {
@@ -92,6 +93,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
 
     _activeUserId = uid;
     _loadGeneration++;
+    _rosterGeneration++;
     _teamSubscription?.cancel();
     _membershipSubscription?.cancel();
     _teamSubscription = null;
@@ -135,6 +137,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   @override
   void dispose() {
     _loadGeneration++;
+    _rosterGeneration++;
     _teamSubscription?.cancel();
     _teamSubscription = null;
     _membershipSubscription?.cancel();
@@ -211,6 +214,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
             _teamNameController.text = updatedTeam.name;
             _selectedSport = updatedTeam.sportType;
             localTeam = updatedTeam;
+            _isLoadingMembers = true;
           });
           await _loadMemberDetails(updatedTeam, generation, uid);
         } catch (err) {
@@ -245,6 +249,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   }
 
   Future<void> _loadMemberDetails(Team team, int generation, String uid) async {
+    final rosterGeneration = ++_rosterGeneration;
     final memberIds = team.memberUids
         .map((id) => id.trim())
         .where((id) => id.isNotEmpty && id != team.captainId)
@@ -253,7 +258,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
 
     try {
       final members = await UserRepository().getUsersByIdsStrict(memberIds);
-      if (!_isCurrentTeamRequest(generation, uid)) return;
+      if (!_isCurrentTeamRequest(generation, uid) ||
+          rosterGeneration != _rosterGeneration) return;
       if (members.length != memberIds.length) {
         throw StateError('Team roster profiles could not all be verified');
       }
@@ -266,7 +272,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
       });
     } catch (err, stackTrace) {
       VSPLogger.e('Team roster could not be verified', err, stackTrace);
-      if (_isCurrentTeamRequest(generation, uid)) {
+      if (_isCurrentTeamRequest(generation, uid) &&
+          rosterGeneration == _rosterGeneration) {
         setState(() {
           _hasTeamLoadError = true;
           _isLoadingMembers = false;
