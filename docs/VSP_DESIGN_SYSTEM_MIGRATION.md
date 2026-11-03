@@ -482,7 +482,7 @@ This is a complete-file scan of that 34-path unchanged subset only. It does not 
 - This does not establish runtime correctness or full-file coverage of all changed files. The 338-path per-screen/per-state runtime audit and the 44-rule mapping remain incomplete; do not promote source review to pass.
 ## Analyzer remediation checkpoint — 2026-11-02
 
-- The prior `Flutter CI` run failed at `flutter analyze` on commit `ad4141994eef7424df63440645ffb186ece54f27`; 82 diagnostics were traced to 12 files. The affected source and test causes are corrected in commits `3c4a33c2b97c58704c9d5d56a281236a50968733` and `dec1f05e3f0fd88b541c8c919802b36d4eb65e2f`.
+- The prior `Flutter CI` run [41388972880](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41388972880) failed at `flutter analyze` on commit `ad4141994eef7424df63440645ffb186ece54f27`; the log reports 110 issues across the affected 12-file source/test batch (not 82). Later run [41576887847](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41576887847) reported 19 Analyze issues and 8 test failures. Run [41635966258](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41635966258) on `4b9b7ff786a1c306ebbda77528a73bfd6d24fdc9` passed Analyze but failed Test (795 passed, 8 failed, 2 skipped). Source/test corrections followed run 416; they have not been rerun.
 - The corrections are source-level only. No new analyzer/test run has been started, so compilation and test success are not claimed. CI is manual-only and contains no APK build until the final validation gate.
 
 ## 2026-11-03 grouped implementation checkpoint — runtime pending
