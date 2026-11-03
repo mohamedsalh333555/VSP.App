@@ -51,13 +51,17 @@ class PaymobCallbackUrlParser {
     final uri = _httpUri(url);
     if (uri == null) return false;
     final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
     return _bank3dsDomains.any(
           (domain) => _isDomainOrSubdomain(host, domain),
         ) ||
         host.contains('mpgs') ||
         host.startsWith('acs.') ||
         host.contains('3dsecure') ||
-        host.contains('cardholder');
+        host.contains('cardholder') ||
+        path.contains('3dsecure') ||
+        path.contains('/3ds') ||
+        path.contains('challenge');
   }
 
   static PaymobCallbackStatus evaluateUrl(String url) {
