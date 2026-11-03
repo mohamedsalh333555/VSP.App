@@ -115,7 +115,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 | `lib/features/player/screens/profile_subscreens/edit_profile_screen.dart` | player | source reviewed—runtime pending (app-bar body avoids duplicate top safe inset; bottom inset handled once by scroll padding) (screen/sheet/dialog layout, safe-area, controller lifecycle, and action states reviewed) |
 | `lib/features/player/screens/profile_subscreens/favorites_screen.dart` | player | source reviewed—runtime pending (system bottom safe-area wrapper; favorites request is cached by selected IDs, initial fetch errors show localized retry instead of a false empty state) |
 | `lib/features/player/screens/profile_subscreens/language_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
-| `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source reviewed—runtime pending (team actions reviewed; Supabase auth ID reads corrected to User.id) |
+| `lib/features/player/screens/profile_subscreens/my_team_screen.dart` | player | source updated—runtime pending (strict membership and roster reads, captain_id-based role display, account/roster generation guards; multiple-team default remains a product decision) |
 | `lib/features/player/widgets/my_team/team_members_section.dart` | player | source reviewed—runtime pending (captain/member trophy badges and remove-member action spacing now use directional insets for RTL/LTR consistency) |
 | `lib/features/player/screens/profile_subscreens/notifications_screen.dart` | player | source reviewed—runtime pending (success states, roster form, language/notification settings, and modal constraints reviewed) |
 | `lib/features/player/screens/stadium_details_screen.dart` | player | source updated—runtime pending (stadium live stream preserves last known details with retry warning; information/pitch/rating tabs now fill a 48dp row and use InkWell semantics; bottom booking bar applies SafeArea; route-state reuse now refreshes the stadium stream when the stadium ID changes and rebuilds the image gallery from the new stadium metadata; runtime pending) |
@@ -256,7 +256,7 @@ This register is the inventory of Dart files whose names indicate screens, pages
 |---|---|---|
 | `lib/shared/widgets/custom_text_field.dart` | shared | source updated—runtime pending (V2 text-field token migration documented; actual call-site states and locale runtime pending) |
 | `lib/shared/widgets/primary_button.dart` | shared | source reviewed—runtime pending (canonical VSPPrimaryButton adapter, haptics and debounce documented; call-site/runtime pending) |
-| `lib/shared/widgets/social_auth_button.dart` | shared | source updated—runtime pending (V2 palette token corrected and border gradient uses directional start/end anchors; provider/auth error and RTL rendering remain runtime pending) |
+| `lib/shared/widgets/social_auth_button.dart` | shared | source updated—runtime pending (directional gradient shader receives TextDirection and repaints on direction/gradient changes; RTL and assistive-technology behavior remain runtime pending) |
 | `lib/shared/widgets/stadium_card.dart` | shared | source updated—runtime pending (V2 semantic colors/radii; card tap disabled without callback; location disabled without coordinates; localized favorite/edit action labels; content-density and locale runtime pending) |
 | `lib/shared/widgets/team_card_hero.dart` | shared | source reviewed—runtime pending (responsive minimum-height and flexible stat/footer correction documented; large-text runtime pending) |
 | `lib/shared/widgets/vsp_animated_button.dart` | shared | source reviewed—runtime pending (disabled state and finally-based cooldown correction documented; repeat-action runtime pending) |
@@ -660,7 +660,7 @@ The 338 unique register paths also include 13 cross-cutting core/navigation/desi
 ## 2026-11-01 source corrections
 
 - `lib/features/owner/widgets/add_stadium/stadium_wizard_submit_service.dart`: stadium persistence is now treated separately from post-save owner-profile synchronization. If the stadium write succeeds but profile refresh fails, the UI no longer reports that the stadium save itself failed; it surfaces a localized account-sync warning and closes the completed wizard. The default stadium usage note is localized in Arabic and English, and blocked/auth-expired feedback is bilingual.
-- `lib/features/player/widgets/payment/paymob_callback_url_parser.dart`: payment callback decisions now require an HTTP(S) URL on an exact trusted payment domain or its subdomain, a recognized payment endpoint, and an explicit success/failure status parameter. Path-only `/payment-status`, arbitrary `standalone` substrings, and untrusted hosts no longer produce a success callback. Bank/3DS domains remain pending and rely on server-side payment-status polling.
+- `lib/features/player/widgets/payment/paymob_callback_url_parser.dart`: payment callback decisions require HTTP(S), an exact trusted payment domain/subdomain, a recognized endpoint, and explicit success/failure parameters. Path-only `/payment-status`, arbitrary `standalone` substrings, and untrusted hosts cannot produce success. Bank/3DS detection now also recognizes `3dsecure`, `/3ds`, and `challenge` paths so these redirects remain pending for server-side payment-status polling.
 
 
 ## Additional booking and tournament integrity fixes — 2026-11-01
@@ -988,3 +988,11 @@ Paths re-fetched and scanned:
 - Follow-up static diff triage found and corrected one remaining feature-level `Colors.transparent` literal in `VSPPositionSelector` and changed the social-auth border gradient to directional alignment.
 - Source changes are committed in `3c4a33c2b97c58704c9d5d56a281236a50968733` and `dec1f05e3f0fd88b541c8c919802b36d4eb65e2f`. The fixes have not yet been revalidated by a new analyzer/test run; no pass is claimed.
 - `.github/workflows/ci.yml` is now manual-only and analyze/test-only so subsequent source commits cannot trigger a premature APK build. The dedicated release workflow remains manual-only.
+
+## 2026-11-03 grouped source corrections — runtime pending
+
+- `my_team_screen.dart`: switched team and roster loading to strict repository methods, derives captain actions from `captain_id` rather than roster ordering, isolates account/roster requests by generation, and shows localized retry when team or roster verification fails. The first-membership selection policy was not changed.
+- `social_auth_button.dart`: passes the active `TextDirection` to the directional gradient shader and repaints when direction/gradient inputs change.
+- `paymob_callback_url_parser.dart`: recognizes 3DS challenge paths in addition to trusted bank/ACS host patterns; callback success still requires a trusted payment host and explicit status parameters.
+- Auth-session safe timeout now follows the auth stream lifecycle and is cancelled when the stream emits, completes, or the subscription is cancelled. Related tests were aligned with the localized account state, incremental password-strength scoring, cash-only settled fixture, and strict booking refresh stub.
+- These are source/test corrections only. No runtime pass is claimed; the 338-path screen/state matrix remains incomplete.
