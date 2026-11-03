@@ -87,7 +87,7 @@ The CI run stopped at Analyze; automated tests and APK build were skipped. No te
 
 ## Gates still open
 
-1. Complete screen-by-screen rule mapping for all 208 registered unique paths, the 26 separately tracked repeated embedded-component findings, and applicable state variants.
+1. Complete screen-by-screen rule mapping for all 338 registered unique paths, the 28 separately tracked repeated embedded-component rows, and applicable state variants. The 366 register rows are inventory/source notes, not a per-rule/per-state pass matrix.
 2. Finish Arabic/English copy and RTL/LTR review.
 3. Resolve findings that require product decisions (including notification retention policy) before changing business/data behavior.
 4. Complete one consolidated validation pass after all grouped source changes.
@@ -1470,3 +1470,12 @@ The current branch now contains the narrow source fixes in commits `82f5e687f019
 - No runtime pass is claimed. The 338 unique registered paths still lack the complete per-screen/per-state matrix; rules 1–24, 26–30, 32–37, 40, 42–44 remain source-reviewed/runtime-pending, while rules 25, 31, 38, 39, and 41 remain `needs product decision`.
 - The product-decision items are intentionally unchanged under the requested guardrails. In particular, the live `get_team_active_league(uuid)` SECURITY DEFINER authorization/PII exposure and missing server-side kickoff/result guard remain documented and require an explicit product/security decision; no permission, SQL, payment, or database changes were made.
 - The final consolidated review and APK gate remain blocked until the per-screen/per-state evidence is complete. The CI workflow is currently manual-only and analyze/test-only; no APK workflow was started.
+
+## 2026-11-03 PR #35 checkpoint — source corrections only
+
+- Scope remains `mohamedsalh333555/VSP.App`, branch `uxlp-44-implementation`, PR #35. The screen register contains 338 unique paths and 366 rows (28 repeated-path findings). All rows still require runtime review; source-reviewed or source-updated labels are not completion.
+- The global 44-rule table currently has 39 `source reviewed—runtime pending`, 5 `needs product decision` (25, 31, 38, 39, 41), and 0 pass / 0 fail / 0 not-applicable. There is still no complete per-screen/per-state matrix proving each applicable rule.
+- Existing `Flutter CI` run [41635966258](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41635966258) completed on the earlier head `4b9b7ff786a1c306ebbda77528a73bfd6d24fdc9`: Analyze succeeded; the test job failed (795 passed, 8 failed, 2 skipped). The failure groups were stale password-strength expectations, an online-payment fixture used for a cash-only card, obsolete My Team unauthenticated/loading expectations, 3DS challenge-path recognition, cancellation refresh/auth-timeout test lifecycle, and the social-auth directional shader missing TextDirection. Source/test corrections were committed after that run, but no rerun has been started and their success is not claimed.
+- `.github/workflows/ci.yml` was changed to `workflow_dispatch` only so subsequent grouped source commits do not launch intermediate checks. The release APK workflow remains manual-only. No Release APK run was started.
+- The prior release run [41286819423](https://github.com/mohamedsalh333555/VSP.App/actions/runs/41286819423) remains a failed older build (compile errors in `stadium_details_screen.dart` and missing `VSPErrorState` import); it produced no APK artifact and is not evidence for the current head.
+- Next gate: finish all 44 rules across the 338 paths and their state variants, record `pass` / `fail` / `needs product decision` / `not applicable` with evidence, close clear fixes, then perform one consolidated review. APK remains prohibited until that review succeeds.
