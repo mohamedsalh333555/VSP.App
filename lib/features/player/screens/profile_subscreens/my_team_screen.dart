@@ -68,34 +68,73 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
 
   StreamSubscription? _teamSubscription;
   StreamSubscription? _membershipSubscription;
+  String? _activeUserId;
+  int _loadGeneration = 0;
+  bool _hasTeamLoadError = false;
 
   bool _isCaptain(Team? currentTeam) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
     if (currentTeam == null) return true;
-    return auth.currentUser?.id == currentTeam.memberUids.first;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final captainId = currentTeam.captainId.trim();
+    return captainId.isNotEmpty && auth.currentUser?.id == captainId;
   }
 
   @override
   void initState() {
     super.initState();
-    _initialLoad();
+  }
 
-    // Listen to membership changes in Supabase
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      final uid = auth.currentUser?.id;
-      if (uid != null) {
-        _membershipSubscription = TeamRepository().streamUserMembership(uid).listen((data) {
-          _initialLoad();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uid = Provider.of<AuthProvider>(context).currentUser?.id;
+    if (uid == _activeUserId) return;
+
+    _activeUserId = uid;
+    _loadGeneration++;
+    _teamSubscription?.cancel();
+    _membershipSubscription?.cancel();
+    _teamSubscription = null;
+    _membershipSubscription = null;
+    localTeam = null;
+    teamMembers.clear();
+    _teamNameController.clear();
+    _selectedSport = 'Football';
+    _selectedLogo = null;
+    _hasTeamLoadError = false;
+    _isLoadingMembers = uid != null;
+
+    if (uid != null) {
+      _initialLoad(uid);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _activeUserId != uid) return;
+        var skipInitialSnapshot = true;
+        _membershipSubscription = TeamRepository()
+            .streamUserMembership(uid)
+            .listen((_) {
+          if (skipInitialSnapshot) {
+            skipInitialSnapshot = false;
+            return;
+          }
+          if (_activeUserId == uid) _initialLoad(uid);
         }, onError: (err) {
           VSPLogger.w('Membership realtime stream notice: $err');
+          if (mounted && _activeUserId == uid) {
+            setState(() {
+              _hasTeamLoadError = true;
+              _isLoadingMembers = false;
+            });
+          }
         });
-      }
-    });
+      });
+    } else {
+      _isLoadingMembers = false;
+    }
   }
 
   @override
   void dispose() {
+    _loadGeneration++;
     _teamSubscription?.cancel();
     _teamSubscription = null;
     _membershipSubscription?.cancel();
@@ -105,7 +144,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
   }
 
   @override
-  Future<void> reloadTeam() => _initialLoad();
+  Future<void> reloadTeam() => _initialLoad(_activeUserId);
 
   @override
   void refreshTeamMembers(UserModel user) {
@@ -114,59 +153,125 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
     }
   }
 
-  Future<void> _initialLoad() async {
-    _teamSubscription?.cancel();
+  bool _isCurrentTeamRequest(int generation, String uid) =>
+      mounted && _loadGeneration == generation && _activeUserId == uid;
+
+  Future<void> _initialLoad([String? requestedUserId]) async {
+    final uid = requestedUserId ?? _activeUserId;
+    final generation = ++_loadGeneration;
+    await _teamSubscription?.cancel();
     _teamSubscription = null;
 
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.id;
-    if (uid == null) return;
-
-    final team = await TeamRepository().getUserTeam(uid);
+    if (uid == null || uid != _activeUserId) return;
     if (mounted) {
-      if (team != null) {
+      setState(() {
+        _isLoadingMembers = true;
+        _hasTeamLoadError = false;
+      });
+    }
+
+    try {
+      // Strict lookup preserves the distinction between a verified no-team state
+      // and a membership/query failure that needs recovery.
+      final team = await TeamRepository().getUserTeamStrict(uid);
+      if (!_isCurrentTeamRequest(generation, uid)) return;
+
+      if (team == null) {
+        setState(() {
+          localTeam = null;
+          teamMembers.clear();
+          _isLoadingMembers = false;
+          _hasTeamLoadError = false;
+        });
+        return;
+      }
+
+      if (team.captainId.trim().isEmpty) {
+        throw StateError('Team captain identity could not be verified');
+      }
+
+      setState(() {
         _teamNameController.text = team.name;
         _selectedSport = team.sportType;
         localTeam = team;
+        teamMembers.clear();
+        _isLoadingMembers = true;
+        _hasTeamLoadError = false;
+      });
 
-        _teamSubscription = TeamRepository().streamTeam(team.id).listen((data) async {
-          if (data.isNotEmpty && mounted) {
-            final updatedTeam = await TeamRepository().getTeam(team.id);
-            if (updatedTeam != null && mounted) {
-              setState(() {
-                _teamNameController.text = updatedTeam.name;
-                _selectedSport = updatedTeam.sportType;
-                localTeam = updatedTeam;
-              });
-            }
+      _teamSubscription = TeamRepository().streamTeam(team.id).listen((data) async {
+        if (data.isEmpty || !_isCurrentTeamRequest(generation, uid)) return;
+        try {
+          final updatedTeam = await TeamRepository().getTeamStrict(team.id);
+          if (updatedTeam == null || !_isCurrentTeamRequest(generation, uid)) return;
+          if (updatedTeam.captainId.trim().isEmpty) {
+            throw StateError('Team captain identity could not be verified');
           }
-        }, onError: (err) {
-          VSPLogger.w('Team realtime stream notice: $err');
-        });
+          setState(() {
+            _teamNameController.text = updatedTeam.name;
+            _selectedSport = updatedTeam.sportType;
+            localTeam = updatedTeam;
+          });
+          await _loadMemberDetails(updatedTeam, generation, uid);
+        } catch (err) {
+          VSPLogger.w('Team realtime refresh could not be verified: $err');
+          if (_isCurrentTeamRequest(generation, uid)) {
+            setState(() {
+              _hasTeamLoadError = true;
+              _isLoadingMembers = false;
+            });
+          }
+        }
+      }, onError: (err) {
+        VSPLogger.w('Team realtime stream notice: $err');
+        if (_isCurrentTeamRequest(generation, uid)) {
+          setState(() {
+            _hasTeamLoadError = true;
+            _isLoadingMembers = false;
+          });
+        }
+      });
 
-        await _loadMemberDetails(team);
-      } else {
+      await _loadMemberDetails(team, generation, uid);
+    } catch (err, stackTrace) {
+      VSPLogger.e('Team profile could not be verified', err, stackTrace);
+      if (_isCurrentTeamRequest(generation, uid)) {
         setState(() {
-          localTeam = null;
+          _hasTeamLoadError = true;
           _isLoadingMembers = false;
         });
       }
     }
   }
 
-  Future<void> _loadMemberDetails(Team team) async {
-    if (team.memberUids.length > 1) {
-      final memberIds = team.memberUids.sublist(1);
-      final members = await UserRepository().getUsersByIds(memberIds);
-      if (mounted) {
+  Future<void> _loadMemberDetails(Team team, int generation, String uid) async {
+    final memberIds = team.memberUids
+        .map((id) => id.trim())
+        .where((id) => id.isNotEmpty && id != team.captainId)
+        .toSet()
+        .toList();
+
+    try {
+      final members = await UserRepository().getUsersByIdsStrict(memberIds);
+      if (!_isCurrentTeamRequest(generation, uid)) return;
+      if (members.length != memberIds.length) {
+        throw StateError('Team roster profiles could not all be verified');
+      }
+      setState(() {
+        teamMembers
+          ..clear()
+          ..addAll(members);
+        _isLoadingMembers = false;
+        _hasTeamLoadError = false;
+      });
+    } catch (err, stackTrace) {
+      VSPLogger.e('Team roster could not be verified', err, stackTrace);
+      if (_isCurrentTeamRequest(generation, uid)) {
         setState(() {
-          teamMembers.clear();
-          teamMembers.addAll(members);
+          _hasTeamLoadError = true;
           _isLoadingMembers = false;
         });
       }
-    } else {
-      if (mounted) setState(() => _isLoadingMembers = false);
     }
   }
 
@@ -187,6 +292,22 @@ class _MyTeamScreenState extends State<MyTeamScreen> with MyTeamController<MyTea
             message: isArabic
                 ? 'سجّل الدخول مرة أخرى لعرض بيانات فريقك.'
                 : 'Sign in again to view your team details.',
+          ),
+        ),
+      );
+    }
+
+    if (_hasTeamLoadError) {
+      return VSPScaffold(
+        backgroundColor: VSPColors.background,
+        body: SafeArea(
+          child: VSPStateView(
+            state: VSPUiState.error,
+            title: isArabic ? 'تعذر تحميل بيانات الفريق' : 'Team data unavailable',
+            message: isArabic
+                ? 'تعذر التحقق من الفريق أو قائمة الأعضاء. أعد المحاولة قبل المتابعة.'
+                : 'We could not verify your team or roster. Retry before continuing.',
+            onRetry: () => _initialLoad(uid),
           ),
         ),
       );
