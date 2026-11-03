@@ -3,7 +3,7 @@ name: Build Android Release APK
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-# QA build trigger: automatically create an installable test APK on main updates.
+# Build installable APKs using the original VSP Android release signing identity.
 
 on:
   workflow_dispatch:
@@ -77,27 +77,42 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      - name: Build installable test Release APK
+      - name: Configure original Android release signing
         env:
-          VSP_TEST_RELEASE_APK: "true"
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$ANDROID_KEYSTORE_BASE64" || -z "$ANDROID_KEYSTORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+            echo "::error::Original signing key secrets are missing. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD using the exact original VSP release keystore."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/vsp-release-key.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=vsp-release-key.jks
+          EOF
+
+      - name: Build signed Release APK
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          PAYMOB_PUBLIC_KEY: ${{ secrets.PAYMOB_PUBLIC_KEY }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_IOS_CLIENT_ID: ${{ secrets.GOOGLE_IOS_CLIENT_ID }}
         shell: bash
         run: |
           DART_DEFINES=()
-          if [ -n "${{ secrets.SUPABASE_URL }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}")
-          fi
-          if [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}")
-          fi
-          if [ -n "${{ secrets.PAYMOB_PUBLIC_KEY }}" ]; then
-            DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="${{ secrets.PAYMOB_PUBLIC_KEY }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_WEB_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="${{ secrets.GOOGLE_WEB_CLIENT_ID }}")
-          fi
-          if [ -n "${{ secrets.GOOGLE_IOS_CLIENT_ID }}" ]; then
-            DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="${{ secrets.GOOGLE_IOS_CLIENT_ID }}")
-          fi
+          [[ -z "$SUPABASE_URL" ]] || DART_DEFINES+=(--dart-define=SUPABASE_URL="$SUPABASE_URL")
+          [[ -z "$SUPABASE_ANON_KEY" ]] || DART_DEFINES+=(--dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY")
+          [[ -z "$PAYMOB_PUBLIC_KEY" ]] || DART_DEFINES+=(--dart-define=PAYMOB_PUBLIC_KEY="$PAYMOB_PUBLIC_KEY")
+          [[ -z "$GOOGLE_WEB_CLIENT_ID" ]] || DART_DEFINES+=(--dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID")
+          [[ -z "$GOOGLE_IOS_CLIENT_ID" ]] || DART_DEFINES+=(--dart-define=GOOGLE_IOS_CLIENT_ID="$GOOGLE_IOS_CLIENT_ID")
           flutter build apk --release "${DART_DEFINES[@]}"
 
       - name: Locate generated APK
