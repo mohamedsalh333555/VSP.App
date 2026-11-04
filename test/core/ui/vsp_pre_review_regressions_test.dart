@@ -86,7 +86,8 @@ void main() {
   testWidgets('Arabic expired countdown reports scheduled time only', (tester) async {
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar'), Locale('en')],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: VSPCountdownTimer(targetDate: DateTime(2000))),
     ));
     await tester.pumpAndSettle();
