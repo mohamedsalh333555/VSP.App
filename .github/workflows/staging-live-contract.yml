@@ -1,0 +1,34 @@
+name: Staging Live Contract
+
+concurrency:
+  group: staging-live-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - "test/db_live_verification_test.dart"
+      - ".github/workflows/staging-live-contract.yml"
+
+jobs:
+  public-contract:
+    name: Read-only staging API and permissions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run read-only live contract checks
+        run: >-
+          flutter test test/db_live_verification_test.dart
+          --dart-define=VSP_RUN_LIVE_TESTS=true
+          --dart-define=SUPABASE_URL=https://vtwgqyxglevcsxwdmhop.supabase.co
+          --dart-define=SUPABASE_ANON_KEY=sb_publishable_PZazWl2p0qR5lsqh6jr83A_cq-ov516
