@@ -95,7 +95,9 @@ jobs:
             echo "::error::Original signing key secrets are missing. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD using the exact original VSP release keystore."
             exit 1
           fi
-          # Android resolves storeFile relative to android/app/build.gradle.kts.\n          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
+          # Android resolves storeFile relative to android/app/build.gradle.kts.
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/vsp-release-key.jks
+          test -s android/app/vsp-release-key.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEY_PASSWORD
