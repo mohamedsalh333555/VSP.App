@@ -42,81 +42,93 @@ class VSPPrimaryButton extends StatelessWidget {
             alpha: resolvedTextColor.a * VSPDSOpacity.disabled,
           )
         : resolvedTextColor;
-    final effectiveGradientColors = gradientColors?.map((gradientColor) {
-      return isDisabled
-          ? gradientColor.withValues(
-              alpha: gradientColor.a * VSPDSOpacity.disabled,
-            )
-          : gradientColor;
-    }).toList(growable: false);
-
-    return SizedBox(
-      height: resolvedHeight,
-      width: width ?? double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(VSPDSRadius.button),
-          gradient: gradientColors == null
-              ? null
-              : LinearGradient(
-                  colors: effectiveGradientColors!,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: gradientColors == null
-              ? (isDisabled
-                  ? resolvedColor.withValues(alpha: VSPDSOpacity.disabled)
-                  : resolvedColor)
-              : null,
-          boxShadow: isDisabled
-              ? const <BoxShadow>[]
-              : const <BoxShadow>[VSPDSComponentEffects.buttonShadow],
-        ),
-        child: ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: effectiveTextColor,
-            disabledForegroundColor:
-                resolvedTextColor.withValues(alpha: VSPDSOpacity.disabled),
-            elevation: VSPDSElevation.none,
-            shadowColor: Colors.transparent,
-            minimumSize: Size.zero,
-            padding: padding ?? EdgeInsets.zero,
-            shape: const StadiumBorder(),
-            overlayColor: VSPDSColors.white12,
-          ),
-          child: isLoading
-              ? SizedBox(
-                  width: VSPDSizes.buttonProgress,
-                  height: VSPDSizes.buttonProgress,
-                  child: CircularProgressIndicator(
-                    strokeWidth: VSPDSizes.progressStroke,
-                    color: effectiveTextColor,
-                  ),
+    final effectiveGradientColors = gradientColors
+        ?.map((gradientColor) {
+          return isDisabled
+              ? gradientColor.withValues(
+                  alpha: gradientColor.a * VSPDSOpacity.disabled,
                 )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (icon != null) ...[
-                      Icon(icon, size: VSPDSizes.iconMd, color: effectiveTextColor),
-                      const SizedBox(width: VSPDSSpacing.xs),
-                    ],
-                    Flexible(
-                      child: Text(
-                        text,
-                        maxLines: 2,
-                        softWrap: true,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: VSPDSTypography.button.copyWith(
+              : gradientColor;
+        })
+        .toList(growable: false);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: resolvedHeight),
+      child: SizedBox(
+        width: width ?? double.infinity,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(VSPDSRadius.button),
+            gradient: gradientColors == null
+                ? null
+                : LinearGradient(
+                    colors: effectiveGradientColors!,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            color: gradientColors == null
+                ? (isDisabled
+                      ? resolvedColor.withValues(alpha: VSPDSOpacity.disabled)
+                      : resolvedColor)
+                : null,
+            boxShadow: isDisabled
+                ? const <BoxShadow>[]
+                : const <BoxShadow>[VSPDSComponentEffects.buttonShadow],
+          ),
+          child: ElevatedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: effectiveTextColor,
+              disabledForegroundColor: resolvedTextColor.withValues(
+                alpha: VSPDSOpacity.disabled,
+              ),
+              elevation: VSPDSElevation.none,
+              shadowColor: Colors.transparent,
+              minimumSize: Size.zero,
+              padding:
+                  padding ??
+                  const EdgeInsets.symmetric(
+                    horizontal: VSPDSSpacing.md,
+                    vertical: VSPDSSpacing.xs,
+                  ),
+              shape: const StadiumBorder(),
+              overlayColor: VSPDSColors.white12,
+            ),
+            child: isLoading
+                ? SizedBox(
+                    width: VSPDSizes.buttonProgress,
+                    height: VSPDSizes.buttonProgress,
+                    child: CircularProgressIndicator(
+                      strokeWidth: VSPDSizes.progressStroke,
+                      color: effectiveTextColor,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (icon != null) ...[
+                        Icon(
+                          icon,
+                          size: VSPDSizes.iconMd,
                           color: effectiveTextColor,
                         ),
+                        const SizedBox(width: VSPDSSpacing.xs),
+                      ],
+                      Flexible(
+                        child: Text(
+                          text,
+                          softWrap: true,
+                          textAlign: TextAlign.center,
+                          style: VSPDSTypography.button.copyWith(
+                            color: effectiveTextColor,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );

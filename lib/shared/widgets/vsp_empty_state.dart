@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/ui/vsp_ui.dart';
-import '../../core/ui/tokens/vsp_design_tokens.dart';
 import 'primary_button.dart';
 
 /// Canonical actionable empty state backed by Design System V2.
@@ -26,11 +25,7 @@ class VSPEmptyState extends StatelessWidget {
     final Widget? action = buttonText != null && onButtonPressed != null
         ? SizedBox(
             width: double.infinity,
-            height: VSPDSizes.buttonHeight,
-            child: PrimaryButton(
-              text: buttonText!,
-              onPressed: onButtonPressed,
-            ),
+            child: PrimaryButton(text: buttonText!, onPressed: onButtonPressed),
           )
         : null;
 

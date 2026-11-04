@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 
@@ -24,32 +25,43 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<Offset> _slide;
+  Timer? _delayTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
 
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _opacity = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    _slide = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     // Use explicit delay if provided, otherwise fall back to index-based stagger
-    final effectiveDelay = widget.delay ?? VSPDSMotion.staggerDelay(widget.index);
-    Future.delayed(effectiveDelay, () {
+    final effectiveDelay =
+        widget.delay ?? VSPDSMotion.staggerDelay(widget.index);
+    _delayTimer = Timer(effectiveDelay, () {
       if (mounted) _controller.forward();
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _delayTimer?.cancel();
+      _controller.value = 1;
+    }
+  }
+
+  @override
   void dispose() {
+    _delayTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -58,10 +70,7 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _opacity,
-      child: SlideTransition(
-        position: _slide,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }
