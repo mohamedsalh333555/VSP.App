@@ -180,7 +180,7 @@ class InsightsTopFiltersRow extends StatelessWidget {
                           data: Theme.of(context).copyWith(
                             colorScheme: const ColorScheme.dark(
                               primary: VSPColors.textPrimary,
-                              onPrimary: Colors.black,
+                              onPrimary: VSPColors.black,
                               surface: VSPColors.surface,
                               onSurface: VSPColors.textPrimary,
                             ),
@@ -276,7 +276,7 @@ class InsightsEmptyState extends StatelessWidget {
               child: Text(
                 isArabic ? 'إدارة الحجوزات' : 'Go to Bookings',
                 style: const TextStyle(
-                  color: Colors.black,
+                  color: VSPColors.black,
                   fontSize: 12.5,
                   fontWeight: FontWeight.w800,
                 ),

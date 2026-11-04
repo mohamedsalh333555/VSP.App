@@ -121,7 +121,7 @@ class _RootScreenState extends State<RootScreen> {
  backgroundColor: VSPColors.surface,
  title: Text(
  l10n.updateRequired,
- style: const TextStyle(color: Colors.white),
+ style: const TextStyle(color: VSPColors.white),
  ),
  content: Text(
  l10n.updateAvailableMessage,
@@ -198,7 +198,7 @@ class _RootScreenState extends State<RootScreen> {
 
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: SystemUiOverlayStyle.light.copyWith(
- statusBarColor: Colors.transparent,
+ statusBarColor: VSPColors.transparent,
  ),
  child: auth.isOwner ? const OwnerMainScreen() : PlayerHomeScreen(key: playerHomeScreenKey),
  );

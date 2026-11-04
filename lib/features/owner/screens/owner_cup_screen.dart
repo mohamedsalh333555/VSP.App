@@ -86,7 +86,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 backgroundColor: VSPColors.accent,
                 shape: const CircleBorder(),
                 elevation: 6,
-                child: const Icon(Iconsax.add_copy, color: Colors.black, size: 28),
+                child: const Icon(Iconsax.add_copy, color: VSPColors.black, size: 28),
               ),
             ),
       floatingActionButtonLocation: isArabic

@@ -38,7 +38,7 @@ class VSPNetworkBanner extends StatelessWidget {
                     curve: Curves.easeInOut,
                     opacity: isOnline ? 0.0 : 1.0,
                     child: Material(
-                      color: Colors.transparent,
+                      color: VSPDSColors.transparent,
                       child: SafeArea(
                         bottom: false,
                         child: Semantics(

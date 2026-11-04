@@ -114,7 +114,7 @@ class HomeTopBar extends StatelessWidget {
                       Text(
                         auth.userModel?.position ?? "ST",
                         style: const TextStyle(
-                          color: Colors.white70,
+                          color: VSPColors.white70,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,

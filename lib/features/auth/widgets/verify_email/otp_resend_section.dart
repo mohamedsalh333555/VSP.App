@@ -41,7 +41,7 @@ class OtpResendSection extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
+                duration: VSPDSMotion.selection,
                 style: TextStyle(
                   color: canResend ? VSPColors.accent : VSPColors.textSecondary,
                   fontWeight: FontWeight.bold,

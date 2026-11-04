@@ -236,7 +236,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                             child: Text(
                               '$activeCount',
                               style: const TextStyle(
-                                color: Colors.black,
+                                color: VSPColors.black,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -316,7 +316,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     height: 46,
                     onPressed: _resetAll,
                     color: VSPColors.surfaceAlt,
-                    textColor: Colors.white,
+                    textColor: VSPColors.white,
                   ),
                 ),
                 const SizedBox(width: 12),

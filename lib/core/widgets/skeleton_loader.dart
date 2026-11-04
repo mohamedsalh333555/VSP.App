@@ -16,18 +16,20 @@ class VSPSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: VSPColors.inputFill,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return placeholder;
     return Shimmer.fromColors(
       baseColor: VSPColors.inputFill,
       highlightColor: VSPColors.surfaceAlt,
-      period: const Duration(milliseconds: 1400),
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: VSPColors.inputFill,
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
+      period: VSPDSMotion.shimmer,
+      child: placeholder,
     );
   }
 }

@@ -48,7 +48,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                     isOwner
                         ? (isArabic ? 'اتفاقية تشغيل وحماية أصحاب الملاعب' : 'Stadium Operator & Data Agreement')
                         : (isArabic ? 'اتفاقية الاستخدام وحماية البيانات' : 'Terms of Use & Data Agreement'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -246,7 +246,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 10),
           Text(

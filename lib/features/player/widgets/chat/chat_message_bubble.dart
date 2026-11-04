@@ -22,47 +22,12 @@ class ChatMessageBubble extends StatelessWidget {
   });
 
   void _showEditDialog(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final editController = TextEditingController(text: message.text);
-
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (dlgCtx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          isArabic ? 'تعديل الرسالة ' : 'Edit Message ',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: TextField(
-          controller: editController,
-          style: const TextStyle(color: Colors.white),
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: isArabic ? 'اكتب الرسالة الجديدة...' : 'Enter new message...',
-            hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dlgCtx),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              final newText = editController.text.trim();
-              if (newText.isEmpty || newText == message.text) {
-                Navigator.pop(dlgCtx);
-                return;
-              }
-              Navigator.pop(dlgCtx);
-              await ChatRepository().editMessage(message.id, newText);
-            },
-            child: Text(isArabic ? 'حفظ التعديل' : 'Save', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    ).then((_) => editController.dispose());
+      useSafeArea: true,
+      barrierDismissible: false,
+      builder: (_) => _MessageEditDialog(message: message),
+    );
   }
 
   @override
@@ -81,17 +46,17 @@ class ChatMessageBubble extends StatelessWidget {
       child: GestureDetector(
         onLongPress: isMe ? () => _showEditDialog(context) : null,
         child: Align(
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: isMe ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: isMe ? VSPColors.accent : VSPColors.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(isMe ? 16 : 4),
-              bottomRight: Radius.circular(isMe ? 4 : 16),
+            borderRadius: BorderRadiusDirectional.only(
+              topStart: const Radius.circular(16),
+              topEnd: const Radius.circular(16),
+              bottomStart: Radius.circular(isMe ? 16 : 4),
+              bottomEnd: Radius.circular(isMe ? 4 : 16),
             ),
             boxShadow: isHost
                 ? [
@@ -180,6 +145,77 @@ class ChatMessageBubble extends StatelessWidget {
           ),
         ),
       ),
+      ),
+    );
+  }
+}
+
+class _MessageEditDialog extends StatefulWidget {
+  final ChatMessage message;
+  const _MessageEditDialog({required this.message});
+  @override
+  State<_MessageEditDialog> createState() => _MessageEditDialogState();
+}
+
+class _MessageEditDialogState extends State<_MessageEditDialog> {
+  late final TextEditingController _controller;
+  bool _saving = false;
+  bool _failed = false;
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.message.text);
+  }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  Future<void> _save() async {
+    if (_saving) return;
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    if (text == widget.message.text) { Navigator.pop(context); return; }
+    setState(() { _saving = true; _failed = false; });
+    try {
+      await ChatRepository().editMessage(widget.message.id, text);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return PopScope(
+      canPop: !_saving,
+      child: AlertDialog(
+        scrollable: true,
+        backgroundColor: VSPColors.surface,
+        title: Text(isArabic ? 'تعديل الرسالة' : 'Edit message'),
+        content: TextField(
+          controller: _controller,
+          enabled: !_saving,
+          minLines: 3, maxLines: 6,
+          style: const TextStyle(color: VSPColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: isArabic ? 'اكتب الرسالة الجديدة...' : 'Enter the new message...',
+            errorMaxLines: 3,
+            errorText: _failed ? (isArabic ? 'تعذر حفظ الرسالة. حاول مرة أخرى.' : 'Could not save the message. Try again.') : null,
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: _saving ? null : () => Navigator.pop(context), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _controller,
+            builder: (context, value, _) => TextButton(
+              onPressed: _saving || value.text.trim().isEmpty ? null : _save,
+              child: Text(_saving ? (isArabic ? 'جارٍ الحفظ...' : 'Saving...') : (isArabic ? 'حفظ التعديل' : 'Save')),
+            ),
+          ),
+        ],
       ),
     );
   }

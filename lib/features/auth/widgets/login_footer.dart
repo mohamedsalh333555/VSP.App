@@ -9,6 +9,7 @@ class LoginFooter extends StatelessWidget {
 
   void _showRoleSheet(BuildContext context) {
     showModalBottomSheet(
+      useSafeArea: true,
       context: context,
       backgroundColor: VSPColors.transparent,
       isScrollControlled: true,

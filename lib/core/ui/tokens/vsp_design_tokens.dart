@@ -583,6 +583,12 @@ abstract final class VSPDSTypography {
 }
 
 abstract final class VSPDSMotion {
+  static const Duration segmentedSelection = Duration(milliseconds: 220);
+  static const Duration reveal = Duration(milliseconds: 500);
+  static const Duration successReveal = Duration(milliseconds: 800);
+  static const Duration celebrationReveal = Duration(milliseconds: 900);
+  static const Duration splashReveal = Duration(milliseconds: 1000);
+
   // Canonical motion tokens. Preserve established timings unless an explicit UX decision changes them.
   static const Duration press = Duration(milliseconds: 120);
   static const Duration fast = Duration(milliseconds: 150);

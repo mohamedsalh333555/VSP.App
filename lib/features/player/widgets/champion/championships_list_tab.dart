@@ -192,7 +192,7 @@ class _ChampionshipsListTabState extends State<ChampionshipsListTab>
                         isArabic
                             ? 'تتصفح بطولات: ${championTranslateItem(context, widget.selectedLocation)}'
                             : 'Viewing: ${championTranslateItem(context, widget.selectedLocation)}',
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(color: VSPColors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
                     InkWell(

@@ -193,7 +193,7 @@ class League1v1RegistrationActionCard extends StatelessWidget {
             : (isArabic ? 'سداد الاشتراك والانضمام (${entryFee.toStringAsFixed(0)} ج.م)' : 'Pay & Join (${entryFee.toStringAsFixed(0)} EGP)'),
         height: 50,
         color: VSPColors.accent,
-        textColor: Colors.black,
+        textColor: VSPColors.black,
         isLoading: isProcessingPayment,
         onPressed: isProcessingPayment ? null : onJoinPressed,
       );

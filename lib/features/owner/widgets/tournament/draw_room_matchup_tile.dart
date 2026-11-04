@@ -22,7 +22,7 @@ class DrawRoomMatchupTile extends StatelessWidget {
     final pendingLabel = isArabic ? 'قيد السحب...' : 'Pending draw...';
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: VSPDSMotion.indicatorTransition,
       opacity: isRevealed ? 1.0 : 0.2,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),

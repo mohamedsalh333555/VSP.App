@@ -43,16 +43,18 @@ class InsightsStrategicKpisGrid extends StatelessWidget {
     required bool isArabic,
   }) {
     showModalBottomSheet(
+      useSafeArea: true,
+      isScrollControlled: true,
       context: context,
       backgroundColor: VSPColors.surface,
-      barrierColor: Colors.black87,
+      barrierColor: VSPColors.black87,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
         side: BorderSide(color: VSPColors.divider, width: 1),
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,

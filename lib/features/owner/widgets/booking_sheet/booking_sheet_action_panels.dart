@@ -85,7 +85,7 @@ class BookingSheetPastPanel extends StatelessWidget {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                     )
                   : const Icon(Iconsax.money_send_copy, size: 18),
               label: Text(
@@ -94,7 +94,7 @@ class BookingSheetPastPanel extends StatelessWidget {
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.accent,
-                foregroundColor: Colors.black,
+                foregroundColor: VSPColors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                 ),
@@ -218,7 +218,7 @@ class BookingSheetCashPanel extends StatelessWidget {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                   )
                 : const Icon(Iconsax.money_send_copy, size: 18),
             label: Text(
@@ -227,7 +227,7 @@ class BookingSheetCashPanel extends StatelessWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(VSPRadius.md)),
               elevation: 2,

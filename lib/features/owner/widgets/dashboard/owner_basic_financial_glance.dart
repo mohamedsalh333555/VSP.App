@@ -25,7 +25,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: VSPColors.white.withValues(alpha: 0.08)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -74,7 +74,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: Column(
@@ -98,7 +98,7 @@ class OwnerBasicFinancialGlance extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.03),
+                    color: VSPColors.white.withValues(alpha: 0.03),
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: Column(

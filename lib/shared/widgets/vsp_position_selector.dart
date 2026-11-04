@@ -81,8 +81,8 @@ class VSPPositionSelector extends StatelessWidget {
                           : [],
                     ),
                     child: Center(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
+                      child: Align(
+                        alignment: Alignment.center,
                         child: Text(
                           label,
                           textAlign: TextAlign.center,

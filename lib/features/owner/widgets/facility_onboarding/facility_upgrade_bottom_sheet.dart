@@ -27,7 +27,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       isScrollControlled: true,
       builder: (ctx) => FacilityUpgradeBottomSheet(isAr: isAr, user: user),
     );
@@ -94,7 +94,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
             isAr ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.white,
+              color: VSPColors.white,
               fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
@@ -162,7 +162,7 @@ class FacilityUpgradeBottomSheet extends StatelessWidget {
           PrimaryButton(
             text: isAr ? ' اشترك الآن في الباقة الاحترافية' : ' Upgrade to Pro Now',
             color: VSPColors.proAccent,
-            textColor: Colors.black,
+            textColor: VSPColors.black,
             onPressed: () async {
               // Capture navigator reference before pop to avoid deactivation issues
               final navigator = Navigator.of(context);

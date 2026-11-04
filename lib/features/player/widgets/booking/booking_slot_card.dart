@@ -38,7 +38,7 @@ class BookingSlotCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(VSPRadius.md),
         onTap: (isBooked || isPast) ? null : onTap,
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: VSPDSMotion.selection,
         alignment: Alignment.center,
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
         padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),

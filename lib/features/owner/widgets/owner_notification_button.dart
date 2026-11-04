@@ -63,7 +63,7 @@ class _OwnerNotificationButtonState extends State<OwnerNotificationButton> {
                 right: 8,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 400),
+                  duration: VSPDSMotion.fadeIn,
                   curve: Curves.elasticOut,
                   builder: (ctx, val, _) => Transform.scale(
                     scale: val,

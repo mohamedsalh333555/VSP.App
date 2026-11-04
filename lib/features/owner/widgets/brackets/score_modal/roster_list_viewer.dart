@@ -46,7 +46,7 @@ class RosterListViewer extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
                         '${idx + 1}. $name',
-                        style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        style: const TextStyle(color: VSPColors.white70, fontSize: 11),
                       ),
                     );
                   }).toList(),

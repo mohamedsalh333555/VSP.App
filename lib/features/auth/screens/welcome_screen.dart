@@ -51,7 +51,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       children: List.generate(3, (index) {
         final isActive = _currentPage == index;
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: VSPDSMotion.standard,
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           height: 6,
           width: isActive ? 28.0 : 8.0,
@@ -69,7 +69,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       onPressed: () {
         if (_currentPage < 2) {
           _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
+            duration: VSPDSMotion.indicatorTransition,
             curve: Curves.easeInOut,
           );
         }
@@ -106,11 +106,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: VSPColors.transparent,
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarDividerColor: VSPColors.transparent,
       ),
       child: VSPScaffold(
         backgroundColor: VSPColors.background,
@@ -148,7 +148,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ? VSPBackButton(
                               onTap: () {
                                 _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
+                                  duration: VSPDSMotion.indicatorTransition,
                                   curve: Curves.easeInOut,
                                 );
                               },
@@ -164,7 +164,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     TextButton(
                       onPressed: () => _pageController.animateToPage(
                         2,
-                        duration: const Duration(milliseconds: 350),
+                        duration: VSPDSMotion.emphasis,
                         curve: Curves.easeInOut,
                       ),
                       style: TextButton.styleFrom(

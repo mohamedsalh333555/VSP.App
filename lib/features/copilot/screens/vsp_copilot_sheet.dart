@@ -26,7 +26,7 @@ class VspCopilotSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: VSPColors.transparent,
       builder: (ctx) => VspCopilotSheet(isArabic: isArabic),
     );
   }
@@ -71,7 +71,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: VSPDSMotion.indicatorTransition,
           curve: Curves.easeOut,
         );
       }
@@ -236,13 +236,13 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
                 bottomRight: Radius.circular(isUser ? 2 : VSPRadius.input),
               ),
               border: Border.all(
-                color: isUser ? Colors.transparent : VSPColors.borderLight,
+                color: isUser ? VSPColors.transparent : VSPColors.borderLight,
               ),
             ),
             child: Text(
               msg.text,
               style: TextStyle(
-                color: isUser ? Colors.black : VSPColors.textPrimary,
+                color: isUser ? VSPColors.black : VSPColors.textPrimary,
                 fontSize: 13.5,
                 height: 1.4,
                 fontWeight: isUser ? FontWeight.w600 : FontWeight.normal,
@@ -268,7 +268,7 @@ class _VspCopilotSheetState extends State<VspCopilotSheet> {
         itemBuilder: (context, i) {
           final s = stadiums[i];
           return Material(
-            color: Colors.transparent,
+            color: VSPColors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(VSPRadius.md),
               onTap: () => _handleStadiumTap(s),

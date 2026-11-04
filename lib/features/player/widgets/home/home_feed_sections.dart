@@ -88,7 +88,7 @@ class _HomeNotificationBadgeState extends State<HomeNotificationBadge> {
               tooltip: hasWarning
                   ? (isArabic ? 'تعذر تحديث حالة الإشعارات' : 'Notification status unavailable')
                   : (isArabic ? 'الإشعارات' : 'Notifications'),
-              icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+              icon: const Icon(Iconsax.notification_copy, color: VSPColors.white),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
@@ -100,7 +100,7 @@ class _HomeNotificationBadgeState extends State<HomeNotificationBadge> {
                 end: 8,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 400),
+                  duration: VSPDSMotion.fadeIn,
                   curve: Curves.elasticOut,
                   builder: (ctx, val, _) => Transform.scale(
                     scale: val,

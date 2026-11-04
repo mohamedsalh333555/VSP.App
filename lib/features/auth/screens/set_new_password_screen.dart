@@ -106,7 +106,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  return VSPScaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  elevation: 0,
  leading: const VSPBackButton(),
  title: Text(

@@ -60,7 +60,7 @@ class PillTextField extends StatelessWidget {
         textDirection: isNumberOrPhone ? TextDirection.ltr : null,
         inputFormatters: inputFormatters,
         style: TextStyle(
-          color: enabled ? Colors.white : VSPColors.textSecondary,
+          color: enabled ? VSPColors.white : VSPColors.textSecondary,
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),

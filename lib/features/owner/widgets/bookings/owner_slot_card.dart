@@ -88,7 +88,7 @@ class OwnerSlotCard extends StatelessWidget {
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : Colors.transparent,
+          color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : VSPColors.transparent,
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
             color: isNowSlot
@@ -155,7 +155,7 @@ class OwnerSlotCard extends StatelessWidget {
         color: isManual ? VSPColors.surface : VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08),
+          color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : VSPColors.white.withValues(alpha: 0.08),
           width: 1,
         ),
       ),

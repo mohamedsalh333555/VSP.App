@@ -37,7 +37,7 @@ class OwnerOnboardingExitDialog {
               onPressed: () => Navigator.pop(ctx, true),
               style: ElevatedButton.styleFrom(
                 backgroundColor: VSPColors.error,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 elevation: 0,
                 minimumSize: const Size(0, 48),
               ),

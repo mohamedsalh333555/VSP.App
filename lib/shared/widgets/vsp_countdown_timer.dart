@@ -75,7 +75,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
           borderRadius: BorderRadius.circular(VSPRadius.sm),
         ),
         child: Text(
-          isArabic ? 'البطولة انطلقت الآن!' : 'Tournament Started!',
+          isArabic ? 'حان موعد البداية المحدد' : 'Scheduled start time reached',
           style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
         ),
       );
@@ -100,7 +100,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
             const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 12),
             const SizedBox(width: 4),
             Text(
-              '${days}d ${hours}h ${minutes}m',
+              isArabic ? '$days ي $hours س $minutes د' : '${days}d ${hours}h ${minutes}m',
               style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 10),
             ),
           ],
@@ -122,15 +122,17 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
             children: [
               const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
               const SizedBox(width: 6),
-              Text(
-                isArabic ? 'ينتهي التسجيل وتبدأ البطولة خلال:' : 'Registration Closes In:',
+              Flexible(child: Text(
+                isArabic ? 'الوقت المتبقي لموعد البداية:' : 'Time until scheduled start:',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
-              ),
+              )),
             ],
           ),
           const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 8,
             children: [
               _buildTimeUnit(days.toString().padLeft(2, '0'), isArabic ? 'يوم' : 'Days'),
               _buildColon(),
@@ -158,7 +160,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
           ),
           child: Text(
             value,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+            style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
           ),
         ),
         const SizedBox(height: 2),

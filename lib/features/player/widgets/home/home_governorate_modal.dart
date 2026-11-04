@@ -51,7 +51,7 @@ void showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                     title: Text(
                       gov,
                       style: TextStyle(
-                        color: isSelected ? VSPColors.accent : Colors.white,
+                        color: isSelected ? VSPColors.accent : VSPColors.white,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -105,7 +105,7 @@ void showGovernorateChangeAlert(
       return AlertDialog(
         scrollable: true,
         backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: VSPColors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
@@ -113,7 +113,7 @@ void showGovernorateChangeAlert(
             const SizedBox(width: 8),
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 18),
             ),
           ],
         ),
@@ -143,7 +143,7 @@ void showGovernorateChangeAlert(
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
+              foregroundColor: VSPColors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
             ),
             child: Text(yesBtn, style: const TextStyle(fontWeight: FontWeight.bold)),

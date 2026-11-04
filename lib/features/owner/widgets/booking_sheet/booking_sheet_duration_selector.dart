@@ -69,7 +69,7 @@ class BookingSheetDurationSelector extends StatelessWidget {
                       : (_) => onDurationChanged(val),
                   selectedColor: VSPColors.accent,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : VSPColors.textPrimary,
+                    color: isSelected ? VSPColors.black : VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

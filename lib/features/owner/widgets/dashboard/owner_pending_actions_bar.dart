@@ -62,7 +62,7 @@ class OwnerPendingActionsBar extends StatelessWidget {
         ),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: VSPColors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(VSPRadius.card),
           onTap: () {

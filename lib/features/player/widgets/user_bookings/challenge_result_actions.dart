@@ -94,7 +94,7 @@ class ChallengeResultActions extends StatelessWidget {
     return VSPAnimatedButton(
       text: isArabic ? 'تسجيل نتيجتي' : 'Record my result',
       color: VSPColors.accent,
-      textColor: Colors.black,
+      textColor: VSPColors.black,
       onPressed: () {
         showDialog(
           context: context,

@@ -35,7 +35,7 @@ class MatchupResultsTimeline extends StatelessWidget {
       children: [
         Text(
           isArabic ? 'سجل مباريات الجلسة (${results.length})' : 'Session match history (${results.length})',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 8),
         ListView.separated(
@@ -91,7 +91,7 @@ class MatchupResultsTimeline extends StatelessWidget {
                       '${tA.teamName} ${isArabic ? 'ضد' : 'vs'} ${tB.teamName}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
                   Container(

@@ -78,13 +78,13 @@ class VSPPrimaryButton extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isLoading ? null : onPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
+              backgroundColor: VSPDSColors.transparent,
               foregroundColor: effectiveTextColor,
               disabledForegroundColor: resolvedTextColor.withValues(
                 alpha: VSPDSOpacity.disabled,
               ),
               elevation: VSPDSElevation.none,
-              shadowColor: Colors.transparent,
+              shadowColor: VSPDSColors.transparent,
               minimumSize: Size.zero,
               padding:
                   padding ??

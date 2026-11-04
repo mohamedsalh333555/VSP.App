@@ -94,7 +94,7 @@ class AddStadiumStep3Images extends StatelessWidget {
             ),
           const SizedBox(height: 40),
           AnimatedOpacity(
-            duration: const Duration(milliseconds: 500),
+            duration: VSPDSMotion.reveal,
             opacity: 1.0,
             child: PrimaryButton(
               text: isArabic ? 'إرسال الملعب' : 'Submit Stadium',

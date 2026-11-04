@@ -75,7 +75,7 @@ class GoalScorersList extends StatelessWidget {
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () => onRemoveGoal(g),
-                        child: const Icon(Iconsax.close_circle_copy, color: Colors.white54, size: 10),
+                        child: const Icon(Iconsax.close_circle_copy, color: VSPColors.white54, size: 10),
                       ),
                     ],
                   ),
@@ -144,7 +144,7 @@ void openAddGoalModal(
                         isExpanded: true,
                         hint: Text(
                           isArabic ? 'اختر لاعباً...' : 'Select a player...',
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                          style: const TextStyle(color: VSPColors.white54, fontSize: 12),
                         ),
                         dropdownColor: VSPColors.surface,
                         underline: const SizedBox(),

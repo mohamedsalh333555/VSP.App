@@ -39,7 +39,7 @@ class ChallengeTeamCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         onTap: onTap,
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(

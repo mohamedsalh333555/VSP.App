@@ -22,7 +22,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     // Set status bar to dark
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
+      statusBarColor: VSPColors.transparent,
       statusBarIconBrightness: Brightness.light,
       systemNavigationBarColor: VSPColors.background,
       systemNavigationBarIconBrightness: Brightness.light,
@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     // Initialize fade animation
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000), // Slightly faster
+      duration: VSPDSMotion.splashReveal, // Slightly faster
       vsync: this,
     );
 

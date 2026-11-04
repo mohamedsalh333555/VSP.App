@@ -41,7 +41,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
  // 2. Setup Checkmark Animation
  _checkController = AnimationController(
- duration: const Duration(milliseconds: 800),
+ duration: VSPDSMotion.successReveal,
  vsync: this,
  );
  _scaleAnimation = CurvedAnimation(

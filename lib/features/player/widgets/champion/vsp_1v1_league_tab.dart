@@ -127,11 +127,11 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  border: Border.all(color: VSPColors.medalGold.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Iconsax.cup_copy, color: Colors.amber, size: 22),
+                    const Icon(Iconsax.cup_copy, color: VSPColors.medalGold, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -139,12 +139,12 @@ class _Vsp1v1LeagueTabState extends State<Vsp1v1LeagueTab>
                         children: [
                           Text(
                             isArabic ? '🏆 موعد ومكان تسليم الجائزة للبطل' : '🏆 Champion Prize Handover',
-                            style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: VSPColors.medalGold, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             tournament['prize_delivery_details'].toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(color: VSPColors.white, fontSize: 12),
                           ),
                         ],
                       ),

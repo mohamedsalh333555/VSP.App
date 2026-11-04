@@ -52,7 +52,7 @@ class FilterPricePanel extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: VSPColors.accent,
-            inactiveTrackColor: Colors.white10,
+            inactiveTrackColor: VSPColors.white10,
             thumbColor: VSPColors.accent,
             overlayColor: VSPColors.accent.withValues(alpha: 0.2),
             rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 8),

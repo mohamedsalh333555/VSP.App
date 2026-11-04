@@ -156,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  GestureDetector(
  onTap: _pickImage,
  child: Stack(
- alignment: Alignment.bottomRight,
+ alignment: AlignmentDirectional.bottomEnd,
  children: [
  Container(
  width: 100,

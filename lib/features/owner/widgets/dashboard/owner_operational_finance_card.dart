@@ -227,13 +227,13 @@ class OwnerOperationalFinanceCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: hasBalance
                           ? VSPColors.accent
-                          : Colors.white.withValues(alpha: 0.05),
+                          : VSPColors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                     child: Text(
                       isArabic ? 'سحب' : 'Withdraw',
                       style: TextStyle(
-                        color: hasBalance ? Colors.black : VSPColors.textSecondary,
+                        color: hasBalance ? VSPColors.black : VSPColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w900,
                       ),

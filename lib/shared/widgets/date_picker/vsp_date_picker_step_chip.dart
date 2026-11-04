@@ -51,7 +51,7 @@ class VspDatePickerStepChip extends StatelessWidget {
               }
             : null,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: VSPDSMotion.selection,
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
           decoration: BoxDecoration(
             color: isCurrent
@@ -92,7 +92,7 @@ class VspDatePickerStepChip extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isCurrent ? Colors.white : (isDone ? VSPColors.textPrimary : VSPColors.textMuted),
+                  color: isCurrent ? VSPColors.white : (isDone ? VSPColors.textPrimary : VSPColors.textMuted),
                   fontSize: 13,
                   fontWeight: FontWeight.w900,
                 ),

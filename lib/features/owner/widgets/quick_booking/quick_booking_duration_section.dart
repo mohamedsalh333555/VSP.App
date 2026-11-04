@@ -43,7 +43,7 @@ class QuickBookingDurationSection extends StatelessWidget {
         onDurationChanged(minutes);
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: VSPDSMotion.navigationSwitch,
         alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(

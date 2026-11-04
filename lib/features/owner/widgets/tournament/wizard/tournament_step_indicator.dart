@@ -71,11 +71,11 @@ class TournamentStepIndicator extends StatelessWidget {
                     ),
                     child: Center(
                       child: i < currentStep
-                          ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
+                          ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.black, size: 16)
                           : Text(
                               '${i + 1}',
                               style: TextStyle(
-                                color: isActive ? Colors.black : VSPColors.textSecondary,
+                                color: isActive ? VSPColors.black : VSPColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),

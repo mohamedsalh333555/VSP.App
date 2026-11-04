@@ -84,7 +84,7 @@ class BookingBottomBar extends StatelessWidget {
                         Text(
                           isArabic ? 'حجز تجميعي خاص' : 'Private Collective Booking',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
                           ),
@@ -123,7 +123,7 @@ class BookingBottomBar extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
@@ -157,7 +157,7 @@ class BookingBottomBar extends StatelessWidget {
                           minWidth: 48,
                           minHeight: 48,
                         ),
-                        icon: const Icon(Iconsax.minus_copy, size: 16, color: Colors.white),
+                        icon: const Icon(Iconsax.minus_copy, size: 16, color: VSPColors.white),
                         onPressed: initialPlayersCount > 1
                             ? () {
                                 HapticFeedback.selectionClick();
@@ -169,7 +169,7 @@ class BookingBottomBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: Text(
                           '$initialPlayersCount',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
                       IconButton(
@@ -177,7 +177,7 @@ class BookingBottomBar extends StatelessWidget {
                           minWidth: 48,
                           minHeight: 48,
                         ),
-                        icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
+                        icon: const Icon(Iconsax.add_copy, size: 16, color: VSPColors.white),
                         onPressed: initialPlayersCount < maxPlayersCount
                             ? () {
                                 HapticFeedback.selectionClick();
@@ -199,7 +199,7 @@ class BookingBottomBar extends StatelessWidget {
               onTap: () => onBallRentedChanged(!isBallRented),
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: VSPDSMotion.navigationSwitch,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: isBallRented ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
@@ -219,7 +219,7 @@ class BookingBottomBar extends StatelessWidget {
                           Text(
                             isArabic ? 'إيجار كرة / ${ballPrice.toInt()} ج.م' : 'Ball / ${ballPrice.toInt()} EGP',
                             style: TextStyle(
-                              color: isBallRented ? Colors.white : VSPColors.textPrimary,
+                              color: isBallRented ? VSPColors.white : VSPColors.textPrimary,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ).merge(VSPTypography.numericStyle),
@@ -242,14 +242,14 @@ class BookingBottomBar extends StatelessWidget {
                       height: 24,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isBallRented ? VSPColors.accent : Colors.transparent,
+                        color: isBallRented ? VSPColors.accent : VSPColors.transparent,
                         border: Border.all(
                           color: isBallRented ? VSPColors.accent : VSPColors.textMuted,
                           width: 1.5,
                         ),
                       ),
                       child: isBallRented
-                          ? const Icon(Iconsax.tick_circle_copy, size: 16, color: Colors.black)
+                          ? const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.black)
                           : null,
                     ),
                   ],
@@ -314,7 +314,7 @@ class BookingBottomBar extends StatelessWidget {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSlotSelected ? VSPColors.accent : VSPColors.surfaceAlt,
-                      foregroundColor: isSlotSelected ? Colors.black : VSPColors.textMuted,
+                      foregroundColor: isSlotSelected ? VSPColors.black : VSPColors.textMuted,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
@@ -327,14 +327,14 @@ class BookingBottomBar extends StatelessWidget {
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.black),
                           )
                         : Text(
                             isSlotSelected
                                 ? (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation')
                                 : (isArabic ? 'اختر الوقت أولاً' : 'Select Time'),
                             style: TextStyle(
-                              color: isSlotSelected ? Colors.black : VSPColors.textMuted,
+                              color: isSlotSelected ? VSPColors.black : VSPColors.textMuted,
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                             ),

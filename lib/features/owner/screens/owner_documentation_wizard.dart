@@ -215,7 +215,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() => _currentStep++);
@@ -230,7 +230,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() => _currentStep++);
@@ -303,7 +303,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   void _previousPage() {
     if (_currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
+        duration: VSPDSMotion.indicatorTransition,
         curve: Curves.easeInOut,
       );
       setState(() {

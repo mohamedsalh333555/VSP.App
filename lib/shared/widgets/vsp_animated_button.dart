@@ -1,3 +1,4 @@
+import 'package:vsp_application/core/ui/tokens/vsp_design_tokens.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,13 +49,19 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
  void initState() {
  super.initState();
  _controller = AnimationController(
- duration: const Duration(milliseconds: 120),
+ duration: VSPDSMotion.press,
  vsync: this,
- lowerBound: 0.96,
+ lowerBound: 0.0,
  upperBound: 1.0,
  )..value = 1.0;
 
- _scale = Tween<double>(begin: 1.0, end: 0.96).animate(_controller);
+ _scale = Tween<double>(begin: 0.96, end: 1.0).animate(_controller);
+ }
+
+ @override
+ void didChangeDependencies() {
+ super.didChangeDependencies();
+ if (MediaQuery.disableAnimationsOf(context)) _controller.value = 1;
  }
 
  @override
@@ -65,7 +72,7 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
  }
 
  void _onTapDown(_) {
- if (mounted) _controller.reverse();
+ if (mounted && widget.onPressed != null && !MediaQuery.disableAnimationsOf(context)) _controller.reverse();
  }
 
  void _onTapUp(_) {
@@ -116,7 +123,7 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
  text: widget.text,
  // Visually disable during the debounce window as well as blocking
  // taps, so the user can tell the action is temporarily unavailable.
- onPressed: _isCoolingDown ? null : _handleThrottledTap,
+ onPressed: _isCoolingDown || widget.onPressed == null ? null : _handleThrottledTap,
  isLoading: widget.isLoading,
  color: widget.color,
  textColor: widget.textColor,

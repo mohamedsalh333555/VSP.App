@@ -99,7 +99,7 @@ class OwnerChatItemCard extends StatelessWidget {
                   child: Text(
                     unreadCount > 0 ? '$unreadCount' : '',
                     style: const TextStyle(
-                      color: Colors.black,
+                      color: VSPColors.black,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),

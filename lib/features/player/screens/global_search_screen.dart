@@ -105,13 +105,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
           ar ? 'كود التجميعية' : 'Collective match code',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800),
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
           textCapitalization: TextCapitalization.characters,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+          style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800, letterSpacing: 1.2),
           decoration: InputDecoration(
             hintText: ar ? 'مثال: AB12CD34' : 'e.g. AB12CD34',
             hintStyle: const TextStyle(color: VSPColors.textSecondary),
@@ -162,7 +162,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         title: TextField(
           controller: _searchController,
           autofocus: widget.initialQuery == null,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: VSPColors.white),
           decoration: InputDecoration(
             hintText: AppLocalizations.of(context)!.searchHint,
             hintStyle: const TextStyle(color: VSPColors.textSecondary),
@@ -226,7 +226,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(ar ? 'لديك كود تجميعية؟' : 'Have a collective code?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                                Text(ar ? 'لديك كود تجميعية؟' : 'Have a collective code?', style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w800)),
                                 const SizedBox(height: 3),
                                 Text(ar ? 'افتح الدعوة مباشرة بالكود.' : 'Open a private invitation by code.', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
                               ],
@@ -241,7 +241,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     Wrap(
                       spacing: 8,
                       children: _recentSearches.map((s) => ActionChip(
-                        label: Text(s, style: const TextStyle(color: Colors.black)),
+                        label: Text(s, style: const TextStyle(color: VSPColors.black)),
                         backgroundColor: VSPColors.accent.withValues(alpha: 0.8),
                         onPressed: () {
                           _searchController.text = s;
@@ -334,7 +334,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(8)),
                 child: Icon(icon, color: VSPColors.textSecondary, size: 20),
               ),
-              title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+              title: Text(name, style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.w500)),
               subtitle: Text(sub, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
               onTap: onTap,
             );

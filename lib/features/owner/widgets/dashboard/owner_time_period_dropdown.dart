@@ -33,9 +33,9 @@ class OwnerTimePeriodDropdown extends StatelessWidget {
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: VSPColors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(VSPRadius.full),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: VSPColors.white.withValues(alpha: 0.08)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(

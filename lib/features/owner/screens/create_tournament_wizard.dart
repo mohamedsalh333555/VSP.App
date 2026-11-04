@@ -464,7 +464,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               physics: const BouncingScrollPhysics(),
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
+                duration: VSPDSMotion.indicatorTransition,
                 child: _currentStep == 0
                     ? TournamentBasicsStep(
                         nameController: _nameController,

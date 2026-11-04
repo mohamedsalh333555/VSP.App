@@ -37,10 +37,16 @@ class _VSPBackButtonState extends State<VSPBackButton>
     _controller = AnimationController(
       duration: VSPDSMotion.fast,
       vsync: this,
-      lowerBound: 0.90,
+      lowerBound: 0.0,
       upperBound: 1.0,
     )..value = 1.0;
-    _scale = Tween<double>(begin: 1.0, end: 0.90).animate(_controller);
+    _scale = Tween<double>(begin: 0.90, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) _controller.value = 1;
   }
 
   @override
@@ -77,7 +83,9 @@ class _VSPBackButtonState extends State<VSPBackButton>
           child: InkWell(
             excludeFromSemantics: true,
             customBorder: const CircleBorder(),
-            onTapDown: (_) => _controller.reverse(),
+            onTapDown: (_) {
+          if (!MediaQuery.disableAnimationsOf(context)) _controller.reverse();
+        },
             onTapUp: (_) => _controller.forward(),
             onTapCancel: () => _controller.forward(),
             onTap: () {

@@ -55,7 +55,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     _startCountdown();
 
     _shakeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: VSPDSMotion.fadeIn,
       vsync: this,
     );
     _shakeAnim = TweenSequence<double>([
@@ -302,7 +302,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
                 // ── Error ─────────────────────────────────────────────────
                 AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
+                  duration: VSPDSMotion.selection,
                   child: _errorMessage != null
                       ? Padding(
                           padding: const EdgeInsets.only(top: VSPSpacing.md),

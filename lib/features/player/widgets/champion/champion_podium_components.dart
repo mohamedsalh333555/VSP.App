@@ -179,7 +179,7 @@ class ChampionPodiumItem extends StatelessWidget {
             child: Text(
               '$points $ptsText',
               style: VSPTypography.numericStyle.copyWith(
-                color: isCenter ? VSPColors.accent : Colors.white70,
+                color: isCenter ? VSPColors.accent : VSPColors.white70,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),

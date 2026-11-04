@@ -226,7 +226,7 @@ class _TeamLeagueMatchResultSheetState extends State<TeamLeagueMatchResultSheet>
       onTap: _isLoading ? null : () => setState(() => _selectedResult = value),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: VSPDSMotion.navigationSwitch,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           color: isSelected ? activeColor.withValues(alpha: 0.2) : VSPColors.surfaceAlt,

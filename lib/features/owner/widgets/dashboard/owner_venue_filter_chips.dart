@@ -61,14 +61,14 @@ class OwnerVenueFilterChips extends StatelessWidget {
           onStadiumSelected(id);
         },
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
+        duration: VSPDSMotion.navigationSwitch,
         constraints: const BoxConstraints(minHeight: 48),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.04),
+          color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(VSPRadius.full),
           border: Border.all(
-            color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.08),
+            color: isSelected ? VSPColors.accent : VSPColors.white.withValues(alpha: 0.08),
             width: isSelected ? 1.2 : 0.8,
           ),
         ),
@@ -78,13 +78,13 @@ class OwnerVenueFilterChips extends StatelessWidget {
             Icon(
               icon,
               size: 13,
-              color: isSelected ? Colors.black : VSPColors.textSecondary,
+              color: isSelected ? VSPColors.black : VSPColors.textSecondary,
             ),
             const SizedBox(width: 5),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white70,
+                color: isSelected ? VSPColors.black : VSPColors.white70,
                 fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),

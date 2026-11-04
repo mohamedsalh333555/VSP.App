@@ -122,14 +122,14 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => SupportService().openSupport(context),
-                          icon: const Icon(Iconsax.messages_3_copy, size: 16, color: Colors.black),
+                          icon: const Icon(Iconsax.messages_3_copy, size: 16, color: VSPColors.black),
                           label: Text(
                             l10n.supportInAppButton,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: VSPColors.black),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.accent,
-                            foregroundColor: Colors.black,
+                            foregroundColor: VSPColors.black,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                             elevation: 0,
@@ -163,7 +163,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                                 fit: BoxFit.scaleDown,
                                 child: Text(
                                   l10n.supportCallButton,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ),
                             ),
@@ -181,7 +181,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
 
             Text(
               isOwner ? l10n.supportOwnerFaqHeading : l10n.supportPlayerFaqHeading,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: VSPColors.white, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: VSPSpacing.sm),
@@ -218,7 +218,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
       ),
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: VSPColors.transparent),
         child: ExpansionTile(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),

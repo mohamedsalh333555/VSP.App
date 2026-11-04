@@ -1,3 +1,5 @@
+> Current checkpoint (2026-11-04): see [execution gate](UXLP_44_EXECUTION_GATE.md) and [design/performance review](VSP_DESIGN_PERFORMANCE_REVIEW.md). Final review, analyzer/tests and APK are on hold; historical passing CI does not validate current changes.
+
 # UXLP-44 Rule Audit Matrix
 
 **Branch:** `uxlp-44-implementation`  

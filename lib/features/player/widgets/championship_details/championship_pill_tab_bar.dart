@@ -71,7 +71,7 @@ class ChampionshipPillTabBar extends StatelessWidget {
             tabController.animateTo(index);
           },
           child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: VSPDSMotion.selection,
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(

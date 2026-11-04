@@ -10,49 +10,22 @@
   "unique_paths": 338,
   "missing_paths": 0,
   "match_counts": {
-    "palette_literal": 189,
-    "physical_alignment": 26,
-    "inline_motion_duration": 45
+    "palette_literal": 14,
+    "physical_alignment": 14,
+    "inline_motion_duration": 4
   },
   "files": [
     {
       "path": "lib/core/navigation/offline_error_screen.dart",
-      "sha256": "52d3d8aea6b96c15ecb84f5dfcac5a26cbe6ff547f4ca9968b9d0cb35ba1b830",
+      "sha256": "e2ab6fd531cdffcc741a9c5a8c4ee90f0ee722a516a3423810a25cf57514aca9",
       "lines": 189,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 65,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 81,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 140,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/core/navigation/root_screen.dart",
-      "sha256": "14aca3da8bff16ce1d3523ce610188fc080400e436334a2f1ba9edcdecbac043",
+      "sha256": "5a2e5e37730a7f4fd881b739b02c9433f6b2604ee0231a00eef71bab609ccc13",
       "lines": 250,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 124,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 201,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/core/navigation/suspended_account_screen.dart",
@@ -86,7 +59,7 @@
     },
     {
       "path": "lib/core/ui/components/vsp_button.dart",
-      "sha256": "8500beab9d018c0f3d584fadffc3af5ef194eb25115a9719fa3b7deb83bd5233",
+      "sha256": "e04885131b4dfd61b1223331569ceed5fb8c4d396d2496bd8686ad0b5b1c21d3",
       "lines": 136,
       "triage_matches": [
         {
@@ -98,16 +71,6 @@
           "category": "physical_alignment",
           "line": 67,
           "match": "Alignment.bottomRight"
-        },
-        {
-          "category": "palette_literal",
-          "line": 81,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 87,
-          "match": "Colors.transparent"
         }
       ]
     },
@@ -137,8 +100,8 @@
     },
     {
       "path": "lib/core/widgets/skeleton_loader.dart",
-      "sha256": "3f78297593925a34ca343dd453268053ca66dbc73ce0d822c89f578a0d15fc43",
-      "lines": 76,
+      "sha256": "3a52c0cde773ad14082dc8ae1894b8724d2ad1c505f52b777231de03740b2a22",
+      "lines": 78,
       "triage_matches": []
     },
     {
@@ -149,25 +112,9 @@
     },
     {
       "path": "lib/features/auth/screens/login_screen.dart",
-      "sha256": "3695427659f0fb1d0e9550f2b0e85aa63e3e8d0bc84ad147be96a5639b2f9146",
+      "sha256": "5811fcc38c8942ab450e00f23a00017d55f5bb883e143106c343d11738c7c01d",
       "lines": 278,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 90,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 94,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 113,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/screens/owner_onboarding_screen.dart",
@@ -189,15 +136,9 @@
     },
     {
       "path": "lib/features/auth/screens/set_new_password_screen.dart",
-      "sha256": "47754086a06e1769911b83542070135272edb808b74181976c3893d465473fed",
+      "sha256": "7b95c024bebedb282dae4b4999d7aa4426d64e47e12da84530d8b10e32e33d2d",
       "lines": 346,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 109,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/screens/signup_screen.dart",
@@ -207,74 +148,21 @@
     },
     {
       "path": "lib/features/auth/screens/splash_screen.dart",
-      "sha256": "1da616d98a4efbb0fe102a1d73ddca8f1f11eb2212bb87927aba86cc7f6e6b63",
+      "sha256": "75aaeb08440c5ad913f1436bdc8a6cbca3c58224e8b94d0f2ad15cea253ad18d",
       "lines": 85,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 25,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 33,
-          "match": "duration: const Duration(milliseconds: 1000)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/screens/verify_email_screen.dart",
-      "sha256": "a36704bfa5309e80f9d57e27cdde8d5bc1bf72cd58a432bf8e970a1cfff1ce1d",
+      "sha256": "a5c043bdeeb9dcef275a8cd58d2b65706c75f26a4ab7a10eb9dc441b8c3f488b",
       "lines": 355,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 58,
-          "match": "duration: const Duration(milliseconds: 400)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 305,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/screens/welcome_screen.dart",
-      "sha256": "98b01f35034465bbbbb64a7b233f8930125637917c55589fe945188dde0a3009",
+      "sha256": "9a94f64e6baea825ecd740e648dffa31b4a25782209e2d24ca3e2c87ad3ce891",
       "lines": 215,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 54,
-          "match": "duration: const Duration(milliseconds: 250)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 72,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 109,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 113,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 151,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 167,
-          "match": "duration: const Duration(milliseconds: 350)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/widgets/forgot_password_dialog.dart",
@@ -284,8 +172,8 @@
     },
     {
       "path": "lib/features/auth/widgets/login_footer.dart",
-      "sha256": "8947c4b1551c66e801a573119607a431f273f0082a24556e7a48cdbfc297f2d3",
-      "lines": 230,
+      "sha256": "4024b5c8f19dde1feb95bb0a6bc04ffcd31f8c660d0225557206ec40e72de68a",
+      "lines": 231,
       "triage_matches": []
     },
     {
@@ -296,27 +184,15 @@
     },
     {
       "path": "lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart",
-      "sha256": "ae8634341c1a56e2f86981746c0e47eab21a3b18267fbf1f677d1e538662fc7c",
+      "sha256": "37260a72cf89773ab01923c92102cae35a07be375429b119e9a1e9f53d5eca3e",
       "lines": 51,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 40,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/widgets/owner_onboarding/owner_onboarding_location_section.dart",
-      "sha256": "0bf9c6e6c1896f1e7d5de248bd6b685e7edbeec7e430d25ab49c01eb2b718174",
+      "sha256": "23ceb4c83495718871def5c08d3fadd297cdf553a359412d4a84532ee32c30bf",
       "lines": 97,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 88,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/widgets/owner_onboarding/owner_payout_info_card.dart",
@@ -362,15 +238,9 @@
     },
     {
       "path": "lib/features/auth/widgets/verify_email/otp_resend_section.dart",
-      "sha256": "6d0a36fea2a50afb8b4e71e1890deae53695f88cd07ea06cf8a7e1ed8400990f",
+      "sha256": "6be255de4e6e47041f0f9fd78efc41699d6db15219aa23febd3e3a0cdb6df909",
       "lines": 93,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 44,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/auth/widgets/verify_email/verify_email_header.dart",
@@ -398,156 +268,45 @@
     },
     {
       "path": "lib/features/copilot/screens/copilot_test_playground.dart",
-      "sha256": "ce06d00d22981db2aea21ac8ed3bbaf60ab88cb9c69ed71d3caf87d7b8a72353",
+      "sha256": "0ed18a49e69c4eb9d06e2f842ece95c1e541e3154b6f6eb5a6798572d1993ab6",
       "lines": 492,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 223,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 225,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 228,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 293,
-          "match": "Colors.redAccent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 317,
-          "match": "Colors.redAccent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 325,
-          "match": "Colors.redAccent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 487,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/copilot/screens/vsp_copilot_screen.dart",
-      "sha256": "b5b217c4930bbc0eb1bf0b4785fb416de6c3e055e855e5646c8a053435cdde34",
+      "sha256": "cc29f44d50042370edf10022e5daaf5cbfa77c75b0efa0eebae8daf8922eaa4a",
       "lines": 458,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 110,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 204,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 209,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 420,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 450,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/copilot/screens/vsp_copilot_sheet.dart",
-      "sha256": "32d22fe94af3f1bbc6a9ea11d694a7a5963e1dc6682b1bda5bd242894ef31153",
+      "sha256": "67e63d6825c80f44ea20bcf0cecbc630fabec516f025c2bba75852fd899355bd",
       "lines": 406,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 29,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 74,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 239,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 245,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 271,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/copilot/widgets/copilot_chat_bubble.dart",
-      "sha256": "533010c3a1aec8b2b436a5ff31f8e4093aae8c2abc71f6cc35032c5de34374ff",
+      "sha256": "d22fed781e2b0cdb9d22e71a39d7efee68635f4d241b0355707a9fff3ec62653",
       "lines": 584,
-      "triage_matches": [
-        {
-          "category": "physical_alignment",
-          "line": 127,
-          "match": "Alignment.bottomLeft"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/copilot/widgets/copilot_conversations_drawer.dart",
-      "sha256": "4e73023859553b4774e9aa0c6e0a8adb32d7d47f136a50f2540b97a7e22bf82d",
+      "sha256": "91680101d6f08308123981a7a1a35cdc85f6071a495429dca87f02e93b4bc468",
       "lines": 193,
       "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/add_stadium_wizard.dart",
-      "sha256": "f33cb4b03b14933a11b8aadaafdcffda31f92bb7e20403979efa57c54887d875",
+      "sha256": "4f408a6e8e30e73ed4bde77b83c990d17a5c1378170845e095fff5ebe6a3ed08",
       "lines": 476,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 307,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 317,
-          "match": "duration: const Duration(milliseconds: 300)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/create_tournament_wizard.dart",
-      "sha256": "b4e6a59a6e2c7dae455ef30c9060ee8c62f5647dce82b2d273f9c464deadf629",
+      "sha256": "fd4a6134c0f2c84fc1d74a538b8485f9580e0cd7c56906ea7cdd0ed1077d3139",
       "lines": 525,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 467,
-          "match": "duration: const Duration(milliseconds: 300)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/facility_onboarding_screen.dart",
@@ -557,20 +316,9 @@
     },
     {
       "path": "lib/features/owner/screens/owner_account_management_screen.dart",
-      "sha256": "93e89fda77bdcfc99b55c3f888db074da4803888edd342b6ec47177ced0ba01a",
+      "sha256": "cac3ea28a5da0d97487f269affea24d910b0a890b8b7646f26a12117419223be",
       "lines": 253,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 179,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 239,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/owner_bookings_screen.dart",
@@ -580,15 +328,9 @@
     },
     {
       "path": "lib/features/owner/screens/owner_cup_screen.dart",
-      "sha256": "f349f7e90b6066e376bef69aa11b1f19a2767426b4c8c8d348bae0137d304d1e",
+      "sha256": "164a1f0d0f957606fb8943b29c59efa18b1fe41edb099896b8ef64a8a1158326",
       "lines": 285,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 89,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/owner_dashboard_screen.dart",
@@ -598,30 +340,14 @@
     },
     {
       "path": "lib/features/owner/screens/owner_documentation_wizard.dart",
-      "sha256": "9278d0d93bcd8df6de66f508c3e0be0efb01c2882c122d61eec393cebed19ea2",
+      "sha256": "cca6586b22ceced385a86185ddc14a5da1b14b4dbd484d86b8ff783494737e27",
       "lines": 372,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 218,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 233,
-          "match": "duration: const Duration(milliseconds: 300)"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 306,
-          "match": "duration: const Duration(milliseconds: 300)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/owner_inbox_screen.dart",
-      "sha256": "75880a1f145e95f5cfbd4685cc3b6503a6b0231917ad2e1d7a8660fdb4404974",
-      "lines": 259,
+      "sha256": "41ae0dfbd7100d2497a75fb7a8ecd19956368241713ba8af7d409a4ab5431151",
+      "lines": 296,
       "triage_matches": []
     },
     {
@@ -643,20 +369,9 @@
     },
     {
       "path": "lib/features/owner/screens/owner_main_screen.dart",
-      "sha256": "6f1357bff89d0c88be74c06d510eaa520cd1cdea1a60a96cb41adc1890e4f3c4",
+      "sha256": "375d5b9295238d7303516467bd507a792ffd72c1f1dfe8f212095fdabe710efd",
       "lines": 192,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 93,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 177,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/screens/owner_profile_screen.dart",
@@ -690,15 +405,9 @@
     },
     {
       "path": "lib/features/owner/widgets/account/owner_delete_account_card.dart",
-      "sha256": "f9255bab33fcc734681ca3b29bd30fd0587e3d488879d47de9a66d91fd732439",
+      "sha256": "ee99dddeb40f611dd48826953755f1c94cd46cc96fb9dea7a3166cecff97a7dc",
       "lines": 231,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 217,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/account/owner_payout_otp_dialog.dart",
@@ -756,15 +465,9 @@
     },
     {
       "path": "lib/features/owner/widgets/add_stadium/add_stadium_step3_images.dart",
-      "sha256": "0167e7d6df14c68e7893cfb8f18fef2d53b4aa077466cfb5ca9aa2e1f14b7982",
+      "sha256": "35d76b9eed193762e05aaaa08d17415764581c74c2dc9bf5037e7f13846cb79d",
       "lines": 226,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 97,
-          "match": "duration: const Duration(milliseconds: 500)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/add_stadium/add_stadium_step_indicator.dart",
@@ -786,30 +489,9 @@
     },
     {
       "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart",
-      "sha256": "b77babd664bc2d022cd1094b660adc974a6f7f47e6074370803e9bc8d25b48f3",
+      "sha256": "19dfcac93614d9ea9397bd486ac13a37fdaae5dbde727d5e806ce8c1fe447079",
       "lines": 419,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 88,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 97,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 221,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 230,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart",
@@ -831,27 +513,15 @@
     },
     {
       "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart",
-      "sha256": "322a2b956aff1a40fb945ef4037e00a504f2cf7170b57c0905b2c77f8ed7a693",
+      "sha256": "88d94c4aca46d77fabb4f157489841b1ef679001d9ecaee251ca64e1f55b1cf6",
       "lines": 142,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 72,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_form_fields.dart",
-      "sha256": "75c2e65471b325084a5e9e63e67feb4ae7b006f84ad146e2db9d1f3059669400",
+      "sha256": "402b6632f986420c7c76ec51cadd037764e10c7061fe41edf1c53c9faa4af15a",
       "lines": 155,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 63,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_header.dart",
@@ -897,20 +567,9 @@
     },
     {
       "path": "lib/features/owner/widgets/bookings/owner_slot_card.dart",
-      "sha256": "b3f71c2796b43df87ff3a4375d5549fc978db3066915265bd5f25b628c7c181c",
+      "sha256": "3b1e7fcff126541693335c712879d0a119c5477a941f16dfb6b9fde9339a1412",
       "lines": 302,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 91,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 158,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/bookings/owner_time_slot_row.dart",
@@ -920,35 +579,19 @@
     },
     {
       "path": "lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart",
-      "sha256": "193b064482b41cb60386465bd4841d91eed36e6fe7affa729e058392b6391335",
+      "sha256": "cbbc32da51e4fe772cf744b614a0a48d45cb74962e00c0c1dea6c56bf94f7bd1",
       "lines": 243,
       "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart",
-      "sha256": "149ed95b10d3f166df8de54e7357e972e8953636b8392a80f536449d7440c7d3",
+      "sha256": "b7565df8e2956028d42937a87ff7afae8e937cbaf5f5334286eeddc83b51f3a1",
       "lines": 135,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 38,
-          "match": "duration: const Duration(milliseconds: 200)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 49,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 49,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart",
-      "sha256": "f568bc1caaabf01f9bd71af9a50393bff8d0b0a4bcf80aee7310159182b14101",
+      "sha256": "c9de02cfec6ea7bf4dbb2a1f62d6255b82bac672b2b9c64b4a92e699b5fe6008",
       "lines": 90,
       "triage_matches": []
     },
@@ -960,15 +603,9 @@
     },
     {
       "path": "lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart",
-      "sha256": "5a2abb9b583e537029e8f3491baef610a9d65d9297bdf547066437a61806e23a",
+      "sha256": "b31a82e2111e69e1630bc5a009b40b5a5888d3e138e39096d8c84d86423b8eef",
       "lines": 419,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 160,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/brackets/tournament_champion_banner.dart",
@@ -1014,171 +651,45 @@
     },
     {
       "path": "lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart",
-      "sha256": "3a16a76b4023dd83204c8080d8e057cdfdc54e07276306392a5b1559c7a61087",
-      "lines": 387,
+      "sha256": "a756507adadf77e11d070030f86dd135062a46250e3789ce255ad89e6e14ee10",
+      "lines": 389,
       "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart",
-      "sha256": "ae2edc1b25ee38cc0fda7b036ca5cde4fed994dc3a5f86df5c8c7a22c0909255",
+      "sha256": "3f321c4da4855a35391b0d0bfdbd197bfc77bed275bdb88719502230143d27cb",
       "lines": 290,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 183,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 279,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_basic_financial_glance.dart",
-      "sha256": "a1a086e0c3b72cd89474a05114764821739c330c7dd312c6259d7f903fbf5068",
+      "sha256": "b9d0b516e2e219d017a9c6ea128cae443dd77f65ae8fe717e83f3253bfd0978a",
       "lines": 126,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 28,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 77,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 101,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_dashboard_header.dart",
-      "sha256": "57f012480a2f39b4c515ee32963e7c6eef4254873b403202e02ec8fca87ec268",
+      "sha256": "37f422aa8726bd715e485b600b0563653d5e1f22abe3e80ad711936c152011d0",
       "lines": 448,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 98,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 148,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 153,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 161,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 218,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 223,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 283,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 362,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 395,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 404,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 409,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_glanceable_timeline.dart",
-      "sha256": "0015ce78ccc6e70437da4a868e131e81db7b76ea16a887f8c197ebf869e207f9",
+      "sha256": "90c41f04d142f9e8121fbce09a2f5b174ab4a14268d21837d2dea6bce8ebb10a",
       "lines": 224,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 72,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 96,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 122,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 133,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 184,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart",
-      "sha256": "808fc1bca6850861bc76e858072ee89446362e27028b746b5cc352575bda60dc",
+      "sha256": "5c1ba0bcb8631bf143f4797368eb42adb5d625a5afb0dddff6b45c9b843a7e8f",
       "lines": 594,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 230,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 236,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart",
-      "sha256": "9c648279cc0104a519ac879be764ec1e86a1c1f89d1569b49c7e4c61f69193d2",
+      "sha256": "f6cb308d728036ecb33dcb3961df5a8f332cb11dfe0ba60cac636ecf3fa88993",
       "lines": 109,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 65,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_pro_insights_view.dart",
@@ -1188,72 +699,15 @@
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_pro_overview_card.dart",
-      "sha256": "053ae3bc7d277f543f0415a626062357bc7595651050db2d551eaf3cd5aa8d59",
+      "sha256": "4bbc82b692ec376ee9a1f01938dd9d8b400975a700cfeb80ae9b64355772b429",
       "lines": 186,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 32,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 89,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 91,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 114,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 116,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 148,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 164,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 166,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 174,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_pro_segmented_tabs.dart",
-      "sha256": "4884b6fa773bc80ae9ef1373e0361c8df5e4718c7bc5148dd746f011c95b827d",
-      "lines": 93,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 31,
-          "match": "duration: const Duration(milliseconds: 220)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 83,
-          "match": "Colors.black"
-        }
-      ]
+      "sha256": "cc2ed2ee015262693e36fc657d8758e0e786dd27443de12a2e969cbe5ad31f69",
+      "lines": 29,
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart",
@@ -1269,20 +723,9 @@
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_time_period_dropdown.dart",
-      "sha256": "da8a2fc4cf78670b0c01e265c1aa0cb428df3a500e9331347fa74ef8eff3cc54",
+      "sha256": "81e32ca0f06675575dbe094b8153bcc70f931f5f143f62fef79ae2dbe01f6e8a",
       "lines": 86,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 36,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 38,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_today_pitch_schedule_card.dart",
@@ -1292,35 +735,9 @@
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_venue_filter_chips.dart",
-      "sha256": "932358cce7dc89e9ebcb43cd13c8f3abdf4fed92a197db581c5546c599be2781",
+      "sha256": "903795f169ccf865c56785cb71437b2f7acc207231d2f74642a84e769e373d22",
       "lines": 98,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 64,
-          "match": "duration: const Duration(milliseconds: 180)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 68,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 71,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 81,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 87,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/dashboard/owner_verification_banner.dart",
@@ -1384,42 +801,20 @@
     },
     {
       "path": "lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart",
-      "sha256": "39432d76fd9c803e1aec64f359b3100738bd190f8436550dc4d76809e6a989cf",
+      "sha256": "1f7df00f91c4d5571f6503b0804309fffb0d083c15ad684360f6d130a5c064ee",
       "lines": 252,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 30,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 97,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 165,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/inbox/owner_chat_item_card.dart",
-      "sha256": "7043c36cfb6a10f383f33963068190dabc1e5f0e61c31a715e428ba0db6a6062",
+      "sha256": "a5a5d35f4b88120ebf4b7c1bbf67c95f6fb5d0e8ed52163848c4ae2d6c78209d",
       "lines": 115,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 102,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/inbox/user_search_delegate.dart",
-      "sha256": "185832be7f1739dd9e0aff0a0a920ec19724469ca8d8a11041fe4aad3da16d72",
-      "lines": 156,
+      "sha256": "c0261ab0fe597ebfe06f803f823e981fb472c60c3ff41bb0fb9e5c33048bb90d",
+      "lines": 168,
       "triage_matches": []
     },
     {
@@ -1470,15 +865,9 @@
     },
     {
       "path": "lib/features/owner/widgets/owner_notification_button.dart",
-      "sha256": "b45a29673b41fced504f159e9b577954eb719575eca6776f7c8bed80415e6d13",
+      "sha256": "8b1e2d889e6d0a39993d1d9536d90aba18fce0044305c39006f63d02a23f9afb",
       "lines": 93,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 66,
-          "match": "duration: const Duration(milliseconds: 400)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/quick_booking/quick_booking_customer_fields.dart",
@@ -1488,15 +877,9 @@
     },
     {
       "path": "lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart",
-      "sha256": "4b56d4d54d0457bec00f007246f17dd05145d5f43994d562803a6028f7d8654a",
+      "sha256": "1f7642b543b2869ec933e584450606ef31b3c1ecf76c4d39fa25237259c99f80",
       "lines": 178,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 46,
-          "match": "duration: const Duration(milliseconds: 180)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart",
@@ -1536,15 +919,9 @@
     },
     {
       "path": "lib/features/owner/widgets/tournament/cups/cups_tab_selector.dart",
-      "sha256": "bd8291f4abcf0f69bd6dc4e9496348ef790266d8887b62826ea84e14ff051dd8",
-      "lines": 83,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 35,
-          "match": "duration: const Duration(milliseconds: 220)"
-        }
-      ]
+      "sha256": "6b1e8eaf09c1402bfd3e3bae1d10e875b3f6e1117c70ede9165a6d3d236208a9",
+      "lines": 33,
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/tournament/cups/owner_cup_card.dart",
@@ -1566,15 +943,9 @@
     },
     {
       "path": "lib/features/owner/widgets/tournament/draw_room_matchup_tile.dart",
-      "sha256": "ed5ca75ad995713f39293c723fb48036b21d14a2029d88ca586d392229a9a865",
+      "sha256": "17f9ab76ae761f0ada4259a54d78fc33a9f21c448624c6aeab723892c05c95ab",
       "lines": 78,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 25,
-          "match": "duration: const Duration(milliseconds: 300)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart",
@@ -1681,20 +1052,9 @@
     },
     {
       "path": "lib/features/owner/widgets/tournament/wizard/tournament_step_indicator.dart",
-      "sha256": "325f166f3633a2ee56e324c3f522e3e8f918979644a571c505a561c8f3ebe031",
+      "sha256": "689637f02fc38ae0c70aba1fb0026cc892d945d23dc8c3ceb0c1ccbd6b6f8925",
       "lines": 111,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 74,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 78,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/owner/widgets/tournament/wizard/tournament_system_step.dart",
@@ -1722,15 +1082,9 @@
     },
     {
       "path": "lib/features/player/screens/booking_success_screen.dart",
-      "sha256": "717737aeb80e035ff858f01fbda762f28d7fa87184e49a0e915b3aac8e9b767e",
+      "sha256": "78ed3c59a80df271889f1195e01cd932b025e5e75ed2963e2bd7270f9282069e",
       "lines": 496,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 44,
-          "match": "duration: const Duration(milliseconds: 800)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/bookings_screen.dart",
@@ -1746,55 +1100,9 @@
     },
     {
       "path": "lib/features/player/screens/champion_screen.dart",
-      "sha256": "74434c51eb14fb88dc29f1f00f505d666235eb167a26dd9ccd2244c21f99a4eb",
-      "lines": 351,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 100,
-          "match": "duration: const Duration(milliseconds: 220)"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 104,
-          "match": "Alignment.centerRight"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 107,
-          "match": "Alignment.centerLeft"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 109,
-          "match": "Alignment.centerLeft"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 112,
-          "match": "Alignment.centerRight"
-        },
-        {
-          "category": "palette_literal",
-          "line": 151,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 181,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 213,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 343,
-          "match": "Colors.white"
-        }
-      ]
+      "sha256": "0f3a88f9b733004ad97be3f831407b4c91eeee4daba78530e9ebf7849f6a736e",
+      "lines": 225,
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/championship_checkout_screen.dart",
@@ -1816,77 +1124,15 @@
     },
     {
       "path": "lib/features/player/screens/faq_and_support_screen.dart",
-      "sha256": "002fdfcaa7aa3d8dc80f179a439783415b57247d906777434f6b4bf4e3557333",
+      "sha256": "df02cb1208f85fb96956c853cfdf860e63708ce32ac0a36a739a788f7214bfcf",
       "lines": 244,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 125,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 128,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 132,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 166,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 184,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 221,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/global_search_screen.dart",
-      "sha256": "26ed7234e8b60d00b98ef6c5f2bdcd5cd7d171bc172059bb26d644627449da1d",
+      "sha256": "9582f78c6f440c68ee02f013a51cce8a02f631ee7d56db13242bd9c0f1c0d040",
       "lines": 346,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 108,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 114,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 165,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 229,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 244,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 337,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/manage_tournament_roster_screen.dart",
@@ -1955,15 +1201,9 @@
     },
     {
       "path": "lib/features/player/screens/profile_subscreens/edit_profile_screen.dart",
-      "sha256": "194b3ce41d08c6ff51fb5f98dac7da58dea00200e374314e7272d642a952bfdf",
+      "sha256": "0aa585b18a99b8768887296ddb4ff11e70224b935a6fb8c5edaf80537039d740",
       "lines": 431,
-      "triage_matches": [
-        {
-          "category": "physical_alignment",
-          "line": 159,
-          "match": "Alignment.bottomRight"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/profile_subscreens/favorites_screen.dart",
@@ -2009,35 +1249,9 @@
     },
     {
       "path": "lib/features/player/screens/team_dashboard_screen.dart",
-      "sha256": "a55977c1f8aef4421710740d81e6e174c0931e83afe149e547ed8c952e0a1450",
-      "lines": 488,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 186,
-          "match": "duration: const Duration(milliseconds: 220)"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 190,
-          "match": "Alignment.centerRight"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 191,
-          "match": "Alignment.centerLeft"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 193,
-          "match": "Alignment.centerLeft"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 194,
-          "match": "Alignment.centerRight"
-        }
-      ]
+      "sha256": "8c396fcbff0c4008966678c289ffddefb0dfd0b1897cccc1468b9c89168dd6f2",
+      "lines": 400,
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/team_profile_screen.dart",
@@ -2047,32 +1261,15 @@
     },
     {
       "path": "lib/features/player/screens/terms_and_privacy_screen.dart",
-      "sha256": "e73e3772cb53749248faf5c9216b922d2f345f3ce6ca726c7e16b5c34f181975",
+      "sha256": "dbbf28f5a8c9034449e351c067c2b9c234188c92667cd7379f76c2ab7736a0b1",
       "lines": 260,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 51,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 249,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/screens/tournament_registration_success_screen.dart",
-      "sha256": "210ecc7e490d57adfa7e768a2012e5738c7079bc0aed148984e7ea181480c090",
+      "sha256": "3c97b1dcf853a1757e5b44731bf4659a4f540b8c3427b2c0aea427697c0b946d",
       "lines": 873,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 73,
-          "match": "duration: const Duration(milliseconds: 900)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/services/matchup_dashboard_service.dart",
@@ -2082,20 +1279,9 @@
     },
     {
       "path": "lib/features/player/widgets/add_player_sheet.dart",
-      "sha256": "1feb3c61fc728ec7c043edcb907497c31403e1f85a7ba25be6e5657d76a6de81",
+      "sha256": "3c5ee534c96bea59264ad0693bb2cfb250dab618fbd519a19a3de9acdc50c9b7",
       "lines": 402,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 383,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 387,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart",
@@ -2105,70 +1291,9 @@
     },
     {
       "path": "lib/features/player/widgets/booking/booking_bottom_bar.dart",
-      "sha256": "10208ef0e65ceba282fc15523a69ae81c06c0d1858e42e72d5e0d71b4c7be744",
+      "sha256": "60082a3508b31f717d663f318c5d78321a83a5b980848edaee77ad5042a77901",
       "lines": 351,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 87,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 126,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 160,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 172,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 180,
-          "match": "Colors.white"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 202,
-          "match": "duration: const Duration(milliseconds: 180)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 222,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 245,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 252,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 317,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 330,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 337,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/booking/booking_calendar_modal.dart",
@@ -2196,15 +1321,9 @@
     },
     {
       "path": "lib/features/player/widgets/booking/booking_slot_card.dart",
-      "sha256": "bba986f88272c1ffaade2d3495e0d4d81207ecb00510b68ae21bfd55750591f7",
+      "sha256": "063faf193aedb3565191485984dad9ba53b99eb254c513a7d9b860c8473efd35",
       "lines": 202,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 41,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/booking/booking_slot_stream_section.dart",
@@ -2220,15 +1339,9 @@
     },
     {
       "path": "lib/features/player/widgets/challenge/challenge_team_card.dart",
-      "sha256": "7ec4eacd12d50ed6652a849406e7d6c9f95d7111b7550dbee827addcff244ab5",
+      "sha256": "3c79454704f7a0a3ffc666854bf0d149b793af8e31c823542c8a09192caabef4",
       "lines": 259,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 42,
-          "match": "duration: const Duration(milliseconds: 300)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/champion_empty_state.dart",
@@ -2238,21 +1351,15 @@
     },
     {
       "path": "lib/features/player/widgets/champion/champion_podium_components.dart",
-      "sha256": "7b74c3d50d4522592cc2d2f3f68d07be5ec94d6f07ccfe02390c8c63fa435654",
+      "sha256": "5c307ea4bed334d92edf058cc974f52ae02d344d8e8353f5f4d9afc7581b28ca",
       "lines": 211,
       "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/championships_list_tab.dart",
-      "sha256": "f980ee2ec187ca30cf3a340e482723a5667e8e4d687c304d78c67c42f8aa7ac6",
+      "sha256": "f70756dad3cda1ab054561e86404af470de8638d202c679b00bc2a8f2f1ac00e",
       "lines": 259,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 195,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart",
@@ -2274,15 +1381,9 @@
     },
     {
       "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart",
-      "sha256": "dd9e44329fc6aff35df98a3d2d64c3f7ba22b638791af42ccf6b9defb0cb239f",
+      "sha256": "061635563ce1387c0c4f181343b9506de4e466ecc778cc430ec245c235e4e8bc",
       "lines": 215,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 196,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart",
@@ -2292,69 +1393,21 @@
     },
     {
       "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart",
-      "sha256": "b1b372470d9b73ad42faf9bf7a5db8fe757a76d76bcf26c896715fbaef06f275",
-      "lines": 425,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 101,
-          "match": "Colors.white"
-        }
-      ]
+      "sha256": "57e9af187960284a2ac9684e6d7f8cd40c2713d5000db621b2ec56f2240a9c3e",
+      "lines": 404,
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/teams_ranking_tab.dart",
-      "sha256": "622e396fb95a50a312d2238a4d66cf8a899b544625b9a26a9aa2434b2975cdb9",
+      "sha256": "aef7302a8577ed16882caad0ce5855874fc848f011270b27baed679891ab764d",
       "lines": 548,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 284,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 322,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 341,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 482,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/champion/vsp_1v1_league_tab.dart",
-      "sha256": "12a559bd358aa124f43c815218300f2b84fb4fadd62a837e9f57d08c35963c3e",
+      "sha256": "55ac8df431478cff16f56d8646e4fbbfba387279feec7f0d49a3b747ae49543e",
       "lines": 537,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 130,
-          "match": "Colors.amber"
-        },
-        {
-          "category": "palette_literal",
-          "line": 134,
-          "match": "Colors.amber"
-        },
-        {
-          "category": "palette_literal",
-          "line": 142,
-          "match": "Colors.amber"
-        },
-        {
-          "category": "palette_literal",
-          "line": 147,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/championship_card.dart",
@@ -2446,15 +1499,9 @@
     },
     {
       "path": "lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart",
-      "sha256": "d8a27d4e9bcb40bb940835ba73dd9b0a6568aa56c86ad343de04370073ae8c29",
+      "sha256": "1f7beeab41bd09b16cd80ba46d2e501b21224e0b86d1669bb16fecb683bd6330",
       "lines": 109,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 74,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/championship_details/championship_rules_tab.dart",
@@ -2488,30 +1535,9 @@
     },
     {
       "path": "lib/features/player/widgets/chat/chat_dialogs.dart",
-      "sha256": "6547955b62f15242ec0143ce2711b196d69dd5aca7d369232fe52e53ef5292af",
+      "sha256": "9d2005ae9cd60e1855b1c7188fbf36e8329b140d6f1d00cfd6ee3b1aea919ef7",
       "lines": 162,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 31,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 43,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 53,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 118,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/chat/chat_input_bar.dart",
@@ -2521,30 +1547,9 @@
     },
     {
       "path": "lib/features/player/widgets/chat/chat_message_bubble.dart",
-      "sha256": "de730ec2c5545a38c727847d746beb6185a68abd1bd815075bbdaff0e1631e5a",
-      "lines": 186,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 35,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 39,
-          "match": "Colors.white"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 84,
-          "match": "Alignment.centerRight"
-        },
-        {
-          "category": "physical_alignment",
-          "line": 84,
-          "match": "Alignment.centerLeft"
-        }
-      ]
+      "sha256": "20217a3c30d6c80e87ab76c32ae021843380b91edbca2ca6e5c35b973d064cee",
+      "lines": 222,
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/chat/chat_system_banner.dart",
@@ -2602,7 +1607,7 @@
     },
     {
       "path": "lib/features/player/widgets/filter/filter_price_panel.dart",
-      "sha256": "132e01082e318bae4f3fe3e6633d47f84ce8d140b8a3c01cbe664a41737b5ba8",
+      "sha256": "cb3eca96ff43371342fd726ec801dcdb587d3633f6a817b32351383a671700e9",
       "lines": 98,
       "triage_matches": []
     },
@@ -2620,20 +1625,9 @@
     },
     {
       "path": "lib/features/player/widgets/filter_bottom_sheet.dart",
-      "sha256": "a48abcbc30dd0446866c57539037117d49c75b893d0bac4d6726949f11b67b38",
+      "sha256": "3b74447bae3b9f8f6b990450a23e40e113e5d40d69ef7322d28d7ed9cd3f8867",
       "lines": 392,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 239,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 319,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/home/book_tonight_card.dart",
@@ -2654,15 +1648,9 @@
     },
     {
       "path": "lib/features/player/widgets/home/book_tonight_sheet.dart",
-      "sha256": "9ddd54dddaa0fdebe6af6c2cc76b4bf24e352cd1f3aed6e0279ee0fa93b5ecdd",
-      "lines": 337,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 37,
-          "match": "Colors.transparent"
-        }
-      ]
+      "sha256": "f9f5a279de0239d32c62c1e76eda0d90c290cdf3afe64c3f73b77da63b62c2f1",
+      "lines": 315,
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/home/home_feed_content.dart",
@@ -2672,47 +1660,15 @@
     },
     {
       "path": "lib/features/player/widgets/home/home_feed_sections.dart",
-      "sha256": "3fd91a51903f691b89e62ce2bfa4b930537f948950fbdcde4eb3bce5bcb4066c",
+      "sha256": "5cdcc9a8cb60aaffeffe5850996f9c7f0e06e2eb447604fd6bc05683ab2be1c0",
       "lines": 399,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 91,
-          "match": "Colors.white"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 103,
-          "match": "duration: const Duration(milliseconds: 400)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/home/home_governorate_modal.dart",
-      "sha256": "6c0e4ef43ec46cdb47ae174fab499be8e2d2566786d5406c9ce37d8024739fca",
+      "sha256": "d6bed8338f26e19bdc6fcef801d07a1e5cf430f508e50f0ac7fe15f78143d3d7",
       "lines": 155,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 54,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 108,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 116,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 146,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/home/home_match_outcome_dialogs.dart",
@@ -2728,7 +1684,7 @@
     },
     {
       "path": "lib/features/player/widgets/home/home_top_bar.dart",
-      "sha256": "561109bfe66a902fd90cc4965ee9e7e77e1feabe92399897ff96015b1bfcfae1",
+      "sha256": "139ef87b7e40eb980d29a05cb4ba1d2b2ee3e56e0c37746e4090b3813ed4f1e8",
       "lines": 238,
       "triage_matches": []
     },
@@ -2746,15 +1702,9 @@
     },
     {
       "path": "lib/features/player/widgets/league/team_league_match_dialog.dart",
-      "sha256": "318592ce9e1986065b9fe0425461c7a169f608298a05544b38475935d2870ffc",
+      "sha256": "164220bc2d3a8236a63fc40254627adc8ca342aedb5b2e60a77ca2f2ad253a51",
       "lines": 542,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 229,
-          "match": "duration: const Duration(milliseconds: 180)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/league/team_league_onboarding_card.dart",
@@ -2810,20 +1760,9 @@
     },
     {
       "path": "lib/features/player/widgets/matchup/matchup_results_timeline.dart",
-      "sha256": "6694448a5e030171b325356cdfd9d82d321996b939730ed3e8a3739f71d5ebb9",
+      "sha256": "2b4e5e85f6809c5cd258b832f99e9226153de02f90899377485795e3e0504d98",
       "lines": 122,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 38,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 94,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/matchup/matchup_standings_table.dart",
@@ -2935,25 +1874,9 @@
     },
     {
       "path": "lib/features/player/widgets/roster/roster_guest_players_section.dart",
-      "sha256": "66b997d90265281d3444ae1b2e6bb064156acf839abe08fd6036f226130d90f5",
+      "sha256": "c71f5b6da7c6f94f86ffb666497ad44f7dc181863181702cc5ea7403cafaa159",
       "lines": 159,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 40,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 70,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 124,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/roster/roster_team_members_section.dart",
@@ -2975,15 +1898,9 @@
     },
     {
       "path": "lib/features/player/widgets/stadium_details/stadium_image_carousel.dart",
-      "sha256": "7e2e92103ef902a4e041975e2e40ec1ca610c6e6b9db7aaacd2dba05cedee03f",
+      "sha256": "6c755a9c30801a363f154be526f38e5547cf9da6c41ae61743f44d83a41d5c48",
       "lines": 354,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 333,
-          "match": "duration: const Duration(milliseconds: 200)"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/stadium_details/stadium_information_tab.dart",
@@ -3053,15 +1970,9 @@
     },
     {
       "path": "lib/features/player/widgets/user_bookings/challenge_result_actions.dart",
-      "sha256": "21892e43393447ef6f6366d677a589b85b10a0d1b2a1e7f9064ab75529684d7b",
+      "sha256": "983798a4f1c2f07ba517023d6d43977dfb525a961335506da8b934e28b99115a",
       "lines": 277,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 97,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/features/player/widgets/user_bookings/open_join_booking_card.dart",
@@ -3101,20 +2012,9 @@
     },
     {
       "path": "lib/shared/dialogs/vsp_terms_and_privacy_modal.dart",
-      "sha256": "0e01996ab88f456471bd02bc33cae6ed9695d6f474b658a0140dcafad2c10684",
+      "sha256": "30318f33d8602f4f765dff966c97b20bdc44903980a668fbf33785af51faa9e0",
       "lines": 333,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 13,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 28,
-          "match": "Colors.transparent"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/banner_slider_widget.dart",
@@ -3130,103 +2030,21 @@
     },
     {
       "path": "lib/shared/widgets/custom_text_field.dart",
-      "sha256": "5ff674d09f55ff83a160e77d50c292314f889519195389e7c3dda0a4b92d3de7",
-      "lines": 178,
+      "sha256": "d3e2655d55bd7cbf43364cac19dea0d7dd6620133c65f1138a1225193d7aa8b0",
+      "lines": 179,
       "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart",
-      "sha256": "8b139b6ebf27784b48b9cace9729d4526071a8d07e0bf187d08f08a52d400857",
+      "sha256": "9f345705f17f21bcc51056fc079b5256b90a3cc463059c281d1868018888a804",
       "lines": 107,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 54,
-          "match": "duration: const Duration(milliseconds: 200)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 95,
-          "match": "Colors.white"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart",
-      "sha256": "8dc38dd8e6f4bb4dd7e0dac1cbd02100392e2f172e4094ab871d9309086baa87",
+      "sha256": "b8c8804edce74d1ab64cc5b596b68ff0c361507bbbedb9962ac32ff9ae2b73bb",
       "lines": 298,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 58,
-          "match": "duration: const Duration(milliseconds: 150)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 84,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 84,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 91,
-          "match": "Colors.black"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 145,
-          "match": "duration: const Duration(milliseconds: 150)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 171,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 178,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 190,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 190,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 197,
-          "match": "Colors.black"
-        },
-        {
-          "category": "inline_motion_duration",
-          "line": 257,
-          "match": "duration: const Duration(milliseconds: 150)"
-        },
-        {
-          "category": "palette_literal",
-          "line": 283,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 283,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 289,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/match_card/manage_participants_modal.dart",
@@ -3295,15 +2113,9 @@
     },
     {
       "path": "lib/shared/widgets/vsp_animated_button.dart",
-      "sha256": "a24697570dba68d2d0cda72cc6a7f0a7bc86c23c5ea8a83b3005a83e11636924",
-      "lines": 129,
-      "triage_matches": [
-        {
-          "category": "inline_motion_duration",
-          "line": 51,
-          "match": "duration: const Duration(milliseconds: 120)"
-        }
-      ]
+      "sha256": "1efe1fdb7a87481716067e76795c2ddfd7cc0f2a061f70f3b73821938d244afe",
+      "lines": 136,
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/vsp_auth_header.dart",
@@ -3313,8 +2125,8 @@
     },
     {
       "path": "lib/shared/widgets/vsp_back_button.dart",
-      "sha256": "e884a51bf40287c0b959e0baa5c0d67c9fdc99affc06a3d8bda8f8303219b755",
-      "lines": 129,
+      "sha256": "0a781590c8acfca6353cb47f54328f61f63846ffa3d8f4e8121a5cad0eed052d",
+      "lines": 137,
       "triage_matches": []
     },
     {
@@ -3325,42 +2137,15 @@
     },
     {
       "path": "lib/shared/widgets/vsp_countdown_timer.dart",
-      "sha256": "91916a87754baf83616965d1999acd825c5931ea53c68553c7c74235404dcab3",
-      "lines": 182,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 161,
-          "match": "Colors.white"
-        }
-      ]
+      "sha256": "01f27056b53d7ff875a21bda6d49563f4814adbeb73da409a9f7624485a49e2e",
+      "lines": 184,
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/vsp_date_picker_dialog.dart",
-      "sha256": "986d8ff4e1afd22b879e2bbf76a4d765e0eb3c2ab577bb66fe4cc5f2c7d76fa7",
+      "sha256": "702e2b70fa81cc5876d3868e133bb1e9d255f0e7a7911948c1af1ccee2e65aec",
       "lines": 347,
-      "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 23,
-          "match": "Colors.black"
-        },
-        {
-          "category": "palette_literal",
-          "line": 90,
-          "match": "Colors.transparent"
-        },
-        {
-          "category": "palette_literal",
-          "line": 143,
-          "match": "Colors.white"
-        },
-        {
-          "category": "palette_literal",
-          "line": 286,
-          "match": "Colors.black"
-        }
-      ]
+      "triage_matches": []
     },
     {
       "path": "lib/shared/widgets/vsp_empty_state.dart",
@@ -3388,14 +2173,9 @@
     },
     {
       "path": "lib/shared/widgets/vsp_network_banner.dart",
-      "sha256": "c54011e0bd6d25a75d98f3598e616d75e95c1f3d7d78351d2e2f162885c22955",
+      "sha256": "f8240b8b532ed7fb279bc8f5d8e692d6f5855b189c9c67ec8f502d3ec29833f6",
       "lines": 98,
       "triage_matches": [
-        {
-          "category": "palette_literal",
-          "line": 41,
-          "match": "Colors.transparent"
-        },
         {
           "category": "physical_alignment",
           "line": 54,
@@ -3410,7 +2190,7 @@
     },
     {
       "path": "lib/shared/widgets/vsp_position_selector.dart",
-      "sha256": "a11805c58f0cf8ab1b4eb1eb213c25657a0e24be1cac9d0744fe9f3786ef33c3",
+      "sha256": "023769e1c7ffef1374de3090b625d5d57533944bb8b4cfb5650b52269df92de1",
       "lines": 107,
       "triage_matches": []
     },

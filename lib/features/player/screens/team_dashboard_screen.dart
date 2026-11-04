@@ -1,3 +1,4 @@
+import '../../../core/ui/components/vsp_segmented_control.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -170,108 +171,19 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         child: Column(
           children: [
             // Pill Switcher: [ تجميع ] [ دوري ] مطابقة 100% لشاشة الأبطال بدون إيموجي
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              height: 48,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
-              ),
-              child: Stack(
-                children: [
-                  // Animated background pill for 2 tabs
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOut,
-                    alignment: Directionality.of(context) == TextDirection.rtl
-                        ? (_selectedMainTab == 0
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft)
-                        : (_selectedMainTab == 0
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight),
-                    child: FractionallySizedBox(
-                      widthFactor: 0.5,
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      // Tab 0: تجميع
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: _selectedMainTab == 0,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(VSPRadius.full),
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _selectedMainTab = 0);
-                            },
-                            child: Center(
-                              child: Builder(
-                                builder: (context) {
-                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                  final label = isArabic ? 'تجميع' : 'Gathering';
-                                  return Text(
-                                    label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: _selectedMainTab == 0 ? VSPColors.black : VSPColors.white,
-                                          fontWeight: _selectedMainTab == 0 ? FontWeight.w900 : FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Tab 1: دوري
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                          selected: _selectedMainTab == 1,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(VSPRadius.full),
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _selectedMainTab = 1);
-                            },
-                            child: Center(
-                              child: Builder(
-                                builder: (context) {
-                                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                  final label = isArabic ? 'دوري' : 'League';
-                                  return Text(
-                                    label,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                          color: _selectedMainTab == 1 ? VSPColors.black : VSPColors.white,
-                                          fontWeight: _selectedMainTab == 1 ? FontWeight.w900 : FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: VSPSegmentedControl(
+                labels: [
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'تجميع' : 'Gathering',
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'دوري' : 'League',
                 ],
+                selectedIndex: _selectedMainTab,
+                onSelected: (index) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedMainTab = index);
+                },
+                textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14),
               ),
             ),
 

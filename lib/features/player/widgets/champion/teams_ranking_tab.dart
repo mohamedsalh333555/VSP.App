@@ -281,7 +281,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                     border: Border.all(color: VSPColors.accent, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: VSPColors.black.withValues(alpha: 0.6),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                       ),
@@ -319,7 +319,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                             Text(
                               '${myTeam.name} • ${isArabic ? 'المركز #$myTeamRank' : 'Rank #$myTeamRank'}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: VSPColors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -338,7 +338,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         child: Text(
                           AppLocalizations.of(context)!.pointsCount(myTeam.points),
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontWeight: FontWeight.w900,
                             fontSize: 12,
                           ),
@@ -479,7 +479,7 @@ class _TeamsRankingTabState extends State<TeamsRankingTab>
                         child: Text(
                           Localizations.localeOf(context).languageCode == 'ar' ? 'فريقك' : 'Your Team',
                           style: const TextStyle(
-                            color: Colors.black,
+                            color: VSPColors.black,
                             fontSize: 9,
                             fontWeight: FontWeight.w900,
                           ),

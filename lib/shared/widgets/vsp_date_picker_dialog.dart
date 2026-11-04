@@ -20,7 +20,7 @@ Future<DateTime?> showVSPDatePicker(
  return showDialog<DateTime>(
  context: context,
  barrierDismissible: true,
- barrierColor: Colors.black.withValues(alpha: 0.8),
+ barrierColor: VSPColors.black.withValues(alpha: 0.8),
  builder: (ctx) => VSPDatePickerDialog(
  initialDate: initialDate,
  minYear: minYear,
@@ -87,7 +87,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  return BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
  child: Dialog(
- backgroundColor: Colors.transparent,
+ backgroundColor: VSPColors.transparent,
  insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
  child: Container(
  width: double.infinity,
@@ -140,7 +140,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  child: Text(
  isAr ? 'اختر تاريخ الميلاد' : 'Select Date of Birth',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontWeight: FontWeight.w900,
  fontSize: 18,
  letterSpacing: 0.2,
@@ -283,7 +283,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
  child: PrimaryButton(
  text: isAr ? 'تأكيد التاريخ' : 'Confirm Date',
  color: VSPColors.accent,
- textColor: Colors.black,
+ textColor: VSPColors.black,
  onPressed: (_selectedYear != null && _selectedMonth != null && _selectedDay != null)
  ? _finishSelection
  : null,

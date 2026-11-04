@@ -90,7 +90,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  Expanded(
  child: Text(
  isAr ? "تم توثيق الحساب! " : "Account Verified! ",
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+ style: const TextStyle(color: VSPColors.white, fontWeight: FontWeight.bold),
  ),
  ),
  ],
@@ -174,7 +174,7 @@ class OwnerMainScreenState extends State<OwnerMainScreen> {
  shouldLoop: false,
  colors: const [
  VSPColors.accent,
- Colors.white,
+ VSPColors.white,
  VSPColors.accentGlow,
  ],
  ),

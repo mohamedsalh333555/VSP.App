@@ -214,7 +214,7 @@ class OwnerDeleteAccountCard extends StatelessWidget {
               onPressed: () => _showDeleteAccountDialog(context),
               style: TextButton.styleFrom(
                 backgroundColor: VSPColors.error,
-                foregroundColor: Colors.white,
+                foregroundColor: VSPColors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
               ),

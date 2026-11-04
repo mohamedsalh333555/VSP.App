@@ -157,7 +157,7 @@ class _TournamentAutoScheduleModalSheetState extends State<TournamentAutoSchedul
                 child: GestureDetector(
                   onTap: () => setState(() => _daysCount = d),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: VSPDSMotion.selection,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                     decoration: BoxDecoration(

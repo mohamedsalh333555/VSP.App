@@ -330,7 +330,7 @@ class _StadiumImageCarouselState extends State<StadiumImageCarousel> {
                       children: List.generate(widget.displayImages.length, (idx) {
                         final isSelected = _currentImageIndex == idx;
                         return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
+                          duration: VSPDSMotion.selection,
                           width: isSelected ? 14 : 6,
                           height: 6,
                           margin: const EdgeInsets.symmetric(horizontal: 3),

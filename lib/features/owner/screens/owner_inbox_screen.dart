@@ -23,6 +23,39 @@ class OwnerInboxScreen extends StatefulWidget {
 
 class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  final ChatRepository _chatRepository = ChatRepository();
+ String? _streamOwnerId;
+ int _scopeGeneration = 0;
+ Stream<List<Map<String, dynamic>>> _conversationsStream = const Stream.empty();
+ final Set<String> _attemptedProfileIds = {};
+
+ @override
+ void didChangeDependencies() {
+   super.didChangeDependencies();
+   final ownerId = context.watch<AuthProvider>().currentUser?.id ?? '';
+   if (ownerId == _streamOwnerId) return;
+   _streamOwnerId = ownerId;
+   _scopeGeneration++;
+   _userCache.clear();
+   _attemptedProfileIds.clear();
+   _isFetchingUsers = false;
+   _conversationsStream = ownerId.isEmpty
+       ? Stream.value(<Map<String, dynamic>>[])
+       : _chatRepository.streamUserConversations(ownerId);
+ }
+
+ void _retryConversations() {
+   if (!mounted) return;
+   setState(() {
+     _scopeGeneration++;
+     _isFetchingUsers = false;
+     _attemptedProfileIds.clear();
+     final ownerId = _streamOwnerId ?? '';
+     _conversationsStream = ownerId.isEmpty
+         ? Stream.value(<Map<String, dynamic>>[])
+         : _chatRepository.streamUserConversations(ownerId);
+   });
+ }
+
 
  /// N+1 FIX: Local in-memory cache of user profiles keyed by user-id.
  /// Populated via a single batch Supabase query whenever the conversation
@@ -32,11 +65,14 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  /// Batch-fetch profiles for all [userIds] that are not already cached.
  Future<void> _prefetchUsers(List<String> userIds) async {
- final missing = userIds.where((id) => id.isNotEmpty && !_userCache.containsKey(id)).toList();
+ final missing = userIds.where((id) => id.isNotEmpty && !_userCache.containsKey(id) && !_attemptedProfileIds.contains(id)).toSet().toList();
  if (missing.isEmpty || _isFetchingUsers) return;
  _isFetchingUsers = true;
+ final generation = _scopeGeneration;
+ _attemptedProfileIds.addAll(missing);
  try {
  final rows = await UserRepository().getUserSummariesByIds(missing);
+ if (!mounted || generation != _scopeGeneration) return;
  for (final map in rows) {
  _userCache[map['id'].toString()] = map;
  }
@@ -44,7 +80,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  } catch (e) {
  debugPrint(' Owner inbox prefetch users notice: $e');
  } finally {
- _isFetchingUsers = false;
+ if (generation == _scopeGeneration) _isFetchingUsers = false;
  }
  }
 
@@ -54,8 +90,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
  @override
  Widget build(BuildContext context) {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final ownerId = auth.currentUser?.id ?? '';
+ final ownerId = _streamOwnerId ?? '';
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  return VSPScaffold(
@@ -71,6 +106,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  ),
  actions: [
  IconButton(
+   tooltip: isArabic ? 'تحديث المحادثات' : 'Refresh conversations',
+   icon: const Icon(Iconsax.refresh_copy, color: VSPColors.textSecondary),
+   onPressed: _retryConversations,
+ ),
+ IconButton(
  icon: const Icon(Iconsax.headphone_copy, color: VSPColors.accent),
  onPressed: () => _openSupportChat(context),
  tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
@@ -79,7 +119,8 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
  ],
  ),
  body: StreamBuilder<List<Map<String, dynamic>>>(
- stream: _chatRepository.streamUserConversations(ownerId),
+ key: ValueKey(ownerId),
+ stream: _conversationsStream,
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
  return VSPStateView(
@@ -98,9 +139,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
          ? 'تعذر تحميل المحادثات. تحقق من الاتصال ثم أعد المحاولة.'
          : 'Could not load conversations. Check your connection and try again.',
      retryButtonText: isArabic ? 'إعادة المحاولة' : 'Retry',
-     onRetry: () {
-       if (mounted) setState(() {});
-     },
+     onRetry: _retryConversations,
    );
  }
 
@@ -154,9 +193,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
              ),
            ),
            TextButton(
-             onPressed: () {
-               if (mounted) setState(() {});
-             },
+             onPressed: _retryConversations,
              child: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
            ),
          ],

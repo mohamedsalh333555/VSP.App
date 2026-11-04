@@ -10,7 +10,7 @@ class VSPTermsAndPrivacyModal {
   static void show(BuildContext context, {bool isOwner = false}) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: VSPColors.black.withValues(alpha: 0.75),
       builder: (dialogContext) {
         final isAr = Localizations.localeOf(dialogContext).languageCode == 'ar';
         final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
@@ -25,7 +25,7 @@ class VSPTermsAndPrivacyModal {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
           child: Dialog(
-            backgroundColor: Colors.transparent,
+            backgroundColor: VSPColors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Container(
               constraints: BoxConstraints(

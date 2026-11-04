@@ -78,31 +78,10 @@ class _League1v1StandingsViewState extends State<League1v1StandingsView> {
         }
         final players = snapshot.data ?? [];
         if (players.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
-                    ),
-                    child: const Icon(Iconsax.cup_copy, size: 38, color: VSPColors.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    AppLocalizations.of(context)!.noOneVsOneRanked,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
+          return VSPStateView(
+            state: VSPUiState.empty,
+            title: AppLocalizations.of(context)!.noOneVsOneRanked,
+            icon: Iconsax.cup_copy,
           );
         }
 

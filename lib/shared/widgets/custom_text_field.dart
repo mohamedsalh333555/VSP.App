@@ -113,8 +113,9 @@ class CustomTextField extends StatelessWidget {
             isDense: true,
             hintText: hintText,
             errorText: errorText,
+            errorMaxLines: 4,
             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: VSPDSSemanticColors.textSecondary.withValues(alpha: 0.5),
+                  color: VSPDSSemanticColors.textSecondary,
                 ),
             filled: true,
             fillColor: VSPDSSemanticColors.inputFill,

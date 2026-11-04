@@ -85,7 +85,7 @@ class OwnerOnboardingLocationSection extends StatelessWidget {
               items: govs
                   .map<DropdownMenuItem<String>>((v) => DropdownMenuItem<String>(
                         value: v,
-                        child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                        child: Text(v, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white)),
                       ))
                   .toList(),
             ),

@@ -62,7 +62,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -78,7 +78,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  ),
  child: BackdropFilter(
  filter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
- child: Container(color: Colors.transparent),
+ child: Container(color: VSPColors.transparent),
  ),
  ),
  ),
@@ -137,7 +137,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  Text(
  isAr ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
  style: const TextStyle(
- color: Colors.white,
+ color: VSPColors.white,
  fontSize: 22,
  fontWeight: FontWeight.bold,
  letterSpacing: -0.5,

@@ -55,7 +55,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
               },
               child: Text(
                 isArabic ? 'عرض الكل' : 'View All',
-                style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                style: const TextStyle(color: VSPColors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -69,15 +69,15 @@ class OwnerGlanceableTimeline extends StatelessWidget {
             decoration: BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: VSPColors.white.withValues(alpha: 0.05)),
             ),
             child: Column(
               children: [
-                const Icon(Iconsax.calendar_tick_copy, size: 28, color: Colors.white54),
+                const Icon(Iconsax.calendar_tick_copy, size: 28, color: VSPColors.white54),
                 const SizedBox(height: 8),
                 Text(
                   isArabic ? 'لا توجد حجوزات مسجلة اليوم' : 'No bookings recorded today',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w500),
+                  style: const TextStyle(color: VSPColors.white70, fontSize: 12.5, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
@@ -93,7 +93,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                     ),
                     child: Text(
                       isArabic ? 'إدارة الحجوزات' : 'Manage Bookings',
-                      style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800),
+                      style: const TextStyle(color: VSPColors.black, fontSize: 12, fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -119,7 +119,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                   border: Border.all(
                     color: isOngoing
                         ? VSPColors.success.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.06),
+                        : VSPColors.white.withValues(alpha: 0.06),
                     width: 1,
                   ),
                 ),
@@ -130,7 +130,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isOngoing
                             ? VSPColors.success.withValues(alpha: 0.12)
-                            : Colors.white.withValues(alpha: 0.04),
+                            : VSPColors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(VSPRadius.sm),
                       ),
                       child: Row(
@@ -181,7 +181,7 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                               ),
                               const SizedBox(width: 6),
-                              Text('•', style: TextStyle(color: Colors.white.withValues(alpha: 0.2))),
+                              Text('•', style: TextStyle(color: VSPColors.white.withValues(alpha: 0.2))),
                               const SizedBox(width: 6),
                               Text(
                                 b.isPaid ? (isArabic ? 'مدفوع' : 'Paid') : (isArabic ? 'كاش' : 'Cash'),
@@ -200,12 +200,12 @@ class OwnerGlanceableTimeline extends StatelessWidget {
                     if (b.playerPhone != null && b.playerPhone!.isNotEmpty && !isPassed) ...[
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.call_copy, size: 17, color: Colors.white70),
+                        icon: const Icon(Iconsax.call_copy, size: 17, color: VSPColors.white70),
                         onPressed: () => VSPLauncherUtils.makePhoneCall(context, b.playerPhone!),
                       ),
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        icon: const Icon(Iconsax.message_copy, size: 17, color: Colors.white70),
+                        icon: const Icon(Iconsax.message_copy, size: 17, color: VSPColors.white70),
                         onPressed: () => VSPLauncherUtils.openWhatsApp(
                           context,
                           phone: b.playerPhone!,

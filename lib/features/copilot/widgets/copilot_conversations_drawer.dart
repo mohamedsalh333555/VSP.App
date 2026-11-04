@@ -30,9 +30,9 @@ class CopilotConversationsDrawer extends StatelessWidget {
         child: Column(
           children: [
             _buildDrawerHeader(context),
-            const Divider(color: Colors.white12, height: 1),
+            const Divider(color: VSPColors.white12, height: 1),
             _buildNewChatButton(context),
-            const Divider(color: Colors.white12, height: 1),
+            const Divider(color: VSPColors.white12, height: 1),
             Expanded(child: _buildConversationsList(context)),
           ],
         ),
@@ -164,7 +164,7 @@ class CopilotConversationsDrawer extends StatelessWidget {
               leading: Icon(
                 Iconsax.message_copy,
                 size: 16,
-                color: isActive ? VSPColors.accent : Colors.white54,
+                color: isActive ? VSPColors.accent : VSPColors.white54,
               ),
               title: Text(
                 conv.title,

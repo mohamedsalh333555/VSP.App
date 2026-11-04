@@ -70,7 +70,7 @@ class _TournamentRegistrationSuccessScreenState
     // 2. أنيميشن نبض الكأس والتحقق
     _badgeAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: VSPDSMotion.celebrationReveal,
     );
     _scaleAnimation = CurvedAnimation(
       parent: _badgeAnimController,

@@ -1,3 +1,4 @@
+import '../../../core/ui/components/vsp_segmented_control.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/vsp_ui.dart';
@@ -84,144 +85,17 @@ class ChampionScreenState extends State<ChampionScreen>
         bottom: false,
         child: Column(
           children: [
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              height: 48,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
-              ),
-              child: Stack(
-                children: [
-                  // Animated background pill for 3 tabs
-                  AnimatedAlign(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeInOut,
-                    alignment: Directionality.of(context) == TextDirection.rtl 
-                        ? (_selectedTabIndex == 0
-                            ? Alignment.centerRight
-                            : (_selectedTabIndex == 1
-                                ? Alignment.center
-                                : Alignment.centerLeft)) 
-                        : (_selectedTabIndex == 0
-                            ? Alignment.centerLeft
-                            : (_selectedTabIndex == 1
-                                ? Alignment.center
-                                : Alignment.centerRight)),
-                    child: FractionallySizedBox(
-                      widthFactor: 1.0 / 3.0,
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.full),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      // Tab 0: Championships
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                excludeSemantics: true,
-                          inMutuallyExclusiveGroup: true,
-                          selected: _selectedTabIndex == 0,
-                          label: Localizations.localeOf(context).languageCode == 'ar'
-                              ? 'البطولات'
-                              : 'Tournaments',
-                          onTap: () => _tabController.animateTo(0),
-                          child: GestureDetector(
-                            excludeFromSemantics: true,
-                            onTap: () => _tabController.animateTo(0),
-                            behavior: HitTestBehavior.opaque,
-                            child: Center(
-                            child: Builder(
-                              builder: (context) {
-                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = isArabic ? 'البطولات' : 'Tournaments';
-                                return Text(
-                                  label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        color: _selectedTabIndex == 0 ? Colors.black : VSPColors.textSecondary,
-                                        fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        ),
-                      ),
-                      // Tab 1: Teams
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                excludeSemantics: true,
-                          inMutuallyExclusiveGroup: true,
-                          selected: _selectedTabIndex == 1,
-                          label: AppLocalizations.of(context)!.teams,
-                          onTap: () => _tabController.animateTo(1),
-                          child: GestureDetector(
-                            excludeFromSemantics: true,
-                            onTap: () => _tabController.animateTo(1),
-                            behavior: HitTestBehavior.opaque,
-                            child: Center(
-                            child: Text(
-                              AppLocalizations.of(context)!.teams,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 1 ? Colors.black : VSPColors.textSecondary,
-                                    fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                            ),
-                          ),
-                        ),
-                        ),
-                      ),
-                      // Tab 2: 1vs1
-                      Expanded(
-                        child: Semantics(
-                          button: true,
-                excludeSemantics: true,
-                          inMutuallyExclusiveGroup: true,
-                          selected: _selectedTabIndex == 2,
-                          label: Localizations.localeOf(context).languageCode == 'ar'
-                              ? '1 ضد 1'
-                              : '1vs1',
-                          onTap: () => _tabController.animateTo(2),
-                          child: GestureDetector(
-                            excludeFromSemantics: true,
-                            onTap: () => _tabController.animateTo(2),
-                            behavior: HitTestBehavior.opaque,
-                            child: Center(
-                            child: Text(
-                              Localizations.localeOf(context).languageCode == 'ar'
-                                  ? '1 ضد 1'
-                                  : '1vs1',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 2 ? Colors.black : VSPColors.textSecondary,
-                                    fontWeight: _selectedTabIndex == 2 ? FontWeight.w900 : FontWeight.bold,
-                                    fontSize: 13,
-                                  ),
-                            ),
-                          ),
-                        ),
-                        ),
-                      ),
-                    ],
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: VSPSegmentedControl(
+                labels: [
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'البطولات' : 'Tournaments',
+                  AppLocalizations.of(context)!.teams,
+                  Localizations.localeOf(context).languageCode == 'ar' ? '1 ضد 1' : '1vs1',
                 ],
+                selectedIndex: _selectedTabIndex,
+                onSelected: (index) => _tabController.animateTo(index),
+                textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 13),
               ),
             ),
 
@@ -340,7 +214,7 @@ class ChampionScreenState extends State<ChampionScreen>
               child: Text(
                 championTranslateItem(context, item, isSport: isSport),
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white, fontSize: 13),
               ),
             );
           }).toList(),
