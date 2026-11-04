@@ -41,6 +41,28 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+  testWidgets('segmented actions remain usable in narrow RTL layout', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(280, 480));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var selected = 0;
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      home: Scaffold(body: StatefulBuilder(
+        builder: (context, update) => VSPSegmentedControl(
+          labels: const ['القادمة', 'الجارية', 'المنتهية'],
+          selectedIndex: selected,
+          onSelected: (index) => update(() => selected = index),
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('المنتهية'));
+    await tester.pumpAndSettle();
+    expect(selected, 2);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('animated button rests at full size and preserves null callback', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: Scaffold(
       body: Center(child: VSPAnimatedButton(text: 'Unavailable')),
