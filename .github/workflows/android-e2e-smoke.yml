@@ -1,0 +1,91 @@
+name: Android E2E Smoke
+
+concurrency:
+  group: android-e2e-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [uxlp-44-implementation]
+    paths:
+      - "integration_test/**"
+      - "lib/**"
+      - "pubspec.yaml"
+      - ".github/workflows/android-e2e-smoke.yml"
+
+jobs:
+  public-auth-smoke:
+    name: Android public/auth journey smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android/sdk/system-images
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo apt-get clean
+
+      - name: Prepare Firebase Android config
+        run: |
+          mkdir -p android/app
+          cat > android/app/google-services.json <<'EOF'
+          {
+            "project_info": {
+              "project_number": "860837572098",
+              "project_id": "vsp-app-103b1",
+              "storage_bucket": "vsp-app-103b1.firebasestorage.app"
+            },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+                "android_client_info": {
+                  "package_name": "app.vsp.sports"
+                }
+              },
+              "api_key": [{
+                "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
+              }]
+            }]
+          }
+          EOF
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.8"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies and generate localizations
+        run: |
+          flutter pub get
+          flutter gen-l10n
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android onboarding/login smoke against staging
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: >-
+            flutter test integration_test/app_public_smoke_test.dart
+            -d emulator-5554
+            --dart-define=SUPABASE_URL=https://vtwgqyxglevcsxwdmhop.supabase.co
+            --dart-define=SUPABASE_ANON_KEY=sb_publishable_PZazWl2p0qR5lsqh6jr83A_cq-ov516
