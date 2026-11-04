@@ -5,7 +5,7 @@ import 'package:vsp_application/shared/widgets/vsp_animated_button.dart';
 import 'package:vsp_application/shared/widgets/vsp_countdown_timer.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
-// Prepared for the final review; execution remains on hold.
+// Regression coverage for accessibility and server-owned tournament status.
 void main() {
   for (final language in ['ar', 'en']) {
     testWidgets('segmented actions wrap and remain reachable in $language', (tester) async {
@@ -66,6 +66,19 @@ void main() {
     ));
     expect(find.text('حان موعد البداية المحدد'), findsOneWidget);
     expect(find.text('Tournament Started!'), findsNothing);
+  });
+
+  testWidgets('countdown updates when the scheduled date changes', (tester) async {
+    final future = DateTime.now().add(const Duration(days: 3));
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: VSPCountdownTimer(targetDate: future)),
+    ));
+    expect(find.text('Scheduled start time reached'), findsNothing);
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: VSPCountdownTimer(targetDate: DateTime(2000))),
+    ));
+    expect(find.text('Scheduled start time reached'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('expired countdown does not claim a server transition', (tester) async {
