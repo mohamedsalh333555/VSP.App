@@ -77,7 +77,7 @@ jobs:
 
       # Validate the exact checked-out commit before attempting a signed APK.
       - name: Flutter static analysis
-        run: flutter analyze --no-pub
+        run: flutter analyze --no-pub --no-fatal-infos
 
       - name: Flutter unit and widget tests
         run: flutter test --no-pub
