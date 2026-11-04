@@ -8,13 +8,13 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-Widget _wrap(Widget child, {AuthProvider? auth}) {
+Widget _wrap(Widget child, {AuthProvider? auth, String language = 'ar'}) {
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<AuthProvider>.value(value: auth ?? _FakeAuth()),
     ],
     child: MaterialApp(
-      locale: const Locale('ar'),
+      locale: Locale(language),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: child,
@@ -32,22 +32,35 @@ class _FakeAuth extends ChangeNotifier implements AuthProvider {
 }
 
 void main() {
-  group('MyTeamScreen — unauthenticated state', () {
-    testWidgets('shows localized account recovery state when uid is null', (tester) async {
-      await tester.pumpWidget(_wrap(const MyTeamScreen()));
-      await tester.pump();
-      expect(find.text('Account unavailable'), findsOneWidget);
-    });
-  });
+  for (final language in ['ar', 'en']) {
+    final accountMessage = language == 'ar'
+        ? 'تعذر التحقق من الحساب'
+        : 'Account unavailable';
 
-  group('MyTeamScreen — loading state', () {
-    testWidgets('does not show loading indicator when uid is null', (tester) async {
-      await tester.pumpWidget(_wrap(const MyTeamScreen()));
-      await tester.pump();
-      expect(find.text('Account unavailable'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+    group('MyTeamScreen — unauthenticated state ($language)', () {
+      testWidgets('shows localized account recovery state when uid is null', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          _wrap(const MyTeamScreen(), language: language),
+        );
+        await tester.pump();
+        expect(find.text(accountMessage), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('does not show loading indicator when uid is null', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          _wrap(const MyTeamScreen(), language: language),
+        );
+        await tester.pump();
+        expect(find.text(accountMessage), findsOneWidget);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      });
     });
-  });
+  }
 
   group('MyTeamScreen — basic structure', () {
     testWidgets('renders Scaffold without throwing', (tester) async {

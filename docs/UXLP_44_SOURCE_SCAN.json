@@ -1,0 +1,3442 @@
+{
+  "scope": "Full contents of unique Dart paths in the register table",
+  "limitations": [
+    "Static pattern matches require contextual review; they are not proven UX defects.",
+    "Physical alignment may be intentional (e.g. gradients or locale-aware branches).",
+    "No runtime, screen-state coverage, contrast or rule pass is established.",
+    "Unregistered surfaces and other kinds of design literals are not covered."
+  ],
+  "register_rows": 366,
+  "unique_paths": 338,
+  "missing_paths": 0,
+  "match_counts": {
+    "palette_literal": 189,
+    "physical_alignment": 26,
+    "inline_motion_duration": 45
+  },
+  "files": [
+    {
+      "path": "lib/core/navigation/offline_error_screen.dart",
+      "sha256": "52d3d8aea6b96c15ecb84f5dfcac5a26cbe6ff547f4ca9968b9d0cb35ba1b830",
+      "lines": 189,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 65,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 81,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 140,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/core/navigation/root_screen.dart",
+      "sha256": "14aca3da8bff16ce1d3523ce610188fc080400e436334a2f1ba9edcdecbac043",
+      "lines": 250,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 124,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 201,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/core/navigation/suspended_account_screen.dart",
+      "sha256": "c6087ce8cf8221f1531227d4f9f508bc18d203c702ba59392068836c25e4d239",
+      "lines": 127,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/providers/auth_provider.dart",
+      "sha256": "fd71fd028dfe849088d843488c1a1b2fc809a8279b2bb947a1d85cee680e0646",
+      "lines": 589,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/providers/booking/booking_sync_coordinator.dart",
+      "sha256": "b1d291e3f869f6f944d5bdf52d81f54eda5b3e0d58619774e6cc43c96a9b00d2",
+      "lines": 202,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/providers/booking_provider.dart",
+      "sha256": "fa51ceb82b622456c14b00d1edbc3a397ffad94fd3cabfaccf3e83a9d59b445c",
+      "lines": 531,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/repositories/team_repository.dart",
+      "sha256": "6d295f5949bcf1cca5dbdd75a7c8c1cbc4096d02b6f0adbf824eee98dea0c06c",
+      "lines": 337,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/ui/components/vsp_button.dart",
+      "sha256": "8500beab9d018c0f3d584fadffc3af5ef194eb25115a9719fa3b7deb83bd5233",
+      "lines": 136,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 66,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 67,
+          "match": "Alignment.bottomRight"
+        },
+        {
+          "category": "palette_literal",
+          "line": 81,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 87,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/core/ui/components/vsp_card.dart",
+      "sha256": "cfc291e1d90196a8da629d3b974fb0892b5e0c23f3e20ad5bfcc8510119bdc08",
+      "lines": 81,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/ui/components/vsp_menu_item.dart",
+      "sha256": "87e4e0f876f29596b9bd1a60e35acb699802e0afb65580f3d07c15f64b3700f9",
+      "lines": 94,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/ui/components/vsp_section_title.dart",
+      "sha256": "e277085aa2291acc9fa9a64615e9e7857886d1fa762364b711bbd4481b5ffe3b",
+      "lines": 18,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/widgets/shimmer_image.dart",
+      "sha256": "fb33e738d6e51fdaeb2566afe8c79f07b3410243b4edbcdc850cc01d429972fd",
+      "lines": 125,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/core/widgets/skeleton_loader.dart",
+      "sha256": "3f78297593925a34ca343dd453268053ca66dbc73ce0d822c89f578a0d15fc43",
+      "lines": 76,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/create_account_screen.dart",
+      "sha256": "bfa3ba7d9c22580d7d1c8e6fc61e5c837b911c1f3888966e8bf1d3b86448aee2",
+      "lines": 283,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/login_screen.dart",
+      "sha256": "3695427659f0fb1d0e9550f2b0e85aa63e3e8d0bc84ad147be96a5639b2f9146",
+      "lines": 278,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 90,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 94,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 113,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/screens/owner_onboarding_screen.dart",
+      "sha256": "d1e96e7c0785b90ad0ce2e6f1de23caa9c7ece009a66f8194dedd98d62792fe8",
+      "lines": 330,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/player_onboarding_screen.dart",
+      "sha256": "97b17e1ef546648742a426113f104f8db7074d38e708299b0a4b8c6a7d8c0f32",
+      "lines": 449,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/select_role_screen.dart",
+      "sha256": "182e0f62715276434ac42364690f2947b18b99fc972c2047200494c748974047",
+      "lines": 194,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/set_new_password_screen.dart",
+      "sha256": "47754086a06e1769911b83542070135272edb808b74181976c3893d465473fed",
+      "lines": 346,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 109,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/screens/signup_screen.dart",
+      "sha256": "c42da96043ed58d83c074b041ccc29e9e097ef69af593cae0cc2163dd41989a8",
+      "lines": 457,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/screens/splash_screen.dart",
+      "sha256": "1da616d98a4efbb0fe102a1d73ddca8f1f11eb2212bb87927aba86cc7f6e6b63",
+      "lines": 85,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 25,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 33,
+          "match": "duration: const Duration(milliseconds: 1000)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/screens/verify_email_screen.dart",
+      "sha256": "a36704bfa5309e80f9d57e27cdde8d5bc1bf72cd58a432bf8e970a1cfff1ce1d",
+      "lines": 355,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 58,
+          "match": "duration: const Duration(milliseconds: 400)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 305,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/screens/welcome_screen.dart",
+      "sha256": "98b01f35034465bbbbb64a7b233f8930125637917c55589fe945188dde0a3009",
+      "lines": 215,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 54,
+          "match": "duration: const Duration(milliseconds: 250)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 72,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 109,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 113,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 151,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 167,
+          "match": "duration: const Duration(milliseconds: 350)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/widgets/forgot_password_dialog.dart",
+      "sha256": "39a8b49336dcedb9c08c7035211c70e04281bf93cf342d41d1f6f8f97b5a9964",
+      "lines": 122,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/login_footer.dart",
+      "sha256": "8947c4b1551c66e801a573119607a431f273f0082a24556e7a48cdbfc297f2d3",
+      "lines": 230,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/login_social_auth_row.dart",
+      "sha256": "0ba14f0e3959b4d38c88a2e8724de125e5086d868677be51cb25f700de8176a2",
+      "lines": 154,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/owner_onboarding/owner_onboarding_exit_dialog.dart",
+      "sha256": "ae8634341c1a56e2f86981746c0e47eab21a3b18267fbf1f677d1e538662fc7c",
+      "lines": 51,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 40,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/widgets/owner_onboarding/owner_onboarding_location_section.dart",
+      "sha256": "0bf9c6e6c1896f1e7d5de248bd6b685e7edbeec7e430d25ab49c01eb2b718174",
+      "lines": 97,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 88,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/widgets/owner_onboarding/owner_payout_info_card.dart",
+      "sha256": "fe4c9f4478304f1c08fd2402a40bf7e6318370f5a9eabb121a180cab3417091a",
+      "lines": 90,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/signup/signup_date_of_birth_field.dart",
+      "sha256": "8beedbf0144f256aa1b86def0dc1a8490c5fd9eb691f180ec3f9e7694c17c820",
+      "lines": 88,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/signup/signup_name_fields.dart",
+      "sha256": "52a35453a154322fa78eb6f6e141485f4e2751a215f6d3d9b51af70e3531081a",
+      "lines": 85,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/signup/signup_password_strength_bar.dart",
+      "sha256": "0c565a602974026493090c405a9ed96a597bfbdf0d82beeab0208740de294711",
+      "lines": 55,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/signup_governorate_dropdown.dart",
+      "sha256": "b53ee8ced52c5b8bf6fb4a494397ede956f2be6c6c826885e3ad0e275ea9b6b0",
+      "lines": 52,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/social_auth_buttons_row.dart",
+      "sha256": "7565cd2117061cac0edc1d1bb6791cd4974a59394a17205162f907dd25136209",
+      "lines": 102,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/verify_email/otp_box.dart",
+      "sha256": "4327ceb7a693b9b1f14ffa2b7a70400bb63a6f2d71d2451178d75b76758bd299",
+      "lines": 77,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/verify_email/otp_resend_section.dart",
+      "sha256": "6d0a36fea2a50afb8b4e71e1890deae53695f88cd07ea06cf8a7e1ed8400990f",
+      "lines": 93,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 44,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/auth/widgets/verify_email/verify_email_header.dart",
+      "sha256": "a62d78505a115d9946e532fa1a74d70c3be96b45e8ac4da66860bc2a96835e40",
+      "lines": 87,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/welcome/scale_animated_button.dart",
+      "sha256": "5b695d50f31853fd3ff0ece83eb209dc7d9bdf64fcf4b22686dae97bca5bba2a",
+      "lines": 74,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/welcome/welcome_language_button.dart",
+      "sha256": "0f8fd8bbbea92dd16c452e10d3848f4c4b7893005ecf825b80ca464ed9860bb4",
+      "lines": 57,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/auth/widgets/welcome/welcome_onboarding_slide.dart",
+      "sha256": "cd05dfe26939178e6fec54e1a010dfd87e0305d4b7d5f8764c3044832ebc4e36",
+      "lines": 256,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/copilot/screens/copilot_test_playground.dart",
+      "sha256": "ce06d00d22981db2aea21ac8ed3bbaf60ab88cb9c69ed71d3caf87d7b8a72353",
+      "lines": 492,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 223,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 225,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 228,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 293,
+          "match": "Colors.redAccent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 317,
+          "match": "Colors.redAccent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 325,
+          "match": "Colors.redAccent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 487,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/copilot/screens/vsp_copilot_screen.dart",
+      "sha256": "b5b217c4930bbc0eb1bf0b4785fb416de6c3e055e855e5646c8a053435cdde34",
+      "lines": 458,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 110,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 204,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 209,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 420,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 450,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/copilot/screens/vsp_copilot_sheet.dart",
+      "sha256": "32d22fe94af3f1bbc6a9ea11d694a7a5963e1dc6682b1bda5bd242894ef31153",
+      "lines": 406,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 29,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 74,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 239,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 245,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 271,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/copilot/widgets/copilot_chat_bubble.dart",
+      "sha256": "533010c3a1aec8b2b436a5ff31f8e4093aae8c2abc71f6cc35032c5de34374ff",
+      "lines": 584,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 127,
+          "match": "Alignment.bottomLeft"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/copilot/widgets/copilot_conversations_drawer.dart",
+      "sha256": "4e73023859553b4774e9aa0c6e0a8adb32d7d47f136a50f2540b97a7e22bf82d",
+      "lines": 193,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/add_stadium_wizard.dart",
+      "sha256": "f33cb4b03b14933a11b8aadaafdcffda31f92bb7e20403979efa57c54887d875",
+      "lines": 476,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 307,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 317,
+          "match": "duration: const Duration(milliseconds: 300)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/create_tournament_wizard.dart",
+      "sha256": "b4e6a59a6e2c7dae455ef30c9060ee8c62f5647dce82b2d273f9c464deadf629",
+      "lines": 525,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 467,
+          "match": "duration: const Duration(milliseconds: 300)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/facility_onboarding_screen.dart",
+      "sha256": "3c85d550bb4a51057f1c4a30935dcd6878160e25a78e2879586ce47515065d28",
+      "lines": 429,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/owner_account_management_screen.dart",
+      "sha256": "93e89fda77bdcfc99b55c3f888db074da4803888edd342b6ec47177ced0ba01a",
+      "lines": 253,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 179,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 239,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/owner_bookings_screen.dart",
+      "sha256": "949b0183204a038f0744645380e27e2410d91ef5682625183501fd2581781d68",
+      "lines": 435,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/owner_cup_screen.dart",
+      "sha256": "f349f7e90b6066e376bef69aa11b1f19a2767426b4c8c8d348bae0137d304d1e",
+      "lines": 285,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 89,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/owner_dashboard_screen.dart",
+      "sha256": "ce41633abd32b4fcb223f512dac458f3e1b10fc265a851dba016beba391eb05b",
+      "lines": 1039,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/owner_documentation_wizard.dart",
+      "sha256": "9278d0d93bcd8df6de66f508c3e0be0efb01c2882c122d61eec393cebed19ea2",
+      "lines": 372,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 218,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 233,
+          "match": "duration: const Duration(milliseconds: 300)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 306,
+          "match": "duration: const Duration(milliseconds: 300)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/owner_inbox_screen.dart",
+      "sha256": "75880a1f145e95f5cfbd4685cc3b6503a6b0231917ad2e1d7a8660fdb4404974",
+      "lines": 259,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/owner_ledger_screen.dart",
+      "sha256": "3c889b4810f450dd106de6e5df679ae37f71e0eb233d0ce7cb972a343130de64",
+      "lines": 406,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 157,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 176,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/owner_main_screen.dart",
+      "sha256": "6f1357bff89d0c88be74c06d510eaa520cd1cdea1a60a96cb41adc1890e4f3c4",
+      "lines": 192,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 93,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 177,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/screens/owner_profile_screen.dart",
+      "sha256": "cb9289a5718d93bf59c1a49e3179b343a49b157a8581360f76897d8b70979c7c",
+      "lines": 422,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/owner_tournament_dashboard_screen.dart",
+      "sha256": "7e76e6390314bab0dbccb9463deeb6494a9cff24a80503e3aa4996793630c88c",
+      "lines": 630,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/subscription_plans_screen.dart",
+      "sha256": "236adbad0a0278e9c22117fda1b73d9a6b8febf055e19e654b3a27624ede4fca",
+      "lines": 715,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/screens/tournament_brackets_screen.dart",
+      "sha256": "1cde5ef011e5357c9982022800662c7a28d059b9807afe8eae3e63e32e366254",
+      "lines": 408,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_avatar_header.dart",
+      "sha256": "8d6a65498b3e7a84444e82a1a172b9541256fb7e76aa48bbb54c47f50287a75f",
+      "lines": 108,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_delete_account_card.dart",
+      "sha256": "f9255bab33fcc734681ca3b29bd30fd0587e3d488879d47de9a66d91fd732439",
+      "lines": 231,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 217,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_payout_otp_dialog.dart",
+      "sha256": "d6beaee4c7fb8a9c745ad2cccdf790af6b2282c8befbe94f3f226d73a9d022a8",
+      "lines": 178,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_payout_settings_card.dart",
+      "sha256": "ba1a43bed12d5fe6f79264b2985f6d328669d5791549d9beafc9e47a30356caf",
+      "lines": 147,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_profile_form.dart",
+      "sha256": "213b150d54ef578ab449c7fdca50bc36aa79d3682770710580fb24a30f478723",
+      "lines": 127,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/account/owner_stadiums_carousel.dart",
+      "sha256": "97635e6da924e36f08a960cad7c276367c828391d949436ab5516116ff6727ad",
+      "lines": 266,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_location_picker_sheet.dart",
+      "sha256": "9accb568f4a21af13c0c8e32de39a78b21eeadd762d1b0621ad4bc558d4254d7",
+      "lines": 624,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step1_details.dart",
+      "sha256": "d794ca800a7e1669e7ec6ef8066838678d18c04720f64b4ec49a6d1dddee5a32",
+      "lines": 307,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step1_hours_section.dart",
+      "sha256": "852129e78ff52d387b1bbee3346a77dc7a45bd8c07d79a74e27153ca7ea333a2",
+      "lines": 242,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step1_location_field.dart",
+      "sha256": "052c9b8aa9ee6d0e7c6bef85516d9d7fddae9f6ea01d1d15ae34f0261b85d607",
+      "lines": 123,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step2_features.dart",
+      "sha256": "adb414e56d5aee7146ba917629671d84a54a7ce922e85b0365e70bfcec508be2",
+      "lines": 215,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step3_images.dart",
+      "sha256": "0167e7d6df14c68e7893cfb8f18fef2d53b4aa077466cfb5ca9aa2e1f14b7982",
+      "lines": 226,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 97,
+          "match": "duration: const Duration(milliseconds: 500)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/add_stadium_step_indicator.dart",
+      "sha256": "9fda42dd24838c0cce5f28e8e775dfda9082c8826387ddc52d69bf454796c029",
+      "lines": 158,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/stadium_wizard_dialogs.dart",
+      "sha256": "7c6932ffb8943fadaa22dccad63dd9faaede680c6307310a31956a7a931eb5c6",
+      "lines": 153,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/add_stadium/stadium_wizard_steps_pager.dart",
+      "sha256": "f52c4e5bec28db7d2e03867af9fa9be1681cefb831323e613e5e11ef0f79c98f",
+      "lines": 162,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_action_panels.dart",
+      "sha256": "b77babd664bc2d022cd1094b660adc974a6f7f47e6074370803e9bc8d25b48f3",
+      "lines": 419,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 88,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 97,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 221,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 230,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_actions.dart",
+      "sha256": "e1e0c25d10795293e424ed3151e651d43430e23c93d5d5a5dc71340cc362a6a3",
+      "lines": 377,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_cancel_dialog.dart",
+      "sha256": "2fe174b75e26248d9b7749767696a7f9df7ef7bb5b7cb3538139a185af94e801",
+      "lines": 176,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_details_form.dart",
+      "sha256": "816f51fa75c3b21a0fe4a45ff6835eb976b85dd7e7edfea86857c7d4be4f8957",
+      "lines": 73,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_duration_selector.dart",
+      "sha256": "322a2b956aff1a40fb945ef4037e00a504f2cf7170b57c0905b2c77f8ed7a693",
+      "lines": 142,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 72,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_form_fields.dart",
+      "sha256": "75c2e65471b325084a5e9e63e67feb4ae7b006f84ad146e2db9d1f3059669400",
+      "lines": 155,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 63,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_header.dart",
+      "sha256": "712b1aee540ddf770546463cd5d2dfcc579291877beb354b88b6686be865d62d",
+      "lines": 57,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_time_stadium_card.dart",
+      "sha256": "11b5c1a6b3cb1d512cca044dfe26fbbd38fdf82ba7debb228b87435417a6418f",
+      "lines": 37,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/booking_sheet_whatsapp_utils.dart",
+      "sha256": "8b16f79aea0b48bf8a4f195b60acb8de678f9a522b148b2847a9703a14044fbf",
+      "lines": 180,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/owner_booking_modal.dart",
+      "sha256": "4f9e2eb59968cb023ef3cc40b3d62f1c908787d35aae867c5106e2ea424cd0c0",
+      "lines": 35,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/owner_booking_sheet_coordinator.dart",
+      "sha256": "09cef1eeeb39e0521a9968cd45a228007b8d6656e896300f9f119a58bca0ae08",
+      "lines": 337,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/booking_sheet/owner_booking_sheet_service.dart",
+      "sha256": "bdbed788d75cfddaaa3ed406087599bf5f5a1d67164117135a4b860169bcb3af",
+      "lines": 327,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/bookings/owner_bookings_filter_bar.dart",
+      "sha256": "c4c357d5df5571d9cd92ead61e80396885f192e3eb1e9585a977b0e3f3395f74",
+      "lines": 179,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/bookings/owner_slot_card.dart",
+      "sha256": "b3f71c2796b43df87ff3a4375d5549fc978db3066915265bd5f25b628c7c181c",
+      "lines": 302,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 91,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 158,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/bookings/owner_time_slot_row.dart",
+      "sha256": "f937781af4d6951c6a3406bc4d7eaffe88ba9466b19def8c68f00642085e9a79",
+      "lines": 279,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/score_modal/goal_scorers_section.dart",
+      "sha256": "193b064482b41cb60386465bd4841d91eed36e6fe7affa729e058392b6391335",
+      "lines": 243,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/score_modal/penalty_shootout_section.dart",
+      "sha256": "149ed95b10d3f166df8de54e7357e972e8953636b8392a80f536449d7440c7d3",
+      "lines": 135,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 38,
+          "match": "duration: const Duration(milliseconds: 200)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 49,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 49,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/score_modal/roster_list_viewer.dart",
+      "sha256": "f568bc1caaabf01f9bd71af9a50393bff8d0b0a4bcf80aee7310159182b14101",
+      "lines": 90,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/score_modal/score_counter_column.dart",
+      "sha256": "2f53b28c4ea0d58d5d34f311e980bf7783d96019c1458330b548a71da8184252",
+      "lines": 62,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/tournament_auto_schedule_modal_sheet.dart",
+      "sha256": "5a2abb9b583e537029e8f3491baef610a9d65d9297bdf547066437a61806e23a",
+      "lines": 419,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 160,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/tournament_champion_banner.dart",
+      "sha256": "8570babfd32e5451817b9246bb87707d288aa1d562b311ac3b37179635c2acce",
+      "lines": 54,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/tournament_match_card.dart",
+      "sha256": "bf5ae37511972d2818481125fd62ef274460ba7a77381dfe0af0d3891eaa4c84",
+      "lines": 150,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/tournament_round_auto_schedule_sheet.dart",
+      "sha256": "5cb901b3c4124a49ecc3f5afb78e223fa2b21bafd54ead20c7b80d93fc2e3321",
+      "lines": 272,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/brackets/tournament_score_modal.dart",
+      "sha256": "25d752610c7c346923770fb84bd032b62834982bbbfa723d96b555f80ad6e2d3",
+      "lines": 491,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/insights/insights_booking_types_card.dart",
+      "sha256": "023459d0d4e27db807f030797d324bddc6d9613268fca7c0157722c3f3cf1578",
+      "lines": 109,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/insights/insights_radial_hero_card.dart",
+      "sha256": "3b60ac94053cfce2f4d3e904b14f489cd4d742de53501ef757d5df5f37f3e45c",
+      "lines": 216,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/insights/insights_revenue_sources_card.dart",
+      "sha256": "ae03a364a571f26db0c15ebf8884dab7310702c907de5bcec388be247020d525",
+      "lines": 141,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/insights/insights_strategic_kpis_grid.dart",
+      "sha256": "3a16a76b4023dd83204c8080d8e057cdfdc54e07276306392a5b1559c7a61087",
+      "lines": 387,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/insights/insights_top_filters_row.dart",
+      "sha256": "ae2edc1b25ee38cc0fda7b036ca5cde4fed994dc3a5f86df5c8c7a22c0909255",
+      "lines": 290,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 183,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 279,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_basic_financial_glance.dart",
+      "sha256": "a1a086e0c3b72cd89474a05114764821739c330c7dd312c6259d7f903fbf5068",
+      "lines": 126,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 28,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 77,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 101,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_dashboard_header.dart",
+      "sha256": "57f012480a2f39b4c515ee32963e7c6eef4254873b403202e02ec8fca87ec268",
+      "lines": 448,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 98,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 148,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 153,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 161,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 218,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 223,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 283,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 362,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 395,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 404,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 409,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_glanceable_timeline.dart",
+      "sha256": "0015ce78ccc6e70437da4a868e131e81db7b76ea16a887f8c197ebf869e207f9",
+      "lines": 224,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 72,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 96,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 122,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 133,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 184,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_operational_finance_card.dart",
+      "sha256": "808fc1bca6850861bc76e858072ee89446362e27028b746b5cc352575bda60dc",
+      "lines": 594,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 230,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 236,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_pending_actions_bar.dart",
+      "sha256": "9c648279cc0104a519ac879be764ec1e86a1c1f89d1569b49c7e4c61f69193d2",
+      "lines": 109,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 65,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_pro_insights_view.dart",
+      "sha256": "8e2f47c6ec07e8e3a8af02b82bf882c980995b89f9128c95ae1463033bc84543",
+      "lines": 445,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_pro_overview_card.dart",
+      "sha256": "053ae3bc7d277f543f0415a626062357bc7595651050db2d551eaf3cd5aa8d59",
+      "lines": 186,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 32,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 89,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 91,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 114,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 116,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 148,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 164,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 166,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 174,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_pro_segmented_tabs.dart",
+      "sha256": "4884b6fa773bc80ae9ef1373e0361c8df5e4718c7bc5148dd746f011c95b827d",
+      "lines": 93,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 31,
+          "match": "duration: const Duration(milliseconds: 220)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 83,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_pro_upgrade_teaser.dart",
+      "sha256": "3dabcfa5ebf7568773fca9ebed622c631e3575d85cb05e5bf501ea4aa13dac22",
+      "lines": 89,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_quick_cash_card.dart",
+      "sha256": "961fc631640dbd6353956bbcdb6308717bf928a2cf6e4554ec6b61f9641221aa",
+      "lines": 411,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_time_period_dropdown.dart",
+      "sha256": "da8a2fc4cf78670b0c01e265c1aa0cb428df3a500e9331347fa74ef8eff3cc54",
+      "lines": 86,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 36,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 38,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_today_pitch_schedule_card.dart",
+      "sha256": "a6406a61995b1576fa78a9fb824dd156db9a734202f75c00d4fd9c70ba9535f4",
+      "lines": 260,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_venue_filter_chips.dart",
+      "sha256": "932358cce7dc89e9ebcb43cd13c8f3abdf4fed92a197db581c5546c599be2781",
+      "lines": 98,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 64,
+          "match": "duration: const Duration(milliseconds: 180)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 68,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 71,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 81,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 87,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/dashboard/owner_verification_banner.dart",
+      "sha256": "8f29da0883026743c23dd3eac552afa57006fe8968e418ad1e68ff95d6016359",
+      "lines": 467,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_explanation_card.dart",
+      "sha256": "31764823295c1710b592e16c18327ac2739e32cecf285332b3cc151755396acf",
+      "lines": 73,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_image_source_sheet.dart",
+      "sha256": "e1405989589d458eab7d898bc0a886040c66d117e3d7ca17dd19f3d7ac89e95a",
+      "lines": 50,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_step_commercial_register.dart",
+      "sha256": "e650de54f44c63c3702d95abb91f071fdf12186968c2bbb124b14dc856541734",
+      "lines": 68,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_step_national_id.dart",
+      "sha256": "e2891e147763c9ab97ef7ead4312f1fca8354c9551143068ce75d0adbf47140e",
+      "lines": 91,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_step_tax_card.dart",
+      "sha256": "e3c7dbdd95feeed286227a3d40349d1d01598a86e14796f5317232d1747ca708",
+      "lines": 68,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_under_review_dialog.dart",
+      "sha256": "19a36129f76cdf87d9018f490bbd45a36d9c7fc4267c251413d72609fe5ac023",
+      "lines": 52,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_wizard_dialogs.dart",
+      "sha256": "2f60fea9c6423005f4c996a67ea1fb5edc83430d061f0ce67bd83444ea095158",
+      "lines": 53,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_wizard_step_indicator.dart",
+      "sha256": "fecd235767b585ca5acb1c9eaa0d82965d78a6af03e385540b8c02dc00506b7d",
+      "lines": 33,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/documentation/doc_wizard_steps_pager.dart",
+      "sha256": "0013dada57d5af88c17ae18f324caa4b637c6ef2e84b021e1922b42dd0327667",
+      "lines": 78,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/facility_onboarding/facility_upgrade_bottom_sheet.dart",
+      "sha256": "39432d76fd9c803e1aec64f359b3100738bd190f8436550dc4d76809e6a989cf",
+      "lines": 252,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 30,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 97,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 165,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/inbox/owner_chat_item_card.dart",
+      "sha256": "7043c36cfb6a10f383f33963068190dabc1e5f0e61c31a715e428ba0db6a6062",
+      "lines": 115,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 102,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/inbox/user_search_delegate.dart",
+      "sha256": "185832be7f1739dd9e0aff0a0a920ec19724469ca8d8a11041fe4aad3da16d72",
+      "lines": 156,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/ledger/owner_ledger_balance_cards.dart",
+      "sha256": "dd16d99bd2961a3ec7ec5a643fb19f95e299d2cc7b9b22ad3fde4b524bfd36fc",
+      "lines": 196,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/ledger/owner_ledger_transaction_item.dart",
+      "sha256": "d643e8f53898061271c2556c64cd1072a10a8455248fa44a5de3846f2f61f485",
+      "lines": 95,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 63,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 73,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 86,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/ledger/owner_payout_dialog.dart",
+      "sha256": "c5d68adaf9d2bdcff31aecbeea26bd489b6c6eaf861465f84204645998120d6c",
+      "lines": 451,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/owner_booking_sheet.dart",
+      "sha256": "26e8af4273ee3fb160a584505ac9180290dff14e6708b6ee0d33ae168bfc496e",
+      "lines": 682,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/owner_bottom_nav_bar.dart",
+      "sha256": "1e30b3022a0cf813a11ccabf8f9f84f6cd0b933ab556559d9229c00313519ae0",
+      "lines": 86,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/owner_notification_button.dart",
+      "sha256": "b45a29673b41fced504f159e9b577954eb719575eca6776f7c8bed80415e6d13",
+      "lines": 93,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 66,
+          "match": "duration: const Duration(milliseconds: 400)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/quick_booking/quick_booking_customer_fields.dart",
+      "sha256": "3ed309e0609f79c0ec9bcf04be3d528619b4c2335b3eb1d514980a11739fe3a6",
+      "lines": 51,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/quick_booking/quick_booking_duration_section.dart",
+      "sha256": "4b56d4d54d0457bec00f007246f17dd05145d5f43994d562803a6028f7d8654a",
+      "lines": 178,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 46,
+          "match": "duration: const Duration(milliseconds: 180)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/quick_booking/quick_booking_payment_section.dart",
+      "sha256": "9a178eceef06a4126d39206ebf646996674a70756c9034e6b79018e63ff279e1",
+      "lines": 217,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/quick_booking/quick_booking_receipt_sheet.dart",
+      "sha256": "742cf74daeda0e3a61997f33725b2302f157884275949d16dedb8f262ff2ef5b",
+      "lines": 122,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/quick_phone_booking_modal.dart",
+      "sha256": "2e9f19144cc15ab6b5025cccfec46f6d15fe5f72842a21cec9835f56c7981952",
+      "lines": 419,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/radial_tick_gauge_painter.dart",
+      "sha256": "458b6147a2410166d441edae10a9e8ad3aae442dfe376685eee3c067bcb181d5",
+      "lines": 63,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/bracket_preview_canvas.dart",
+      "sha256": "31a558d33fc5eb9810aa604e10f4711ca3850b8c2e0062f23e94369d4a8602b7",
+      "lines": 209,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/cups/cups_filter_dropdowns.dart",
+      "sha256": "c8f9a474a2f3a76b03f8913ebda7c74b0c75215331957910f9054b8d84cb31de",
+      "lines": 116,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/cups/cups_tab_selector.dart",
+      "sha256": "bd8291f4abcf0f69bd6dc4e9496348ef790266d8887b62826ea84e14ff051dd8",
+      "lines": 83,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 35,
+          "match": "duration: const Duration(milliseconds: 220)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/cups/owner_cup_card.dart",
+      "sha256": "fdadcc88b99e96c408694734f641f19142d63aeabac77979cbbe9bc7c2f3f3ef",
+      "lines": 245,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/cups/owner_cup_empty_view.dart",
+      "sha256": "1b3a0e26b86d56f8cdc0f4e113424972e107d3bd0744e0ef46d6279e9f119154",
+      "lines": 44,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/cups/owner_cup_format_modal.dart",
+      "sha256": "8ae0b6b356420325c50b88cdda2db9083fdd5e9d20937c1e71c795d73290a786",
+      "lines": 209,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/draw_room_matchup_tile.dart",
+      "sha256": "ed5ca75ad995713f39293c723fb48036b21d14a2029d88ca586d392229a9a865",
+      "lines": 78,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 25,
+          "match": "duration: const Duration(milliseconds: 300)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_bracket_preview_dialog.dart",
+      "sha256": "5790823ff8de4668cc3c3d2ebdeae5d90d8daf2865d1f41e3e1a97dc0d7587d7",
+      "lines": 204,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_dashboard_bottom_bar.dart",
+      "sha256": "f5aa9d110c33d6f3181077a444b71e783ff256ab8ebcfc3bb10a0355319075c3",
+      "lines": 130,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_dashboard_dialogs.dart",
+      "sha256": "f45268ff3b6ad5d43f0b20832a4c7bb9163ebc1c788e04628332b13648175863",
+      "lines": 291,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_manual_team_options_section.dart",
+      "sha256": "e2dc9f1884b0de231c7f897364b6a579eea2e17e8e2446d15f33fbf14ff4b52c",
+      "lines": 170,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 13,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 15,
+          "match": "Colors.blue"
+        },
+        {
+          "category": "palette_literal",
+          "line": 17,
+          "match": "Colors.amber"
+        },
+        {
+          "category": "palette_literal",
+          "line": 18,
+          "match": "Colors.black"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 58,
+          "match": "duration: const Duration(milliseconds: 200)"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 94,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_manual_team_roster_section.dart",
+      "sha256": "ac2230d891407e7ff4ba140af750033cbacb2d28f7c6846849b6721201ad4331",
+      "lines": 131,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_manual_team_sheet.dart",
+      "sha256": "3935801d3057956e892edda03b4275f11977fbf565f12456a076714c5482ddaf",
+      "lines": 314,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_overview_card.dart",
+      "sha256": "4af2e620798e2c0db55ca6d62ab8d4cacb9f04a9aab1320a71601db028149f67",
+      "lines": 220,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_prize_delivery_dialog.dart",
+      "sha256": "9a900b874d10286362c40223bafaf973ed97626e5ea8ef396c277c3cc253b584",
+      "lines": 180,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/tournament_team_card.dart",
+      "sha256": "50e1a2ecd1963623450cf51e59fbbbf8d9b2ccb020b4112ab3e9304760ed2439",
+      "lines": 213,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 81,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/wizard/tournament_basics_step.dart",
+      "sha256": "422053bdfa744aeb38c0fba602b694cc6eb0b5d193d937eff7d0c6b2e22232b4",
+      "lines": 445,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/wizard/tournament_scheduling_step.dart",
+      "sha256": "e70c3113f20f3e69a564f08d189369d66d21df6eeaa832d44b97b828a1b1f1f1",
+      "lines": 221,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/wizard/tournament_step_indicator.dart",
+      "sha256": "325f166f3633a2ee56e324c3f522e3e8f918979644a571c505a561c8f3ebe031",
+      "lines": 111,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 74,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 78,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/wizard/tournament_system_step.dart",
+      "sha256": "35647cef50129dde3df3d4828cbf597232e89888c92b9d5a2d29163fa69b34ce",
+      "lines": 190,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/owner/widgets/tournament/wizard/tournament_wizard_bottom_bar.dart",
+      "sha256": "048f2ae57745f43424c2351834ec84daa8a438b20128dd7f78c50e53b8a177bb",
+      "lines": 75,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/all_stadiums_screen.dart",
+      "sha256": "16fb45b747745da61a94681c118830605276de5289f9e5691bc8144e1fcf4817",
+      "lines": 442,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/booking_confirmation_screen.dart",
+      "sha256": "cf17c9903325042cb95ed241ec2562f01467e7c674db436d7d9c2571e7c950d0",
+      "lines": 296,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/booking_success_screen.dart",
+      "sha256": "717737aeb80e035ff858f01fbda762f28d7fa87184e49a0e915b3aac8e9b767e",
+      "lines": 496,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 44,
+          "match": "duration: const Duration(milliseconds: 800)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/bookings_screen.dart",
+      "sha256": "a54a53683bb40bedc0a286740862af60dd903b46f1056b81af4af636177a8a1e",
+      "lines": 379,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/challenge_select_team_screen.dart",
+      "sha256": "4a3443516384da57e12b255451690e69c0d58d8ee0f3c84f1219d7bb92c7df90",
+      "lines": 898,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/champion_screen.dart",
+      "sha256": "74434c51eb14fb88dc29f1f00f505d666235eb167a26dd9ccd2244c21f99a4eb",
+      "lines": 351,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 100,
+          "match": "duration: const Duration(milliseconds: 220)"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 104,
+          "match": "Alignment.centerRight"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 107,
+          "match": "Alignment.centerLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 109,
+          "match": "Alignment.centerLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 112,
+          "match": "Alignment.centerRight"
+        },
+        {
+          "category": "palette_literal",
+          "line": 151,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 181,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 213,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 343,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/championship_checkout_screen.dart",
+      "sha256": "41ad8d330efeaade8661e1e329c072a225e10600a9fffd7175a82f78bae50370",
+      "lines": 517,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/championship_details_screen.dart",
+      "sha256": "3df3113ee3ab35f9763e73ecb8b0b81ac80aeb8acec892c414a1a5f56f46545c",
+      "lines": 413,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/chat_screen.dart",
+      "sha256": "38b3257610f2fa6fae397ef53c790c92b90597e4d572ddfab567251ab4f597cf",
+      "lines": 252,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/faq_and_support_screen.dart",
+      "sha256": "002fdfcaa7aa3d8dc80f179a439783415b57247d906777434f6b4bf4e3557333",
+      "lines": 244,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 125,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 128,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 132,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 166,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 184,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 221,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/global_search_screen.dart",
+      "sha256": "26ed7234e8b60d00b98ef6c5f2bdcd5cd7d171bc172059bb26d644627449da1d",
+      "lines": 346,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 108,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 114,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 165,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 229,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 244,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 337,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/manage_tournament_roster_screen.dart",
+      "sha256": "df4194ae1e083b312c7e7363b3bfc52a770f264ab06361bcaef12ac8484bedc9",
+      "lines": 408,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/match_details_screen.dart",
+      "sha256": "4734cb2ca984ee7a0fe258dd548ca3955b799638bf6a7669c0877d90fa585cd4",
+      "lines": 1113,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/matchup_live_dashboard_screen.dart",
+      "sha256": "2c1ae3a5aaf1867139f4587e15346cafe4c5981e3e92b474e0988c15f864c160",
+      "lines": 310,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/notifications_center_screen.dart",
+      "sha256": "0af60306f5d4937794ca1f75be29246f16401e40fc6298de3eabdfc4d6bca55a",
+      "lines": 637,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/payment_gateway_screen.dart",
+      "sha256": "81512be38ada236fb498e6fe024425914923daf80aac9f551bd9617312355bd2",
+      "lines": 874,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/paymob_web_view_screen.dart",
+      "sha256": "d4b14c7a782e8c8f2ee14561734836f0af1a1e1b11f49c658641e52a6ac88943",
+      "lines": 370,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 314,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 328,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/player_booking_details_screen.dart",
+      "sha256": "c5feb36cd9e0b812728f819146b3aaa5902e29d64b84066269f447f1497e08e0",
+      "lines": 215,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/player_home_screen.dart",
+      "sha256": "aab8ac5de3f45686883ffedcd8ef6d7f6d901fc1208b9047fb49302251ce815b",
+      "lines": 318,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/profile_screen.dart",
+      "sha256": "e742c9376b840325ef329b54013af5017093f740fe8be4437dd1294c57b1f1f2",
+      "lines": 651,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/profile_subscreens/edit_profile_screen.dart",
+      "sha256": "194b3ce41d08c6ff51fb5f98dac7da58dea00200e374314e7272d642a952bfdf",
+      "lines": 431,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 159,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/profile_subscreens/favorites_screen.dart",
+      "sha256": "7d98089470643cffbbd63a9eb9c28684abcd3cabfd283cfc217c932062dcbd53",
+      "lines": 127,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/profile_subscreens/language_screen.dart",
+      "sha256": "ace05fb290e23feeb649cb9fd53b1d0f4f65e8dffaeec623383f5ef4bc630f25",
+      "lines": 158,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/profile_subscreens/my_team_screen.dart",
+      "sha256": "ea09af1c7fa9481274d85ce949a046c5b099cb530a47c99a6e5b336c4ca73ada",
+      "lines": 452,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/profile_subscreens/notifications_screen.dart",
+      "sha256": "dbc5e606d1c2cb3d7fd8415e868ec256e6f37d3f9794a23d2153865426eda655",
+      "lines": 306,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/stadium_details_screen.dart",
+      "sha256": "c72678f0cadf8f2dbd39f157a842f7a72d6665bdaf9cda1317d124edd76b1d18",
+      "lines": 233,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/support_ticket_screen.dart",
+      "sha256": "db9b560ec787f856905738601a2e61042c0e29b948d6fb003e1abfa97edea017",
+      "lines": 521,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/support_tickets_screen.dart",
+      "sha256": "0f2e5be462fc5c46eafa819274505e2bb113007006e1cc488bb9afadb4fc110c",
+      "lines": 418,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/team_dashboard_screen.dart",
+      "sha256": "a55977c1f8aef4421710740d81e6e174c0931e83afe149e547ed8c952e0a1450",
+      "lines": 488,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 186,
+          "match": "duration: const Duration(milliseconds: 220)"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 190,
+          "match": "Alignment.centerRight"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 191,
+          "match": "Alignment.centerLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 193,
+          "match": "Alignment.centerLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 194,
+          "match": "Alignment.centerRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/team_profile_screen.dart",
+      "sha256": "a03eed112fce3afe9d128dbc79448701ec1e33dbf22143f3c78da0a13bf30c48",
+      "lines": 393,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/screens/terms_and_privacy_screen.dart",
+      "sha256": "e73e3772cb53749248faf5c9216b922d2f345f3ce6ca726c7e16b5c34f181975",
+      "lines": 260,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 51,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 249,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/screens/tournament_registration_success_screen.dart",
+      "sha256": "210ecc7e490d57adfa7e768a2012e5738c7079bc0aed148984e7ea181480c090",
+      "lines": 873,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 73,
+          "match": "duration: const Duration(milliseconds: 900)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/services/matchup_dashboard_service.dart",
+      "sha256": "302584d5726bbd45e7e2018c2bd25a72ec57602c0b540b77e8ff81dee880c6ad",
+      "lines": 65,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/add_player_sheet.dart",
+      "sha256": "1feb3c61fc728ec7c043edcb907497c31403e1f85a7ba25be6e5657d76a6de81",
+      "lines": 402,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 383,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 387,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/all_stadiums/all_stadiums_filter_sheet.dart",
+      "sha256": "1b392734f16071c5f4129efe3c196cf974ba489c7d030634b0d7608ee19862e1",
+      "lines": 226,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_bottom_bar.dart",
+      "sha256": "10208ef0e65ceba282fc15523a69ae81c06c0d1858e42e72d5e0d71b4c7be744",
+      "lines": 351,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 87,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 126,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 160,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 172,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 180,
+          "match": "Colors.white"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 202,
+          "match": "duration: const Duration(milliseconds: 180)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 222,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 245,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 252,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 317,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 330,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 337,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_calendar_modal.dart",
+      "sha256": "a3b3262fe9b15781cb1064ab52e3103640f9cd3ea071a5994922dd3803858c0b",
+      "lines": 205,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_date_selector.dart",
+      "sha256": "bf5099e36f48b5041c947bd490873f4dbc494cf66f66009730086045f6c6f1a6",
+      "lines": 121,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_financial_summary.dart",
+      "sha256": "0adbdbbb6fe74877536edd5babd615bac861db88e50f961716b3279a0ec53849",
+      "lines": 136,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_payment_method_sheet.dart",
+      "sha256": "860749de51e39c3c8af6683373ddf9a9e91537c915f02c82572a8005b205fe25",
+      "lines": 336,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_slot_card.dart",
+      "sha256": "bba986f88272c1ffaade2d3495e0d4d81207ecb00510b68ae21bfd55750591f7",
+      "lines": 202,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 41,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/booking/booking_slot_stream_section.dart",
+      "sha256": "9c23a2f54ce54f8d6f1f78ce27904d53e31b0598e83e4c15674907ed0330e19e",
+      "lines": 155,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/booking_type_modal.dart",
+      "sha256": "a00b98906cc96c362cc450f7ff353e61e0f96848e916ed29e9c476f70702ef4e",
+      "lines": 314,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/challenge/challenge_team_card.dart",
+      "sha256": "7ec4eacd12d50ed6652a849406e7d6c9f95d7111b7550dbee827addcff244ab5",
+      "lines": 259,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 42,
+          "match": "duration: const Duration(milliseconds: 300)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/champion/champion_empty_state.dart",
+      "sha256": "aa9a0c59aadbc143c42dbad5d869c92ccea53d938ccc0af57630917398feb104",
+      "lines": 118,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/champion_podium_components.dart",
+      "sha256": "7b74c3d50d4522592cc2d2f3f68d07be5ec94d6f07ccfe02390c8c63fa435654",
+      "lines": 211,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/championships_list_tab.dart",
+      "sha256": "f980ee2ec187ca30cf3a340e482723a5667e8e4d687c304d78c67c42f8aa7ac6",
+      "lines": 259,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 195,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_empty_states.dart",
+      "sha256": "c89daeceec473ac4bd59d1ffceb47f58c3125477d91321aee687c83141175920",
+      "lines": 120,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_hero_card.dart",
+      "sha256": "3dcf1433ffbab02c78c9321e1169d7d02d4aa070d8ddd47dcd01ad0bac27876d",
+      "lines": 164,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_prize_card.dart",
+      "sha256": "18693eeca4a6500a4a5ba1075c1a7b069067b37e9fabd74c7c231bfeaa9def8b",
+      "lines": 125,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_registration_action_card.dart",
+      "sha256": "dd9e44329fc6aff35df98a3d2d64c3f7ba22b638791af42ccf6b9defb0cb239f",
+      "lines": 215,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 196,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_roster_list.dart",
+      "sha256": "6e6fdd20b0f10738fd0d851893c5a4dac7aa24afcbb6ccf2681c6da8dcc40391",
+      "lines": 177,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/champion/league_1v1/league_1v1_standings_view.dart",
+      "sha256": "b1b372470d9b73ad42faf9bf7a5db8fe757a76d76bcf26c896715fbaef06f275",
+      "lines": 425,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 101,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/champion/teams_ranking_tab.dart",
+      "sha256": "622e396fb95a50a312d2238a4d66cf8a899b544625b9a26a9aa2434b2975cdb9",
+      "lines": 548,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 284,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 322,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 341,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 482,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/champion/vsp_1v1_league_tab.dart",
+      "sha256": "12a559bd358aa124f43c815218300f2b84fb4fadd62a837e9f57d08c35963c3e",
+      "lines": 537,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 130,
+          "match": "Colors.amber"
+        },
+        {
+          "category": "palette_literal",
+          "line": 134,
+          "match": "Colors.amber"
+        },
+        {
+          "category": "palette_literal",
+          "line": 142,
+          "match": "Colors.amber"
+        },
+        {
+          "category": "palette_literal",
+          "line": 147,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/championship_card.dart",
+      "sha256": "4ee8c88ad49249cea5a728f8dc3a12ec841568a3f0f9e99b51371398e013e957",
+      "lines": 415,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_checkout/checkout_championship_header.dart",
+      "sha256": "43e201d51263a21bd580cf85332ed9c361731c7935304d0e47489e92c6384592",
+      "lines": 80,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 45,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/championship_checkout/checkout_financial_card.dart",
+      "sha256": "a718cc4892dd5bb8f049bcf88fdff09a08bcf82e85e2b66ce635121875732471",
+      "lines": 170,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_checkout/checkout_guest_players_section.dart",
+      "sha256": "bf841bf040377e6ba91c1c507127ca92e57a598ac10ee33d85e9b23a3f4257c4",
+      "lines": 133,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_checkout/checkout_squad_requirement_card.dart",
+      "sha256": "d700db849738e56ef1b2c79715039455a97a1238ff0cb08027efa5aa2f7d281f",
+      "lines": 113,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 68,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 84,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/championship_checkout/checkout_team_members_list.dart",
+      "sha256": "cabb760c94e4518e161a9aaccd36eac5f7e87912d6934e24de271b77745243f0",
+      "lines": 97,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_bottom_bar.dart",
+      "sha256": "fef6f8e65cdd29dc4051416a404d00dcc710f0b25acd85093c11447be9a122cd",
+      "lines": 90,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_details_header.dart",
+      "sha256": "f53bbb0b59a6732a1ae9910fe17af8a6a9fdb47a0727c1d80fc72567b77e2fce",
+      "lines": 278,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_governorate_dialog.dart",
+      "sha256": "dc3ad9bfc58b70be94152c4e1f6c7c22f45d99db5616ea2dff453c2eb6e4c68f",
+      "lines": 83,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_matches_tab.dart",
+      "sha256": "44274b779c09cc104317992fb9a5db257ddf006eaf994325f36d992a35817bd5",
+      "lines": 403,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 89,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 90,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_pill_tab_bar.dart",
+      "sha256": "d8a27d4e9bcb40bb940835ba73dd9b0a6568aa56c86ad343de04370073ae8c29",
+      "lines": 109,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 74,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_rules_tab.dart",
+      "sha256": "7131d2ee378a12f0f153fbff7f43103a09cb71a00cb32acd2207aa4531662303",
+      "lines": 89,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_squad_builder_sheet.dart",
+      "sha256": "f30102d50a92770441f66c656b2e1ed3ce19c4dba69683af431e05432b1cec80",
+      "lines": 168,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_standings_table.dart",
+      "sha256": "52d59f31a95fcf14e767c8e64b228e79ec15a220a45652cbee3020f14c4a64a6",
+      "lines": 219,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/championship_details/championship_top_scorers_tab.dart",
+      "sha256": "91ad78c07e7b6d5c2408842f24d4cacca3f271e2bb6c486f715b65991dcc34a2",
+      "lines": 155,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/chat/chat_app_bar_title.dart",
+      "sha256": "1fa3e9e6f5e525ac3bb106e5a99cc109de5134c80fee465cbee611568604937b",
+      "lines": 83,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/chat/chat_dialogs.dart",
+      "sha256": "6547955b62f15242ec0143ce2711b196d69dd5aca7d369232fe52e53ef5292af",
+      "lines": 162,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 31,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 43,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 53,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 118,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/chat/chat_input_bar.dart",
+      "sha256": "2c1fbecad9739b27c82a5bfac19daab90de040bb78c1b2a88408b59074b812cc",
+      "lines": 109,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/chat/chat_message_bubble.dart",
+      "sha256": "de730ec2c5545a38c727847d746beb6185a68abd1bd815075bbdaff0e1631e5a",
+      "lines": 186,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 35,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 39,
+          "match": "Colors.white"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 84,
+          "match": "Alignment.centerRight"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 84,
+          "match": "Alignment.centerLeft"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/chat/chat_system_banner.dart",
+      "sha256": "a844b342edb06aedd40df642213445a1c76721c9834a75a9080622c8bc8b3832",
+      "lines": 101,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/collective_match_invite_route.dart",
+      "sha256": "169aa24e995b3c6f0e6dabb0536a16cd1fc1f10a4537315bcca2f9b4942c5535",
+      "lines": 44,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/collective_match_invite_sheet.dart",
+      "sha256": "849e0adc5a89bed7116fde2a093ddf9d9882af8ad7e73481c804c7ef1f900bf0",
+      "lines": 647,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/create_team_logo_picker_row.dart",
+      "sha256": "ef003278cc616430af33fe50fdcaad0ab6c2ae9fc910d90de44ac47df74057ee",
+      "lines": 77,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/create_team_members_section.dart",
+      "sha256": "69318d1c506c978b35c52258825b1a9db970aeb2ad0ffa7d6a94ac356d41116d",
+      "lines": 181,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/create_team_sheet.dart",
+      "sha256": "8461bd89bb325c2fe50f32a5306234b2574e2d7f442186a0fb346bdbbf445fb4",
+      "lines": 419,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_amenities_panel.dart",
+      "sha256": "590d29cccd82a8a708912266b90dda20171922e96f9245ce8896f7b66957502f",
+      "lines": 51,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_category_sidebar.dart",
+      "sha256": "e583ce93fd4a0e9d575f9146c16a57146c0e30d65dcdb440ae9a31754f543679",
+      "lines": 115,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_location_panel.dart",
+      "sha256": "9383111df2b5b390bd71b3e3c8a1581d7eb32c80cf51eb416555d293be6e4b50",
+      "lines": 74,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_price_panel.dart",
+      "sha256": "132e01082e318bae4f3fe3e6633d47f84ce8d140b8a3c01cbe664a41737b5ba8",
+      "lines": 98,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_specs_panel.dart",
+      "sha256": "7246cb7c0c39e7502de5311249e5514af2667b18c4abacf39a7be1512978095b",
+      "lines": 57,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter/filter_sports_panel.dart",
+      "sha256": "1c13e289a0cfe3550f6ebc0a6cb028e367598f1d432749e5a9dd317157da0b18",
+      "lines": 63,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/filter_bottom_sheet.dart",
+      "sha256": "a48abcbc30dd0446866c57539037117d49c75b893d0bac4d6726949f11b67b38",
+      "lines": 392,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 239,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 319,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/home/book_tonight_card.dart",
+      "sha256": "514e69c448662f71e42ae25e19c2fa1bef3efb85535ef1693c33bf5ef6ca05cd",
+      "lines": 139,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 44,
+          "match": "Alignment.topRight"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 45,
+          "match": "Alignment.bottomLeft"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/home/book_tonight_sheet.dart",
+      "sha256": "9ddd54dddaa0fdebe6af6c2cc76b4bf24e352cd1f3aed6e0279ee0fa93b5ecdd",
+      "lines": 337,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 37,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_feed_content.dart",
+      "sha256": "43fbf6dca8a4e43ee7c0f4724ce74d90f3c3667114ca0482f777e2498cd93e81",
+      "lines": 50,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_feed_sections.dart",
+      "sha256": "3fd91a51903f691b89e62ce2bfa4b930537f948950fbdcde4eb3bce5bcb4066c",
+      "lines": 399,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 91,
+          "match": "Colors.white"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 103,
+          "match": "duration: const Duration(milliseconds: 400)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_governorate_modal.dart",
+      "sha256": "6c0e4ef43ec46cdb47ae174fab499be8e2d2566786d5406c9ce37d8024739fca",
+      "lines": 155,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 54,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 108,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 116,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 146,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_match_outcome_dialogs.dart",
+      "sha256": "a4259505e765a67bd2cecbf51d1ad80f48a62ca7564663ebe7c18237b41c9f95",
+      "lines": 369,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_stadiums_section.dart",
+      "sha256": "bdf6debfb8b9d7058ce1289cc5f0aa414f8de19996fba2fef107d7cc8136ccdf",
+      "lines": 199,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/home/home_top_bar.dart",
+      "sha256": "561109bfe66a902fd90cc4965ee9e7e77e1feabe92399897ff96015b1bfcfae1",
+      "lines": 238,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_fixtures_view.dart",
+      "sha256": "1b7c44f6783436e16fda4e3a5bb71e920260d21c0737e938da5250d81c61c17d",
+      "lines": 669,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_gathering_card.dart",
+      "sha256": "133bb97195d5853c9103fdd16e12fdc735b0cdb925ea2a8d7c13aad85797a964",
+      "lines": 355,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_match_dialog.dart",
+      "sha256": "318592ce9e1986065b9fe0425461c7a169f608298a05544b38475935d2870ffc",
+      "lines": 542,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 229,
+          "match": "duration: const Duration(milliseconds: 180)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_onboarding_card.dart",
+      "sha256": "e548a5e7ec60528c24e2148d27b3b494d78e458ad377ca237077cbda4e7e0dcb",
+      "lines": 200,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 50,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 51,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_standings_view.dart",
+      "sha256": "013d1e01e614580096b0e53617c908b2b6761eef52e2a84d66a9c418f8e773f9",
+      "lines": 486,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 41,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 42,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/league/team_league_tab.dart",
+      "sha256": "5586e4493d12807d8ff6d32465d2062bbdc9f4603f9e53f4c637708636a81232",
+      "lines": 1279,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/match_result_modal.dart",
+      "sha256": "d9bc9758dbb9312d065b863d3b4e5ed5c7ef48568b134181b3c6d3a1b1dc9d7c",
+      "lines": 370,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/matchup/matchup_record_result_card.dart",
+      "sha256": "f6bdc4bd853a0c9bed4a9e398227d357b5883d292ae4b9b00d910b25793ef21d",
+      "lines": 190,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/matchup/matchup_results_timeline.dart",
+      "sha256": "6694448a5e030171b325356cdfd9d82d321996b939730ed3e8a3739f71d5ebb9",
+      "lines": 122,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 38,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 94,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/matchup/matchup_standings_table.dart",
+      "sha256": "919fd9f8a6a2c85403b0c574c1aba845ffd89534c83467ff6bf5ed071c3efa27",
+      "lines": 116,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_achievements_section.dart",
+      "sha256": "b86f0590526fc6beb28e6a82e31aa9f5b0cc4196c012316f29bdebe562b6e447",
+      "lines": 270,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_action_buttons.dart",
+      "sha256": "f17f096ac841f89dca08e6a6b90bdcdb98313c8d6e246e3d2bffc50fe9118c53",
+      "lines": 118,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_dialogs.dart",
+      "sha256": "36bb97c5e25ea4dcfa15b2fa1f47ef1e7a8ce83ef9c1b3382a5aa97c6628c5d3",
+      "lines": 177,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_members_section.dart",
+      "sha256": "8f52367128b8286e9527b6715961f8f21d7c1d3b1b5bd5da3b3b8638b3cc0948",
+      "lines": 188,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_profile_form.dart",
+      "sha256": "d05662c6e034a97b645a966ac02430a1ccce2d89c5dc22787e52c105aa284a0c",
+      "lines": 136,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/my_team/team_stats_header.dart",
+      "sha256": "2ec9480b6cdf563684dc69418a0dbeb01603468fa1e252673f45b6dff9ffe8c0",
+      "lines": 205,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_background_glow.dart",
+      "sha256": "1a04810a7adb2487ba380ab35b52053af511a4450174aa3ecad668d46559a79e",
+      "lines": 28,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_breakdown_card.dart",
+      "sha256": "1e55a7906797e023092136d77ea05fa28a99a3c442d334024d71876c529b0e05",
+      "lines": 281,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_cancel_dialog.dart",
+      "sha256": "6d09589cb1d7c05b448425a1cb1100261174c2e5b4ca75756fc3d4078cb023e2",
+      "lines": 63,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_countdown_header.dart",
+      "sha256": "e81afd0e0afd852b11d266efcf693acd78f2a4f3d0c42426f805b9164be5cff4",
+      "lines": 146,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_method_selector.dart",
+      "sha256": "ace7daafdb14645048836fad53527cc8addfa40238c383f5f04be620d7174c27",
+      "lines": 205,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_security_footer.dart",
+      "sha256": "d5b5f79a6de161ca4572118915767dc1454663f42db4bf364807e44238bbd700",
+      "lines": 84,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/payment_verification_modal.dart",
+      "sha256": "8d79da587837c5f637d982f7f6837a2e53d14e82c3b2bc67e08c440bdda1cb60",
+      "lines": 330,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 56,
+          "match": "duration: const Duration(milliseconds: 1200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/payment/paymob_still_waiting_dialog.dart",
+      "sha256": "25aafbb80370908bca827ba41fe724c4bc7f68a4ce875f6c1f10008a5cc7fcac",
+      "lines": 61,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/payment/paymob_web_fallback_view.dart",
+      "sha256": "a7b3aa5cf10f94791cf3eb58d450cdc3f5f33867d4f15d2a7c9df16573df0765",
+      "lines": 67,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/roster/roster_capacity_card.dart",
+      "sha256": "03b4bd428f08d99ae2770ec91f5b953ef4b5c0a5cb178e03c252c580cfa005c8",
+      "lines": 96,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/roster/roster_guest_players_section.dart",
+      "sha256": "66b997d90265281d3444ae1b2e6bb064156acf839abe08fd6036f226130d90f5",
+      "lines": 159,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 40,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 70,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 124,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/roster/roster_team_members_section.dart",
+      "sha256": "4f57819d842c3ff7db2ff9f781f24dfa49f63870fc63a2e30f93eda952dd56a5",
+      "lines": 155,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/roster/roster_tournament_header.dart",
+      "sha256": "843e73a30f143ef30e74c503c8ce156339f8fbcd07d4d0af97adc2b234f8138a",
+      "lines": 131,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/stadium_details/stadium_bottom_booking_bar.dart",
+      "sha256": "97ca3d468e1cf9495fd7c8679ff674d62ab6e4b365e92a202e4bf11d8bbc2215",
+      "lines": 110,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/stadium_details/stadium_image_carousel.dart",
+      "sha256": "7e2e92103ef902a4e041975e2e40ec1ca610c6e6b9db7aaacd2dba05cedee03f",
+      "lines": 354,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 333,
+          "match": "duration: const Duration(milliseconds: 200)"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/stadium_details/stadium_information_tab.dart",
+      "sha256": "527fec3190174f745dcdd63ba5739466b4e705fa09500f85c5874fd222c27dce",
+      "lines": 406,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/stadium_details/stadium_pitch_conditions_tab.dart",
+      "sha256": "e8cb2cd010aaa540999bcb1db48f3906df7fb6e13eead8a535c235ce273033df",
+      "lines": 64,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/stadium_details/stadium_ratings_tab.dart",
+      "sha256": "004a410624d32483202e7cce2da15001aecb894de628811ad3dd5fab88a274fc",
+      "lines": 454,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_matchup_invite_modal.dart",
+      "sha256": "6be74dc68951f8de27e1db3ff4f768ba2ffb595f939d937d554a7778d9f697bf",
+      "lines": 89,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_achievements_section.dart",
+      "sha256": "b59175eac10cfcd5529f4c708e96cd631cdae815963f78f6922df39f896c9844",
+      "lines": 101,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_action_bar.dart",
+      "sha256": "8076034ee645b9f18547643d33942258a3ff8256c9c40f0793b0f09691dbcc3b",
+      "lines": 58,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_captain_card.dart",
+      "sha256": "f72ce621d933f6e97f305104a58d61895131a2a422af1c0e645048776b539ec3",
+      "lines": 83,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_head_to_head_section.dart",
+      "sha256": "17f21eae1b0f6822e41bd216a2d48a998d303c77343160ae2b235b9220db207b",
+      "lines": 116,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_hero_header.dart",
+      "sha256": "3604a2653d9bad94321f3876c62bc76332c3f8d069131ed33e9fd5fe8c7b322a",
+      "lines": 93,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_roster_section.dart",
+      "sha256": "ccb439574d8cb8a651fb0cf8204f4c3a744fbda44fb51c04463fc41cd406ed6f",
+      "lines": 103,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/team_profile/team_profile_stats_grid.dart",
+      "sha256": "7e09a39e6a04d43d0d485d568513cc79eb5e0ddb8918c1b85996bccc8db8f74e",
+      "lines": 63,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/challenge_result_actions.dart",
+      "sha256": "21892e43393447ef6f6366d677a589b85b10a0d1b2a1e7f9064ab75529684d7b",
+      "lines": 277,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 97,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/open_join_booking_card.dart",
+      "sha256": "092b1aec92d4729e41b8266d8e04bdeb105aa02379c3b1ef7d23de155e8623ef",
+      "lines": 569,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/pending_booking_card.dart",
+      "sha256": "c58af6528c8a01deb72e94f5ec8b181a0871350dc9e255e0287401b21321e45d",
+      "lines": 321,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/player_booking_cancel_dialog.dart",
+      "sha256": "d250fa7729477ec7d6acd2662184059386dc8da1edc032a1fec668ccd6a165f9",
+      "lines": 197,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/player_booking_card.dart",
+      "sha256": "f2c74bdc6edd14b1e498f31807f82527c0d689b51c97a5887f870f897dfe9eec",
+      "lines": 624,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/user_bookings/reschedule_action_banner.dart",
+      "sha256": "5270c6f33aebeb78b85055e14e6ec8b646e7d5e172999a38e52d0accf6b6345a",
+      "lines": 130,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/features/player/widgets/vsp_1v1_trophy_badge.dart",
+      "sha256": "be65e0f7510b28a35d3b999ca83354ec5b821ba754ed0f56a234340b234b5cfc",
+      "lines": 85,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/dialogs/vsp_terms_and_privacy_modal.dart",
+      "sha256": "0e01996ab88f456471bd02bc33cae6ed9695d6f474b658a0140dcafad2c10684",
+      "lines": 333,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 13,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 28,
+          "match": "Colors.transparent"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/banner_slider_widget.dart",
+      "sha256": "5678a71c1bd2ccd528a416f8dba42305228c4ac01ea7c1a4c6c8034c756918f7",
+      "lines": 421,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/copyable_phone_text.dart",
+      "sha256": "2939e6b7e57964fc9dd43d336caabd82a5d2925c42b5544b68f1ad69b4f9546d",
+      "lines": 84,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/custom_text_field.dart",
+      "sha256": "5ff674d09f55ff83a160e77d50c292314f889519195389e7c3dda0a4b92d3de7",
+      "lines": 178,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/date_picker/vsp_date_picker_step_chip.dart",
+      "sha256": "8b139b6ebf27784b48b9cace9729d4526071a8d07e0bf187d08f08a52d400857",
+      "lines": 107,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 54,
+          "match": "duration: const Duration(milliseconds: 200)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 95,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/date_picker/vsp_date_picker_step_views.dart",
+      "sha256": "8dc38dd8e6f4bb4dd7e0dac1cbd02100392e2f172e4094ab871d9309086baa87",
+      "lines": 298,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 58,
+          "match": "duration: const Duration(milliseconds: 150)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 84,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 84,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 91,
+          "match": "Colors.black"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 145,
+          "match": "duration: const Duration(milliseconds: 150)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 171,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 178,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 190,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 190,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 197,
+          "match": "Colors.black"
+        },
+        {
+          "category": "inline_motion_duration",
+          "line": 257,
+          "match": "duration: const Duration(milliseconds: 150)"
+        },
+        {
+          "category": "palette_literal",
+          "line": 283,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 283,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 289,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/match_card/manage_participants_modal.dart",
+      "sha256": "d6fcbbc88daf2f2e53e410635394c4bc4de6abb7fb4c4a5ce525eb4a2166c82e",
+      "lines": 507,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/primary_button.dart",
+      "sha256": "f8e2414bc46f2fd1f1899f8714f4baeec336e2ff5891b0842ad6ccede9c3cb9a",
+      "lines": 88,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/public_match_card.dart",
+      "sha256": "bc4e6f410caf3f47234018b005b01a123cfdb0ce0f4069e50da13c25320e29c6",
+      "lines": 504,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/refund_tracking_sheet.dart",
+      "sha256": "c8690527ba0cb79eaf644892795891b90f4153754b584f02a9db81e35412323c",
+      "lines": 142,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/social_auth_button.dart",
+      "sha256": "0d056a0c0fc28177e9f03221c14614aca3484f70eb8eb1a4fc22ab7f0a7ddcab",
+      "lines": 98,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/stadium_card.dart",
+      "sha256": "0352968839e260d64f1401ef906a868cd166c72025c2107d28db20e6f0bff7c1",
+      "lines": 459,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/team_card_hero.dart",
+      "sha256": "4e481926ede0aff662432f859c68205b1da5668be61bd13d8ca7e110abc25374",
+      "lines": 221,
+      "triage_matches": [
+        {
+          "category": "physical_alignment",
+          "line": 30,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 31,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/vsp_ai_spark_icon.dart",
+      "sha256": "ea3c48e416da09c18c0d9a751590d04761b7e0f41686521ae668bed0b2e80a93",
+      "lines": 100,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_ambient_background.dart",
+      "sha256": "c6e4ba5d0868b9572a62eb71ed9145decaa8aa993aaea325b2bf48306c354109",
+      "lines": 90,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_animated_button.dart",
+      "sha256": "a24697570dba68d2d0cda72cc6a7f0a7bc86c23c5ea8a83b3005a83e11636924",
+      "lines": 129,
+      "triage_matches": [
+        {
+          "category": "inline_motion_duration",
+          "line": 51,
+          "match": "duration: const Duration(milliseconds: 120)"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/vsp_auth_header.dart",
+      "sha256": "3c4a89962cc70be08d7af972976aca22d02a15011b0f6717f621cae41163da55",
+      "lines": 47,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_back_button.dart",
+      "sha256": "e884a51bf40287c0b959e0baa5c0d67c9fdc99affc06a3d8bda8f8303219b755",
+      "lines": 129,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_bottom_nav_bar.dart",
+      "sha256": "5c30fbb2cf7f10ddce18a8550963c6401d984e95f8fceabbb8cc5134edcb04d9",
+      "lines": 212,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_countdown_timer.dart",
+      "sha256": "91916a87754baf83616965d1999acd825c5931ea53c68553c7c74235404dcab3",
+      "lines": 182,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 161,
+          "match": "Colors.white"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/vsp_date_picker_dialog.dart",
+      "sha256": "986d8ff4e1afd22b879e2bbf76a4d765e0eb3c2ab577bb66fe4cc5f2c7d76fa7",
+      "lines": 347,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 23,
+          "match": "Colors.black"
+        },
+        {
+          "category": "palette_literal",
+          "line": 90,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "palette_literal",
+          "line": 143,
+          "match": "Colors.white"
+        },
+        {
+          "category": "palette_literal",
+          "line": 286,
+          "match": "Colors.black"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/vsp_empty_state.dart",
+      "sha256": "9769a666815929709ead1b1c99daba017426cd1882311e9a14f26fbc768fcdfa",
+      "lines": 40,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_error_state.dart",
+      "sha256": "b70129152fcf630df351577b4eb17eb728194507f599d0574f2bdec4f0d80284",
+      "lines": 63,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_fade_in_item.dart",
+      "sha256": "bccddc0d5060c29c13b1b58a5ff9eba2310f3169cb956f6114bb3cb427812930",
+      "lines": 76,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_icon_badge.dart",
+      "sha256": "e212fd10d482617b3c25d6ce260d00d0bd0205eea1ad91d8e00be8ccb58d0bf4",
+      "lines": 46,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_network_banner.dart",
+      "sha256": "c54011e0bd6d25a75d98f3598e616d75e95c1f3d7d78351d2e2f162885c22955",
+      "lines": 98,
+      "triage_matches": [
+        {
+          "category": "palette_literal",
+          "line": 41,
+          "match": "Colors.transparent"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 54,
+          "match": "Alignment.topLeft"
+        },
+        {
+          "category": "physical_alignment",
+          "line": 55,
+          "match": "Alignment.bottomRight"
+        }
+      ]
+    },
+    {
+      "path": "lib/shared/widgets/vsp_position_selector.dart",
+      "sha256": "a11805c58f0cf8ab1b4eb1eb213c25657a0e24be1cac9d0744fe9f3786ef33c3",
+      "lines": 107,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_terms_checkbox.dart",
+      "sha256": "75175680afabc348ceb57877cc53c993433315f791974ca8da57edac8c9553fc",
+      "lines": 150,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/shared/widgets/vsp_upload_widgets.dart",
+      "sha256": "063901733c835d81b96dd836294fd1951ec775b544ac37e6aec34c105289fb3a",
+      "lines": 203,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/widgets/refund_badge_widget.dart",
+      "sha256": "0068eeaed6ca29e96f1fc9d8c28f00820cbb3b986e8e4f06ce502b70b9f41792",
+      "lines": 123,
+      "triage_matches": []
+    },
+    {
+      "path": "lib/widgets/refund_notice_widget.dart",
+      "sha256": "3c0a92e0a324f58b8925145a3c128c272a9771eef9e35a793533bb789d9241a9",
+      "lines": 107,
+      "triage_matches": []
+    }
+  ]
+}
