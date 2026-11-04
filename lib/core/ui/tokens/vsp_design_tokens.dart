@@ -77,7 +77,7 @@ abstract final class VSPDSColors {
   static const Color glassSurfaceAlt = Color(0x991C1C20);
   static const Color glassBorder = Color(0x26FFFFFF);
   static const Color glassBorderAccent = Color(0x409FDF02);
-  static const Color glassGlow = Color(0x1F9FDF02);
+  static const Color glassGlow = zinc800; // Charcoal; legacy glow consumers now use a neutral tone.
 }
 
 abstract final class VSPDSSemanticColors {
@@ -254,8 +254,8 @@ abstract final class VSPDSElevation {
 
 abstract final class VSPDSComponentEffects {
   static const BoxShadow buttonShadow = BoxShadow(
-    color: Color(0x2E9FDF02),
-    blurRadius: 12.0,
+    color: VSPDSColors.zinc800,
+    blurRadius: 0.0,
     offset: Offset(0, 4),
   );
 
@@ -280,7 +280,7 @@ abstract final class VSPDSComponentEffects {
 
   static const BoxShadow glassShadow = BoxShadow(
     color: VSPDSColors.glassGlow,
-    blurRadius: 16.0,
+    blurRadius: 0.0,
     spreadRadius: 0.0,
     offset: Offset(0, 4),
   );
@@ -705,7 +705,7 @@ abstract final class VSPDSGradients {
     center: Alignment(-0.4, -0.2),
     radius: 1.2,
     colors: <Color>[
-      VSPDSColors.voltGreenSoft,
+      VSPDSColors.zinc950,
       VSPDSColors.zinc950,
     ],
     stops: <double>[0.0, 0.7],
