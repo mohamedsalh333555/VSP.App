@@ -49,6 +49,25 @@ void main() {
     final scale = find.descendant(of: find.byType(VSPAnimatedButton), matching: find.byType(ScaleTransition));
     expect(tester.widget<ScaleTransition>(scale).scale.value, 1);
   });
+  testWidgets('disabled animated button ignores taps', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: Center(child: VSPAnimatedButton(text: 'Unavailable')),
+    )));
+    await tester.tap(find.text('Unavailable'));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed, isNull);
+  });
+
+  testWidgets('Arabic expired countdown reports scheduled time only', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      home: Scaffold(body: VSPCountdownTimer(targetDate: DateTime(2000))),
+    ));
+    expect(find.text('حان موعد البداية المحدد'), findsOneWidget);
+    expect(find.text('Tournament Started!'), findsNothing);
+  });
+
   testWidgets('expired countdown does not claim a server transition', (tester) async {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: VSPCountdownTimer(targetDate: DateTime(2000)))));
     expect(find.text('Scheduled start time reached'), findsOneWidget);
