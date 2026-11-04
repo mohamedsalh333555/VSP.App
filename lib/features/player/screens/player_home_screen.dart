@@ -287,28 +287,28 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
         },
         items: [
           VspNavItem(
-            inactiveIcon: Iconsax.home_1,
-            activeIcon: Iconsax.home_1_copy,
+            inactiveIcon: Iconsax.home_1_copy,
+            activeIcon: Iconsax.home_1,
             label: AppLocalizations.of(context)!.homeNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.people,
-            activeIcon: Iconsax.people_copy,
+            inactiveIcon: Iconsax.people_copy,
+            activeIcon: Iconsax.people,
             label: AppLocalizations.of(context)!.matchesNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.cup,
-            activeIcon: Iconsax.cup_copy,
+            inactiveIcon: Iconsax.cup_copy,
+            activeIcon: Iconsax.cup,
             label: AppLocalizations.of(context)!.championNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.calendar_1,
-            activeIcon: Iconsax.calendar_1_copy,
+            inactiveIcon: Iconsax.calendar_1_copy,
+            activeIcon: Iconsax.calendar_1,
             label: AppLocalizations.of(context)!.bookedNav,
           ),
           VspNavItem(
-            inactiveIcon: Iconsax.user,
-            activeIcon: Iconsax.user_copy,
+            inactiveIcon: Iconsax.user_copy,
+            activeIcon: Iconsax.user,
             label: AppLocalizations.of(context)!.profileNav,
           ),
         ],
