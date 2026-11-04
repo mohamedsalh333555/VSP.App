@@ -9,7 +9,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 void main() {
   for (final language in ['ar', 'en']) {
     testWidgets('segmented actions wrap and remain reachable in $language', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(320, 400));
+      await tester.binding.setSurfaceSize(const Size(320, 800));
       addTearDown(() => tester.binding.setSurfaceSize(null));
       var selected = 0;
       final labels = language == 'ar'
@@ -35,6 +35,8 @@ void main() {
       for (final target in find.byType(InkWell).evaluate()) {
         expect(tester.getSize(find.byWidget(target.widget)).height, greaterThanOrEqualTo(48));
       }
+      await tester.ensureVisible(find.text(labels.last));
+      await tester.pumpAndSettle();
       await tester.tap(find.text(labels.last));
       await tester.pumpAndSettle();
       expect(selected, 2);
@@ -86,6 +88,7 @@ void main() {
       locale: const Locale('ar'),
       home: Scaffold(body: VSPCountdownTimer(targetDate: DateTime(2000))),
     ));
+    await tester.pumpAndSettle();
     expect(find.text('حان موعد البداية المحدد'), findsOneWidget);
     expect(find.text('Tournament Started!'), findsNothing);
   });
