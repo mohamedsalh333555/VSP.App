@@ -49,18 +49,18 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
           onItemTapped: widget.onTap,
           items: [
             VspNavItem(
-              inactiveIcon: Iconsax.element_4,
-            activeIcon: Iconsax.element_4_copy,
+              inactiveIcon: Iconsax.element_4_copy,
+            activeIcon: Iconsax.element_4,
               label: AppLocalizations.of(context)!.home,
             ),
             VspNavItem(
-              inactiveIcon: Iconsax.cup,
-            activeIcon: Iconsax.cup_copy,
+              inactiveIcon: Iconsax.cup_copy,
+            activeIcon: Iconsax.cup,
               label: AppLocalizations.of(context)!.tournamentsTab,
             ),
             VspNavItem(
-              inactiveIcon: Iconsax.messages_3,
-            activeIcon: Iconsax.messages_3_copy,
+              inactiveIcon: Iconsax.messages_3_copy,
+            activeIcon: Iconsax.messages_3,
               label: AppLocalizations.of(context)!.chat,
               hasNotification: hasUnread, // النقطة الحمراء
               hasWarning: unreadStatusFailed,
@@ -69,13 +69,13 @@ class _OwnerBottomNavBarState extends State<OwnerBottomNavBar> {
                   : 'Message status unavailable',
             ),
             VspNavItem(
-              inactiveIcon: Iconsax.calendar_1,
-            activeIcon: Iconsax.calendar_1_copy,
+              inactiveIcon: Iconsax.calendar_1_copy,
+            activeIcon: Iconsax.calendar_1,
               label: AppLocalizations.of(context)!.bookedTab,
             ),
             VspNavItem(
-              inactiveIcon: Iconsax.user,
-            activeIcon: Iconsax.user_copy,
+              inactiveIcon: Iconsax.user_copy,
+            activeIcon: Iconsax.user,
               label: AppLocalizations.of(context)!.profileTab,
             ),
           ],
