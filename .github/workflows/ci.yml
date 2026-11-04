@@ -6,8 +6,6 @@ concurrency:
 
 on:
   workflow_dispatch:
-  push:
-    branches: [uxlp-44-implementation]
 
 jobs:
   analyze-test:
