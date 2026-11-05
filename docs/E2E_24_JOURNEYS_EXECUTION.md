@@ -31,7 +31,7 @@ was queried read-only for contract comparison and was never mutated.
 | 21 Owner finance | Blocked | Owner summary loaded; canonical Free/Pro plans restored | No successful Sandbox subscription invoice/payment or supported payout flow exists to prove settlement | Zero-balance summary consistent; reference seed `fd4be565` |
 | 22 Settings/privacy | Not Run | Source routes for language, notification preferences, privacy and sign-out found | Full device/account state verification remains | Pending Android authenticated journey |
 | 23 Admin panel | Blocked | Non-admin admin-RPC denial and admin report visibility exercised | Backend access works; no usable in-app admin dashboard route was found | Report `9731701b-7647-48a5-bd92-8ca08efc8bfc` visible to admin, hidden from player |
-| 24 Comprehensive release | Not Run | Live database journey calls completed and Supabase advisors rerun | Current head has no CI run, local Flutter SDK is unavailable, blocked payment/device journeys remain, and no APK was started | Head `e7a7009c`; PR #35 remains Draft |
+| 24 Comprehensive release | Not Run | Live database journey calls completed and Supabase advisors rerun | Current head has no CI run, local Flutter SDK is unavailable, blocked payment/device journeys remain, and no APK was started | Head `8260cef9`; PR #35 remains Draft |
 
 ## Current totals
 
@@ -67,7 +67,7 @@ Commits:
 - There is no per-stadium cash-allowed switch.
 - No usable in-app admin dashboard route was found.
 - Advisors still report pre-existing security-definer views/functions and multiple permissive policies. They were recorded, not changed wholesale, because broad permission/RLS rewrites require a separate audited security scope.
-- No workflow run exists for head `e7a7009c`; no APK was built.
+- No workflow run existed for head `8260cef9` when this report was recorded; no APK was built.
 
 Blocked journeys are not counted as passed. No payment success, push delivery,
 winner publication, final release validation or APK integrity claim is made.
