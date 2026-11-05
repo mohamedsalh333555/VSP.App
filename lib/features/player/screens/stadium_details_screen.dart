@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../widgets/stadium_details/stadium_bottom_booking_bar.dart';
@@ -32,7 +34,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _stadiumStream = StadiumRepository().streamStadiumRaw(widget.stadium.id);
-
+    unawaited(
+      AnalyticsService.logVenueViewed(venueId: widget.stadium.id),
+    );
   }
 
   List<String> _collectDisplayImages(Stadium stadium) {
@@ -71,6 +75,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       // A different stadium starts at the first information tab rather than
       // inheriting the previous stadium's tab selection.
       _tabController.index = 0;
+      unawaited(
+        AnalyticsService.logVenueViewed(venueId: widget.stadium.id),
+      );
     }
   }
 
