@@ -2,7 +2,7 @@ name: Android E2E Smoke
 
 concurrency:
   group: android-e2e-smoke-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   workflow_dispatch:
