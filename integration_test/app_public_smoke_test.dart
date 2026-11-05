@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:vsp_application/core/providers/language_provider.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:vsp_application/features/auth/screens/login_screen.dart';
 import 'package:vsp_application/features/auth/screens/welcome_screen.dart';
@@ -36,25 +38,22 @@ void main() {
       // ignore: avoid_print
       print('VSP_E2E: welcome screen found=${find.byType(WelcomeScreen).evaluate().isNotEmpty}');
       expect(find.byType(WelcomeScreen), findsOneWidget);
-      // Device locale or persisted preference may start in Arabic or English.
-      // Verify the language control actually changes the visible skip label,
-      // then normalize to English for the remaining navigation assertions.
-      expect(find.byType(WelcomeLanguageButton), findsOneWidget);
-      final initialLanguage = Localizations.localeOf(
+      // The device may retain Arabic from an earlier smoke run. Test the
+      // visible language control, then deterministically reset to English.
+      final languageProvider = Provider.of<LanguageProvider>(
         tester.element(find.byType(WelcomeScreen)),
-      ).languageCode;
-      expect(find.text(initialLanguage == 'ar' ? 'تخطي' : 'Skip'), findsOneWidget);
-
+        listen: false,
+      );
+      expect(find.byType(WelcomeLanguageButton), findsOneWidget);
+      final beforeSwitch = languageProvider.currentLanguage;
       await tester.tap(find.byType(WelcomeLanguageButton));
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.text(initialLanguage == 'ar' ? 'Skip' : 'تخطي'), findsOneWidget);
-
-      if (initialLanguage == 'ar') {
-        // The first switch already moved the app into English.
-      } else {
-        await tester.tap(find.byType(WelcomeLanguageButton));
-        await tester.pump(const Duration(seconds: 1));
+      for (var i = 0; i < 10 && languageProvider.currentLanguage == beforeSwitch; i++) {
+        await tester.pump(const Duration(milliseconds: 250));
       }
+      expect(languageProvider.currentLanguage, isNot(beforeSwitch));
+      await tester.runAsync(() => languageProvider.changeLanguage('en'));
+      await tester.pump(const Duration(seconds: 1));
+      expect(languageProvider.currentLanguage, 'en');
       expect(find.text('Skip'), findsOneWidget);
 
       await tester.tap(find.text('Skip'));
