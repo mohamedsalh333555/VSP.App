@@ -88,3 +88,10 @@ A direct GitHub source update was attempted but the execution tool blocked the w
 - **REGRESSION CONTRACT COMMITTED** `8b6f65d0`: `test/owner_checkout_authorization_contract_test.dart` asserts the server-side owner-id guard, absence of the email fallback, and explicit denial branch. This is a static source regression test, **not** a live cross-account authorization test.
 - **Status:** IN PROGRESS. Await Flutter CI execution of the new test and deploy/reverify the updated function on Staging. No deployment or live 401/403/owner-vs-other-account test has occurred; production remains unchanged.
 - The prior entry noting a blocked write is historical; the subsequent write succeeded.
+
+## Verification checkpoint — 2026-11-05
+
+- GitHub Actions Flutter CI run **42030240411**, commit `0dbe13fa`: **SUCCESS**; both `Analyze` and `Test` steps succeeded. This includes the initial SEC-06 static source regression test at commit `8b6f65d0`. This does **not** establish live deployed authorization correctness.
+- Android E2E Smoke run **42028838602**, commit `497acf4b`: **FAILED**, Android onboarding/login smoke step; logs show the emulator/application started but the driver did not complete within its allotted time. Do not mark the Android journey passed.
+- SEC-03/06 additional code patch `f2c38de6`: checkout status function no longer selects unused `checkout_email`; corresponding regression update `26bcb2d5`. CI result for these newer commits **not yet verified**.
+- Outstanding: deploy to Staging only when deployment process and required settings are verified; run real two-account negative tests and repeat CI. Production not modified.
