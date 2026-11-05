@@ -95,3 +95,10 @@ A direct GitHub source update was attempted but the execution tool blocked the w
 - Android E2E Smoke run **42028838602**, commit `497acf4b`: **FAILED**, Android onboarding/login smoke step; logs show the emulator/application started but the driver did not complete within its allotted time. Do not mark the Android journey passed.
 - SEC-03/06 additional code patch `f2c38de6`: checkout status function no longer selects unused `checkout_email`; corresponding regression update `26bcb2d5`. CI result for these newer commits **not yet verified**.
 - Outstanding: deploy to Staging only when deployment process and required settings are verified; run real two-account negative tests and repeat CI. Production not modified.
+
+## SEC-06 verified checkpoint (2026-11-05)
+
+- Staging Edge Function `get_owner_web_checkout_status` deployed ACTIVE v3 with JWT verification enabled. Post-deploy inspection confirmed strict owner-id authorization and removal of checkout-email fallback.
+- Flutter CI run `42033265264` for commit `a83987f1` passed both Analyze and Test. The earlier failing run `42032520519` was corrected by fixing a malformed newline in the static security test.
+- Still required: live two-account and admin authorization tests on staging; static tests and deployed-source inspection are not equivalent to live authorization verification.
+- Android emulator E2E remains failed from run `42028838602`. Production and main were not changed.
