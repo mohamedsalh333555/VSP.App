@@ -129,6 +129,11 @@ class AnalyticsService {
         dedupeKey: 'match_viewed:$matchId',
       );
 
+  static Future<void> logTeamCreated({required String sportType}) => logEvent(
+        name: 'team_created',
+        parameters: {'sport_type': sportType},
+      );
+
   static Future<void> logOwnerRegistrationStarted() => logOncePerSession(
         name: 'owner_registration_started',
         dedupeKey: 'owner_registration_started',
