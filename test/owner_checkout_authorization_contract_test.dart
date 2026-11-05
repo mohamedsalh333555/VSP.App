@@ -18,7 +18,7 @@ void main() {
       source,
       isNot(contains('order.checkout_email.toLowerCase()')),
     );
-    expect(source, contains('if (!isAdmin && !isOrderOwner)'));
+    expect(source, contains('if (!isAdmin && !isOrderOwner)'));\n    expect(source, isNot(contains('owner_id,checkout_email,status')));
     expect(source, contains('FORBIDDEN_NOT_ORDER_OWNER'));
     expect(source, contains('sb.auth.getUser(token)'));
   });
