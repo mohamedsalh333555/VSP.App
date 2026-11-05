@@ -19,7 +19,8 @@ class DevicePerformance {
     try {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
-        final androidInfo = await deviceInfo.androidInfo\n            .timeout(const Duration(seconds: 3));
+        final androidInfo = await deviceInfo.androidInfo
+            .timeout(const Duration(seconds: 3));
         final sdkInt = androidInfo.version.sdkInt;
         final isLowRam = androidInfo.isLowRamDevice;
         if (sdkInt < 26 || isLowRam) {
