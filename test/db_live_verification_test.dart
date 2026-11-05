@@ -58,6 +58,20 @@ void main() {
         }
       });
 
+      test('required public app configuration is present', () async {
+        final config = await client
+            .from('app_config')
+            .select('id,is_maintenance,min_version,vsp_1v1_is_open')
+            .eq('id', 1)
+            .maybeSingle();
+
+        expect(config, isNotNull);
+        expect(config!['id'], 1);
+        expect(config['is_maintenance'], isA<bool>());
+        expect(config['min_version'], isA<String>());
+        expect(config['vsp_1v1_is_open'], isA<bool>());
+      });
+
       test('anonymous users cannot enumerate user rows', () async {
         final rows = await client.from('users').select('id').limit(1);
         expect(rows, isEmpty);
