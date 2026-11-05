@@ -15,6 +15,7 @@ import 'core/providers/auth_provider.dart' as app_auth;
 import 'core/providers/stadium_provider.dart';
 import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/analytics_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'core/services/logger_service.dart';
@@ -215,6 +216,7 @@ Future<void> main() async {
  };
 
  runApp(const VSPApplication());
+ unawaited(AnalyticsService.logAppOpened());
 
  // Background non-critical services (Notifications & Crashlytics)
  unawaited(
