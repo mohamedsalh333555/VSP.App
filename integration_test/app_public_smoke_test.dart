@@ -55,8 +55,9 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text('Email address'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
+      // Email/password are hintText on custom input fields, not Text widgets.
+      // Verify the actual editable controls instead of matching hint labels.
+      expect(find.byType(EditableText), findsNWidgets(2));
       expect(tester.takeException(), isNull);
     },
   );
