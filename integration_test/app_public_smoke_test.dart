@@ -10,10 +10,12 @@ void main() {
   testWidgets(
     'Android cold start supports Arabic, English, onboarding, and login',
     (tester) async {
-      // Wait for real Supabase, Firebase, and remote-config startup to finish.
-      // Without awaiting this future the test races initialization and can
-      // report a misleading splash-screen failure.
-      await app.main().timeout(const Duration(seconds: 30));
+      // Bootstrap uses real asynchronous platform/network operations.
+      // runAsync keeps those operations on the real event loop rather than
+      // trapping their timers inside the widget test's fake async zone.
+      await tester.runAsync(
+        () => app.main().timeout(const Duration(seconds: 30)),
+      );
 
       // Supabase/Firebase/remote-config initialization and the splash route are
       // real in this test. Pump in bounded increments rather than waiting on
