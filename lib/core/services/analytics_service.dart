@@ -152,12 +152,12 @@ class AnalyticsService {
       );
 
   // Existing product events retained for compatibility.
-  static Future<void> logMatchJoined(String bookingId, String type) async {
-    await logEvent(
-      name: 'match_joined',
-      parameters: {'booking_id': bookingId, 'type': type},
-    );
-  }
+  static Future<void> logMatchJoined(String bookingId, String type) =>
+      logOncePerSession(
+        name: 'match_joined',
+        dedupeKey: 'match_joined:$bookingId',
+        parameters: {'type': type},
+      );
 
   static Future<void> logStadiumBooked(String stadiumId, double price) async {
     await logEvent(
