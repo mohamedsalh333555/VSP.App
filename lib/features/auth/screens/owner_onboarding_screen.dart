@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../shared/widgets/vsp_terms_checkbox.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
@@ -13,6 +14,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/analytics_service.dart';
 import '../services/signup_validation_service.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../widgets/owner_onboarding/owner_onboarding_exit_dialog.dart';
@@ -40,6 +42,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logOwnerRegistrationStarted());
     _phoneController.addListener(() => setState(() {}));
     _firstNameController.addListener(() => setState(() {}));
     _lastNameController.addListener(() => setState(() {}));
@@ -144,6 +147,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       if (!mounted) return;
 
       if (success) {
+        unawaited(AnalyticsService.logOwnerRegistrationCompleted());
         HapticFeedback.lightImpact();
         if (mounted) {
           context.go('/facility-onboarding');
