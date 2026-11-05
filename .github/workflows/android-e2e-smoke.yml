@@ -13,6 +13,13 @@ on:
       - "lib/**"
       - "pubspec.yaml"
       - ".github/workflows/android-e2e-smoke.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "integration_test/**"
+      - "lib/**"
+      - "pubspec.yaml"
+      - ".github/workflows/android-e2e-smoke.yml"
 
 jobs:
   public-auth-smoke:
