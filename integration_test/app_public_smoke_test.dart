@@ -35,14 +35,18 @@ void main() {
       // ignore: avoid_print
       print('VSP_E2E: welcome screen found=${find.byType(WelcomeScreen).evaluate().isNotEmpty}');
       expect(find.byType(WelcomeScreen), findsOneWidget);
-      // Device locale and saved language preferences can start in either
-      // Arabic or English. Assert the current locale, then switch to English.
-      final locale = Localizations.localeOf(tester.element(find.byType(WelcomeScreen)));
-      if (locale.languageCode == 'ar') {
-        expect(find.text('تخطي'), findsOneWidget);
-        await tester.tap(find.text('English'));
-        await tester.pump(const Duration(seconds: 1));
-      }
+      // English is the product default. Exercise the Arabic switch and
+      // restore English before continuing the role/login journey.
+      expect(find.text('Skip'), findsOneWidget);
+      expect(find.text('العربية'), findsOneWidget);
+
+      await tester.tap(find.text('العربية'));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('تخطي'), findsOneWidget);
+      expect(find.text('English'), findsOneWidget);
+
+      await tester.tap(find.text('English'));
+      await tester.pump(const Duration(seconds: 1));
       expect(find.text('Skip'), findsOneWidget);
 
       await tester.tap(find.text('Skip'));
