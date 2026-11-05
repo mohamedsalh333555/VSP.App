@@ -22,7 +22,7 @@ Critical boundaries: player booking → atomic database slot lock → owner list
 | INT-04 | P1 | FAILED/PARTIAL | Journey 14 lacks invitation acceptance; journey 08 challenge acceptance differs from requested flow; preserve business rules pending decision |
 | INT-05 | P0 | BLOCKED | Tournament payment and final result paths incomplete; exercise duplicate result submissions safely |
 | INT-06 | P1 | BLOCKED | Journey 03/23 admin backend exercised but no verified in-app admin dashboard route |
-| REL-01 | P1 | PARTIAL | Flutter CI tests passed; Android device smoke remains unproven; add API/concurrency/failure-recovery tests |
+| REL-01 | P1 | PARTIAL | Flutter CI and Android emulator smoke passed (2026-11-06); add API/concurrency/failure-recovery tests |
 | REL-02 | P1 | NOT STARTED | Isolated staging failure injection: network loss, timeouts, duplicate requests, expired sessions |
 | REL-03 | P0 | PARTIAL | Map state owners and reconcile after notification/payment failure |
 | REL-04 | P0 | PARTIAL | Audit server-side idempotency and uniqueness constraints, test concurrent operations |
@@ -67,6 +67,6 @@ Project `vtwgqyxglevcsxwdmhop`. `pg_stat_user_tables` snapshot: bookings estimat
 
 - Flutter CI run **42081295300**: SUCCESS, commit `6a55cb07`.
 - Android E2E Smoke run **42081295267**: SUCCESS, commit `6a55cb07`. This verifies only the Android cold-start/language/onboarding/login smoke path, **not** all 24 journeys.
-- Booking replay privacy: migration `20261105014000_harden_booking_idempotency_lookup.sql` is deployed to **Staging only**. Read-only inspection of the live staging function confirmed the user-scoped lookup and `IDEMPOTENCY_KEY_CONFLICT` rejection. Source regression test added at `test/booking_idempotency_authorization_contract_test.dart`; CI result pending at this checkpoint.
+- Booking replay privacy: migration `20261105014000_harden_booking_idempotency_lookup.sql` is deployed to **Staging only**. Read-only inspection of the live staging function confirmed the user-scoped lookup and `IDEMPOTENCY_KEY_CONFLICT` rejection. Source regression test added at `test/booking_idempotency_authorization_contract_test.dart`; Flutter CI run **42120695011** passed at commit `353a23eb`; this remains a source contract, not a live replay test.
 - Still outstanding: live two-account replay/authorization and concurrent duplicate-request tests; do not promote INT-02 or SEC-06 to DONE based on SQL inspection or static assertions.
 - Production and `main` remain untouched by this checkpoint.
