@@ -18,7 +18,8 @@ void main() {
 
     // A replay lookup must never be keyed solely by a caller-supplied token.
     final replay = RegExp(
-      r'SELECT id,status INTO v_existing_id,v_existing_status([\\s\\S]*?)IF FOUND',
+      r'SELECT id,status INTO v_existing_id,v_existing_status(.*?)IF FOUND',
+      dotAll: true,
     ).firstMatch(sql);
     expect(replay, isNotNull);
     final lookup = replay!.group(1)!;
