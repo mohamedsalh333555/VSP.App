@@ -56,3 +56,18 @@ Paymob sandbox credentials and deployed payment functions; real email inbox conf
 
 - Phase 8 register created: commit is the GitHub history entry adding this file.
 - No Phase 8-specific runtime security test has passed yet. This document is a persistent checkpoint, **not completion evidence**.
+
+## SEC-02 / SEC-06 — staging read-only verification, 2026-11-05
+
+**Actually checked:** Staging Edge Function inventory reports `process_tournament_refund` (v1), `create_owner_web_checkout` (v2), and `get_owner_web_checkout_status` (v2) ACTIVE with `verify_jwt=true`. The deployed refund function additionally checks a bearer token against service-role / internal-worker secret or verifies a user and privileged role; its `process_queue` branch rejects non-internal callers. **This is code/config inspection, not a passed live 401/403 test or idempotency test.** The staging inventory returned only these three functions; payment webhook and FCM availability remain unverified/incomplete.
+
+Staging read-only SQL privilege inspection:
+| Function | anon EXECUTE | authenticated EXECUTE |
+|---|---|---|
+| `admin_approve_owner_atomic` | false | true |
+| `get_admin_metrics` | false | true |
+| `claim_next_cancellation_refund_atomic` | false | false |
+
+An authenticated grant alone is **not** proof that admin-only authorization is enforced; the function body and cross-role behavior still require validation. No SQL permissions were modified. No refunds were triggered.
+
+**Next:** inspect `admin_approve_owner_atomic` and `get_admin_metrics` body authorization; verify owner checkout ownership and server-side price; then run staging negative tests without creating charges.
