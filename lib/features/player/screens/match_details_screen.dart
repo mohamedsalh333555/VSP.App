@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_error_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/repositories/report_repository.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
@@ -60,6 +62,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  @override
  void initState() {
  super.initState();
+ unawaited(AnalyticsService.logMatchViewed(matchId: widget.bookingId));
  _bookingStream = MatchRepository().streamPublicMatchDetails(widget.bookingId);
     _fetchMatchDetails();
  }
@@ -128,6 +131,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  _isActionProcessing = false;
  });
  if (success) {
+ unawaited(AnalyticsService.logMatchJoined(widget.bookingId, 'public_match'));
  VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
  _fetchMatchDetails();
  } else {
