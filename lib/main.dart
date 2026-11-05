@@ -79,7 +79,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   VSPLogger.i('Handling a background FCM message: ${message.messageId}');
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DevicePerformance.init();
   usePathUrlStrategy();
