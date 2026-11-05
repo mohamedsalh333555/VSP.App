@@ -158,19 +158,47 @@ class StadiumInformationTab extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 14),
-                    const SizedBox(width: 5),
-                    Text(
-                      stadium.rating.toStringAsFixed(1),
-                      style: const TextStyle(color: VSPColors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${stadium.reviewsCount})',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                    ),
-                  ],
+                  children: stadium.reviewsCount > 0
+                      ? [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.accent,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            stadium.rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: VSPColors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(${stadium.reviewsCount})',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ]
+                      : [
+                          const Icon(
+                            Iconsax.star_copy,
+                            color: VSPColors.textSecondary,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isArabic ? 'لسه مفيش تقييمات' : 'No ratings yet',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                 ),
               ),
             ],
