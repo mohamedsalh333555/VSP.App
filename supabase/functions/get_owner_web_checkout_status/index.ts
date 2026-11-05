@@ -145,7 +145,7 @@ serve(async(req:Request)=>{
       .maybeSingle();
 
     const isAdmin = userProfile && ["admin", "super_admin", "co_founder", "cofounder"].includes(userProfile.role);
-    const isOrderOwner = (order.owner_id && order.owner_id === callerUser.id) || (order.checkout_email && callerUser.email && order.checkout_email.toLowerCase() === callerUser.email.toLowerCase());
+    const isOrderOwner = order.owner_id === callerUser.id;
 
     if (!isAdmin && !isOrderOwner) {
       return out(req, { success: false, error: "FORBIDDEN_NOT_ORDER_OWNER", message: "You are not authorized to view this order status." }, 403);
