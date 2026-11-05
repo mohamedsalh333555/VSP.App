@@ -114,7 +114,13 @@ void main() async {
   
   // Initialize Remote Config & App Feature Engine
   final configService = RemoteConfigService();
-  await configService.initialize();
+  try {
+    await configService.initialize().timeout(const Duration(seconds: 8));
+  } catch (e, stack) {
+    VSPLogger.e("Remote configuration initialization failed: $e", e, stack);
+    runApp(_StartupFailureApp(message: e.toString()));
+    return;
+  }
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
