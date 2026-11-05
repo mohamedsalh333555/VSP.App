@@ -1,7 +1,7 @@
 name: Android E2E Smoke
 
 concurrency:
-  group: android-e2e-smoke-${{ github.ref }}
+  group: android-e2e-smoke-bounded-${{ github.ref }}
   cancel-in-progress: true
 
 on:
@@ -18,7 +18,7 @@ jobs:
   public-auth-smoke:
     name: Android public/auth journey smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
