@@ -13,9 +13,15 @@ void main() {
       // Bootstrap uses real asynchronous platform/network operations.
       // runAsync keeps those operations on the real event loop rather than
       // trapping their timers inside the widget test's fake async zone.
+      // CI diagnostics: distinguish bootstrap hangs from navigation failures.
+      // ignore: avoid_print
+      print('VSP_E2E: starting app bootstrap');
       await tester.runAsync(
         () => app.main().timeout(const Duration(seconds: 30)),
       );
+
+      // ignore: avoid_print
+      print('VSP_E2E: app bootstrap returned');
 
       // Supabase/Firebase/remote-config initialization and the splash route are
       // real in this test. Pump in bounded increments rather than waiting on
@@ -25,6 +31,8 @@ void main() {
         if (find.byType(WelcomeScreen).evaluate().isNotEmpty) break;
       }
 
+      // ignore: avoid_print
+      print('VSP_E2E: welcome screen found=${find.byType(WelcomeScreen).evaluate().isNotEmpty}');
       expect(find.byType(WelcomeScreen), findsOneWidget);
       expect(find.text('تخطي'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
