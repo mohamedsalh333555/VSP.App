@@ -62,3 +62,11 @@ Project `vtwgqyxglevcsxwdmhop`. `pg_stat_user_tables` snapshot: bookings estimat
 3. Record representative staging query plans/timings and compare indexes before proposing optimization.
 4. Add isolated duplicate-request and failure-recovery tests, then tie evidence back to journey IDs.
 5. Continue Phase 8 and 24 journeys in parallel; update this checkpoint after each verified commit.
+
+## Verification checkpoint — 2026-11-06
+
+- Flutter CI run **42081295300**: SUCCESS, commit `6a55cb07`.
+- Android E2E Smoke run **42081295267**: SUCCESS, commit `6a55cb07`. This verifies only the Android cold-start/language/onboarding/login smoke path, **not** all 24 journeys.
+- Booking replay privacy: migration `20261105014000_harden_booking_idempotency_lookup.sql` is deployed to **Staging only**. Read-only inspection of the live staging function confirmed the user-scoped lookup and `IDEMPOTENCY_KEY_CONFLICT` rejection. Source regression test added at `test/booking_idempotency_authorization_contract_test.dart`; CI result pending at this checkpoint.
+- Still outstanding: live two-account replay/authorization and concurrent duplicate-request tests; do not promote INT-02 or SEC-06 to DONE based on SQL inspection or static assertions.
+- Production and `main` remain untouched by this checkpoint.
