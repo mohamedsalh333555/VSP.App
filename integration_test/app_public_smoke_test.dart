@@ -10,12 +10,15 @@ void main() {
   testWidgets(
     'Android cold start supports Arabic, English, onboarding, and login',
     (tester) async {
-      app.main();
+      // Wait for real Supabase, Firebase, and remote-config startup to finish.
+      // Without awaiting this future the test races initialization and can
+      // report a misleading splash-screen failure.
+      await app.main();
 
       // Supabase/Firebase/remote-config initialization and the splash route are
       // real in this test. Pump in bounded increments rather than waiting on
       // decorative animations that may never fully settle.
-      for (var i = 0; i < 12; i++) {
+      for (var i = 0; i < 25; i++) {
         await tester.pump(const Duration(seconds: 1));
         if (find.byType(WelcomeScreen).evaluate().isNotEmpty) break;
       }
