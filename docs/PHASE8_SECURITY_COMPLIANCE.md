@@ -81,3 +81,10 @@ An authenticated grant alone is **not** proof that admin-only authorization is e
 **Test matrix (NOT RUN):** owner reads own order; unrelated authenticated user denied even when order contact email matches their verified email; unrelated user denied with different email; admin allowed; unauthenticated 401; malformed order ID 400; no payment inquiry or subscription mutation for unauthorized users. Confirm deployed staging function matches patched source before declaring DONE.
 
 A direct GitHub source update was attempted but the execution tool blocked the write; **no source fix was committed or deployed**. Do not describe this finding as resolved.
+
+## SEC-06 implementation checkpoint (2026-11-05)
+
+- **PATCH COMMITTED** `3fbb2f58`: `supabase/functions/get_owner_web_checkout_status/index.ts` now checks non-admin ownership exclusively by `order.owner_id === callerUser.id`, removing the contact-email fallback.
+- **REGRESSION CONTRACT COMMITTED** `8b6f65d0`: `test/owner_checkout_authorization_contract_test.dart` asserts the server-side owner-id guard, absence of the email fallback, and explicit denial branch. This is a static source regression test, **not** a live cross-account authorization test.
+- **Status:** IN PROGRESS. Await Flutter CI execution of the new test and deploy/reverify the updated function on Staging. No deployment or live 401/403/owner-vs-other-account test has occurred; production remains unchanged.
+- The prior entry noting a blocked write is historical; the subsequent write succeeded.
