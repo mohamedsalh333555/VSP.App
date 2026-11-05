@@ -9,7 +9,7 @@ was queried read-only for contract comparison and was never mutated.
 | Journey | Status | What was actually exercised | Defect / fix | Verification evidence |
 |---|---|---|---|---|
 | 01 Owner registration | Blocked | Real owner password authentication and owner profile role verified | Real email inbox/link delivery is unavailable; email-verification source-of-truth defect fixed in `8d8be09d` | Staging auth token and `public.users` profile verified |
-| 02 Add stadium | Blocked | Real owner created a stadium with price, hours, location and deposit rules | Staging has no Storage buckets, so real image/document upload cannot complete | Stadium `a34382ee-6c12-4b82-b5fd-389c04c11922` persisted |
+| 02 Add stadium | Passed | Real owner created a stadium with price, hours, location and deposit rules; uploaded a real image and private owner document | Restored the required Storage buckets and owner-folder policies without public document access | Stadium `a34382ee-6c12-4b82-b5fd-389c04c11922`; public image 200, private owner read 200, cross-account read/upload rejected; `e7a7009c` |
 | 03 Admin approval | Blocked | Real admin approved the owner/stadium through the authoritative RPC; player was denied | Backend passes; no usable in-app admin dashboard route was found | `admin_approve_owner_atomic` success/denial evidence |
 | 04 Stadium visibility | Passed | Anonymous read before approval returned 0; after approval returned the verified stadium | None in exercised contract | Before/after anonymous REST results |
 | 05 Player registration | Blocked | Two real player password authentications and profile roles verified | Real email inbox/link delivery is unavailable | Both Staging auth tokens and profiles verified |
@@ -31,13 +31,13 @@ was queried read-only for contract comparison and was never mutated.
 | 21 Owner finance | Blocked | Owner summary loaded; canonical Free/Pro plans restored | No successful Sandbox subscription invoice/payment or supported payout flow exists to prove settlement | Zero-balance summary consistent; reference seed `fd4be565` |
 | 22 Settings/privacy | Not Run | Source routes for language, notification preferences, privacy and sign-out found | Full device/account state verification remains | Pending Android authenticated journey |
 | 23 Admin panel | Blocked | Non-admin admin-RPC denial and admin report visibility exercised | Backend access works; no usable in-app admin dashboard route was found | Report `9731701b-7647-48a5-bd92-8ca08efc8bfc` visible to admin, hidden from player |
-| 24 Comprehensive release | Not Run | Live database journey calls completed and Supabase advisors rerun | Current head has no CI run, local Flutter SDK is unavailable, blocked payment/device journeys remain, and no APK was started | Head `fd4be565`; PR #35 remains Draft |
+| 24 Comprehensive release | Not Run | Live database journey calls completed and Supabase advisors rerun | Current head has no CI run, local Flutter SDK is unavailable, blocked payment/device journeys remain, and no APK was started | Head `e7a7009c`; PR #35 remains Draft |
 
 ## Current totals
 
-- Passed: 3
+- Passed: 4
 - Failed: 3
-- Blocked: 15
+- Blocked: 14
 - Not Run: 3
 
 ## Applied Staging-only fixes
@@ -49,16 +49,17 @@ was queried read-only for contract comparison and was never mutated.
 - Added the roster timestamp required by tournament RPCs.
 - Restored canonical league fee and owner subscription reference rows without overwriting existing values.
 - Supplied required league end date and registration deadline from the existing league format.
+- Restored secure owner-scoped Storage for stadium images, profile pictures and private owner documents.
 
 Commits:
 
 - `0b0d5fab` — team schema and legacy cancellation contracts.
 - `d73328ac` — booking trigger contract and atomic cancellation guard.
 - `fd4be565` — tournament and open-league schema/reference contracts.
+- `e7a7009c` — required Storage buckets and owner-scoped policies.
 
 ## Remaining blockers
 
-- Staging Storage has no required buckets/policies.
 - Required payment/FCM Edge Functions and Sandbox secrets are incomplete.
 - Real email inbox/link verification is unavailable.
 - Team invitations are not implemented as an accept/reject lifecycle.
@@ -66,7 +67,7 @@ Commits:
 - There is no per-stadium cash-allowed switch.
 - No usable in-app admin dashboard route was found.
 - Advisors still report pre-existing security-definer views/functions and multiple permissive policies. They were recorded, not changed wholesale, because broad permission/RLS rewrites require a separate audited security scope.
-- No workflow run exists for head `fd4be565`; no APK was built.
+- No workflow run exists for head `e7a7009c`; no APK was built.
 
 Blocked journeys are not counted as passed. No payment success, push delivery,
 winner publication, final release validation or APK integrity claim is made.
