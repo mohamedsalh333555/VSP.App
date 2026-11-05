@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:vsp_application/features/auth/screens/login_screen.dart';
 import 'package:vsp_application/features/auth/screens/welcome_screen.dart';
+import 'package:vsp_application/features/auth/widgets/welcome/welcome_language_button.dart';
 import 'package:vsp_application/main.dart' as app;
 
 void main() {
@@ -38,14 +39,13 @@ void main() {
       // English is the product default. Exercise the Arabic switch and
       // restore English before continuing the role/login journey.
       expect(find.text('Skip'), findsOneWidget);
-      expect(find.text('العربية'), findsOneWidget);
+      expect(find.byType(WelcomeLanguageButton), findsOneWidget);
 
-      await tester.tap(find.text('العربية'));
+      await tester.tap(find.byType(WelcomeLanguageButton));
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('تخطي'), findsOneWidget);
-      expect(find.text('English'), findsOneWidget);
 
-      await tester.tap(find.text('English'));
+      await tester.tap(find.byType(WelcomeLanguageButton));
       await tester.pump(const Duration(seconds: 1));
       expect(find.text('Skip'), findsOneWidget);
 
