@@ -13,7 +13,7 @@ void main() {
       // Wait for real Supabase, Firebase, and remote-config startup to finish.
       // Without awaiting this future the test races initialization and can
       // report a misleading splash-screen failure.
-      await app.main();
+      await app.main().timeout(const Duration(seconds: 30));
 
       // Supabase/Firebase/remote-config initialization and the splash route are
       // real in this test. Pump in bounded increments rather than waiting on
