@@ -36,17 +36,25 @@ void main() {
       // ignore: avoid_print
       print('VSP_E2E: welcome screen found=${find.byType(WelcomeScreen).evaluate().isNotEmpty}');
       expect(find.byType(WelcomeScreen), findsOneWidget);
-      // English is the product default. Exercise the Arabic switch and
-      // restore English before continuing the role/login journey.
-      expect(find.text('Skip'), findsOneWidget);
+      // Device locale or persisted preference may start in Arabic or English.
+      // Verify the language control actually changes the visible skip label,
+      // then normalize to English for the remaining navigation assertions.
       expect(find.byType(WelcomeLanguageButton), findsOneWidget);
+      final initialLanguage = Localizations.localeOf(
+        tester.element(find.byType(WelcomeScreen)),
+      ).languageCode;
+      expect(find.text(initialLanguage == 'ar' ? 'تخطي' : 'Skip'), findsOneWidget);
 
       await tester.tap(find.byType(WelcomeLanguageButton));
       await tester.pump(const Duration(seconds: 1));
-      expect(find.text('تخطي'), findsOneWidget);
+      expect(find.text(initialLanguage == 'ar' ? 'Skip' : 'تخطي'), findsOneWidget);
 
-      await tester.tap(find.byType(WelcomeLanguageButton));
-      await tester.pump(const Duration(seconds: 1));
+      if (initialLanguage == 'ar') {
+        // The first switch already moved the app into English.
+      } else {
+        await tester.tap(find.byType(WelcomeLanguageButton));
+        await tester.pump(const Duration(seconds: 1));
+      }
       expect(find.text('Skip'), findsOneWidget);
 
       await tester.tap(find.text('Skip'));
