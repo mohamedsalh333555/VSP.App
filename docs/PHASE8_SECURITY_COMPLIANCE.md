@@ -102,3 +102,11 @@ A direct GitHub source update was attempted but the execution tool blocked the w
 - Flutter CI run `42033265264` for commit `a83987f1` passed both Analyze and Test. The earlier failing run `42032520519` was corrected by fixing a malformed newline in the static security test.
 - Still required: live two-account and admin authorization tests on staging; static tests and deployed-source inspection are not equivalent to live authorization verification.
 - Android emulator E2E remains failed from run `42028838602`. Production and main were not changed.
+
+## Security verification checkpoint — 2026-11-06
+
+- **Flutter CI SUCCESS**: run `42120695011` at commit `353a23eb`, covering the newly added booking-idempotency source regression contract (`test/booking_idempotency_authorization_contract_test.dart`). Prior intermediate CI runs `42120634642` and `42120658007` were **cancelled by superseding pushes**, not test failures.
+- **Android E2E Smoke SUCCESS**: run `42081295267` at `6a55cb07`. This is a smoke test, not all 24 end-to-end journeys.
+- **Staging read-only function inspection** confirmed `create_booking_atomic` matches both user-scoped idempotency lookup and explicit key-conflict rejection. This is not a live multi-user negative test.
+- **Staging read-only privilege/body inspection**: `admin_set_admin_role_atomic` requires founder-level actor role (or service role), disallows protected-founder and self-role changes, and writes an audit log. `get_admin_metrics` checks administrator role. `activate_vsp_pro` checks admin/co-founder role. No live cross-role tests were performed; SQL body inspection does not prove absence of every exploit.
+- **SEC-02 and SEC-06 remain IN PROGRESS** pending real two-account authorization tests, concurrent booking replay tests, and payment sandbox verification. Production and `main` unchanged.
