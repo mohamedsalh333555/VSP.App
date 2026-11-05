@@ -402,3 +402,15 @@ Source work continued on `uxlp-44-implementation`:
 6. Only after all source work and the above gates are closed, perform one consolidated test pass; then build and verify one test APK.
 
 No final test pass or APK build was intentionally started as part of this source-remediation batch.
+
+
+## Phase 10 — Behavioral UX, conversion and retention
+
+Phase 10 is active and additive. Its task register, analytics contract, experiment gates and delivery status are maintained in:
+
+- [PHASE10_BEHAVIORAL_UX.md](PHASE10_BEHAVIORAL_UX.md)
+- [CONVERSION_ANALYTICS.md](CONVERSION_ANALYTICS.md)
+- [PHASE10_EXPERIMENTS.md](PHASE10_EXPERIMENTS.md)
+- [PHASE10_FINAL_REPORT.md](PHASE10_FINAL_REPORT.md)
+
+No behavioral change may invent social proof, scarcity, pricing, discounts, verification, prizes or financial outcomes. Conversion events must represent authoritative stages and must not weaken the 24 journeys, Phase 8 security controls or Phase 9 reliability work.
