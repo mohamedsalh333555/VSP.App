@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/image_pick_service.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/roster_parser_utils.dart';
@@ -182,6 +184,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final teamId = await TeamRepository().createTeam(teamData);
 
       if (teamId != null && mounted) {
+        unawaited(
+          AnalyticsService.logTeamCreated(sportType: _selectedSport),
+        );
         final messenger = ScaffoldMessenger.of(context);
         final successTextStyle = Theme.of(context)
             .textTheme
