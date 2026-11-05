@@ -71,3 +71,13 @@ Staging read-only SQL privilege inspection:
 An authenticated grant alone is **not** proof that admin-only authorization is enforced; the function body and cross-role behavior still require validation. No SQL permissions were modified. No refunds were triggered.
 
 **Next:** inspect `admin_approve_owner_atomic` and `get_admin_metrics` body authorization; verify owner checkout ownership and server-side price; then run staging negative tests without creating charges.
+
+## SEC-06 finding: checkout status authorization (2026-11-05)
+
+**Severity: P1 pending exploit verification; status: BLOCKED for patch.** Source: `supabase/functions/get_owner_web_checkout_status/index.ts`. The status endpoint currently treats either matching `owner_id` or matching `checkout_email` as sufficient ownership. The latter is contact information, not an authorization principal. A verified user whose email matches contact information supplied for a different owner's checkout may pass the authorization branch. The service-role database read happens before that branch, making the server-side check essential.
+
+**Proposed minimal correction:** restrict non-admin access to `order.owner_id === callerUser.id`; retain the separately verified administrator role check. Do not use `checkout_email` as an authorization factor. Preserve existing payment amount and subscription behavior.
+
+**Test matrix (NOT RUN):** owner reads own order; unrelated authenticated user denied even when order contact email matches their verified email; unrelated user denied with different email; admin allowed; unauthenticated 401; malformed order ID 400; no payment inquiry or subscription mutation for unauthorized users. Confirm deployed staging function matches patched source before declaring DONE.
+
+A direct GitHub source update was attempted but the execution tool blocked the write; **no source fix was committed or deployed**. Do not describe this finding as resolved.
