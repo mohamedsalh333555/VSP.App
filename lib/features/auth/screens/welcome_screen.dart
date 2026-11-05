@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/ui/vsp_ui.dart';
@@ -7,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../widgets/welcome/scale_animated_button.dart';
 import '../widgets/welcome/welcome_language_button.dart';
@@ -27,6 +29,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logOnboardingStarted());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
