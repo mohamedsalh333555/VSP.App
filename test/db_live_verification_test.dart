@@ -72,6 +72,17 @@ void main() {
         expect(config['vsp_1v1_is_open'], isA<bool>());
       });
 
+      test('app startup can read exactly one complete remote config row', () async {
+        // Mirror RemoteConfigService._fetchLatestConfig: no id filter.
+        // This catches an empty response or a duplicate row that would
+        // otherwise crash the app before its first screen is rendered.
+        final config = await client.from('app_config').select().maybeSingle();
+        expect(config, isNotNull,
+            reason: 'App startup requires one publicly readable config row.');
+        expect(config!['id'], 1);
+        expect(config['is_maintenance'], isA<bool>());
+      });
+
       test('anonymous users cannot enumerate user rows', () async {
         final rows = await client.from('users').select('id').limit(1);
         expect(rows, isEmpty);
