@@ -1,5 +1,9 @@
 name: Android E2E Smoke
 
+permissions:
+  contents: read
+  statuses: write
+
 concurrency:
   group: android-e2e-smoke-${{ github.ref }}
   cancel-in-progress: true
@@ -85,6 +89,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Run Android onboarding/login smoke against staging
+        id: android_smoke
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -100,3 +106,23 @@ jobs:
             --dart-define=SUPABASE_URL=https://vtwgqyxglevcsxwdmhop.supabase.co
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PZazWl2p0qR5lsqh6jr83A_cq-ov516
             || (adb logcat -d -t 1200; exit 1)
+
+      - name: Publish Android smoke commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SMOKE_OUTCOME: ${{ steps.android_smoke.outcome }}
+        run: |
+          if [ "$SMOKE_OUTCOME" = "success" ]; then
+            state=success
+            description="Android onboarding/login smoke passed"
+          else
+            state=failure
+            description="Android onboarding/login smoke failed"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="$state" \
+            -f context="android-e2e-smoke" \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          test "$state" = success
