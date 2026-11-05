@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/ui/vsp_ui.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -8,6 +9,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/utils/app_error_handler.dart';
 import '../../../core/repositories/owner_subscription_repository.dart';
+import '../../../core/services/analytics_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// شاشة اشتراك المالكين: استخدام مجاني + Pro المدفوع + تجربة Pro
@@ -30,6 +32,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AnalyticsService.logSubscriptionViewed());
     _loadPlans();
   }
 
