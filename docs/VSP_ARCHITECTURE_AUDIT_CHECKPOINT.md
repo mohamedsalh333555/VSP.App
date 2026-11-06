@@ -115,3 +115,7 @@ These results verify the CI workflows as configured on that commit; they do **no
 ## Complete booking coordinator source guard
 
 Expanded `test/architecture/booking_coordinator_client_scope_test.dart` in commit `9d6ef53eedd655a036770e3479e3084a30a00825` to include `booking_creation_coordinator.dart` and `booking_reconciliation_service.dart`. The five booking coordinator/service files inspected (creation, cancellation, reconciliation, schedule, query) use the injected `_client` fallback accessor and no direct `await Supabase.instance.client.rpc(` calls. This verifies a static source pattern only, not user-role authorization or transactional outcomes. The latest branch CI must pass before the gate can be marked green.
+
+## Seven tournament coordinator client-scope guards
+
+Added `test/architecture/tournament_coordinator_client_scope_test.dart` in commit `9d1a46a28e4c7126f8119b94f217b22c7a15fbc4` after inspecting registration, lifecycle, match, query, roster, fixture, and stats coordinators. Each uses the injected Supabase accessor for direct RPCs; the source-level test prevents future direct `await Supabase.instance.client.rpc(` bypasses in these files. No authorization behavior or payments were executed; latest-head CI is still required.
