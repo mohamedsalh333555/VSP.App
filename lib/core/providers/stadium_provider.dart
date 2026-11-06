@@ -102,6 +102,9 @@ class StadiumProvider with ChangeNotifier {
  _isLoadingMore = false;
  _lastDocument = null;
  _hasMore = true;
+ // A refresh must retry the user's chosen governorate before deciding
+ // whether to fall back nationwide again.
+ _isGeographicFallback = false;
  if (_stadiums.isEmpty) {
  _setLoading(true);
  }
