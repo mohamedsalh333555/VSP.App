@@ -19,6 +19,18 @@ BEGIN
     RAISE EXCEPTION 'No safe challenge replay fixture available';
   END IF;
 
+  -- Privileged invocation without JWT claims must not disclose a booking.
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  v_result := public.create_challenge_booking_atomic(
+    'invalid', '00000000-0000-0000-0000-000000000000',
+    now(), now() + interval '1 hour', 'cash', false,
+    v_booking.idempotency_key
+  );
+  IF v_result->>'error' IS DISTINCT FROM 'IDEMPOTENCY_KEY_COLLISION'
+     OR v_result ? 'booking_id' THEN
+    RAISE EXCEPTION 'Unauthenticated replay guard failed';
+  END IF;
+
   PERFORM set_config('request.jwt.claim.sub', v_other::text, true);
   v_result := public.create_challenge_booking_atomic(
     'invalid', '00000000-0000-0000-0000-000000000000',
