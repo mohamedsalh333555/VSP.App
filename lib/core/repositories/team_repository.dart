@@ -29,6 +29,11 @@ class TeamRepository {
   Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) =>
       _rosterCoordinator.getTeamMemberProfiles(teamId);
 
+  /// Propagates RPC failures so a roster screen can show retry instead of
+  /// incorrectly presenting a network error as an empty team.
+  Future<List<Map<String, String>>> getTeamMemberProfilesStrict(String teamId) =>
+      _rosterCoordinator.getTeamMemberProfilesStrict(teamId);
+
   Future<bool> checkIsTeamOfficial(String teamId) =>
       TeamOpponentService.checkIsTeamOfficial(
         supabase: _supabase,
