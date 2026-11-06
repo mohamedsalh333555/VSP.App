@@ -96,7 +96,7 @@ class StadiumProvider with ChangeNotifier {
  }
  final requestGeneration = isRefresh ? ++_discoveryRequestGeneration : _discoveryRequestGeneration;
  final requestScopeGeneration = _scopeGeneration;
- if ((_isLoading || _isLoadingMore) && !isRefresh) return;
+ if (!isRefresh && (!_hasMore || _isLoading || _isLoadingMore)) return;
 
  if (isRefresh) {
  _isLoadingMore = false;
@@ -398,7 +398,7 @@ class StadiumProvider with ChangeNotifier {
  if (_listeningOwnerId != null) return;
  final requestGeneration = isRefresh ? ++_discoveryRequestGeneration : _discoveryRequestGeneration;
  final requestScopeGeneration = _scopeGeneration;
- if ((_isLoading || _isLoadingMore) && !isRefresh) return;
+ if (!isRefresh && (!_hasMore || _isLoading || _isLoadingMore)) return;
 
  if (isRefresh) {
  _isLoadingMore = false;
