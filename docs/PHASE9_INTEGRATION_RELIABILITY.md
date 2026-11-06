@@ -96,3 +96,9 @@ Read-only `pg_get_functiondef` inspection of Staging `public.create_challenge_bo
 - Flutter CI **SUCCESS** on `2614eacb`, workflow run `42182795631` (earlier superseded runs were cancelled; not failures).
 - Executed a read/write-free PL/pgSQL assertion block on Staging using one existing active challenge booking with a non-null idempotency key. Simulated `auth.uid()` via transaction-local `request.jwt.claim.sub` for a different UUID and for the booking owner. Assertions passed: cross-user replay returned `IDEMPOTENCY_KEY_COLLISION` without `booking_id`; same-user replay returned original `booking_id` and `idempotent=true`.
 - Repeatable test committed at `supabase/tests/challenge_idempotency_replay_staging.sql` (`f470365f`). The SQL test **simulates claims under a privileged SQL session**, so it does not establish real two-account JWT/RLS behavior. No concurrent client requests were executed; concurrent behavior remains **BLOCKED / NOT VERIFIED**. No application rows were modified.
+
+### Release CI gate check — 2026-11-06
+
+- PR #35 is still **Draft**. After adding `pull_request: branches: [main]` to branch Flutter CI (`c99118ab`), GitHub recomputed mergeability as `mergeable=true`; the current `mergeable_state=unstable` reflects pending checks, not an approved release.
+- Current-head `c99118ab` checks started: Flutter CI runs `42222486802` and `42222478726`, Android staging onboarding/login smoke `42222486956`. At inspection all were **in progress**. Do not report them passed.
+- Remaining hard release blockers: 24 journey E2E failures/blocks, real authenticated concurrent booking checks, payment/refund sandbox and production rollback verification. Owner has approved release in principle; keep production untouched until gates pass.
