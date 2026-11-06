@@ -342,22 +342,26 @@ class StadiumRepository {
         case 'priceLowToHigh':
           query = query
               .order('price_per_hour', ascending: true)
-              .order('created_at', ascending: false);
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
           break;
         case 'priceHighToLow':
           query = query
               .order('price_per_hour', ascending: false)
-              .order('created_at', ascending: false);
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
           break;
         case 'topRated':
           query = query
               .order('rating', ascending: false)
-              .order('created_at', ascending: false);
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
           break;
         default:
           query = query
               .order('is_featured', ascending: false)
-              .order('created_at', ascending: false);
+              .order('created_at', ascending: false)
+              .order('id', ascending: true);
       }
 
       final int startIndex = (startAfter is int) ? startAfter : 0;
