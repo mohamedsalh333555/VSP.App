@@ -147,7 +147,11 @@ class BookingCreationCoordinator {
       VSPLogger.i('Atomic booking created: ${created.id}');
       return created;
     } on PostgrestException catch (e) {
-      if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
+      if (e.code == '23P11' ||
+          e.code == '23P01' ||
+          e.code == '23505' ||
+          e.message.toLowerCase().contains('overlapping') ||
+          e.message.toLowerCase().contains('exclude')) {
         throw Exception('عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.');
       }
       rethrow;
