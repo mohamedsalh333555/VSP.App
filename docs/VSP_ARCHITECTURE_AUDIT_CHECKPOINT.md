@@ -84,3 +84,9 @@ Project: staging `vtwgqyxglevcsxwdmhop` (NOT production). Security advisor retur
 A read-only `pg_proc` privilege/definition-pattern check for `activate_vsp_pro`, `admin_approve_championship_atomic`, `cancel_tournament_payment_order_atomic`, `confirm_tournament_order_atomic`, `create_team_with_consent`, `get_tournament_payment_order_status` found all six are `SECURITY DEFINER`, executable by `authenticated` but not by `anon`, and contain the literal `auth.uid()` in their definitions. **This does not prove correct ownership, admin checks, transaction validation, or authorization**, and must not be treated as an access-control pass. Next: inspect each sensitive function's conditions and dependencies and run role-separated negative tests in staging before considering policy changes.
 
 No SQL mutation or production access was performed.
+
+## Expanded source-level RPC guard — 2026-11-06
+
+- `test/architecture/tournament_client_injection_test.dart` now asserts the entire tournament repository has no direct `await Supabase.instance.client.rpc(` bypass; commit `da6978c8e6fb9c060184240599bc78eeaf25662f`.
+- `test/architecture/checkout_client_injection_test.dart` adds the equivalent coordinator-wide guard; commit `73be39cf16153a82a8edafe5e997ddf29b8bfaad`.
+- These are source-level tests, not execution of RPCs or security proof. Current-head CI and E2E results still need verification.
