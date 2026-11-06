@@ -139,7 +139,11 @@ class StadiumProvider with ChangeNotifier {
  } catch (e) {
  debugPrint('Error getting GPS location: $e');
  }
- _discoveryPagePosition = userPosition;
+ if (requestGeneration == _discoveryRequestGeneration &&
+     requestScopeGeneration == _scopeGeneration &&
+     _listeningOwnerId == null) {
+   _discoveryPagePosition = userPosition;
+ }
  }
 
  // Governorate Filter Priority: If a specific governorate is selected by user,
