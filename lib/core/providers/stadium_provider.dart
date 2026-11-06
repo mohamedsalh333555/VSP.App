@@ -149,10 +149,12 @@ class StadiumProvider with ChangeNotifier {
  _hasMore = _activeQuickFilter == null && nearbyStadiums.length >= limit;
  _isGeographicFallback = false;
  } else {
+ // Continue paging the same nationwide dataset when the initial
+ // governorate search fell back; never mix local and fallback offsets.
  final result = await _databaseService.getStadiumsPaginated(
  limit: 10,
  startAfter: _lastDocument,
- governorate: _selectedGovernorate,
+ governorate: _isGeographicFallback ? 'All' : _selectedGovernorate,
  quickFilter: _activeQuickFilter,
  );
 
@@ -178,8 +180,12 @@ class StadiumProvider with ChangeNotifier {
             _stadiums = fallbackStadiums;
             _lastDocument = fallbackResult['lastDoc'];
             _isGeographicFallback = true;
+            // Page exhaustion must be calculated from the fallback response,
+            // not the empty governorate response.
+            _hasMore = fallbackStadiums.length == 10;
           } else {
             _stadiums = [];
+            _hasMore = false;
             _isGeographicFallback = false;
           }
         } else {
@@ -190,8 +196,8 @@ class StadiumProvider with ChangeNotifier {
         _stadiums.addAll(newStadiums);
       }
 
- if (newStadiums.length < 10) {
- _hasMore = false;
+ if (!_isGeographicFallback || !isRefresh) {
+   _hasMore = newStadiums.length == 10;
  }
  }
 
