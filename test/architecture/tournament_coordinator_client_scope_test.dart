@@ -15,7 +15,11 @@ void main() {
       'TournamentMatchCoordinator',
       'TournamentFixtureCoordinator',
     ]) {
-      expect(repository, contains('$coordinator(client: _client'), reason: coordinator);
+      expect(
+        RegExp('$coordinator' r'\\s*\\(\\s*client:\\s*_client').hasMatch(repository),
+        isTrue,
+        reason: coordinator,
+      );
     }
 
     for (final name in [
