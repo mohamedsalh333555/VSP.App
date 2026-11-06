@@ -46,9 +46,8 @@ class TeamRosterCoordinator {
   /// Fetch list of player profiles (id, name, phone, position) for members of a team
   Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) async {
     try {
-      final memberUids = await getTeamMemberUids(teamId);
-      if (memberUids.isEmpty) return [];
-
+      // The server RPC already scopes and resolves the roster. Avoid a
+      // redundant team_members round-trip before every profile lookup.
       final response = await _supabase.rpc(
         'get_team_member_profiles',
         params: {'p_team_id': teamId},
