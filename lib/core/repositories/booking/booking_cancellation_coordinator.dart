@@ -57,7 +57,7 @@ class BookingCancellationCoordinator {
             'p_owner_id': booking.ownerId,
             'p_refund_deposit': false,
           });
-          if (manualResult is Map && manualResult['success'] == false) {
+          if (manualResult is! Map || manualResult['success'] != true) {
             throw Exception(sanitizeCancellationError(
               null,
               manualResult['message']?.toString(),
@@ -115,7 +115,7 @@ class BookingCancellationCoordinator {
               'p_user_id': _supabase.auth.currentUser?.id,
               'p_reason': 'User requested cancellation from app',
             });
-            if (rpcRes is Map && rpcRes['success'] == false) {
+            if (rpcRes is! Map || rpcRes['success'] != true) {
               throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
             }
           }
@@ -125,7 +125,7 @@ class BookingCancellationCoordinator {
             'p_user_id': _supabase.auth.currentUser?.id,
             'p_reason': 'User requested cancellation from app',
           });
-          if (rpcRes is Map && rpcRes['success'] == false) {
+          if (rpcRes is! Map || rpcRes['success'] != true) {
             throw Exception(sanitizeCancellationError(null, rpcRes['message']?.toString()));
           }
         }
