@@ -76,3 +76,11 @@ Run with `flutter test test/architecture/tournament_client_injection_test.dart` 
 - Extended `test/architecture/tournament_client_injection_test.dart` to cover both direct repository RPC entry points (`claimOwnerChampionshipApprovalHomeNotice` and `getTournamentPaymentOrderStatus`) in commit `b604d6daea9bc58527b9ed72d8491da66a0dec8e`.
 - This is static source-level guard coverage, **not** a mock client execution test or a server-side permission audit.
 - CI on earlier commit `64d0d916`: Flutter analyze-test and Android public/auth smoke were still running at last inspection. New head has no verified passing test result yet. Production and main remain untouched.
+
+## Staging Supabase read-only security audit — 2026-11-06
+
+Project: staging `vtwgqyxglevcsxwdmhop` (NOT production). Security advisor returned **4** `security_definer_view` ERROR findings (`public.courts`, `public.tournament_clean_sheets`, `public.owner_subscription_status`, `public.public_subscription_plans`), **4** `extension_in_public` warnings and **198** `authenticated_security_definer_function_executable` warning findings. Counts are advisor notices, **not** confirmed exploit counts. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view and https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable.
+
+A read-only `pg_proc` privilege/definition-pattern check for `activate_vsp_pro`, `admin_approve_championship_atomic`, `cancel_tournament_payment_order_atomic`, `confirm_tournament_order_atomic`, `create_team_with_consent`, `get_tournament_payment_order_status` found all six are `SECURITY DEFINER`, executable by `authenticated` but not by `anon`, and contain the literal `auth.uid()` in their definitions. **This does not prove correct ownership, admin checks, transaction validation, or authorization**, and must not be treated as an access-control pass. Next: inspect each sensitive function's conditions and dependencies and run role-separated negative tests in staging before considering policy changes.
+
+No SQL mutation or production access was performed.
