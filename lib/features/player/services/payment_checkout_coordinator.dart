@@ -9,14 +9,16 @@ import 'payment_checkout_service.dart';
 /// for the payment checkout screen.
 class PaymentCheckoutCoordinator {
   SupabaseBookingRepository? _bookingRepo;
+  final SupabaseClient? _client;
   Timer? _countdownTimer;
   Timer? _webhookTimeoutTimer;
   Timer? _fallbackPollingTimer;
   StreamSubscription? _bookingSubscription;
   int _pollingGeneration = 0;
 
-  PaymentCheckoutCoordinator({SupabaseBookingRepository? bookingRepo})
-      : _bookingRepo = bookingRepo;
+  PaymentCheckoutCoordinator({SupabaseBookingRepository? bookingRepo, SupabaseClient? client})
+      : _bookingRepo = bookingRepo,
+        _client = client;
 
   @visibleForTesting
   SupabaseBookingRepository get bookingRepo => _bookingRepo ??= SupabaseBookingRepository();
@@ -176,7 +178,7 @@ class PaymentCheckoutCoordinator {
       final orderReference = paymentOrderReference;
       if (orderReference != null && orderReference.isNotEmpty) {
         try {
-          await Supabase.instance.client.rpc(
+          await (_client ?? Supabase.instance.client).rpc(
             'cancel_tournament_payment_order_atomic',
             params: {'p_order_reference': orderReference},
           );
