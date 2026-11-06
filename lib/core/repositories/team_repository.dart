@@ -12,6 +12,10 @@ class TeamRepository {
   SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   late final TeamRosterCoordinator _rosterCoordinator;
 
+  /// Invitations that failed after the team was successfully created.
+  /// Read immediately after createTeam on the same repository instance.
+  final List<String> failedInvitationUserIds = <String>[];
+
   TeamRepository({
     SupabaseClient? client,
     TeamRosterCoordinator? rosterCoordinator,
@@ -124,6 +128,7 @@ class TeamRepository {
  }
 
  Future<String?> createTeam(Map<String, dynamic> data) async {
+  failedInvitationUserIds.clear();
   final memberUids = List<String>.from((data['memberUids'] as List? ?? []).map((e) => e.toString()).where((e) => !e.startsWith('guest_')));
   final pgData = TeamPayloadBuilder.buildCreatePayload(data);
   final captainId = _supabase.auth.currentUser?.id;
@@ -144,6 +149,7 @@ class TeamRepository {
       try {
         await inviteTeamMember(teamId, userId);
       } catch (error) {
+        failedInvitationUserIds.add(userId);
         debugPrint('Team created, but invitation to $userId failed: $error');
       }
     }
