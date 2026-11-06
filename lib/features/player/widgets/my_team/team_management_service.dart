@@ -14,7 +14,7 @@ class TeamManagementService {
     String? logoUrl,
     required List<UserModel> members,
   }) {
-    final List<String> memberUids = [user.uid, ...members.map((m) => m.uid)];
+    final List<String> memberUids = [user.uid, ...members.map((m) => m.uid).where((id) => id != user.uid).toSet()];
     final List<String> playerImages = [
       user.profileImageUrl ?? '',
       ...members.map((m) => m.profileImageUrl ?? ''),
