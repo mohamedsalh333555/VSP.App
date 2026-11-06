@@ -131,3 +131,7 @@ Corrected Dart raw-string regex escaping in `test/architecture/tournament_coordi
 ## Booking coordinator client propagation assertions
 
 Strengthened `test/architecture/booking_coordinator_client_scope_test.dart` in commit `de6ed3848b81c663f5e1ae541898d5221dfb14cc`: all five booking coordinator/service constructor call sites must receive `client: _client`, including multiline formatting. Verified against the current booking repository source that all five patterns match. This remains static wiring verification, not authorization or end-to-end behavior. CI on current head is not yet confirmed.
+
+## Verified CI on 85da709 (2026-11-06)
+
+GitHub Actions **Flutter CI** run [42273541284](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42273541284), job `128083947318`, completed **success**. Explicit steps `Analyze`, `Architecture regression gate`, `Test`, and `Publish Flutter CI commit status` each completed successfully. **Android E2E Smoke** run [42273541307](https://github.com/mohamedsalh333555/VSP.App/actions/runs/42273541307), job `128083968326`, completed **success**, including `Run Android onboarding/login smoke against staging`. This verifies commit `85da709c691dcb79908bcec84586a0a158d2561a`, not any future commit. These checks do not establish full authorization/payment/booking E2E release readiness.
