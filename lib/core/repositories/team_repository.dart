@@ -59,7 +59,9 @@ class TeamRepository {
        },
      );
      if (response is! Map || response['success'] != true) {
-       throw Exception(response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة');
+       throw Exception(response is Map
+           ? (response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة')
+           : 'استجابة غير متوقعة عند تحديث نتيجة المباراة');
      }
    } catch (e) {
      debugPrint('Error updating match result through atomic RPC: $e');
