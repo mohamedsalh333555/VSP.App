@@ -146,6 +146,13 @@ class StadiumProvider with ChangeNotifier {
  }
  }
 
+ // GPS permission/location lookups are asynchronous. A newer refresh, changed
+ // governorate, or owner scope can invalidate this request while they run.
+ // Do not send a superseded discovery query to Supabase.
+ if (requestGeneration != _discoveryRequestGeneration ||
+     requestScopeGeneration != _scopeGeneration ||
+     _listeningOwnerId != null) return;
+
  // Governorate Filter Priority: If a specific governorate is selected by user,
  // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
  if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
