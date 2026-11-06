@@ -7,7 +7,7 @@ void main() {
     final source = File(
       'lib/core/repositories/team/team_roster_coordinator.dart',
     ).readAsStringSync();
-    final start = source.indexOf('Future<List<Map<String, String>>> getTeamMemberProfiles(');
+    final start = source.indexOf('Future<List<Map<String, String>>> getTeamMemberProfilesStrict(');
     final end = source.indexOf('Future<void> addMemberToTeam(', start);
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
