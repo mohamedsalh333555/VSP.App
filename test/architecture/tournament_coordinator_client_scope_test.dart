@@ -45,6 +45,12 @@ void main() {
         reason: '$path should use the scoped client for RPC calls.',
       );
       expect(
+        RegExp(r'\bSupabase\.instance\.client\s*\.\s*rpc\s*\(')
+            .hasMatch(source),
+        isFalse,
+        reason: '$path must not invoke RPCs on the global client.',
+      );
+      expect(
         source,
         isNot(contains('await Supabase.instance.client.rpc(')),
         reason: '$path must not bypass dependency injection.',
