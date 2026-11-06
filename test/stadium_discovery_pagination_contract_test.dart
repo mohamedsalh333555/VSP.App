@@ -71,6 +71,23 @@ void main() {
     expect(source, contains('_discoveryPagePosition = null;'));
   });
 
+  test('superseded GPS requests never start a stadium query', () {
+    final source =
+        File('lib/core/providers/stadium_provider.dart').readAsStringSync();
+    final discovery = source.substring(
+      source.indexOf('Future<void> fetchStadiums({'),
+      source.indexOf('Future<void> fetchStadiumsWithParams({'),
+    );
+    final guard = discovery.indexOf(
+      '// Do not send a superseded discovery query to Supabase.',
+    );
+    final nearby = discovery.indexOf('_databaseService.fetchNearbyStadiums(');
+    final paginated = discovery.indexOf('_databaseService.getStadiumsPaginated(');
+    expect(guard, greaterThan(0));
+    expect(nearby, greaterThan(guard));
+    expect(paginated, greaterThan(guard));
+  });
+
   test('stadium discovery error exposes a real retry callback', () {
     final source = File(
       'lib/features/player/widgets/home/home_stadiums_section.dart',
