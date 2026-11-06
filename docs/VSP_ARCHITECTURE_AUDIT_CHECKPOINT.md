@@ -51,3 +51,10 @@ The change above is a small dependency-injection consistency fix, not a payment-
 Added `test/architecture/tournament_client_injection_test.dart` in commit `fa32aa7f8ae6a8bb7ae5a1b1629d4c9a2fe30c02`. This source-level regression test checks that tournament payment status RPC respects the repository's injected Supabase client and does not bypass it with a direct global client call. **Not yet executed**; it does not validate payment transactions, RLS, webhooks or live behavior.
 
 Run with `flutter test test/architecture/tournament_client_injection_test.dart` and then full current-head CI before treating this guard as passing.
+
+## Checkout cancellation SSOT follow-up — 2026-11-06
+
+- `lib/features/player/services/payment_checkout_coordinator.dart` previously invoked `Supabase.instance.client.rpc('cancel_tournament_payment_order_atomic', ...)` directly, despite being a coordinator with an injectable booking repository. Added optional `SupabaseClient? client` constructor dependency and used the injected client when supplied, retaining the global client fallback for existing call sites. Commit `8cb2d92812847b06156af10fe67d32606a1a6b61`.
+- Added source-level guard `test/architecture/checkout_client_injection_test.dart` in commit `66048a85ba37667213e501156c4a17019d708bec`.
+- Existing `TournamentRegistrationCoordinator` and `TournamentLifecycleCoordinator` already expose `_supabase => _client ?? Supabase.instance.client` and use it for their RPCs. This targeted scan did not identify the same bypass there.
+- CI for earlier commit `1dc41c71`: Flutter analyze-test was still in progress at last check; Android E2E smoke job was **cancelled**, not passed. The newer commits require fresh current-head CI; neither new architecture guard has been observed passing.
