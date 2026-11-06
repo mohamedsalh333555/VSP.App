@@ -46,6 +46,21 @@ void main() {
     );
   });
 
+  test('explicit governorate queries bypass unnecessary GPS checks', () {
+    final source =
+        File('lib/core/providers/stadium_provider.dart').readAsStringSync();
+    final discovery = source.substring(
+      source.indexOf('Future<void> fetchStadiums({'),
+      source.indexOf('Future<void> fetchStadiumsWithParams({'),
+    );
+    final gpsGuard = discovery.indexOf(
+      'if (_selectedGovernorate == null || _selectedGovernorate!.isEmpty) {',
+    );
+    final gpsServiceCheck = discovery.indexOf('Geolocator.isLocationServiceEnabled()');
+    expect(gpsGuard, greaterThanOrEqualTo(0));
+    expect(gpsServiceCheck, greaterThan(gpsGuard));
+  });
+
   test('stadium discovery error exposes a real retry callback', () {
     final source = File(
       'lib/features/player/widgets/home/home_stadiums_section.dart',
