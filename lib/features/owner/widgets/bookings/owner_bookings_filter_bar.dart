@@ -1,3 +1,4 @@
+import '../../../../core/ui/components/vsp_filter_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -37,36 +38,16 @@ class OwnerBookingsFilterBar extends StatelessWidget {
               Expanded(
                 child: stadiums.isEmpty
                     ? const SizedBox.shrink()
-                    : Container(
-                        constraints: const BoxConstraints(minHeight: 48),
-                        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-                        decoration: BoxDecoration(
-                          color: VSPColors.surface,
-                          borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: VSPColors.divider, width: 0.5),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Stadium>(
-                            value: selectedStadium,
-                            dropdownColor: VSPColors.surface,
-                            icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
-                            isExpanded: true,
-                            items: stadiums.map((s) => DropdownMenuItem(
-                              value: s,
-                              child: Text(
-                                s.name,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: VSPColors.textPrimary,
-                                      fontSize: 13,
-                                    ),
-                              ),
-                            )).toList(),
-                            onChanged: (val) {
-                              if (val != null) onStadiumChanged(val);
-                            },
-                          ),
-                        ),
+                    : VSPFilterDropdown<Stadium>(
+                        value: selectedStadium != null &&
+                                stadiums.contains(selectedStadium)
+                            ? selectedStadium!
+                            : stadiums.first,
+                        items: stadiums,
+                        labelFor: (stadium) => stadium.name,
+                        onChanged: (stadium) {
+                          if (stadium != null) onStadiumChanged(stadium);
+                        },
                       ),
               ),
               const SizedBox(width: 12),
@@ -129,11 +110,11 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                     width: 60,
                     margin: const EdgeInsetsDirectional.only(end: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? VSPColors.accent : VSPColors.transparent,
+                      color: isSelected ? VSPColors.surfaceAlt : VSPColors.transparent,
                       borderRadius: BorderRadius.circular(VSPRadius.md),
                       border: Border.all(
                         color: isSelected
-                            ? VSPColors.accent
+                            ? VSPColors.textSecondary
                             : VSPColors.divider,
                         width: 1.5,
                       ),
@@ -145,7 +126,7 @@ class OwnerBookingsFilterBar extends StatelessWidget {
                           '${date.day}',
                           style: TextStyle(
                             color: isSelected
-                                ? VSPColors.background
+                                ? VSPColors.textPrimary
                                 : VSPColors.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
