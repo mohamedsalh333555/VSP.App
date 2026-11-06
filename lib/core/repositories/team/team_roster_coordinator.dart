@@ -29,11 +29,17 @@ class TeamRosterCoordinator {
     if (memberUids.isEmpty) return [];
     final response = await _supabase
         .from('user_public_profiles')
-        .select('profile_image_url')
+        .select('id, profile_image_url')
         .inFilter('id', memberUids);
-    return (response as List)
-        .map((row) => row['profile_image_url']?.toString() ?? '')
-        .toList();
+    // PostgREST does not guarantee the order of rows returned by IN.
+    // Keep images aligned with the team's member IDs, including missing
+    // profiles, so avatars cannot be displayed for the wrong player.
+    final imageByUserId = <String, String>{
+      for (final row in response as List)
+        if (row['id'] != null)
+          row['id'].toString(): row['profile_image_url']?.toString() ?? '',
+    };
+    return [for (final uid in memberUids) imageByUserId[uid] ?? ''];
   }
 
   /// Fetch list of player profiles (id, name, phone, position) for members of a team
