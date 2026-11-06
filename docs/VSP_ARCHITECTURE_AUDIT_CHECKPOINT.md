@@ -58,3 +58,9 @@ Run with `flutter test test/architecture/tournament_client_injection_test.dart` 
 - Added source-level guard `test/architecture/checkout_client_injection_test.dart` in commit `66048a85ba37667213e501156c4a17019d708bec`.
 - Existing `TournamentRegistrationCoordinator` and `TournamentLifecycleCoordinator` already expose `_supabase => _client ?? Supabase.instance.client` and use it for their RPCs. This targeted scan did not identify the same bypass there.
 - CI for earlier commit `1dc41c71`: Flutter analyze-test was still in progress at last check; Android E2E smoke job was **cancelled**, not passed. The newer commits require fresh current-head CI; neither new architecture guard has been observed passing.
+
+## CI and architecture guard follow-up
+
+- GitHub Actions on commit `0b8c413ca0da406b9dbdf42b98059db1e3985e4f`: Flutter CI run `42270406177` was in progress and Android E2E run `42270406173` was queued at inspection. These are **not** passing results and predate the newest test edit.
+- Strengthened `test/architecture/checkout_client_injection_test.dart` in commit `76802d5d98641044b093f17ce2563d2b458bdb33`: check injectable constructor, assigned client, and cancellation RPC within the method scope rather than searching the entire file. Source-level test only, not a simulated server cancellation.
+- Release gate remains closed pending completed current-head CI, E2E, and server-side RLS/RPC permission verification.
