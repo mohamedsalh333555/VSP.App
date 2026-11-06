@@ -14,10 +14,13 @@ class TeamManagementService {
     String? logoUrl,
     required List<UserModel> members,
   }) {
-    final List<String> memberUids = [user.uid, ...members.map((m) => m.uid).where((id) => id != user.uid).toSet()];
+    // Deduplicate members before deriving both parallel roster arrays.
+    final seen = <String>{user.uid};
+    final uniqueMembers = members.where((member) => seen.add(member.uid)).toList();
+    final List<String> memberUids = [user.uid, ...uniqueMembers.map((m) => m.uid)];
     final List<String> playerImages = [
       user.profileImageUrl ?? '',
-      ...members.map((m) => m.profileImageUrl ?? ''),
+      ...uniqueMembers.map((m) => m.profileImageUrl ?? ''),
     ];
 
     return {
@@ -49,13 +52,18 @@ class TeamManagementService {
     String? logoUrl,
     required List<UserModel> members,
   }) {
+    final captainUid = existingTeam.memberUids.isNotEmpty
+        ? existingTeam.memberUids.first
+        : (user?.uid ?? '');
+    final seen = <String>{captainUid};
+    final uniqueMembers = members.where((member) => seen.add(member.uid)).toList();
     final List<String> memberUids = [
-      existingTeam.memberUids.isNotEmpty ? existingTeam.memberUids.first : (user?.uid ?? ''),
-      ...members.map((m) => m.uid),
+      captainUid,
+      ...uniqueMembers.map((m) => m.uid),
     ];
     final List<String> playerImages = [
       user?.profileImageUrl ?? (existingTeam.playerImages.isNotEmpty ? existingTeam.playerImages.first : ''),
-      ...members.map((m) => m.profileImageUrl ?? ''),
+      ...uniqueMembers.map((m) => m.profileImageUrl ?? ''),
     ];
 
     return {
