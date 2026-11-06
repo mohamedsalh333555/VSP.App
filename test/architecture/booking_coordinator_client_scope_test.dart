@@ -15,9 +15,10 @@ void main() {
       'BookingQueryCoordinator',
     ]) {
       expect(
-        repository,
-        contains('$coordinator('),
-        reason: '$coordinator must be wired by the booking repository.',
+        RegExp('$coordinator' r'\s*\(\s*client:\s*_client')
+            .hasMatch(repository),
+        isTrue,
+        reason: '$coordinator must receive the repository client.',
       );
     }
 
