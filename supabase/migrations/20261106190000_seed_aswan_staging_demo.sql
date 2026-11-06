@@ -3,7 +3,7 @@
 -- Password hashes are random and discarded; accounts cannot be signed into.
 DO $seed$
 DECLARE
- i integer; j integer; uid uuid; tid uuid; oid uuid; sid uuid; tournament_id uuid;
+ i integer; j integer; uid uuid; tid uuid; oid uuid; sid uuid; v_tournament_id uuid;
  home_id uuid; away_id uuid; booking_id uuid; home_goals integer; away_goals integer;
  home_name text; away_name text;
  cities text[] := ARRAY['Aswan','Kom Ombo','Edfu','Daraw','Nasr Al Nuba'];
@@ -63,19 +63,19 @@ DECLARE
    ON CONFLICT (team_id,user_id) DO NOTHING;
   END LOOP;
  END LOOP;
- SELECT id INTO tournament_id FROM public.vsp_1v1_tournaments
+ SELECT id INTO v_tournament_id FROM public.vsp_1v1_tournaments
  WHERE name='[DEMO/STAGING] بطولة أسوان 1 ضد 1' AND governorate='Aswan' LIMIT 1;
- IF tournament_id IS NULL THEN
+ IF v_tournament_id IS NULL THEN
   INSERT INTO public.vsp_1v1_tournaments(name,target_player_count,status,governorate,entry_fee,prize_pool,prize_amount)
   VALUES('[DEMO/STAGING] بطولة أسوان 1 ضد 1',16,'draft','Aswan',0,0,0)
-  RETURNING id INTO tournament_id;
+  RETURNING id INTO v_tournament_id;
  END IF;
  FOR i IN 1..16 LOOP
   uid := md5('vsp-aswan-demo-user-'||i)::uuid;
   IF NOT EXISTS(SELECT 1 FROM public.vsp_1v1_tournament_players p
-    WHERE p.tournament_id=tournament_id AND p.user_id=uid) THEN
+    WHERE p.tournament_id=v_tournament_id AND p.user_id=uid) THEN
    INSERT INTO public.vsp_1v1_tournament_players(tournament_id,user_id,player_name,payment_status,paid_amount)
-   VALUES(tournament_id,uid,'[DEMO] لاعب أسوان '||lpad(i::text,3,'0'),'unpaid',0);
+   VALUES(v_tournament_id,uid,'[DEMO] لاعب أسوان '||lpad(i::text,3,'0'),'unpaid',0);
   END IF;
  END LOOP;
  -- Simulated completed matches; no paid orders, no payment gateway operations.
