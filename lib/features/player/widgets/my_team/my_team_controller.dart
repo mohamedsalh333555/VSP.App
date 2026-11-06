@@ -169,7 +169,9 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
         members: teamMembers,
       );
 
-      final teamId = await TeamRepository().createTeam(payload);
+      final repository = TeamRepository();
+      final teamId = await repository.createTeam(payload);
+      final failedInvitations = repository.failedInvitationUserIds.length;
 
       if (teamId != null && mounted) {
         var refreshFailed = false;
@@ -184,13 +186,19 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                refreshFailed
+                failedInvitations > 0
                     ? (isArabic
-                        ? 'تم إنشاء الفريق، لكن تعذر تحديث العرض. أعد فتح الصفحة لرؤية الفريق.'
-                        : 'Team created, but the view could not refresh. Reopen the page to see it.')
-                    : l10n.teamCreatedSuccess,
+                        ? 'تم إنشاء الفريق، لكن فشل إرسال $failedInvitations دعوة. افتح الفريق وأعد إرسال الدعوات.'
+                        : 'Team created, but $failedInvitations invitation(s) failed. Open the team and resend them.')
+                    : refreshFailed
+                        ? (isArabic
+                            ? 'تم إنشاء الفريق، لكن تعذر تحديث العرض. أعد فتح الصفحة لرؤية الفريق.'
+                            : 'Team created, but the view could not refresh. Reopen the page to see it.')
+                        : l10n.teamCreatedSuccess,
               ),
-              backgroundColor: refreshFailed ? VSPColors.warning : VSPColors.accent,
+              backgroundColor: (refreshFailed || failedInvitations > 0)
+                  ? VSPColors.warning
+                  : VSPColors.accent,
             ),
           );
         }
