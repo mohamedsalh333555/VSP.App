@@ -11,6 +11,11 @@ void main() {
     expect(source, contains('final SupabaseClient? _client;'));
     expect(
       source,
+      isNot(contains('await Supabase.instance.client.rpc(')),
+      reason: 'Checkout coordinator RPCs must respect client injection.',
+    );
+    expect(
+      source,
       contains('SupabaseClient? client'),
       reason: 'Tests must be able to supply a scoped Supabase client.',
     );
