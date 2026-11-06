@@ -22,6 +22,8 @@ void main() {
     }
 
     for (final path in [
+      'lib/core/repositories/booking/booking_creation_coordinator.dart',
+      'lib/core/repositories/booking/booking_reconciliation_service.dart',
       'lib/core/repositories/booking/booking_cancellation_coordinator.dart',
       'lib/core/repositories/booking/booking_schedule_coordinator.dart',
       'lib/core/repositories/booking/booking_query_coordinator.dart',
