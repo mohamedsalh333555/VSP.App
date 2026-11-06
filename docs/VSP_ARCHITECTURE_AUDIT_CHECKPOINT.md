@@ -64,3 +64,9 @@ Run with `flutter test test/architecture/tournament_client_injection_test.dart` 
 - GitHub Actions on commit `0b8c413ca0da406b9dbdf42b98059db1e3985e4f`: Flutter CI run `42270406177` was in progress and Android E2E run `42270406173` was queued at inspection. These are **not** passing results and predate the newest test edit.
 - Strengthened `test/architecture/checkout_client_injection_test.dart` in commit `76802d5d98641044b093f17ce2563d2b458bdb33`: check injectable constructor, assigned client, and cancellation RPC within the method scope rather than searching the entire file. Source-level test only, not a simulated server cancellation.
 - Release gate remains closed pending completed current-head CI, E2E, and server-side RLS/RPC permission verification.
+
+## Canonical tournament client accessor
+
+- `lib/core/repositories/tournament_repository.dart`: introduced `SupabaseClient get _supabase => _client ?? Supabase.instance.client;` and routed both direct RPC calls through it. Commit `066c45eb6a13ec5b533073e864fe1571038edf2a`.
+- Updated `test/architecture/tournament_client_injection_test.dart` to guard the shared accessor and payment-status call. Commit `fe07a9d71a602312d7a21f3860a155759d04dd23`.
+- The prior CI run for `ba0427ea` had both Flutter CI and Android E2E in progress when checked; it predates these changes. Current HEAD requires new CI evidence. No runtime test result claimed.
