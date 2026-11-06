@@ -21,7 +21,7 @@ class VSPSegmentedControl extends StatelessWidget {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return LayoutBuilder(
-      builder: (context, constraints) {
+      builder: (context, _) {
         final scale = MediaQuery.textScalerOf(context);
         final height = scale.scale(48).clamp(48.0, 80.0).toDouble();
 
