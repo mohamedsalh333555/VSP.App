@@ -40,6 +40,8 @@ jobs:
         run: test -s lib/firebase_options.dart
       - name: Analyze
         run: flutter analyze --no-fatal-infos
+      - name: Architecture regression gate
+        run: flutter test test/architecture
       - name: Test
         run: flutter test --coverage
 
