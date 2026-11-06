@@ -45,3 +45,9 @@ This file is an audit checkpoint, not evidence of complete architectural complia
 ### Release boundary
 
 The change above is a small dependency-injection consistency fix, not a payment-rule change. No current-head analyzer, test suite, live payment test or production release was run as part of this checkpoint. Do not treat the fix as a production acceptance pass.
+
+## Automated architecture guard — 2026-11-06
+
+Added `test/architecture/tournament_client_injection_test.dart` in commit `fa32aa7f8ae6a8bb7ae5a1b1629d4c9a2fe30c02`. This source-level regression test checks that tournament payment status RPC respects the repository's injected Supabase client and does not bypass it with a direct global client call. **Not yet executed**; it does not validate payment transactions, RLS, webhooks or live behavior.
+
+Run with `flutter test test/architecture/tournament_client_injection_test.dart` and then full current-head CI before treating this guard as passing.
