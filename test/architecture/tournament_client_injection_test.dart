@@ -14,6 +14,8 @@ void main() {
       ),
     );
 
+    expect(source, isNot(contains('await Supabase.instance.client.rpc(')));
+
     for (final methodName in [
       'claimOwnerChampionshipApprovalHomeNotice',
       'getTournamentPaymentOrderStatus',
