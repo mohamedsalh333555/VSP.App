@@ -88,7 +88,8 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
                     itemCount: invitations.length,
                     itemBuilder: (context, index) {
                       final invitation = invitations[index];
-                      final id = invitation['id'].toString();
+                      final id = invitation['id']?.toString().trim();
+                      final hasValidId = id != null && id.isNotEmpty && id != 'null';
                       return ListTile(
                         title: Text(isArabic ? 'دعوة للانضمام إلى فريق' : 'Invitation to join a team'),
                         subtitle: Text(
@@ -100,11 +101,11 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
                           spacing: 4,
                           children: [
                             TextButton(
-                              onPressed: _busyId == null ? () => _respond(id, false) : null,
+                              onPressed: _busyId == null && hasValidId ? () => _respond(id, false) : null,
                               child: Text(isArabic ? 'رفض' : 'Decline'),
                             ),
                             FilledButton(
-                              onPressed: _busyId == null ? () => _respond(id, true) : null,
+                              onPressed: _busyId == null && hasValidId ? () => _respond(id, true) : null,
                               child: Text(isArabic ? 'قبول' : 'Accept'),
                             ),
                           ],
