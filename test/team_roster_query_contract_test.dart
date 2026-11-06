@@ -17,4 +17,26 @@ void main() {
     expect(method, isNot(contains('getTeamMemberUids(teamId)')));
     expect(method, isNot(contains(".from('team_members')")));
   });
+
+  test('strict roster failures propagate while legacy lookup remains compatible', () {
+    final source = File(
+      'lib/core/repositories/team/team_roster_coordinator.dart',
+    ).readAsStringSync();
+    final wrapperStart = source.indexOf(
+      'Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId)',
+    );
+    final strictStart = source.indexOf(
+      'Future<List<Map<String, String>>> getTeamMemberProfilesStrict(String teamId)',
+    );
+    final nextMethod = source.indexOf('Future<void> addMemberToTeam(', strictStart);
+    expect(wrapperStart, greaterThanOrEqualTo(0));
+    expect(strictStart, greaterThan(wrapperStart));
+    expect(nextMethod, greaterThan(strictStart));
+    final wrapper = source.substring(wrapperStart, strictStart);
+    final strict = source.substring(strictStart, nextMethod);
+    expect(wrapper, contains('await getTeamMemberProfilesStrict(teamId)'));
+    expect(wrapper, contains('catch (e)'));
+    expect(strict, isNot(contains('catch (e)')));
+    expect(strict, contains("'get_team_member_profiles'"));
+  });
 }
