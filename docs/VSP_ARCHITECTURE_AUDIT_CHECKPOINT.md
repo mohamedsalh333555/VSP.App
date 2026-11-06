@@ -20,3 +20,14 @@ Branch: uxlp-44-implementation. Scope: audit only; no production deployment.
 5. Keep PR #35 and release gates blocked until current-head CI, critical E2E and rollback evidence pass.
 
 This file is an audit checkpoint, not evidence of complete architectural compliance.
+
+## Source tracing checkpoint — 2026-11-06
+
+| Domain | Entry point | Shared authority found | Remaining verification |
+|---|---|---|---|
+| Booking create/cancel | `lib/core/providers/booking_provider.dart` | `SupabaseBookingRepository` via injected repository; `createBooking`, `cancelBooking` | Trace RPC/transaction and server-side occupancy/idempotency; compare all alternate call sites |
+| Booking sync | `lib/core/providers/booking/booking_sync_coordinator.dart` | Shared `BookingSyncCoordinator` for user/owner refresh and subscription handling | Verify scope changes, stale events and confirmed state precedence in runtime tests |
+| Team creation/invites | `lib/core/repositories/team_repository.dart` | `create_team_with_consent`, `invite_team_member`, invitation response RPC and `team_membership_invitations` | Verify server policies, RLS, invitation replay, all screens use canonical repository |
+| Team results | `lib/core/repositories/team_repository.dart` | RPC invoked by `updateMatchResult` | Verify captain confirmation and authoritative standings recalculation before any refactor |
+
+**Classification:** These are established shared entry points, not proof that every call site uses them. No duplicate or unsafe-client-authority finding is yet confirmed by this targeted trace. Do not change financial, booking or competition semantics based only on these observations.
