@@ -1,3 +1,4 @@
+import '../../../core/ui/components/vsp_filter_dropdown.dart';
 import '../../../core/ui/components/vsp_segmented_control.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -172,54 +173,11 @@ class ChampionScreenState extends State<ChampionScreen>
   }) {
     final effectiveValue = items.contains(value) ? value : items.first;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      height: 48,
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: effectiveValue,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
-          dropdownColor: VSPColors.surface,
-          isExpanded: true,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-          onChanged: onChanged,
-          selectedItemBuilder: (BuildContext context) {
-            return items.map<Widget>((String item) {
-              return Container(
-                alignment: AlignmentDirectional.centerStart,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    championTranslateItem(context, item, isSport: isSport),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                  ),
-                ),
-              );
-            }).toList();
-          },
-          items: items.map<DropdownMenuItem<String>>((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                championTranslateItem(context, item, isSport: isSport),
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.white, fontSize: 13),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
+    return VSPFilterDropdown<String>(
+      value: effectiveValue,
+      items: items,
+      labelFor: (item) => championTranslateItem(context, item, isSport: isSport),
+      onChanged: onChanged,
     );
   }
 }
