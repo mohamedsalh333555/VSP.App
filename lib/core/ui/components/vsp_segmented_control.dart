@@ -22,10 +22,6 @@ class VSPSegmentedControl extends StatelessWidget {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final availableWidth = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : MediaQuery.sizeOf(context).width - 32;
-        final tabWidth = (availableWidth - 6) / labels.length;
         final scale = MediaQuery.textScalerOf(context);
         final height = scale.scale(48).clamp(48.0, 80.0).toDouble();
 
@@ -41,8 +37,7 @@ class VSPSegmentedControl extends StatelessWidget {
             child: Row(
               children: List.generate(labels.length, (index) {
                 final selected = index == selectedIndex;
-                return SizedBox(
-                  width: tabWidth,
+                return Expanded(
                   child: Semantics(
                     button: true,
                     selected: selected,
