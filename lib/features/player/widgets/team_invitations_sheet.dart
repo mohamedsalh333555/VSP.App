@@ -91,7 +91,11 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
                       final id = invitation['id'].toString();
                       return ListTile(
                         title: Text(isArabic ? 'دعوة للانضمام إلى فريق' : 'Invitation to join a team'),
-                        subtitle: Text(invitation['team_id'].toString()),
+                        subtitle: Text(
+                          (invitation['team_name']?.toString().trim().isNotEmpty ?? false)
+                              ? invitation['team_name'].toString()
+                              : (isArabic ? 'فريق غير متاح' : 'Team unavailable'),
+                        ),
                         trailing: Wrap(
                           spacing: 4,
                           children: [
