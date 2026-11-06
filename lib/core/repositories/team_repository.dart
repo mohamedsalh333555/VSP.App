@@ -239,6 +239,50 @@ class TeamRepository {
   @Deprecated('Use lookupChallengeCode or team ID instead of captain phone')
   Future<Team?> getTeamByCaptainPhone(String phone) async => null;
 
+  /// Request consent before adding a registered player to a team.
+  Future<String> inviteTeamMember(String teamId, String userId) async {
+    final response = await _supabase.rpc(
+      'invite_team_member',
+      params: {'p_team_id': teamId, 'p_user_id': userId},
+    );
+    if (response is! Map || response['success'] != true) {
+      throw StateError(
+        response is Map ? (response['error']?.toString() ?? 'Invitation failed') : 'Invitation failed',
+      );
+    }
+    return response['invitation_id'].toString();
+  }
+
+  /// Only the recipient can accept or decline a pending invitation.
+  Future<void> respondToTeamInvitation(String invitationId, {required bool accept}) async {
+    final response = await _supabase.rpc(
+      'respond_team_membership_invitation',
+      params: {'p_invitation_id': invitationId, 'p_accept': accept},
+    );
+    if (response is! Map || response['success'] != true) {
+      throw StateError(
+        response is Map ? (response['error']?.toString() ?? 'Invitation response failed') : 'Invitation response failed',
+      );
+    }
+  }
+
+  /// RLS limits these rows to invitations addressed to the signed-in player.
+  Future<List<Map<String, dynamic>>> getPendingTeamInvitations(String userId) async {
+    if (_supabase.auth.currentUser?.id != userId) {
+      throw StateError('Cannot read invitations for another user');
+    }
+    final response = await _supabase
+        .from('team_membership_invitations')
+        .select('id, team_id, invited_by, created_at, expires_at')
+        .eq('invited_user_id', userId)
+        .eq('status', 'pending')
+        .gt('expires_at', DateTime.now().toUtc().toIso8601String())
+        .order('created_at', ascending: false);
+    return (response as List)
+        .map((row) => Map<String, dynamic>.from(row as Map))
+        .toList();
+  }
+
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) =>
       _rosterCoordinator.addMemberToTeam(teamId, userId, imageUrl);
 
