@@ -7,6 +7,8 @@ void main() {
     final source = File('lib/core/repositories/tournament_repository.dart')
         .readAsStringSync();
 
+    expect(source, contains('SupabaseClient get _supabase => _client ?? Supabase.instance.client;'));
+
     final methodStart = source.indexOf(
       'Future<Map<String, dynamic>> getTournamentPaymentOrderStatus(',
     );
@@ -21,7 +23,7 @@ void main() {
     final method = source.substring(methodStart, nextMethod);
     expect(
       method,
-      contains('(_client ?? Supabase.instance.client).rpc('),
+      contains('_supabase.rpc('),
       reason: 'Repository methods must respect the injected Supabase client.',
     );
     expect(
