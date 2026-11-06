@@ -1,3 +1,4 @@
+import '../../../../../core/ui/components/vsp_filter_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -33,175 +34,62 @@ class InsightsTopFiltersRow extends StatelessWidget {
 
     return Row(
       children: [
-        // 1. Stadium Filter Dropdown
+        // 1. Stadium Filter Dropdown — shared compact charcoal style.
         Expanded(
-          child: Container(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.divider),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedStadiumFilter,
-                isExpanded: true,
-                dropdownColor: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.card),
-                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 12),
-                selectedItemBuilder: (context) {
-                  final items = [
-                    DropdownMenuItem<String>(
-                      value: 'all',
-                      child: Text(
-                        isArabic ? 'جميع الملاعب' : 'All Pitches',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: VSPColors.textPrimary,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    ...stadiums.map((s) => DropdownMenuItem<String>(
-                          value: s.id,
-                          child: Text(
-                            s.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: VSPColors.textPrimary,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        )),
-                  ];
-                  return items
-                      .map((item) => Align(alignment: AlignmentDirectional.centerEnd, child: item.child))
-                      .toList();
-                },
-                items: [
-                  DropdownMenuItem<String>(
-                    value: 'all',
-                    child: Text(
-                      isArabic ? 'جميع الملاعب' : 'All Pitches',
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  ...stadiums.map((s) => DropdownMenuItem<String>(
-                        value: s.id,
-                        child: Text(
-                          s.name,
-                          style: const TextStyle(
-                            color: VSPColors.textPrimary,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      )),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    HapticFeedback.selectionClick();
-                    onStadiumFilterChanged(val);
-                  }
-                },
-              ),
-            ),
+          child: VSPFilterDropdown<String>(
+            value: selectedStadiumFilter,
+            items: ['all', ...stadiums.map((stadium) => stadium.id)],
+            labelFor: (id) => id == 'all'
+                ? (isArabic ? 'جميع الملاعب' : 'All Pitches')
+                : stadiums.firstWhere((stadium) => stadium.id == id).name,
+            onChanged: (val) {
+              if (val == null) return;
+              HapticFeedback.selectionClick();
+              onStadiumFilterChanged(val);
+            },
           ),
         ),
         const SizedBox(width: 10),
 
-        // 2. Time Period Dropdown
+        // 2. Time Period Dropdown — preserve custom range behavior.
         Expanded(
-          child: Container(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.divider),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedTimePeriod,
-                isExpanded: true,
-                dropdownColor: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.card),
-                icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 12),
-                selectedItemBuilder: (context) {
-                  return periodOptions.map((p) {
-                    return Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Text(
-                        p['label']!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: VSPColors.textPrimary,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    );
-                  }).toList();
-                },
-                items: periodOptions.map((p) {
-                  return DropdownMenuItem<String>(
-                    value: p['key'],
-                    child: Text(
-                      p['label']!,
-                      style: const TextStyle(
-                        color: VSPColors.textPrimary,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
+          child: VSPFilterDropdown<String>(
+            value: selectedTimePeriod,
+            items: periodOptions.map((p) => p['key']!).toList(),
+            labelFor: (key) => periodOptions
+                .firstWhere((p) => p['key'] == key)['label']!,
+            onChanged: (val) async {
+              if (val == null) return;
+              HapticFeedback.selectionClick();
+              if (val == 'custom') {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2024),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  locale: isArabic ? const Locale('ar') : const Locale('en'),
+                  builder: (context, child) => Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.dark(
+                        primary: VSPColors.textPrimary,
+                        onPrimary: VSPColors.black,
+                        surface: VSPColors.surface,
+                        onSurface: VSPColors.textPrimary,
                       ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (val) async {
-                  if (val == null) return;
-                  HapticFeedback.selectionClick();
-                  if (val == 'custom') {
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2024),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                      locale: isArabic ? const Locale('ar') : const Locale('en'),
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: const ColorScheme.dark(
-                              primary: VSPColors.textPrimary,
-                              onPrimary: VSPColors.black,
-                              surface: VSPColors.surface,
-                              onSurface: VSPColors.textPrimary,
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (picked != null) {
-                      if (onCustomRangeSelected != null) {
-                        onCustomRangeSelected!(picked.start, picked.end);
-                      } else {
-                        onTimePeriodChanged('custom');
-                      }
-                    }
+                    child: child!,
+                  ),
+                );
+                if (picked != null) {
+                  if (onCustomRangeSelected != null) {
+                    onCustomRangeSelected!(picked.start, picked.end);
                   } else {
-                    onTimePeriodChanged(val);
+                    onTimePeriodChanged('custom');
                   }
-                },
-              ),
-            ),
+                }
+              } else {
+                onTimePeriodChanged(val);
+              }
+            },
           ),
         ),
       ],
