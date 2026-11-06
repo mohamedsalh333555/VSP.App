@@ -32,3 +32,17 @@ These counts are from read-only SQL and do not prove that demo accounts can auth
 ## Safety
 
 No schema/data writes or production changes were made as part of this verification. The existing UXLP-44 release gates remain in force. This document records verified staging state, not completion of final QA.
+
+## Application connection diagnosis — verified 2026-11-06
+
+The Flutter entrypoint `lib/main.dart` initializes Supabase using `AppEnv.supabaseUrl` and `AppEnv.supabaseAnonKey`. The `lib/core/config/app_env.dart` compile-time defaults point to the main VSP Supabase project (`mktqkddbcddrxjxabdua`), **not** staging (`vtwgqyxglevcsxwdmhop`). Thus a build without `--dart-define` overrides cannot show the staging-only Aswan demo records. This is a code-level finding, not evidence of which build is deployed.
+
+For a separately identified test build, pass the staging URL and the corresponding **staging publishable key** as build-time defines, e.g.:
+
+```bash
+flutter run --dart-define=SUPABASE_URL=https://vtwgqyxglevcsxwdmhop.supabase.co --dart-define=SUPABASE_ANON_KEY=<STAGING_PUBLISHABLE_KEY>
+```
+
+The placeholder must be replaced locally from the staging project's publishable keys; never use a service-role/secret key or publish a private credential. Verify build configuration and test account scope before running. Do not change production defaults, deploy the test build as production, or merge this branch on the strength of the demo-data check.
+
+Next: confirm actual deployed build configuration, then inspect application visibility rules and RLS with staging test accounts.
