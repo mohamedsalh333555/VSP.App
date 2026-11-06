@@ -23,6 +23,8 @@ class StadiumProvider with ChangeNotifier {
  // Invalidates in-flight player fetches when the active data scope changes.
  int _scopeGeneration = 0;
  int _discoveryRequestGeneration = 0;
+ // Reuse one GPS snapshot across pages; refresh obtains a new snapshot.
+ Position? _discoveryPagePosition;
 
  StadiumProvider();
  String? _errorMessage;
@@ -102,6 +104,7 @@ class StadiumProvider with ChangeNotifier {
  _isLoadingMore = false;
  _lastDocument = null;
  _hasMore = true;
+ _discoveryPagePosition = null;
  // A refresh must retry the user's chosen governorate before deciding
  // whether to fall back nationwide again.
  _isGeographicFallback = false;
@@ -117,10 +120,12 @@ class StadiumProvider with ChangeNotifier {
  // Discovery and Search Geo-Matching: Database-Level Geodistance Query
  // Check if user's geographic location is available. If active, immediately fetch
  // the pre-sorted list from the database RPC instead of client-side loops.
- Position? userPosition;
+ Position? userPosition = _discoveryPagePosition;
  // Explicit governorate selection uses server-side location filtering;
  // skip GPS permission/service calls that cannot affect this query.
- if (_selectedGovernorate == null || _selectedGovernorate!.isEmpty) {
+ // Subsequent nearby pages reuse the same location so results do not jump.
+ if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) &&
+     userPosition == null) {
  try {
  if (await Geolocator.isLocationServiceEnabled()) {
  LocationPermission permission = await Geolocator.checkPermission();
@@ -134,6 +139,7 @@ class StadiumProvider with ChangeNotifier {
  } catch (e) {
  debugPrint('Error getting GPS location: $e');
  }
+ _discoveryPagePosition = userPosition;
  }
 
  // Governorate Filter Priority: If a specific governorate is selected by user,
