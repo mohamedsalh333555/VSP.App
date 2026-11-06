@@ -132,7 +132,7 @@ class BookingCreationCoordinator {
       }
 
       final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
-      if (bookingId == null) {
+      if (bookingId == null || bookingId.trim().isEmpty || bookingId == 'null') {
         throw Exception('فشل تسجيل الحجز في قاعدة البيانات.');
       }
 
