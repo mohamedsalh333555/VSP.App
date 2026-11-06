@@ -3,7 +3,6 @@ import '../../../core/ui/components/vsp_segmented_control.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/vsp_ui.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/league_repository.dart';
