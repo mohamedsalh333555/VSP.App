@@ -4,6 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('tournament coordinators route RPCs through scoped clients', () {
+    final repository = File('lib/core/repositories/tournament_repository.dart')
+        .readAsStringSync();
+    for (final coordinator in [
+      'TournamentQueryCoordinator',
+      'TournamentLifecycleCoordinator',
+      'TournamentStatsCoordinator',
+      'TournamentRosterCoordinator',
+      'TournamentRegistrationCoordinator',
+      'TournamentMatchCoordinator',
+      'TournamentFixtureCoordinator',
+    ]) {
+      expect(repository, contains('$coordinator(client: _client'), reason: coordinator);
+    }
+
     for (final name in [
       'tournament_registration_coordinator',
       'tournament_lifecycle_coordinator',
