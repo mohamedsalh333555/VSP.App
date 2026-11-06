@@ -367,7 +367,15 @@ class StadiumRepository {
       final int startIndex = (startAfter is int) ? startAfter : 0;
       final int endIndex = startIndex + limit - 1;
       
+      // Debug-only timing for real-device discovery baselines. No location,
+      // search text, account identifiers, or result contents are logged.
+      final queryTimer = Stopwatch()..start();
       final response = await query.range(startIndex, endIndex);
+      queryTimer.stop();
+      VSPLogger.d(
+        'stadium_discovery_query_ms=${queryTimer.elapsedMilliseconds} '
+        'page_size=${(response as List).length}',
+      );
       final items = (response as List)
           .map((doc) => Stadium.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
           .toList();
