@@ -18,6 +18,11 @@ class OwnerSubscriptionRepository {
         .toList(growable: false);
   }
 
+  Future<Map<String, dynamic>> fetchTrialState() async {
+    final result = await _supabase.rpc('get_owner_trial_state');
+    return Map<String, dynamic>.from(result as Map);
+  }
+
   Future<Map<String, dynamic>> startProTrial() async {
     final result = await _supabase.rpc('start_owner_trial');
     return Map<String, dynamic>.from(result as Map);
