@@ -148,9 +148,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             ..clear()
             ..addAll(members);
           _isLoadingMembers = false;
-          // Membership IDs exist, so an empty profile response is not a
-          // verified empty roster.
-          _hasMemberLoadError = members.isEmpty;
+          // A partial profile response is not a verified complete roster.
+          // Keep retry available if any registered member is missing.
+          _hasMemberLoadError = members.length < memberIds.length;
         });
       }
     } catch (e) {
