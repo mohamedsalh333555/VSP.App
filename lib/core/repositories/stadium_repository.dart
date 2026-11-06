@@ -374,7 +374,7 @@ class StadiumRepository {
       queryTimer.stop();
       VSPLogger.d(
         'stadium_discovery_query_ms=${queryTimer.elapsedMilliseconds} '
-        'page_size=${(response as List).length}',
+        'page_size=${response.length}',
       );
       final items = (response as List)
           .map((doc) => Stadium.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
