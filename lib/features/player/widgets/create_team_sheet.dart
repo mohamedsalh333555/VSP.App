@@ -64,6 +64,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         onPlayerAdded: (user) {
           if (!mounted) return;
           setState(() {
+            if (_teamMembers.length >= 11) return;
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
               _teamMembers.add(user);
             }
@@ -120,6 +121,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   }
 
   Future<void> _handleCreateTeam() async {
+    // Ignore repeated taps while the create RPC or logo upload is pending.
+    if (_isSubmitting) return;
     final name = _nameController.text.trim();
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
