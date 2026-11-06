@@ -247,7 +247,7 @@ class TournamentRepository {
 
   Future<Map<String, dynamic>> getTournamentPaymentOrderStatus(String orderReference) async {
     try {
-      final response = await Supabase.instance.client.rpc(
+      final response = await (_client ?? Supabase.instance.client).rpc(
         'get_tournament_payment_order_status',
         params: {'p_order_reference': orderReference},
       );
