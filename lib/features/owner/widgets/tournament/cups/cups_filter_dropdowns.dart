@@ -77,19 +77,19 @@ class CupsFilterDropdowns extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       height: 44,
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider, width: 1),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
           isExpanded: true,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
+          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 16),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: VSPColors.textPrimary,
                 fontWeight: FontWeight.w600,
