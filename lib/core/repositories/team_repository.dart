@@ -287,6 +287,9 @@ class TeamRepository {
 
   /// Only the recipient can accept or decline a pending invitation.
   Future<void> respondToTeamInvitation(String invitationId, {required bool accept}) async {
+    if (invitationId.trim().isEmpty || invitationId == 'null') {
+      throw ArgumentError.value(invitationId, 'invitationId', 'A valid invitation ID is required');
+    }
     final response = await _supabase.rpc(
       'respond_team_membership_invitation',
       params: {'p_invitation_id': invitationId, 'p_accept': accept},
