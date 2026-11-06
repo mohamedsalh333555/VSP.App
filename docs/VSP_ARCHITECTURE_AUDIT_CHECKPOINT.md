@@ -105,3 +105,9 @@ GitHub Actions for commit `fef5c4e36a2e403b4add34e4b56851ca624828dc` completed s
 - Android E2E Smoke run `42271597713`: `Android public/auth journey smoke` job `128077285138` completed **success**.
 
 These results verify the CI workflows as configured on that commit; they do **not** prove full payment, booking, competition, RLS or cross-role security coverage. A documentation-only follow-up commit will need its own head status if strict current-HEAD verification is required. No production deploy or main merge is authorized.
+
+## Booking coordinator client scope regression guard
+
+- Inspected `booking_cancellation_coordinator.dart`, `booking_schedule_coordinator.dart`, and `booking_query_coordinator.dart`. Each already uses `_supabase => _client ?? Supabase.instance.client` for RPCs. The booking repository passes `_client` to its creation, cancellation, reconciliation, schedule, and query coordinators.
+- Added `test/architecture/booking_coordinator_client_scope_test.dart` in commit `bd7893b68b253ab48237ccb5509ff6e474ccf4a1` to guard these structural assumptions. This is a source-level check, not an end-to-end booking authorization test.
+- CI for earlier head `f8319ec` was still running at inspection; new HEAD requires its own successful CI evidence. No production changes.
