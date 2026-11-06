@@ -16,7 +16,7 @@ void main() {
       'TournamentFixtureCoordinator',
     ]) {
       expect(
-        RegExp('$coordinator' r'\\s*\\(\\s*client:\\s*_client').hasMatch(repository),
+        RegExp('$coordinator' r'\s*\(\s*client:\s*_client').hasMatch(repository),
         isTrue,
         reason: coordinator,
       );
