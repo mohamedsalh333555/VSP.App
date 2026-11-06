@@ -111,3 +111,7 @@ These results verify the CI workflows as configured on that commit; they do **no
 - Inspected `booking_cancellation_coordinator.dart`, `booking_schedule_coordinator.dart`, and `booking_query_coordinator.dart`. Each already uses `_supabase => _client ?? Supabase.instance.client` for RPCs. The booking repository passes `_client` to its creation, cancellation, reconciliation, schedule, and query coordinators.
 - Added `test/architecture/booking_coordinator_client_scope_test.dart` in commit `bd7893b68b253ab48237ccb5509ff6e474ccf4a1` to guard these structural assumptions. This is a source-level check, not an end-to-end booking authorization test.
 - CI for earlier head `f8319ec` was still running at inspection; new HEAD requires its own successful CI evidence. No production changes.
+
+## Complete booking coordinator source guard
+
+Expanded `test/architecture/booking_coordinator_client_scope_test.dart` in commit `9d6ef53eedd655a036770e3479e3084a30a00825` to include `booking_creation_coordinator.dart` and `booking_reconciliation_service.dart`. The five booking coordinator/service files inspected (creation, cancellation, reconciliation, schedule, query) use the injected `_client` fallback accessor and no direct `await Supabase.instance.client.rpc(` calls. This verifies a static source pattern only, not user-role authorization or transactional outcomes. The latest branch CI must pass before the gate can be marked green.
