@@ -20,7 +20,7 @@ abstract final class VSPDSColors {
   static const Color zinc800 = Color(0xFF27272A);
   static const Color zinc750 = Color(0xFF323238);
 
-  static const Color voltGreen = Color(0xFF9FDF02);
+  static const Color voltGreen = zinc400; // Legacy alias: neutral, no neon green.
   static const Color black = Color(0xFF000000);
   static const Color transparent = Color(0x00000000);
   static const Color white = Color(0xFFFFFFFF);
@@ -39,9 +39,9 @@ abstract final class VSPDSColors {
   static const Color bronze = Color(0xFFCD7F32);
 
   // Alpha primitives derived from the same palette.
-  static const Color voltGreenSoft = Color(0x1F9FDF02);
-  static const Color voltGreenMuted = Color(0x339FDF02);
-  static const Color voltGreenBorder = Color(0x409FDF02);
+  static const Color voltGreenSoft = white10;
+  static const Color voltGreenMuted = white15;
+  static const Color voltGreenBorder = white24;
 
   static const Color white05 = Color(0x0DFFFFFF);
   static const Color white10 = Color(0x1AFFFFFF);
@@ -76,7 +76,7 @@ abstract final class VSPDSColors {
   static const Color glassSurface = Color(0x73141417);
   static const Color glassSurfaceAlt = Color(0x991C1C20);
   static const Color glassBorder = Color(0x26FFFFFF);
-  static const Color glassBorderAccent = Color(0x409FDF02);
+  static const Color glassBorderAccent = white24;
   static const Color glassGlow = zinc800; // Charcoal; legacy glow consumers now use a neutral tone.
 }
 
