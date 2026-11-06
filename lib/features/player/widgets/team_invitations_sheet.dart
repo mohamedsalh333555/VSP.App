@@ -101,11 +101,11 @@ class _TeamInvitationsSheetState extends State<TeamInvitationsSheet> {
                           spacing: 4,
                           children: [
                             TextButton(
-                              onPressed: _busyId == null && hasValidId ? () => _respond(id, false) : null,
+                              onPressed: _busyId == null && hasValidId ? () => _respond(id!, false) : null,
                               child: Text(isArabic ? 'رفض' : 'Decline'),
                             ),
                             FilledButton(
-                              onPressed: _busyId == null && hasValidId ? () => _respond(id, true) : null,
+                              onPressed: _busyId == null && hasValidId ? () => _respond(id!, true) : null,
                               child: Text(isArabic ? 'قبول' : 'Accept'),
                             ),
                           ],
