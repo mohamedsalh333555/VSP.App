@@ -2,6 +2,26 @@
 -- Run as a privileged test operator. Simulated auth.uid() claims are NOT
 -- a substitute for two real authenticated client sessions.
 -- This script does not insert, update, or delete application rows.
+-- Validate RPC grants independently of privileged test session JWT claims.
+DO $grants$
+DECLARE v_rpc oid;
+BEGIN
+  SELECT p.oid INTO v_rpc FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public' AND p.proname = 'create_challenge_booking_atomic';
+  IF v_rpc IS NULL THEN RAISE EXCEPTION 'Challenge booking RPC missing'; END IF;
+  IF has_function_privilege('anon', v_rpc, 'EXECUTE') THEN
+    RAISE EXCEPTION 'Anonymous role can execute challenge booking RPC';
+  END IF;
+  IF NOT has_function_privilege('authenticated', v_rpc, 'EXECUTE') THEN
+    RAISE EXCEPTION 'Authenticated role cannot execute challenge booking RPC';
+  END IF;
+  IF NOT has_function_privilege('service_role', v_rpc, 'EXECUTE') THEN
+    RAISE EXCEPTION 'Service role cannot execute challenge booking RPC';
+  END IF;
+  RAISE NOTICE 'PASS: challenge RPC role grants';
+END $grants$;
+
 DO $test$
 DECLARE
   v_booking record;
@@ -52,5 +72,5 @@ BEGIN
      OR v_result->>'idempotent' IS DISTINCT FROM 'true' THEN
     RAISE EXCEPTION 'Same-user replay failed';
   END IF;
-  RAISE NOTICE 'PASS: cross-user collision and same-user replay';
+  RAISE NOTICE 'PASS: missing JWT, cross-user collision, and same-user replay';
 END $test$;
