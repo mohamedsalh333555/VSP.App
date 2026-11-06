@@ -40,6 +40,12 @@ class BookingCancellationCoordinator {
     if (booking == null) {
       throw Exception('بيانات الحجز غير متوفرة.');
     }
+    if (bookingId.trim().isEmpty) {
+      throw ArgumentError('معرّف الحجز مطلوب لإتمام الإلغاء.');
+    }
+    if (booking.id != bookingId) {
+      throw ArgumentError('معرّف الحجز لا يطابق بيانات الحجز المطلوب إلغاؤه.');
+    }
 
     try {
       final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
