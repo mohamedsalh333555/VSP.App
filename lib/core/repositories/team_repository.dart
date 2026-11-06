@@ -58,7 +58,7 @@ class TeamRepository {
          'p_outcome': finalOutcome.name,
        },
      );
-     if (response is Map && response['success'] == false) {
+     if (response is! Map || response['success'] != true) {
        throw Exception(response['error']?.toString() ?? 'فشل تحديث نتيجة المباراة');
      }
    } catch (e) {
