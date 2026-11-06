@@ -90,3 +90,9 @@ No SQL mutation or production access was performed.
 - `test/architecture/tournament_client_injection_test.dart` now asserts the entire tournament repository has no direct `await Supabase.instance.client.rpc(` bypass; commit `da6978c8e6fb9c060184240599bc78eeaf25662f`.
 - `test/architecture/checkout_client_injection_test.dart` adds the equivalent coordinator-wide guard; commit `73be39cf16153a82a8edafe5e997ddf29b8bfaad`.
 - These are source-level tests, not execution of RPCs or security proof. Current-head CI and E2E results still need verification.
+
+## Booking and team client guard
+
+- Reviewed `BookingRepository` and `TeamRepository`: both already centralize the Supabase client in `_supabase => _client ?? Supabase.instance.client` and use `_supabase.rpc` for direct RPCs.
+- Added `test/architecture/booking_team_client_injection_test.dart` to detect future direct global-client RPC bypasses in either repository. Commit `d6dbc95ea775e1d1a64037415dea565cc2f89995`.
+- This is a source-level architecture regression test only; no booking, team, or database transaction was executed. CI for earlier head `51d9852b` was pending/queued when checked. Latest commit still needs green CI.
