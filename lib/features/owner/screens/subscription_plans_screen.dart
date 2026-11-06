@@ -22,6 +22,7 @@ class SubscriptionPlansScreen extends StatefulWidget {
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   bool _isPaying = false;
+  String? _pendingAction;
   String? _trialState;
   final OwnerSubscriptionRepository _subscriptionRepository = OwnerSubscriptionRepository();
   Map<String, dynamic>? _freePlan;
@@ -571,7 +572,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                   ),
-                  child: Text(
+                  child: _pendingAction == 'trial'
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(
                     isArabic
                         ? 'جرّب Pro لمدة ${_planNumber(plan, 'trial_days')} أيام مجاناً'
                         : 'Try Pro for ${_planNumber(plan, 'trial_days')} days free',
@@ -599,7 +602,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
                 ),
-                child: _isPaying
+                child: _pendingAction == 'monthly'
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -635,7 +638,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                   ),
-                  child: Text(
+                  child: _pendingAction == 'annual'
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(
                     isArabic
                         ? 'اشتراك سنوي • $annualPrice جنيه'
                         : 'Annual subscription • $annualPrice EGP',
@@ -668,7 +673,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   Future<void> _startOwnerTrial(BuildContext context, bool isArabic) async {
     final auth = context.read<AuthProvider>();
-    setState(() => _isPaying = true);
+    setState(() { _isPaying = true; _pendingAction = 'trial'; });
     try {
       final data = await _subscriptionRepository.startProTrial();
       if (data['success'] != true) {
@@ -690,7 +695,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       }
       if (context.mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     } finally {
-      if (mounted) setState(() => _isPaying = false);
+      if (mounted) setState(() { _isPaying = false; _pendingAction = null; });
     }
   }
 
@@ -699,7 +704,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     String billingPeriod,
     bool isArabic,
   ) async {
-    setState(() => _isPaying = true);
+    setState(() { _isPaying = true; _pendingAction = billingPeriod; });
     try {
       final orderData = await _subscriptionRepository.createProOrder(
         billingPeriod: billingPeriod,
@@ -729,7 +734,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     } catch (e) {
       if (context.mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     } finally {
-      if (mounted) setState(() => _isPaying = false);
+      if (mounted) setState(() { _isPaying = false; _pendingAction = null; });
     }
   }
 }
