@@ -96,3 +96,12 @@ No SQL mutation or production access was performed.
 - Reviewed `BookingRepository` and `TeamRepository`: both already centralize the Supabase client in `_supabase => _client ?? Supabase.instance.client` and use `_supabase.rpc` for direct RPCs.
 - Added `test/architecture/booking_team_client_injection_test.dart` to detect future direct global-client RPC bypasses in either repository. Commit `d6dbc95ea775e1d1a64037415dea565cc2f89995`.
 - This is a source-level architecture regression test only; no booking, team, or database transaction was executed. CI for earlier head `51d9852b` was pending/queued when checked. Latest commit still needs green CI.
+
+## Verified CI milestone — 2026-11-06
+
+GitHub Actions for commit `fef5c4e36a2e403b4add34e4b56851ca624828dc` completed successfully:
+
+- Flutter CI run `42271597741`: `analyze-test` job `128077267743` completed **success**.
+- Android E2E Smoke run `42271597713`: `Android public/auth journey smoke` job `128077285138` completed **success**.
+
+These results verify the CI workflows as configured on that commit; they do **not** prove full payment, booking, competition, RLS or cross-role security coverage. A documentation-only follow-up commit will need its own head status if strict current-HEAD verification is required. No production deploy or main merge is authorized.
