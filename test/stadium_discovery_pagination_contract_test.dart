@@ -54,7 +54,7 @@ void main() {
       source.indexOf('Future<void> fetchStadiumsWithParams({'),
     );
     final gpsGuard = discovery.indexOf(
-      'if (_selectedGovernorate == null || _selectedGovernorate!.isEmpty) {',
+      'if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) &&',
     );
     final gpsServiceCheck = discovery.indexOf('Geolocator.isLocationServiceEnabled()');
     expect(gpsGuard, greaterThanOrEqualTo(0));
