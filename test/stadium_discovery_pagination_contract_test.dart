@@ -37,6 +37,15 @@ void main() {
     );
   });
 
+  test('nearby discovery stops at the RPC 100-row ceiling', () {
+    final source =
+        File('lib/core/providers/stadium_provider.dart').readAsStringSync();
+    expect(
+      source,
+      contains('limit < 100 && nearbyStadiums.length >= limit'),
+    );
+  });
+
   test('stadium discovery error exposes a real retry callback', () {
     final source = File(
       'lib/features/player/widgets/home/home_stadiums_section.dart',
