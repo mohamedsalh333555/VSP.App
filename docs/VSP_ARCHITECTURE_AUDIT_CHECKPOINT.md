@@ -119,3 +119,7 @@ Expanded `test/architecture/booking_coordinator_client_scope_test.dart` in commi
 ## Seven tournament coordinator client-scope guards
 
 Added `test/architecture/tournament_coordinator_client_scope_test.dart` in commit `9d1a46a28e4c7126f8119b94f217b22c7a15fbc4` after inspecting registration, lifecycle, match, query, roster, fixture, and stats coordinators. Each uses the injected Supabase accessor for direct RPCs; the source-level test prevents future direct `await Supabase.instance.client.rpc(` bypasses in these files. No authorization behavior or payments were executed; latest-head CI is still required.
+
+## Tournament facade client propagation guard
+
+Expanded `test/architecture/tournament_coordinator_client_scope_test.dart` to verify all seven tournament coordinator constructors in `TournamentRepository` receive `client: _client`. The assertion tolerates multiline constructor formatting. Final code commit: `27568f97652b433735fb09ff70e0853b9b66da09`. The test has not yet been confirmed green at this HEAD. No production or main changes.
