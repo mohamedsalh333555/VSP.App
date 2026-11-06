@@ -296,9 +296,37 @@ class TeamRepository {
         .eq('status', 'pending')
         .gt('expires_at', DateTime.now().toUtc().toIso8601String())
         .order('created_at', ascending: false);
-    return (response as List)
+    final invitations = (response as List)
         .map((row) => Map<String, dynamic>.from(row as Map))
         .toList();
+    if (invitations.isEmpty) return invitations;
+
+    // Resolve human-readable team names from the public, restricted view.
+    // Do not expose private team records or silently show an empty inbox if
+    // the name lookup fails.
+    final teamIds = invitations
+        .map((invite) => invite['team_id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .toList();
+    if (teamIds.isEmpty) return invitations;
+    try {
+      final teams = await _supabase
+          .from('teams_public')
+          .select('id, name')
+          .inFilter('id', teamIds);
+      final names = <String, String>{
+        for (final team in (teams as List))
+          if (team['id'] != null && team['name'] != null)
+            team['id'].toString(): team['name'].toString(),
+      };
+      for (final invite in invitations) {
+        invite['team_name'] = names[invite['team_id']?.toString()];
+      }
+    } catch (error) {
+      debugPrint('Could not resolve invitation team names: $error');
+    }
+    return invitations;
   }
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) =>
