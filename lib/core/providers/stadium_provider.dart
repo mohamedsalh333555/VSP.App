@@ -118,6 +118,9 @@ class StadiumProvider with ChangeNotifier {
  // Check if user's geographic location is available. If active, immediately fetch
  // the pre-sorted list from the database RPC instead of client-side loops.
  Position? userPosition;
+ // Explicit governorate selection uses server-side location filtering;
+ // skip GPS permission/service calls that cannot affect this query.
+ if (_selectedGovernorate == null || _selectedGovernorate!.isEmpty) {
  try {
  if (await Geolocator.isLocationServiceEnabled()) {
  LocationPermission permission = await Geolocator.checkPermission();
@@ -130,6 +133,7 @@ class StadiumProvider with ChangeNotifier {
  }
  } catch (e) {
  debugPrint('Error getting GPS location: $e');
+ }
  }
 
  // Governorate Filter Priority: If a specific governorate is selected by user,
