@@ -1,3 +1,4 @@
+import '../../../../../core/ui/components/vsp_filter_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../../core/ui/tokens/vsp_tokens.dart';
@@ -76,41 +77,11 @@ class CupsFilterDropdowns extends StatelessWidget {
       return val;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      height: 44,
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider, width: 1),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: items.contains(value) ? value : items.first,
-          dropdownColor: VSPColors.surface,
-          isExpanded: true,
-          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary, size: 16),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: VSPColors.textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                translateItem(item),
-                style: const TextStyle(
-                  color: VSPColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-        ),
-      ),
+    return VSPFilterDropdown<String>(
+      value: value,
+      items: items,
+      labelFor: translateItem,
+      onChanged: onChanged,
     );
   }
 }
