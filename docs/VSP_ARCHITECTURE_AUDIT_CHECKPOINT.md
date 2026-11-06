@@ -123,3 +123,7 @@ Added `test/architecture/tournament_coordinator_client_scope_test.dart` in commi
 ## Tournament facade client propagation guard
 
 Expanded `test/architecture/tournament_coordinator_client_scope_test.dart` to verify all seven tournament coordinator constructors in `TournamentRepository` receive `client: _client`. The assertion tolerates multiline constructor formatting. Final code commit: `27568f97652b433735fb09ff70e0853b9b66da09`. The test has not yet been confirmed green at this HEAD. No production or main changes.
+
+## Tournament client wiring test regex correction
+
+Corrected Dart raw-string regex escaping in `test/architecture/tournament_coordinator_client_scope_test.dart` in commit `858df7d0522d0bb565f5b7661a948150b41b7ec3`: use `\s` and `\(` (not doubled backslashes in the raw regex) to match whitespace and constructor parentheses. Previous test assertion could incorrectly fail; await CI on corrected head before declaring it passing.
