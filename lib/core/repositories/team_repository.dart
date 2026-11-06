@@ -276,7 +276,13 @@ class TeamRepository {
         response is Map ? (response['error']?.toString() ?? 'Invitation failed') : 'Invitation failed',
       );
     }
-    return response['invitation_id'].toString();
+    final invitationId = response['invitation_id']?.toString();
+    if (invitationId == null ||
+        invitationId.trim().isEmpty ||
+        invitationId == 'null') {
+      throw StateError('Invitation succeeded without a valid invitation ID');
+    }
+    return invitationId;
   }
 
   /// Only the recipient can accept or decline a pending invitation.
