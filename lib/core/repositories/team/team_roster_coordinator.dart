@@ -30,7 +30,8 @@ class TeamRosterCoordinator {
     final response = await _supabase
         .from('user_public_profiles')
         .select('id, profile_image_url')
-        .inFilter('id', memberUids);
+        // Repeated roster IDs do not need repeated filter parameters.
+        .inFilter('id', memberUids.toSet().toList());
     // PostgREST does not guarantee the order of rows returned by IN.
     // Keep images aligned with the team's member IDs, including missing
     // profiles, so avatars cannot be displayed for the wrong player.
