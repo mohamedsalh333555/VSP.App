@@ -31,3 +31,17 @@ This file is an audit checkpoint, not evidence of complete architectural complia
 | Team results | `lib/core/repositories/team_repository.dart` | RPC invoked by `updateMatchResult` | Verify captain confirmation and authoritative standings recalculation before any refactor |
 
 **Classification:** These are established shared entry points, not proof that every call site uses them. No duplicate or unsafe-client-authority finding is yet confirmed by this targeted trace. Do not change financial, booking or competition semantics based only on these observations.
+
+## Critical domains trace — 2026-11-06
+
+| Domain | Verified path | Finding | Status |
+|---|---|---|---|
+| Identity/roles | `lib/core/providers/auth_provider.dart` | Delegates authentication to `AuthService`; `isOwner`/`isAdmin` are client presentation getters, **not** evidence of server authorization | Server RLS and RPC grants pending |
+| Payment checkout | `lib/features/player/screens/payment_gateway_screen.dart` → `payment_checkout_coordinator.dart` / `payment_checkout_service.dart` | Shared checkout orchestration and payment status verification; coordinator also calls an RPC for safe booking release | Verify webhook, idempotency and amount authority |
+| Challenges | `lib/features/player/screens/challenge_select_team_screen.dart` → `TeamRepository` / `ChallengeTeamService` / `BookingProvider` | Shared eligibility helper and repository code lookup; client validation cannot replace server-side acceptance | Concurrent acceptance E2E pending |
+| Tournament lifecycle | `lib/features/owner/screens/owner_tournament_dashboard_screen.dart` → `lib/core/repositories/tournament_repository.dart` | Repository facade coordinates start, activation, cancel and standings | Verify lifecycle RPC authorization and state transitions |
+| Tournament payment status | `lib/core/repositories/tournament_repository.dart` | **Confirmed inconsistency:** status RPC bypassed injected `_client` and used global Supabase singleton | **Fixed** in commit `71c3ab0ca005643bd4b378dcb2bbe494392eaa2e` using `(_client ?? Supabase.instance.client)`; runtime tests pending |
+
+### Release boundary
+
+The change above is a small dependency-injection consistency fix, not a payment-rule change. No current-head analyzer, test suite, live payment test or production release was run as part of this checkpoint. Do not treat the fix as a production acceptance pass.
