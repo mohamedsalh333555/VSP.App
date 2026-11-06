@@ -61,6 +61,16 @@ void main() {
     expect(gpsServiceCheck, greaterThan(gpsGuard));
   });
 
+  test('nearby pages reuse a GPS snapshot until refresh', () {
+    final source =
+        File('lib/core/providers/stadium_provider.dart').readAsStringSync();
+    expect(source, contains('Position? _discoveryPagePosition;'));
+    expect(source, contains('Position? userPosition = _discoveryPagePosition;'));
+    expect(source, contains('userPosition == null) {'));
+    expect(source, contains('_discoveryPagePosition = userPosition;'));
+    expect(source, contains('_discoveryPagePosition = null;'));
+  });
+
   test('stadium discovery error exposes a real retry callback', () {
     final source = File(
       'lib/features/player/widgets/home/home_stadiums_section.dart',
