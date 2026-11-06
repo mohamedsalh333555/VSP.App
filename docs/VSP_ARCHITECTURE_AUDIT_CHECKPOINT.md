@@ -127,3 +127,7 @@ Expanded `test/architecture/tournament_coordinator_client_scope_test.dart` to ve
 ## Tournament client wiring test regex correction
 
 Corrected Dart raw-string regex escaping in `test/architecture/tournament_coordinator_client_scope_test.dart` in commit `858df7d0522d0bb565f5b7661a948150b41b7ec3`: use `\s` and `\(` (not doubled backslashes in the raw regex) to match whitespace and constructor parentheses. Previous test assertion could incorrectly fail; await CI on corrected head before declaring it passing.
+
+## Booking coordinator client propagation assertions
+
+Strengthened `test/architecture/booking_coordinator_client_scope_test.dart` in commit `de6ed3848b81c663f5e1ae541898d5221dfb14cc`: all five booking coordinator/service constructor call sites must receive `client: _client`, including multiline formatting. Verified against the current booking repository source that all five patterns match. This remains static wiring verification, not authorization or end-to-end behavior. CI on current head is not yet confirmed.
