@@ -22,6 +22,7 @@ class SubscriptionPlansScreen extends StatefulWidget {
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   bool _isPaying = false;
+  String? _trialState;
   final OwnerSubscriptionRepository _subscriptionRepository = OwnerSubscriptionRepository();
   Map<String, dynamic>? _freePlan;
   Map<String, dynamic>? _proPlan;
@@ -34,6 +35,18 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     super.initState();
     unawaited(AnalyticsService.logSubscriptionViewed());
     _loadPlans();
+    unawaited(_loadTrialState());
+  }
+
+  Future<void> _loadTrialState() async {
+    try {
+      final result = await _subscriptionRepository.fetchTrialState();
+      if (mounted && result['success'] == true) {
+        setState(() => _trialState = result['state']?.toString());
+      }
+    } catch (error) {
+      debugPrint('Unable to check owner trial eligibility: $error');
+    }
   }
 
   Future<void> _loadPlans() async {
@@ -544,7 +557,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               ),
             )
           else ...[
-            if (!isTrialActive && _planNumber(plan, 'trial_days') > 0) ...[
+            if (!isTrialActive && _trialState != 'used' && _planNumber(plan, 'trial_days') > 0) ...[
               SizedBox(
                 width: double.infinity,
                 height: 46,
@@ -662,6 +675,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         throw Exception(data['error']?.toString() ?? 'trial_start_failed');
       }
       await auth.refreshProfile();
+      if (mounted) setState(() => _trialState = 'active');
       if (context.mounted) {
         VSPFeedback.showSuccess(
           context,
@@ -671,6 +685,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         );
       }
     } catch (e) {
+      if (e.toString().contains('TRIAL_ALREADY_USED') && mounted) {
+        setState(() => _trialState = 'used');
+      }
       if (context.mounted) VSPFeedback.showError(context, AppErrorHandler.formatError(e, isArabic: isArabic));
     } finally {
       if (mounted) setState(() => _isPaying = false);
