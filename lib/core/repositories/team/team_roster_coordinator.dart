@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../data/models.dart';
 import '../../repositories/notification_repository.dart';
-import '../../services/logger_service.dart';
 
 /// Coordinator handling team member roster queries, additions, removals, and notifications.
 class TeamRosterCoordinator {
@@ -118,12 +117,8 @@ class TeamRosterCoordinator {
         .from('team_members')
         .stream(primaryKey: ['team_id', 'user_id'])
         .eq('user_id', userId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) => sink.add([]),
-        )
-        .handleError((err) {
-          VSPLogger.w('Membership realtime stream notice: $err');
-        });
+        // A timeout or subscription error must reach the UI. Emitting an
+        // empty list here falsely tells users they left every team.
+        .timeout(const Duration(seconds: 10));
   }
 }
