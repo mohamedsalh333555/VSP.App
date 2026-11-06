@@ -19,6 +19,7 @@ import '../../../shared/widgets/team_card_hero.dart';
 import '../../../core/repositories/league/team_league_repository.dart';
 import '../widgets/league/team_league_tab.dart';
 import 'player_home_screen.dart';
+import '../widgets/team_invitations_sheet.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
   const TeamDashboardScreen({super.key});
@@ -153,6 +154,17 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           style: Theme.of(context).textTheme.displayMedium,
         ),
         actions: [
+          if (_activeUserTeamScope != null)
+            IconButton(
+              tooltip: 'Team invitations',
+              icon: const Icon(Iconsax.sms_copy, color: VSPColors.accent),
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                builder: (_) => TeamInvitationsSheet(userId: _activeUserTeamScope!),
+              ),
+            ),
           if (_userTeam != null)
             IconButton(
               icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
