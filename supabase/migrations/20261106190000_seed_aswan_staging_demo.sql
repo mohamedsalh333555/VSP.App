@@ -72,8 +72,8 @@ DECLARE
  END IF;
  FOR i IN 1..16 LOOP
   uid := md5('vsp-aswan-demo-user-'||i)::uuid;
-  IF NOT EXISTS(SELECT 1 FROM public.vsp_1v1_tournament_players
-    WHERE tournament_id=tournament_id AND user_id=uid) THEN
+  IF NOT EXISTS(SELECT 1 FROM public.vsp_1v1_tournament_players p
+    WHERE p.tournament_id=tournament_id AND p.user_id=uid) THEN
    INSERT INTO public.vsp_1v1_tournament_players(tournament_id,user_id,player_name,payment_status,paid_amount)
    VALUES(tournament_id,uid,'[DEMO] لاعب أسوان '||lpad(i::text,3,'0'),'unpaid',0);
   END IF;
