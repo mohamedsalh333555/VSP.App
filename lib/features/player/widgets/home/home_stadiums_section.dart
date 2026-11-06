@@ -34,6 +34,7 @@ class HomeStadiumsSection extends StatelessWidget {
             message: isArabic
                 ? 'حصلت مشكلة أثناء تحديث الملاعب. حاول مرة تانية.'
                 : 'We could not refresh stadiums right now. Please try again.',
+            onRetry: () => provider.fetchStadiums(isRefresh: true),
           );
         }
 
