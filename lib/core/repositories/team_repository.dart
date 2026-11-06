@@ -126,11 +126,29 @@ class TeamRepository {
  Future<String?> createTeam(Map<String, dynamic> data) async {
   final memberUids = List<String>.from((data['memberUids'] as List? ?? []).map((e) => e.toString()).where((e) => !e.startsWith('guest_')));
   final pgData = TeamPayloadBuilder.buildCreatePayload(data);
-  final response = await _supabase.rpc('create_team_atomic', params: {
+  final captainId = _supabase.auth.currentUser?.id;
+  if (captainId == null || !memberUids.contains(captainId)) {
+    throw StateError('Captain must be signed in and included in the team');
+  }
+  // Creating a team never enrolls invited players without their consent.
+  final response = await _supabase.rpc('create_team_with_consent', params: {
     'p_data': pgData,
-    'p_member_uids': memberUids,
+    'p_member_uids': [captainId],
   });
-  if (response is Map && response['success'] == true) return response['team_id']?.toString();
+  if (response is Map && response['success'] == true) {
+    final teamId = response['team_id']?.toString();
+    if (teamId == null || teamId.isEmpty) {
+      throw StateError('Team creation returned no team ID');
+    }
+    for (final userId in memberUids.where((id) => id != captainId)) {
+      try {
+        await inviteTeamMember(teamId, userId);
+      } catch (error) {
+        debugPrint('Team created, but invitation to $userId failed: $error');
+      }
+    }
+    return teamId;
+  }
   throw Exception(response is Map ? response['error'] ?? 'فشل إنشاء الفريق' : 'فشل إنشاء الفريق');
  }
   Future<Team?> getTeam(String id) async {
