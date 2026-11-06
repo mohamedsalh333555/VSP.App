@@ -595,8 +595,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     ? null
                     : () => _startSubscriptionPayment(context, 'monthly', isArabic),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: VSPColors.accent,
-                  foregroundColor: VSPColors.black,
+                  backgroundColor: VSPColors.surfaceAlt,
+                  foregroundColor: VSPColors.textPrimary,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
@@ -608,7 +608,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: VSPColors.black,
+                          color: VSPColors.textPrimary,
                         ),
                       )
                     : Text(
