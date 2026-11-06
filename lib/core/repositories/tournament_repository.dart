@@ -22,6 +22,7 @@ export 'tournament/tournament_stats_coordinator.dart';
 /// Central repository facade for tournament championships, matches, brackets, and standings.
 class TournamentRepository {
   final SupabaseClient? _client;
+  SupabaseClient get _supabase => _client ?? Supabase.instance.client;
   final TournamentQueryCoordinator? _queryCoordinator;
   final TournamentLifecycleCoordinator? _lifecycleCoordinator;
   final TournamentStatsCoordinator? _statsCoordinator;
@@ -117,7 +118,7 @@ class TournamentRepository {
   Future<Map<String, dynamic>> claimOwnerChampionshipApprovalHomeNotice(
     String championshipId,
   ) async {
-    final response = await (_client ?? Supabase.instance.client).rpc(
+    final response = await _supabase.rpc(
       'claim_owner_championship_approval_home_notice',
       params: {'p_championship_id': championshipId},
     );
@@ -247,7 +248,7 @@ class TournamentRepository {
 
   Future<Map<String, dynamic>> getTournamentPaymentOrderStatus(String orderReference) async {
     try {
-      final response = await (_client ?? Supabase.instance.client).rpc(
+      final response = await _supabase.rpc(
         'get_tournament_payment_order_status',
         params: {'p_order_reference': orderReference},
       );
