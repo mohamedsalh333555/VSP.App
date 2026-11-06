@@ -70,3 +70,9 @@ Run with `flutter test test/architecture/tournament_client_injection_test.dart` 
 - `lib/core/repositories/tournament_repository.dart`: introduced `SupabaseClient get _supabase => _client ?? Supabase.instance.client;` and routed both direct RPC calls through it. Commit `066c45eb6a13ec5b533073e864fe1571038edf2a`.
 - Updated `test/architecture/tournament_client_injection_test.dart` to guard the shared accessor and payment-status call. Commit `fe07a9d71a602312d7a21f3860a155759d04dd23`.
 - The prior CI run for `ba0427ea` had both Flutter CI and Android E2E in progress when checked; it predates these changes. Current HEAD requires new CI evidence. No runtime test result claimed.
+
+## Two-entry-point regression coverage
+
+- Extended `test/architecture/tournament_client_injection_test.dart` to cover both direct repository RPC entry points (`claimOwnerChampionshipApprovalHomeNotice` and `getTournamentPaymentOrderStatus`) in commit `b604d6daea9bc58527b9ed72d8491da66a0dec8e`.
+- This is static source-level guard coverage, **not** a mock client execution test or a server-side permission audit.
+- CI on earlier commit `64d0d916`: Flutter analyze-test and Android public/auth smoke were still running at last inspection. New head has no verified passing test result yet. Production and main remain untouched.
