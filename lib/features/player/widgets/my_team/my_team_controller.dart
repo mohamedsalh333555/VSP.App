@@ -246,7 +246,10 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
         members: teamMembers,
       );
 
-      await TeamRepository().updateTeam(team.id, payload);
+      final updated = await TeamRepository().updateTeam(team.id, payload);
+      if (!updated) {
+        throw StateError('Team update was not confirmed by the server');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
