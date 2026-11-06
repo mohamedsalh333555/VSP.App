@@ -49,18 +49,20 @@ mixin MyTeamController<T extends StatefulWidget> on State<T> {
       // Capture messenger before the async gap
       final messenger = ScaffoldMessenger.of(context);
       try {
-        await TeamRepository().addMemberToTeam(
-          currentTeam.id,
-          user.uid,
-          user.profileImageUrl ?? '',
+        await TeamRepository().inviteTeamMember(currentTeam.id, user.uid);
+        // Invitation is not membership. Do not show the player on the active
+        // roster until they accept and the server commits the membership.
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              Localizations.localeOf(context).languageCode == 'ar'
+                  ? 'تم إرسال دعوة للاعب. سينضم للفريق بعد موافقته.'
+                  : 'Invitation sent. The player joins after accepting.',
+            ),
+            backgroundColor: VSPColors.accent,
+          ),
         );
-        if (mounted) {
-          setState(() {
-            if (!teamMembers.any((m) => m.uid == user.uid)) {
-              teamMembers.add(user);
-            }
-          });
-        }
       } catch (e) {
         if (!mounted) return;
         final errorMsg = e.toString().replaceAll('Exception:', '').trim();
