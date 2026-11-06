@@ -26,6 +26,17 @@ void main() {
     );
   });
 
+  test('exhausted discovery pages never issue redundant fetches', () {
+    final source =
+        File('lib/core/providers/stadium_provider.dart').readAsStringSync();
+    expect(
+      RegExp(r'if \(!isRefresh && \(!_hasMore \|\| _isLoading \|\| _isLoadingMore\)\) return;')
+          .allMatches(source)
+          .length,
+      2,
+    );
+  });
+
   test('stadium discovery error exposes a real retry callback', () {
     final source = File(
       'lib/features/player/widgets/home/home_stadiums_section.dart',
