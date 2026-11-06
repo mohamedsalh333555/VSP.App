@@ -53,8 +53,10 @@ class BookingCreationCoordinator {
       const double platformFee = 0.0;
       final dynamic rpcResult;
       if (draft.bookingType == BookingType.challenge &&
-          draft.challengeCode != null &&
-          draft.challengeCode!.trim().isNotEmpty) {
+          (draft.challengeCode == null || draft.challengeCode!.trim().isEmpty)) {
+        throw ArgumentError('كود التحدي مطلوب لإتمام حجز التحدي.');
+      }
+      if (draft.bookingType == BookingType.challenge) {
         rpcResult = await _supabase.rpc('create_challenge_booking_atomic', params: {
           'p_challenge_code': draft.challengeCode!.trim(),
           'p_stadium_id': draft.stadiumId,
