@@ -149,7 +149,9 @@ class StadiumProvider with ChangeNotifier {
  _lastDocument = nearbyStadiums.length;
  // The nearby RPC caps at 100 rows and has no offset/filter parameters.
  // For quick-filtered nearby results, load that bounded nearest set once.
- _hasMore = _activeQuickFilter == null && nearbyStadiums.length >= limit;
+ // The RPC has a hard 100-row ceiling; a full 100-row response does
+ // not mean another page can be fetched from this endpoint.
+ _hasMore = _activeQuickFilter == null && limit < 100 && nearbyStadiums.length >= limit;
  _isGeographicFallback = false;
  } else {
  // Continue paging the same nationwide dataset when the initial
