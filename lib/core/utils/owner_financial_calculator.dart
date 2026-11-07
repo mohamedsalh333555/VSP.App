@@ -70,10 +70,16 @@ class OwnerFinancialCalculator {
     double totalHours = 0.0;
 
     for (final b in filteredBookings) {
-      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      digitalVspBalance += b.digitalAmountPaid;
-      pitchCashRevenue += b.pitchCashCollected;
-      pendingReceivables += b.pendingReceivable;
+      final double totalPrice = b.totalPrice.isFinite && b.totalPrice > 0
+          ? b.totalPrice
+          : (b.depositPaid.isFinite && b.depositPaid > 0 ? b.depositPaid : 0.0);
+      // Bad upstream numeric values must not corrupt dashboard totals.
+      final digital = b.digitalAmountPaid;
+      final cash = b.pitchCashCollected;
+      final pending = b.pendingReceivable;
+      if (digital.isFinite && digital > 0) digitalVspBalance += digital;
+      if (cash.isFinite && cash > 0) pitchCashRevenue += cash;
+      if (pending.isFinite && pending > 0) pendingReceivables += pending;
       totalPipeline += totalPrice;
 
       final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
