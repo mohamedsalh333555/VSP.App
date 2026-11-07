@@ -20,6 +20,9 @@ void main() {
     expect(badge, contains('submittedTeamId == currentTeamId'));
     expect(badge, contains('الفريق الآخر سجّل نتيجته، سجّل نتيجتك'));
     expect(badge, contains('Opponent submitted; record your result'));
+    expect(badge, contains('Opponent submitted; wait until the match ends'));
+    expect(badge, contains('الفريق الآخر سجّل نتيجته، انتظر انتهاء المباراة'));
+    expect(badge, contains('!booking.endTime.isAfter(VSPTimeService.now)'));
     expect(badge, contains('Waiting for the other team result'));
     expect(badge, isNot(contains('Waiting for matching result')));
   });
