@@ -22,9 +22,9 @@ class TeamProfileAchievementsSection extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final badges = [
-      {'id': 'explorer', 'name': isArabic ? 'المستكشف' : 'Explorer', 'icon': Iconsax.discover_copy, 'desc': 'Play against 5 different teams'},
-      {'id': 'gladiator', 'name': isArabic ? 'المحارب' : 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': 'Played 10+ matches'},
-      {'id': 'streak_3', 'name': isArabic ? '3 انتصارات متتالية' : 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': 'Won 3 matches in a row'},
+      {'id': 'explorer', 'name': isArabic ? 'المستكشف' : 'Explorer', 'icon': Iconsax.discover_copy, 'desc': isArabic ? 'مواجهة 5 فرق مختلفة' : 'Play against 5 different teams'},
+      {'id': 'gladiator', 'name': isArabic ? 'المحارب' : 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': isArabic ? 'خوض 10 مباريات أو أكثر' : 'Played 10+ matches'},
+      {'id': 'streak_3', 'name': isArabic ? '3 انتصارات متتالية' : 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': isArabic ? 'الفوز في 3 مباريات متتالية' : 'Won 3 matches in a row'},
     ];
 
     return Column(
