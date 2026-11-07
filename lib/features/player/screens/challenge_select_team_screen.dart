@@ -251,11 +251,20 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     try {
       final res = await TeamRepository().lookupChallengeCode(code);
       if (!mounted) return;
+      // Ignore an in-flight lookup if the player edited the code meanwhile.
+      if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
+        setState(() => _isLookingUpCode = false);
+        return;
+      }
 
       if (res['success'] == true && res['opponent_team_id'] != null) {
         final oppId = res['opponent_team_id'].toString();
         final oppTeam = await TeamRepository().getTeam(oppId);
         if (!mounted) return;
+        if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
+          setState(() => _isLookingUpCode = false);
+          return;
+        }
 
         if (oppTeam != null) {
           final validatedCode = (res['code']?.toString() ?? code).toUpperCase();
