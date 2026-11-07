@@ -340,8 +340,12 @@ class TeamRepository {
       for (final invite in invitations) {
         invite['team_name'] = names[invite['team_id']?.toString()];
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint('Could not resolve invitation team names: $error');
+      Error.throwWithStackTrace(
+        StateError('Failed to load invitation team details: $error'),
+        stackTrace,
+      );
     }
     return invitations;
   }
