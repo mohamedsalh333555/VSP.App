@@ -17,6 +17,9 @@ void main() {
     expect(badge, contains('Syncing result status'));
     expect(badge, contains('booking.pendingOutcome != null'));
     expect(badge, contains('submittedTeamId.isNotEmpty'));
+    expect(badge, contains('submittedTeamId == currentTeamId'));
+    expect(badge, contains('الفريق الآخر سجّل نتيجته، سجّل نتيجتك'));
+    expect(badge, contains('Opponent submitted; record your result'));
     expect(badge, contains('Waiting for the other team result'));
     expect(badge, isNot(contains('Waiting for matching result')));
   });
