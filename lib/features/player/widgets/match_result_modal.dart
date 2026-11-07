@@ -189,7 +189,9 @@ class _MatchResultModalState extends State<MatchResultModal> {
 
  Future<void> _handleSubmit() async {
    if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam ||
-       widget.booking.matchResultStatus == MatchResultStatus.confirmed) return;
+       widget.booking.matchResultStatus == MatchResultStatus.confirmed) {
+     return;
+   }
    // Recheck at submission time even if the dialog was opened earlier.
    if (widget.booking.endTime.isAfter(VSPTimeService.now)) {
      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
