@@ -12,10 +12,10 @@ void main() {
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
     final panel = source.substring(start, end);
-    expect(panel, contains('pending == null'));
-    expect(panel, contains('Waiting for the opponent result to sync.'));
+    expect(panel, contains('pending != null'));
+    expect(panel, contains('Syncing result status'));
     expect(panel, contains('Opponent recorded:'));
-    expect(panel.indexOf('pending == null'),
+    expect(panel.indexOf('pending != null'),
         lessThan(panel.indexOf('Opponent recorded:')));
   });
 }
