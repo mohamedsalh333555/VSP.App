@@ -39,7 +39,10 @@ class OwnerFinancialCalculator {
     required String stadiumFilter,
   }) {
     final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final yesterdayStart = DateTime(now.year, now.month, now.day - 1);
+    final weekStart = DateTime(now.year, now.month, now.day - (now.weekday - 1));
+    final nextWeekStart = DateTime(weekStart.year, weekStart.month, weekStart.day + 7);
 
     final List<Booking> filteredBookings = allBookings.where((b) {
       if (b.status == BookingStatus.cancelled) return false;
@@ -49,13 +52,11 @@ class OwnerFinancialCalculator {
       final bDate = b.operationalDate ?? bStartLocal;
 
       if (timePeriod == 'today') {
-        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
+        return bDate.year == todayStart.year && bDate.month == todayStart.month && bDate.day == todayStart.day;
       } else if (timePeriod == 'yesterday') {
-        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
+        return bDate.year == yesterdayStart.year && bDate.month == yesterdayStart.month && bDate.day == yesterdayStart.day;
       } else if (timePeriod == 'week') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
+        return !bDate.isBefore(weekStart) && bDate.isBefore(nextWeekStart);
       } else if (timePeriod == 'month') {
         return bDate.year == now.year && bDate.month == now.month;
       }
