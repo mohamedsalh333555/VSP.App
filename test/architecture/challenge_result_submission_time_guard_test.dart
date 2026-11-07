@@ -20,4 +20,21 @@ void main() {
     expect(branch.indexOf('booking.endTime.isAfter(VSPTimeService.now)'),
         lessThan(branch.indexOf('_openResultModal(context, currentTeamId)')));
   });
+  test('pending opponent action is also hidden until match ends', () {
+    final source = File(
+      'lib/features/player/widgets/user_bookings/challenge_result_actions.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('Widget build(BuildContext context) {');
+    final pending = source.indexOf(
+      'if (booking.matchResultStatus == MatchResultStatus.waitingOpponent)', start);
+    final confirmed = source.indexOf(
+      'if (booking.matchResultStatus == MatchResultStatus.confirmed)', pending);
+    expect(pending, greaterThan(start));
+    expect(confirmed, greaterThan(pending));
+    final branch = source.substring(pending, confirmed);
+    expect(branch, contains('!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)'));
+    expect(branch.indexOf('!submittedByMe && !booking.endTime.isAfter(VSPTimeService.now)'),
+        lessThan(branch.indexOf('_openResultModal(context, currentTeamId)')));
+  });
+
 }
