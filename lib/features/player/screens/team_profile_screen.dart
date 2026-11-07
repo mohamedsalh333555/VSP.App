@@ -36,6 +36,7 @@ class TeamProfileScreen extends StatefulWidget {
 
 class _TeamProfileScreenState extends State<TeamProfileScreen> {
   final List<UserModel> _teamMembers = [];
+  Set<String>? _verifiedMemberIds;
   bool _isLoadingMembers = true;
   bool _hasMemberLoadError = false;
   Team? _fetchedTeam;
@@ -137,6 +138,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
           : await UserRepository().getUsersByIdsStrict(memberIds);
       if (!mounted || team.id != teamId) return;
       setState(() {
+        _verifiedMemberIds = currentIds.where((id) => id.isNotEmpty).toSet();
         _teamMembers
           ..clear()
           ..addAll(members);
@@ -155,7 +157,10 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   int get _teamMemberCount {
-    final ids = team.memberUids.where((id) => id.isNotEmpty).toSet();
+    final ids = {...?_verifiedMemberIds};
+    if (_verifiedMemberIds == null) {
+      ids.addAll(team.memberUids.where((id) => id.isNotEmpty));
+    }
     if (team.captainId.isNotEmpty) ids.add(team.captainId);
     return ids.length;
   }
