@@ -184,7 +184,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         'sportType': _selectedSport,
       };
 
-      final teamId = await TeamRepository().createTeam(teamData);
+      final teamRepository = TeamRepository();
+      final teamId = await teamRepository.createTeam(teamData);
+      final failedInvitations = teamRepository.failedInvitationUserIds.length;
 
       if (teamId != null && mounted) {
         unawaited(
@@ -198,8 +200,15 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         Navigator.pop(context, true);
         messenger.showSnackBar(
           SnackBar(
-            content: Text(l10n.teamCreatedSuccess, style: successTextStyle),
-            backgroundColor: VSPColors.accent,
+            content: Text(
+              failedInvitations == 0
+                  ? l10n.teamCreatedSuccess
+                  : (isArabic
+                      ? 'تم إنشاء الفريق، لكن تعذر إرسال $failedInvitations دعوة. حاول دعوتهم مرة أخرى.'
+                      : 'Team created, but $failedInvitations invitation(s) failed. Please retry inviting them.'),
+              style: successTextStyle,
+            ),
+            backgroundColor: failedInvitations == 0 ? VSPColors.accent : Colors.orange.shade800,
           ),
         );
       } else if (mounted) {
