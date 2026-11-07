@@ -507,6 +507,9 @@ class BookingProvider with ChangeNotifier {
           BookingListModifier.updatePaymentStatus(current, bookingId, isPaid);
           _currentBooking = current.single;
         }
+        // Publish the confirmed write immediately. The server refresh can be
+        // slow; owners should not see the previous payment state while waiting.
+        notifyListeners();
         // Reconcile the full payment/deposit fields with the server rather
         // than treating the optimistic flag as authoritative.
         try {
