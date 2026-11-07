@@ -38,6 +38,13 @@ class BookingReconciliationService {
     String? review,
   }) async {
     try {
+      // Reject unrelated team IDs before issuing any result RPC. The database
+      // still enforces the authenticated captain's permissions.
+      if (teamId.isEmpty ||
+          (teamId != booking.playerTeamId &&
+              teamId != booking.opponentTeamId)) {
+        return false;
+      }
       if (BookingDomainRules.isResultSubmissionTimeLocked(booking.endTime, DateTime.now())) {
         throw Exception('Cannot submit results before the match officially ends.');
       }
