@@ -125,7 +125,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         setState(() {
           _fetchedTeam = t;
           _isLoadingTeam = false;
-          _hasTeamLoadError = false;
+          _hasTeamLoadError = t == null;
         });
         if (t != null) {
           _loadMemberDetails();
@@ -161,7 +161,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       final members = memberIds.isEmpty
           ? <UserModel>[]
           : await UserRepository().getUsersByIdsStrict(memberIds);
-      if (!mounted || team.id != teamId) return;
+      if (!mounted || (widget.team?.id ?? widget.teamId) != teamId) return;
       setState(() {
         _verifiedMemberIds = currentIds.where((id) => id.isNotEmpty).toSet();
         _teamMembers
@@ -172,7 +172,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       });
     } catch (e) {
       debugPrint('Error loading team members: $e');
-      if (mounted && team.id == teamId) {
+      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _isLoadingMembers = false;
           _hasMemberLoadError = true;
