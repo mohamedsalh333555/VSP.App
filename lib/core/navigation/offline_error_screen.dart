@@ -101,10 +101,13 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
  child: SingleChildScrollView(
  padding: const EdgeInsets.symmetric(horizontal: 24),
  child: ScaleTransition(
- scale: CurvedAnimation(
- parent: ModalRoute.of(context)?.animation ?? const AlwaysStoppedAnimation(1.0),
- curve: Curves.easeOutBack,
- ),
+ scale: MediaQuery.disableAnimationsOf(context)
+     ? const AlwaysStoppedAnimation<double>(1.0)
+     : CurvedAnimation(
+         parent: ModalRoute.of(context)?.animation ??
+             const AlwaysStoppedAnimation<double>(1.0),
+         curve: Curves.easeOutBack,
+       ),
  child: VSPCard(
  isGlass: true,
  padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
