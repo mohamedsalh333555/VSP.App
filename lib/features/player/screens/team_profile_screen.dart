@@ -63,6 +63,30 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     }
   }
 
+  @override
+  void didUpdateWidget(covariant TeamProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previousId = oldWidget.team?.id ?? oldWidget.teamId;
+    final currentId = widget.team?.id ?? widget.teamId;
+    if (previousId == currentId) return;
+    _teamMembers.clear();
+    _verifiedMemberIds = null;
+    _isLoadingMembers = true;
+    _hasMemberLoadError = false;
+    _fetchedTeam = null;
+    _headToHeadRecords = [];
+    _has1v1Champion = false;
+    if (currentId != null) {
+      _check1v1Champion(currentId);
+      _loadHeadToHead(currentId);
+    }
+    if (widget.team != null) {
+      _loadMemberDetails();
+    } else if (widget.teamId != null) {
+      _loadTeamAndMembers();
+    }
+  }
+
   Future<void> _loadHeadToHead(String teamId) async {
     try {
       final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
