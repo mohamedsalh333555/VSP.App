@@ -19,7 +19,9 @@ class VSPQuickBookingReceiptFormatter {
  }) {
  final dateStr = AppDateFormatter.formatDayMonth(startTime, isArabic ? 'ar' : 'en');
  final timeStr = '${AppDateFormatter.formatTime(startTime, isArabic ? 'ar' : 'en')} - ${AppDateFormatter.formatTime(endTime, isArabic ? 'ar' : 'en')}';
- final remainingAmount = (totalPrice - depositPaid).clamp(0.0, 999999.0);
+ final safeTotal = totalPrice.isFinite && totalPrice > 0 ? totalPrice : 0.0;
+ final safeDeposit = depositPaid.isFinite && depositPaid > 0 ? depositPaid.clamp(0.0, safeTotal).toDouble() : 0.0;
+ final remainingAmount = safeTotal - safeDeposit;
 
  final mapsLine = (googleMapsUrl != null && googleMapsUrl.isNotEmpty)
  ? (isArabic ? '📍 *موقع الملعب على الخريطة:* $googleMapsUrl\n' : '📍 *Location Map:* $googleMapsUrl\n')
@@ -31,23 +33,23 @@ class VSPQuickBookingReceiptFormatter {
 
  String paymentStatus;
  if (isCashConfirmed) {
- if (depositPaid > 0 && depositPaid < totalPrice) {
+ if (safeDeposit > 0 && safeDeposit < safeTotal) {
  paymentStatus = isArabic
- ? 'مدفوع بالكامل (عربون: ${depositPaid.toInt()} ج.م + كاش: ${(totalPrice - depositPaid).toInt()} ج.م)'
- : 'Paid in full (Deposit: ${depositPaid.toInt()} EGP + Cash: ${(totalPrice - depositPaid).toInt()} EGP)';
+ ? 'مدفوع بالكامل (عربون: ${safeDeposit.toStringAsFixed(2)} ج.م + كاش: ${(safeTotal - safeDeposit).toStringAsFixed(2)} ج.م)'
+ : 'Paid in full (Deposit: ${safeDeposit.toStringAsFixed(2)} EGP + Cash: ${(safeTotal - safeDeposit).toStringAsFixed(2)} EGP)';
  } else {
  paymentStatus = isArabic ? 'مدفوع بالكامل نقداً بالملعب' : 'Paid in full cash at pitch';
  }
- } else if (depositPaid >= totalPrice && totalPrice > 0) {
+ } else if (safeDeposit >= safeTotal && safeTotal > 0) {
  paymentStatus = isArabic ? 'مدفوع بالكامل إلكترونياً' : 'Paid in full online';
- } else if (depositPaid > 0) {
+ } else if (safeDeposit > 0) {
  paymentStatus = isArabic
- ? 'عربون مسدد: ${depositPaid.toInt()} ج.م (المتبقي: ${remainingAmount.toInt()} ج.م عند الحضور)'
- : 'Deposit: ${depositPaid.toInt()} EGP (Remaining: ${remainingAmount.toInt()} EGP upon arrival)';
+ ? 'عربون مسدد: ${safeDeposit.toStringAsFixed(2)} ج.م (المتبقي: ${remainingAmount.toStringAsFixed(2)} ج.م عند الحضور)'
+ : 'Deposit: ${safeDeposit.toStringAsFixed(2)} EGP (Remaining: ${remainingAmount.toStringAsFixed(2)} EGP upon arrival)';
  } else {
  paymentStatus = isArabic
- ? 'دفع كاش بالملعب: ${totalPrice.toInt()} ج.م'
- : 'Cash at pitch: ${totalPrice.toInt()} EGP';
+ ? 'الدفع عند الملعب: ${safeTotal.toStringAsFixed(2)} ج.م'
+ : 'Payment at pitch: ${safeTotal.toStringAsFixed(2)} EGP';
  }
 
  if (isArabic) {
@@ -58,7 +60,7 @@ class VSPQuickBookingReceiptFormatter {
  *الكابتن:* $customerName
  *التاريخ:* $dateStr
  *الميعاد:* $timeStr
- *الإجمالي:* ${totalPrice.toInt()} ج.م ($paymentStatus)
+ *الإجمالي:* ${safeTotal.toStringAsFixed(2)} ج.م ($paymentStatus)
  *كود الحجز:* #$bookingRef
 $mapsLine$phoneLine
  *تنبيه:* يرجى الحضور قبل الموعد بـ 10 دقائق لتجهيز الإحماء. نتمنى لكم مباراة ممتعة! 
@@ -71,7 +73,7 @@ $mapsLine$phoneLine
  *Captain:* $customerName
  *Date:* $dateStr
  *Time:* $timeStr
- *Total:* ${totalPrice.toInt()} EGP ($paymentStatus)
+ *Total:* ${safeTotal.toStringAsFixed(2)} EGP ($paymentStatus)
  *Booking Code:* #$bookingRef
 $mapsLine$phoneLine
  *Note:* Please arrive 10 minutes prior for warmup. Enjoy your match! 
