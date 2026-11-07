@@ -13,6 +13,8 @@
 - **P1 unblock user journeys:** #34 challenge accept/reject lifecycle, #33 team invite accept/reject, #25 subscription entitlements, #23 owner booking management, #42 admin result approval. Existing E2E report confirms challenge and team invitation journeys failed, and Paymob sandbox remains a blocker.
 - **P1 account and stadium:** #11, #19–22, #24; owner registration and stadium listing partially exercised; email verification and full device flows blocked.
 - **P2 growth and UI:** #01–10, #50–55, notifications #45–49, competitions #38–44. Reuse existing implementation and avoid duplicating work.
+- **2026-11-07 functional fix (#34, partial):** `lib/features/player/screens/challenge_select_team_screen.dart` now refuses to proceed when a verified challenge code is edited after lookup; commit `19558b97985fa66244a1ed535e0cca9c216119be`. Needs latest Flutter CI and real challenge acceptance lifecycle; do not mark complete.
+- **2026-11-07 security (#77, partial):** 16 targeted SECURITY DEFINER caller guards fixed on staging across batches; 4 views hardened. Negative no-JWT role tests passed; real JWT/cross-account and complete RPC inventory still pending. Evidence `docs/security/STAGING_1V1_CHALLENGE_OWNER_AI_GUARDS_2026-11-07.md`.
 - **Evidence:** `docs/E2E_24_JOURNEYS_EXECUTION.md`, `docs/security/STAGING_1V1_ADMIN_GUARDS_2026-11-07.md`, PR #35 and issues #37/#38. The 24 journeys baseline is 4 passed / 3 failed / 14 blocked / 3 not run, and is not a release pass.
 
 ## Completion criteria
