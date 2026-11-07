@@ -52,6 +52,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   String? _activeUserId;
   bool _hasObservedUserId = false;
   int _teamRequestGeneration = 0;
+  int _opponentRequestGeneration = 0;
   final Map<String, bool> _championStatusMap = {};
 
   @override
@@ -246,11 +247,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     }
 
     FocusScope.of(context).unfocus();
+    final opponentGeneration = ++_opponentRequestGeneration;
     setState(() => _isLookingUpCode = true);
 
     try {
       final res = await TeamRepository().lookupChallengeCode(code);
-      if (!mounted) return;
+      if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
       // Ignore an in-flight lookup if the player edited the code meanwhile.
       if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
         setState(() => _isLookingUpCode = false);
@@ -260,7 +262,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       if (res['success'] == true && res['opponent_team_id'] != null) {
         final oppId = res['opponent_team_id'].toString();
         final oppTeam = await TeamRepository().getTeam(oppId);
-        if (!mounted) return;
+        if (!mounted || opponentGeneration != _opponentRequestGeneration) return;
         if (_challengeCodeController.text.trim().toUpperCase() != code.toUpperCase()) {
           setState(() => _isLookingUpCode = false);
           return;
@@ -280,7 +282,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           // Fetch head-to-head stats if user has a team
           if (_userTeam != null) {
             final stats = await TeamRepository().getHeadToHeadStats(_userTeam!.id, oppTeam.id);
-            if (mounted) {
+            if (mounted && opponentGeneration == _opponentRequestGeneration &&
+                _selectedTeam?.id == oppTeam.id) {
               setState(() {
                 _h2hStats = stats;
                 _isLoadingH2H = false;
@@ -336,6 +339,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   }
 
   void _clearSelectedOpponent() {
+    ++_opponentRequestGeneration;
     setState(() {
       _selectedTeam = null;
       _appliedChallengeCode = null;
