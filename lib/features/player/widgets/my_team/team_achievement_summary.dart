@@ -75,3 +75,10 @@ class OneVsOneChampionshipWin {
     required this.isVerified,
   });
 }
+
+/// Count actual distinct opponents; match totals cannot establish uniqueness.
+int countDistinctTeamOpponents(Iterable<String> opponentIds) => opponentIds
+    .map((id) => id.trim())
+    .where((id) => id.isNotEmpty)
+    .toSet()
+    .length;
