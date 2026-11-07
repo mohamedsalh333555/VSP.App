@@ -144,9 +144,10 @@ The following is a **source-inspection ledger**, not an E2E pass. Count these su
 - [ ] Run real authenticated accept test and confirm membership appears exactly once.
 - [ ] Run real authenticated reject test and confirm no membership added.
 - [ ] Run expired, wrong-recipient, unauthorized-captain and cross-governorate tests.
-- [ ] Pass Flutter CI, device E2E, and update the 24-journey report.
+- [x] Pass Flutter CI and Android onboarding/login smoke on commit `5aa4ef4` (both GitHub workflows succeeded; these are not invitation-specific E2E tests).
+- [ ] Run invitation-specific Android/device E2E and update the 24-journey report.
 
-**Subtasks: 7 source/schema checks implemented or verified; 6 validation tasks pending. Item 33 remains open (0/80 fully complete).** These checks do not prove live user flows.
+**Subtasks: 8 implementation/verification checks passed; 5 validation tasks pending. Item 33 remains open (0/80 fully complete).** These checks do not prove live user flows.
 
 ## Related issues
 - #35 implementation PR
