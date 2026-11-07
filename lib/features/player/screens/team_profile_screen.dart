@@ -43,6 +43,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingTeam = false;
   bool _hasTeamLoadError = false;
   bool _has1v1Champion = false;
+  bool _championVerificationFailed = false;
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
   int _rosterRequestVersion = 0;
@@ -84,6 +85,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     _hasTeamLoadError = false;
     _headToHeadRecords = [];
     _has1v1Champion = false;
+    _championVerificationFailed = false;
     if (currentId != null) {
       _check1v1Champion(currentId);
       _loadHeadToHead(currentId);
@@ -135,15 +137,20 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _check1v1Champion(String teamId) async {
     final requestVersion = ++_championRequestVersion;
     try {
-      final hasChamp = await TeamRepository().has1v1Champion(teamId);
+      final hasChamp = await TeamRepository().has1v1ChampionStrict(teamId);
       if (mounted && requestVersion == _championRequestVersion &&
           (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _has1v1Champion = hasChamp;
+          _championVerificationFailed = false;
         });
       }
     } catch (e) {
       debugPrint('Error checking 1v1 champion in team profile: $e');
+      if (mounted && requestVersion == _championRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
+        setState(() => _championVerificationFailed = true);
+      }
     }
   }
 
@@ -375,7 +382,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             // 1. Team Hero Header
             TeamProfileHeroHeader(
               team: team,
-              has1v1Champion: _has1v1Champion,
+              has1v1Champion: !_championVerificationFailed && _has1v1Champion,
             ),
 
             if (team.bio.trim().isNotEmpty) ...[
