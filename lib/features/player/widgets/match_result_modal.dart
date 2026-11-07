@@ -164,7 +164,12 @@ class _MatchResultModalState extends State<MatchResultModal> {
  child: PrimaryButton(
  text: isArabic ? 'إرسال النتيجة' : 'Submit Result',
  height: 48,
- onPressed: _selectedIndex == -1 || _isSubmitting || !_isParticipatingTeam ? null : _handleSubmit,
+ onPressed: _selectedIndex == -1 ||
+     _isSubmitting ||
+     !_isParticipatingTeam ||
+     widget.booking.endTime.isAfter(VSPTimeService.now)
+     ? null
+     : _handleSubmit,
  isLoading: _isSubmitting,
  ),
  ),
