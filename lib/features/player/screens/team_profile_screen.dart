@@ -74,6 +74,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     _isLoadingMembers = true;
     _hasMemberLoadError = false;
     _fetchedTeam = null;
+    _isLoadingTeam = widget.team == null && widget.teamId != null;
+    _hasTeamLoadError = false;
     _headToHeadRecords = [];
     _has1v1Champion = false;
     if (currentId != null) {
