@@ -17,7 +17,7 @@ class RosterParserUtils {
  final List<String> result = [];
 
  // Prefix stripping regexes
- final numberingRegex = RegExp(r'^\s*(?:(?:\\(?[0-9٠-٩۰-۹]+\\)?[.\\-/)]?)|[•*+#\\[\\]-])\\s*');
+ final numberingRegex = RegExp(r'^\s*(?:\(?[0-9٠-٩۰-۹]+\)?[.\-/)]?|[•*+#\[\]-])\s*');
  final captainPrefixRegex = RegExp(r'^(?:كابتن|اللاعب\s*:?|لاعب\s*:?)\s*', caseSensitive: false);
 
  for (var line in lines) {
