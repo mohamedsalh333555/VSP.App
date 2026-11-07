@@ -142,4 +142,8 @@ void main() {
     expect(summary.oneVsOneChampionPlayers, 0);
   });
 
+  test('distinct opponent count excludes duplicate and blank team IDs', () {
+    expect(countDistinctTeamOpponents(['A', 'A', ' B ', '', '  ', 'C']), 3);
+    expect(countDistinctTeamOpponents([]), 0);
+  });
 }
