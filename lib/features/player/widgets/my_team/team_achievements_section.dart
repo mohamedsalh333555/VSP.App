@@ -30,7 +30,8 @@ class TeamAchievementsSection extends StatelessWidget {
     final bool isStreak3Unlocked = team.currentWinningStreak >= 3;
     final bool isStreak10Unlocked = team.currentWinningStreak >= 10;
     final bool isExplorerUnlocked = uniqueOpponentsCount >= 5;
-    final bool isChampionUnlocked = team.championshipsWon >= 1;
+    // Official championship badges require verified server-side results.
+    final bool isChampionUnlocked = (verifiedSummary?.stadiumChampionships ?? 0) >= 1;
 
     final badges = [
       {
@@ -57,13 +58,13 @@ class TeamAchievementsSection extends StatelessWidget {
         'isUnlocked': isExplorerUnlocked,
         'progress': '${uniqueOpponentsCount.clamp(0, 5)}/5',
       },
-      {
+      if (verifiedSummary != null) {
         'id': 'champion',
         'name': isArabic ? 'بطل البطولات' : 'Champion',
         'icon': Iconsax.cup_copy,
         'desc': isArabic ? 'الحصول والتتويج بأي بطولة رسمية مع فريقك' : 'Win at least 1 official tournament',
         'isUnlocked': isChampionUnlocked,
-        'progress': '${team.championshipsWon.clamp(0, 1)}/1',
+        'progress': '${verifiedSummary!.stadiumChampionships.clamp(0, 1)}/1',
       },
     ];
 
