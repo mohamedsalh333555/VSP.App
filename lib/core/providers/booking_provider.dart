@@ -507,6 +507,22 @@ class BookingProvider with ChangeNotifier {
           BookingListModifier.updatePaymentStatus(current, bookingId, isPaid);
           _currentBooking = current.single;
         }
+        // Reconcile the full payment/deposit fields with the server rather
+        // than treating the optimistic flag as authoritative.
+        try {
+          final updated = await _repository.getBookingByIdStrict(bookingId);
+          if (updated != null) {
+            final index = _userBookings.indexWhere((b) => b.id == bookingId);
+            if (index >= 0) {
+              BookingListModifier.updateBooking(_userBookings, updated);
+            }
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking = updated;
+            }
+          }
+        } catch (refreshError) {
+          debugPrint('Payment status refresh failed: $refreshError');
+        }
       } else {
         _errorMessage = 'تعذر تحديث حالة الدفع';
       }
