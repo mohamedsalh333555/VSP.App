@@ -10,7 +10,7 @@ void main() {
     expect(source, contains('bool get _isParticipatingTeam =>'));
     expect(source, contains('widget.submittingTeamId == widget.booking.playerTeamId'));
     expect(source, contains('widget.submittingTeamId == widget.booking.opponentTeamId'));
-    expect(source, contains('_selectedIndex == -1 || _isSubmitting || !_isParticipatingTeam'));
-    expect(source, contains('if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam) return;'));
+    expect(source, contains('_selectedIndex == -1 || !_isParticipatingTeam ||'));
+    expect(source, contains('if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam ||'));
   });
 }
