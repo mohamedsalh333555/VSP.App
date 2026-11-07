@@ -17,6 +17,10 @@ void main() {
       expect(PhoneUtils.toE164('٠١٠١٢٣٤٥٦٧٨'), '+201012345678');
       expect(PhoneUtils.toE164('۰۱۰۱۲۳۴۵۶۷۸'), '+201012345678');
     });
+    test('international 0020 prefix is not duplicated', () {
+      expect(PhoneUtils.toE164('00201012345678'), '+201012345678');
+      expect(PhoneUtils.compare('00201012345678', '01012345678'), isTrue);
+    });
     test('blank or nonnumeric phone values are not comparable', () {
       expect(PhoneUtils.normalize(' -- '), isNull);
       expect(PhoneUtils.compare('', '+201012345678'), isFalse);
