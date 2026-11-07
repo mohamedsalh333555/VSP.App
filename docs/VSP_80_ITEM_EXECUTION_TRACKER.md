@@ -138,6 +138,7 @@ The following is a **source-inspection ledger**, not an E2E pass. Count these su
 - [x] Implement repository query for recipient's pending, unexpired invitations.
 - [x] Verify staging authenticated SELECT/EXECUTE grants and anon RPC denial.
 - [x] Fail visibly if invitation team-name lookup errors or returns missing team identity (commits `f5121ec`, `a0e5028`).
+- [x] Route legacy roster add-member calls to consent-based invitations rather than the disabled direct-membership RPC (commit `ed92e1f`; code changed, E2E pending).
 - [ ] Verify recipient inbox is reachable in the running Flutter UI.
 - [ ] Run real authenticated two-account invitation-send test.
 - [ ] Run real authenticated accept test and confirm membership appears exactly once.
@@ -145,7 +146,7 @@ The following is a **source-inspection ledger**, not an E2E pass. Count these su
 - [ ] Run expired, wrong-recipient, unauthorized-captain and cross-governorate tests.
 - [ ] Pass Flutter CI, device E2E, and update the 24-journey report.
 
-**Subtasks: 6 source/schema checks implemented or verified; 6 validation tasks pending. Item 33 remains open (0/80 fully complete).** These checks do not prove live user flows.
+**Subtasks: 7 source/schema checks implemented or verified; 6 validation tasks pending. Item 33 remains open (0/80 fully complete).** These checks do not prove live user flows.
 
 ## Related issues
 - #35 implementation PR
