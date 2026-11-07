@@ -423,6 +423,9 @@
 
 ### 33 — Team invites/membership (14)
 
+> 33.13: نجح Flutter CI وAndroid E2E Smoke على commit `3b549a23f22fb57a9158621365b45f8a902e04f5` (GitHub Actions runs `42395799199` و`42395799209`). لا يعني نجاح Android login smoke اكتمال Android invitation E2E (33.14).
+
+
 > مراجعة مصدر إضافية: 33.02: `inviteTeamMember` يستدعي RPC `invite_team_member` ويتحقق من نجاح الاستجابة ومعرّف الدعوة. 33.03: `respondToTeamInvitation` يستدعي RPC `respond_team_membership_invitation` للقبول والرفض. 33.07: `createTeam` ينشئ الكابتن فقط بواسطة `create_team_with_consent` ثم يرسل الدعوات للمستخدمين المسجلين بدل إضافتهم كأعضاء؛ الأسماء `guest_` مستبعدة. هذه إغلاقات على مستوى ربط الكود فقط؛ اختبارات E2E وصلاحيات staging مستقلة ولم تُغلق.
 
 
@@ -441,7 +444,7 @@
 - [ ] 33.10 — اختبار قبول الدعوة وعضوية واحدة
 - [ ] 33.11 — اختبار الرفض وعدم إضافة العضوية
 - [ ] 33.12 — اختبار الانتهاء والمستلم الخطأ والمحافظة والصلاحيات
-- [ ] 33.13 — اجتياز CI وAndroid login smoke
+- [x] 33.13 — اجتياز CI وAndroid login smoke
 - [ ] 33.14 — اختبار Android للدعوات وتحديث تقرير الرحلات
 
 ### 34 — Challenge invite lifecycle (13)
