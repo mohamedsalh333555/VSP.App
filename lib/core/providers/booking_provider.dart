@@ -294,6 +294,8 @@ class BookingProvider with ChangeNotifier {
 
   /// Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
+    // Prevent duplicate cancellation RPCs from rapid taps or concurrent callers.
+    if (_cancellingIds.contains(bookingId)) return false;
     _cancellingIds.add(bookingId);
     _errorMessage = null;
     notifyListeners();
