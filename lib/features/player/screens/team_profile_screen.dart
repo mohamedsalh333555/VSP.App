@@ -94,6 +94,11 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Future<void> _refreshTeamProfile() async {
     final teamId = widget.team?.id ?? widget.teamId;
     if (teamId == null) return;
+    if (widget.team == null) {
+      await _loadTeamAndMembers();
+    }
+    if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
+        (widget.team == null && _fetchedTeam == null)) return;
     await Future.wait<void>([
       _loadMemberDetails(),
       _loadHeadToHead(teamId),
