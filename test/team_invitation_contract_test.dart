@@ -46,4 +46,16 @@ void main() {
     expect(migration, contains("ON CONFLICT (team_id, user_id) DO NOTHING"));
   });
 
+  test('repository rejects imported draft names and captain self-invites', () {
+    final source = File('lib/core/repositories/team_repository.dart').readAsStringSync();
+    final start = source.indexOf('Future<String> inviteTeamMember(');
+    final end = source.indexOf('Future<void> respondToTeamInvitation(', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final method = source.substring(start, end);
+    expect(method, contains("userId.startsWith('guest_')"));
+    expect(method, contains('userId == _supabase.auth.currentUser!.id'));
+    expect(method, contains("'invite_team_member'"));
+  });
+
 }
