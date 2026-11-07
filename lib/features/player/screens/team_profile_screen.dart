@@ -46,6 +46,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
   int _rosterRequestVersion = 0;
+  int _headToHeadRequestVersion = 0;
+  int _championRequestVersion = 0;
 
   Team get team => widget.team ?? _fetchedTeam!;
 
@@ -71,6 +73,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final currentId = widget.team?.id ?? widget.teamId;
     if (previousId == currentId) return;
     _rosterRequestVersion++;
+    _headToHeadRequestVersion++;
+    _championRequestVersion++;
     _teamMembers.clear();
     _verifiedMemberIds = null;
     _isLoadingMembers = true;
@@ -114,9 +118,11 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   Future<void> _loadHeadToHead(String teamId) async {
+    final requestVersion = ++_headToHeadRequestVersion;
     try {
       final records = await MatchupRepository().getAllHeadToHeadForTeam(teamId);
-      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
+      if (mounted && requestVersion == _headToHeadRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _headToHeadRecords = records;
         });
@@ -127,9 +133,11 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   Future<void> _check1v1Champion(String teamId) async {
+    final requestVersion = ++_championRequestVersion;
     try {
       final hasChamp = await TeamRepository().has1v1Champion(teamId);
-      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
+      if (mounted && requestVersion == _championRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _has1v1Champion = hasChamp;
         });
