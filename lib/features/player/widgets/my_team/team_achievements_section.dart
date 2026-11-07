@@ -3,16 +3,21 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../data/models.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import 'team_achievement_badges.dart';
+import 'team_achievement_summary.dart';
 
 /// Section showcasing the team's achievements and unlocked badges.
 class TeamAchievementsSection extends StatelessWidget {
   final Team team;
   final bool isArabic;
+  /// Null until the authoritative competition results have been loaded.
+  final TeamAchievementSummary? verifiedSummary;
 
   const TeamAchievementsSection({
     super.key,
     required this.team,
     required this.isArabic,
+    this.verifiedSummary,
   });
 
   @override
@@ -93,6 +98,10 @@ class TeamAchievementsSection extends StatelessWidget {
               ),
           ],
         ),
+        if (verifiedSummary != null) ...[
+          const SizedBox(height: VSPSpacing.md),
+          TeamAchievementBadges(summary: verifiedSummary!),
+        ],
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
           height: 118,
