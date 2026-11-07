@@ -494,13 +494,20 @@ class BookingProvider with ChangeNotifier {
 
   /// Update payment status
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    _errorMessage = null;
     try {
       final success = await _repository.updatePaymentStatus(bookingId, isPaid);
       if (success) {
         BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid);
-        _errorMessage = null;
-        notifyListeners();
+        if (_currentBooking?.id == bookingId) {
+          final current = <Booking>[_currentBooking!];
+          BookingListModifier.updatePaymentStatus(current, bookingId, isPaid);
+          _currentBooking = current.single;
+        }
+      } else {
+        _errorMessage = 'تعذر تحديث حالة الدفع';
       }
+      notifyListeners();
       return success;
     } catch (error, stackTrace) {
       // Payment confirmation is a user-facing owner action. Keep repository
