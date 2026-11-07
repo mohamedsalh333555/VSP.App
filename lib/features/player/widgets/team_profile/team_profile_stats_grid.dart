@@ -21,7 +21,8 @@ class TeamProfileStatsGrid extends StatelessWidget {
     // Raw trophy counts are intentionally not presented as verified titles.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 520 ? 4 : 2;
+        final scale = MediaQuery.textScalerOf(context).scale(1.0);
+        final columns = constraints.maxWidth >= 520 && scale <= 1.3 ? 4 : 2;
         final itemWidth = (constraints.maxWidth - (columns - 1) * 8) / columns;
         return Wrap(
           spacing: 8,
@@ -47,17 +48,21 @@ class TeamProfileStatsGrid extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
+          Semantics(
+            label: '$label: $value',
+            child: ExcludeSemantics(child: Text(
             value,
             style: const TextStyle(
               color: VSPColors.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
-          ),
+          )),
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: VSPColors.textSecondary,
