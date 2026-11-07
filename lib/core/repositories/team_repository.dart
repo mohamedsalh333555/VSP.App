@@ -338,7 +338,12 @@ class TeamRepository {
             team['id'].toString(): team['name'].toString(),
       };
       for (final invite in invitations) {
-        invite['team_name'] = names[invite['team_id']?.toString()];
+        final teamId = invite['team_id']?.toString();
+        final teamName = names[teamId];
+        if (teamName == null || teamName.trim().isEmpty) {
+          throw StateError('Team details unavailable for invitation ${invite['id']}');
+        }
+        invite['team_name'] = teamName;
       }
     } catch (error, stackTrace) {
       debugPrint('Could not resolve invitation team names: $error');
