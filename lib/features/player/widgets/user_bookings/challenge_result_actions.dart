@@ -307,8 +307,8 @@ class ChallengeResultActions extends StatelessWidget {
             Expanded(
               child: Text(
                 isArabic
-                    ? 'تم اعتماد النتيجة وتحديث ترتيب الفرق.'
-                    : 'Result confirmed and team standings updated.',
+                    ? 'تم اعتماد النتيجة. يمكنك مراجعة ترتيب الفرق.'
+                    : 'Result confirmed. You can check the team standings.',
                 style: const TextStyle(
                   color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w700,
