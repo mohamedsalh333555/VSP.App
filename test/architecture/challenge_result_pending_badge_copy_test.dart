@@ -13,6 +13,10 @@ void main() {
     expect(end, greaterThan(start));
     final badge = source.substring(start, end);
     expect(badge, contains('في انتظار نتيجة الفريق الآخر'));
+    expect(badge, contains('جارٍ تحديث حالة النتيجة'));
+    expect(badge, contains('Syncing result status'));
+    expect(badge, contains('booking.pendingOutcome != null'));
+    expect(badge, contains('submittedTeamId.isNotEmpty'));
     expect(badge, contains('Waiting for the other team result'));
     expect(badge, isNot(contains('Waiting for matching result')));
   });
