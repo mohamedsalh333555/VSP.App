@@ -94,10 +94,10 @@ class OwnerFinancialCalculator {
   /// استنتاج مصدر الدفع من وسيلة الدفع (Fallback Helper)
   static String inferSourceFromMethod(String method) {
     final m = method.toLowerCase().trim();
-    if (m.contains('cash') || m.contains('كاش')) return 'cash';
+    if (m.contains('vodafone') || m.contains('فودافون')) return 'vodafone_cash';
+    if (m.contains('instapay') || m.contains('انستاباي')) return 'instapay';
     if (m.contains('paymob') || m.contains('card') || m.contains('online')) return 'paymob';
-    if (m.contains('instapay')) return 'instapay';
-    if (m.contains('vodafone')) return 'vodafone_cash';
+    if (m.contains('cash') || m.contains('كاش')) return 'cash';
     return 'pending';
   }
 }
