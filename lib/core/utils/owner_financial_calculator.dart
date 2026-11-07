@@ -77,7 +77,8 @@ class OwnerFinancialCalculator {
       totalPipeline += totalPrice;
 
       final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-      totalHours += diffMinutes > 0 ? (diffMinutes / 60.0) : 1.0;
+      // Invalid or zero-length bookings must never inflate occupancy hours.
+      if (diffMinutes > 0) totalHours += diffMinutes / 60.0;
     }
 
     return OwnerFinancialMetrics(
