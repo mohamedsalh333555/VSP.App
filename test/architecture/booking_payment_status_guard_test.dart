@@ -20,6 +20,11 @@ void main() {
     expect(update, contains('BookingListModifier.updatePaymentStatus(current, bookingId, isPaid)'));
     expect(update, contains('_currentBooking = current.single'));
     expect(update, contains('_repository.getBookingByIdStrict(bookingId)'));
+    // UI must be notified before the best-effort refresh is awaited.
+    expect(
+      update.indexOf('notifyListeners();', update.indexOf('_currentBooking = current.single')),
+      lessThan(update.indexOf('await _repository.getBookingByIdStrict(bookingId)')),
+    );
     expect(update, contains('BookingListModifier.updateBooking(_userBookings, updated)'));
     expect(update, contains('_currentBooking = updated'));
     expect(update, contains('catch (refreshError)'));
