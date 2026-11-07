@@ -24,11 +24,7 @@ class TeamAchievementsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     // Exact condition checking matching user requirements
     // Match count cannot prove the number of distinct opposing teams.
-    final int uniqueOpponentsCount = team.playedOpponents
-        .where((id) => id.trim().isNotEmpty)
-        .map((id) => id.trim())
-        .toSet()
-        .length;
+    final int uniqueOpponentsCount = countDistinctTeamOpponents(team.playedOpponents);
 
     final bool isStreak3Unlocked = team.currentWinningStreak >= 3;
     final bool isStreak10Unlocked = team.currentWinningStreak >= 10;
