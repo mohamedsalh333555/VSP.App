@@ -38,6 +38,16 @@ class ChallengeResultActions extends StatelessWidget {
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
+      // A confirmed flag without a final outcome is inconsistent data.
+      // Never label it as a loss just because the outcome is missing.
+      if (outcome == null) {
+        return buildStatusBadge(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'النتيجة غير متاحة'
+              : 'Result unavailable',
+          VSPColors.warning,
+        );
+      }
       if (outcome == MatchOutcome.draw) {
         return buildStatusBadge(l10n.draw, VSPColors.info);
       }
