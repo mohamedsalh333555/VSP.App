@@ -69,13 +69,15 @@ class AppDateFormatter {
     try {
       final clean = timeStr.trim();
       final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م|مساءً|صباحاً)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(clean);
+      final normalized = clean.replaceAll('٠', '0').replaceAll('١', '1').replaceAll('٢', '2').replaceAll('٣', '3').replaceAll('٤', '4').replaceAll('٥', '5').replaceAll('٦', '6').replaceAll('٧', '7').replaceAll('٨', '8').replaceAll('٩', '9');
+      final match = timeRegex.firstMatch(normalized);
       if (match == null) return 0;
       int hour = int.parse(match.group(1)!);
       int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
       String? period = match.group(3)?.toUpperCase();
       if ((period == 'PM' || period == 'م' || period == 'مساءً') && hour != 12) hour += 12;
       if ((period == 'AM' || period == 'ص' || period == 'صباحاً') && hour == 12) hour = 0;
+      if (minute < 0 || minute > 59 || hour < 0 || hour > 23) return 0;
       return hour * 60 + minute;
     } catch (_) {
       return 0;
