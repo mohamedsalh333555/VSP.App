@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/services/vsp_time_service.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 
@@ -182,6 +183,18 @@ class _MatchResultModalState extends State<MatchResultModal> {
 
  Future<void> _handleSubmit() async {
    if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam) return;
+   // Recheck at submission time even if the dialog was opened earlier.
+   if (widget.booking.endTime.isAfter(VSPTimeService.now)) {
+     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text(isArabic
+             ? 'يمكن تسجيل النتيجة بعد انتهاء المباراة.'
+             : 'You can submit the result after the match ends.'),
+       ),
+     );
+     return;
+   }
 
    late MatchOutcome outcome;
    final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
