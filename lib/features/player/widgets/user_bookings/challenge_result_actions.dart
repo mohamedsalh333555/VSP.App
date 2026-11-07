@@ -246,6 +246,12 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
+      if (booking.finalOutcome == null) {
+        return buildStatusBadge(
+          isArabic ? 'النتيجة غير متاحة حاليًا' : 'Result currently unavailable',
+          VSPColors.warning,
+        );
+      }
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(
