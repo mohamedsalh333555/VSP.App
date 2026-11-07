@@ -68,7 +68,10 @@ class ChallengeResultActions extends StatelessWidget {
       );
     }
 
-    if (booking.endTime.isBefore(VSPTimeService.now)) {
+    // Only bookings without a submitted result can prompt submission.
+    // Unknown or disputed statuses must not be presented as "Submit result".
+    if (booking.matchResultStatus == MatchResultStatus.noResult &&
+        !booking.endTime.isAfter(VSPTimeService.now)) {
       return buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
 
