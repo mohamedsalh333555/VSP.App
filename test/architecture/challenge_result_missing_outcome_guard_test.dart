@@ -17,4 +17,19 @@ void main() {
     expect(confirmed.indexOf('if (outcome == null)'),
         lessThan(confirmed.indexOf('final won')));
   });
+  test('confirmed result panel does not claim standings update without outcome', () {
+    final source = File(
+      'lib/features/player/widgets/user_bookings/challenge_result_actions.dart',
+    ).readAsStringSync();
+    final start = source.indexOf('Widget build(BuildContext context) {');
+    final confirmed = source.indexOf(
+      'if (booking.matchResultStatus == MatchResultStatus.confirmed)', start);
+    expect(confirmed, greaterThan(start));
+    final panel = source.substring(confirmed);
+    expect(panel, contains('if (booking.finalOutcome == null)'));
+    expect(panel, contains('Result currently unavailable'));
+    expect(panel.indexOf('if (booking.finalOutcome == null)'),
+        lessThan(panel.indexOf('Result confirmed and team standings updated.')));
+  });
+
 }
