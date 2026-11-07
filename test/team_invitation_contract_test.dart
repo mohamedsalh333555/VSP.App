@@ -58,4 +58,20 @@ void main() {
     expect(method, contains("'invite_team_member'"));
   });
 
+  test('pending inbox is scoped to authenticated recipient and unexpired invitations', () {
+    final source = File('lib/core/repositories/team_repository.dart').readAsStringSync();
+    final start = source.indexOf('Future<List<Map<String, dynamic>>> getPendingTeamInvitations(');
+    final end = source.indexOf('Future<void> addMemberToTeam(', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final method = source.substring(start, end);
+    expect(method, contains('_supabase.auth.currentUser?.id != userId'));
+    expect(method, contains(".from('team_membership_invitations')"));
+    expect(method, contains(".eq('invited_user_id', userId)"));
+    expect(method, contains(".eq('status', 'pending')"));
+    expect(method, contains(".gt('expires_at', DateTime.now().toUtc().toIso8601String())"));
+    expect(method, contains(".from('teams_public')"));
+    expect(method, contains('Failed to load invitation team details'));
+  });
+
 }
