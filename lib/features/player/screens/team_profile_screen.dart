@@ -117,23 +117,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   Future<void> _loadMemberDetails() async {
-    // team_members has no guaranteed row order; never assume the captain is
-    // the first returned UID. Exclude the captain by identity instead.
-    final memberIds = team.memberUids
-        .where((id) => id.isNotEmpty && id != team.captainId)
-        .toSet()
-        .toList();
-    if (memberIds.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _teamMembers.clear();
-          _isLoadingMembers = false;
-          _hasMemberLoadError = false;
-        });
-      }
-      return;
-    }
-
+    final teamId = team.id;
     if (mounted) {
       setState(() {
         _isLoadingMembers = true;
@@ -141,21 +125,27 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       });
     }
     try {
-      final members = await UserRepository().getUsersByIdsStrict(memberIds);
-      if (mounted) {
-        setState(() {
-          _teamMembers
-            ..clear()
-            ..addAll(members);
-          _isLoadingMembers = false;
-          // A partial profile response is not a verified complete roster.
-          // Keep retry available if any registered member is missing.
-          _hasMemberLoadError = members.length < memberIds.length;
-        });
-      }
+      // Fetch the current roster from the membership source of truth, not
+      // the potentially stale memberUids embedded in the public team card.
+      final currentIds = await TeamRepository().getTeamMemberUids(teamId);
+      final memberIds = currentIds
+          .where((id) => id.isNotEmpty && id != team.captainId)
+          .toSet()
+          .toList();
+      final members = memberIds.isEmpty
+          ? <UserModel>[]
+          : await UserRepository().getUsersByIdsStrict(memberIds);
+      if (!mounted || team.id != teamId) return;
+      setState(() {
+        _teamMembers
+          ..clear()
+          ..addAll(members);
+        _isLoadingMembers = false;
+        _hasMemberLoadError = members.length < memberIds.length;
+      });
     } catch (e) {
       debugPrint('Error loading team members: $e');
-      if (mounted) {
+      if (mounted && team.id == teamId) {
         setState(() {
           _isLoadingMembers = false;
           _hasMemberLoadError = true;
