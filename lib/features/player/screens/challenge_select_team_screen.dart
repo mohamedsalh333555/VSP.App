@@ -144,6 +144,17 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   Future<void> _continueWithChallenge() async {
     if (_isContinuing || _selectedTeam == null || _appliedChallengeCode == null) return;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // A code can be edited after lookup. Never proceed with a stale verified opponent.
+    if (_challengeCodeController.text.trim().toUpperCase() != _appliedChallengeCode) {
+      _clearSelectedOpponent();
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? 'تم تغيير كود التحدي. تحقق من الكود الجديد قبل متابعة الحجز.'
+            : 'The challenge code changed. Verify the new code before booking.',
+      );
+      return;
+    }
     final auth = context.read<app_auth.AuthProvider>();
     final uid = auth.currentUser?.id;
     if (uid == null) {
