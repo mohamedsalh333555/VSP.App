@@ -141,7 +141,13 @@ class ChallengeResultActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final currentTeamId = myTeamId;
-    if (currentTeamId == null) return const SizedBox.shrink();
+    // Only the two teams participating in this booking may be offered
+    // result submission. The server remains the final authorization gate.
+    if (currentTeamId == null ||
+        (currentTeamId != booking.playerTeamId &&
+            currentTeamId != booking.opponentTeamId)) {
+      return const SizedBox.shrink();
+    }
 
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
       return _openResultModal(context, currentTeamId);
