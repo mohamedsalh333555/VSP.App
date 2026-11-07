@@ -60,8 +60,9 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
-      final hasSubmissionDetails = booking.resultSubmittedByTeamId != null &&
-          booking.resultSubmittedByTeamId!.isNotEmpty &&
+      final submittedTeamId = booking.resultSubmittedByTeamId;
+      final hasSubmissionDetails = submittedTeamId != null &&
+          submittedTeamId.isNotEmpty &&
           booking.pendingOutcome != null;
       return buildStatusBadge(
         hasSubmissionDetails
