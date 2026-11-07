@@ -312,6 +312,15 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _teamRequestVersion++;
+    _rosterRequestVersion++;
+    _headToHeadRequestVersion++;
+    _championRequestVersion++;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_isLoadingTeam) {
       return VSPScaffold(
