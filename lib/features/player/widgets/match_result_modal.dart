@@ -163,7 +163,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
  child: PrimaryButton(
  text: isArabic ? 'إرسال النتيجة' : 'Submit Result',
  height: 48,
- onPressed: _selectedIndex == -1 || _isSubmitting ? null : _handleSubmit,
+ onPressed: _selectedIndex == -1 || _isSubmitting || !_isParticipatingTeam ? null : _handleSubmit,
  isLoading: _isSubmitting,
  ),
  ),
@@ -176,8 +176,12 @@ class _MatchResultModalState extends State<MatchResultModal> {
  );
  }
 
+ bool get _isParticipatingTeam =>
+     widget.submittingTeamId == widget.booking.playerTeamId ||
+     widget.submittingTeamId == widget.booking.opponentTeamId;
+
  Future<void> _handleSubmit() async {
-   if (_isSubmitting || _selectedIndex == -1) return;
+   if (_isSubmitting || _selectedIndex == -1 || !_isParticipatingTeam) return;
 
    late MatchOutcome outcome;
    final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
