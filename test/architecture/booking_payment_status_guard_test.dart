@@ -1,0 +1,21 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  test('payment status updates both booking list and selected booking', () {
+    final source = File('lib/core/providers/booking_provider.dart')
+        .readAsStringSync();
+    final start = source.indexOf('Future<bool> updatePaymentStatus(');
+    final end = source.indexOf('Future<bool> updateManualBooking(', start);
+    expect(start, greaterThanOrEqualTo(0));
+    expect(end, greaterThan(start));
+    final update = source.substring(start, end);
+    expect(update, contains('BookingListModifier.updatePaymentStatus(_userBookings, bookingId, isPaid)'));
+    expect(update, contains('if (_currentBooking?.id == bookingId)'));
+    expect(update, contains('BookingListModifier.updatePaymentStatus(current, bookingId, isPaid)'));
+    expect(update, contains('_currentBooking = current.single'));
+    expect(update, contains("_errorMessage = 'تعذر تحديث حالة الدفع'"));
+    expect(update, contains('notifyListeners()'));
+  });
+}
