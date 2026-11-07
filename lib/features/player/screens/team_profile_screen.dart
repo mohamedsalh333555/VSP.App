@@ -45,6 +45,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _has1v1Champion = false;
   List<Map<String, dynamic>> _headToHeadRecords = [];
   bool _isGeneratingCode = false;
+  int _rosterRequestVersion = 0;
 
   Team get team => widget.team ?? _fetchedTeam!;
 
@@ -69,6 +70,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     final previousId = oldWidget.team?.id ?? oldWidget.teamId;
     final currentId = widget.team?.id ?? widget.teamId;
     if (previousId == currentId) return;
+    _rosterRequestVersion++;
     _teamMembers.clear();
     _verifiedMemberIds = null;
     _isLoadingMembers = true;
@@ -156,6 +158,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
   Future<void> _loadMemberDetails() async {
     final teamId = team.id;
+    final requestVersion = ++_rosterRequestVersion;
     if (mounted) {
       setState(() {
         _isLoadingMembers = true;
@@ -178,7 +181,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       final members = memberIds.isEmpty
           ? <UserModel>[]
           : await UserRepository().getUsersByIdsStrict(memberIds);
-      if (!mounted || (widget.team?.id ?? widget.teamId) != teamId) return;
+      if (!mounted || requestVersion != _rosterRequestVersion ||
+          (widget.team?.id ?? widget.teamId) != teamId) return;
       setState(() {
         _verifiedMemberIds = currentIds.where((id) => id.isNotEmpty).toSet();
         _teamMembers
@@ -189,7 +193,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       });
     } catch (e) {
       debugPrint('Error loading team members: $e');
-      if (mounted && (widget.team?.id ?? widget.teamId) == teamId) {
+      if (mounted && requestVersion == _rosterRequestVersion &&
+          (widget.team?.id ?? widget.teamId) == teamId) {
         setState(() {
           _isLoadingMembers = false;
           _hasMemberLoadError = true;
