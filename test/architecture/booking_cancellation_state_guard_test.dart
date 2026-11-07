@@ -11,6 +11,10 @@ void main() {
     expect(start, greaterThanOrEqualTo(0));
     expect(end, greaterThan(start));
     final cancel = source.substring(start, end);
+    expect(cancel, contains('if (_cancellingIds.contains(bookingId)) return false;'));
+    expect(cancel.indexOf('if (_cancellingIds.contains(bookingId))'),
+        lessThan(cancel.indexOf('_repository.cancelBooking(bookingId)')));
+    expect(cancel, contains('_cancellingIds.remove(bookingId)'));
     expect(cancel, contains('BookingListModifier.updateBooking(_userBookings, updatedBooking)'));
     expect(cancel, isNot(contains('BookingListModifier.removeBooking(_userBookings, bookingId)')));
     expect(cancel, contains('_currentBooking = updatedBooking'));
