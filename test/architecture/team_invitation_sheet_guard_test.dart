@@ -9,7 +9,7 @@ void main() {
     expect(source, contains("invitation['id']?.toString().trim()"));
     expect(source, contains("id != null && id.isNotEmpty && id != 'null'"));
     expect(source, contains('_busyId == null && hasValidId'));
-    expect(source, contains('_respond(id!, false)'));
-    expect(source, contains('_respond(id!, true)'));
+    expect(source, contains('_respond(id, false)'));
+    expect(source, contains('_respond(id, true)'));
   });
 }
