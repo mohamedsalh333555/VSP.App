@@ -96,6 +96,13 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     if (teamId == null) return;
     if (widget.team == null) {
       await _loadTeamAndMembers();
+      if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
+          _fetchedTeam == null) return;
+      await Future.wait<void>([
+        _loadHeadToHead(teamId),
+        _check1v1Champion(teamId),
+      ]);
+      return;
     }
     if (!mounted || (widget.team?.id ?? widget.teamId) != teamId ||
         (widget.team == null && _fetchedTeam == null)) return;
