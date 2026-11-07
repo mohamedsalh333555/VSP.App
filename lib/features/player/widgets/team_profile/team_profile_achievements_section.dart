@@ -61,7 +61,7 @@ class TeamProfileAchievementsSection extends StatelessWidget {
         ],
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
-          height: 110,
+          height: MediaQuery.textScalerOf(context).scale(1) > 1.4 ? 152 : 122,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -70,7 +70,9 @@ class TeamProfileAchievementsSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final badge = badges[index];
               final isUnlocked = team.unlockedBadges.contains(badge['id']);
-              return Column(
+              return SizedBox(
+                width: 112,
+                child: Column(
                 children: [
                   Container(
                     width: 64,
@@ -92,7 +94,9 @@ class TeamProfileAchievementsSection extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: VSPSpacing.sm),
-                  Text(
+                  SizedBox(
+                    width: 108,
+                    child: Text(
                     badge['name'] as String,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -103,7 +107,9 @@ class TeamProfileAchievementsSection extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  ),
                 ],
+                ),
               );
             },
           ),
