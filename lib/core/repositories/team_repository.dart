@@ -267,6 +267,12 @@ class TeamRepository {
 
   /// Request consent before adding a registered player to a team.
   Future<String> inviteTeamMember(String teamId, String userId) async {
+    if (_supabase.auth.currentUser == null) {
+      throw StateError('Sign in before inviting a player');
+    }
+    if (teamId.trim().isEmpty || userId.trim().isEmpty) {
+      throw ArgumentError('Team ID and player ID are required');
+    }
     final response = await _supabase.rpc(
       'invite_team_member',
       params: {'p_team_id': teamId, 'p_user_id': userId},
