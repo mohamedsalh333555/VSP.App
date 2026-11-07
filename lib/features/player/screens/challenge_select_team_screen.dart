@@ -166,11 +166,27 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       return;
     }
 
+    final verifiedOpponent = _selectedTeam!;
+    final verifiedCode = _appliedChallengeCode!;
+    final opponentGeneration = _opponentRequestGeneration;
     setState(() => _isContinuing = true);
     try {
       final team = await TeamRepository().getUserTeamStrict(uid);
       if (!mounted) return;
       if (context.read<app_auth.AuthProvider>().currentUser?.id != uid) return;
+      // The async team check must not finalize a different opponent or code.
+      if (opponentGeneration != _opponentRequestGeneration ||
+          _selectedTeam?.id != verifiedOpponent.id ||
+          _appliedChallengeCode != verifiedCode ||
+          _challengeCodeController.text.trim().toUpperCase() != verifiedCode) {
+        VSPFeedback.showError(
+          context,
+          isArabic
+              ? 'تغيّر التحدي أثناء التحقق. أعد التحقق من الفريق المنافس.'
+              : 'The challenge changed during verification. Verify the opponent again.',
+        );
+        return;
+      }
       if (team == null) {
         VSPFeedback.showError(
           context,
@@ -181,17 +197,17 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         return;
       }
       if (!ChallengeTeamService.isFairPlayEligible(team) ||
-          !ChallengeTeamService.isFairPlayEligible(_selectedTeam)) {
+          !ChallengeTeamService.isFairPlayEligible(verifiedOpponent)) {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.fairPlayBannedError);
         return;
       }
 
       context.read<BookingProvider>().updateDraft(
-        opponentTeamId: _selectedTeam!.id,
-        opponentTeamName: _selectedTeam!.name,
+        opponentTeamId: verifiedOpponent.id,
+        opponentTeamName: verifiedOpponent.name,
         playerTeamId: team.id,
         playerTeamName: team.name,
-        challengeCode: _appliedChallengeCode,
+        challengeCode: verifiedCode,
       );
       Navigator.push(
         context,
@@ -199,7 +215,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           builder: (context) => BookingConfirmationScreen(
             stadium: widget.stadium,
             bookingType: widget.bookingType,
-            opponentTeam: _selectedTeam,
+            opponentTeam: verifiedOpponent,
           ),
         ),
       );
