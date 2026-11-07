@@ -160,6 +160,11 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
+      // The repository rejects early submissions. Do not offer an action
+      // that cannot succeed until the match has actually ended.
+      if (booking.endTime.isAfter(VSPTimeService.now)) {
+        return const SizedBox.shrink();
+      }
       return _openResultModal(context, currentTeamId);
     }
 
