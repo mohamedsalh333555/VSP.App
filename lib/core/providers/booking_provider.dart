@@ -307,8 +307,25 @@ class BookingProvider with ChangeNotifier {
           final updatedBooking = await _repository.getBookingByIdStrict(bookingId);
           if (updatedBooking != null) {
             BookingListModifier.updateBooking(_userBookings, updatedBooking);
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking = updatedBooking;
+            }
           } else {
-            BookingListModifier.removeBooking(_userBookings, bookingId);
+            // A successful cancellation must not erase the booking history
+            // merely because the follow-up read returned no record.
+            final existingIndex =
+                _userBookings.indexWhere((item) => item.id == bookingId);
+            if (existingIndex >= 0) {
+              BookingListModifier.updateBooking(
+                _userBookings,
+                _userBookings[existingIndex]
+                    .copyWith(status: BookingStatus.cancelled),
+              );
+            }
+            if (_currentBooking?.id == bookingId) {
+              _currentBooking =
+                  _currentBooking!.copyWith(status: BookingStatus.cancelled);
+            }
           }
         } catch (refreshError) {
           // Cancellation is already confirmed. Keep the record in history with
@@ -319,6 +336,10 @@ class BookingProvider with ChangeNotifier {
               _userBookings,
               _userBookings[existingIndex].copyWith(status: BookingStatus.cancelled),
             );
+          }
+          if (_currentBooking?.id == bookingId) {
+            _currentBooking =
+                _currentBooking!.copyWith(status: BookingStatus.cancelled);
           }
           debugPrint('Cancellation succeeded but booking refresh failed: $refreshError');
         }
