@@ -84,4 +84,62 @@ void main() {
     expect(summary.stadiumChampionships, 0);
     expect(summary.oneVsOneChampionPlayers, 0);
   });
+  test('membership changes update the distinct 1v1 champion count', () {
+    const titles = [
+      OneVsOneChampionshipWin(
+        competitionId: 'cup-a',
+        winnerPlayerId: 'p1',
+        isFinalized: true,
+        isVerified: true,
+      ),
+      OneVsOneChampionshipWin(
+        competitionId: 'cup-b',
+        winnerPlayerId: 'p2',
+        isFinalized: true,
+        isVerified: true,
+      ),
+      OneVsOneChampionshipWin(
+        competitionId: 'cup-c',
+        winnerPlayerId: 'p1',
+        isFinalized: true,
+        isVerified: true,
+      ),
+    ];
+    TeamAchievementSummary summary(List<String> members) =>
+        TeamAchievementSummary.fromVerifiedResults(
+          teamId: 'team',
+          currentMemberIds: members,
+          teamWins: const [],
+          individualWins: titles,
+        );
+    expect(summary(['p1']).oneVsOneChampionPlayers, 1);
+    expect(summary(['p1', 'p2']).oneVsOneChampionPlayers, 2);
+    expect(summary(['p2']).oneVsOneChampionPlayers, 1);
+    expect(summary([]).oneVsOneChampionPlayers, 0);
+  });
+
+  test('unverified and unfinished individual titles never count', () {
+    const titles = [
+      OneVsOneChampionshipWin(
+        competitionId: 'unverified',
+        winnerPlayerId: 'p1',
+        isFinalized: true,
+        isVerified: false,
+      ),
+      OneVsOneChampionshipWin(
+        competitionId: 'pending',
+        winnerPlayerId: 'p2',
+        isFinalized: false,
+        isVerified: true,
+      ),
+    ];
+    final summary = TeamAchievementSummary.fromVerifiedResults(
+      teamId: 'team',
+      currentMemberIds: const ['p1', 'p2'],
+      teamWins: const [],
+      individualWins: titles,
+    );
+    expect(summary.oneVsOneChampionPlayers, 0);
+  });
+
 }
