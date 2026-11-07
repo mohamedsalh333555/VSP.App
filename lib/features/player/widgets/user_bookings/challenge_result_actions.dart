@@ -60,10 +60,17 @@ class ChallengeResultActions extends StatelessWidget {
     }
 
     if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+      final hasSubmissionDetails = booking.resultSubmittedByTeamId != null &&
+          booking.resultSubmittedByTeamId!.isNotEmpty &&
+          booking.pendingOutcome != null;
       return buildStatusBadge(
-        Localizations.localeOf(context).languageCode == 'ar'
-            ? 'في انتظار نتيجة الفريق الآخر'
-            : 'Waiting for the other team result',
+        hasSubmissionDetails
+            ? (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'في انتظار نتيجة الفريق الآخر'
+                : 'Waiting for the other team result')
+            : (Localizations.localeOf(context).languageCode == 'ar'
+                ? 'جارٍ تحديث حالة النتيجة'
+                : 'Syncing result status'),
         VSPColors.warning,
       );
     }
