@@ -114,8 +114,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       VSPFeedback.showSuccess(
         context,
         isArabic
-            ? 'تمت إضافة $addedCount أعضاء من النص بنجاح.'
-            : 'Added $addedCount members from the pasted text.',
+            ? 'تم استيراد $addedCount اسمًا كمسودة فقط. لن يصبحوا أعضاء ولن تصلهم دعوات حتى تختار حساباتهم المسجلة.'
+            : 'Imported $addedCount names as draft entries only. They will not join or receive invitations until you select their registered accounts.',
       );
     }
   }
