@@ -37,7 +37,7 @@ class TeamProfileRosterSection extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                   ),
                 )
-              : hasError
+              : hasError && members.isEmpty
                   ? Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -60,10 +60,22 @@ class TeamProfileRosterSection extends StatelessWidget {
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                     )
-                  : Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: members.map((member) => _buildMemberChip(member)).toList(),
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hasError) ...[
+                          Text(isArabic ? 'بعض اللاعبين غير متاحين حالياً' : 'Some players could not be loaded',
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                          if (onRetry != null)
+                            TextButton(onPressed: onRetry, child: Text(isArabic ? 'إعادة المحاولة' : 'Retry')),
+                          const SizedBox(height: VSPSpacing.sm),
+                        ],
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: members.map((member) => _buildMemberChip(member)).toList(),
+                        ),
+                      ],
                     ),
         ),
       ],
