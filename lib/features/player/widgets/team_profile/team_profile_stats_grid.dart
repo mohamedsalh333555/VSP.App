@@ -23,7 +23,9 @@ class TeamProfileStatsGrid extends StatelessWidget {
       builder: (context, constraints) {
         final scale = MediaQuery.textScalerOf(context).scale(1.0);
         final columns = constraints.maxWidth >= 520 && scale <= 1.3 ? 4 : 2;
-        final itemWidth = (constraints.maxWidth - (columns - 1) * 8) / columns;
+        final availableWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 320.0;
+        final safeColumns = availableWidth < 180 ? 1 : columns;
+        final itemWidth = (availableWidth - (safeColumns - 1) * 8) / safeColumns;
         return Wrap(
           spacing: 8,
           runSpacing: 8,
