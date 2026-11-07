@@ -32,6 +32,8 @@ class CreateTeamMembersSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final draftCount = members.where((m) => m.uid.startsWith('guest_')).length;
+    final registeredCount = members.length - draftCount;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +44,9 @@ class CreateTeamMembersSection extends StatelessWidget {
             Directionality(
               textDirection: TextDirection.ltr,
               child: Text(
-                l10n.teamMembersHeader(members.length + 1, 12),
+                isArabic
+                    ? 'الكابتن: 1 | دعوات مقترحة: $registeredCount | أسماء مسودة: $draftCount (الحد 12)'
+                    : 'Captain: 1 | Invite candidates: $registeredCount | Draft names: $draftCount (max 12)',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: VSPColors.textSecondary,
                     ),
@@ -153,6 +157,17 @@ class CreateTeamMembersSection extends StatelessWidget {
                           style: Theme.of(context).textTheme.labelSmall,
                         ),
                       ),
+                      if (member.uid.startsWith('guest_'))
+                        Tooltip(
+                          message: isArabic
+                              ? 'اسم مسودة وليس عضوًا أو حسابًا مدعوًا'
+                              : 'Draft name, not a member or invited account',
+                          child: Icon(
+                            Iconsax.info_circle_copy,
+                            size: 16,
+                            color: VSPColors.textSecondary,
+                          ),
+                        ),
                       const SizedBox(width: 4),
                       IconButton(
                         tooltip: isArabic ? 'إزالة اللاعب' : 'Remove player',
