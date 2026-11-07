@@ -48,16 +48,18 @@ class PhoneUtils {
     final n1 = normalize(phone1);
     final n2 = normalize(phone2);
     if (n1 == null || n2 == null) return false;
-    return n1 == n2 || toE164(phone1) == toE164(phone2);
+    return n1 == n2 || toE164(n1) == toE164(n2);
   }
 
   static String _convertEasternToWesternDigits(String input) {
     const eastern = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     const western = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 
     String output = input;
     for (int i = 0; i < eastern.length; i++) {
       output = output.replaceAll(eastern[i], western[i]);
+      output = output.replaceAll(persian[i], western[i]);
     }
     return output;
   }
