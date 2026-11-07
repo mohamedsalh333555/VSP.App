@@ -23,5 +23,16 @@ void main() {
       expect(AppDateFormatter.parseTimeToHour('12:00 AM'), 0);
       expect(AppDateFormatter.parseTimeToHour('12:00 PM'), 12);
     });
+    test('negative minute offsets wrap to the previous day', () {
+      expect(AppDateFormatter.formatMinutesToTime(-30, false), '11:30 PM');
+      expect(AppDateFormatter.formatMinutesToTime(1470, false), '12:30 AM');
+    });
+    test('short time labels preserve minutes other than zero', () {
+      expect(AppDateFormatter.formatTimeShort('4:00 PM - 5:30 PM'), '4 PM - 5:30 PM');
+    });
+    test('operational shift start must be a valid hour', () {
+      expect(() => AppDateFormatter.getOperationalDate(DateTime(2026, 11, 7), shiftStartHour: 24), throwsRangeError);
+      expect(() => AppDateFormatter.getOperationalDate(DateTime(2026, 11, 7), shiftStartHour: -1), throwsRangeError);
+    });
   });
 }
